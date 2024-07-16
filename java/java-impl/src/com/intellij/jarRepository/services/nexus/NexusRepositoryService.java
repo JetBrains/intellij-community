@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services.nexus;
 
 import com.google.gson.Gson;
@@ -23,8 +23,7 @@ public class NexusRepositoryService extends MavenRepositoryService {
 
   private final Gson gson = new Gson();
 
-  @Nullable
-  public static RemoteRepositoryDescription convertRepositoryInfo(@NotNull NexusModel.RepositoryType repo) {
+  public static @Nullable RemoteRepositoryDescription convertRepositoryInfo(@NotNull NexusModel.RepositoryType repo) {
     if (repo.id == null) {
       return null;
     }
@@ -43,15 +42,13 @@ public class NexusRepositoryService extends MavenRepositoryService {
     );
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return "Nexus";
   }
 
-  @NotNull
   @Override
-  public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       NexusModel.RepositorySearchResults repos = gson.fromJson(
@@ -80,9 +77,8 @@ public class NexusRepositoryService extends MavenRepositoryService {
     }
   }
 
-  @NotNull
   @Override
-  public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template) throws IOException {
+  public @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template) throws IOException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       final String packaging = StringUtil.notNullize(template.getPackaging());
@@ -111,8 +107,7 @@ public class NexusRepositoryService extends MavenRepositoryService {
     }
   }
 
-  @NotNull
-  private String prepareParameters(@NotNull RepositoryArtifactDescription template) {
+  private @NotNull String prepareParameters(@NotNull RepositoryArtifactDescription template) {
     Map<String, String> params = new LinkedHashMap<>();
     params.put("q", StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":"));
     params.put("g", template.getGroupId());

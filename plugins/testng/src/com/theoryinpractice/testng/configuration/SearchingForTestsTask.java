@@ -8,6 +8,9 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -81,7 +84,23 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   @Override
   protected void search() throws CantRunException {
     myClasses.clear();
-    fillTestObjects(myClasses);
+    Project project = myProject;
+    if (project == null) return;
+    try {
+      CantRunException exception = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+        try {
+          fillTestObjects(myClasses);
+          return null;
+        }
+        catch (CantRunException e) {
+          return e;
+        }
+      });
+      if (exception != null) throw exception;
+    }
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+    }
   }
 
   @Override
@@ -246,6 +265,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
 
   protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes)
     throws CantRunException {
+
     TestNGTestObject.fromConfig(myConfig).fillTestObjects(classes);
   }
 

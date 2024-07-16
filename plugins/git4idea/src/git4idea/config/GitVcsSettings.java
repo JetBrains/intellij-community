@@ -150,6 +150,14 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setShowRecentBranches(value);
   }
 
+  public boolean showTags() {
+    return getState().getShowTags();
+  }
+
+  public void setShowTags(boolean value) {
+    getState().setShowTags(value);
+  }
+
   public boolean filterByActionInPopup() {
     return getState().getFilterByActionInPopup();
   }

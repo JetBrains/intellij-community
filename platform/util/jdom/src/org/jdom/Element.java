@@ -117,7 +117,7 @@ public class Element extends Content implements Parent, Serializable {
    * The content of the element.  Subclasses have to
    * track content using their own mechanism.
    */
-  protected transient ContentList content = new ContentList(this);
+  transient ContentList content = new ContentList(this);
 
   /**
    * This protected constructor is provided in order to support an Element
@@ -1021,7 +1021,7 @@ public class Element extends Content implements Parent, Serializable {
    * @param name name of the attribute whose value to be returned
    * @return the named attribute's value, or null if no such attribute
    */
-  public String getAttributeValue(final String name) {
+  public String getAttributeValue(String name) {
     return attributes == null ? null : getAttributeValue(name, Namespace.NO_NAMESPACE, null);
   }
 

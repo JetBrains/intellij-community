@@ -1,38 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
-import com.intellij.codeInspection.InspectionApplicationFactory.Companion.getApplication
 import com.intellij.openapi.application.ModernApplicationStarter
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
 class InspectionMain : ModernApplicationStarter() {
-  private lateinit var application: InspectionApplicationStart
+  private lateinit var application: InspectionApplicationBase
 
   override fun premain(args: List<String>) {
     InspectionApplicationBase.LOG.info("Command line arguments: $args")
-    application = if (args.size > 1 && "qodana" == args[1]) {
-      buildQodanaApplication(args)
-    }
-    else {
-      buildInspectionApplication(args)
-    }
+    application = buildInspectionApplication(args)
   }
 
-  private fun buildQodanaApplication(args: List<String>) =
-    try {
-      getApplication("qodana", args.subList(2, args.size))
-    }
-    catch (e: InspectionApplicationException) {
-      System.err.println(e.message)
-      exitProcess(1)
-    }
-    catch (e: Exception) {
-      e.printStackTrace() // workaround for IDEA-289086
-      exitProcess(1)
-    }
-
-  private fun buildInspectionApplication(args: List<String>): InspectionApplicationStart {
+  private fun buildInspectionApplication(args: List<String>): InspectionApplicationBase {
     val app = InspectionApplicationBase()
     if (args.size < 4) {
       System.err.println("invalid args:$args")
@@ -112,14 +93,11 @@ class InspectionMain : ModernApplicationStarter() {
   }
 
   override suspend fun start(args: List<String>) {
-    when (val r = application) {
-      is InspectionApplicationStart.Asynchronous -> r.startup()
-      /*
-       todo https://youtrack.jetbrains.com/issue/IDEA-298594
-       See also com.intellij.platform.ide.bootstrap.ApplicationLoader.executeApplicationStarter
-       */
-      is InspectionApplicationStart.Synchronous -> CompletableFuture.runAsync(r::startup)
-    }
+    /*
+     todo https://youtrack.jetbrains.com/issue/IDEA-298594
+     See also com.intellij.platform.ide.bootstrap.ApplicationLoader.executeApplicationStarter
+     */
+    CompletableFuture.runAsync(application::startup)
   }
 
 

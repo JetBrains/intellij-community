@@ -34,7 +34,7 @@ public class CutAction extends DumbAwareAction implements LightEditCompatible {
   private static CutProvider getAvailableCutProvider(@NotNull AnActionEvent e) {
     CutProvider provider = e.getData(PlatformDataKeys.CUT_PROVIDER);
     Project project = e.getProject();
-    if (project != null && DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+    if (project != null && provider != null && !DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
       return null;
     }
     return provider;

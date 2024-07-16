@@ -24,12 +24,14 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class StructureViewElementWrapper<V extends PsiElement> implements StructureViewTreeElement {
   private final StructureViewTreeElement myTreeElement;
   private final PsiFile myMainFile;

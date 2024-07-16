@@ -16,7 +16,7 @@
 package org.intellij.images.options.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.BaseConfigurableWithChangeSupport;
+import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -36,7 +36,7 @@ import java.beans.PropertyChangeListener;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport implements SearchableConfigurable, PropertyChangeListener {
+public final class ImagesConfigurable extends BaseConfigurable implements SearchableConfigurable, PropertyChangeListener {
   private ImagesOptionsComponent myComponent;
   private final Disposable myUIResourcesDisposable = Disposer.newDisposable();
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.DynamicBundle;
+import com.intellij.DynamicBundle.LanguageBundleEP;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -25,15 +25,15 @@ public final class LocaleSensitiveApplicationCacheService implements Disposable 
 
   public LocaleSensitiveApplicationCacheService() {
     //todo remove this check after we made languageBundle dynamic; it's added to avoid warnings
-    if (DynamicBundle.LanguageBundleEP.EP_NAME.getPoint().isDynamic()) {
-      DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<DynamicBundle.LanguageBundleEP>() {
+    if (LanguageBundleEP.EP_NAME.getPoint().isDynamic()) {
+      LanguageBundleEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageBundleEP>() {
         @Override
-        public void extensionAdded(DynamicBundle.@NotNull LanguageBundleEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull LanguageBundleEP extension, @NotNull PluginDescriptor pluginDescriptor) {
           myMapProvider.drop();
         }
 
         @Override
-        public void extensionRemoved(DynamicBundle.@NotNull LanguageBundleEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionRemoved(@NotNull LanguageBundleEP extension, @NotNull PluginDescriptor pluginDescriptor) {
           myMapProvider.drop();
         }
       }, this);

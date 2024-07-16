@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon
 
 import com.intellij.codeInspection.InspectionProfile
@@ -12,8 +12,10 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 
 @State(name = "DaemonCodeAnalyzerSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
+@Internal
 open class DaemonCodeAnalyzerSettingsImpl : DaemonCodeAnalyzerSettings(), PersistentStateComponent<Element>, Cloneable {
   override fun isCodeHighlightingChanged(oldSettings: DaemonCodeAnalyzerSettings): Boolean {
     return !JDOMUtil.areElementsEqual((oldSettings as DaemonCodeAnalyzerSettingsImpl).state, state)
@@ -28,7 +30,7 @@ open class DaemonCodeAnalyzerSettingsImpl : DaemonCodeAnalyzerSettings(), Persis
     return settings
   }
 
-  override fun getState(): Element? {
+  override fun getState(): Element {
     val element = Element("state")
     serializeObjectInto(this, element)
     val profile = ApplicationInspectionProfileManager.getInstanceImpl().rootProfileName

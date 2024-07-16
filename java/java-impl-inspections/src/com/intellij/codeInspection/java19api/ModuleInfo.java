@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ record ModuleInfo(@NotNull PsiDirectory rootDir, @NotNull ModuleNode node) {
       final String dependencyName = dependency.getKey().getName();
       if (JAVA_BASE.equals(dependencyName)) continue;
       boolean isBadSyntax = ContainerUtil.or(dependencyName.split("\\."),
-                                             part -> JavaLexer.isKeyword(part, LanguageLevel.JDK_1_9));
+                                             part -> PsiUtil.isKeyword(part, LanguageLevel.JDK_1_9));
 
       text.append(isBadSyntax ? "// " : " ").append(PsiKeyword.REQUIRES).append(' ');
       if(dependency.getValue().contains(STATIC)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Service
-public final class VisibleEditorsTracker {
+final class VisibleEditorsTracker {
   private final Set<Editor> myEditorsVisibleOnCommandStart = new HashSet<>();
   private long myCurrentCommandStart;
   private long myLastCommandFinish;
@@ -47,7 +47,7 @@ public final class VisibleEditorsTracker {
   }
 
   private void commandStarted() {
-    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+    for (Editor editor : EditorFactory.getInstance().getEditorList()) {
       if (editor.getComponent().isShowing()) {
         myEditorsVisibleOnCommandStart.add(editor);
       }

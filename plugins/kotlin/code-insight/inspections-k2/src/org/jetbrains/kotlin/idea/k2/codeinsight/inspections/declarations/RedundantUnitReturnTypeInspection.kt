@@ -3,49 +3,69 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class RedundantUnitReturnTypeInspection :
-  AbstractKotlinApplicableInspectionWithContext<KtNamedFunction, TypeInfo>(),
-  CleanupLocalInspectionTool {
+    KotlinApplicableInspectionBase.Simple<KtNamedFunction, TypeInfo>(),
+    CleanupLocalInspectionTool {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitNamedFunction(function: KtNamedFunction) {
-                visitTargetElement(function, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitNamedFunction(function: KtNamedFunction) {
+            visitTargetElement(function, holder, isOnTheFly)
         }
     }
+
     override fun getProblemDescription(element: KtNamedFunction, context: TypeInfo): String =
         KotlinBundle.message("inspection.redundant.unit.return.type.display.name")
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.redundant.unit.return.type.action.name")
-
-    override fun getApplicabilityRange() = ApplicabilityRanges.CALLABLE_RETURN_TYPE
+    override fun getApplicableRanges(element: KtNamedFunction): List<TextRange> =
+        ApplicabilityRange.single(element) { it.typeReference?.typeElement }
 
     override fun isApplicableByPsi(element: KtNamedFunction): Boolean {
         return element.hasBlockBody() && element.typeReference != null
     }
 
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtNamedFunction): TypeInfo? = when {
-        element.getFunctionLikeSymbol().returnType.isUnit -> TypeInfo(TypeInfo.UNIT)
-        else -> null
+    context(KaSession)
+    override fun prepareContext(element: KtNamedFunction): TypeInfo? {
+        val returnType = element.getFunctionLikeSymbol().returnType.fullyExpandedType
+
+        if (!returnType.isMarkedNullable && returnType.isUnit) {
+            return TypeInfo(TypeInfo.UNIT)
+        }
+
+        return null
     }
 
-    override fun apply(element: KtNamedFunction, context: TypeInfo, project: Project, updater: ModPsiUpdater) {
-        updateType(element, context, project, updater = updater)
+    override fun createQuickFix(
+        element: KtNamedFunction,
+        context: TypeInfo,
+    ) = object : KotlinModCommandQuickFix<KtNamedFunction>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.redundant.unit.return.type.action.name")
+
+        override fun applyFix(
+            project: Project,
+            element: KtNamedFunction,
+            updater: ModPsiUpdater,
+        ) {
+            updateType(element, context, project, updater = updater)
+        }
     }
 }

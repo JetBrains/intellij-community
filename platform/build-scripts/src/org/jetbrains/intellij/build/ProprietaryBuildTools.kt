@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
@@ -13,8 +13,7 @@ import java.nio.file.Path
  */
 data class ProprietaryBuildTools(
   /**
-   * This tool is required to sign files in distribution. If it is null the files won't be signed and OS may show
-   * a warning when user tries to run them.
+   * This tool is required to sign files in distribution. If it is null, the files won't be signed and OS may show a warning when a user tries to run them.
    */
   val signTool: SignTool,
 
@@ -35,7 +34,7 @@ data class ProprietaryBuildTools(
   val artifactsServer: ArtifactsServer?,
 
   /**
-   * Properties required to bundle a default version of feature usage statistics white list into IDE
+   * Properties required to bundle a default version of feature usage statistics allowlist into the IDE
    */
   val featureUsageStatisticsProperties: List<FeatureUsageStatisticsProperties>?,
 
@@ -46,26 +45,30 @@ data class ProprietaryBuildTools(
   val licenseServerHost: String?
 ) {
   companion object {
-    val DUMMY = ProprietaryBuildTools(
-      signTool = object : SignTool {
-        override val signNativeFileMode: SignNativeFileMode
-          get() = SignNativeFileMode.DISABLED
+    internal val DUMMY_SIGN_TOOL: SignTool = object : SignTool {
+      override val signNativeFileMode: SignNativeFileMode
+        get() = SignNativeFileMode.DISABLED
 
-        override suspend fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>) {
-          Span.current().addEvent("files won't be signed", Attributes.of(
-            AttributeKey.stringArrayKey("files"), files.map(Path::toString),
-            AttributeKey.stringKey("reason"), "sign tool isn't defined",
-          ))
-        }
+      override suspend fun signFiles(files: List<Path>, context: BuildContext?, options: PersistentMap<String, String>) {
+        Span.current().addEvent(
+          "files won't be signed", Attributes.of(
+          AttributeKey.stringArrayKey("files"), files.map(Path::toString),
+          AttributeKey.stringKey("reason"), "sign tool isn't defined",
+        )
+        )
+      }
 
-        override suspend fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path? {
-          error("Must be not called if signNativeFileMode equals to ENABLED")
-        }
+      override suspend fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path? {
+        error("Must be not called if signNativeFileMode equals to ENABLED")
+      }
 
-        override suspend fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path? {
-          return null
-        }
-      },
+      override suspend fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path? {
+        return null
+      }
+    }
+
+    val DUMMY: ProprietaryBuildTools = ProprietaryBuildTools(
+      signTool = DUMMY_SIGN_TOOL,
       scrambleTool = null,
       macOsCodesignIdentity = null,
       artifactsServer = null,

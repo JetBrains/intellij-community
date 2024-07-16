@@ -21,6 +21,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -78,8 +79,9 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
                                               mySession.getProject());
   }
 
+  @RequiresBackgroundThread
   @Override
-  public boolean isInExecutionPointHighlight() {
+  protected boolean calculateIsInExecutionPoint() {
     return LinePainter.isFullLineHighlighter(mySession, myPosition.getFile(), myPosition.getLine(), false);
   }
 

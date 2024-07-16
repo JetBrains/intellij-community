@@ -13,13 +13,14 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import git4idea.GitUtil
 import git4idea.actions.branch.GitBranchActionsUtil
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.BranchGroupingAction
 
 internal class GitBranchesTreePopupSettings :
@@ -57,7 +58,8 @@ internal class GitBranchesTreePopupResizeAction :
   }
 }
 
-internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSynchronouslyAction(), KeepingPopupOpenAction {
+internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSynchronouslyAction() {
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
@@ -74,7 +76,8 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
   override fun getSettings(e: AnActionEvent): DvcsSyncSettings = GitVcsSettings.getInstance(e.project!!)
 }
 
-internal class GitBranchesTreePopupGroupByPrefixAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY), KeepingPopupOpenAction {
+internal class GitBranchesTreePopupGroupByPrefixAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.setText(DvcsBundle.messagePointer("action.text.branch.group.by.prefix"))
@@ -103,6 +106,31 @@ internal class GitBranchesTreePopupShowRecentBranchesAction :
   }
 }
 
+internal class GitBranchesTreePopupShowTagsAction :
+  ToggleAction(GitBundle.messagePointer("git.branches.popup.show.tags.name")), DumbAware {
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabledAndVisible = e.project != null
+                                         && e.getData(GitBranchesTreePopup.POPUP_KEY) != null
+  }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  override fun isSelected(e: AnActionEvent): Boolean =
+    e.project?.let(GitVcsSettings::getInstance)?.showTags() ?: true
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val project = e.project ?: return
+    GitVcsSettings.getInstance(project).setShowTags(state)
+
+    for (repository in GitRepositoryManager.getInstance(project).repositories) {
+      repository.tagHolder.updateEnabled()
+    }
+    e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
+  }
+}
+
 internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(), DumbAware {
 
   init {
@@ -118,7 +146,7 @@ internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(
   }
 }
 
-internal class GitBranchesTreePopupFilterByAction : ToggleAction(), KeepingPopupOpenAction, DumbAware {
+internal class GitBranchesTreePopupFilterByAction : DumbAwareToggleAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -151,7 +179,7 @@ internal class GitBranchesTreePopupFilterByAction : ToggleAction(), KeepingPopup
   }
 }
 
-internal class GitBranchesTreePopupFilterByRepository : ToggleAction(), KeepingPopupOpenAction, DumbAware {
+internal class GitBranchesTreePopupFilterByRepository : DumbAwareToggleAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -11,6 +11,7 @@ import com.intellij.ui.border.NamedBorderKt;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -666,7 +667,7 @@ public final class JBUI {
         return "EditorTabs.verticalTabInsets";
       }
 
-      public static Insets tabContentInsets(Boolean actionsOnTheRight) {
+      public static Insets tabContentInsets(@Nullable Boolean actionsOnTheRight) {
         if (actionsOnTheRight == null) {
           return insets(tabContentInsetsActionsNoneKey(), isNewUI() ? insetsLeft(4) : insets(0, 4));
         }
@@ -905,6 +906,7 @@ public final class JBUI {
     public interface Notification {
       Color FOREGROUND = JBColor.namedColor("Notification.foreground", Label.foreground());
       Color BACKGROUND = JBColor.namedColor("Notification.background", 0xFFF8D1, 0x1D3857);
+      Color ICON_HOVER_BACKGROUND = JBColor.namedColor("Notification.iconHoverBackground", ActionButton.hoverBorder());
 
       interface Error {
         Color FOREGROUND = JBColor.namedColor("Notification.errorForeground", Notification.FOREGROUND);
@@ -1257,8 +1259,12 @@ public final class JBUI {
         return 20;
       }
 
-      public static @NotNull Insets stripeToolbarButtonIconPadding() {
-        return insets(stripeToolbarButtonIconPaddingKey(), defaultStripeToolbarButtonIconPadding());
+      public static @NotNull Insets stripeToolbarButtonIconPadding(boolean compactMode, boolean showNames) {
+        return insets(stripeToolbarButtonIconPaddingKey(), showNames
+                                                           ? compactMode
+                                                             ? defaultStripeToolbarButtonIconPaddingForCompactMode()
+                                                             : defaultStripeToolbarButtonIconPaddingForNames()
+                                                           : defaultStripeToolbarButtonIconPadding());
       }
 
       public static @NotNull String stripeToolbarButtonIconPaddingKey() {
@@ -1267,6 +1273,14 @@ public final class JBUI {
 
       public static @NotNull JBInsets defaultStripeToolbarButtonIconPadding() {
         return insets(5);
+      }
+
+      public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForNames() {
+        return insets(4);
+      }
+
+      public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForCompactMode() {
+        return insets(3);
       }
     }
 
@@ -2306,9 +2320,6 @@ public final class JBUI {
       public static final Color RUN_ICON_COLOR = JBColor.namedColor("RunWidget.runIconColor", new Color(0x5FAD65));
       public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
       public static final Color RUNNING_ICON_COLOR = JBColor.namedColor("RunWidget.runningIconColor", Color.WHITE);
-      /** @deprecated The separator key was used in the contrast run widget implementation, and now it is now needed any more */
-      @Deprecated(forRemoval = true)
-      public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
       public static final Color STOP_BACKGROUND = JBColor.namedColor("RunWidget.stopBackground", new Color(0xC94F4F));
 
       // these colors will be applied over background color
@@ -2422,6 +2433,39 @@ public final class JBUI {
 
       public static @NotNull Color getBadgeBackground(boolean hover) {
         return hover ? BADGE_BACKGROUND_HOVER : BADGE_BACKGROUND;
+      }
+    }
+
+    @ApiStatus.Internal
+    public static final class LicenseDialog {
+      private static final @NotNull Color TERMS_AND_CONDITIONS_COLOR =
+        JBColor.namedColor("LicenseDialog.termsAndConditionsForeground", 0x818594, 0x6F737A);
+
+      private static final @NotNull Color SEPARATOR_COLOR =
+        JBColor.namedColor("LicenseDialog.separatorColor", 0xEBECF0, 0x393B40);
+
+      public static @NotNull Color getTermsAndConditionsForeground() {
+        return TERMS_AND_CONDITIONS_COLOR;
+      }
+
+      public static @NotNull Color getSeparatorColor() {
+        return SEPARATOR_COLOR;
+      }
+
+      public static final class LicenseList {
+        private static final @NotNull Color LICENSE_DETAILS_COLOR =
+          JBColor.namedColor("LicenseDialog.LicenseList.licenseDetailsForeground", 0xC9CCD6, 0x9DA0A8);
+
+        private static final @NotNull Color SEPARATOR_COLOR =
+          JBColor.namedColor("LicenseDialog.LicenseList.separatorColor", 0x818594, 0x6F737A);
+
+        public static @NotNull Color getLicenseDetailsColor() {
+          return LICENSE_DETAILS_COLOR;
+        }
+
+        public static @NotNull Color getSeparatorColor() {
+          return SEPARATOR_COLOR;
+        }
       }
     }
   }

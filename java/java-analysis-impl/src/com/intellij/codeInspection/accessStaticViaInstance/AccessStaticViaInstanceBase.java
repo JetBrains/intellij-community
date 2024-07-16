@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.accessStaticViaInstance;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -53,7 +53,7 @@ public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspection
     JavaResolveResult result = expr.advancedResolve(false);
     PsiElement resolved = result.getElement();
 
-    if (!(resolved instanceof PsiMember)) return;
+    if (!(resolved instanceof PsiMember member)) return;
     PsiExpression qualifierExpression = expr.getQualifierExpression();
     if (qualifierExpression == null) return;
 
@@ -63,11 +63,11 @@ public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspection
         return;
       }
     }
-    if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return;
+    if (!member.hasModifierProperty(PsiModifier.STATIC)) return;
 
     //don't report warnings on compilation errors
-    PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
-    if (containingClass != null && containingClass.isInterface()) return;
+    PsiClass containingClass = member.getContainingClass();
+    if (containingClass != null && containingClass.isInterface() && member instanceof PsiMethod) return;
     if (containingClass instanceof PsiAnonymousClass || containingClass instanceof PsiImplicitClass) return;
 
     String description = JavaErrorBundle.message("static.member.accessed.via.instance.reference",

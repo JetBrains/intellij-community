@@ -34,15 +34,15 @@ import java.util.ArrayList;
 
 public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposable {
   private static final Logger LOG = Logger.getInstance(ToolbarPanel.class);
-  protected final TestTreeExpander myTreeExpander = new TestTreeExpander();
-  protected final FailedTestsNavigator myOccurenceNavigator;
-  protected final ScrollToTestSourceAction myScrollToSource;
+  private final TestTreeExpander myTreeExpander = new TestTreeExpander();
+  private final FailedTestsNavigator myOccurenceNavigator;
+  private final ScrollToTestSourceAction myScrollToSource;
   private @Nullable ExportTestResultsAction myExportAction;
 
   private final ArrayList<ToggleModelAction> myActions = new ArrayList<>();
 
-  public final AnAction[] actionsToMerge;
-  public final AnAction[] additionalActionsToMerge;
+  private final AnAction[] actionsToMerge;
+  private final AnAction[] additionalActionsToMerge;
 
   public ToolbarPanel(final TestConsoleProperties properties,
                       final JComponent parent) {
@@ -179,6 +179,14 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_ALPHABETICALLY, createComparatorPropertyListener(model), model, true);
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SORT_BY_DURATION, createComparatorPropertyListener(model), model, true);
     TestFrameworkActions.addPropertyListener(TestConsoleProperties.SUITES_ALWAYS_ON_TOP, createComparatorPropertyListener(model), model, true);
+  }
+
+  public AnAction[] getActionsToMerge() {
+    return actionsToMerge;
+  }
+
+  public AnAction[] getAdditionalActionsToMerge() {
+    return additionalActionsToMerge;
   }
 
   private static TestFrameworkPropertyListener<Boolean> createComparatorPropertyListener(TestFrameworkRunningModel model) {

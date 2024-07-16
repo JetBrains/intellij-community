@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
@@ -24,11 +24,11 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.ui.RootIcon
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.util.VcsLogUiUtil
 import net.miginfocom.layout.CC
+import net.miginfocom.layout.HideMode
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.*
@@ -44,6 +44,8 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     const val INTERNAL_BORDER = 10
     const val EXTERNAL_BORDER = 14
     const val LAYOUT_MIN_WIDTH = 40
+    const val TOOLBAR_MIN_HEIGHT = 30
+    const val INFO_PANEL_MIN_HEIGHT = 17
   }
 
   private val statusesActionGroup = DefaultActionGroup()
@@ -67,11 +69,11 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   private val containingBranchesPanel = ContainingBranchesPanel()
 
   init {
-    layout = MigLayout(LC().gridGap("0", "0").insets("0").fill())
+    layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().hideMode(HideMode.DISREGARD))
     isOpaque = false
 
     val mainPanel = JPanel(null).apply {
-      layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY())
+      layout = MigLayout(LC().gridGap("0", "0").insets("0").fill().flowY().hideMode(3))
       isOpaque = false
 
       val metadataPanel = BorderLayoutPanel().apply {
@@ -81,7 +83,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
         addToCenter(hashAndAuthorPanel)
       }
 
-      val componentLayout = CC().minWidth("$LAYOUT_MIN_WIDTH").grow().push()
+      val componentLayout = CC().minWidth("$LAYOUT_MIN_WIDTH").minHeight("$INFO_PANEL_MIN_HEIGHT").grow().push()
       add(messagePanel, componentLayout)
       add(metadataPanel, componentLayout)
       add(branchesPanel, componentLayout)
@@ -92,7 +94,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     add(mainPanel, CC().grow().push())
     //show at most 4 icons
     val maxHeight = 22 * 4
-    add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight"))
+    add(statusesToolbar.component, CC().alignY("top").maxHeight("$maxHeight").minHeight("$TOOLBAR_MIN_HEIGHT"))
 
     updateStatusToolbar(false)
   }
@@ -386,7 +388,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
 
   fun setRoot(rootColor: CommitDetailsPanel.RootColor?) {
     if (rootColor != null) {
-      icon = RootIcon.createAndScale(rootColor.color)
+      icon = CheckboxIcon.createAndScale(rootColor.color)
       tooltipText = rootColor.root.path
     }
     else {

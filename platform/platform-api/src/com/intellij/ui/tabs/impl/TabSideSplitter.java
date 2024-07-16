@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.ui.OnePixelDivider;
@@ -13,7 +13,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-class TabSideSplitter implements Splittable, PropertyChangeListener {
+final class TabSideSplitter implements Splittable, PropertyChangeListener {
   private final @NotNull JBTabsImpl tabs;
   private int sideTabsLimit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
   private final OnePixelDivider divider;
@@ -52,7 +52,7 @@ class TabSideSplitter implements Splittable, PropertyChangeListener {
     if (this.sideTabsLimit != sideTabsLimit) {
       this.sideTabsLimit = sideTabsLimit;
       tabs.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, this.sideTabsLimit);
-      tabs.relayout(true, true);
+      tabs.relayout$intellij_platform_ide(true, true);
       TabInfo info = tabs.getSelectedInfo();
       JComponent page = info != null ? info.getComponent() : null;
       if (page != null) {

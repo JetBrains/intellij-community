@@ -43,12 +43,13 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.create.comment")));
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.open.comment")));
 
+    ActionManager actionManager = ActionManager.getInstance();
     Couple<DefaultActionGroup> mainAndMore =
-      splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE),
+      splitAndWrapActions((ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE),
                           action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
                           ProjectsTabFactory.PRIMARY_BUTTONS_NUM);
     ActionGroup main = new DefaultActionGroup(
-      ContainerUtil.map(mainAndMore.getFirst().getChildren(null), LargeIconWithTextWrapper::wrapAsBigIconWithText));
+      ContainerUtil.map(mainAndMore.getFirst().getChildren(actionManager), LargeIconWithTextWrapper::wrapAsBigIconWithText));
 
     ActionToolbarImpl actionsToolbar = createActionsToolbar(main);
     mainPanel.add(new Wrapper(new FlowLayout(), actionsToolbar.getComponent()));
@@ -57,7 +58,7 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     if (moreActionGroup.getChildrenCount() > 0) {
       JComponent actionLink;
       if (moreActionGroup.getChildrenCount() == 1) {
-        AnAction action = moreActionGroup.getChildren(null)[0];
+        AnAction action = moreActionGroup.getChildren(actionManager)[0];
         actionLink = new AnActionLink(action, ActionPlaces.WELCOME_SCREEN);
         if (action instanceof OpenAlienProjectAction) {
           ((OpenAlienProjectAction)action).scheduleUpdate(actionLink);

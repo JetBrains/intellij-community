@@ -11,9 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 
 public class ProjectDescriptorWithStdlibSources extends KotlinWithJdkAndRuntimeLightProjectDescriptor {
+
+    @NotNull
+    private static final ProjectDescriptorWithStdlibSources CACHED_INSTANCE = new ProjectDescriptorWithStdlibSources();
+
     @NotNull
     public static ProjectDescriptorWithStdlibSources getInstanceWithStdlibSources() {
-        return new ProjectDescriptorWithStdlibSources();
+      return CACHED_INSTANCE;
     }
 
     @Override

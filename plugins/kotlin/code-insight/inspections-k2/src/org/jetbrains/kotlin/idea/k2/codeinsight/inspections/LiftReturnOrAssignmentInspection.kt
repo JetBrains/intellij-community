@@ -9,7 +9,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -79,13 +79,13 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
         object : KtVisitorVoid() {
             override fun visitExpression(expression: KtExpression) {
                 // Note that we'd better run the following line first instead of running
-                // `if (analyze(expression) { expression.isUsedAsExpression() }) return`
+                // `if (analyze(expression) { expression.isUsedAsExpression }) return`
                 // because `getState(expression)` will filter many expressions after checking only PSI.
                 val states = getState(expression) ?: return
 
                 // This inspection targets only return and assignment within expressions with branches.
                 // Their values must not be used by other expressions.
-                if (expression.parent !is KtBlockExpression && analyze(expression) { expression.isUsedAsExpression() }) return
+                if (expression.parent !is KtBlockExpression && analyze(expression) { expression.isUsedAsExpression }) return
 
                 states.forEach { state ->
                     val problemMessage = KotlinBundle.message(
@@ -151,7 +151,7 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
         if (skipLongExpressions && expression.getLineCount() > LINES_LIMIT) return null
         if (expression.parent.node.elementType == KtNodeTypes.ELSE) return null

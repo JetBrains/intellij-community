@@ -32,11 +32,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElementBase<JpsLibraryFilesPackagingElementImpl> implements JpsLibraryFilesPackagingElement {
+class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElementBase<JpsLibraryFilesPackagingElementImpl> implements JpsLibraryFilesPackagingElement {
   private static final JpsElementChildRole<JpsLibraryReference>
     LIBRARY_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("library reference");
 
-  public JpsLibraryFilesPackagingElementImpl(@NotNull JpsLibraryReference reference) {
+  JpsLibraryFilesPackagingElementImpl(@NotNull JpsLibraryReference reference) {
     myContainer.setChild(LIBRARY_REFERENCE_CHILD_ROLE, reference);
   }
 
@@ -46,7 +46,7 @@ public class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElem
 
   @NotNull
   @Override
-  public JpsLibraryFilesPackagingElementImpl createCopy() {
+  public JpsLibraryFilesPackagingElementImpl createElementCopy() {
     return new JpsLibraryFilesPackagingElementImpl(this);
   }
 

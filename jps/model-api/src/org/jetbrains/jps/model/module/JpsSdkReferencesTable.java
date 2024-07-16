@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.module;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
@@ -27,6 +28,7 @@ public interface JpsSdkReferencesTable extends JpsCompositeElement {
   <P extends JpsElement>
   JpsSdkReference<P> getSdkReference(@NotNull JpsSdkType<P> type);
 
+  @ApiStatus.Internal
   <P extends JpsElement>
   void setSdkReference(@NotNull JpsSdkType<P> type, @Nullable JpsSdkReference<P> sdkReference);
 }

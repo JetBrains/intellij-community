@@ -16,6 +16,7 @@
 package org.jetbrains.debugger.values
 
 import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Obsolescent
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.EvaluateContext
@@ -25,6 +26,7 @@ import org.jetbrains.debugger.VariablesHost
 /**
  * A compound value that has zero or more properties
  */
+@ApiStatus.Internal
 interface ObjectValue : Value {
   val className: String?
 

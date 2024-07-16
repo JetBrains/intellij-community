@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.SelectionEvent;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
+//@ApiStatus.Internal
 public final class SelectionModelImpl implements SelectionModel {
   private static final Logger LOG = Logger.getInstance(SelectionModelImpl.class);
 
@@ -26,6 +26,7 @@ public final class SelectionModelImpl implements SelectionModel {
 
   private TextAttributes myTextAttributes;
 
+  @ApiStatus.Internal
   public SelectionModelImpl(EditorImpl editor) {
     myEditor = editor;
   }
@@ -33,6 +34,7 @@ public final class SelectionModelImpl implements SelectionModel {
   /**
    * @see CaretImpl#setUnknownDirection(boolean)
    */
+  @ApiStatus.Internal
   public boolean isUnknownDirection() {
     return myEditor.getCaretModel().getCurrentCaret().isUnknownDirection();
   }
@@ -40,6 +42,7 @@ public final class SelectionModelImpl implements SelectionModel {
   /**
    * @see CaretImpl#setUnknownDirection(boolean)
    */
+  @ApiStatus.Internal
   public void setUnknownDirection(boolean unknownDirection) {
     myEditor.getCaretModel().getCurrentCaret().setUnknownDirection(unknownDirection);
   }
@@ -140,6 +143,7 @@ public final class SelectionModelImpl implements SelectionModel {
     return myTextAttributes;
   }
 
+  @ApiStatus.Internal
   public void reinitSettings() {
     myTextAttributes = null;
   }

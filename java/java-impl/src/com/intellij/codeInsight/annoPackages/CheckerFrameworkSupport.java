@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -20,12 +20,11 @@ final class CheckerFrameworkSupport implements AnnotationPackageSupport {
   private static final String DEFAULT_QUALIFIER = "org.checkerframework.framework.qual.DefaultQualifier";
   private static final String DEFAULT_QUALIFIERS = "org.checkerframework.framework.qual.DefaultQualifiers";
 
-  @Nullable
   @Override
-  public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                       @NotNull PsiElement context,
-                                                                       PsiAnnotation.TargetType @NotNull [] types,
-                                                                       boolean superPackage) {
+  public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                                 @NotNull PsiElement context,
+                                                                                 PsiAnnotation.TargetType @NotNull [] types,
+                                                                                 boolean superPackage) {
     if (context instanceof PsiTypeParameter) {
       // DefaultQualifier is not applicable to type parameter declarations
       return null;
@@ -81,9 +80,8 @@ final class CheckerFrameworkSupport implements AnnotationPackageSupport {
     return false;
   }
 
-  @NotNull
   @Override
-  public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+  public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {
       case NOT_NULL -> Arrays.asList("org.checkerframework.checker.nullness.qual.NonNull",
                                      "org.checkerframework.checker.nullness.compatqual.NonNullDecl",

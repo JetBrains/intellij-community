@@ -6,17 +6,20 @@ import com.intellij.openapi.editor.IndentsModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.util.IntPair;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+//@ApiStatus.Internal
 public final class IndentsModelImpl implements IndentsModel {
   private final Map<IntPair, IndentGuideDescriptor> myIndentsByLines = CollectionFactory.createSmallMemoryFootprintMap();
   private List<IndentGuideDescriptor> myIndents = new ArrayList<>();
   private final @NotNull EditorImpl myEditor;
 
+  @ApiStatus.Internal
   public IndentsModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
   }

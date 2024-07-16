@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
@@ -189,16 +189,6 @@ final class JBTabsDemoAction extends AnAction {
     });
     south.add(block);
 
-    final JCheckBox fill = new JCheckBox("Tab fill in", true);
-    fill.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        tabs.getPresentation().setActiveTabFillIn(fill.isSelected() ? Color.white : null);
-      }
-    });
-    south.add(fill);
-
-
     final JButton refire = new JButton("Re-fire attraction");
     refire.addActionListener(new ActionListener() {
       @Override
@@ -240,7 +230,6 @@ final class JBTabsDemoAction extends AnAction {
     tabs.addTab(new TabInfo(new JTable())).setText("Table 9").setActions(new DefaultActionGroup(), null);
 
     //tabs.getComponent().setBorder(new EmptyBorder(5, 5, 5, 5));
-    tabs.getPresentation().setActiveTabFillIn(Color.white);
 
     //tabs.setBorder(new LineBorder(Color.blue, 5));
     tabs.setBorder(new EmptyBorder(30, 30, 30, 30));

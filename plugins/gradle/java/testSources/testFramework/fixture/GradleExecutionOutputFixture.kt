@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework.fixture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptorImpl
@@ -74,7 +74,7 @@ class GradleExecutionOutputFixture(
   }
 
   private fun installGradleEventsListener() {
-    val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
+    val listener = object : ExternalSystemTaskNotificationListener {
 
       override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
         output = Output()

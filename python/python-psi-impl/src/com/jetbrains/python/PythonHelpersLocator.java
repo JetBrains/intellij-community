@@ -32,6 +32,8 @@ public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
   private static final String PROPERTY_HELPERS_LOCATION = "idea.python.helpers.path";
   private static final String EXPECTED_PRO_HELPER_PACKAGE = "jupyter_debug";
+  private static final String PRO_HELPERS_DIR = "helpers-pro";
+  private static final String PYTHON_PRO_PLUGIN_NAME = "python";
 
   private PythonHelpersLocator() { }
 
@@ -68,12 +70,20 @@ public final class PythonHelpersLocator {
     else {
       final File pluginBaseDir = getPluginBaseDir(jarPath);
       if (pluginBaseDir != null) {
-        return new File(pluginBaseDir, PathUtil.getFileName(relativePath));
+        return createWithPluginBaseDir(pluginBaseDir, relativePath);
       }
       else {
         return new File(new File(jarPath).getParentFile(), moduleName);
       }
     }
+  }
+
+  private static @NotNull File createWithPluginBaseDir(@NotNull File corePluginBaseDir, @NotNull String relativePath) {
+    if (relativePath.contains(PRO_HELPERS_DIR)) {
+      File proPluginBaseDir = new File(corePluginBaseDir.getParentFile(), PYTHON_PRO_PLUGIN_NAME);
+      return new File(proPluginBaseDir, PathUtil.getFileName(relativePath));
+    }
+    return new File(corePluginBaseDir, PathUtil.getFileName(relativePath));
   }
 
   private static @Nullable File getPluginBaseDir(@NonNls String jarPath) {

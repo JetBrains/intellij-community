@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.intellij.lang.Language
@@ -6,9 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
+import com.intellij.psi.*
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.MoveHandlerDelegate
@@ -27,8 +25,8 @@ class K2MoveHandler : MoveHandlerDelegate() {
 
     override fun canMove(elements: Array<out PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
         if (!Registry.`is`("kotlin.k2.smart.move")) return false
-        if (elements.any { it !is KtElement }) return false
-
+        if (elements.any { it !is KtElement && it !is PsiFile && it !is PsiClass && it !is PsiDirectory }) return false
+        if (elements.none { it is KtElement }) return false // only handle the refactoring if it includes Kotlin elements
         (elements.firstOrNull()?.containingFile as? KtFile)?.let { if (!KotlinSupportAvailability.isSupported(it)) return false }
 
         return targetContainer?.isValidTarget() != false
@@ -49,7 +47,7 @@ class K2MoveHandler : MoveHandlerDelegate() {
         editor: Editor
     ): Boolean {
         fun PsiElement.findElementToMove(): PsiElement? {
-            val candidate = parentOfTypes(KtNamedDeclaration::class, KtFile::class, withSelf = true)
+            val candidate = parentOfTypes(KtNamedDeclaration::class, KtFile::class, PsiFile::class, PsiDirectory::class, withSelf = true)
             if (candidate is KtConstructor<*>) return candidate.parent.findElementToMove()
             return candidate
         }

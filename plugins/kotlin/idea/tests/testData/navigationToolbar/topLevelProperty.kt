@@ -1,4 +1,4 @@
-// NAV_BAR_ITEMS: src, topLevelProperty.kt, foo: Int
+// NAV_BAR_ITEMS: src, topLevelProperty.kt, foo
 
 val foo: Int
     get() {

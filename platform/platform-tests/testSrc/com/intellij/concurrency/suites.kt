@@ -23,6 +23,8 @@ import org.junit.platform.suite.api.Suite
   WithModalProgressTest::class,
   CoroutineToIndicatorTest::class,
   CurrentThreadCoroutineScopeTest::class,
+  ImplicitBlockingContextTest::class,
+  CancellableContextTest::class,
 
   // rw
   CancellableReadActionWithJobTest::class,

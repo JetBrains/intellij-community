@@ -8,12 +8,17 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.beans.addIfDiffers
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.io.URLUtil
@@ -27,10 +32,15 @@ import git4idea.config.*
 import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import git4idea.statistics.GitAvailabilityChecker
+import git4idea.statistics.GitCommitterCounter
+import git4idea.statistics.RepositoryAvailability
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
+import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Period
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
@@ -44,6 +54,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     val set = HashSet<MetricEvent>()
 
     val repositoryManager = GitUtil.getRepositoryManager(project)
+    val repositoryChecker = GitAvailabilityChecker.getInstance(project)
     val repositories = repositoryManager.repositories
 
     val settings = GitVcsSettings.getInstance(project)
@@ -68,24 +79,38 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isStagingAreaEnabled }, STAGING_AREA)
 
     reportVersion(project, set)
-
+    val counter = GitCommitterCounter(listOf(Period.ofMonths(1), Period.ofMonths(3), Period.ofYears(1)),
+                                      additionalGitParameters = listOf("--all"))
     for (repository in repositories) {
+      val repoStatus = repositoryChecker.checkRepoStatus(repository)
       val branches = repository.branches
-
       val repositoryMetric = REPOSITORY.metric(
+        REPO_ID with project.getProjectCacheFileName() + repository.root.name,
         LOCAL_BRANCHES with branches.localBranches.size,
         REMOTE_BRANCHES with branches.remoteBranches.size,
         RECENT_CHECKOUT_BRANCHES with branches.recentCheckoutBranches.size,
         REMOTES with repository.remotes.size,
         IS_WORKTREE_USED with repository.isWorkTreeUsed(),
         FS_MONITOR with repository.detectFsMonitor(),
+
+        REMOTES_AVAILABILITY with repoStatus,
       )
 
+      try {
+        val commitersCount = counter.calculateWithGit(project, repository)
+        if (commitersCount.size == 3) {
+          COMMITERS_LAST_MONTH.addData(repositoryMetric.data, commitersCount[0].authors)
+          COMMITERS_HALF_YEAR.addData(repositoryMetric.data, commitersCount[1].authors)
+          COMMITERS_LAST_YEAR.addData(repositoryMetric.data, commitersCount[2].authors)
+        }
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+      }
       val remoteTypes = HashMultiset.create(repository.remotes.map { getRemoteServerType(it) })
       for (remoteType in remoteTypes) {
         repositoryMetric.data.addData("remote_$remoteType", remoteTypes.count(remoteType))
       }
-
       set.add(repositoryMetric)
     }
 
@@ -110,10 +135,12 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     ))
   }
 
-  private fun addRecentBranchesOptionMetric(set: MutableSet<MetricEvent>,
-                                            settings: GitVcsSettings,
-                                            defaultSettings: GitVcsSettings,
-                                            repositories: List<GitRepository>) {
+  private fun addRecentBranchesOptionMetric(
+    set: MutableSet<MetricEvent>,
+    settings: GitVcsSettings,
+    defaultSettings: GitVcsSettings,
+    repositories: List<GitRepository>,
+  ) {
     if (defaultSettings.showRecentBranches() == settings.showRecentBranches()) return
 
     val maxLocalBranches = repositories.maxOf { repo -> repo.branches.localBranches.size }
@@ -151,10 +178,12 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     addPropertyMetricIfDiffers(metrics, ui, CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY, UPDATE_BRANCH_FILTERS_ON_SELECTION)
   }
 
-  private fun addPropertyMetricIfDiffers(metrics: MutableSet<MetricEvent>,
-                                         ui: VcsLogUiImpl,
-                                         property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
-                                         eventId: VarargEventId) {
+  private fun addPropertyMetricIfDiffers(
+    metrics: MutableSet<MetricEvent>,
+    ui: VcsLogUiImpl,
+    property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
+    eventId: VarargEventId,
+  ) {
     val defaultValue = (property as? VcsLogProjectTabsProperties.CustomBooleanTabProperty)?.defaultValue(ui.id)
                        ?: (property as? VcsLogApplicationSettings.CustomBooleanProperty)?.defaultValue() ?: return
     val properties = ui.properties
@@ -165,7 +194,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     }
   }
 
-  private val GROUP = EventLogGroup("git.configuration", 17)
+  private val GROUP = EventLogGroup("git.configuration", 18)
 
   private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
   private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -193,11 +222,20 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val COMMON_BRANCHES_COUNT_EVENT = GROUP.registerVarargEvent("common_branches_count",
                                                                       COMMON_LOCAL_BRANCHES, COMMON_REMOTE_BRANCHES)
 
+  private val REPO_ID = EventFields.AnonymizedField("repository_id")
+
+  private val COMMITERS_LAST_MONTH = RoundedUserCountEventField("last_month")
+  private val COMMITERS_HALF_YEAR = RoundedUserCountEventField("last3_month")
+  private val COMMITERS_LAST_YEAR = RoundedUserCountEventField("last_year")
+
+  private val REMOTES_AVAILABILITY = EventFields.EnumList<RepositoryAvailability>("remotes_availability")
+
   private val LOCAL_BRANCHES = EventFields.RoundedInt("local_branches")
   private val REMOTE_BRANCHES = EventFields.RoundedInt("remote_branches")
   private val RECENT_CHECKOUT_BRANCHES = EventFields.RoundedInt("recent_checkout_branches")
   private val REMOTES = EventFields.RoundedInt("remotes")
   private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
+
   private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
   private val remoteTypes = setOf("github", "gitlab", "bitbucket", "gitee",
                                   "github_custom", "gitlab_custom", "bitbucket_custom", "gitee_custom",
@@ -208,12 +246,17 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   private val REPOSITORY = GROUP.registerVarargEvent("repository",
+                                                     REPO_ID,
                                                      LOCAL_BRANCHES,
                                                      REMOTE_BRANCHES,
                                                      RECENT_CHECKOUT_BRANCHES,
                                                      REMOTES,
                                                      IS_WORKTREE_USED,
                                                      FS_MONITOR,
+                                                     COMMITERS_LAST_MONTH,
+                                                     COMMITERS_HALF_YEAR,
+                                                     COMMITERS_LAST_YEAR,
+                                                     REMOTES_AVAILABILITY,
                                                      *remoteTypesEventIds.toTypedArray()
   )
 
@@ -244,6 +287,10 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     if (remote.urls.any { it.contains("gitee") }) return "gitee_custom"
 
     return "other"
+  }
+
+  companion object {
+    val LOG = Logger.getInstance(GitStatisticsCollector::class.java)
   }
 }
 
@@ -289,4 +336,23 @@ private fun GitRepository.detectFsMonitor(): FsMonitor {
   }
 
   return FsMonitor.NONE
+}
+
+private data class RoundedUserCountEventField(
+  override val name: String,
+  @NonNls override val description: String? = null,
+) : PrimitiveEventField<Int>() {
+
+  override val validationRule: List<String>
+    get() = listOf("{regexp#integer}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    val number = if (value in 0..10) {
+      value
+    }
+    else {
+      StatisticsUtil.roundToPowerOfTwo(value)
+    }
+    fuData.addData(name, number)
+  }
 }

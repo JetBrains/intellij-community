@@ -7,6 +7,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,14 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
       return HtmlChunk.text(JavaAnalysisBundle.message("inspection.depends.on.the.java.feature", 
                                                        feature.getFeatureName(), feature.getMinimumLevel().getShortText()))
         .wrapWith("p");
+    }
+    else if (features.size() > 1) {
+      int minimalVersion = features.stream().mapToInt(f -> f.getMinimumLevel().feature()).max().getAsInt();
+      return HtmlChunk.p().children(
+        HtmlChunk.text(JavaAnalysisBundle.message("inspection.depends.on.the.java.features")),
+        HtmlChunk.ul().children(features.stream().map(JavaFeature::getFeatureName).sorted()
+                                  .map((@Nls String name) -> HtmlChunk.li().addText(name)).toList()),
+        HtmlChunk.text(JavaAnalysisBundle.message("inspection.depends.on.the.java.features.minimal.version", minimalVersion)));
     }
     return HtmlChunk.empty();
   }

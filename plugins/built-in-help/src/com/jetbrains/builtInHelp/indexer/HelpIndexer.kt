@@ -10,18 +10,17 @@ import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.store.FSDirectory
 import org.jsoup.Jsoup
+import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
-import kotlin.io.path.extension
-import kotlin.io.path.isDirectory
 
 class HelpIndexer
 @Throws(IOException::class)
 internal constructor(indexDir: String) {
 
   private val writer: IndexWriter
-  private val allowedExtensions = setOf("htm", "html")
+  private val queue = ArrayList<File>()
 
   init {
     val dir = FSDirectory.open(Paths.get(indexDir))
@@ -30,33 +29,48 @@ internal constructor(indexDir: String) {
   }
 
   @Throws(IOException::class)
-  fun indexFilesFromDirectory(dirName: String) {
+  fun indexFileOrDirectory(fileName: String) {
 
-    Files.walk(Paths.get(dirName))
-      .filter { !it.isDirectory() && allowedExtensions.contains(it.extension) }
-      .map { it.toFile() }
-      .forEach { f ->
-        try {
-          val doc = Document()
-          val parsedDocument = Jsoup.parse(f, "UTF-8")
+    addFiles(File(fileName))
 
-          val content = StringBuilder()
-          val lineSeparator = System.lineSeparator()
-          parsedDocument.body().getElementsByClass("article")[0].children()
-            .filterNot { it.hasAttr("data-swiftype-index") }
-            .forEach { content.append(it.text()).append(lineSeparator) }
+    for (f in queue) {
+      try {
+        val doc = Document()
+        val parsedDocument = Jsoup.parse(f, "UTF-8")
 
-          doc.add(TextField("contents", content.toString(), Field.Store.YES))
-          doc.add(StringField("filename", f.name, Field.Store.YES))
-          doc.add(StringField("title", parsedDocument.title(), Field.Store.YES))
+        val content = StringBuilder()
+        val lineSeparator = System.lineSeparator()
+        parsedDocument.body().getElementsByClass("article")[0].children()
+          .filterNot { it.hasAttr("data-swiftype-index") }
+          .forEach { content.append(it.text()).append(lineSeparator) }
 
-          writer.addDocument(doc)
-          println("Added: $f")
-        }
-        catch (e: Throwable) {
-          println("Could not add: $f because ${e.message}")
-        }
+        doc.add(TextField("contents", content.toString(), Field.Store.YES))
+        doc.add(StringField("filename", f.name, Field.Store.YES))
+        doc.add(StringField("title", parsedDocument.title(), Field.Store.YES))
+
+        writer.addDocument(doc)
+        println("Added: $f")
       }
+      catch (e: Throwable) {
+        println("Could not add: $f because ${e.message}")
+      }
+    }
+    queue.clear()
+  }
+
+  private fun addFiles(file: File) {
+    if (file.isDirectory) {
+      val files = file.listFiles() ?: emptyArray()
+      for (f in files) {
+        addFiles(f)
+      }
+    }
+    else {
+      val filename = file.name.toLowerCase()
+      if (filename.endsWith(".htm") || filename.endsWith(".html")) {
+        queue.add(file)
+      }
+    }
   }
 
   @Throws(IOException::class)
@@ -69,17 +83,33 @@ internal constructor(indexDir: String) {
 
     private fun doIndex(dirToStore: String, dirToIndex: String) {
       val indexer = HelpIndexer(dirToStore)
-      indexer.indexFilesFromDirectory(dirToIndex)
+      indexer.indexFileOrDirectory(dirToIndex)
       indexer.closeIndex()
     }
 
     @Throws(IOException::class)
     @JvmStatic
     fun main(args: Array<String>) {
-      if (args.size < 2) {
-        println("Usage: HelpIndexer <dirToStore> <dirToIndex>")
-        return
+      val tokens = listOf(
+        "<noscript><iframe src=\"//www.googletagmanager.com/ns.html?id=GTM-5P98\" height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>",
+        "</script><script src=\"/help/app/v2/analytics.js\"></script>",
+        "<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':",
+        "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],",
+        "j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=",
+        "'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);",
+        "})(window,document,'script','dataLayer','GTM-5P98');")
+
+      val files = Paths.get(args[1]).toFile().listFiles() ?: emptyArray()
+      files.filter { it.extension == "html" }.forEach {
+        var contents = String(Files.readAllBytes(it.toPath()), Charsets.UTF_8)
+        println("Removing analytics code from ${it.name}")
+        for (token in tokens) {
+          contents = contents.replace(token, "")
+        }
+        contents = contents.replace("//resources.jetbrains.com/storage/help-app/", "/help/")
+        Files.write(it.toPath(), contents.toByteArray(Charsets.UTF_8))
       }
+
       doIndex(args[0], args[1])
     }
   }

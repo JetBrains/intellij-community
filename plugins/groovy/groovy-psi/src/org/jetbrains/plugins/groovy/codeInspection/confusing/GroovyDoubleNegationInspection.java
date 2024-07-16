@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NEQ;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_NOT;
 
-public class GroovyDoubleNegationInspection extends BaseInspection {
+public final class GroovyDoubleNegationInspection extends BaseInspection {
 
   @Override
   @NotNull

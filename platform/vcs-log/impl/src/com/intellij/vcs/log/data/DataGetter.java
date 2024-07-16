@@ -26,9 +26,6 @@ import java.util.List;
 
 public interface DataGetter<T extends VcsShortCommitDetails> extends VcsLogCommitDataCache<T> {
 
-  @NotNull
-  T getCachedDataOrPlaceholder(int hash);
-
   void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<? super List<T>> consumer,
                        @NotNull Consumer<? super Throwable> errorConsumer, @Nullable ProgressIndicator indicator);
 }

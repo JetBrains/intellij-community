@@ -43,7 +43,7 @@ class CodeFenceSyntaxHighlighterGeneratingProvider(
       else it.setClass("language-${languageCodeBlock.split(" ").joinToString(separator = "-")}")
     }
 
-    val html = HtmlBuilder().append(coloredContent).wrapWith(codeHtmlChunk)
+    val html = HtmlBuilder().append(coloredContent).wrapWith(codeHtmlChunk).wrapWith(HtmlChunk.tag("pre"))
     visitor.consumeHtml(html.toString())
   }
 }

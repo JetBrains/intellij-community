@@ -10,18 +10,21 @@ import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
@@ -75,7 +78,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   private var isShowOnlyAffectedSelected = false
 
   private var affectedPaths: Collection<FilePath>? = null
-  private val editorDiffPreviewController: VcsLogEditorDiffPreview?
 
   init {
     val propertiesChangeListener = object : PropertiesChangeListener {
@@ -99,7 +101,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     init()
 
-    editorDiffPreviewController = if (isWithEditorDiffPreview) VcsLogEditorDiffPreview(this) else null
+    showDiffActionPreview = if (isWithEditorDiffPreview) VcsLogEditorDiffPreview(this) else null
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
@@ -134,6 +136,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       super.createToolbarActions(),
       getInstance().getCorrectedAction(VcsLogActionIds.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
     )
+  }
+
+  override fun createLastToolbarActions(): List<AnAction> {
+    return emptyList() // do not duplicate 'ChangesView.GroupBy' group
   }
 
   override fun createPopupMenuActions(): List<AnAction> {
@@ -265,42 +271,34 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   val selectedChanges: List<Change>
     get() = VcsTreeModelData.selected(myViewer).userObjects(Change::class.java)
 
-  override fun getData(dataId: String): Any? {
-    if (HAS_AFFECTED_FILES.`is`(dataId)) {
-      return affectedPaths != null
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[HAS_AFFECTED_FILES] = affectedPaths != null
+    sink[QuickActionProvider.KEY] = ComponentQuickActionProvider(this@VcsLogChangesBrowser)
+
+    val roots = HashSet(commitModel.roots)
+    val selectedData = VcsTreeModelData.selected(myViewer)
+    sink.lazy(VcsDataKeys.VCS) {
+      getSelectedVcs(roots, selectedData)?.keyInstanceMethod
     }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId)) {
-      val roots = HashSet(commitModel.roots)
-      val selectedData = VcsTreeModelData.selected(myViewer)
-      val superProvider = super.getData(dataId) as DataProvider?
-      return CompositeDataProvider.compose({ slowId -> getSlowData(slowId, roots, selectedData) }, superProvider)
-    }
-    else if (QuickActionProvider.KEY.`is`(dataId)) {
-      return ComponentQuickActionProvider(this@VcsLogChangesBrowser)
-    }
-    return super.getData(dataId)
   }
 
-  private fun getSlowData(dataId: String,
-                          roots: Set<VirtualFile>,
-                          selectedData: VcsTreeModelData): Any? {
-    if (VcsDataKeys.VCS.`is`(dataId)) {
-      val rootsVcs = JBIterable.from(roots)
-        .map { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
-        .filterNotNull()
-        .unique()
-        .single()
-      if (rootsVcs != null) return rootsVcs.keyInstanceMethod
+  private fun getSelectedVcs(
+    roots: Set<VirtualFile>,
+    selectedData: VcsTreeModelData,
+  ): AbstractVcs? {
+    val rootsVcs = JBIterable.from(roots)
+      .filterMap { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+      .unique()
+      .single()
+    if (rootsVcs != null) return rootsVcs
 
-      val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
-        .map { change -> ChangesUtil.getFilePath(change) }
-        .map { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
-        .filterNotNull()
-        .unique()
-        .single()
-      return selectionVcs?.keyInstanceMethod
-    }
-    return null
+    val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
+      .map { change -> ChangesUtil.getFilePath(change) }
+      .filterMap { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+      .unique()
+      .single()
+    return selectionVcs
   }
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
@@ -333,10 +331,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     VcsLogTreeChangeProcessorTracker(this, processor, handler, !isInEditor).track()
     processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CombinedDiffToggle.DEFAULT)
     return processor
-  }
-
-  override fun getShowDiffActionPreview(): DiffPreview? {
-    return editorDiffPreviewController
   }
 
   fun selectChange(userObject: Any, tag: ChangesBrowserNode.Tag?) {

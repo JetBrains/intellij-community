@@ -11,6 +11,9 @@ import java.util.Collection;
 
 // in java - don't use kotlin to avoid loading non-JDK classes
 public final class DevMainKt {
+
+  private DevMainKt() { }
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] rawArgs) throws Throwable {
     long start = System.currentTimeMillis();
@@ -20,7 +23,7 @@ public final class DevMainKt {
     if (!(DevMainKt.class.getClassLoader() instanceof PathClassLoader classLoader)) {
       System.err.println("********************************************************************************************");
       System.err.println("* The current class loader is not a com.intellij.util.lang.PathClassLoader.                *");
-      System.err.println("* This may mean that the \"Plugin DevKit\" IntelliJ IDEA plugin is outdated or absent.     *");
+      System.err.println("* This may mean that the \"Plugin DevKit\" IntelliJ IDEA plugin is outdated or absent.       *");
       System.err.println("* Please make sure you have the latest version of the Plugin DevKit installed and enabled. *");
       System.err.println("********************************************************************************************");
       return;

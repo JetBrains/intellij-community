@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.java.JavaBundle;
@@ -72,14 +72,12 @@ public final class JavaColorProvider implements ElementColorProvider {
     return false;
   }
 
-  @Nullable
-  public static Color getJavaColorFromExpression(@Nullable PsiElement element) {
+  public static @Nullable Color getJavaColorFromExpression(@Nullable PsiElement element) {
     UCallExpression newExpression = UastUtils.findContaining(element, UCallExpression.class);
     return getJavaColorFromExpression(element, newExpression);
   }
 
-  @Nullable
-  private static Color getJavaColorFromExpression(@Nullable PsiElement element, @Nullable UCallExpression newExpression) {
+  private static @Nullable Color getJavaColorFromExpression(@Nullable PsiElement element, @Nullable UCallExpression newExpression) {
     if (newExpression != null && newExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL &&
         isColorType(newExpression.getReturnType())) {
       return getColor(newExpression.getValueArguments());
@@ -113,8 +111,7 @@ public final class JavaColorProvider implements ElementColorProvider {
     return false;
   }
 
-  @Nullable
-  private static Color getColor(List<? extends UExpression> args) {
+  private static @Nullable Color getColor(List<? extends UExpression> args) {
     try {
       ColorConstructors type = args.isEmpty() ? null : getConstructorType(args.size(), args.get(0).getExpressionType());
       if (type != null) {
@@ -133,8 +130,7 @@ public final class JavaColorProvider implements ElementColorProvider {
     return null;
   }
 
-  @Nullable
-  private static ColorConstructors getConstructorType(int paramCount, PsiType paramType) {
+  private static @Nullable ColorConstructors getConstructorType(int paramCount, PsiType paramType) {
     return switch (paramCount) {
       case 1 -> ColorConstructors.INT;
       case 2 -> ColorConstructors.INT_BOOL;

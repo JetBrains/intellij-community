@@ -4,7 +4,11 @@ package com.intellij.ide.gdpr;
 import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.ui.LicensingFacade;
 
+import java.util.Set;
+
 final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
+  private static final Set<String> ourFreeLicenseEligibleProducts = Set.of("QA", "RR");
+
   @Override
   public boolean isEAP() {
     return ConsentOptions.getInstance().isEAP();
@@ -12,9 +16,12 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
 
   @Override
   public boolean isActivatedWithFreeLicense() {
-    //  Using free non-commercial license is by EULA a consent to sending feature usage statistics for product improvements
+    // Using free non-commercial license is by EULA a consent to sending feature usage statistics for product improvements
     LicensingFacade facade = LicensingFacade.getInstance();
-    String meta = facade != null? facade.metadata : null;
+    if (facade == null || !ourFreeLicenseEligibleProducts.contains(facade.platformProductCode)) {
+      return false;
+    }
+    String meta = facade.metadata;
     return meta != null && meta.length() > 10 && meta.charAt(10) == 'F';
   }
 

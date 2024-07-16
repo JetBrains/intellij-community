@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.GrVisibilityUtils.getVisibility;
-public class ConstructorAnnotationsProcessor implements AstTransformationSupport {
+public final class ConstructorAnnotationsProcessor implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

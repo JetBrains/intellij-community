@@ -198,7 +198,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     private final boolean myHorizontal;
 
     public SplitTabAction(@NotNull ContentManager manager, boolean horizontal) {
-      super(manager, new EmptyAction(ActionsBundle.actionText(horizontal ? "MoveTabRight" : "MoveTabDown"), null, null), manager);
+      super(manager, EmptyAction.createEmptyAction(ActionsBundle.actionText(horizontal ? "MoveTabRight" : "MoveTabDown"), null, false), manager);
       myHorizontal = horizontal;
     }
 

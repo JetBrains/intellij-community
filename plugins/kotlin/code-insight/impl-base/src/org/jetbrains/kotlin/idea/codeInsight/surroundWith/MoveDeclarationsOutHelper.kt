@@ -7,13 +7,14 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtilCore
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
@@ -115,13 +116,13 @@ private fun createVariableAssignment(property: KtProperty): KtBinaryExpression {
     return assignment
 }
 
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
 private fun createVariableDeclaration(property: KtProperty, generateDefaultInitializers: Boolean): KtProperty {
     allowAnalysisOnEdt {
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(property) {
-                val propertyType = property.getReturnKtType()
+                val propertyType = property.returnType
 
                 var defaultInitializer: String? = null
                 if (generateDefaultInitializers && property.isVar) {
@@ -131,8 +132,8 @@ private fun createVariableDeclaration(property: KtProperty, generateDefaultIniti
                 val typeRef = property.typeReference
                 val typeString = when {
                     typeRef != null -> typeRef.text
-                    propertyType !is KtErrorType -> propertyType.render(
-                        KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.typeRenderer, Variance.INVARIANT
+                    propertyType !is KaErrorType -> propertyType.render(
+                        KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.typeRenderer, Variance.INVARIANT
                     )
 
                     else -> null
@@ -146,7 +147,7 @@ private fun createVariableDeclaration(property: KtProperty, generateDefaultIniti
 
 private fun needToDeclareOut(element: PsiElement, lastStatementOffset: Int, scope: SearchScope): Boolean {
     if (element is KtProperty || element is KtClassOrObject || element is KtFunction) {
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         val refs = allowAnalysisFromWriteAction { ReferencesSearch.search(element, scope, false).toArray(PsiReference.EMPTY_ARRAY) }
         if (refs.isNotEmpty()) {
             val lastRef = refs.maxByOrNull { it.element.textOffset } ?: return false

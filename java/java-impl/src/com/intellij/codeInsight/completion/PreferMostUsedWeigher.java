@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -39,9 +39,8 @@ final class PreferMostUsedWeigher extends LookupElementWeigher {
     return service.isActive() || UNIT_TEST_MODE ? new PreferMostUsedWeigher(service, JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) : null;
   }
 
-  @Nullable
   @Override
-  public Integer weigh(@NotNull LookupElement element) {
+  public @Nullable Integer weigh(@NotNull LookupElement element) {
     final PsiElement psi = ObjectUtils.tryCast(element.getObject(), PsiElement.class);
     if (!(psi instanceof PsiMember)) {
       return null;

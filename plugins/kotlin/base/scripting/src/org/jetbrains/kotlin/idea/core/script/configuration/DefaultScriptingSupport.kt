@@ -165,7 +165,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
         val (async, sync) = loaders.partition { it.shouldRunInBackground(scriptDefinition) }
 
         val syncLoader =
-            sync.filter { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }.firstOrNull()
+            sync.firstOrNull { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }
 
         return if (syncLoader == null) {
             if (!fromCacheOnly) {
@@ -484,7 +484,6 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
         newConfigurationSnapshot: ScriptConfigurationSnapshot?,
         syncUpdate: Boolean = false
     ) {
-        manager.updater.checkHasTransactionToHappen()
         val newConfiguration = newConfigurationSnapshot?.configuration
         scriptingDebugLog(file) { "configuration changed = $newConfiguration" }
 

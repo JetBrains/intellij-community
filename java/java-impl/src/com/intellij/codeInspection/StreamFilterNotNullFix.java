@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -21,8 +21,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class StreamFilterNotNullFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("inspection.data.flow.filter.notnull.quickfix");
   }
 
@@ -42,8 +41,7 @@ public class StreamFilterNotNullFix extends PsiUpdateModCommandQuickFix implemen
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result.getArgumentList());
   }
 
-  @NotNull
-  private static String suggestVariableName(@NotNull PsiFunctionalExpression function, @NotNull PsiExpression qualifier) {
+  private static @NotNull String suggestVariableName(@NotNull PsiFunctionalExpression function, @NotNull PsiExpression qualifier) {
     String name = null;
     if (function instanceof PsiLambdaExpression) {
       PsiParameter parameter = ArrayUtil.getFirstElement(((PsiLambdaExpression)function).getParameterList().getParameters());
@@ -55,8 +53,7 @@ public class StreamFilterNotNullFix extends PsiUpdateModCommandQuickFix implemen
     return new VariableNameGenerator(qualifier, VariableKind.PARAMETER).byName(name).byType(type).byName("obj").generate(false);
   }
 
-  @Nullable
-  private static PsiFunctionalExpression findFunction(PsiElement reference) {
+  private static @Nullable PsiFunctionalExpression findFunction(PsiElement reference) {
     if (reference instanceof PsiFunctionalExpression) {
       return (PsiFunctionalExpression)reference;
     }

@@ -2,11 +2,13 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestFilterErrorPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -119,7 +120,15 @@ internal class GitLabFiltersPanelFactory(
     presenter = { user ->
       PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
     },
-    popupConfig = PopupConfig(errorPresenter = GitLabMergeRequestFilterErrorPresenter(vm))
+    popupConfig = PopupConfig(errorPresenter = ErrorStatusPresenter.simple(
+      GitLabBundle.message("merge.request.list.filter.error"),
+      descriptionProvider = { null },
+      actionProvider = {
+        swingAction(GitLabBundle.message("merge.request.list.filter.error.action")) {
+          vm.reloadData()
+        }
+      }
+    ))
   )
 
   companion object {

@@ -27,8 +27,8 @@ public interface AppLifecycleListener {
   /**
    * Called after all application startup tasks, including opening projects, are processed
    * (i.e., either completed or running in the background).
-   * <p/>
-   * Plugins must use {@link com.intellij.openapi.startup.ProjectActivity} and track successful once-per-application run instead.
+   * <p>
+   * <b>NOTE:</b> Plugins must use {@link com.intellij.openapi.startup.ProjectActivity} and track successful once-per-application run instead.
    */
   @ApiStatus.Internal
   default void appStarted() { }
@@ -39,19 +39,20 @@ public interface AppLifecycleListener {
   default void projectFrameClosed() { }
 
   /**
-   * Called if the project opening was cancelled or failed because of an error.
+   * Called if the project opening was canceled or failed because of an error.
    */
   default void projectOpenFailed() { }
 
   /**
-   * Fired before saving settings and before final 'can exit?' check. App may end up not closing if some of the
+   * Fired before saving settings and before the final "can exit?" check.
+   * The application may end up not closing if any of the
    * {@link com.intellij.openapi.application.ApplicationListener} listeners return false from their {@code canExitApplication}
    * method.
    */
   default void appClosing() { }
 
   /**
-   * Fired after saving settings and after final 'can exit?' check.
+   * Fired after saving settings and after the final "can exit?" check.
    */
   default void appWillBeClosed(boolean isRestart) { }
 }

@@ -66,4 +66,3 @@ fun main() {
         .let { foo3() }
 }
 
-// IGNORE_K2

@@ -16,7 +16,6 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.debug
@@ -24,7 +23,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
@@ -34,10 +32,7 @@ import com.intellij.toolWindow.FocusTask
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowProperty
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.ComponentTreeWatcher
-import com.intellij.ui.LayeredIcon
-import com.intellij.ui.UIBundle
+import com.intellij.ui.*
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
@@ -47,7 +42,6 @@ import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.content.tabs.TabbedContentAction
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Consumer
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -66,7 +60,6 @@ import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.util.function.Supplier
 import javax.swing.*
-import javax.swing.text.JTextComponent
 import kotlin.math.abs
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
@@ -102,6 +95,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   internal var decorator: InternalDecoratorImpl? = null
     private set
+  private var scrollPaneTracker: ScrollPaneTracker? = null
 
   private var hideOnEmptyContent = false
   var isPlaceholderMode: Boolean = false
@@ -152,8 +146,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private class UpdateBackgroundContentManager(private val decorator: InternalDecoratorImpl?) : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
-      setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
-      addAdjustListener(decorator, event.content.component)
+      InternalDecoratorImpl.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
     }
   }
 
@@ -212,6 +205,11 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       }
       override fun unprocessComponent(component: Component) = Unit
     }.register(decorator)
+    if (ExperimentalUI.isNewUI()) {
+      scrollPaneTracker = ScrollPaneTracker(decorator, { true }) {
+        updateScrolledState()
+      }
+    }
 
     toolWindowFocusWatcher = ToolWindowFocusWatcher(toolWindow = this, component = decorator)
     contentManager.addContentManagerListener(object : ContentManagerListener {
@@ -232,6 +230,79 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private fun updateToolbarsVisibility() {
     ToggleToolbarAction.updateToolbarsVisibility(this, PropertiesComponent.getInstance(project))
+  }
+
+  private fun updateScrolledState() {
+    val decorator = this.decorator ?: return
+    val tracker = scrollPaneTracker ?: return
+    val oldState = ClientProperty.isTrue(decorator, SimpleToolWindowPanel.SCROLLED_STATE)
+    var newState = false
+    for (scrollPaneState in tracker.scrollPaneStates) {
+      val scrollPane = scrollPaneState.scrollPane
+      if (isTouchingHeader(scrollPane) && !scrollPaneState.state.isVerticalAtStart) {
+        newState = true
+      }
+    }
+    if (oldState != newState) {
+      ClientProperty.put(decorator, SimpleToolWindowPanel.SCROLLED_STATE, newState)
+      decorator.header.repaint()
+    }
+    for (scrollPaneState in tracker.scrollPaneStates) {
+      val targetComponent = ScrollableContentBorder.getTargetComponent(scrollPaneState.scrollPane) ?: continue
+      updateEdgeProperty(
+        targetComponent,
+        ScrollableContentBorder.HEADER_WITH_BORDER_ABOVE,
+        isTouchingHeader(targetComponent) && (anchor == ToolWindowAnchor.BOTTOM || newState)
+      )
+      updateEdgeProperty(targetComponent, ScrollableContentBorder.TOOL_WINDOW_EDGE_LEFT, isTouchingLeftEdge(targetComponent))
+      updateEdgeProperty(targetComponent, ScrollableContentBorder.TOOL_WINDOW_EDGE_RIGHT, isTouchingRightEdge(targetComponent))
+      updateEdgeProperty(targetComponent, ScrollableContentBorder.TOOL_WINDOW_EDGE_BOTTOM, isTouchingBottomEdge(targetComponent))
+    }
+  }
+
+  private fun updateEdgeProperty(targetComponent: JComponent, property: Key<Boolean>, newValue: Boolean) {
+    val oldValue = ClientProperty.isTrue(targetComponent, property)
+    if (newValue != oldValue) {
+      ClientProperty.put(targetComponent, property, newValue)
+      targetComponent.repaint()
+    }
+  }
+
+  private fun isTouchingHeader(component: JComponent): Boolean {
+    return componentBoundsSatisfy(component) { componentBounds, decorator ->
+      val header = decorator.header
+      val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
+      componentBounds.y == headerBounds.y + headerBounds.height
+    }
+  }
+
+  private fun isTouchingLeftEdge(component: JComponent): Boolean {
+    return componentBoundsSatisfy(component) { componentBounds, _ ->
+      componentBounds.x == 0
+    }
+  }
+
+  private fun isTouchingRightEdge(component: JComponent): Boolean {
+    return componentBoundsSatisfy(component) { componentBounds, decorator ->
+      componentBounds.x + componentBounds.width == decorator.width
+    }
+  }
+
+  private fun isTouchingBottomEdge(component: JComponent): Boolean {
+    return componentBoundsSatisfy(component) { componentBounds, decorator ->
+      componentBounds.y + componentBounds.height == decorator.height
+    }
+  }
+
+  private inline fun componentBoundsSatisfy(component: JComponent, predicate: (Rectangle, InternalDecoratorImpl) -> Boolean): Boolean {
+    val decorator = this.decorator
+    if (decorator == null || !component.isShowing) {
+      return false
+    }
+    else {
+      val componentBounds = SwingUtilities.convertRectangle(component.parent, component.bounds, decorator)
+      return predicate(componentBounds, decorator)
+    }
   }
 
   fun onMovedOrResized() {
@@ -596,8 +667,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
 
     if (toolWindowManager.isNewUi) {
-      setBackgroundRecursively(component = contentManager.value.component, bg = JBUI.CurrentTheme.ToolWindow.background())
-      addAdjustListener(decorator = decorator, component = contentManager.value.component)
+      InternalDecoratorImpl.setBackgroundRecursively(component = contentManager.value.component, bg = JBUI.CurrentTheme.ToolWindow.background())
     }
   }
 
@@ -763,6 +833,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     init {
       ActionUtil.copyFrom(this, "ToggleContentUiTypeMode")
+
+      templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
     }
 
     override fun update(e: AnActionEvent) {
@@ -890,22 +962,5 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
           InternalDecoratorImpl.setActiveDecorator(toolWindow, component)
         }
       })
-  }
-}
-
-private fun setBackgroundRecursively(component: Component, bg: Color) {
-  UIUtil.forEachComponentInHierarchy(component, Consumer { c ->
-    if (c !is ActionButton && c !is Divider && c !is JTextComponent) {
-      c.background = bg
-    }
-  })
-}
-
-private fun addAdjustListener(decorator: InternalDecoratorImpl?, component: JComponent) {
-  UIUtil.findComponentOfType(component, JScrollPane::class.java)?.verticalScrollBar?.addAdjustmentListener { event ->
-    decorator?.let {
-      ClientProperty.put(it, SimpleToolWindowPanel.SCROLLED_STATE, event.adjustable?.value != 0)
-      it.header.repaint()
-    }
   }
 }

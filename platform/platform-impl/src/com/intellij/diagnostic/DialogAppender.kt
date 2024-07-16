@@ -3,6 +3,7 @@ package com.intellij.diagnostic
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -14,20 +15,10 @@ import java.util.*
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
-import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
 class DialogAppender : Handler() {
-  companion object {
-    //TODO android update checker accesses project jdk, fix it and remove
-    fun delayPublishingForcibly() {
-      delay = true
-    }
-
-    fun stopForceDelaying() {
-      delay = false
-    }
-  }
+  private val MAX_EARLY_LOGGING_EVENTS = 20
 
   private var earlyEventCounter = 0
   private val earlyEvents = ArrayDeque<IdeaLoggingEvent>()
@@ -35,7 +26,7 @@ class DialogAppender : Handler() {
   private val context = Dispatchers.IO.limitedParallelism(1) + CoroutineName("DialogAppender")
 
   override fun publish(event: LogRecord) {
-    if (event.level.intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
+    if (event.level.intValue() < Level.SEVERE.intValue() || (AppMode.isCommandLine() && !ApplicationManagerEx.isInIntegrationTest())) {
       // the dialog appender doesn't deal with non-critical errors
       // also, it makes no sense when there is no frame to show an error icon
       return
@@ -52,7 +43,7 @@ class DialogAppender : Handler() {
     }
 
     synchronized(this) {
-      if (LoadingState.COMPONENTS_LOADED.isOccurred && !delay) {
+      if (LoadingState.APP_READY.isOccurred) {
         processEarlyEventsIfNeeded()
         queueAppend(ideaEvent)
       }
@@ -89,34 +80,29 @@ class DialogAppender : Handler() {
     }
   }
 
-  override fun flush() {}
+  override fun flush() { }
 
-  override fun close() {}
-}
+  override fun close() { }
 
-@Volatile
-private var delay = false
-
-private const val MAX_EARLY_LOGGING_EVENTS = 20
-
-private fun extractLoggingEvent(messageObject: Any?, throwable: Throwable): IdeaLoggingEvent {
-  var message: String? = null
-  val withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments::class.java)
-  (withAttachments.firstOrNull() as? RuntimeExceptionWithAttachments)?.let {
-    message = it.userMessage
-  }
-  if (message == null && messageObject != null) {
-    message = messageObject.toString()
-  }
-
-  if (withAttachments.isEmpty()) {
-    return IdeaLoggingEvent(message, throwable)
-  }
-  else {
-    val list = ArrayList<Attachment>()
-    for (e in withAttachments) {
-      list.addAll(e.attachments)
+  private fun extractLoggingEvent(messageObject: Any?, throwable: Throwable): IdeaLoggingEvent {
+    var message: String? = null
+    val withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments::class.java)
+    (withAttachments.firstOrNull() as? RuntimeExceptionWithAttachments)?.let {
+      message = it.userMessage
     }
-    return LogMessage.eventOf(throwable, message, list)
+    if (message == null && messageObject != null) {
+      message = messageObject.toString()
+    }
+
+    if (withAttachments.isEmpty()) {
+      return IdeaLoggingEvent(message, throwable)
+    }
+    else {
+      val list = ArrayList<Attachment>()
+      for (e in withAttachments) {
+        list.addAll(e.attachments)
+      }
+      return LogMessage.eventOf(throwable, message, list)
+    }
   }
 }

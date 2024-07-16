@@ -18,13 +18,11 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-class OtherOptions(private val controller: ImportSettingsController) : ProductChooserAction() {
+class OtherOptions(private val controller: ImportSettingsController, private val syncDataProvider: SyncActionsDataProvider) : ProductChooserAction() {
 
   private val jbDataProvider = JBrActionsDataProvider.getInstance()
-  private val syncDataProvider = SyncActionsDataProvider.getInstance()
 
   private var jb: List<AnAction>? = null
-  private var sync: List<AnAction>? = null
   private val config = ConfigAction(controller)
 
   init {
@@ -37,20 +35,19 @@ class OtherOptions(private val controller: ImportSettingsController) : ProductCh
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val jbProducts = jbDataProvider.other
-    val syncProducts = if (syncDataProvider.settingsService.isLoggedIn()) syncDataProvider.other else emptyList()
 
     val arr = mutableListOf<AnAction>()
     if (jb == null && jbProducts != null) {
       jb = addActionList(jbProducts, jbDataProvider, ImportSettingsBundle.message("other.options.sub.title.installed"))
     }
 
-    if (sync == null && syncProducts != null && syncDataProvider.settingsService.isSyncEnabled.value) {
-      sync = addActionList(syncProducts, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync"))
-    }
-
-    sync?.let {
-      if (it.isNotEmpty()) {
-        arr.addAll(it)
+    if (syncDataProvider.settingsService.isSyncEnabled && syncDataProvider.settingsService.hasDataToSync.value) {
+      syncDataProvider.other?.let { products ->
+        addActionList(products, syncDataProvider, ImportSettingsBundle.message("other.options.sub.title.setting.sync")).let {
+          if (it.isNotEmpty()) {
+            arr.addAll(it)
+          }
+        }
       }
     }
 

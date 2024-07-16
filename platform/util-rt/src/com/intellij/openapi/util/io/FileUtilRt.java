@@ -38,6 +38,8 @@ public final class FileUtilRt {
 
   private static String ourCanonicalTempPathCache;
 
+  private FileUtilRt() { }
+
   public static boolean isJarOrZip(@NotNull File file) {
     return isJarOrZip(file, true);
   }
@@ -780,7 +782,7 @@ public final class FileUtilRt {
   interface DeleteRecursivelyCallback {
     void beforeDeleting(Path path);
   }
-  
+
   static void deleteRecursively(@NotNull Path path, @Nullable final DeleteRecursivelyCallback callback) throws IOException {
     if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
       return;
@@ -838,7 +840,8 @@ public final class FileUtilRt {
         }
       });
     }
-    catch (NoSuchFileException ignored) { }
+    catch (NoSuchFileException ignored) {
+    }
   }
 
   private static void doDelete(Path path) throws IOException {
@@ -902,9 +905,9 @@ public final class FileUtilRt {
     try (DirectoryStream<Path> children = Files.newDirectoryStream(path, alwaysTrue)) {
       StringBuilder sb = new StringBuilder();
       for (Path child : children) {
-        sb.append(child.getFileName()).append("\n");
+        sb.append(child.getFileName()).append(", ");
       }
-      return new DirectoryNotEmptyException(path.toAbsolutePath() + "{" + sb + "}");
+      return new DirectoryNotEmptyException(path.toAbsolutePath() + " (children: " + sb + ")");
     }
   }
 

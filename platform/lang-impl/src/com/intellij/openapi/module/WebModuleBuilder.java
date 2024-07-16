@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Consumer;
 
 /**
 * @author Dmitry Avdeev
@@ -80,19 +81,30 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
   public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
     Module module = super.commitModule(project, model);
     if (module != null && myTemplate != null) {
-      doGenerate(myTemplate, module);
+      VirtualFile dir = getModuleDir(module);
+      myTemplate.generateProject(module.getProject(), dir, myGeneratorPeerLazyValue.getValue().getSettings(), module);
     }
     return module;
   }
 
-  private void doGenerate(@NotNull WebProjectTemplate<T> template, @NotNull Module module) {
+  @Override
+  public @Nullable Consumer<Module> createModuleConfigurator() {
+    return module -> {
+      if (myTemplate != null) {
+        VirtualFile dir = getModuleDir(module);
+        myTemplate.configureModule(module, dir, myGeneratorPeerLazyValue.getValue().getSettings());
+      }
+    };
+  }
+
+  private static @NotNull VirtualFile getModuleDir(@NotNull Module module) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     VirtualFile dir = ProjectUtil.guessModuleDir(module);
     if (dir == null) {
       dir = ArrayUtil.getFirstElement(moduleRootManager.getContentRoots());
     }
     assert dir != null : module.getProject();
-    template.generateProject(module.getProject(), dir, myGeneratorPeerLazyValue.getValue().getSettings(), module);
+    return dir;
   }
 
   @Override

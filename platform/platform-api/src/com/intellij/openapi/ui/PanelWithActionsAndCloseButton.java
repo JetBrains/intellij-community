@@ -55,14 +55,15 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     myCloseEnabled = false;
   }
 
-  protected void init(){
+  protected void init() {
     addActionsTo(myToolbarGroup);
     myToolbarGroup.add(new MyCloseAction());
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, ! myVerticalToolbar);
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, !myVerticalToolbar);
     JComponent centerPanel = createCenterPanel();
     toolbar.setTargetComponent(centerPanel);
-    for (AnAction action : myToolbarGroup.getChildren(null)) {
+    for (AnAction action : myToolbarGroup.getChildren(actionManager)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), centerPanel);
     }
 

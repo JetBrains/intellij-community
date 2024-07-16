@@ -8,7 +8,6 @@
   </extensions>
   <extensionPoints>
     <extensionPoint name="inspectResultsConsumer" interface="com.intellij.codeInspection.InspectResultsConsumer" dynamic="true"/>
-    <extensionPoint name="inspectionApplicationFactory" interface="com.intellij.codeInspection.InspectionApplicationFactory" dynamic="true"/>
     <extensionPoint name="inspectionGroupProvider" interface="com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider" dynamic="true"/>
   </extensionPoints>
   <actions>

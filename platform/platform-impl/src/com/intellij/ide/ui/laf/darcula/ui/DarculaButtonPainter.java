@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -31,6 +33,8 @@ public class DarculaButtonPainter implements Border, UIResource {
     Graphics2D g2 = (Graphics2D)g.create();
 
     try {
+      Object avoidExtendingObject = ClientProperty.get(c, AVOID_EXTENDING_BORDER_GRAPHICS);
+      g2.setRenderingHint(IdeBackgroundUtil.NO_BACKGROUND_HINT, avoidExtendingObject != null && avoidExtendingObject.equals(Boolean.TRUE));
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);

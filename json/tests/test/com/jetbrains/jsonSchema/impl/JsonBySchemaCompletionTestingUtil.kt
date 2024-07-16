@@ -16,7 +16,7 @@ fun assertThatSchema(@Language("JSON") schemaJson: String) = JsonSchemaSetup(sch
 fun JsonSchemaSetup.withConfiguration(configurator: NestedCompletionsNode) = copy(predefinedNestedCompletionsRoot = configurator)
 internal data class JsonSchemaAppliedToJsonSetup(val schemaSetup: JsonSchemaSetup, @Language("JSON") val json: String)
 
-internal fun JsonSchemaSetup.appliedToJsonFile(@Language("YAML") yaml: String) = JsonSchemaAppliedToJsonSetup(this, yaml)
+internal fun JsonSchemaSetup.appliedToJsonFile(@Language("YAML") sourceText: String) = JsonSchemaAppliedToJsonSetup(this, sourceText)
 
 
 fun testNestedCompletionsWithPredefinedCompletionsRoot(predefinedNestedCompletionsRoot: NestedCompletionsNode?, test: () -> Unit) {

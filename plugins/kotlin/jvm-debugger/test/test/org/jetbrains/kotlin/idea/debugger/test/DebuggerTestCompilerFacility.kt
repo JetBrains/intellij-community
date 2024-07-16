@@ -15,13 +15,13 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.IndexingTestUtil
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
@@ -34,6 +34,7 @@ data class TestCompileConfiguration(
     val lambdasGenerationScheme: JvmClosureGenerationScheme,
     val languageVersion: LanguageVersion?,
     val enabledLanguageFeatures: Collection<LanguageFeature>,
+    val useInlineScopes: Boolean,
 )
 
 open class DebuggerTestCompilerFacility(
@@ -137,6 +138,7 @@ open class DebuggerTestCompilerFacility(
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(classesDir)
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libClassesDir)
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
 
         if (kotlinJvm.isNotEmpty() || kotlinCommon.isNotEmpty()) {
             val options = getCompileOptionsForMainSources(jvmSrcDir, commonSrcDir)
@@ -192,6 +194,9 @@ open class DebuggerTestCompilerFacility(
         )
         if (compileConfig.languageVersion != null) {
             options.add("-language-version=${compileConfig.languageVersion}")
+        }
+        if (compileConfig.useInlineScopes) {
+            options.add("-Xuse-inline-scopes-numbers")
         }
         options.addAll(compileConfig.enabledLanguageFeatures.map { "-XXLanguage:+$it" })
         return options
@@ -257,6 +262,7 @@ open class DebuggerTestCompilerFacility(
 }
 
 internal fun File.refreshAndToVirtualFile(): VirtualFile? = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(this)
+    ?.also { IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects() }
 
 private fun List<TestFile>.copy(destination: File) {
     for (file in this) {

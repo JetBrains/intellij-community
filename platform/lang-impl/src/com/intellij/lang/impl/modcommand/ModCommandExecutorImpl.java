@@ -40,7 +40,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.DumbProgressIndicator;
@@ -48,7 +51,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -231,7 +233,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     }
   }
 
-  private boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
+  private static boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
     List<? extends @NotNull MemberChooserElement> result;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       result = modChooser.defaultSelection();
@@ -254,14 +256,11 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       result = elements == null ? List.of() :
                IntStreamEx.ofIndices(members, elements::contains).elements(modChooser.elements()).toList();
     }
-    ModCommand nextCommand = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(() -> modChooser.nextCommand().apply(result)).executeSynchronously(),
-      modChooser.title(), true, context.project());
-    executeInteractively(context, nextCommand, editor);
+    ModCommandExecutor.executeInteractively(context, modChooser.title(), editor, () -> modChooser.nextCommand().apply(result));
     return true;
   }
 
-  private boolean executeStartTemplate(@NotNull ActionContext context, @NotNull ModStartTemplate template, @Nullable Editor editor) {
+  private static boolean executeStartTemplate(@NotNull ActionContext context, @NotNull ModStartTemplate template, @Nullable Editor editor) {
     VirtualFile file = actualize(template.file());
     if (file == null) return false;
     Editor finalEditor = getEditor(context.project(), editor, file);
@@ -284,6 +283,12 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
           builder.replaceElement(psiFile, variableField.range(), variableField.varName(),
                                  variableField.dependantVariableName(), variableField.alwaysStopAt());
         }
+        else if (field instanceof ModStartTemplate.EndField endField) {
+          PsiElement leaf = psiFile.findElementAt(endField.range().getStartOffset());
+          if (leaf != null) {
+            builder.setEndVariableBefore(leaf);
+          }
+        }
       }
 
       final Template tmpl = builder.buildInlineTemplate();
@@ -291,10 +296,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       TemplateManager.getInstance(context.project()).startTemplate(finalEditor, tmpl, new TemplateEditingAdapter() {
         @Override
         public void templateFinished(@NotNull Template tmpl, boolean brokenOff) {
-          ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-            return ReadAction.nonBlocking(() -> template.templateFinishFunction().apply(psiFile)).executeSynchronously();
-          }, name, true, context.project());
-          CommandProcessor.getInstance().executeCommand(context.project(), () -> executeInteractively(context, next, editor), name, null);
+          ModCommandExecutor.executeInteractively(context, name, editor, () -> template.templateFinishFunction().apply(psiFile));
         }
       });
     });
@@ -398,7 +400,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     VirtualFile file = context.file().getVirtualFile();
     if (file == null) return false;
     Editor finalEditor = editor == null ? getEditor(context.project(), file) : editor;
-    if (editor == null) return false;
+    if (finalEditor == null) return false;
     List<IntentionActionWithTextCaching> actionsWithTextCaching = ContainerUtil.map(
       actions, (actionAndPresentation) -> {
         IntentionAction intention = new ModCommandActionWrapper(actionAndPresentation.action(), actionAndPresentation.presentation());
@@ -425,7 +427,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
         return action.getIcon();
       }
     };
-    IntentionHintComponent.showIntentionHint(context.project(), context.file(), editor, true, intentions);
+    IntentionHintComponent.showIntentionHint(context.project(), context.file(), finalEditor, true, intentions);
     return true;
   }
 

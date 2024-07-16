@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -130,8 +130,15 @@ public class DomFileDescription<T> {
     return true;
   }
 
+  /**
+   * @see #getFileIcon(XmlFile, int)
+   */
   public @Nullable Icon getFileIcon(@Iconable.IconFlags int flags) {
     return null;
+  }
+
+  public @Nullable Icon getFileIcon(@NotNull XmlFile file, @Iconable.IconFlags int flags) {
+    return getFileIcon(flags);
   }
 
   /**

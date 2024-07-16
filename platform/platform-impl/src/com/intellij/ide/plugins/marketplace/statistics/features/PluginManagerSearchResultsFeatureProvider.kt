@@ -20,12 +20,18 @@ object PluginManagerSearchResultsFeatureProvider {
     )
   }
 
-  fun getSearchStateFeatures(userQuery: String?, result: List<IdeaPluginDescriptor>) = arrayListOf<EventPair<*>>(
+  fun getCommonFeatures(userQuery: String?, result: List<IdeaPluginDescriptor>) = arrayListOf<EventPair<*>>(
     IS_EMPTY_DATA_KEY.with(result.isEmpty()),
     RESULTS_COUNT_DATA_KEY.with(result.size),
-    RESULTS_COUNT_LIMIT_DATA_KEY.with(RESULTS_REPORT_COUNT),
-    RESULTS_DATA_KEY.with(result.take(RESULTS_REPORT_COUNT).map {
-      ObjectEventData(PluginManagerSearchResultFeatureProvider.getSearchStateFeatures(userQuery, it))
-    })
+    RESULTS_COUNT_LIMIT_DATA_KEY.with(RESULTS_REPORT_COUNT)
   )
+
+  fun getSearchStateFeatures(userQuery: String?, result: List<IdeaPluginDescriptor>,
+                             pluginToScore: Map<IdeaPluginDescriptor, Double>?): List<EventPair<*>> {
+    return getCommonFeatures(userQuery, result).apply {
+      add(RESULTS_DATA_KEY.with(result.take(RESULTS_REPORT_COUNT).map {
+        ObjectEventData(PluginManagerSearchResultFeatureProvider.getSearchStateFeatures(userQuery, it, pluginToScore))
+      }))
+    }
+  }
 }

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class GuiFormFileType implements /*UIBased*/FileType {
+public final class GuiFormFileType implements /*UIBased*/FileType {
 
   public static final GuiFormFileType INSTANCE = new GuiFormFileType();
 

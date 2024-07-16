@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.util.executeEnterHandler
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 sealed class AddElseBranchFix<T : KtExpression>(element: T) : KotlinPsiOnlyQuickFixAction<T>(element) {
     override fun getFamilyName() = KotlinBundle.message("fix.add.else.branch.when")
@@ -90,7 +89,7 @@ class AddIfElseBranchFix(element: KtIfExpression) : AddElseBranchFix<KtIfExpress
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            return listOfNotNull(psiElement.parent?.safeAs<KtIfExpression>()?.let(::AddIfElseBranchFix))
+            return listOfNotNull(((psiElement as? KtIfExpression) ?: (psiElement.parent as? KtIfExpression))?.let(::AddIfElseBranchFix))
         }
     }
 }

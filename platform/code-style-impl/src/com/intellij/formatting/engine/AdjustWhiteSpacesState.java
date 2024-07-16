@@ -4,11 +4,13 @@ package com.intellij.formatting.engine;
 import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class AdjustWhiteSpacesState extends State {
 
   private final FormattingProgressCallback myProgressCallback;

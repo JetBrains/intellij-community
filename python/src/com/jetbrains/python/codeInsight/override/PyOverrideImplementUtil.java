@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
@@ -38,8 +38,7 @@ import java.util.List;
 
 public final class PyOverrideImplementUtil {
 
-  @Nullable
-  public static PyClass getContextClass(@NotNull final Editor editor, @NotNull final PsiFile file) {
+  public static @Nullable PyClass getContextClass(final @NotNull Editor editor, final @NotNull PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) {
@@ -157,11 +156,10 @@ public final class PyOverrideImplementUtil {
     }
   }
 
-  @Nullable
-  private static PyFunction writeMember(@NotNull PyClass cls,
-                                        @NotNull PyFunction baseFunction,
-                                        @Nullable PsiElement anchor,
-                                        boolean implement) {
+  private static @Nullable PyFunction writeMember(@NotNull PyClass cls,
+                                                  @NotNull PyFunction baseFunction,
+                                                  @Nullable PsiElement anchor,
+                                                  boolean implement) {
     final PyStatementList statementList = cls.getStatementList();
     final TypeEvalContext context = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile());
 

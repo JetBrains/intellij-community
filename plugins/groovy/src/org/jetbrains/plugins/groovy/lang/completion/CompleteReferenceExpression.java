@@ -503,10 +503,13 @@ public final class CompleteReferenceExpression {
       if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName()) || myIsMap) return;
 
       for (LookupElement element : GroovyCompletionUtil.createLookupElements(resolveResult, false, myMatcher, null)) {
-        Icon icon = field.getIcon(0);
-        myConsumer.consume(((LookupElementBuilder)element).withIcon(icon == null ? JetgroovyIcons.Groovy.Property : icon));
+        Icon icon = getIconForField(field);
+        if (element instanceof LookupElementBuilder lookupElementBuilder) {
+          myConsumer.consume(lookupElementBuilder.withIcon(icon));
+        } else if (element instanceof GroovyResolveResultLookupElementDecorator groovyResolveResultLookupElementDecorator) {
+          myConsumer.consume(groovyResolveResultLookupElementDecorator.withIcon(icon));
+        }
       }
-
     }
 
     private void processProperty(@NotNull PsiMethod method, @NotNull GroovyResolveResult resolveResult) {
@@ -578,5 +581,10 @@ public final class CompleteReferenceExpression {
       if (myInapplicable == null) return Collections.emptyList();
       return myInapplicable;
     }
+  }
+
+  private static @NotNull Icon getIconForField(@NotNull GrField field) {
+    Icon icon = field.getIcon(0);
+    return icon == null ? JetgroovyIcons.Groovy.Property : icon;
   }
 }

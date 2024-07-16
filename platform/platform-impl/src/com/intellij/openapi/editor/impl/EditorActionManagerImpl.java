@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
-public final class EditorActionManagerImpl extends EditorActionManager {
+final class EditorActionManagerImpl extends EditorActionManager {
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
 
   @Override

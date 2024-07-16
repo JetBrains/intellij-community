@@ -5,7 +5,7 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -13,6 +13,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -56,9 +57,6 @@ abstract class ProductProperties {
    * Name of the module containing ${platformPrefix}ApplicationInfo.xml product descriptor in 'idea' package.
    */
   lateinit var applicationInfoModule: String
-
-  @ApiStatus.Internal
-  var productPluginSourceModuleName: String? = null
 
   /**
    * Enables fast activation of a running IDE instance from the launcher
@@ -354,13 +352,19 @@ abstract class ProductProperties {
    * If `true`, a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   @ApiStatus.Internal
-  open fun addRemoteDevelopmentLibraries(): Boolean = productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+  open fun addRemoteDevelopmentLibraries(buildContext: BuildContext): Boolean = buildContext.bundledPluginModules.contains("intellij.remoteDevServer")
 
   /**
    * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.
    */
   @ApiStatus.Experimental
   open fun validateLayout(platformLayout: PlatformLayout, context: BuildContext) {}
+
+  /**
+   * Copies additional localization resources to the plugin generated localization resources directory.
+   */
+  @ApiStatus.Internal
+  open suspend fun copyAdditionalLocalizationResourcesToPlugin(context: BuildContext, lang: String, targetDir: Path) {}
 
   /**
    * Build steps which are always skipped for this product.
@@ -414,6 +418,12 @@ abstract class ProductProperties {
    * Returns IDs of flavors which the current product has. They will be added to the product-info.json file.  
    */
   open fun getProductFlavors(buildContext: BuildContext): List<String> = emptyList()
+
+  /**
+   * Properties required for running Qodana application with this product.
+   * Should be not null if running Qodana is possible, null otherwise.
+   */
+  var qodanaProductProperties: QodanaProductProperties? = null
 
   /**
    * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.

@@ -7,3 +7,5 @@ class Bar {
 fun bar(bar: Bar) {
     test(bar.function)
 }
+
+// IGNORE_K2

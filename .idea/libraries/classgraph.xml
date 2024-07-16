@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="classgraph" type="repository">
-    <properties maven-id="io.github.classgraph:classgraph:4.8.165">
+    <properties maven-id="io.github.classgraph:classgraph:4.8.167">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.165/classgraph-4.8.165.jar">
-          <sha256sum>5258d9218fc6413f4d14218a5a6e784528e349f60f48883b77de74bb478ebafd</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.167/classgraph-4.8.167.jar">
+          <sha256sum>0bb527b0f118801cb7b1da32951dbded566627b37f1ab97bebac8dc285b46f1d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.165/classgraph-4.8.165.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.167/classgraph-4.8.167.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.165/classgraph-4.8.165-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/classgraph/classgraph/4.8.167/classgraph-4.8.167-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

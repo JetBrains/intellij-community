@@ -3,7 +3,9 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -204,7 +206,6 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
       assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
   }
-
 
   @Test
   fun testImportProjectWithCompilerConfigWithoutGroupId() = runBlocking {
@@ -595,8 +596,8 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                 </parent>
                 """.trimIndent())
 
-    val projects = projectsManager.projects
-    assertEmpty(projects)
+    val projects = projectsManager.projects.map { it.mavenId.displayString }
+    UsefulTestCase.assertSameElements(projects, "group:parent:1")
   }
 
   @Test
@@ -710,4 +711,123 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
     assertModuleModuleDeps("m2", "m1")
 
   }
+
+  @Test
+  fun testImportTestScopeDependency() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>somedep</groupId>
+                        <artifactId>somedep</artifactId>
+                        <version>4.0</version>
+                        <scope>test</scope>
+                      </dependency>
+                    </dependencies>
+                    """.trimIndent())
+
+    assertModules("project")
+    assertModuleLibDep("project", "Maven: somedep:somedep:4.0",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+
+    assertModuleLibDepScope("project", "Maven: somedep:somedep:4.0", DependencyScope.TEST)
+
+    assertProjectLibraryCoordinates("Maven: somedep:somedep:4.0", "somedep", "somedep", "4.0")
+  }
+
+  @Test
+  fun testImportLibrariesDeclaredInParent() = runBlocking {
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                    </modules>
+                    <dependencies> 
+                    <dependency>
+                        <groupId>somedep</groupId>
+                        <artifactId>somedep</artifactId>
+                        <version>4.0</version>
+                      </dependency>
+                    </dependencies>
+                    """.trimIndent())
+
+    assertModules("project", "m1")
+
+    assertModuleLibDep("m1", "Maven: somedep:somedep:4.0",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-sources.jar!/",
+                       "jar://" + repositoryPath + "/somedep/somedep/4.0/somedep-4.0-javadoc.jar!/")
+  }
+
+  @Test
+  fun testReimportProjectsIfModulesDeclaredInDefaultProfile() = runBlocking {
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        """)
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                        <module>m2</module>
+                    </modules>
+                    """.trimIndent())
+    assertModules("project", "m1", "m2")
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                    </modules>
+                    <profiles>
+                      <profile>
+                        <id>myprofile</id>
+                        <activation>
+                          <property>
+                            <name>!someVarName</name>
+                          </property>
+                        </activation>
+                        <modules>
+                          <module>m2</module>
+                        </modules>
+                      </profile>
+                  </profiles>
+                    """.trimIndent())
+    assertModules("project", "m1", "m2")
+  }
+
 }

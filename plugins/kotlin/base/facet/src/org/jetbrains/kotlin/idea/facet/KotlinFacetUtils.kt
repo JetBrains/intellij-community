@@ -257,12 +257,6 @@ fun applyCompilerArgumentsToFacetSettings(
                 copyFieldsSatisfying(this, this@updateCompilerArguments) { exposeAsAdditionalArgument(it) || it.name in ignoredFields }
             }
 
-            val languageLevel = languageLevel
-            val apiLevel = apiLevel
-            if (languageLevel != null && apiLevel != null && apiLevel > languageLevel) {
-                this@with.apiLevel = languageLevel
-            }
-
             updateMergedArguments()
         }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -20,24 +20,20 @@ import java.util.Collection;
 
 public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
-  @NotNull
-  private final Collection<PyFunction> myToImplement;
+  private final @NotNull Collection<PyFunction> myToImplement;
 
   public PyImplementMethodsQuickFix(@NotNull PyClass cls, @NotNull Collection<PyFunction> toImplement) {
     super(cls);
     myToImplement = toImplement;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return PyBundle.message("QFIX.NAME.implement.methods");
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getFamilyName() {
+  public @NonNls @NotNull String getFamilyName() {
     return getName();
   }
 

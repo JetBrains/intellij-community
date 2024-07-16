@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.CommonBundle;
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.psi.*;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
@@ -573,7 +574,7 @@ public final class CaptureConfigurable implements SearchableConfigurable, NoScro
         .forEach(annotationName -> NodeRendererSettings.visitAnnotatedElements(annotationName, project,
                                                                                (e, annotation) -> consumer.accept(capture, e, annotation)));
     }
-    catch (IndexNotReadyException | ProcessCanceledException ignore) {
+    catch (IndexNotReadyException | ProcessCanceledException | AlreadyDisposedException ignore) {
     }
     catch (Exception e) {
       LOG.error(e);

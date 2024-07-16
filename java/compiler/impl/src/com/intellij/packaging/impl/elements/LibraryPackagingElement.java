@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -21,7 +22,6 @@ import com.intellij.platform.workspace.jps.entities.LibraryTableId;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import kotlin.Unit;
@@ -224,11 +224,11 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     LibraryFilesPackagingElementEntity entity;
     if (myLibraryName == null) {
@@ -251,15 +251,24 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       }));
     }
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
-    return entity;
+    return getBuilder(diff, entity);
   }
 
   @Nullable
   public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
+    return findLibrary(
+      context.getModulesProvider(),
+      (level, libraryName) -> {
+        return context.findLibrary(level, libraryName);
+      });
+  }
+
+  @Nullable
+  public Library findLibrary(@NotNull ModulesProvider modulesProvider,
+                             @NotNull PackagingElementResolvingContext.LibraryFinder libraryFinder) {
     String level = myLevel;
     String myLibraryName1 = myLibraryName;
     String moduleName = myModuleName;
-
 
     if (myStorage != null) {
       LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
@@ -269,9 +278,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     }
 
     if (moduleName == null && level != null && myLibraryName1 != null) {
-      return context.findLibrary(level, myLibraryName1);
+      return libraryFinder.find(level, myLibraryName1);
     }
-    final ModulesProvider modulesProvider = context.getModulesProvider();
     final Module module;
     if (moduleName != null) {
       module = modulesProvider.getModule(moduleName);

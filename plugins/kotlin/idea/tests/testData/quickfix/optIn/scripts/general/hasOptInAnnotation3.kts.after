@@ -1,6 +1,6 @@
 // "Opt in for 'A' on 'root'" "true"
-// ACTION: Add '-opt-in=HasOptInAnnotation3.A' to module light_idea_test_case compiler arguments
 // ACTION: Opt in for 'A' in containing file 'hasOptInAnnotation3.kts'
+// ACTION: Opt in for 'A' in module 'light_idea_test_case'
 // ACTION: Opt in for 'A' on 'root'
 // ACTION: Opt in for 'A' on statement
 // ACTION: Propagate 'A' opt-in requirement to 'root'

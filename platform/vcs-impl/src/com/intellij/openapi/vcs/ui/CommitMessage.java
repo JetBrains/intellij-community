@@ -113,6 +113,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     myEditorField = createCommitMessageEditor(project, runInspections);
     myEditorField.getDocument().putUserData(DATA_KEY, this);
     myEditorField.setPlaceholder(myMessagePlaceholder);
+    myEditorField.getAccessibleContext().setAccessibleName(VcsBundle.message("commit.message.editor.accessible.name"));
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 0);
     myLoadingPanel.add(myEditorField, BorderLayout.CENTER);
@@ -171,7 +172,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @NotNull
-  private JComponent createToolbar(boolean horizontal) {
+  public JComponent createToolbar(boolean horizontal) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CommitMessage", getToolbarActions(), horizontal);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setBorder(createEmptyBorder());

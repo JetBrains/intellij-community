@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * {@link LowPriorityAction} or {@link PriorityAction}.
  * <p>
  * Can be {@link com.intellij.openapi.project.DumbAware}.
+ * <p>
+ * See {@link CustomizableIntentionAction} for further customization options.
  */
 public interface IntentionAction extends FileModifier, CommonIntentionAction, PossiblyDumbAware {
 
@@ -100,14 +102,14 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction, Po
    * In this case, overriding {@code getFileModifierForPreview} or {@code generatePreview} is desired.
    *
    * @param project the current project
-   * @param editor the editor where a file copy is opened.
-   *               Could be a simplified headless Editor implementation that lacks some features.
-   * @param file a non-physical file to apply, which is a copy of the file that contains the element returned from
-   *             {@link #getElementToMakeWritable(PsiFile)}, or a copy of the current file if that method returns null
+   * @param editor  the editor where a file copy is opened.
+   *                Could be a simplified headless Editor implementation that lacks some features.
+   * @param file    a non-physical file to apply, which is a copy of the file that contains the element returned from
+   *                {@link #getElementToMakeWritable(PsiFile)}, or a copy of the current file if that method returns null
    * @return an object that describes the action preview to display
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    var copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
+    IntentionAction copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
     if (copy == null) return IntentionPreviewInfo.FALLBACK_DIFF;
     PsiElement writable = copy.getElementToMakeWritable(file);
     if (writable == null || writable.getContainingFile() != file) return IntentionPreviewInfo.FALLBACK_DIFF;

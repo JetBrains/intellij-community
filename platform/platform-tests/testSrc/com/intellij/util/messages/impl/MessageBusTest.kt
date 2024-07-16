@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.createSimpleMessageBusOwner
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.ListenerDescriptor
@@ -243,7 +244,7 @@ class MessageBusTest : MessageBusOwner {
 
   @Test
   fun manyChildrenCreationDeletionPerformance() {
-    PlatformTestUtil.newPerformanceTest("Child bus creation/deletion") {
+    PerformanceTestUtil.newPerformanceTest("Child bus creation/deletion") {
       val children = ArrayList<MessageBus>()
       val count = 10000
       for (i in 0 until count) {

@@ -16,8 +16,7 @@ public final class SynchronizationUtil {
     if (context instanceof PsiSynchronizedStatement) {
       return true;
     }
-    if (context instanceof PsiMethod) {
-      final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)context;
+    if (context instanceof PsiMethod modifierListOwner) {
       if (modifierListOwner.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
         return true;
       }

@@ -100,36 +100,36 @@ sealed interface ProtocolOpenProjectResult {
 data class LocationInFile(val line: Int, val column: Int)
 typealias LocationToOffsetConverter = (LocationInFile, Editor) -> Int
 
+private const val FILE_PROTOCOL = "file://"
+private const val PATH_GROUP = "path"
+private const val LINE_GROUP = "line"
+private const val COLUMN_GROUP = "column"
+private const val REVISION = "revision"
+private val PATH_WITH_LOCATION by lazy {
+  Pattern.compile("(?<${PATH_GROUP}>[^:]+)(:(?<${LINE_GROUP}>\\d+))?(:(?<${COLUMN_GROUP}>\\d+))?")
+}
+
+private fun parseLocationInFile(range: String): LocationInFile? {
+  val position = range.split(':')
+  return if (position.size != 2) null
+  else try {
+    LocationInFile(position[0].toInt(), position[1].toInt())
+  }
+  catch (e: Exception) {
+    null
+  }
+}
+
 class NavigatorWithinProject(
   val project: Project,
   val parameters: Map<String, String>,
   private val locationToOffset: LocationToOffsetConverter
 ) {
   companion object {
-    private const val FILE_PROTOCOL = "file://"
-    private const val PATH_GROUP = "path"
-    private const val LINE_GROUP = "line"
-    private const val COLUMN_GROUP = "column"
-    private const val REVISION = "revision"
-    private val PATH_WITH_LOCATION by lazy {
-      Pattern.compile("(?<${PATH_GROUP}>[^:]+)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
-    }
-
     fun parseNavigationPath(pathText: String): Triple<String?, String?, String?> {
       val matcher = PATH_WITH_LOCATION.matcher(pathText)
       return if (!matcher.matches()) Triple(null, null, null)
       else Triple(matcher.group(PATH_GROUP), matcher.group(LINE_GROUP), matcher.group(COLUMN_GROUP))
-    }
-
-    private fun parseLocationInFile(range: String): LocationInFile? {
-      val position = range.split(':')
-      return if (position.size != 2) null
-      else try {
-        LocationInFile(position[0].toInt(), position[1].toInt())
-      }
-      catch (e: Exception) {
-        null
-      }
     }
   }
 
@@ -151,10 +151,9 @@ class NavigatorWithinProject(
   }
 
   suspend fun navigate(keysPrefixesToNavigate: List<NavigationKeyPrefix>) {
-    keysPrefixesToNavigate.forEach { keyPrefix ->
-      val stringPrefix = keyPrefix.prefix
-      val path = parameters.get(stringPrefix) ?: return@forEach
-      when(keyPrefix) {
+    for (keyPrefix in keysPrefixesToNavigate) {
+      val path = parameters.get(keyPrefix.prefix) ?: continue
+      when (keyPrefix) {
         NavigationKeyPrefix.FQN -> navigateByFqn(path)
         NavigationKeyPrefix.PATH -> navigateByPath(path)
       }

@@ -119,6 +119,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory dir : view.getDirectories()) {
+      LOG.assertTrue(dir != null, view + " produced a null PsiDirectory");
       if (projectFileIndex.isUnderSourceRootOfType(dir.getVirtualFile(), sourceRootTypes) && checkPackageExists.test(dir)) {
         return true;
       }

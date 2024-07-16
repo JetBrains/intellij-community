@@ -3,9 +3,7 @@
 
 package com.intellij.platform.backend.observation
 
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 
 /**
@@ -35,15 +33,10 @@ import org.jetbrains.annotations.Nls
  * Generally, it is highly discouraged to have any side effects in the provided methods.
  * The platform does not give any guarantees on the environment of invocation,
  * so handling the consequences of some state change might be challenging.
- * Nevertheless, the platform is ready to handle *idempotent* side effects (such as saving of files, for example).
+ * Nevertheless, the platform is ready to handle *idempotent* side effects.
  * It means that if there is a configuration process ongoing, the method [isInProgress] will be invoked at least two times.
  */
-@Experimental
 interface ActivityTracker {
-
-  companion object {
-    val EP_NAME: ExtensionPointName<ActivityTracker> = ExtensionPointName("com.intellij.activityTracker")
-  }
 
   /**
    * The user-visible name of this tracker.

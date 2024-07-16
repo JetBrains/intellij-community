@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -481,30 +482,7 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
         }
       }
       else if (isMaximized(extendedState)) {
-        val normalBounds = frame.normalBounds
-        if (normalBounds == null) {
-          IDE_FRAME_EVENT_LOG.debug("Not updating frame bounds because normalBounds == null")
-        }
-        if (normalBounds != null) {
-          normalBoundsOnCurrentScreen = normalBounds
-          if (
-            oldScreen != null && !oldScreen.isEmpty &&
-            newScreen != null && !newScreen.isEmpty &&
-            newScreen != oldScreen
-          ) {
-            // The frame was moved to another screen after it had been maximized, move/scale its "normal" bounds accordingly.
-            normalBoundsOnCurrentScreen = Rectangle(normalBoundsOnCurrentScreen)
-            ScreenUtil.moveAndScale(normalBoundsOnCurrentScreen, oldScreen, newScreen)
-            if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
-              IDE_FRAME_EVENT_LOG.debug("Updated bounds for IDE frame ${normalBoundsOnCurrentScreen} after moving from $oldScreen to $newScreen")
-            }
-          }
-          else {
-            if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
-              IDE_FRAME_EVENT_LOG.debug("Frame moved from $oldScreen to $newScreen, not updating normal bounds $normalBounds")
-            }
-          }
-        }
+        normalBoundsOnCurrentScreen = getNormalFrameBounds(frame, oldScreen, newScreen)
       }
     }
 
@@ -522,4 +500,40 @@ internal class FrameStateListener(private val defaultFrameInfoHelper: FrameInfoH
       ProjectFrameBounds.getInstance(project).markDirty(if (isMaximized(extendedState)) normalBoundsOnCurrentScreen else bounds)
     }
   }
+}
+
+private fun getNormalFrameBounds(frame: IdeFrameImpl, oldScreen: Rectangle?, newScreen: Rectangle?): Rectangle? {
+  val nativeBounds = frame.getNativeNormalBounds()
+  if (nativeBounds != null) {
+    IDE_FRAME_EVENT_LOG.debug { "Got native bounds: $nativeBounds" }
+    FrameBoundsConverter.scaleDown(nativeBounds, frame.graphicsConfiguration)
+    IDE_FRAME_EVENT_LOG.debug { "Updated normal frame bounds from native bounds: $nativeBounds" }
+    return nativeBounds
+  }
+  var result: Rectangle? = null
+  val normalBounds = frame.normalBounds
+  if (normalBounds == null) {
+    IDE_FRAME_EVENT_LOG.debug("Not updating frame bounds because normalBounds == null")
+  }
+  if (normalBounds != null) {
+    result = normalBounds
+    if (
+      oldScreen != null && !oldScreen.isEmpty &&
+      newScreen != null && !newScreen.isEmpty &&
+      newScreen != oldScreen
+    ) {
+      // The frame was moved to another screen after it had been maximized, move/scale its "normal" bounds accordingly.
+      result = Rectangle(result)
+      ScreenUtil.moveAndScale(result, oldScreen, newScreen)
+      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+        IDE_FRAME_EVENT_LOG.debug("Updated bounds for IDE frame ${result} after moving from $oldScreen to $newScreen")
+      }
+    }
+    else {
+      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+        IDE_FRAME_EVENT_LOG.debug("Frame moved from $oldScreen to $newScreen, not updating normal bounds $normalBounds")
+      }
+    }
+  }
+  return result
 }

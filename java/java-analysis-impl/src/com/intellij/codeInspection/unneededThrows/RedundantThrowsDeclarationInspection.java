@@ -588,8 +588,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
       if (throwsClass == null) return false;
       final PsiClassType type = PsiTypesUtil.getClassType(throwsClass);
 
-      return redundantThrows.stream()
-        .anyMatch(e -> e.isAssignableFrom(type));
+      return ContainerUtil.exists(redundantThrows, e -> e.isAssignableFrom(type));
     }
 
     @Override

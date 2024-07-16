@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 
 package com.intellij.util
@@ -8,6 +8,7 @@ import com.intellij.ide.ui.IdeUiService
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.navigation.NavigationOptions
@@ -22,7 +23,7 @@ internal fun openSourcesFrom(context: DataContext, requestFocus: Boolean) {
   val asyncContext = IdeUiService.getInstance().createAsyncDataContext(context)
   val options = NavigationOptions.defaultOptions().requestFocus(requestFocus)
   runWithModalProgressBlocking(project, IdeBundle.message("progress.title.preparing.navigation")) {
-    NavigationService.getInstance(project).navigate(asyncContext, options)
+    project.serviceAsync<NavigationService>().navigate(asyncContext, options)
   }
 }
 

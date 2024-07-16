@@ -17,7 +17,7 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassName
 /**
  * @author Vladislav.Soroka
  */
-public class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFilter {
+public final class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFilter {
 
   private final static Set<String> IGNORE_SET = ContainerUtil.newHashSet(
     GradleCommonClassNames.GRADLE_API_TASK,

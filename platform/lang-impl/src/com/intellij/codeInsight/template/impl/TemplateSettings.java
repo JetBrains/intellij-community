@@ -132,7 +132,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     @OptionTag(nameAttribute = "", valueAttribute = "shortcut", converter = ShortcutConverter.class)
     public char defaultShortcut = TAB_CHAR;
 
-    public List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
+    public final List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
   }
 
   public static final class TemplateKey {
@@ -509,8 +509,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
         try {
           ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
-          readDefTemplate(file, !ep.hidden, pluginClassLoader,
-                          PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
+          readDefTemplate(file, !ep.hidden, pluginClassLoader, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
         }
         catch (Exception e) {
           LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
@@ -535,8 +534,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       String[] hidden = provider.getHiddenLiveTemplateFiles();
       if (hidden != null) {
         for (String s : hidden) {
-          readDefTemplate(s, false, provider.getClass().getClassLoader(),
-                          PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+          readDefTemplate(s, false, provider.getClass().getClassLoader(), PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
         }
       }
     }
@@ -792,7 +790,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return element;
   }
 
-  public void setTemplates(@NotNull List<? extends TemplateGroup> newGroups) {
+  public void setTemplates(@NotNull List<TemplateGroup> newGroups) {
     myTemplates.clear();
     myState.deletedKeys.clear();
     for (TemplateImpl template : myDefaultTemplates.values()) {

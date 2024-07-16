@@ -4,7 +4,7 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.gotoDeclaration
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.Companion.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.find.FindSettings
 import com.intellij.find.actions.ShowUsagesAction.showUsages
@@ -27,19 +27,41 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 
-object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
+class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
+
+  companion object {
+
+    private fun gotoDeclarationOrUsages(project: Project, editor: Editor, file: PsiFile, offset: Int): GTDUActionData? {
+      return fromGTDProviders(project, editor, offset)?.toGTDUActionData()
+             ?: gotoDeclarationOrUsages(file, offset)
+    }
+
+    @JvmStatic
+    fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
+      return gotoDeclarationOrUsages(file.project, editor, file, offset)?.ctrlMouseData()
+    }
+
+    @TestOnly
+    @JvmStatic
+    fun testGTDUOutcome(editor: Editor, file: PsiFile, offset: Int): GTDUOutcome? {
+      return when (gotoDeclarationOrUsages(file.project, editor, file, offset)?.result()) {
+        null -> null
+        is GTDUActionResult.GTD -> GTDUOutcome.GTD
+        is GTDUActionResult.SU -> GTDUOutcome.SU
+      }
+    }
+
+    @TestOnly
+    @JvmStatic
+    fun testGTDUOutcomeInNonBlockingReadAction(editor: Editor, file: PsiFile, offset: Int): GTDUOutcome? {
+      val callable = Callable {
+        testGTDUOutcome(editor, file, offset)
+      }
+      return ReadAction.nonBlocking(callable).submit(AppExecutorUtil.getAppExecutorService()).get()
+    }
+  }
 
   override fun startInWriteAction(): Boolean = false
-
-  private fun gotoDeclarationOrUsages(project: Project, editor: Editor, file: PsiFile, offset: Int): GTDUActionData? {
-    return fromGTDProviders(project, editor, offset)?.toGTDUActionData()
-           ?: gotoDeclarationOrUsages(file, offset)
-  }
-
-  @JvmStatic
-  fun getCtrlMouseData(editor: Editor, file: PsiFile, offset: Int): CtrlMouseData? {
-    return gotoDeclarationOrUsages(file.project, editor, file, offset)?.ctrlMouseData()
-  }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     if (navigateToLookupItem(project)) {
@@ -58,18 +80,22 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
         gotoDeclarationOrUsages(project, editor, file, offset)?.result()
       }
       when (actionResult) {
-        null -> notifyNowhereToGo(project, editor, file, offset)
+        null -> {
+          reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
+          notifyNowhereToGo(project, editor, file, offset)
+        }
         is GTDUActionResult.GTD -> {
           GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
-          gotoDeclaration(project, editor, actionResult.navigationActionResult)
+          gotoDeclaration(project, editor, actionResult.navigationActionResult, reporter)
         }
         is GTDUActionResult.SU -> {
+          reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.NONE)
           GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
           showUsages(project, editor, file, actionResult.targetVariants)
         }
       }
     }
-    catch (e: IndexNotReadyException) {
+    catch (_: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
         CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
         DumbModeBlockedFunctionality.GotoDeclarationOrUsage
@@ -91,7 +117,7 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
                  editor,
                  FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName()))
     }
-    catch (e: IndexNotReadyException) {
+    catch (_: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
         CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
         DumbModeBlockedFunctionality.GotoDeclarationOrUsage
@@ -104,24 +130,5 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
     GTD,
     SU,
     ;
-  }
-
-  @TestOnly
-  @JvmStatic
-  fun testGTDUOutcome(editor: Editor, file: PsiFile, offset: Int): GTDUOutcome? {
-    return when (gotoDeclarationOrUsages(file.project, editor, file, offset)?.result()) {
-      null -> null
-      is GTDUActionResult.GTD -> GTDUOutcome.GTD
-      is GTDUActionResult.SU -> GTDUOutcome.SU
-    }
-  }
-
-  @TestOnly
-  @JvmStatic
-  fun testGTDUOutcomeInNonBlockingReadAction(editor: Editor, file: PsiFile, offset: Int): GTDUOutcome? {
-    val callable = Callable {
-      testGTDUOutcome(editor, file, offset)
-    }
-    return ReadAction.nonBlocking(callable).submit(AppExecutorUtil.getAppExecutorService()).get()
   }
 }

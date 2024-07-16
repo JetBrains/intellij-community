@@ -8,6 +8,8 @@ import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescr
 interface EditorConfigOptionDescriptorProvider {
   fun getOptionDescriptors(project: Project): List<EditorConfigOptionDescriptor>
   fun requiresFullSupport(): Boolean
+  fun initialize(project: Project) {
+  }
 
   companion object {
     val EP_NAME: ExtensionPointName<EditorConfigOptionDescriptorProvider> =

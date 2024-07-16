@@ -5,11 +5,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
-import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
+import com.intellij.platform.ml.embeddings.search.indices.EntityId
+import com.intellij.platform.ml.embeddings.search.indices.IndexType.CLASSES
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
+import com.intellij.platform.ml.embeddings.utils.splitIdentifierIntoTokens
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 
@@ -30,6 +32,8 @@ class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope)
     )
   )
 
+  override val reportableIndex = CLASSES
+
   companion object {
     private const val INDEX_DIR = "classes"
 
@@ -37,6 +41,6 @@ class ClassEmbeddingsStorage(project: Project, cs: CoroutineScope)
   }
 }
 
-open class IndexableClass(override val id: String) : IndexableEntity {
-  override val indexableRepresentation: String by lazy { splitIdentifierIntoTokens(id).joinToString(separator = " ") }
+open class IndexableClass(override val id: EntityId) : IndexableEntity {
+  override val indexableRepresentation: String by lazy { splitIdentifierIntoTokens(id.id) }
 }

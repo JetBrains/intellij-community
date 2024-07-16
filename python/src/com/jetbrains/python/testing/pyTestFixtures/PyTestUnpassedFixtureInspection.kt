@@ -64,12 +64,12 @@ class PyTestUnpassedFixtureInspection : PyInspection() {
       // no warning if an element has type OTHER
       if (getType(element) == ResolveType.OTHER) return
 
-      // try to find a fixture from conftest.py file
-      getFixtureLink(element, myTypeEvalContext) ?: return
-
-      holder?.registerProblem(element, PyPsiBundle.message("INSP.use.fixture.without.declaration.in.test.function", element.text),
-                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                              quickFix)
+      // if an element is fixture then register a problem
+      if (getFixtureLink(element, myTypeEvalContext) != null) {
+        holder?.registerProblem(element, PyPsiBundle.message("INSP.use.fixture.without.declaration.in.test.function", element.text),
+                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                quickFix)
+      }
     }
 
     private fun getType(element: PyReferenceExpression): ResolveType {

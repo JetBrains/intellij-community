@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
@@ -49,6 +50,7 @@ class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialS
     isPopup = true
     selected = initialScope
     scopeModel.addScopeModelListener(scopeModelListener)
+    Disposer.register(parentDisposable, scopeModel)
 
     val scopeListener = NamedScopesHolder.ScopeListener { updateActions() }
     NamedScopeManager.getInstance(project).addScopeListener(scopeListener, parentDisposable)

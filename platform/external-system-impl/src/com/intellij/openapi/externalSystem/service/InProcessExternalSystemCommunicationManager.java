@@ -5,7 +5,6 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
-import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,11 +29,7 @@ public final class InProcessExternalSystemCommunicationManager implements Extern
 
   @Override
   public boolean isAlive(@NotNull RemoteExternalSystemFacade facade) {
-    RemoteExternalSystemFacade toCheck = facade;
-    if (facade instanceof ExternalSystemFacadeWrapper) {
-      toCheck = ((ExternalSystemFacadeWrapper)facade).getDelegate();
-    }
-    return toCheck instanceof InProcessExternalSystemFacadeImpl;
+    return facade instanceof InProcessExternalSystemFacadeImpl;
   }
 
   @Override

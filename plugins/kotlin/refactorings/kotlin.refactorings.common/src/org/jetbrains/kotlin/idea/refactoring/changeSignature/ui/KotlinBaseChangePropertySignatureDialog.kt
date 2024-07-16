@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureCompone
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
@@ -94,8 +95,8 @@ abstract class KotlinBaseChangePropertySignatureDialog<P: KotlinModifiableParame
 
     protected abstract fun fillVisibilities(model: DefaultComboBoxModel<V>)
 
-    protected abstract fun createReturnTypeCodeFragment(m: M): KtCodeFragment
-    protected abstract fun createReceiverTypeCodeFragment(m: M): KtCodeFragment
+    protected abstract fun createReturnTypeCodeFragment(m: M): KtTypeCodeFragment
+    protected abstract fun createReceiverTypeCodeFragment(m: M): KtTypeCodeFragment
 
     private fun updateSignature(): Unit = SwingUtilities.invokeLater label@{
         if (Disposer.isDisposed(myDisposable)) return@label

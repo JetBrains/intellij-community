@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.IntPredicate;
+
 public final class IdTableBuilding {
   private IdTableBuilding() {
   }
@@ -30,7 +32,7 @@ public final class IdTableBuilding {
     void run(CharSequence chars, char @Nullable [] charsArray, int start, int end);
   }
 
-  public static @Nullable IdIndexer getFileTypeIndexer(FileType fileType) {
+  public static @Nullable IdIndexer getFileTypeIndexer(@NotNull FileType fileType) {
     final IdIndexer extIndexer = getIndexer(fileType);
     if (extIndexer != null) {
       return extIndexer;
@@ -84,7 +86,6 @@ public final class IdTableBuilding {
                                    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,
                                                    CustomHighlighterTokenType.MULTI_LINE_COMMENT),
                                    TokenSet.create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
-
   }
 
   public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {
@@ -97,35 +98,56 @@ public final class IdTableBuilding {
                                final int startOffset,
                                final int endOffset,
                                final boolean mayHaveEscapes) {
-    int index = startOffset;
-    final boolean hasArray = charArray != null;
+    scanWords(processor, chars, charArray, startOffset, endOffset, mayHaveEscapes, IdTableBuilding::isWordCodePoint);
+  }
 
+  public static boolean isWordCodePoint(int codePoint) {
+    return (codePoint >= 'a' && codePoint <= 'z') ||
+           (codePoint >= 'A' && codePoint <= 'Z') ||
+           (codePoint >= '0' && codePoint <= '9') ||
+           (Character.isJavaIdentifierStart(codePoint) && codePoint != '$');
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  public static void scanWords(final ScanWordProcessor processor,
+                               CharSequence chars,
+                               final char @Nullable [] charArray,
+                               final int startOffset,
+                               final int endOffset,
+                               final boolean mayHaveEscapes,
+                               final IntPredicate isWordCodePoint) {
+    int index = startOffset;
+    boolean hasArray = charArray != null;
     ScanWordsLoop:
     while (true) {
+      int startIndex = index;
       while (true) {
         if (index >= endOffset) break ScanWordsLoop;
-        final char c = hasArray ? charArray[index] : chars.charAt(index);
-
-        if ((c >= 'a' && c <= 'z') ||
-            (c >= 'A' && c <= 'Z') ||
-            (c >= '0' && c <= '9') ||
-            (Character.isJavaIdentifierStart(c) && c != '$')) {
+        int codePoint = hasArray
+                        ? Character.codePointAt(charArray, index, endOffset)
+                        // no overload with endOffset, but it is highly unlikely that we go beyond it
+                        : Character.codePointAt(chars, index);
+        index += Character.charCount(codePoint);
+        if (isWordCodePoint.test(codePoint)) {
           break;
         }
-        index++;
-        if (mayHaveEscapes && c == '\\') index++; //the next symbol is for escaping
+        if (mayHaveEscapes && codePoint == '\\') index++; //the next symbol is for escaping
+        startIndex = index;
       }
-      int index1 = index;
+      int endIndex = index;
       while (true) {
-        index++;
         if (index >= endOffset) break;
-        final char c = hasArray ? charArray[index] : chars.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
-        if (!Character.isJavaIdentifierPart(c) || c == '$') break;
+        int codePoint = hasArray ? Character.codePointAt(charArray, index, endOffset)
+                                 : Character.codePointAt(chars, index);
+        index += Character.charCount(codePoint);
+        if (!isWordCodePoint.test(codePoint)) {
+          break;
+        }
+        endIndex = index;
       }
-      if (index - index1 > 100) continue; // Strange limit but we should have some!
+      if (endIndex - startIndex > 100) continue; // Strange limit but we should have some!
 
-      processor.run(chars, charArray, index1, index);
+      processor.run(chars, charArray, startIndex, endIndex);
     }
   }
 }

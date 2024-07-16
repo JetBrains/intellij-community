@@ -5,6 +5,7 @@
   </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
     <statistics.validation.customValidationRule implementation="org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorIdValidationRule"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.WizardStatsService"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector"/>

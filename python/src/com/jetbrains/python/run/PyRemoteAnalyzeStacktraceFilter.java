@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.module.Module;
@@ -20,8 +20,7 @@ public final class PyRemoteAnalyzeStacktraceFilter extends PythonTracebackFilter
   }
 
   @Override
-  @Nullable
-  protected VirtualFile findFileByName(@NotNull String fileName) {
+  protected @Nullable VirtualFile findFileByName(@NotNull String fileName) {
     VirtualFile vFile = super.findFileByName(fileName);
     if (vFile != null) {
       return vFile;

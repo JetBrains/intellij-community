@@ -1,6 +1,6 @@
 public final class InferenceInsideUnresolvedConstructorKt {
     public static final fun getBar() : java.lang.Object {
-        return <anonymous class>(id(42))
+        return UIdentifier (Identifier (Unresolved))(id(42))
     }
     public static final fun id(x: T) : T {
         return x

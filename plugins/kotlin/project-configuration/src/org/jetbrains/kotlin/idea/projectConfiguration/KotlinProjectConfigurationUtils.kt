@@ -36,11 +36,7 @@ import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.platform.IdePlatformKind
-import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.*
 import org.jetbrains.kotlin.utils.PathUtil
 
 fun getLibraryDescription(project: Project, platformKind: IdePlatformKind): CustomLibraryDescription? {
@@ -48,7 +44,8 @@ fun getLibraryDescription(project: Project, platformKind: IdePlatformKind): Cust
         CommonIdePlatformKind -> CommonStandardLibraryDescription(project)
         JvmIdePlatformKind -> JavaRuntimeLibraryDescription(project)
         JsIdePlatformKind -> JSLibraryStdDescription(project)
-        WasmIdePlatformKind -> null
+        WasmJsIdePlatformKind -> null
+        WasmWasiIdePlatformKind -> null
         NativeIdePlatformKind -> null
         else -> throw IllegalArgumentException("Unsupported platform kind: $platformKind")
     }

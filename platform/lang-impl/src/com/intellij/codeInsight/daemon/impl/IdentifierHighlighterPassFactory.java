@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -23,15 +24,14 @@ public final class IdentifierHighlighterPassFactory {
   public IdentifierHighlighterPass createHighlightingPass(@NotNull PsiFile file,
                                                           @NotNull Editor editor,
                                                           @NotNull TextRange visibleRange) {
-    if (!editor.isOneLineMode() &&
-        CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
-        !DumbService.isDumb(file.getProject()) &&
-        isEnabled() &&
-        (file.isPhysical() || file.getOriginalFile().isPhysical())) {
-      return new IdentifierHighlighterPass(file, editor, visibleRange);
+    if (editor.isOneLineMode() && ((EditorEx)editor).isEmbeddedIntoDialogWrapper()) return null;
+    if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET ||
+        DumbService.isDumb(file.getProject()) ||
+        !isEnabled() ||
+        (!file.isPhysical() && !file.getOriginalFile().isPhysical())) {
+      return null;
     }
-
-    return null;
+    return new IdentifierHighlighterPass(file, editor, visibleRange);
   }
 
   public static boolean isEnabled() {

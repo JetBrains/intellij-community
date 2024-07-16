@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim.Medvedev
  */
-public class GrPrivateFieldScopeEnlarger extends UseScopeEnlarger {
+public final class GrPrivateFieldScopeEnlarger extends UseScopeEnlarger {
   @Override
   public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
     if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.PRIVATE)) {

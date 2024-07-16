@@ -15,7 +15,7 @@ abstract class JvmGoToRelatedTestBase : LightJvmCodeInsightFixtureTestCase() {
     assertion: (GotoRelatedItem) -> Unit
   ) {
     configureByText("$fileName${lang.ext}", before)
-    val items = GotoRelatedSymbolAction.getItems(myFixture.getFile(), myFixture.getEditor(), null)
+    val items = GotoRelatedSymbolAction.getItems(myFixture.getFile(), myFixture.getEditor())
     assertSize(1, items)
     assertion(items.first())
   }

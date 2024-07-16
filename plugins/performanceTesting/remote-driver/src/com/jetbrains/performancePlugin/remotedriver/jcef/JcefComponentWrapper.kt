@@ -1,13 +1,12 @@
 package com.jetbrains.performancePlugin.remotedriver.jcef
 
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.awt.Component
-import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.coroutines.resumeWithException
 
@@ -29,7 +28,8 @@ internal class JcefComponentWrapper(private val component: Component) {
    * @return the result of the JavaScript code execution
    * @throws IllegalStateException if no result is received from the script within the specified timeout
    */
-  fun callJs(js: String, executeTimeoutMs: Long): String = runBlockingCancellable { jsExecutor.callJs(js, executeTimeoutMs) }
+  @Suppress("SSBasedInspection")
+  fun callJs(js: String, executeTimeoutMs: Long): String = runBlocking { jsExecutor.callJs(js, executeTimeoutMs) }
 
   /**
    * Finds the JBCefBrowserBase component associated with the given component.
@@ -56,12 +56,11 @@ internal class JcefComponentWrapper(private val component: Component) {
 
   private class JsExecutor(jbCefBrowser: JBCefBrowserBase) {
     private val cefBrowser = jbCefBrowser.cefBrowser
-    private val runJsContinuation = AtomicReference<CancellableContinuation<String>?>()
+    private var callback: Consumer<String>? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private val jsResultQuery = JBCefJSQuery.create(jbCefBrowser).apply {
       addHandler {
-        runJsContinuation.getAndSet(null)?.resume(it) {}
+        callback?.accept(it)
         null
       }
     }
@@ -75,13 +74,15 @@ internal class JcefComponentWrapper(private val component: Component) {
     suspend fun callJs(js: String, executeTimeoutMs: Long = 3000): String = mutex.withLock {
       withTimeout(executeTimeoutMs) {
         suspendCancellableCoroutine { continuation ->
-          if (runJsContinuation.compareAndSet(null, continuation).not()) {
-            continuation.resumeWithException(IllegalStateException("Previous call is still running"))
-          }
           continuation.invokeOnCancellation {
-            runJsContinuation.getAndSet(null)?.resumeWithException(IllegalStateException("""
+            callback = null
+            continuation.resumeWithException(IllegalStateException("""
             |No result from script '$js' in embedded browser in ${executeTimeoutMs}ms.
             |Check logs in the browsers devTools(`ide.browser.jcef.contextMenu.devTools.enabled` key in the Registry...)""".trimMargin()))
+          }
+          callback = Consumer<String> {
+            continuation.resumeWith(Result.success(it))
+            callback = null
           }
           cefBrowser.executeJavaScript(jsResultQuery.inject(js), cefBrowser.url, 0)
         }

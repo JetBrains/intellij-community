@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
@@ -33,6 +34,11 @@ class ActionsCollectorImpl : ActionsCollector() {
   private data class ActionUpdateStatsKey(val actionId: String, val language: String)
 
   private val myUpdateStats = Object2LongMaps.synchronize(Object2LongOpenHashMap<ActionUpdateStatsKey>())
+
+  init {
+    // preload classes
+    ActionsEventLogGroup.ACTION_UPDATED.hashCode()
+  }
 
   override fun record(actionId: String?, event: InputEvent?, context: Class<*>) {
     recordCustomActionInvoked(null, actionId, event, context)
@@ -50,7 +56,7 @@ class ActionsCollectorImpl : ActionsCollector() {
 
   override fun recordUpdate(action: AnAction, event: AnActionEvent, durationMs: Long) {
     if (durationMs <= 5) return
-    val dataContext = Utils.getCachedDataContext(event.dataContext)
+    val dataContext = Utils.getCachedOnlyDataContext(event.dataContext)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
     ActionsEventLogGroup.ACTION_UPDATED.log(project) {
       val info = getPluginInfo(action.javaClass)
@@ -112,6 +118,11 @@ class ActionsCollectorImpl : ActionsCollector() {
     }
 
     @JvmStatic
+    fun recordActionInvoked(project: Project, dataBuilder: MutableList<EventPair<*>>.() -> Unit) {
+      record(ActionsEventLogGroup.ACTION_FINISHED, project, dataBuilder)
+    }
+
+    @JvmStatic
     fun recordActionInvoked(project: Project?,
                             action: AnAction?,
                             event: AnActionEvent?,
@@ -126,7 +137,7 @@ class ActionsCollectorImpl : ActionsCollector() {
                                   submenu: Boolean,
                                   durationMs: Long,
                                   result: List<AnAction>?) {
-      val dataContext = Utils.getCachedDataContext(context)
+      val dataContext = Utils.getCachedOnlyDataContext(context)
       val project = CommonDataKeys.PROJECT.getData(dataContext)
       ActionsEventLogGroup.ACTION_GROUP_EXPANDED.log(project) {
         val info = getPluginInfo(action.javaClass)
@@ -143,12 +154,30 @@ class ActionsCollectorImpl : ActionsCollector() {
     }
 
     @JvmStatic
+    fun record(eventId: VarargEventId, project: Project?, dataBuilder: MutableList<EventPair<*>>.() -> Unit) {
+      val projectPairs = projectData(project)
+      eventId.log(project) {
+        addAll(projectPairs)
+        dataBuilder()
+      }
+    }
+
+    @JvmStatic
     fun record(eventId: VarargEventId,
                project: Project?,
                action: AnAction?,
                event: AnActionEvent?,
                customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       if (action == null) return
+
+      val isLookupActive = project
+        ?.takeIf { !project.isDisposed }
+        ?.getServiceIfCreated(LookupManager::class.java)
+        ?.let { event?.dataContext?.getData(CommonDataKeys.HOST_EDITOR) }
+        ?.let { LookupManager.getActiveLookup(it) } != null
+
+      val projectPairs = projectData(project)
+
       eventId.log(project) {
         val info = getPluginInfo(action.javaClass)
         add(EventFields.PluginInfoFromInstance.with(action))
@@ -157,20 +186,36 @@ class ActionsCollectorImpl : ActionsCollector() {
             add(ActionsEventLogGroup.TOGGLE_ACTION.with(Toggleable.isSelected(event.presentation)))
           }
           addAll(actionEventData(event))
+          addAll(projectPairs)
           if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
-            val isLookupActive = event.dataContext.getData(CommonDataKeys.HOST_EDITOR)
-              ?.let { LookupManager.getActiveLookup(it) } != null
             add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
           }
-        }
-        if (project != null && !project.isDisposed) {
-          add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)))
         }
         customDataProvider(this)
         addActionClass(this, action, info)
       }
+
       if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
         FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(getActionId(action))
+      }
+    }
+
+    private fun projectData(project: Project?): List<EventPair<*>> {
+      val isDumb = project
+        ?.takeIf { !project.isDisposed }
+        ?.let { DumbService.isDumb(project) }
+      val incompleteDependenciesMode = project
+        ?.takeIf { !project.isDisposed }
+        ?.getServiceIfCreated(IncompleteDependenciesService::class.java)
+        ?.getState()
+
+      return buildList {
+        if (isDumb != null) {
+          add(ActionsEventLogGroup.DUMB.with(isDumb))
+        }
+        if (incompleteDependenciesMode != null) {
+          add(ActionsEventLogGroup.INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode))
+        }
       }
     }
 
@@ -248,7 +293,7 @@ class ActionsCollectorImpl : ActionsCollector() {
     @JvmStatic
     fun onBeforeActionInvoked(action: AnAction, event: AnActionEvent) {
       val project = event.project
-      val context = Utils.getCachedDataContext(event.dataContext)
+      val context = Utils.getCachedOnlyDataContext(event.dataContext)
       val stats = Stats(project, DataContextUtils.getFileLanguage(context), getInjectedOrFileLanguage(project, context))
       ourStats[event] = stats
     }
@@ -292,7 +337,7 @@ class ActionsCollectorImpl : ActionsCollector() {
                                          contextBefore: Language?,
                                          injectedContextBefore: Language?,
                                          data: MutableList<EventPair<*>>) {
-      val dataContext = Utils.getCachedDataContext(event.dataContext)
+      val dataContext = Utils.getCachedOnlyDataContext(event.dataContext)
       val language = DataContextUtils.getFileLanguage(dataContext)
       data.add(EventFields.CurrentFile.with(language ?: contextBefore))
       val injectedLanguage = getInjectedOrFileLanguage(project, dataContext)

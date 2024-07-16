@@ -18,3 +18,4 @@ fun test(i: Int): Boolean = true
 fun bar() {}
 
 // STEP_OVER: 5
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

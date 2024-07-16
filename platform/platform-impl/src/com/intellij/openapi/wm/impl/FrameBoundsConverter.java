@@ -21,6 +21,9 @@ import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_L
  */
 @ApiStatus.Internal
 public final class FrameBoundsConverter {
+  private static final int MIN_WIDTH = 350;
+  private static final int MIN_HEIGHT = 150;
+
   /**
    * @param bounds the bounds in the device space
    * @return the bounds in the user space
@@ -28,6 +31,9 @@ public final class FrameBoundsConverter {
   public static @Nullable Pair<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
     int tolerance = Registry.intValue("ide.project.frame.screen.bounds.tolerance", 10);
     Rectangle b = bounds.getBounds();
+    // Protect against incorrectly saved meaningless values.
+    if (b.width < MIN_WIDTH) b.width = MIN_WIDTH;
+    if (b.height < MIN_HEIGHT) b.height = MIN_HEIGHT;
     int centerX = b.x + b.width / 2;
     int centerY = b.y + b.height / 2;
     boolean scaleNeeded = shouldConvert();
@@ -104,7 +110,7 @@ public final class FrameBoundsConverter {
     scale(bounds, gc.getBounds(), JBUIScale.sysScale(gc));
   }
 
-  private static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
+  static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
     float scale = JBUIScale.sysScale(gc);
     assert scale != 0;
     scale(bounds, gc.getBounds(), 1 / scale);

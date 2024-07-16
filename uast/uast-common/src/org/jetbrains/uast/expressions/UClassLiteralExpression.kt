@@ -23,7 +23,6 @@ interface UClassLiteralExpression : UExpression {
 
   /**
    * Returns an expression for this class literal expression.
-   * Might be null if the [type] is specified.
    */
   val expression: UExpression?
 

@@ -3,6 +3,7 @@ package com.intellij.ui.components
 
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.scale.JBUIScale.scale
@@ -121,6 +122,7 @@ internal class DefaultLinkButtonUI : BasicButtonUI() {
       }
     }
     if (g is Graphics2D && isFocused(button)) {
+      g.setRenderingHint(IdeBackgroundUtil.NO_BACKGROUND_HINT, true)
       g.color = Link.FOCUSED_BORDER_COLOR
       val bounds = layout.bounds.also { JBInsets.addTo(it, button.focusInsets()) }
       val round = Registry.intValue("ide.link.button.focus.round.arc", 4)

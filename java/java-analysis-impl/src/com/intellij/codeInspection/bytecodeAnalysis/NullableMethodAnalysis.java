@@ -14,7 +14,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -171,8 +170,7 @@ final class NullableMethodAnalysis {
         return v1;
       }
     }
-    else if (v2 instanceof Calls) {
-      Calls calls2 = (Calls)v2;
+    else if (v2 instanceof Calls calls2) {
       int labels2 = calls2.mergedLabels;
       int aliveLabels2 = labels2 - (labels2 & constraint.calls);
       return new Calls(aliveLabels2);

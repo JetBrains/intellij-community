@@ -9,11 +9,13 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.endOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import com.intellij.psi.util.endOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
@@ -33,12 +35,12 @@ import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.renderer.render
 
 internal class FunctionLookupElementFactory {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createLookup(
         name: Name,
-        signature: KtFunctionLikeSignature<*>,
+        signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
-        expectedType: KtType? = null,
+        expectedType: KaType? = null,
     ): LookupElementBuilder {
         val insertEmptyLambda = insertLambdaBraces(signature, options)
         val lookupObject = FunctionCallLookupObject(
@@ -93,18 +95,19 @@ internal class FunctionLookupElementFactory {
 }
 
 object FunctionInsertionHelper {
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun functionCanBeCalledWithoutExplicitTypeArguments(
-        symbol: KtFunctionLikeSymbol,
-        expectedType: KtType?
+        symbol: KaFunctionSymbol,
+        expectedType: KaType?
     ): Boolean {
         if (symbol.typeParameters.isEmpty()) return true
 
         val typeParametersToInfer = symbol.typeParameters.toSet()
-        val potentiallyInferredTypeParameters = mutableSetOf<KtTypeParameterSymbol>()
+        val potentiallyInferredTypeParameters = mutableSetOf<KaTypeParameterSymbol>()
 
         /**
-         * Collects type arguments of [type] (or type itself in case of [KtTypeParameterType]), which are probably will be inferred.
+         * Collects type arguments of [type] (or type itself in case of [KaTypeParameterType]), which are probably will be inferred.
          *
          * @param onlyCollectReturnTypeOfFunctionalType if true, then only the return type of functional type is considered inferred.
          * For example, in the following case:
@@ -117,9 +120,9 @@ object FunctionInsertionHelper {
          * ```
          * we can't rely on the inference from `handler`, because lambda input types may not be declared explicitly.
          */
-        fun collectPotentiallyInferredTypes(type: KtType, onlyCollectReturnTypeOfFunctionalType: Boolean) {
+        fun collectPotentiallyInferredTypes(type: KaType, onlyCollectReturnTypeOfFunctionalType: Boolean) {
             when (type) {
-                is KtTypeParameterType -> {
+                is KaTypeParameterType -> {
                     val typeParameterSymbol = type.symbol
                     if (typeParameterSymbol !in typeParametersToInfer || typeParameterSymbol in potentiallyInferredTypeParameters) return
 
@@ -127,12 +130,12 @@ object FunctionInsertionHelper {
                     // Add type parameters possibly inferred by type arguments of parameter's upper-bound
                     // e.g. <T, C: Iterable<T>>, so T is inferred from C
                     type.symbol.upperBounds
-                        .filterIsInstance<KtNonErrorClassType>()
-                        .filter { it.ownTypeArguments.isNotEmpty() }
+                        .filterIsInstance<KaClassType>()
+                        .filter { it.typeArguments.isNotEmpty() }
                         .forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType = false) }
                 }
 
-                is KtFunctionalType -> {
+                is KaFunctionType -> {
                     val typesToProcess = if (onlyCollectReturnTypeOfFunctionalType) {
                         // do not rely on inference from input of functional type - use only return type of functional type
                         listOf(type.returnType)
@@ -142,8 +145,8 @@ object FunctionInsertionHelper {
                     typesToProcess.forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType) }
                 }
 
-                is KtUsualClassType -> {
-                    val typeArguments = type.ownTypeArguments.mapNotNull { it.type }
+                is KaUsualClassType -> {
+                    val typeArguments = type.typeArguments.mapNotNull { it.type }
                     typeArguments.forEach { collectPotentiallyInferredTypes(it, onlyCollectReturnTypeOfFunctionalType) }
                 }
 

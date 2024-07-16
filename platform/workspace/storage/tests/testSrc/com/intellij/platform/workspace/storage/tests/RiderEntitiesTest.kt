@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
@@ -28,13 +29,13 @@ class RiderEntitiesTest {
     val anotherBuilder = snapshot.toBuilder()
     val existingContentRootTestEntity = anotherBuilder.entities(ContentRootTestEntity::class.java).single()
     val newProjectModelEntity = ProjectModelTestEntity("2", DescriptorInstance("project model data"), MySource) {
-      this.contentRoot = existingContentRootTestEntity
+      this.contentRoot = existingContentRootTestEntity.builderFrom(anotherBuilder)
     }
     anotherBuilder.addEntity(newProjectModelEntity)
 
     val contentRootTestEntity = newBuilder.entities(ContentRootTestEntity::class.java).single()
     val sameContentRootTestEntity = anotherBuilder.entities(ContentRootTestEntity::class.java).single()
-    assertEquals(contentRootTestEntity, sameContentRootTestEntity)
+    assertEquals(contentRootTestEntity.asBase().id, sameContentRootTestEntity.asBase().id)
     newBuilder.replaceBySource({ it is MySource }, anotherBuilder)
     assertEquals(1, newBuilder.entities(ContentRootTestEntity::class.java).toList().size)
   }
@@ -84,13 +85,13 @@ class RiderEntitiesTest {
       it.descriptor.data.contains("left")
     }
     assertNotNull(existingProjectModelEntity.contentRoot)
-    anotherBuilder.modifyEntity(existingProjectModelEntity) {
+    anotherBuilder.modifyProjectModelTestEntity(existingProjectModelEntity) {
       this.descriptor = DescriptorInstance("project model data left")
     }
 
     existingProjectModelEntity = anotherBuilder.entities(ProjectModelTestEntity::class.java).single { it.descriptor.data.contains("right") }
     assertNotNull(existingProjectModelEntity.contentRoot)
-    anotherBuilder.modifyEntity(existingProjectModelEntity) {
+    anotherBuilder.modifyProjectModelTestEntity(existingProjectModelEntity) {
       this.descriptor = DescriptorInstance("project model data right")
     }
 

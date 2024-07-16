@@ -205,6 +205,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void setLookupFocusDegree(@NotNull LookupFocusDegree lookupFocusDegree) {
+    LOG.debug("Set lookup focus degree to " + lookupFocusDegree);
     myLookupFocusDegree = lookupFocusDegree;
     for (LookupListener listener : myListeners) {
       listener.focusDegreeChanged();
@@ -294,7 +295,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   // Used by external plugins
   @SuppressWarnings("unused")
   public void scheduleItemUpdate(@NotNull LookupElement item) {
-    LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
+    // this check significantly affects perfomance with enabled assertions
+    if (LOG.isTraceEnabled()){
+      LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
+    }
     myCellRenderer.updateItemPresentation(item);
   }
 

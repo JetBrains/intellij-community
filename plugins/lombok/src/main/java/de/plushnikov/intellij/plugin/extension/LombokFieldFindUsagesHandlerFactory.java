@@ -2,6 +2,8 @@ package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory;
+import com.intellij.find.findUsages.FindUsagesOptions;
+import com.intellij.find.findUsages.JavaFindUsagesHelper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -9,6 +11,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
@@ -22,7 +26,7 @@ import java.util.Collection;
 /**
  * It should find calls to getters/setters of some field changed by lombok accessors
  */
-public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
+public final class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
 
   public LombokFieldFindUsagesHandlerFactory() {
   }
@@ -44,6 +48,13 @@ public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactor
   @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
     return new FindUsagesHandler(element) {
+      @Override
+      public boolean processElementUsages(@NotNull PsiElement element,
+                                          @NotNull Processor<? super UsageInfo> processor,
+                                          @NotNull FindUsagesOptions options) {
+        return JavaFindUsagesHelper.processElementUsages(element, options, processor);
+      }
+
       @Override
       public PsiElement @NotNull [] getSecondaryElements() {
         final PsiMember psiMember = (PsiMember)getPsiElement();

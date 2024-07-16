@@ -6,6 +6,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions
@@ -19,47 +20,51 @@ private const val repetitions: Int = 100
 class SuspendingWriteActionTest {
 
   @RepeatedTest(repetitions)
-  fun context() = timeoutRunBlocking {
-    val application = ApplicationManager.getApplication()
+  fun context() = runWithImplicitBlockingContextEnabled {
+    timeoutRunBlocking {
+      val application = ApplicationManager.getApplication()
+      val rootJob = coroutineContext.job
 
-    fun assertEmptyContext() {
-      Assertions.assertFalse(EDT.isCurrentThreadEdt())
-      Assertions.assertNull(Cancellation.currentJob())
-      Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
-      Assertions.assertFalse(application.isWriteAccessAllowed)
-    }
-
-    fun assertWriteActionWithCurrentJob() {
-      Assertions.assertTrue(EDT.isCurrentThreadEdt())
-      Assertions.assertNotNull(Cancellation.currentJob())
-      Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
-      application.assertWriteAccessAllowed()
-    }
-
-    fun assertWriteActionWithoutCurrentJob() {
-      Assertions.assertTrue(EDT.isCurrentThreadEdt())
-      Assertions.assertNull(Cancellation.currentJob())
-      Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
-      application.assertWriteAccessAllowed()
-    }
-
-    assertEmptyContext()
-
-    val result = writeAction {
-      assertWriteActionWithCurrentJob()
-      runBlockingCancellable {
-        assertWriteActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
-        withContext(Dispatchers.Default) {
-          assertEmptyContext()
-        }
-        assertWriteActionWithoutCurrentJob()
+      fun assertEmptyContext(job: Job) {
+        Assertions.assertFalse(EDT.isCurrentThreadEdt())
+        Assertions.assertEquals(job, Cancellation.currentJob())
+        Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
+        Assertions.assertFalse(application.isWriteAccessAllowed)
       }
-      assertWriteActionWithCurrentJob()
-      42
-    }
-    Assertions.assertEquals(42, result)
 
-    assertEmptyContext()
+      fun assertWriteActionWithCurrentJob() {
+        Assertions.assertTrue(EDT.isCurrentThreadEdt())
+        Assertions.assertNotNull(Cancellation.currentJob())
+        Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertWriteAccessAllowed()
+      }
+
+      fun assertWriteActionWithoutCurrentJob(job: Job) {
+        Assertions.assertTrue(EDT.isCurrentThreadEdt())
+        Assertions.assertEquals(job, Cancellation.currentJob())
+        Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertWriteAccessAllowed()
+      }
+
+      assertEmptyContext(rootJob)
+
+      val result = writeAction {
+        assertWriteActionWithCurrentJob()
+        runBlockingCancellable {
+          val writeJob = coroutineContext.job
+          assertWriteActionWithoutCurrentJob(writeJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
+          withContext(Dispatchers.Default) {
+            assertEmptyContext(coroutineContext.job)
+          }
+          assertWriteActionWithoutCurrentJob(writeJob)
+        }
+        assertWriteActionWithCurrentJob()
+        42
+      }
+      Assertions.assertEquals(42, result)
+
+      assertEmptyContext(rootJob)
+    }
   }
 
   @RepeatedTest(repetitions)

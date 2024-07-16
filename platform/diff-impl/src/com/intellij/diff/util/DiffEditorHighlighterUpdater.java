@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -14,12 +14,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-
+@ApiStatus.Internal
 public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
   @NotNull private final DocumentContent myContent;
 
@@ -27,7 +28,7 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
                                       @NotNull Disposable parentDisposable,
                                       @NotNull EditorEx editor,
                                       @NotNull DocumentContent content) {
-    super(project, parentDisposable, editor, content.getHighlightFile());
+    super(project, parentDisposable, project.getMessageBus().connect(parentDisposable), editor, content.getHighlightFile(), null);
     myContent = content;
   }
 
@@ -35,8 +36,8 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
   @Override
   protected EditorHighlighter createHighlighter(boolean forceEmpty) {
     if (!forceEmpty) {
-      CharSequence text = myEditor.getDocument().getImmutableCharSequence();
-      EditorHighlighter highlighter = DiffUtil.initEditorHighlighter(myProject, myContent, text);
+      CharSequence text = editor.getDocument().getImmutableCharSequence();
+      EditorHighlighter highlighter = DiffUtil.initEditorHighlighter(project, myContent, text);
       if (highlighter != null) {
         return highlighter;
       }
@@ -48,7 +49,7 @@ public class DiffEditorHighlighterUpdater extends EditorHighlighterUpdater {
   protected void setupHighlighter(@NotNull EditorHighlighter highlighter) {
     super.setupHighlighter(highlighter);
 
-    restartHighlighterFor(myProject, myEditor);
+    restartHighlighterFor(project, editor);
   }
 
   /**

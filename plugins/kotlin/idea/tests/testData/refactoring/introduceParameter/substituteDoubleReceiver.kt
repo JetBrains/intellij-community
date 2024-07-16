@@ -16,3 +16,5 @@ fun test() {
         A(2).foo()
     }
 }
+
+// IGNORE_K2

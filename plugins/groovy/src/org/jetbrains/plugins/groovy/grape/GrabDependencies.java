@@ -63,7 +63,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 
-public class GrabDependencies implements IntentionAction {
+public final class GrabDependencies implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(GrabDependencies.class);
 
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Grape");

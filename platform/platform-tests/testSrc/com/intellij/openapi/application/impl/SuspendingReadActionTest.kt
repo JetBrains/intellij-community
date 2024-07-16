@@ -2,14 +2,18 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -17,47 +21,52 @@ import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 private const val REPETITIONS: Int = 100
 
+@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 abstract class SuspendingReadActionTest : CancellableReadActionTests() {
 
   @RepeatedTest(REPETITIONS)
-  fun context(): Unit = timeoutRunBlocking {
-    val application = ApplicationManager.getApplication()
+  fun context(): Unit = runWithImplicitBlockingContextEnabled {
+    timeoutRunBlocking {
+      val rootJob = coroutineContext.job
+      val application = ApplicationManager.getApplication()
 
-    fun assertEmptyContext() {
-      assertNull(Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
-      application.assertReadAccessNotAllowed()
-    }
-
-    fun assertReadActionWithCurrentJob() {
-      assertNotNull(Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
-      application.assertReadAccessAllowed()
-    }
-
-    fun assertReadActionWithoutCurrentJob() {
-      assertNull(Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
-      application.assertReadAccessAllowed()
-    }
-
-    assertEmptyContext()
-
-    val result = cra {
-      assertReadActionWithCurrentJob()
-      runBlockingCancellable {
-        assertReadActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
-        withContext(Dispatchers.Default) {
-          assertEmptyContext()
-        }
-        assertReadActionWithoutCurrentJob()
+      fun assertEmptyContext(job: Job) {
+        assertEquals(job, Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessNotAllowed()
       }
-      assertReadActionWithCurrentJob()
-      42
-    }
-    assertEquals(42, result)
 
-    assertEmptyContext()
+      fun assertReadActionWithCurrentJob() {
+        assertNotNull(Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessAllowed()
+      }
+
+      fun assertReadActionWithoutCurrentJob(job: Job) {
+        assertEquals(job, Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessAllowed()
+      }
+
+      assertEmptyContext(rootJob)
+
+      val result = cra {
+        assertReadActionWithCurrentJob()
+        runBlockingCancellable {
+          val suspendingJob = Cancellation.currentJob()!!
+          assertReadActionWithoutCurrentJob(suspendingJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
+          withContext(Dispatchers.Default) {
+            assertEmptyContext(coroutineContext.job)
+          }
+          assertReadActionWithoutCurrentJob(suspendingJob)
+        }
+        assertReadActionWithCurrentJob()
+        42
+      }
+      assertEquals(42, result)
+
+      assertEmptyContext(rootJob)
+    }
   }
 
   @RepeatedTest(REPETITIONS)
@@ -169,7 +178,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       assertFalse(attempt)
       attempt = true
       waitForPendingWrite().up()
-      assertThrows<CeProcessCanceledException> { // assert but not throw
+      assertThrows<CannotReadException> { // assert but not throw
         ProgressManager.checkCanceled()
       }
     }
@@ -182,7 +191,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       when (attempts++) {
         0 -> {
           waitForPendingWrite().up()
-          throw assertThrows<CeProcessCanceledException> {
+          throw assertThrows<CannotReadException> {
             ProgressManager.checkCanceled()
           }
         }
@@ -204,15 +213,15 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
     val result = readAction {
       when (attempts++) {
         0 -> {
-          throw assertThrows<CeProcessCanceledException> {
+          throw assertThrows<CannotReadException> {
             runBlockingCancellable {
-              throw assertThrows<PceCancellationException> {
+              throw assertThrows<CannotReadException> {
                 blockingContext {
-                  throw assertThrows<CeProcessCanceledException> {
+                  throw assertThrows<CannotReadException> {
                     runBlockingCancellable {
-                      throw assertThrows<PceCancellationException> {
+                      throw assertThrows<CannotReadException> {
                         blockingContext {
-                          throw assertThrows<CeProcessCanceledException> {
+                          throw assertThrows<CannotReadException> {
                             runBlockingCancellable {
                               waitForPendingWrite().up()
                               awaitCancellation()
@@ -247,10 +256,10 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
     val result = readAction {
       when (attempts++) {
         0 -> {
-          throw assertThrows<CeProcessCanceledException> {
+          throw assertThrows<CannotReadException> {
             blockingContextToIndicator {
               waitForPendingWrite().up()
-              throw assertThrows<ProcessCanceledException> {
+              throw assertThrows<CannotReadException> {
                 ProgressManager.checkCanceled()
               }
             }
@@ -298,7 +307,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
               }
             }
             pendingWrite.timeoutWaitUp()
-            throw assertThrows<CeProcessCanceledException> {
+            throw assertThrows<CannotReadException> {
               ProgressManager.checkCanceled()
             }
           }

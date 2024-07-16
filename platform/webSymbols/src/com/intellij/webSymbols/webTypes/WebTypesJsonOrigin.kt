@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.webTypes.json.SourceBase
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal

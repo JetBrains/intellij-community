@@ -15,7 +15,7 @@ fun main() {
     println(<warning descr="Condition 'c === a || c === b' is always true">c === a || <warning descr="Condition 'c === b' is always true when reached">c === b</warning></warning>)
     println(a == b)
     println(<warning descr="Condition 'c == a || c == b' is always true">c == a || <warning descr="Condition 'c == b' is always true when reached">c == b</warning></warning>)
-    val a1: Any = ic <warning descr="[USELESS_CAST] No cast needed">as Any</warning>
-    val b1: Any = ic <warning descr="[USELESS_CAST] No cast needed">as Any</warning>
+    @Suppress("USELESS_CAST") val a1: Any = ic as Any
+    @Suppress("USELESS_CAST") val b1: Any = ic as Any
     println(a1 === b1)
 }

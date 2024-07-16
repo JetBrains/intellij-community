@@ -20,8 +20,10 @@ import com.intellij.coverage.CoverageSuiteListener;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class CoverageViewSuiteListener implements CoverageSuiteListener {
   private final Project myProject;
 
@@ -31,9 +33,8 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
 
   @Override
   public void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
-    CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
-    if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, viewManager.getStateBean()) != null) {
-      viewManager.createView(suitesBundle, shouldActivate(suitesBundle));
+    if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle) != null) {
+      CoverageViewManager.getInstance(myProject).createView(suitesBundle, shouldActivate(suitesBundle));
     }
   }
 

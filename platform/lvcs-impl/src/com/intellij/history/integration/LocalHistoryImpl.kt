@@ -1,14 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration
 
 import com.intellij.history.*
 import com.intellij.history.core.*
-import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
-import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
+import com.intellij.history.core.changes.Change
+import com.intellij.history.core.changes.ChangeSet
+import com.intellij.history.core.changes.PutLabelChange
+import com.intellij.history.core.tree.Entry
+import com.intellij.history.integration.revertion.DifferenceReverter
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getInt
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
@@ -17,6 +21,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.platform.lvcs.impl.RevisionId
+import com.intellij.platform.lvcs.impl.diff.findEntry
+import com.intellij.platform.lvcs.impl.operations.getRevertCommandName
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
@@ -45,12 +52,10 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   var isDisabled: Boolean = false
     private set
 
-  private var changeList: ChangeList? = null
   var facade: LocalHistoryFacade? = null
     private set
 
-  var gateway: IdeaGateway? = null
-    private set
+  val gateway: IdeaGateway = IdeaGateway()
 
   private var flusherTask: Job? = null
   private val initialFlush = AtomicBoolean(true)
@@ -93,7 +98,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       while (true) {
         delay(1.seconds)
 
-        val changeList = changeList ?: continue
+        val changeList = facade?.changeList ?: continue
         withContext(Dispatchers.IO) {
           if (initialFlush.compareAndSet(true, false)) {
             changeList.purgeObsolete()
@@ -115,10 +120,8 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       LocalHistoryLog.LOG.warn("cannot create storage, in-memory  implementation will be used", e)
       storage = InMemoryChangeListStorage()
     }
-    changeList = ChangeList(storage)
-    facade = LocalHistoryFacade(changeList!!)
-    gateway = IdeaGateway()
-    eventDispatcher = LocalHistoryEventDispatcher(facade, gateway)
+    facade = LocalHistoryFacade(ChangeList(storage))
+    eventDispatcher = LocalHistoryEventDispatcher(facade!!, gateway)
   }
 
   override fun dispose() {
@@ -134,7 +137,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       it.cancel()
       flusherTask = null
     }
-    changeList?.close()
+    facade?.changeList?.close()
     LocalHistoryLog.LOG.debug("Local history storage successfully closed.")
   }
 
@@ -173,12 +176,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
   }
 
   override fun putUserLabel(project: Project, name: @NlsContexts.Label String): Label {
-    if (!isInitialized()) {
-      return Label.NULL_INSTANCE
-    }
-
-    gateway!!.registerUnsavedDocuments(facade!!)
-    return label(facade!!.putUserLabel(name, getProjectId(project)))
+    return putEventLabel(project, name, CommonActivity.UserLabel)
   }
 
   override fun putSystemLabel(project: Project, name: @NlsContexts.Label String, color: Int): Label {
@@ -186,24 +184,24 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
       return Label.NULL_INSTANCE
     }
 
-    gateway!!.registerUnsavedDocuments(facade!!)
+    gateway.registerUnsavedDocuments(facade!!)
     return label(facade!!.putSystemLabel(name, getProjectId(project), color))
   }
 
   @ApiStatus.Internal
-  fun addVFSListenerAfterLocalHistoryOne(virtualFileListener: BulkFileListener, disposable: Disposable?) {
+  fun addVFSListenerAfterLocalHistoryOne(virtualFileListener: BulkFileListener, disposable: Disposable) {
     eventDispatcher!!.addVirtualFileListener(virtualFileListener, disposable)
   }
 
-  private fun label(impl: LabelImpl): Label {
+  private fun label(label: LabelImpl): Label {
     return object : Label {
       override fun revert(project: Project, file: VirtualFile) {
-        revertToLabel(project = project, f = file, impl = impl)
+        revertToLabel(project = project, f = file, label = label)
       }
 
       override fun getByteContent(path: String): ByteContent {
         return ApplicationManager.getApplication().runReadAction(Computable {
-          impl.getByteContent(gateway!!.createTransientRootEntryForPathOnly(path), path)
+          label.getByteContent(gateway.createTransientRootEntryForPath(path, false), path)
         })
       }
     }
@@ -215,7 +213,7 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     }
 
     return ApplicationManager.getApplication().runReadAction(Computable {
-      if (gateway!!.areContentChangesVersioned(virtualFile)) {
+      if (gateway.areContentChangesVersioned(virtualFile)) {
         ByteContentRetriever(gateway, facade, virtualFile, condition).getResult()
       }
       else {
@@ -224,33 +222,42 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
     })
   }
 
-  override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway!!.isVersioned(file)
+  override fun isUnderControl(file: VirtualFile): Boolean = isInitialized() && gateway.isVersioned(file)
 
   private fun isInitialized(): Boolean = isInitialized.get()
 
   @Throws(LocalHistoryException::class)
-  private fun revertToLabel(project: Project, f: VirtualFile, impl: LabelImpl) {
-    val dirHistoryModel = if (f.isDirectory()) {
-      DirectoryHistoryDialogModel(project, gateway, facade, f)
-    }
-    else {
-      EntireFileHistoryDialogModel(project, gateway, facade, f)
+  private fun revertToLabel(project: Project, f: VirtualFile, label: LabelImpl) {
+    val path = gateway.getPathOrUrl(f)
+
+    var targetChangeSet: ChangeSet? = null
+    var targetChange: Change? = null
+    val targetPaths = mutableSetOf(path)
+
+    facade!!.collectChanges(path, ChangeAndPathProcessor(project.locationHash, null, targetPaths::add) { changeSet: ChangeSet ->
+      val change = changeSet.changes.firstOrNull { it.id == label.labelChangeId }
+      if (change != null) {
+        targetChangeSet = changeSet
+        targetChange = change
+      }
+    })
+
+    if (targetChangeSet == null || targetChange == null) {
+      throw LocalHistoryException("Couldn't find label")
     }
 
-    val leftRev = LocalHistoryUtil.findRevisionIndexToRevert(dirHistoryModel, impl)
-    if (leftRev < 0) {
-      throw LocalHistoryException("Couldn't find label revision")
-    }
+    val rootEntry = runReadAction { gateway.createTransientRootEntryForPaths(targetPaths, true) }
+    val leftEntry = facade!!.findEntry(rootEntry, RevisionId.ChangeSet(targetChangeSet!!.id), path,
+                                       /*do not revert the change itself*/false)
+    val rightEntry = rootEntry.findEntry(path)
+    val diff = Entry.getDifferencesBetween(leftEntry, rightEntry, true)
+    if (diff.isEmpty()) return // nothing to revert
 
-    // we shouldn't revert because no changes found to revert;
-    if (leftRev == 0) {
-      return
+    val reverter = DifferenceReverter(project, facade, gateway, diff) {
+      getRevertCommandName((targetChange as? PutLabelChange)?.name, targetChangeSet!!.timestamp, false)
     }
-
     try {
-      //-1 because we should revert all changes up to the previous one, but not label-related.
-      dirHistoryModel.selectRevisions(-1, leftRev - 1)
-      dirHistoryModel.createReverter().revert()
+      reverter.revert()
     }
     catch (e: Exception) {
       throw LocalHistoryException("Couldn't revert ${f.getName()} to local history label.", e)

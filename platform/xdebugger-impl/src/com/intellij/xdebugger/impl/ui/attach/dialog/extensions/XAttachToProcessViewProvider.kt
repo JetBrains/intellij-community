@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog.extensions
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -23,12 +23,10 @@ interface XAttachToProcessViewProvider {
       columnsLayout: AttachDialogColumnsLayout,
       attachDebuggerProviders: List<XAttachDebuggerProvider>,
       attachHostProviders: List<XAttachHostProvider<out XAttachHost>> = emptyList()
-    ) = EP.extensions.mapNotNull {
-      if (it.isApplicable(attachHostProviders))
-        it.getProcessView(project, state, columnsLayout, attachDebuggerProviders, attachHostProviders)
-      else
-        null
-    }
+    ) = EP.extensionList.asSequence()
+      .filter { it.isApplicable(attachHostProviders) }
+      .map { it.getProcessView(project, state, columnsLayout, attachDebuggerProviders, attachHostProviders) }
+      .toList()
   }
 
   fun isApplicable(attachHostProviders: List<XAttachHostProvider<out XAttachHost>>) = true

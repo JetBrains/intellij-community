@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl.text
@@ -6,15 +6,14 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createTextEditor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
@@ -25,6 +24,9 @@ import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -44,7 +46,7 @@ private const val RELATIVE_CARET_POSITION_ATTR: @NonNls String = "relative-caret
 private const val CARET_ELEMENT: @NonNls String = "caret"
 
 open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFileEditorProvider, StructureViewFileEditorProvider,
-                                QuickDefinitionProvider, DumbAware {
+                                QuickDefinitionProvider, AsyncFileEditorProvider {
   companion object {
     @JvmStatic
     fun getInstance(): TextEditorProvider {
@@ -86,10 +88,38 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return isTextFile(file) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file)
   }
 
-  override fun acceptRequiresReadAction() = false
+  final override fun acceptRequiresReadAction() = false
+
+  override suspend fun createFileEditor(
+    project: Project,
+    file: VirtualFile,
+    document: Document?,
+    editorCoroutineScope: CoroutineScope,
+  ): TextEditor {
+    val asyncLoader = createAsyncEditorLoader(
+      provider = this@TextEditorProvider,
+      project = project,
+      fileForTelemetry = file,
+      editorCoroutineScope = editorCoroutineScope,
+    )
+    return withContext(Dispatchers.EDT) {
+      val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
+      TextEditorImpl(
+        project = project,
+        file = file,
+        componentAndLoader = TextEditorComponent(file = file, editorImpl = editor) to asyncLoader,
+      )
+    }
+  }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return TextEditorImpl(project, file, this, createTextEditor(project, file))
+    val asyncLoader = createAsyncEditorLoader(provider = this, project = project, fileForTelemetry = file, editorCoroutineScope = null)
+    val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
+    return TextEditorImpl(
+      project = project,
+      file = file,
+      componentAndLoader = TextEditorComponent(file = file, editorImpl = editor) to asyncLoader,
+    )
   }
 
   override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
@@ -208,7 +238,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   }
 
   override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? {
-    return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.fileType, file, project)
+    return StructureViewBuilder.getProvider().getStructureViewBuilder(file.fileType, file, project)
   }
 
   protected open inner class EditorWrapper(private val editor: Editor) : UserDataHolderBase(), TextEditor {
@@ -268,14 +298,15 @@ private fun getLine(position: LogicalPosition?): Int = position?.line ?: 0
 private fun getColumn(position: LogicalPosition?): Int = position?.column ?: 0
 
 internal fun scrollToCaret(editor: Editor, exactState: Boolean, relativeCaretPosition: Int) {
-  editor.scrollingModel.disableAnimation()
+  val scrollingModel = editor.scrollingModel
+  scrollingModel.disableAnimation()
   if (relativeCaretPosition != Int.MAX_VALUE) {
     EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition)
   }
   if (!exactState) {
-    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+    scrollingModel.scrollToCaret(ScrollType.RELATIVE)
   }
-  editor.scrollingModel.enableAnimation()
+  scrollingModel.enableAnimation()
 }
 
 private fun readCaretInfo(element: Element): TextEditorState.CaretState {

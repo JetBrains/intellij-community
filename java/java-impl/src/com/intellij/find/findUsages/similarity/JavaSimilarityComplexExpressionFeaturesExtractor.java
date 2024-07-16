@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages.similarity;
 
 import com.intellij.psi.*;
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.psi.JavaTokenType.FINAL_KEYWORD;
 
 public class JavaSimilarityComplexExpressionFeaturesExtractor extends JavaRecursiveElementVisitor {
-  private final static int MAX_SECONDARY_FEATURES = 20;
-  private final static int MAX_PRIMARY_FEATURES = 50;
+  private static final int MAX_SECONDARY_FEATURES = 20;
+  private static final int MAX_PRIMARY_FEATURES = 50;
   private final @NotNull UsageSimilarityFeaturesRecorder myUsageSimilarityFeaturesRecorder;
   private final @NotNull PsiElement myContext;
 

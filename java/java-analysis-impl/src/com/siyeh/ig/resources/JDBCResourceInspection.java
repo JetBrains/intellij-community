@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ package com.siyeh.ig.resources;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,11 +54,7 @@ public final class JDBCResourceInspection extends ResourceInspection {
       "getGeneratedKeys"
     };
 
-  private static final Set<String> creationMethodNameSet = new HashSet<>(9);
-
-  static {
-    ContainerUtil.addAll(creationMethodNameSet, creationMethodName);
-  }
+  private static final Set<String> creationMethodNameSet = ContainerUtil.newHashSet(creationMethodName);
 
   @Override
   @NotNull

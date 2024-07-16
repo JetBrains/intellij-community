@@ -28,7 +28,7 @@ import org.jetbrains.concurrency.CancellablePromise
  * 3. Record all state collectors with "Record State Collectors to Event Log" action.<br>
  * [com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction]
  *
- * For more information see *fus-collectors.md*.
+ * For more information see *Fus-Collectors.md*.
  *
  * @see ApplicationUsagesCollector
  * @see CounterUsagesCollector

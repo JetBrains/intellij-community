@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.changes
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.setupCodeReviewProgressModel
@@ -10,12 +11,11 @@ import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.fileStatus
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.getDataOrSuper
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.selected
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClientProperty
@@ -25,8 +25,6 @@ import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
@@ -38,7 +36,7 @@ object CodeReviewChangeListComponentFactory {
                progressModel: CodeReviewProgressTreeModel<*>?,
                emptyTextText: @Nls String): AsyncChangesTree {
     val treeModel = createTreeModel(vm)
-    val tree = createTree(vm.project, treeModel).apply {
+    val tree = cs.createTree(vm, treeModel).apply {
       emptyText.text = emptyTextText
     }.also { tree ->
       ClientProperty.put(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
@@ -62,44 +60,51 @@ object CodeReviewChangeListComponentFactory {
     }
     tree.rebuildTree()
 
-    cs.launch {
-      // magic with selection to skip selection reset after update
-      val selectionListener = TreeSelectionListener {
-        vm.updateSelectedChangesFromTree(tree)
-      }
+    val selectionListener = TreeSelectionListener {
+      vm.updateSelectedChangesFromTree(tree)
+    }
+    tree.addTreeSelectionListener(selectionListener)
 
-      vm.selectionRequests.collectLatest {
-        tree.removeTreeSelectionListener(selectionListener)
-        when (it) {
-          is CodeReviewChangeListViewModel.SelectionRequest.All -> {
-            tree.invokeAfterRefresh {
-              TreeUtil.selectFirstNode(tree)
-              tree.addTreeSelectionListener(selectionListener)
-            }
-          }
-          is CodeReviewChangeListViewModel.SelectionRequest.OneChange -> {
-            tree.invokeAfterRefresh {
-              tree.setSelectedChanges(listOf(it.change))
-              tree.addTreeSelectionListener(selectionListener)
-            }
-          }
-        }
+    cs.launchNow {
+      vm.selectionRequests.collect {
+        tree.handleSelectionRequest(selectionListener, it)
       }
     }
     return tree
   }
 
-  private fun createTree(project: Project, treeModel: AsyncChangesTreeModel) =
-    object : AsyncChangesTree(project, false, false) {
+  private fun AsyncChangesTree.handleSelectionRequest(
+    selectionListener: TreeSelectionListener,
+    request: CodeReviewChangeListViewModel.SelectionRequest,
+  ) {
+    // skip selection reset after update to avoid loop
+    removeTreeSelectionListener(selectionListener)
+    when (request) {
+      is CodeReviewChangeListViewModel.SelectionRequest.All -> {
+        invokeAfterRefresh {
+          TreeUtil.selectFirstNode(this)
+          addTreeSelectionListener(selectionListener)
+        }
+      }
+      is CodeReviewChangeListViewModel.SelectionRequest.OneChange -> {
+        invokeAfterRefresh {
+          setSelectedChanges(listOf(request.change))
+          addTreeSelectionListener(selectionListener)
+        }
+      }
+    }
+  }
+
+  private fun CoroutineScope.createTree(vm: CodeReviewChangeListViewModel, treeModel: AsyncChangesTreeModel) =
+    object : AsyncChangesTree(vm.project, false, false) {
       override val changesTreeModel: AsyncChangesTreeModel = treeModel
 
-      override fun getData(dataId: String): Any? {
-        return when {
-          CommonDataKeys.NAVIGATABLE.`is`(dataId) -> getSelectedFiles().singleOrNull()?.let { OpenFileDescriptor(project, it) }
-          CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> ChangesUtil.getNavigatableArray(project, getSelectedFiles())
-          SELECTED_CHANGES.`is`(dataId) -> getSelectedChanges()
-          else -> return getDataOrSuper(project, this, dataId, super.getData(dataId))
-        }
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        VcsTreeModelData.uiDataSnapshot(sink, project, this)
+        sink[CommonDataKeys.NAVIGATABLE] = getSelectedFiles().singleOrNull()?.let { OpenFileDescriptor(project, it) }
+        sink[CommonDataKeys.NAVIGATABLE_ARRAY] = ChangesUtil.getNavigatableArray(project, getSelectedFiles())
+        sink[SELECTED_CHANGES] = getSelectedChanges()
       }
 
       private fun getSelectedChanges(): List<RefComparisonChange> =
@@ -108,6 +113,23 @@ object CodeReviewChangeListComponentFactory {
 
       private fun getSelectedFiles(): List<VirtualFile> =
         getSelectedChanges().mapNotNull { it.filePath.virtualFile }
+
+      override fun installGroupingSupport(): ChangesGroupingSupport =
+        if (vm is CodeReviewChangeListViewModel.WithGrouping) {
+          ChangesGroupingSupport(vm.project, this, false).also { gs ->
+            installGroupingSupport(this, gs, vm.grouping::value, vm::setGrouping)
+            launchNow {
+              vm.grouping.collect {
+                if(gs.groupingKeys != it) {
+                  gs.setGroupingKeysOrSkip(it)
+                }
+              }
+            }
+          }
+        }
+        else {
+          super.installGroupingSupport()
+        }
     }
 }
 

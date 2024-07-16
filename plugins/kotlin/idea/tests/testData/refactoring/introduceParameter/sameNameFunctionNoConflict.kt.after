@@ -1,0 +1,8 @@
+fun String.bar() = 0
+class Foo {
+    fun bar(string: String = "bar"): String {
+        return string
+    }
+}
+
+// IGNORE_K1

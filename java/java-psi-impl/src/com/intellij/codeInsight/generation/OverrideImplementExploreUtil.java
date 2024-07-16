@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.MemberImplementorExplorer;
@@ -16,29 +16,24 @@ import java.util.*;
 import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
 public class OverrideImplementExploreUtil {
-  @NotNull
-  public static Collection<CandidateInfo> getMethodsToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
+  public static @NotNull Collection<CandidateInfo> getMethodsToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
     return getMapToOverrideImplement(aClass, toImplement).values();
   }
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull PsiClass aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull PsiClass aClass) {
     return getMapToOverrideImplement(aClass, true).keySet();
   }
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
     if (aClass.isAnnotationType()) return Collections.emptySet();
     return getMapToOverrideImplement(aClass, false).keySet();
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement) {
     return getMapToOverrideImplement(aClass, toImplement, true);
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement, boolean skipImplemented) {
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(@NotNull PsiClass aClass, boolean toImplement, boolean skipImplemented) {
     if (aClass.isAnnotationType() || aClass instanceof PsiTypeParameter) return Collections.emptyMap();
 
     PsiUtilCore.ensureValid(aClass);
@@ -210,8 +205,7 @@ public class OverrideImplementExploreUtil {
     }
   }
 
-  @NotNull
-  public static PsiSubstitutor correctSubstitutor(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+  public static @NotNull PsiSubstitutor correctSubstitutor(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     PsiClass hisClass = method.getContainingClass();
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length > 0) {

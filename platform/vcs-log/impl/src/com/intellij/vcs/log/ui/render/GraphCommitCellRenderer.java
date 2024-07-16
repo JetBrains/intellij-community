@@ -19,12 +19,15 @@ import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
+import com.intellij.vcs.log.ui.VcsBookmarkRef;
 import com.intellij.vcs.log.ui.table.GraphCommitCellController;
+import com.intellij.vcs.log.ui.table.VcsLogCellController;
 import com.intellij.vcs.log.ui.table.VcsLogCellRenderer;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.visible.filters.VcsLogTextFilterWithMatches;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell>
   implements VcsLogCellRenderer {
   private static final int MAX_GRAPH_WIDTH = 6;
@@ -71,18 +75,19 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   private @Nullable JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
-    if (refs.isEmpty()) return null;
+    Collection<VcsBookmarkRef> bookmarks = cell.getBookmarksToThisCommit();
+    if (refs.isEmpty() && bookmarks.isEmpty()) return null;
 
     prepareTemplateComponent(row, cell);
     if (myTemplateComponent.getReferencePainter().isLeftAligned()) {
       double distance = point.getX() - myTemplateComponent.getGraphWidth();
       if (distance > 0 && distance <= myTemplateComponent.getReferencesWidth()) {
-        return new TooltipReferencesPanel(myLogData, refs);
+        return new TooltipReferencesPanel(myLogData, refs, bookmarks);
       }
     }
     else {
       if (getColumnWidth() - point.getX() <= myTemplateComponent.getReferencesWidth()) {
-        return new TooltipReferencesPanel(myLogData, refs);
+        return new TooltipReferencesPanel(myLogData, refs, bookmarks);
       }
     }
     return null;
@@ -90,7 +95,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
   private int getTooltipXCoordinate(int row) {
     GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, Commit.INSTANCE));
-    if (cell.getRefsToThisCommit().isEmpty()) return getColumnWidth() / 2;
+    if (cell.getRefsToThisCommit().isEmpty() && cell.getBookmarksToThisCommit().isEmpty()) return getColumnWidth() / 2;
 
     prepareTemplateComponent(row, cell);
     int referencesWidth = myTemplateComponent.getReferencesWidth();
@@ -129,7 +134,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   @Override
-  public @NotNull GraphCommitCellController getCellController() {
+  public @NotNull VcsLogCellController getCellController() {
     return new GraphCommitCellController(myLogData, myGraphTable, myComponent.myPainter) {
 
       @Override
@@ -197,7 +202,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       else {
         myReferencePainter.paint(g2d, myGraphWidth, 0, getHeight());
       }
-      myPainter.draw(g2d, myPrintElements);
+      myPainter.paint(g2d, myPrintElements);
     }
 
     public void customize(@NotNull GraphCommitCell cell, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -212,6 +217,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
+      Collection<VcsBookmarkRef> bookmarks = cell.getBookmarksToThisCommit();
       Color labelForeground;
       if (ExperimentalUI.isNewUI()) {
         labelForeground = JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", CurrentBranchComponent.TEXT_COLOR);
@@ -224,7 +230,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
-        myReferencePainter.customizePainter(refs, getBackground(), labelForeground, isSelected,
+        myReferencePainter.customizePainter(refs, bookmarks, getBackground(), labelForeground, isSelected,
                                             getAvailableWidth(column, myGraphWidth));
 
         int referencesWidth = myReferencePainter.getSize().width;
@@ -235,7 +241,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       else {
         appendTextPadding(myGraphWidth);
         appendText(cell, style, isSelected);
-        myReferencePainter.customizePainter(refs, getBackground(), labelForeground, isSelected,
+        myReferencePainter.customizePainter(refs, bookmarks, getBackground(), labelForeground, isSelected,
                                             getAvailableWidth(column, myGraphWidth));
       }
     }
@@ -319,7 +325,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       maxIndex++;
       maxIndex = Math.max(maxIndex, Math.min(MAX_GRAPH_WIDTH, table.getVisibleGraph().getRecommendedWidth()));
 
-      return (int)(maxIndex * PaintParameters.getNodeWidth(table.getRowHeight()));
+      return (int)(maxIndex * PaintParameters.getElementWidth(table.getRowHeight()));
     }
   }
 

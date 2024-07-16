@@ -55,7 +55,7 @@ object RiderIconsJsonGenerator {
 
         g.key.relativeTo(iconsResourcesPath) to obj
       }
-      .sortedBy { it.first }
+      .sortedBy { it.first.name }
 
     val tree = hashMapOf<Path, JsonObject>()
 
@@ -82,6 +82,7 @@ object RiderIconsJsonGenerator {
 
     tree.toList()
       .filter { it.first.parent == null }
+      .sortedBy { it.first.name }
       .forEach {
         jsonObj.add(it.first.name, it.second)
       }

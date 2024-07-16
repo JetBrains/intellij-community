@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.Disposable;
@@ -13,16 +13,15 @@ import com.intellij.ui.tabs.JBTabsBorder;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
+import java.util.Objects;
 
-/**
- * @author Dennis.Ushakov
- */
 public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   public static JBRunnerTabsBase create(@Nullable Project project, @NotNull Disposable parentDisposable) {
     return new JBRunnerTabs(project, parentDisposable);
@@ -47,6 +46,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   }
 
   @Override
+  @ApiStatus.Internal
   protected @NotNull JBTabsBorder createTabBorder() {
     return new JBRunnerTabsBorder(this);
   }
@@ -77,7 +77,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
     setShowDropLocation(shouldAddToGlobal(point));
     super.processDropOver(over, relativePoint);
     for (Map.Entry<TabInfo, TabLabel> entry : getInfoToLabel().entrySet()) {
-      final TabLabel label = entry.getValue();
+      TabLabel label = entry.getValue();
       if (label.getBounds().contains(point) && getDropInfo() != entry.getKey()) {
         select(entry.getKey(), false);
         break;
@@ -106,8 +106,9 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
       }
 
       private void updateFont() {
-        JComponent label = getLabelComponent();
+        JComponent label = this.label;
         // can be null at the first updateUI call during init
+        //noinspection ConstantValue
         if (label != null && ExperimentalUI.isNewUI()) {
           label.setFont(JBUI.CurrentTheme.DebuggerTabs.font());
         }
@@ -121,7 +122,7 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   }
 
   public final class JBRunnerTabsBorder extends JBTabsBorder {
-    private int mySideMask = SideBorder.LEFT;
+    private int sideMask = SideBorder.LEFT;
 
     JBRunnerTabsBorder(@NotNull JBTabsImpl tabs) {
       super(tabs);
@@ -130,24 +131,24 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
     @Override
     public @NotNull Insets getEffectiveBorder() {
       //noinspection UseDPIAwareInsets
-      return new Insets(getBorderThickness(), (mySideMask & SideBorder.LEFT) != 0 ? getBorderThickness() : 0, 0, 0);
+      return new Insets(getBorderThickness(), (sideMask & SideBorder.LEFT) != 0 ? getBorderThickness() : 0, 0, 0);
     }
 
     @Override
     public void paintBorder(@NotNull Component c, @NotNull Graphics g, int x, int y, int width, int height) {
       if (isEmptyVisible()) return;
 
-      if ((mySideMask & SideBorder.LEFT) != 0) {
+      if ((sideMask & SideBorder.LEFT) != 0) {
         getTabPainter().paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y), new Point(x, y + height));
       }
 
       getTabPainter()
-        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + getHeaderFitSize().height),
+        .paintBorderLine((Graphics2D)g, getBorderThickness(), new Point(x, y + Objects.requireNonNull(getHeaderFitSize()).height),
                          new Point(x + width, y + getHeaderFitSize().height));
     }
 
     public void setSideMask(@SideBorder.SideMask int mask) {
-      mySideMask = mask;
+      sideMask = mask;
     }
   }
 }

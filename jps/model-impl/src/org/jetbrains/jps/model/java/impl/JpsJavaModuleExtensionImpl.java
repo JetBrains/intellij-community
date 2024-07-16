@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.java.LanguageLevel;
 
 import java.util.Objects;
 
-public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaModuleExtensionImpl> implements JpsJavaModuleExtension {
+final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaModuleExtensionImpl> implements JpsJavaModuleExtension {
   private static final JpsUrlListRole JAVADOC_ROOTS_ROLE = new JpsUrlListRole("javadoc roots");
   private static final JpsUrlListRole ANNOTATIONS_ROOTS_ROLE = new JpsUrlListRole("annotation roots");
   private String myOutputUrl;
@@ -20,7 +20,7 @@ public final class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<Jp
   private boolean myExcludeOutput;
   private LanguageLevel myLanguageLevel;
 
-  public JpsJavaModuleExtensionImpl() {
+  JpsJavaModuleExtensionImpl() {
     myContainer.setChild(JAVADOC_ROOTS_ROLE);
     myContainer.setChild(ANNOTATIONS_ROOTS_ROLE);
   }

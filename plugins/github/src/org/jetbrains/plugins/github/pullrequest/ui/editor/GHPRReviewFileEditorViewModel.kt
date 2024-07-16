@@ -23,7 +23,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThre
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
@@ -60,7 +60,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>,
   private val showDiff: (change: RefComparisonChange, lineIdx: Int?) -> Unit
 ) : GHPRReviewFileEditorViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val originalContent: StateFlow<ComputedResult<CharSequence>?> =
     flow {
@@ -86,8 +86,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
   override val commentableRanges: List<Range> = diffData.patch.ranges
 
   private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewEditorThreadViewModel.MappingData>> =
-    dataProvider.reviewData.createThreadsRequestsFlow()
-      .computationState()
+    dataProvider.reviewData.threadsComputationFlow
       .transformConsecutiveSuccesses(false) {
         combine(discussionsViewOption) { threads, viewOption ->
           threads.associateBy(GHPullRequestReviewThread::id) { threadData ->

@@ -47,4 +47,4 @@ fun localReturn() {
     }
     if (<warning descr="Condition 'y == 11' is always true">y == 11</warning>) {}
 }
-fun consume(<warning descr="[UNUSED_PARAMETER] Parameter 'lambda' is never used">lambda</warning>: (String) -> Unit) {}
+fun consume(lambda: (String) -> Unit) { println(lambda) }

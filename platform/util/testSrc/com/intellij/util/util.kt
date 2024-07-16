@@ -2,10 +2,12 @@
 package com.intellij.util
 
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
 const val TEST_TIMEOUT_MS: Long = 1000
 
 @Suppress("DeprecatedCallableAddReplaceWith") // function move does not work correctly
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Function was moved to `com.intellij.testFramework.common`",
 )

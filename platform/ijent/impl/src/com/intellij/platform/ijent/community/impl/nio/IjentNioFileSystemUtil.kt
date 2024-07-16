@@ -4,11 +4,8 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.fs.*
-import com.intellij.platform.ijent.fs.IjentFileSystemApi.*
 import com.intellij.util.text.nullize
-import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
+import java.io.IOException
 import java.nio.file.*
 
 /**
@@ -34,25 +31,31 @@ fun IjentFileSystemApi.asNioFileSystem(): FileSystem {
 }
 
 @Throws(FileSystemException::class)
-internal fun IjentFsResult.Error.throwFileSystemException(): Nothing {
+internal fun <T, E : IjentFsError> IjentFsResult<T, E>.getOrThrowFileSystemException(): T =
+  when (this) {
+    is IjentFsResult.Ok -> value
+    is IjentFsResult.Error -> error.throwFileSystemException()
+  }
+
+@Throws(FileSystemException::class)
+internal fun IjentFsError.throwFileSystemException(): Nothing {
   throw when (this) {
-    is IjentFsResult.DoesNotExist, is IjentFsResult.NotFile -> NoSuchFileException(where.toString(), null, message.nullize())
-    is IjentFsResult.NotDirectory -> NotDirectoryException(where.toString())
-    is IjentFsResult.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
-    is IjentOpenedFile.Seek.InvalidValue -> TODO()
+    is IjentFsError.DoesNotExist, is IjentFsError.NotFile -> NoSuchFileException(where.toString(), null, message.nullize())
+    is IjentFsError.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
+    is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
+    is IjentFsError.AlreadyDeleted -> NoSuchFileException(where.toString())
+    is IjentFsError.AlreadyExists -> FileAlreadyExistsException(where.toString())
+    is IjentFsError.FileNotOpened -> IOException("File is not opened")
+    is IjentOpenedFile.SeekError.InvalidValue -> TODO()
+    is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
+    is IjentOpenedFile.Reader.ReadError.InvalidValue -> TODO()
+    is IjentFileSystemApi.DeleteException.DirNotEmpty -> DirectoryNotEmptyException(where.toString())
   }
 }
 
 internal fun Path.toIjentPath(isWindows: Boolean): IjentPath =
   when {
     this is IjentNioPath -> ijentPath
-
-    startsWith("ijent:") && nameCount >= 3 ->
-      IjentNioFileSystemProvider.getInstance()
-        .getPath(URI(asSequence().drop(1).joinToString("/", prefix = "ijent://") {
-          URLEncoder.encode(it.toString(), StandardCharsets.UTF_8)
-        }))
-        .ijentPath
 
     isAbsolute -> throw InvalidPathException(toString(), "This path can't be converted to IjentPath")
 

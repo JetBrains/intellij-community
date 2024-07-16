@@ -21,6 +21,9 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 
 public final class ExternalAppUtil {
+
+  private ExternalAppUtil() { }
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @NotNull
   public static Result sendIdeRequest(@NotNull String entryPoint, int idePort, @NotNull String handlerId, @Nullable String bodyContent) {
@@ -74,6 +77,40 @@ public final class ExternalAppUtil {
 
   public static int getEnvInt(@NotNull String env) {
     return Integer.parseInt(getEnv(env));
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void handleAskPassInvocation(@NotNull String handlerIdEnvName,
+                                             @NotNull String idePortEnvName,
+                                             @NotNull String entryPoint,
+                                             String[] args) {
+    try {
+      String handlerId = getEnv(handlerIdEnvName);
+      int idePort = getEnvInt(idePortEnvName);
+
+      String description = args.length > 0 ? args[0] : null;
+
+      ExternalAppUtil.Result result = sendIdeRequest(entryPoint, idePort, handlerId, description);
+
+      if (result.isError) {
+        System.err.println(result.getPresentableError());
+        System.exit(1);
+      }
+
+      String passphrase = result.response;
+      if (passphrase == null) {
+        System.err.println("Authentication request was cancelled");
+        System.exit(1); // dialog canceled
+      }
+
+      System.out.println(passphrase);
+      System.exit(0);
+    }
+    catch (Throwable t) {
+      System.err.println(t.getMessage());
+      t.printStackTrace(System.err);
+      System.exit(1);
+    }
   }
 
   private static class AllowingTrustManager extends X509ExtendedTrustManager {

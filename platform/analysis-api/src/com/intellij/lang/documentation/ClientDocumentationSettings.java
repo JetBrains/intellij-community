@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,4 +23,8 @@ public interface ClientDocumentationSettings {
 
   @NotNull
   DocumentationSettings.InlineCodeHighlightingMode getInlineCodeHighlightingMode();
+
+  default boolean autoShowQuickDocInModalDialogs() {
+    return AdvancedSettings.getBoolean("documentation.auto.show.in.modal.dialogs");
+  }
 }

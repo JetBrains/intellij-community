@@ -7,7 +7,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -326,19 +324,17 @@ public final class LossyEncodingInspection extends LocalInspectionTool {
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
       VirtualFile virtualFile = file.getVirtualFile();
-
-      DataContext dataContext = createDataContext(editor, editor == null ? null : editor.getComponent(), virtualFile, project);
+      DataContext dataContext = createDataContext(project, editor, virtualFile);
       ListPopup popup = new ChangeFileEncodingAction().createPopup(dataContext, null);
       if (popup != null) {
         popup.showInBestPositionFor(dataContext);
       }
     }
 
-    @NotNull
-    static DataContext createDataContext(@Nullable Editor editor, Component component, VirtualFile selectedFile, @NotNull Project project) {
+    static @NotNull DataContext createDataContext(@NotNull Project project, @Nullable Editor editor, @Nullable VirtualFile selectedFile) {
+      DataContext parent = editor == null ? null : DataManager.getInstance().getDataContext(editor.getContentComponent());
       return SimpleDataContext.builder()
-        .setParent(DataManager.getInstance().getDataContext(component))
-        .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor == null ? null : editor.getComponent())
+        .setParent(parent)
         .add(CommonDataKeys.PROJECT, project)
         .add(CommonDataKeys.VIRTUAL_FILE, selectedFile)
         .build();

@@ -9,10 +9,10 @@ import com.intellij.psi.util.parents
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
@@ -53,7 +53,7 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findVariableNames(
         expression: KtExpression,
         boundaryElement: PsiElement,
@@ -94,7 +94,7 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         return parameterList.parameters.mapNotNull { it.name }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
 private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpression {
         var lastSeenBlockExpression = expression
         for (parent in expression.parents(withSelf = true)) {
@@ -112,22 +112,22 @@ private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpre
         return lastSeenBlockExpression
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isCoroutineContextAvailable(expression: KtExpression) =
         isCoroutineContextAvailableFromFunction(expression) || isCoroutineContextAvailableFromLambda(expression)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isCoroutineContextAvailableFromFunction(expression: KtExpression): Boolean {
         val functionParent = expression.parentOfType<KtFunction>(withSelf = true) ?: return false
-        val symbol = functionParent.getSymbol() as? KtFunctionSymbol ?: return false
+        val symbol = functionParent.symbol as? KaNamedFunctionSymbol ?: return false
         return symbol.isSuspend
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
         val literalParent = expression.parentOfType<KtFunctionLiteral>(withSelf = true) ?: return false
         val parentCall = KtPsiUtil.getParentCallIfPresent(literalParent) as? KtCallExpression ?: return false
-        val call = parentCall.resolveCall()?.singleFunctionCallOrNull() ?: return false
+        val call = parentCall.resolveToCall()?.singleFunctionCallOrNull() ?: return false
         val valueArgument = parentCall.getContainingValueArgument(expression) ?: return false
         val argumentSymbol = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
         return argumentSymbol.returnType.isSuspendFunctionType
@@ -153,7 +153,7 @@ private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpre
             false
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isInlined(expression: KtBlockExpression): Boolean {
         val parentFunction = expression.parentOfType<KtFunction>() ?: return false
         return isInlinedArgument(parentFunction)

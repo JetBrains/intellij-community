@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class GroovyNoVariantsDelegator extends CompletionContributor {
+public final class GroovyNoVariantsDelegator extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(GroovyNoVariantsDelegator.class);
 
   private static boolean suggestAnnotations(CompletionParameters parameters) {

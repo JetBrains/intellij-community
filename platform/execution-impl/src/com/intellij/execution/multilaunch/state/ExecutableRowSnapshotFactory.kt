@@ -30,7 +30,7 @@ object ExecutableRowSnapshotFactory {
     }
   }
 
-  private fun createCompositeId(type: String, uniqueId: String) = "$type:$uniqueId"
+  fun createCompositeId(type: String, uniqueId: String) = "$type:$uniqueId"
 }
 
 fun ExecutableRow.toSnapshot() =

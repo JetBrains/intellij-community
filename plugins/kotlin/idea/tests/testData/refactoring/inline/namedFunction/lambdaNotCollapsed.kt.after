@@ -1,0 +1,5 @@
+fun newFun(p1: String, p2: String?, p3: () -> Boolean) {}
+
+fun foo() {
+    newFun("a", null) { true }
+}

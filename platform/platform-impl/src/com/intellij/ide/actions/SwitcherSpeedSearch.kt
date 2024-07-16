@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.speedSearch.NameFilteringListModel
@@ -29,7 +28,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
     NameFilteringListModel(model,
                            { it.mainText },
                            { !isPopupActive || compare(it, enteredPrefix) },
-                           { StringUtil.notNullize(enteredPrefix) })
+                           { (enteredPrefix ?: "") })
 
   private val files
     get() = myComponent.files
@@ -46,7 +45,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
 
   override fun getElementCount(): Int = files.itemsCount + windows.itemsCount
 
-  override fun getElementAt(index: Int): SwitcherListItem? = when {
+  override fun getElementAt(index: Int): Any? = when {
     index < 0 -> null
     index < files.itemsCount -> files.model.getElementAt(index)
     index < elementCount -> windows.model.getElementAt(index - files.itemsCount)

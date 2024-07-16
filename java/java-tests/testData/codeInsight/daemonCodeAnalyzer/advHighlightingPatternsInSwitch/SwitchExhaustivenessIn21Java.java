@@ -233,7 +233,7 @@ class Basic {
   }
   //see com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.reduceRecordPatterns
   void exhaustinvenessWithInterface(Pair<I> pairI) {
-    switch (<error descr="'switch' statement does not cover all possible input values">pairI</error>) {
+    switch (pairI) {
       case Pair<I>(C fst, D snd) -> {}
       case Pair<I>(I fst, C snd) -> {}
       case Pair<I>(D fst, I snd) -> {}
@@ -242,12 +242,52 @@ class Basic {
 
   //see com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.reduceRecordPatterns
   void exhaustinvenessWithInterface2(Pair<? extends I> pairI) {
-    switch (<error descr="'switch' statement does not cover all possible input values">pairI</error>) {
+    switch (pairI) {
       case Pair<? extends I>(C fst, D snd) -> {}
       case Pair<? extends I>(I fst, C snd) -> {}
       case Pair<? extends I>(D fst, I snd) -> {}
     }
   }
+
+  sealed interface A1 permits A11, A12 {}
+  sealed interface A2 permits A21, A22 {}
+
+  record A11() implements A1 {}
+  record A12() implements A1 {}
+
+  record A21() implements A2 { }
+  record A22() implements A2 { }
+
+  record R1(A2 a2) { }
+  record R2(A1 a1, R1 r1) { }
+
+  record R12(A1 a1, A2 a2) { }
+  record R21(A2 a2, A1 a1) { }
+
+  void exhaustivenessWithCrossSectionNestedRecords(R2 r2) {
+    switch (r2) {
+      case R2(A11 b1, R1(A2 b2)) -> System.out.println("1");
+      case R2(A12 b1, R1(A22 b2)) -> System.out.println("2");
+      case R2(A1 b1, R1(A21 b2)) -> System.out.println("3");
+    }
+  }
+
+  void exhaustivenessWithCrossSection1(R12 r12) {
+    switch (r12) {
+      case R12(A11 b1, A2 b2) -> System.out.println("1");
+      case R12(A12 b1, A22 b2) -> System.out.println("2");
+      case R12(A1 b1, A21 b2) -> System.out.println("3");
+    }
+  }
+
+  void exhaustivenessWithCrossSection2(R21 r21) {
+    switch (r21) {
+      case R21(A2 b2, A11 b1) -> System.out.println("1");
+      case R21(A22 b2, A12 b1) -> System.out.println("2");
+      case R21(A21 b2, A1 b1) -> System.out.println("3");
+    }
+  }
+
 
   sealed interface Parent {}
   record AAA() implements Parent {}

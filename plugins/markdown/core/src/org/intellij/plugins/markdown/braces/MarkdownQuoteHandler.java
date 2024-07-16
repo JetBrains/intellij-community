@@ -24,7 +24,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownQuoteHandler implements QuoteHandler {
+public final class MarkdownQuoteHandler implements QuoteHandler {
   private final static TokenSet QUOTE_TYPES = TokenSet.create(MarkdownTokenTypes.EMPH,
                                                               //MarkdownTokenTypes.TILDE,
                                                               MarkdownTokenTypes.BACKTICK,

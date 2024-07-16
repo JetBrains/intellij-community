@@ -3,13 +3,13 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.useReactiveWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -29,17 +29,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.system.measureTimeMillis
 
-
-class OrphanageActivity : ProjectActivity {
+private class OrphanageActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (useReactiveWorkspaceModelApi()) {
       setupOpenTelemetryReporting(jpsMetrics.meter)
-      project.service<OrphanService>().start()
+      project.serviceAsync<OrphanService>().start()
     }
   }
 }
 
-class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
+internal class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
   private val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
@@ -67,7 +66,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
   private fun checkIfParentsAlreadyExist(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     val orphanModules = changes[ModuleEntity::class.java]
                           ?.filterIsInstance<EntityChange.Added<ModuleEntity>>()
-                          ?.map { it.entity } ?: return
+                          ?.map { it.newEntity } ?: return
 
     val snapshot = project.workspaceModel.currentSnapshot
     val orphanToSnapshotModule = orphanModules
@@ -95,7 +94,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
 }
 
 @Service(Service.Level.PROJECT)
-class OrphanService(
+internal class OrphanService(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {
@@ -105,7 +104,7 @@ class OrphanService(
   fun start() {
     cs.launch {
       // flowOfDiff is used to process updates in batches
-      project.workspaceModel.internal.flowOfDiff(query).collect { diff ->
+      (project.workspaceModel as WorkspaceModelInternal).flowOfDiff(query).collect { diff ->
         val added = diff.added
 
         val updateTime = measureTimeMillis {
@@ -151,9 +150,8 @@ class OrphanService(
   }
 }
 
-class OrphanListener(private val project: Project) : WorkspaceModelChangeListener {
+private class OrphanListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
-    if (!EntitiesOrphanage.isEnabled) return
     if (useReactiveWorkspaceModelApi()) return
 
     val adders = listOf(
@@ -166,7 +164,7 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
       // Do not move to the field! They should be created every time! (or the code should be refactored)
       val changedModules = event.getChanges(ModuleEntity::class.java)
         .filterIsInstance<EntityChange.Added<ModuleEntity>>()
-        .map { it.entity }
+        .map { it.newEntity }
 
       val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
       val orphanModules = changedModules.mapNotNull {
@@ -251,7 +249,7 @@ private class ContentRootAdder : EntityAdder {
     log.info("Move content roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
-      builder.modifyEntity(resolvedModule) {
+      builder.modifyModuleEntity(resolvedModule) {
         this.contentRoots += rootsToAdd
       }
     }
@@ -316,7 +314,7 @@ private class SourceRootAdder : EntityAdder {
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
       rootsToAdd.forEach { (root, sources) ->
         val contentRoot = resolvedModule.contentRoots.find { it.url == root }!!
-        builder.modifyEntity(contentRoot) {
+        builder.modifyContentRootEntity(contentRoot) {
           this.sourceRoots += sources
         }
       }
@@ -390,7 +388,7 @@ private class ExcludeRootAdder : EntityAdder {
       val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
       rootsToAdd.forEach { (root, excludes) ->
         val contentRoot = resolvedModule.contentRoots.find { it.url == root }!!
-        builder.modifyEntity(contentRoot) {
+        builder.modifyContentRootEntity(contentRoot) {
           this.excludedUrls += excludes
         }
       }

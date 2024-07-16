@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author Maxim.Medvedev
  */
-public class MoveClassToNewFileIntention extends Intention {
+public final class MoveClassToNewFileIntention extends Intention {
 
   @Override
   public boolean startInWriteAction() {

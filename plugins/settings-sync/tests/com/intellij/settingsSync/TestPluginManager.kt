@@ -1,17 +1,18 @@
 package com.intellij.settingsSync
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginEnabler
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginEnableStateChangedListener
+import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
-import com.intellij.settingsSync.plugins.*
+import com.intellij.settingsSync.plugins.AbstractPluginManagerProxy
+import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.junit.Assert
 import java.util.concurrent.CopyOnWriteArrayList
 
-internal class TestPluginManager : AbstractPluginManagerProxy() {
+internal class TestPluginManager(val testScheduler: TestCoroutineScheduler) : AbstractPluginManagerProxy() {
   val installer = TestPluginInstaller {
     addPluginDescriptors(TestPluginDescriptor.ALL[it]!!)
   }
@@ -39,6 +40,7 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
         for (pluginListener in pluginEnabledStateListeners) {
           pluginListener.stateChanged(enabledList, true)
         }
+        testScheduler.runCurrent()
         return enabledList.size == pluginIds.size
       }
 
@@ -56,6 +58,7 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
         for (pluginListener in pluginEnabledStateListeners) {
           pluginListener.stateChanged(disabledList, false)
         }
+        testScheduler.runCurrent()
         return disabledList.size == pluginIds.size
       }
 

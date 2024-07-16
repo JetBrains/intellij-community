@@ -16,9 +16,9 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -60,8 +60,7 @@ public final class MultiplyOrDivideByPowerOfTwoInspection
     final PsiExpression lhs;
     final PsiExpression rhs;
     final String operator;
-    if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression exp = (PsiAssignmentExpression)expression;
+    if (expression instanceof PsiAssignmentExpression exp) {
       lhs = exp.getLExpression();
       rhs = exp.getRExpression();
       final IElementType tokenType = exp.getOperationTokenType();

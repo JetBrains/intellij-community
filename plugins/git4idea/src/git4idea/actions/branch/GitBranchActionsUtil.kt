@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.tail
 import git4idea.GitBranch
+import git4idea.GitTag
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
@@ -29,6 +30,9 @@ object GitBranchActionsUtil {
 
   @JvmField
   val BRANCHES_KEY = DataKey.create<List<GitBranch>>("Git.Branches")
+
+  @JvmField
+  val TAGS_KEY = DataKey.create<List<GitTag>>("Git.Tags")
 
   @JvmStatic
   fun calculateNewBranchInitialName(branch: GitBranch): @NlsSafe String {

@@ -8,6 +8,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -236,7 +237,8 @@ public abstract class VcsLogUserFilterTest {
 
   private @NotNull List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
     VcsLogFilterCollection filters = VcsLogFilterObject.collection(filter);
-    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), filters, -1);
+    List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(PlatformTestUtil.getOrCreateProjectBaseDir(myProject), filters,
+                                                                          PermanentGraph.Options.Default, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 

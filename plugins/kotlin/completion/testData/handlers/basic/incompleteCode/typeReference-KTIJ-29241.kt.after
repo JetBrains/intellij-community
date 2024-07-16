@@ -1,0 +1,9 @@
+import dependency.FooBar
+
+fun <T> foo() {}
+
+fun test() {
+    foo<FooBar<caret>()
+}
+
+// ELEMENT: FooBar

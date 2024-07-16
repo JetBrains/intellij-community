@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.scratch;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/scratch")
     public static class ScratchCompiling extends AbstractScratchRunActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doScratchCompilingTest, this, testDataFilePath);
         }
@@ -109,6 +116,12 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/scratch")
     public static class ScratchRepl extends AbstractScratchRunActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doScratchReplTest, this, testDataFilePath);
         }
@@ -197,6 +210,12 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/scratch/multiFile")
     public static class ScratchMultiFile extends AbstractScratchRunActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doScratchMultiFileTest, this, testDataFilePath);
         }
@@ -215,6 +234,12 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/worksheet")
     public static class WorksheetCompiling extends AbstractScratchRunActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doWorksheetCompilingTest, this, testDataFilePath);
         }
@@ -228,6 +253,12 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/worksheet")
     public static class WorksheetRepl extends AbstractScratchRunActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doWorksheetReplTest, this, testDataFilePath);
         }
@@ -241,6 +272,12 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/worksheet/multiFile")
     public static class WorksheetMultiFile extends AbstractScratchRunActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doWorksheetMultiFileTest, this, testDataFilePath);
         }
@@ -259,6 +296,12 @@ public abstract class ScratchRunActionTestGenerated extends AbstractScratchRunAc
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/scratch/rightPanelOutput")
     public static class ScratchRightPanelOutput extends AbstractScratchRunActionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doRightPreviewPanelOutputTest, this, testDataFilePath);
         }

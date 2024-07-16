@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class PyOperatorReference extends PyReferenceImpl {
   public PyOperatorReference(PyQualifiedExpression element, @NotNull PyResolveContext context) {
@@ -41,8 +38,7 @@ public class PyOperatorReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    if (myElement instanceof PyBinaryExpression) {
-      final PyBinaryExpression expr = (PyBinaryExpression)myElement;
+    if (myElement instanceof PyBinaryExpression expr) {
       final String name = expr.getReferencedName();
       if (PyNames.CONTAINS.equals(name)) {
         return resolveMember(expr.getRightExpression(), name);
@@ -51,12 +47,10 @@ public class PyOperatorReference extends PyReferenceImpl {
         return resolveLeftAndRightOperators(expr, name);
       }
     }
-    else if (myElement instanceof PySubscriptionExpression) {
-      final PySubscriptionExpression expr = (PySubscriptionExpression)myElement;
+    else if (myElement instanceof PySubscriptionExpression expr) {
       return resolveMember(expr.getOperand(), expr.getReferencedName());
     }
-    else if (myElement instanceof PyPrefixExpression) {
-      final PyPrefixExpression expr = (PyPrefixExpression)myElement;
+    else if (myElement instanceof PyPrefixExpression expr) {
       return resolveMember(expr.getOperand(), expr.getReferencedName());
     }
     return Collections.emptyList();

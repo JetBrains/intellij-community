@@ -10,6 +10,7 @@ import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.impl.copy
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
@@ -57,9 +58,9 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         .postProcess(owner, apiStatus, priority, proximity)
         .let { matchResults ->
           if (!isRequired)
-            matchResults + MatchResult(WebSymbolNameSegment(start, start))
+            matchResults + MatchResult(WebSymbolNameSegment.create(start, start))
           else if (matchResults.isEmpty())
-            listOf(MatchResult(WebSymbolNameSegment(start, start, problem = WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART)))
+            listOf(MatchResult(WebSymbolNameSegment.create(start, start, problem = WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART)))
           else
             matchResults
         }
@@ -75,7 +76,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         if (isRequired)
           emptyList()
         else
-          listOf(ListResult("", WebSymbolNameSegment(0, 0)))
+          listOf(ListResult("", WebSymbolNameSegment.create(0, 0)))
       else
         patterns
           .flatMap { it.list(null, scopeStack, newSymbolsResolver, params) }
@@ -84,7 +85,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           .flatMap { it.postProcess(owner, apiStatus, priority, proximity) }
           .let {
             if (!isRequired)
-              it + ListResult("", WebSymbolNameSegment(0, 0))
+              it + ListResult("", WebSymbolNameSegment.create(0, 0))
             else
               it
           }

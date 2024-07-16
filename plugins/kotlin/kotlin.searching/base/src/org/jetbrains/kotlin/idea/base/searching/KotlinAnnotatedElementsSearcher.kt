@@ -14,22 +14,20 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.idea.KotlinIconProvider.Companion.getBaseIcon
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex
 import org.jetbrains.kotlin.psi.*
@@ -109,14 +107,14 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
 
                     if (psiBasedResolveResult == ImpreciseResolveResult.NO_MATCH) return true
                     if (psiBasedResolveResult == ImpreciseResolveResult.UNSURE) {
-                        @OptIn(KtAllowAnalysisOnEdt::class)
+                        @OptIn(KaAllowAnalysisOnEdt::class)
                         allowAnalysisOnEdt {
-                            @OptIn(KtAllowAnalysisFromWriteAction::class)
+                            @OptIn(KaAllowAnalysisFromWriteAction::class)
                             allowAnalysisFromWriteAction {
                                 analyze(elt) {
-                                    val annotationSymbol = elt.resolveCall()?.singleConstructorCallOrNull()?.symbol
+                                    val annotationSymbol = elt.resolveToCall()?.singleConstructorCallOrNull()?.symbol
                                         ?: return false
-                                    val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
+                                    val annotationType = annotationSymbol.returnType as? KaClassType ?: return false
                                     val fqName = annotationType.classId.asFqNameString()
                                     if (fqName != annotationFQN) return true
                                 }

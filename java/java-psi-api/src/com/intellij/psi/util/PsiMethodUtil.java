@@ -1,14 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class PsiMethodUtil {
 
@@ -23,13 +28,21 @@ public final class PsiMethodUtil {
 
   @Nullable
   public static PsiMethod findMainMethod(final PsiClass aClass) {
-    for (JavaMainMethodProvider provider : JavaMainMethodProvider.EP_NAME.getExtensionList()) {
-      if (provider.isApplicable(aClass)) {
-        return provider.findMainInClass(aClass);
-      }
+    JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(aClass);
+    if (mainMethodProvider != null) {
+      return mainMethodProvider.findMainInClass(aClass);
     }
-    final PsiMethod[] mainMethods = aClass.findMethodsByName("main", true);
-    return findMainMethod(mainMethods, aClass);
+
+    DumbService dumbService = DumbService.getInstance(aClass.getProject());
+    try {
+      return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<PsiMethod, Throwable>)() -> {
+        final PsiMethod[] mainMethods = aClass.findMethodsByName("main", true);
+        return findMainMethod(mainMethods, aClass);
+      });
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
   }
 
   @Nullable
@@ -99,26 +112,84 @@ public final class PsiMethodUtil {
     }
   }
 
-  private static boolean isJavaLangStringArray(PsiParameter parameter) {
-    final PsiType type = parameter.getType();
-    if (!(type instanceof PsiArrayType)) return false;
-    final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return componentType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+  private static boolean isJavaLangStringArray(@NotNull PsiParameter parameter) {
+    try {
+      final PsiType type = parameter.getType();
+      if (!(type instanceof PsiArrayType)) return false;
+
+      return DumbService.getInstance(parameter.getProject()).computeWithAlternativeResolveEnabled(
+        (ThrowableComputable<Boolean, Throwable>)() -> {
+          final PsiType componentType = ((PsiArrayType)type).getComponentType();
+          return componentType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+        }
+      );
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
   }
 
   public static boolean hasMainMethod(final PsiClass psiClass) {
-    for (JavaMainMethodProvider provider : JavaMainMethodProvider.EP_NAME.getExtensionList()) {
-      if (provider.isApplicable(psiClass)) {
-        return provider.hasMainMethod(psiClass);
-      }
+    JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(psiClass);
+    if (mainMethodProvider != null) {
+      return mainMethodProvider.hasMainMethod(psiClass);
     }
-    final PsiMethod[] mainMethods = psiClass.findMethodsByName("main", true);
-    return findMainMethod(mainMethods, psiClass) != null;
+
+    DumbService dumbService = DumbService.getInstance(psiClass.getProject());
+    try {
+      return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<Boolean, Throwable>)() -> {
+        final PsiMethod[] mainMethods = psiClass.findMethodsByName("main", true);
+        return findMainMethod(mainMethods, psiClass) != null;
+      });
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
+  }
+
+  public static boolean isMainMethodWithProvider(@NotNull PsiClass psiClass, @NotNull PsiElement psiElement) {
+    JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(psiClass);
+    if (mainMethodProvider != null) {
+      return mainMethodProvider.isMain(psiElement);
+    }
+
+    DumbService dumbService = DumbService.getInstance(psiElement.getProject());
+    try {
+      return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<Boolean, Throwable>)() -> {
+        PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
+        if (psiMethod == null) return false;
+
+        return "main".equals(psiMethod.getName()) && isMainMethod(psiMethod);
+      });
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
+  }
+
+  @Nullable
+  public static String getMainJVMClassName(@NotNull PsiClass psiClass) {
+    JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(psiClass);
+    if (mainMethodProvider != null) {
+      return mainMethodProvider.getMainClassName(psiClass);
+    }
+
+    return ClassUtil.getJVMClassName(psiClass);
   }
 
   @Nullable
   public static PsiMethod findMainInClass(final PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return null;
     return findMainMethod(aClass);
+  }
+
+  @Nullable
+  private static JavaMainMethodProvider getApplicableMainMethodProvider(@NotNull PsiClass aClass) {
+    DumbService dumbService = DumbService.getInstance(aClass.getProject());
+
+    List<JavaMainMethodProvider> javaMainMethodProviders =
+      dumbService.filterByDumbAwareness(JavaMainMethodProvider.EP_NAME.getExtensionList());
+
+    return ContainerUtil.find(javaMainMethodProviders, provider -> provider.isApplicable(aClass));
   }
 }

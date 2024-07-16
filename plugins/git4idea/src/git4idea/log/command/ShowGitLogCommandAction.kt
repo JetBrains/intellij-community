@@ -15,8 +15,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitVcs
 import java.util.*
 
-@Suppress("HardCodedStringLiteral") // internal action
-class ShowGitLogCommandAction : DumbAwareAction("Show Git Log for Command") {
+class ShowGitLogCommandAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project

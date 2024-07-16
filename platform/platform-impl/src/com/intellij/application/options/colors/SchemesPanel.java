@@ -2,11 +2,11 @@
 
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
+public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> {
   private static final Logger LOG = Logger.getInstance(SchemesPanel.class);
   private final ColorAndFontOptions myOptions;
 
@@ -37,6 +37,8 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
     super(vGap);
     myOptions = options;
     setEnabled(options.isSchemesPanelEnabled());
+
+    putClientProperty(SearchUtil.SEARCH_SKIP_COMPONENT_KEY, true);
   }
 
   private boolean myListLoaded;
@@ -128,18 +130,16 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
   }
 
   protected void onSchemeChangedFromAction(@Nullable EditorColorsScheme scheme) {
-    if (scheme != null) {
+    if (scheme != null && areSchemesLoaded()) {
       myOptions.selectScheme(scheme.getName());
-      if (areSchemesLoaded()) {
-        myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
+      myDispatcher.getMulticaster().schemeChanged(this);
 
-        if (shouldApplyImmediately() && myOptions.isModified()) {
-          try {
-            myOptions.apply();
-          }
-          catch (ConfigurationException e) {
-            LOG.warn("Unable to apply compiler resource patterns", e);
-          }
+      if (shouldApplyImmediately() && myOptions.isModified()) {
+        try {
+          myOptions.apply();
+        }
+        catch (ConfigurationException e) {
+          LOG.warn("Unable to apply compiler resource patterns", e);
         }
       }
     }
@@ -169,6 +169,6 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
 
   @Override
   public boolean useBoldForNonRemovableSchemes() {
-    return true;
+    return false;
   }
 }

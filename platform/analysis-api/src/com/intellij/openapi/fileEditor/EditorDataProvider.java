@@ -16,10 +16,12 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.editor.Editor;
 
+/** @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead */
+@Deprecated(forRemoval = true)
 public interface EditorDataProvider {
   @Nullable Object getData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret);
 }

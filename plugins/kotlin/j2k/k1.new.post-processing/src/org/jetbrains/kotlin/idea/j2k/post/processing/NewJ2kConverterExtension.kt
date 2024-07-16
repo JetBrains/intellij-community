@@ -2,35 +2,46 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiJavaFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
-import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.psi.KtFile
 
 class NewJ2kConverterExtension : J2kConverterExtension() {
-    override val isNewJ2k = true
+    override val kind: Kind = K1_NEW
 
     override fun createJavaToKotlinConverter(
         project: Project,
         targetModule: Module?,
-        settings: ConverterSettings
+        settings: ConverterSettings,
+        targetFile: KtFile?
     ): JavaToKotlinConverter =
-        NewJavaToKotlinConverter(project, targetModule, settings)
+        NewJavaToKotlinConverter(project, targetModule, settings, targetFile)
 
     override fun createPostProcessor(formatCode: Boolean): PostProcessor =
         NewJ2kPostProcessor()
 
     override fun doCheckBeforeConversion(project: Project, module: Module): Boolean =
-        checkKotlinIsConfigured(project, module)
+        checkKotlinIsConfigured(module)
 
     override fun createWithProgressProcessor(
         progress: ProgressIndicator?,
@@ -39,11 +50,19 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
     ): WithProgressProcessor =
         NewJ2kWithProgressProcessor(progress, files, phasesCount)
 
-    private fun checkKotlinIsConfigured(project: Project, module: Module): Boolean {
-        val kotlinIsConfigured =
-            module.hasKotlinPluginEnabled() || isModuleConfigured(module.toModuleGroup())
-        if (kotlinIsConfigured) return true
+    override fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+        getNewJ2KConversions(context)
 
+    private fun checkKotlinIsConfigured(module: Module): Boolean {
+        return module.hasKotlinPluginEnabled() || isModuleConfigured(module.toModuleGroup())
+    }
+
+    override fun setUpAndConvert(
+        project: Project,
+        module: Module,
+        javaFiles: List<PsiJavaFile>,
+        convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit
+    ) {
         val title = KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.title")
         if (Messages.showOkCancelDialog(
                 project,
@@ -59,9 +78,20 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
                 configurators.isEmpty() -> {
                     val message = KotlinNJ2KServicesBundle.message("converter.kotlin.not.configured.no.configurators.available")
                     Messages.showErrorDialog(message, title)
+                    return
                 }
 
-                configurators.size == 1 -> configurators.single().configure(project, emptyList())
+                configurators.size == 1 -> {
+                    val configurator = configurators.single()
+                    configureKotlinAndConvertJavaCodeToKotlin(
+                        configurator,
+                        project,
+                        module,
+                        convertFunction,
+                        javaFiles
+                    )
+                }
+
                 else -> {
                     @Suppress("DEPRECATION")
                     val resultIndex = Messages.showChooseDialog( //TODO a better dialog?
@@ -72,11 +102,51 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
                         configurators.map { it.presentableText }.toTypedArray(),
                         configurators.first().presentableText
                     )
-                    configurators.getOrNull(resultIndex)?.configure(project, emptyList())
+                    val configurator = configurators.getOrNull(resultIndex) ?: return
+                    configureKotlinAndConvertJavaCodeToKotlin(
+                        configurator,
+                        project,
+                        module,
+                        convertFunction,
+                        javaFiles
+                    )
                 }
             }
         }
+    }
 
-        return false
+    private fun configureKotlinAndConvertJavaCodeToKotlin(
+        configurator: KotlinProjectConfigurator,
+        project: Project,
+        module: Module,
+        convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit,
+        javaFiles: List<PsiJavaFile>
+    ) {
+        val configuredModules = configurator.configureAndGetConfiguredModules(project, excludeModules = emptyList())
+        CoroutineScopeService.getCoroutineScope(project).launch {
+            withBackgroundProgress(project, KotlinNJ2KServicesBundle.message("converter.kotlin.wait.for.sync.to.be.finished")) {
+                configurator.queueSyncAndWaitForProjectToBeConfigured(project)
+            }
+            if (configuredModules.contains(module) ||
+                /*
+                * This is needed because when configuring Kotlin with Gradle we receive a source root module like `myModule.main` but we need
+                * just the base module `myModule` because the configurator itself returns a collection of configured base modules.
+                */
+                configuredModules.contains(module.toModuleGroup().baseModule)
+            ) {
+                withContext(Dispatchers.EDT) {
+                    convertFunction(javaFiles, project, module)
+                }
+            }
+        }
+    }
+
+    @Service(Service.Level.PROJECT)
+    private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
+        companion object {
+            fun getCoroutineScope(project: Project): CoroutineScope {
+                return project.service<CoroutineScopeService>().coroutineScope
+            }
+        }
     }
 }

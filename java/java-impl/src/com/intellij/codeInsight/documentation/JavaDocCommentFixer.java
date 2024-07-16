@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -90,8 +90,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
     locateCaret(docComment, editor, file);
   }
 
-  @NotNull
-  private static MissingJavadocInspection getMissingJavadocInspection() {
+  private static @NotNull MissingJavadocInspection getMissingJavadocInspection() {
     MissingJavadocInspection localInspection = new MissingJavadocInspection();
 
     //region visibility
@@ -113,8 +112,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
     return localInspection;
   }
 
-  @NotNull
-  private static JavadocDeclarationInspection getJavadocDeclarationInspection() {
+  private static @NotNull JavadocDeclarationInspection getJavadocDeclarationInspection() {
     JavadocDeclarationInspection localInspection = new JavadocDeclarationInspection();
     localInspection.setIgnoreEmptyDescriptions(true);
     return localInspection;
@@ -143,7 +141,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
   @SuppressWarnings("unchecked")
   private static void fixCommonProblems(@NotNull List<? extends ProblemDescriptor> problems,
                                         @NotNull PsiComment comment,
-                                        @NotNull final Document document,
+                                        final @NotNull Document document,
                                         @NotNull Project project) {
     List<RangeMarker> toRemove = new ArrayList<>();
     List<ProblemDescriptor> problemsToApply = new ArrayList<>();
@@ -280,8 +278,7 @@ public final class JavaDocCommentFixer implements DocCommentFixer {
     //endregion
   }
 
-  @NotNull
-  private static Pair<TextRange, String> parseTagValue(@NotNull PsiDocTag tag, @NotNull Document document) {
+  private static @NotNull Pair<TextRange, String> parseTagValue(@NotNull PsiDocTag tag, @NotNull Document document) {
     PsiDocTagValue valueElement = tag.getValueElement();
     assert valueElement != null;
 

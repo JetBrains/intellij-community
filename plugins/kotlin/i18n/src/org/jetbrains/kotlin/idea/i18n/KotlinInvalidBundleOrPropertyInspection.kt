@@ -12,8 +12,8 @@ import com.intellij.lang.properties.references.PropertyReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -59,7 +59,7 @@ class KotlinInvalidBundleOrPropertyInspection : AbstractKotlinInspection() {
                 if (keyArgumentIndex < 0) return
 
                 analyze(callExpression) {
-                    val callable = callExpression.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return
+                    val callable = callExpression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return
                     if (callable.valueParameters.size != keyArgumentIndex + 2) return
                     if (!callable.valueParameters.last().isVararg) return
                 }

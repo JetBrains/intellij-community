@@ -45,8 +45,9 @@ public final class ExecutionUtil {
 
   private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
-  private static final NotificationGroup ourNotificationGroup =
-    NotificationGroupManager.getInstance().getNotificationGroup("Execution");
+  private static NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Execution");
+  }
 
   private ExecutionUtil() { }
 
@@ -147,7 +148,7 @@ public final class ExecutionUtil {
         return;
       }
 
-      Notification notification = ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      Notification notification = getNotificationGroup().createNotification(title, _description, NotificationType.ERROR);
       notification.setToolWindowId(toolWindowId);
       if (_listener != null) {
         notification.setListener((_notification, event) -> {

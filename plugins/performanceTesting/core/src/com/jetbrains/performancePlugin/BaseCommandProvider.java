@@ -18,6 +18,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(InspectionCommandEx.PREFIX, InspectionCommandEx::new),
       Map.entry(ReformatCommand.PREFIX, ReformatCommand::new),
       Map.entry(GoToCommand.PREFIX, GoToCommand::new),
+      Map.entry(ScrollEditorCommand.PREFIX, ScrollEditorCommand::new),
       Map.entry(DoLocalInspection.PREFIX, DoLocalInspection::new),
       Map.entry(CompletionCommand.PREFIX, CompletionCommand::new),
       Map.entry(DelayTypeCommand.PREFIX, DelayTypeCommand::new),
@@ -26,8 +27,6 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ExitAppWithTimeoutCommand.PREFIX, ExitAppWithTimeoutCommand::new),
       Map.entry(OpenFileWithTerminateCommand.PREFIX, OpenFileWithTerminateCommand::new),
       Map.entry(WaitForSmartCommand.PREFIX, WaitForSmartCommand::new),
-      Map.entry(WaitForVcsLogUpdateCommand.PREFIX, WaitForVcsLogUpdateCommand::new),
-      Map.entry(WaitVcsLogIndexingCommand.PREFIX, WaitVcsLogIndexingCommand::new),
       Map.entry(WaitForInitialRefreshCommand.PREFIX, WaitForInitialRefreshCommand::new),
       Map.entry(SingleInspectionCommand.PREFIX, SingleInspectionCommand::new),
       Map.entry(StartPowerSave.PREFIX, StartPowerSave::new),
@@ -46,6 +45,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(RunServiceInPlugin.PREFIX, RunServiceInPlugin::new),
       Map.entry(SetupProjectSdkCommand.PREFIX, SetupProjectSdkCommand::new),
       Map.entry(OpenProjectCommand.PREFIX, OpenProjectCommand::new),
+      Map.entry(CloseProjectCommand.PREFIX, CloseProjectCommand::new),
       Map.entry(CodeAnalysisCommand.PREFIX, CodeAnalysisCommand::new),
       Map.entry(DumpProjectFiles.PREFIX, DumpProjectFiles::new),
       Map.entry(CompareProjectFiles.PREFIX, CompareProjectFiles::new),
@@ -109,8 +109,17 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(AssertModuleJdkVersionCommand.PREFIX, AssertModuleJdkVersionCommand::new),
       Map.entry(WaitForEDTQueueUnstuckCommand.PREFIX, WaitForEDTQueueUnstuckCommand::new),
       Map.entry(CreateScratchFile.PREFIX, CreateScratchFile::new),
+      Map.entry(StoreHighlightingResultsCommand.PREFIX, StoreHighlightingResultsCommand::new),
+      Map.entry(AddContentRootToModule.PREFIX, AddContentRootToModule::new),
+      Map.entry(DisableKotlinNotificationCommand.PREFIX, DisableKotlinNotificationCommand::new),
+      Map.entry(RequestHeavyScanningOnNextStartCommand.PREFIX, RequestHeavyScanningOnNextStartCommand::new),
       Map.entry(AssertCaretPositionCommand.PREFIX, AssertCaretPositionCommand::new),
-      Map.entry(AssertCurrentFileCommand.PREFIX, AssertCurrentFileCommand::new)
+      Map.entry(AssertCurrentFileCommand.PREFIX, AssertCurrentFileCommand::new),
+      Map.entry(AwaitCompleteProjectConfigurationCommand.PREFIX, AwaitCompleteProjectConfigurationCommand::new),
+      Map.entry(RenameModuleCommand.PREFIX, RenameModuleCommand::new),
+      Map.entry(WaitForProjectViewCommand.PREFIX, WaitForProjectViewCommand::new),
+      Map.entry(ExpandProjectViewCommand.PREFIX, ExpandProjectViewCommand::new),
+      Map.entry(DebugToggleBreakpointCommand.PREFIX, DebugToggleBreakpointCommand::new)
     );
   }
 }

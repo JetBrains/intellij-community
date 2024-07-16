@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cyclicDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -25,7 +25,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +37,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public final class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
+public final class CyclicDependenciesPanel extends JPanel implements Disposable, UiDataProvider {
   private static final Set<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
 
   private final HashMap<PsiPackage, Set<List<PsiPackage>>> myDependencies;
@@ -134,8 +133,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     }
   }
 
-  @Nullable
-  private static PackageDependenciesNode getNextPackageNode(DefaultMutableTreeNode node) {
+  private static @Nullable PackageDependenciesNode getNextPackageNode(DefaultMutableTreeNode node) {
     DefaultMutableTreeNode child = node;
     while (node != null) {
       if (node instanceof CycleNode) {
@@ -301,8 +299,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     tree.expandPath(new TreePath(node.getPath()));
   }
 
-  @Nullable
-  private static PackageNode getSelectedPackage(final Tree tree) {
+  private static @Nullable PackageNode getSelectedPackage(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length != 1) return null;
     PackageDependenciesNode node = (PackageDependenciesNode)paths[0].getLastPathComponent();
@@ -339,13 +336,8 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return "dependency.viewer.tool.window";
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "dependency.viewer.tool.window");
   }
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -506,8 +498,7 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
       return null;
     }
 
-    @Nullable
-    public PackageDependenciesNode getSelectedNode() {
+    public @Nullable PackageDependenciesNode getSelectedNode() {
       TreePath[] paths = getSelectionPaths();
       if (paths == null || paths.length != 1) return null;
       final Object lastPathComponent = paths[0].getLastPathComponent();

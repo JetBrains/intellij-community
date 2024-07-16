@@ -14,12 +14,13 @@ import com.intellij.util.ProcessingContext
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
-interface LightClassBehaviorTestBase : UastPluginSelection {
+interface LightClassBehaviorTestBase {
     // NB: ported [LightClassBehaviorTest#testIdentifierOffsets]
     fun checkIdentifierOffsets(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
@@ -359,8 +360,16 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
     }
 
     private fun checkPsiType(psiType: PsiType, fqName: String = "TypeAnnotation") {
-        TestCase.assertEquals(1, psiType.annotations.size)
-        val annotation = psiType.annotations[0]
+        val annotations = psiType.annotations.asList()
+        val nullabilityAnnotation = annotations.find {
+            when (it.qualifiedName) {
+                JvmAnnotationNames.JETBRAINS_NULLABLE_ANNOTATION.asString(), JvmAnnotationNames.JETBRAINS_NOT_NULL_ANNOTATION.asString() -> true
+                else -> false
+            }
+        }
+
+        TestCase.assertEquals(1 + (1.takeIf { nullabilityAnnotation != null } ?: 0), psiType.annotations.size)
+        val annotation = annotations.minus(listOfNotNull(nullabilityAnnotation)).single()
         TestCase.assertEquals(fqName, annotation.qualifiedName)
     }
 
@@ -594,7 +603,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         )
     }
 
-    fun checkDefaultValueOfAnnotation(myFixture: JavaCodeInsightTestFixture) {
+    fun checkDefaultValueOfAnnotation_Kotlin(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
                 annotation class IntDef(
@@ -626,6 +635,51 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         )
 
         val flagValue = (lc.findAttributeValue("flag") as? PsiLiteralExpression)?.value
+        TestCase.assertEquals("false", flagValue?.toString())
+    }
+
+    fun checkDefaultValueOfAnnotation_Java(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                import java.lang.annotation.Annotation;
+                import java.lang.annotation.ElementType;
+                import java.lang.annotation.Target;
+
+                @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+                public @interface MyRestrictedApi {
+                  String explanation();
+                  Class<? extends Annotation>[] allowlistAnnotations() default {};
+                  boolean allowedInTestonlyTargets() default false;
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                @Target(AnnotationTarget.FUNCTION) annotation class KAllowlist
+
+                class Test {
+                  @MyRestrictedApi(
+                    explanation = "umbrella",
+                    allowlistAnnotations = [KAllowlist::class],
+                  )
+                  fun foo() {}
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val foo = uFile.findElementByTextFromPsi<UMethod>("fun foo", strict = false)
+            .orFail("can't convert to UMethod")
+        val lc = foo.uAnnotations.single().javaPsi!!
+        val annos = (lc.findAttributeValue("allowlistAnnotations") as? PsiArrayInitializerMemberValue)?.initializers
+        TestCase.assertEquals(
+            "[KAllowlist]",
+            annos?.joinToString(separator = ", ", prefix = "[", postfix = "]") { annoValue ->
+                (annoValue as? PsiClassObjectAccessExpression)?.type?.canonicalText ?: annoValue.text
+            }
+        )
+
+        val flagValue = (lc.findAttributeValue("allowedInTestonlyTargets") as? PsiLiteralExpression)?.value
         TestCase.assertEquals("false", flagValue?.toString())
     }
 

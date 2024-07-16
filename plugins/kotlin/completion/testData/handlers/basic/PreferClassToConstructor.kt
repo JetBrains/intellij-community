@@ -1,5 +1,7 @@
 // FIR_COMPARISON
 // FIR_IDENTICAL
+package test
+
 class Color {
     companion object {
         val RED = Color()

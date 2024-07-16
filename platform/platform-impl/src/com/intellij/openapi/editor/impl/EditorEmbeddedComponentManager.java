@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -17,6 +17,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -254,6 +255,7 @@ public final class EditorEmbeddedComponentManager {
     }
   }
 
+  @ApiStatus.Internal
   public static final class FullEditorWidthRenderer extends MyRenderer {
 
     FullEditorWidthRenderer(@NotNull JComponent component,
@@ -323,7 +325,9 @@ public final class EditorEmbeddedComponentManager {
       });
 
       // If validation is postponed, visual artifacts can appear while typing text.
-      renderer.validate();
+      if (!myEditor.getInlayModel().isInBatchMode()) {
+        renderer.validate();
+      }
 
       return inlay;
     }
@@ -374,8 +378,7 @@ public final class EditorEmbeddedComponentManager {
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
         @Override
         public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
-          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 && inlay.getRenderer() instanceof MyRenderer) {
-            JComponent component = (JComponent)inlay.getRenderer();
+          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 && inlay.getRenderer() instanceof MyRenderer component) {
             // This method can be called while validating the same component. Prevent resetting parent validation flags.
             if (component.isValid()) {
               component.revalidate();

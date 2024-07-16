@@ -31,5 +31,3 @@ fun main(args: Array<String>) {
     //Breakpoint!
     bar().foo("1")
 }
-
-// IGNORE_K2

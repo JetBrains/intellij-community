@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +17,6 @@ public interface OptionsSearchTopHitProvider {
   @NonNls
   String getId();
 
-  default boolean preloadNeeded() {
-    return true;
-  }
-
   /**
    * Extension point name: com.intellij.search.topHitProvider
    */
@@ -29,7 +26,10 @@ public interface OptionsSearchTopHitProvider {
     // do not override
     @Override
     default void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-      OptionsTopHitProvider.consumeTopHits(this, pattern, collector, project);
+      OptionsTopHitProvider.Companion.consumeTopHits(this, pattern, it -> {
+        collector.accept(it);
+        return Unit.INSTANCE;
+      }, project);
     }
   }
 

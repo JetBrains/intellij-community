@@ -5,8 +5,12 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.facet.getMergedCompilerArguments
 
 object ParcelizeAvailability {
     fun isAvailable(element: PsiElement): Boolean {
@@ -25,6 +29,10 @@ object ParcelizeAvailability {
 
         return ParcelizeAvailabilityProvider.PROVIDER_EP.getExtensions(module.project).any { it.isAvailable(module) }
     }
+
+    internal fun isPluginJarPath(path: String): Boolean {
+        return path.endsWith(KotlinArtifactNames.PARCELIZE_COMPILER_PLUGIN)
+    }
 }
 
 interface ParcelizeAvailabilityProvider {
@@ -34,4 +42,16 @@ interface ParcelizeAvailabilityProvider {
     }
 
     fun isAvailable(module: Module): Boolean
+
+    class Default : ParcelizeAvailabilityProvider {
+        private val isEnabled: Boolean
+            get() = Registry.`is`("kotlin.parcelize.support.availabilityProvider.default.enabled")
+
+        override fun isAvailable(module: Module): Boolean {
+            if (!isEnabled) return false
+
+            val pluginClasspath = KotlinCommonCompilerArgumentsHolder.getMergedCompilerArguments(module).pluginClasspaths ?: return false
+            return pluginClasspath.any(ParcelizeAvailability::isPluginJarPath)
+        }
+    }
 }

@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import static org.jetbrains.idea.maven.plugins.api.MavenPluginParamInfo.ParamInfo;
 
-public class MavenPluginParamReferenceContributor extends PsiReferenceContributor {
+public final class MavenPluginParamReferenceContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {

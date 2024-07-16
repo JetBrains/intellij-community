@@ -5,7 +5,7 @@
 // ERROR: Type mismatch: inferred type is T but T & Any was expected
 // ACTION: Add 'Any' as upper bound for T to make it non-nullable
 // ACTION: Add names in comment to call arguments
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (value!!) call
 // ACTION: Cast expression 'value' to 'T & Any'
 
 class Derived<T>(value: T) : Base<T>(<caret>value) {}

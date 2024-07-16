@@ -1,6 +1,7 @@
 // WITH_STDLIB
 fun checkValue(value: Int, predicate: Predicate?) {
-    if (predicate != null && value<warning descr="[UNNECESSARY_SAFE_CALL] Unnecessary safe call on a non-null receiver of type Int">?.</warning>matches(predicate) == true) {
+    @Suppress("UNNECESSARY_SAFE_CALL")
+    if (predicate != null && value?.matches(predicate) == true) {
         println("It matched!")
     }
 }

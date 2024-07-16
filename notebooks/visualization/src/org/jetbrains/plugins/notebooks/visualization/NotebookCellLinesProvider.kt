@@ -42,18 +42,5 @@ interface NotebookCellLinesProvider : IntervalsGenerator {
   }
 }
 
-interface IntervalsGenerator {
-  fun makeIntervals(document: Document): List<NotebookCellLines.Interval>
-}
-
-open class NonIncrementalCellLinesProvider protected constructor(private val intervalsGenerator: IntervalsGenerator) : NotebookCellLinesProvider, IntervalsGenerator {
-  override fun create(document: Document): NotebookCellLines =
-    NonIncrementalCellLines.get(document, intervalsGenerator)
-
-  /* If NotebookCellLines doesn't exist, parse document once and don't create NotebookCellLines instance */
-  override fun makeIntervals(document: Document): List<NotebookCellLines.Interval> =
-    NonIncrementalCellLines.getOrNull(document)?.intervals ?: intervalsGenerator.makeIntervals(document)
-}
-
 internal fun getLanguage(project: Project, document: Document): Language? =
   PsiDocumentManager.getInstance(project).getPsiFile(document)?.language

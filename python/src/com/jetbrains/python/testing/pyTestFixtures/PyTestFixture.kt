@@ -207,8 +207,8 @@ private fun findImportedFixtureInFile(targetFile: PyFile,
   val resolveImportElements = importedFixture?.multiResolve()?.map { it.element }
   if (importedFixture != null) {
     // if fixture is imported as `from module import some_fixture as sf`
-    resolveImportElements?.filterIsInstance<PyFunction>()?.firstOrNull()?.let { fixture ->
-      return NamedFixtureLink(PyTestFixture(func, fixture, fixture.name ?: ""), importedFixture)
+    resolveImportElements?.firstOrNull { (it as? PyFunction)?.isFixture() == true }?.let { fixture ->
+      return (fixture as? PyFunction)?.let {  NamedFixtureLink(PyTestFixture(func, fixture, fixture.name ?: ""), importedFixture) }
     }
 
     resolveImportElements?.let { list ->

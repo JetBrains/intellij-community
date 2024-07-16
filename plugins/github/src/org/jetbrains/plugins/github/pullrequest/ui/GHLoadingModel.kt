@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import java.util.*
 
+@Deprecated("Deprecated with migration to coroutines and view models")
 interface GHLoadingModel {
   val loading: Boolean
 

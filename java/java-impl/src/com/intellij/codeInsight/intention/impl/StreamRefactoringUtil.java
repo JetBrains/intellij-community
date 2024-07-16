@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
@@ -23,8 +23,7 @@ public final class StreamRefactoringUtil {
     return false;
   }
 
-  @NotNull
-  public static String generateMapOperation(PsiVariable variable, @Nullable PsiType outType, PsiElement mapper) {
+  public static @NotNull String generateMapOperation(PsiVariable variable, @Nullable PsiType outType, PsiElement mapper) {
     String shortcutMappingMethod = getShortcutMappingMethod(variable, outType, mapper);
     if (shortcutMappingMethod != null) return shortcutMappingMethod.isEmpty() ? "" : "." + shortcutMappingMethod + "()";
     PsiType inType = variable.getType();
@@ -46,8 +45,7 @@ public final class StreamRefactoringUtil {
    * @return shortcut mapping name ("boxed", "asLongStream", "asDoubleStream") if applicable, empty string if it's
    * ditto mapping (no mapping is necessary at all) and null if no shortcut is applicable for given mapper
    */
-  @Nullable
-  public static String getShortcutMappingMethod(PsiVariable variable, @Nullable PsiType outType, PsiElement mapper) {
+  public static @Nullable String getShortcutMappingMethod(PsiVariable variable, @Nullable PsiType outType, PsiElement mapper) {
     if (!(mapper instanceof PsiExpression)) return null;
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(((PsiExpression)mapper));
     PsiType inType = variable.getType();
@@ -78,8 +76,7 @@ public final class StreamRefactoringUtil {
    * @param outType output stream element type
    * @return a name of the mapping operation like "map" or "mapToLong".
    */
-  @NotNull
-  public static String getMapOperationName(PsiType inType, @Nullable PsiType outType) {
+  public static @NotNull String getMapOperationName(PsiType inType, @Nullable PsiType outType) {
     if(outType instanceof PsiPrimitiveType) {
       if(!outType.equals(inType)) {
         if(PsiTypes.intType().equals(outType)) {
@@ -96,8 +93,7 @@ public final class StreamRefactoringUtil {
     return "map";
   }
 
-  @Nullable
-  public static String getFlatMapOperationName(PsiType inType, PsiType outType) {
+  public static @Nullable String getFlatMapOperationName(PsiType inType, PsiType outType) {
     if (!(inType instanceof PsiPrimitiveType)) {
       if (PsiTypes.intType().equals(outType)) {
         return "flatMapToInt";

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.ExperimentalUI;
@@ -7,19 +7,20 @@ import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class SingleRowLayoutStrategy {
-
   private static final int MIN_TAB_WIDTH = 50;
   final SingleRowLayout myLayout;
   final JBTabsImpl myTabs;
 
-  protected SingleRowLayoutStrategy(final SingleRowLayout layout) {
+  protected SingleRowLayoutStrategy(SingleRowLayout layout) {
     myLayout = layout;
-    myTabs = myLayout.myTabs;
+    myTabs = myLayout.tabs;
   }
 
   abstract int getMoreRectAxisSize();
@@ -178,7 +179,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isSideComponentOnTabs() {
-      return !myTabs.isSideComponentVertical() && myTabs.isSideComponentOnTabs();
+      return myTabs.getHorizontalSide() && myTabs.isSideComponentOnTabs();
     }
 
     @Override
@@ -278,7 +279,7 @@ public abstract class SingleRowLayoutStrategy {
     }
   }
 
-  static class Bottom extends Horizontal {
+  static final class Bottom extends Horizontal {
     Bottom(final SingleRowLayout layout) {
       super(layout);
     }

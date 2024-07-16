@@ -14,6 +14,7 @@ interface KotlinFindUsageConfigurator {
     val module: Module
     val editor: Editor?
     val elementAtCaret: PsiElement
+    val allFiles: List<PsiFile>
     fun configureByFile(filePath: String)
     fun configureByFiles(filePaths: List<String>)
     fun renameElement(element: PsiElement, newName: String)
@@ -25,12 +26,13 @@ interface KotlinFindUsageConfigurator {
             override val module: Module get() = fixture.module
             override val editor: Editor? get() = fixture.editor
             override val elementAtCaret: PsiElement get() = fixture.elementAtCaret
+            override lateinit var allFiles: List<PsiFile>
             override fun configureByFile(filePath: String) {
-                fixture.configureByFile(filePath)
+                allFiles = listOf(fixture.configureByFile(filePath))
             }
 
             override fun configureByFiles(filePaths: List<String>) {
-                fixture.configureByFiles(*filePaths.toTypedArray())
+                allFiles = fixture.configureByFiles(*filePaths.toTypedArray()).toList()
             }
 
             override fun renameElement(element: PsiElement, newName: String) {

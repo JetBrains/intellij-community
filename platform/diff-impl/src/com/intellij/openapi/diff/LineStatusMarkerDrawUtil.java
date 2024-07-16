@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.ex.VisibleRangeMerger;
 import com.intellij.openapi.vcs.ex.VisibleRangeMerger.FlagsProvider;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IntPair;
@@ -140,7 +141,8 @@ public final class LineStatusMarkerDrawUtil {
         int line = gutter.getHoveredFreeMarkersLine();
         if (isRangeHovered(editor, line, x, start, end)) {
           paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
-        } else {
+        }
+        else {
           paintRect(g, gutterColor, null, x, start, endX, end);
         }
       }
@@ -215,17 +217,19 @@ public final class LineStatusMarkerDrawUtil {
   @NotNull
   public static IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    int x = 1; // leave 1px for brace highlighters
     if (ExperimentalUI.isNewUI()) {
-      x += gutter.getExtraLineMarkerFreePaintersAreaOffset();
+      int x = gutter.getExtraLineMarkerFreePaintersAreaOffset();
+      x += 1; // leave 1px for brace highlighters
       x += 2; //IDEA-286352
-      return new IntPair(x, x + (int)(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4) * getEditorScale(editor))));
+      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4)), editor);
+      return new IntPair(x, x + areaWidth);
     }
     else {
-      x += gutter.getLineMarkerFreePaintersAreaOffset();
+      int x = gutter.getLineMarkerFreePaintersAreaOffset();
+      x += 1; // leave 1px for brace highlighters
+      int endX = gutter.getWhitespaceSeparatorOffset();
+      return new IntPair(x, endX);
     }
-    int endX = gutter.getWhitespaceSeparatorOffset();
-    return new IntPair(x, endX);
   }
 
   public static boolean isInsideMarkerArea(@NotNull MouseEvent e) {
@@ -240,7 +244,8 @@ public final class LineStatusMarkerDrawUtil {
         g.setColor(color);
         double width = x2 - x1;
         RectanglePainter2D.FILL.paint(g, x1, y1 + 1, width, y2 - y1 - 2, width);
-      } else if (borderColor != null) {
+      }
+      else if (borderColor != null) {
         g.setColor(borderColor);
         double width = x2 - x1;
         RectanglePainter2D.DRAW.paint(g, x1, y1 + 1, width, y2 - y1 - 2, width);
@@ -264,7 +269,7 @@ public final class LineStatusMarkerDrawUtil {
 
   public static void paintTriangle(@NotNull Graphics2D g, @NotNull Editor editor, @Nullable Color color, @Nullable Color borderColor,
                                    int x1, int x2, int y) {
-    int size = (int)JBUIScale.scale(4 * getEditorScale(editor));
+    int size = scaleWithEditor(JBUIScale.scale(4), editor);
     if (y < size) y = size;
 
     if (ExperimentalUI.isNewUI()) {
@@ -272,7 +277,8 @@ public final class LineStatusMarkerDrawUtil {
         g.setColor(color);
         double width = x2 - x1;
         RectanglePainter2D.FILL.paint(g, x1, y - size + 1, width, 2 * size - 2, width);
-      } else if (borderColor != null) {
+      }
+      else if (borderColor != null) {
         g.setColor(borderColor);
         double width = x2 - x1;
         RectanglePainter2D.DRAW.paint(g, x1, y - size + 1, width, 2 * size - 2, width);
@@ -296,8 +302,9 @@ public final class LineStatusMarkerDrawUtil {
     }
   }
 
-  private static float getEditorScale(@NotNull Editor editor) {
-    return editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
+  private static int scaleWithEditor(float v, @NotNull Editor editor) {
+    float scale = editor instanceof EditorImpl ? ((EditorImpl)editor).getScale() : 1.0f;
+    return PaintUtil.RoundingMode.ROUND.round(v * scale);
   }
 
   @Nullable

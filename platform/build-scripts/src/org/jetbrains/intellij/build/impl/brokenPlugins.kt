@@ -147,7 +147,7 @@ private class BuildNumber(private val productCode: String, private val component
       return code.toIntOrNull() ?: throw RuntimeException("Invalid version number: $version; plugin name: $pluginName")
     }
 
-    // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html
+    // https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html
     private fun getBaseLineForHistoricBuilds(bn: Int): Int {
       if (bn >= 10000) return 88 // Maia, 9x builds
       if (bn >= 9500) return 85 // 8.1 builds

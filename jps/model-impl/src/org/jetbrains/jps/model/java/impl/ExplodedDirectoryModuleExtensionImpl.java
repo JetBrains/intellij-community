@@ -9,15 +9,15 @@ import org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension;
 
 import java.util.Objects;
 
-public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<ExplodedDirectoryModuleExtensionImpl> implements
+class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<ExplodedDirectoryModuleExtensionImpl> implements
                                                                                                                ExplodedDirectoryModuleExtension {
   private String myExplodedUrl;
   private boolean myExcludeExploded;
 
-  public ExplodedDirectoryModuleExtensionImpl() {
+  ExplodedDirectoryModuleExtensionImpl() {
   }
 
-  public ExplodedDirectoryModuleExtensionImpl(ExplodedDirectoryModuleExtensionImpl original) {
+  ExplodedDirectoryModuleExtensionImpl(ExplodedDirectoryModuleExtensionImpl original) {
     myExcludeExploded = original.myExcludeExploded;
     myExplodedUrl = original.myExplodedUrl;
   }

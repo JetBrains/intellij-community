@@ -8,14 +8,13 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.wm.impl.IdeRootPane
-import com.intellij.openapi.wm.impl.ToolbarHolder
-import com.intellij.openapi.wm.impl.configureCustomTitleBar
+import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxResizableCustomFrameButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.HEADER_HEIGHT_DFM
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath.SimpleCustomDecorationPathComponent
-import com.intellij.openapi.wm.impl.getPreferredWindowHeaderHeight
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.ide.menu.IdeJMenuBar
@@ -67,6 +66,7 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   }
 
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private var currentContentState: WindowButtonsConfiguration.State? = null
 
   @Volatile
   private var isCompactHeader: Boolean
@@ -85,12 +85,29 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
       }
     }
 
-    val gb = GridBag().anchor(WEST)
-
     productIcon.border = JBUI.Borders.empty(V, 0, V, 0)
-    add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
-    add(headerContent, gb.next().fillCell().anchor(GridBagConstraints.CENTER).weightx(1.0).weighty(1.0))
-    buttonPanes?.let { add(wrap(it.getView()), gb.next().anchor(GridBagConstraints.EAST)) }
+
+    fillContent(WindowButtonsConfiguration.getInstance()?.state)
+    WindowButtonsConfiguration.getInstance()?.let {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        it.stateFlow.collect { value ->
+          // Skip initial call
+          if (currentContentState !== value) {
+            fillContent(value)
+            (buttonPanes as? LinuxResizableCustomFrameButtons)?.fillContent(value)
+          }
+        }
+      }
+    }
+
+    updateIconTheme(LinuxIconThemeConfiguration.getInstance()?.state?.iconTheme)
+    LinuxIconThemeConfiguration.getInstance()?.let {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        it.stateFlow.collect { value ->
+          updateIconTheme(value?.iconTheme)
+        }
+      }
+    }
 
     setCustomFrameTopBorder(isTopNeeded = { false }, isBottomNeeded = { mode == ShowMode.MENU })
 
@@ -107,18 +124,20 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
             updateLayout()
           }
 
-          isCompactHeader = rootPane.isCompactHeader { computeMainActionGroups() }
+          val compactHeader = rootPane.isCompactHeader { computeMainActionGroups() }
 
           when (mode) {
-            ShowMode.TOOLBAR -> doUpdateToolbar(isCompactHeader)
+            ShowMode.TOOLBAR -> doUpdateToolbar(compactHeader)
             ShowMode.MENU -> {
               withContext(Dispatchers.EDT) {
                 toolbar?.removeComponentListener(contentResizeListener)
                 toolbarPlaceholder.removeAll()
                 toolbarPlaceholder.revalidate()
+                toolbar = null
               }
             }
           }
+          isCompactHeader = compactHeader
 
           withContext(Dispatchers.EDT) {
             buttonPanes?.isCompactMode = isCompactHeader
@@ -162,6 +181,27 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
     }
+  }
+
+  private fun fillContent(state: WindowButtonsConfiguration.State?) {
+    currentContentState = state
+
+    removeAll()
+
+    val gb = GridBag().anchor(WEST)
+    if (state == null || state.rightPosition) {
+      add(productIcon, gb.nextLine().next().anchor(WEST).insetLeft(H))
+      add(headerContent, gb.next().fillCell().anchor(GridBagConstraints.CENTER).weightx(1.0).weighty(1.0))
+      buttonPanes?.let { add(wrap(it.getContent()), gb.next().anchor(GridBagConstraints.EAST)) }
+    }
+    else {
+      buttonPanes?.let { add(wrap(it.getContent()), gb.nextLine().next().anchor(WEST)) }
+      add(headerContent, gb.next().fillCell().anchor(GridBagConstraints.CENTER).weightx(1.0).weighty(1.0))
+    }
+  }
+
+  private fun updateIconTheme(iconTheme: String?) {
+    (buttonPanes as? LinuxResizableCustomFrameButtons)?.updateIconTheme(iconTheme)
   }
 
   private fun createToolbarPlaceholder(): JPanel {
@@ -212,26 +252,36 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     }
   }
 
-  private suspend fun doUpdateToolbar(isCompactHeader: Boolean) {
-    val toolbar = withContext(Dispatchers.EDT) {
+  private suspend fun doUpdateToolbar(compactHeader: Boolean) {
+    val resetToolbar = compactHeader != isCompactHeader || toolbar == null
+
+    if (!resetToolbar) {
+      withContext(Dispatchers.EDT) {
+        toolbarPlaceholder.revalidate()
+        toolbarPlaceholder.repaint()
+      }
+      return
+    }
+
+    val newToolbar = withContext(Dispatchers.EDT) {
       toolbar?.removeComponentListener(contentResizeListener)
       toolbarPlaceholder.removeAll()
       MainToolbar(coroutineScope = coroutineScope.childScope(), frame = frame)
     }
-    toolbar.init(customTitleBar)
+    newToolbar.init(customTitleBar)
     withContext(Dispatchers.EDT) {
-      toolbar.addComponentListener(contentResizeListener)
-      this@ToolbarFrameHeader.toolbar = toolbar
+      newToolbar.addComponentListener(contentResizeListener)
+      this@ToolbarFrameHeader.toolbar = newToolbar
       toolbarHeaderTitle.updateBorders(0)
-
-      if (isCompactHeader) {
+      if (compactHeader) {
         toolbarPlaceholder.add(toolbarHeaderTitle, BorderLayout.CENTER)
       }
       else {
-        toolbarPlaceholder.add(toolbar, BorderLayout.CENTER)
+        toolbarPlaceholder.add(newToolbar, BorderLayout.CENTER)
       }
 
       toolbarPlaceholder.revalidate()
+      toolbarPlaceholder.repaint()
     }
   }
 

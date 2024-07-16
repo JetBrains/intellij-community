@@ -8,12 +8,13 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoVariantsService
@@ -158,22 +159,13 @@ fun ModuleInfo.nameForTooltip(): String {
 /*
     Supported formats:
 
-    <groupId>:<artifactId>:<variant>:<version>
-    <groupId>:<artifactId>-<variant>:<version>
+    [prefix:] <groupId>:<artifactId>:<variant>:<version>
+    [prefix:] <groupId>:<artifactId>-<variant>:<version>
  */
 private fun Library.extractVariantName(binariesModuleInfo: LibraryInfo?): String? {
     binariesModuleInfo?.let(LibraryInfoVariantsService::bundledLibraryVariant)?.displayName?.let { return it }
 
-    val split = name.orEmpty().split(":")
-    if (split.size != 3 && split.size != 4) {
-        return null
-    }
-
-    return when (split.size) {
-        3 -> split[1].substringAfterLast('-')
-        4 -> split[2]
-        else -> null
-    }
+    return LibraryInfoVariantsService.extractVariantName(name)
 }
 
 private fun Collection<KtDeclaration>.hasUniqueModuleNames() = distinctBy { it.moduleInfo.nameForTooltip() }.size == size
@@ -215,9 +207,10 @@ fun KtDeclaration.isExpectDeclaration(): Boolean {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 fun hasExpectForActual(declaration: KtDeclaration): Boolean {
     return analyze(declaration) {
-        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.symbol
         symbol.getExpectsForActual().isNotEmpty()
     }
 }
@@ -226,10 +219,11 @@ fun KtDeclaration.allNavigatableExpectedDeclarations(): List<SmartPsiElementPoin
     return expectedDeclarationIfAny() + findMarkerBoundDeclarations().flatMap { it.expectedDeclarationIfAny() }
 }
 
+@OptIn(KaExperimentalApi::class)
 internal fun KtDeclaration.expectedDeclarationIfAny(): List<SmartPsiElementPointer<KtDeclaration>> {
     val declaration = this
     return analyze(this) {
-        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.symbol
         (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration)?.createSmartPointer() })
     }
 }

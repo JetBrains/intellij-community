@@ -20,7 +20,7 @@ import java.awt.Point
 import javax.swing.JList
 import kotlin.coroutines.resume
 
-object CollaborationToolsPopupUtil {
+internal object CollaborationToolsPopupUtil {
   fun configureSearchField(popup: JBPopup, popupConfig: PopupConfig) {
     val searchTextField = UIUtil.findComponentOfType(popup.content, SearchTextField::class.java)
     if (searchTextField != null) {

@@ -36,5 +36,3 @@ fun main() {
         .convert { foo() }
         .convert2 { foo2() }
 }
-
-// IGNORE_K2

@@ -120,6 +120,9 @@ public class BackgroundImageDialog extends DialogWrapper {
     });
   }
 
+  /**
+   * Called by UI Designer
+   */
   private void createUIComponents() {
     ComboBox<String> comboBox = new ComboBox<>(new CollectionComboBoxModel<>(), 100);
     myPathField = new ComboboxWithBrowseButton(comboBox);
@@ -311,6 +314,8 @@ public class BackgroundImageDialog extends DialogWrapper {
       myEditorPreview.updateView();
     }
     updatePreview();
+    setOKButtonText(EDITOR.equals(myPreviewTarget) ? IdeBundle.message("set.action.editor.and.tools")
+                                                   : IdeBundle.message("set.action.empty.frame"));
   }
 
   public void setSelectedPath(@NlsSafe String path) {
@@ -361,7 +366,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     String prop = getSystemProp();
     PropertiesComponent.getInstance(myProject).setValue(prop, null);
     PropertiesComponent.getInstance().setValue(prop, null);
-    repaintAllWindows();
+    resetBackgroundImagePainters();
   }
 
   @Override
@@ -381,7 +386,7 @@ public class BackgroundImageDialog extends DialogWrapper {
       PropertiesComponent.getInstance().setValue(prop, value);
     }
 
-    repaintAllWindows();
+    resetBackgroundImagePainters();
   }
 
   private void storeRecentImages() {

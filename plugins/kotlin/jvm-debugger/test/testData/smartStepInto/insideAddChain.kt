@@ -10,4 +10,4 @@ fun f3() = 30
 fun f4() = 40
 
 // EXISTS: f2(), f3(), f4()
-// IGNORE_K2
+

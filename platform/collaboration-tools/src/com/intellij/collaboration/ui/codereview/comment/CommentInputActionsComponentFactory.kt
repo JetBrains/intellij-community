@@ -31,7 +31,8 @@ object CommentInputActionsComponentFactory {
   val newLineShortcutText: @NlsSafe String
     get() = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
 
-  private val SUBMIT_SHORTCUT = CommonShortcuts.CTRL_ENTER
+  private val SUBMIT_SHORTCUT
+    get() = CommonShortcuts.getCtrlEnter()
   private val CANCEL_SHORTCUT = CommonShortcuts.ESCAPE
 
   fun create(cs: CoroutineScope, cfg: Config): JComponent {
@@ -112,6 +113,7 @@ object CommentInputActionsComponentFactory {
     val submitHint: StateFlow<@Nls String>
   )
 
+  @Deprecated("Use a version with CoroutineScope")
   fun attachActions(component: JComponent, cfg: Config): JComponent {
     return VerticalListPanel().apply {
       add(component)

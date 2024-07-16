@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.util.Processor;
@@ -27,25 +27,28 @@ import java.util.List;
  * @see CodeStyleSettingsModifier
  */
 public final class TransientCodeStyleSettings extends CodeStyleSettings {
-  private final WeakReference<FileViewProvider> myViewProviderRef;
-  private CodeStyleSettingsModifier             myModifier;
+  private final WeakReference<VirtualFile> myFileRef;
+  private final Project myProject;
+  private CodeStyleSettingsModifier myModifier;
   private final List<Object> myDependencies = new ArrayList<>();
 
   /**
-   * @deprecated Use {@link #TransientCodeStyleSettings(FileViewProvider,CodeStyleSettings)}
+   * @deprecated Use {@link #TransientCodeStyleSettings(VirtualFile,Project,CodeStyleSettings)}
    */
   @Deprecated
   public TransientCodeStyleSettings(@NotNull PsiFile psiFile, @NotNull CodeStyleSettings settings) {
     super(true, false);
-    myViewProviderRef = new WeakReference<>(psiFile.getViewProvider());
+    myFileRef = new WeakReference<>(psiFile.getVirtualFile());
+    myProject = psiFile.getProject();
     copyFrom(settings);
     myDependencies.add(settings.getModificationTracker());
   }
 
 
-  public TransientCodeStyleSettings(@NotNull FileViewProvider viewProvider, @NotNull CodeStyleSettings settings) {
+  public TransientCodeStyleSettings(@NotNull VirtualFile file, @NotNull Project project, @NotNull CodeStyleSettings settings) {
     super(true, false);
-    myViewProviderRef = new WeakReference<>(viewProvider);
+    myFileRef = new WeakReference<>(file);
+    myProject = project;
     copyFrom(settings);
     myDependencies.add(settings.getModificationTracker());
   }
@@ -65,8 +68,8 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
    */
   @Nullable
   public PsiFile getPsiFile() {
-    FileViewProvider viewProvider = myViewProviderRef.get();
-    return viewProvider != null ? viewProvider.getPsi(viewProvider.getBaseLanguage()) : null;
+    VirtualFile file = myFileRef.get();
+    return file != null ? PsiManager.getInstance(myProject).findFile(file) : null;
   }
 
   @NotNull

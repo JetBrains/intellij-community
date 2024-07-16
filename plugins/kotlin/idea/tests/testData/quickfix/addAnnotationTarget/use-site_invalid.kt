@@ -1,4 +1,5 @@
 // "Add annotation target" "false"
+// ACTION: Compiler warning 'INAPPLICABLE_TARGET_ON_PROPERTY_WARNING' options
 // ACTION: Create test
 // ACTION: Extract 'Test' from current file
 // ACTION: Make internal

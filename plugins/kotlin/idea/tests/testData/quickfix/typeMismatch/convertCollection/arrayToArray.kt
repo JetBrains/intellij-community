@@ -3,6 +3,7 @@
 // ACTION: Cast expression 'strings' to 'Array<String>'
 // ACTION: Change parameter 'strings' type of function 'bar' to 'Array<out String>'
 // ACTION: Create function 'bar'
+// IGNORE_K2
 
 fun foo(vararg strings: String) {
     bar(strings<caret>)

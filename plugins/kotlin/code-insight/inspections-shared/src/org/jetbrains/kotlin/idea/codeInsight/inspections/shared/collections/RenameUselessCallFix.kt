@@ -1,29 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.AbstractUselessCallInspection.ScopedLabelVisitor
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtContainerNode
-import org.jetbrains.kotlin.psi.KtPrefixExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class RenameUselessCallFix(private val newName: String, private val invert: Boolean = false) : LocalQuickFix {
+class RenameUselessCallFix(private val newName: String, private val invert: Boolean = false) : PsiUpdateModCommandQuickFix() {
     override fun getName() = KotlinBundle.message("rename.useless.call.fix.text", newName)
 
     override fun getFamilyName() = name
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val qualifiedExpression = descriptor.psiElement as? KtQualifiedExpression ?: return
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+        val qualifiedExpression = element as? KtQualifiedExpression ?: return
         val psiFactory = KtPsiFactory(project)
         val selectorCallExpression = qualifiedExpression.selectorExpression as? KtCallExpression
         val calleeExpression = selectorCallExpression?.calleeExpression ?: return

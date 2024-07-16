@@ -12,6 +12,7 @@ public class FileDownloadEventImpl extends AbstractBuildEvent implements Progres
   private final long myProgress;
   private final @NotNull @NlsSafe String myUnit;
   private final boolean myFirstInGroup;
+  private final @NotNull String myDownloadPath;
 
   public FileDownloadEventImpl(@NotNull Object eventId,
                                @Nullable Object parentId,
@@ -20,12 +21,14 @@ public class FileDownloadEventImpl extends AbstractBuildEvent implements Progres
                                long total,
                                long progress,
                                @NotNull String unit,
-                               boolean firstInGroup) {
+                               boolean firstInGroup,
+                               @NotNull String downloadPath) {
     super(eventId, parentId, eventTime, message);
     myTotal = total;
     myProgress = progress;
     myUnit = unit;
     myFirstInGroup = firstInGroup;
+    myDownloadPath = downloadPath;
   }
 
   @Override
@@ -45,5 +48,9 @@ public class FileDownloadEventImpl extends AbstractBuildEvent implements Progres
 
   public boolean isFirstInGroup() {
     return myFirstInGroup;
+  }
+
+  public @NotNull String getDownloadPath() {
+    return myDownloadPath;
   }
 }

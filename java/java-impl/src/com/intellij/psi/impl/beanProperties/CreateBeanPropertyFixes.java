@@ -35,7 +35,7 @@ public final class CreateBeanPropertyFixes {
       type = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(JAVA_LANG_STRING, GlobalSearchScope.allScope(project));
     }
     PropertyKind propertyKind = createSetter ? PropertyKind.SETTER : PropertyKind.GETTER;
-    CreateBeanPropertyRequest request = new CreateBeanPropertyRequest(psiClass.getProject(), propertyName, propertyKind, type);
+    CreateBeanPropertyRequest request = new CreateBeanPropertyRequest(psiClass.getProject(), propertyName, propertyKind, type, true);
     return createMethodActions(psiClass, request).toArray(IntentionAction.EMPTY_ARRAY);
   }
 }

@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,8 @@ import java.util.concurrent.ExecutorService;
  * A builder helper for {@link PersistentHashMap}
  *
  * @see PersistentHashMap
+ *
+ * TODO expose this as an interface
  */
 @ApiStatus.Experimental
 public final class PersistentMapBuilder<Key, Value> {
@@ -154,6 +157,7 @@ public final class PersistentMapBuilder<Key, Value> {
     return inlineValues(true);
   }
 
+  @Internal
   public @NotNull PersistentMapBuilder<Key, Value> withStorageLockContext(@Nullable StorageLockContext context) {
     myLockContext = context;
     return this;
@@ -211,6 +215,7 @@ public final class PersistentMapBuilder<Key, Value> {
     return myWalExecutor;
   }
 
+  @Internal
   public @Nullable StorageLockContext getLockContext() {
     return myLockContext;
   }

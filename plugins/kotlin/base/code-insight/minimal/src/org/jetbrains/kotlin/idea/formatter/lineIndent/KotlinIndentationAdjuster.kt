@@ -32,4 +32,7 @@ interface KotlinIndentationAdjuster {
 
     // CONTINUATION_INDENT_FOR_CHAINED_CALLS
     val continuationIndentForChainedCalls: Boolean get() = false
+
+    // INDENT_BEFORE_ARROW_ON_NEW_LINE
+    val indentBeforeArrowOnNewLine: Boolean get() = true
 }

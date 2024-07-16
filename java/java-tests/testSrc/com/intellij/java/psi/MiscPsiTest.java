@@ -6,7 +6,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Factory;
@@ -20,6 +19,7 @@ import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ThrowableRunnable;
@@ -222,14 +222,13 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testTopLevelEnumIsNotStatic() {
     final JavaPsiFacade facade = getJavaFacade();
-    final LanguageLevel prevLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    final LanguageLevel prevLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.getProject(), LanguageLevel.JDK_1_5);
     final PsiClass aClass;
     try {
       aClass = JavaPsiFacade.getElementFactory(getProject()).createEnum("E");
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(prevLanguageLevel);
+      IdeaTestUtil.setProjectLanguageLevel(facade.getProject(), prevLanguageLevel);
     }
     assertTrue(aClass.isEnum());
     assertFalse(aClass.hasModifierProperty(PsiModifier.STATIC));

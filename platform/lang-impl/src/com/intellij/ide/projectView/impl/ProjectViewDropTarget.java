@@ -314,10 +314,9 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
         if (!element.isValid()) return;
       }
 
-      DataContext context = CustomizedDataContext.create(externalDrop ? DataContext.EMPTY_CONTEXT : dataContext, dataId -> {
-        if (LangDataKeys.TARGET_MODULE.is(dataId)) return module;
-        if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) return target;
-        else return null;
+      DataContext context = CustomizedDataContext.withSnapshot(externalDrop ? DataContext.EMPTY_CONTEXT : dataContext, sink -> {
+        sink.set(LangDataKeys.TARGET_MODULE, module);
+        sink.set(LangDataKeys.TARGET_PSI_ELEMENT, target);
       });
       getActionHandler().invoke(myProject, sources, context);
     }

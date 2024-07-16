@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -17,17 +16,12 @@ import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import kotlin.Pair;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,22 +33,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @SuppressWarnings("Duplicates")
+@ApiStatus.Internal
 public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   private static final ExtensionPointName<SearchableOptionContributor> EP_NAME =
     new ExtensionPointName<>("com.intellij.search.optionContributor");
-
-  private static final ExtensionPointName<AdditionalLocationProvider> LOCATION_EP_NAME =
-    new ExtensionPointName<>("com.intellij.search.additionalOptionsLocation");
 
   // option => array of packed OptionDescriptor
   private volatile Map<CharSequence, long[]> storage = Collections.emptyMap();
@@ -79,7 +67,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
     stopWords = loadStopWords();
 
-    app.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         dropStorage();
@@ -146,7 +134,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     highlightOptionToSynonym = processor.computeHighlightOptionToSynonym();
 
     storage = processor.getStorage();
-    identifierTable = processor.getIdentifierTable();
+    identifierTable = processor.identifierTable;
   }
 
   /**
@@ -160,58 +148,6 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   @ApiStatus.Internal
   public Map<CharSequence, long[]> getStorage() {
     return new HashMap<>(storage);
-  }
-
-  static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter,
-                                       @NotNull BiConsumer<? super String, ? super Element> consumer) {
-    Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.INSTANCE.getPluginSet().getEnabledModules()) {
-      ClassLoader classLoader = plugin.getPluginClassLoader();
-      if (!(classLoader instanceof UrlClassLoader) || !visited.add(classLoader)) {
-        continue;
-      }
-
-      try {
-        ((UrlClassLoader)classLoader).processResources("search", fileNameFilter, (name, stream) -> {
-          try {
-            consumer.accept(name, JDOMUtil.load(stream));
-          }
-          catch (IOException | JDOMException e) {
-            throw new RuntimeException(String.format("Can't parse searchable options '%s' for plugin '%s'",
-                                                     name, plugin.getPluginId().getIdString()), e);
-          }
-        });
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    // process additional locations
-    LOCATION_EP_NAME.forEachExtensionSafe(provider -> {
-      Path additionalLocation = provider.getAdditionalLocation();
-      if (additionalLocation == null) {
-        return;
-      }
-      if (Files.isDirectory(additionalLocation)) {
-        try (var stream = Files.list(additionalLocation)) {
-          stream
-            .filter(path -> fileNameFilter.test(path.getFileName().toString()))
-            .forEach(path -> {
-              String fileName = path.getFileName().toString();
-              try {
-                consumer.accept(fileName, JDOMUtil.load(path));
-              }
-              catch (IOException | JDOMException e) {
-                throw new RuntimeException(String.format("Can't parse searchable options '%s'", fileName), e);
-              }
-            });
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
   }
 
   /**
@@ -276,9 +212,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
     Set<Configurable> effectiveConfigurables = new LinkedHashSet<>();
     if (previouslyFiltered == null) {
-      Consumer<Configurable> consumer = new CollectConsumer<>(effectiveConfigurables);
       for (ConfigurableGroup group : groups) {
-        SearchUtil.processExpandedGroups(group, consumer);
+        SearchUtilKt.processExpandedGroups(group, effectiveConfigurables);
       }
     }
     else {
@@ -506,33 +441,41 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   @Override
-  public @NotNull Set<String> getInnerPaths(SearchableConfigurable configurable, String option) {
+  public @NotNull Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option) {
     initialize();
-    final Set<String> words = getProcessedWordsWithoutStemming(option);
-    final Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
+    Set<String> words = getProcessedWordsWithoutStemming(option);
+    Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
+
+    if (path == null || path.isEmpty()) {
+      return Collections.emptySet();
+    }
 
     Set<String> resultSet = new HashSet<>();
-    if (path != null && !path.isEmpty()) {
-      OptionDescription theOnlyResult = null;
-      for (OptionDescription description : path) {
-        final String hit = description.getHit();
-        if (hit != null) {
-          boolean theBest = true;
-          for (String word : words) {
-            if (!StringUtil.containsIgnoreCase(hit, word)) {
-              theBest = false;
-              break;
-            }
-          }
-          if (theBest) {
-            resultSet.add(description.getPath());
+    OptionDescription theOnlyResult = null;
+    for (OptionDescription description : path) {
+      String hit = description.getHit();
+      if (hit != null) {
+        boolean theBest = true;
+        for (String word : words) {
+          if (!StringUtil.containsIgnoreCase(hit, word)) {
+            theBest = false;
+            break;
           }
         }
-        theOnlyResult = description;
+        if (theBest) {
+          String p = description.getPath();
+          if (p != null) {
+            resultSet.add(p);
+          }
+        }
       }
+      theOnlyResult = description;
+    }
 
-      if (resultSet.isEmpty()) {
-        resultSet.add(theOnlyResult.getPath());
+    if (resultSet.isEmpty()) {
+      String p = theOnlyResult.getPath();
+      if (p != null) {
+        resultSet.add(p);
       }
     }
 
@@ -555,18 +498,21 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   public static void collectProcessedWordsWithoutStemming(@NotNull String text,
                                                           @NotNull Set<? super String> result,
                                                           @NotNull Set<String> stopWords) {
-    for (String opt : WORD_SEPARATOR_CHARS.split(Strings.toLowerCase(text))) {
-      if (stopWords.contains(opt)) {
-        continue;
+    for (String opt : WORD_SEPARATOR_CHARS.split(text.toLowerCase(Locale.ENGLISH))) {
+      if (!stopWords.contains(opt) && !stopWords.contains(PorterStemmerUtil.stem(opt))) {
+        result.add(opt);
       }
-
-      String processed = PorterStemmerUtil.stem(opt);
-      if (stopWords.contains(processed)) {
-        continue;
-      }
-
-      result.add(opt);
     }
+  }
+
+  @ApiStatus.Internal
+  public static void collectProcessedWordsWithoutStemmingAndStopWords(@NotNull String text, @NotNull Set<? super String> result) {
+    Collections.addAll(result, WORD_SEPARATOR_CHARS.split(text.toLowerCase(Locale.ENGLISH)));
+  }
+
+  @ApiStatus.Internal
+  public static Stream<String> splitToWordsWithoutStemmingAndStopWords(@NotNull String text) {
+    return WORD_SEPARATOR_CHARS.splitAsStream(text);
   }
 
   @Override
@@ -577,9 +523,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   }
 
   static void collectProcessedWords(@NotNull String text, @NotNull Set<? super String> result, @NotNull Set<String> stopWords) {
-    String toLowerCase = StringUtil.toLowerCase(text);
-    final String[] options = WORD_SEPARATOR_CHARS.split(toLowerCase);
-    for (String opt : options) {
+    String toLowerCase = text.toLowerCase(Locale.ENGLISH);
+    for (String opt : WORD_SEPARATOR_CHARS.split(toLowerCase)) {
       if (stopWords.contains(opt)) {
         continue;
       }

@@ -2,21 +2,18 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
-import com.intellij.refactoring.suggested.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -50,8 +47,8 @@ object AddQualifiersUtil {
         return root
     }
 
-    context(KtAnalysisSession)
-    fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KtSymbol): Boolean {
+    context(KaSession)
+    fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KaSymbol): Boolean {
         if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
 
         val prevElement = referenceExpression.prevLeaf {
@@ -59,18 +56,18 @@ object AddQualifiersUtil {
         }
         if (prevElement.elementType == KtTokens.DOT) return false
         val fqName = getFqName(contextSymbol) ?: return false
-        if (contextSymbol is KtCallableSymbol && contextSymbol.isExtension || fqName.parent().isRoot == true) return false
+        if (contextSymbol is KaCallableSymbol && contextSymbol.isExtension || fqName.parent().isRoot == true) return false
 
         if (prevElement.elementType == KtTokens.COLONCOLON) {
 
-            fun isTopLevelCallable(callableSymbol: KtSymbol): Boolean {
-                if (callableSymbol is KtConstructorSymbol) {
-                    val containingClassSymbol = callableSymbol.getContainingSymbol()
-                    if (containingClassSymbol?.getContainingSymbol() == null) {
+            fun isTopLevelCallable(callableSymbol: KaSymbol): Boolean {
+                if (callableSymbol is KaConstructorSymbol) {
+                    val containingClassSymbol = callableSymbol.containingDeclaration
+                    if (containingClassSymbol?.containingDeclaration == null) {
                         return true
                     }
                 }
-                return callableSymbol is KtCallableSymbol && callableSymbol.getContainingSymbol() == null
+                return callableSymbol is KaCallableSymbol && callableSymbol.containingDeclaration == null
             }
 
             if (isTopLevelCallable(contextSymbol)) return false
@@ -101,21 +98,21 @@ object AddQualifiersUtil {
         return action()
     }
 
-    fun getFqName(symbol: KtSymbol): FqName? {
+    fun getFqName(symbol: KaSymbol): FqName? {
         return when (symbol) {
-            is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()
-            is KtConstructorSymbol -> symbol.containingClassIdIfNonLocal?.asSingleFqName()
-            is KtCallableSymbol -> symbol.callableIdIfNonLocal?.asSingleFqName()
+            is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
+            is KaConstructorSymbol -> symbol.containingClassId?.asSingleFqName()
+            is KaCallableSymbol -> symbol.callableId?.asSingleFqName()
             else -> null
         }
     }
 
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private fun applyIfApplicable(referenceExpression: KtNameReferenceExpression): KtElement? {
         val fqName = allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(referenceExpression) {
-                    val symbol = referenceExpression.mainReference.resolveToSymbols().singleOrNull() as? KtNamedSymbol ?: return null
+                    val symbol = referenceExpression.mainReference.resolveToSymbols().singleOrNull() as? KaNamedSymbol ?: return null
                     val fqName = getFqName(symbol) ?: return null
                     if (!isApplicableTo(referenceExpression, symbol)) return null
                     fqName

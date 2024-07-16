@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisScope;
@@ -25,6 +24,7 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -123,7 +123,15 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
     myTree = new InspectionTree(this);
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
+    JScrollPane scrollPane;
+    if (ExperimentalUI.isNewUI()) {
+      scrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
+      ScrollableContentBorder.setup(scrollPane, Side.LEFT);
+    }
+    else {
+      scrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
+    }
+    mySplitter.setFirstComponent(scrollPane);
     mySplitter.setHonorComponentsMinimumSize(false);
 
     mySplitter.addPropertyChangeListener(evt -> {
@@ -146,13 +154,11 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement();
-        node.dropProblemCountCaches();
       }
 
       @Override
       public void includeNode(@NotNull InspectionTreeNode node) {
         node.amnestyElement();
-        node.dropProblemCountCaches();
       }
 
       @Override
@@ -403,8 +409,10 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
               myRightPanelUpdater.execute(() -> {
                 final var entity = node.getContainingFileLocalEntity();
                 SwingUtilities.invokeLater(() -> {
-                  TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
-                  if (newPath == pathSelected) showInRightPanel(entity);
+                  ReadAction.run(() -> {
+                    TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
+                    if (newPath == pathSelected) showInRightPanel(entity);
+                  });
                 });
               });
             }
@@ -923,8 +931,10 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
     myRerun = true;
     if (myScope.isValid()) {
       myGlobalInspectionContext.doInspections(myScope);
-    } else {
-      GlobalInspectionContextImpl.NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.view.invalid.scope.message"), NotificationType.INFORMATION).notify(getProject());
+    }
+    else {
+      var content = InspectionsBundle.message("inspection.view.invalid.scope.message");
+      new Notification(GlobalInspectionContextImpl.NOTIFICATION_GROUP, content, NotificationType.INFORMATION).notify(getProject());
     }
   }
 

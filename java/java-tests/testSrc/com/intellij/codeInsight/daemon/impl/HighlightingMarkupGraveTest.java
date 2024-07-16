@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -68,7 +68,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSymbolSeverityHighlightersAreAppliedOnFileReload() {
-    HighlightingMarkupGrave.runInEnabled(() -> {
+    HighlightingMarkupGrave.Companion.runInEnabled(() -> {
       MyStoppableAnnotator annotator = new MyStoppableAnnotator();
       DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
         @Language("JAVA")
@@ -100,7 +100,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
             Arrays.stream(markupModel.getAllHighlighters())
               .filter(h -> h.getTextAttributesKey() != null)
               .filter(h -> h.getLayer() == HighlighterLayer.ADDITIONAL_SYNTAX)
-              .filter(h -> HighlightingMarkupGrave.isZombieMarkup(h))
+              .filter(h -> HighlightingMarkupGrave.Companion.isZombieMarkup(h))
               .sorted(RangeMarker.BY_START_OFFSET)
               .map(h -> h.getTextRange().substring(document.getText()))
               .toList();
@@ -141,7 +141,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
   }
 
   public void testStoredHighlightersAreAppliedImmediatelyOnFileReload() {
-    HighlightingMarkupGrave.runInEnabled(() -> {
+    HighlightingMarkupGrave.Companion.runInEnabled(() -> {
       MyStoppableAnnotator annotator = new MyStoppableAnnotator();
       DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new MyStoppableAnnotator[]{annotator}, () -> {
         @Language("JAVA")
@@ -170,7 +170,7 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
             errorHighlighter = ContainerUtil.find(markupModel.getAllHighlighters(), h -> CodeInsightColors.ERRORS_ATTRIBUTES.equals(h.getTextAttributesKey()));
           assertNotNull(errorHighlighter);
           assertEquals("//XXX", errorHighlighter.getTextRange().substring(document.getText()));
-          assertTrue(HighlightingMarkupGrave.isZombieMarkup(errorHighlighter));
+          assertTrue(HighlightingMarkupGrave.Companion.isZombieMarkup(errorHighlighter));
         }
         finally {
           annotator.allowToRun.set(true);

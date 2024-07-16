@@ -2,14 +2,10 @@
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.history.integration.IdeaGateway
-import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.util.EventDispatcher
@@ -19,61 +15,65 @@ import kotlinx.coroutines.flow.*
 import java.util.*
 
 @OptIn(FlowPreview::class)
-internal class ActivityViewModel(private val project: Project, gateway: IdeaGateway, private val activityScope: ActivityScope, coroutineScope: CoroutineScope) {
+internal class ActivityViewModel(private val project: Project, gateway: IdeaGateway, internal val activityScope: ActivityScope,
+                                 diffMode: DirectoryDiffMode, coroutineScope: CoroutineScope) {
   private val eventDispatcher = EventDispatcher.create(ActivityModelListener::class.java)
 
   internal val activityProvider: ActivityProvider = LocalHistoryActivityProvider(project, gateway)
 
   private val activityItemsFlow = MutableStateFlow(ActivityData.EMPTY)
   private val selectionFlow = MutableStateFlow<ActivitySelection?>(null)
-  private val diffDataFlow = MutableStateFlow<Pair<ActivitySelection?, ActivityDiffData?>>(Pair(null, null))
+  private val diffModeFlow = MutableStateFlow(diffMode)
 
-  private val scopeFilterFlow = MutableStateFlow<String?>(null)
-  private val activityFilterFlow = MutableStateFlow<String?>(null)
+  private val filterFlow = MutableStateFlow<String?>(null)
 
   private val isVisibleFlow = MutableStateFlow(true)
 
   init {
     coroutineScope.launch {
-      combine(activityProvider.getActivityItemsChanged(activityScope).debounce(500), scopeFilterFlow,
+      combine(activityProvider.getActivityItemsChanged(activityScope).debounce(500),
+              if (filterKind == FilterKind.FILE) filterFlow else flowOf(null),
               isVisibleFlow) { _, filter, isVisible -> filter to isVisible }
         .filter { (_, isVisible) -> isVisible }
         .map { it.first }
         .collect { filter ->
           thisLogger<ActivityViewModel>().debug("Loading activity items for $activityScope and filter $filter")
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
-          val activityItems = withContext(Dispatchers.Default) {
+          val activityData = withContext(Dispatchers.Default) {
             LocalHistoryCounter.logLoadItems(project, activityScope) {
               activityProvider.loadActivityList(activityScope, filter)
             }
           }
           withContext(Dispatchers.EDT) {
-            val activityData = ActivityData(activityItems)
             activityItemsFlow.value = activityData
             eventDispatcher.multicaster.onItemsLoadingStopped(activityData)
           }
         }
     }
-    coroutineScope.launch {
-      selectionFlow.collectLatest { selection ->
-        thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope")
-        val diffData = selection?.let {
-          withContext(Dispatchers.Default) {
-            LocalHistoryCounter.logLoadDiff(project, activityScope) {
-              activityProvider.loadDiffData(activityScope, selection)
+    if (!isSingleDiffSupported) {
+      coroutineScope.launch {
+        combine(selectionFlow, diffModeFlow) { s, d -> s to d }.collectLatest { (selection, diffMode) ->
+          thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope diff mode $diffMode")
+          withContext(Dispatchers.EDT) {
+            eventDispatcher.multicaster.onDiffDataLoadingStarted()
+          }
+          val diffData = selection?.let {
+            withContext(Dispatchers.Default) {
+              LocalHistoryCounter.logLoadDiff(project, activityScope) {
+                activityProvider.loadDiffData(activityScope, selection, diffMode)
+              }
             }
           }
-        }
-        diffDataFlow.value = selection to diffData
-        withContext(Dispatchers.EDT) {
-          eventDispatcher.multicaster.onDiffDataLoaded(diffData)
+          withContext(Dispatchers.EDT) {
+            eventDispatcher.multicaster.onDiffDataLoadingStopped(diffData)
+          }
         }
       }
     }
 
-    if (activityProvider.isActivityFilterSupported(activityScope)) {
+    if (filterKind == FilterKind.CONTENT) {
       coroutineScope.launch {
-        combine(activityFilterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }.collect { (filter, data) ->
+        combine(filterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }.collect { (filter, data) ->
           if (filter.isNullOrEmpty()) {
             withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(null) }
             return@collect
@@ -90,37 +90,25 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
     }
   }
 
-  @RequiresEdt
-  internal fun loadDiffDataSynchronously(): ActivityDiffData? {
-    val lastSelection = selectionFlow.value ?: return null
+  internal val selection get() = selectionFlow.value
 
-    val (lastSelectionWithDiffData, lastDiffData) = diffDataFlow.value
-    if (lastSelectionWithDiffData == lastSelection) return lastDiffData
+  internal var diffMode get() = diffModeFlow.value
+    set(value) {
+      diffModeFlow.value = value
+    }
 
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
-      runBlockingCancellable {
-        diffDataFlow.first { it.first == lastSelection }
-      }
-    }, LocalHistoryBundle.message("activity.diff.loading"), true, project).second
-  }
+  internal val isSingleDiffSupported get() = !activityScope.hasMultipleFiles
 
-  internal val isScopeFilterSupported get() = activityProvider.isScopeFilterSupported(activityScope)
-  internal val isActivityFilterSupported get() = activityProvider.isActivityFilterSupported(activityScope)
-
-  val isFilterSet: Boolean get() = !scopeFilterFlow.value.isNullOrEmpty() || !activityFilterFlow.value.isNullOrEmpty()
-
+  internal val filterKind get() = activityProvider.getSupportedFilterKindFor(activityScope)
+  val isFilterSet: Boolean get() = !filterFlow.value.isNullOrEmpty()
   fun setFilter(pattern: String?) {
-    if (isScopeFilterSupported) {
-      scopeFilterFlow.value = pattern
-    }
-    if (isActivityFilterSupported) {
-      activityFilterFlow.value = pattern
-    }
+    filterFlow.value = pattern
   }
 
   @RequiresEdt
   fun setSelection(selection: ActivitySelection?) {
     selectionFlow.value = selection
+    eventDispatcher.multicaster.onSelectionChanged(selection)
   }
 
   fun setVisible(isVisible: Boolean) {
@@ -132,10 +120,12 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
   }
 }
 
-interface ActivityModelListener : EventListener {
+internal interface ActivityModelListener : EventListener {
   fun onItemsLoadingStarted() = Unit
   fun onItemsLoadingStopped(data: ActivityData) = Unit
-  fun onDiffDataLoaded(diffData: ActivityDiffData?) = Unit
+  fun onSelectionChanged(selection: ActivitySelection?) = Unit
+  fun onDiffDataLoadingStarted() = Unit
+  fun onDiffDataLoadingStopped(diffData: ActivityDiffData?) = Unit
   fun onFilteringStarted() = Unit
   fun onFilteringStopped(result: Set<ActivityItem>?) = Unit
 }

@@ -97,8 +97,7 @@ public final class JavaGenerateMemberCompletionContributor {
     return fileText.length() > afterAnno && fileText.charAt(afterAnno) == '\n';
   }
 
-  @NotNull
-  private static LookupElement itemWithOverrideImplementDialog() {
+  private static @NotNull LookupElement itemWithOverrideImplementDialog() {
     LookupElementBuilder element =
       LookupElementBuilder.create(JavaBundle.message("completion.override.implement.methods")).withLookupString("Override")
         .withInsertHandler((context, item) -> {
@@ -264,7 +263,8 @@ public final class JavaGenerateMemberCompletionContributor {
 
       newInfos.get(0).positionCaret(context.getEditor(), true);
       ApplicationManager.getApplication().invokeLater(
-        () -> GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(PsiElement.EMPTY_ARRAY)));
+        () -> GlobalInspectionContextBase.cleanupElements(
+          context.getProject(), null, elements.stream().filter(e -> e.isValid()).toArray(PsiElement[]::new)));
     }
   }
 
@@ -306,8 +306,7 @@ public final class JavaGenerateMemberCompletionContributor {
     return PrioritizedLookupElement.withPriority(element, -1);
   }
 
-  @NotNull
-  private static String getShortParameterName(PsiSubstitutor substitutor, PsiParameter p) {
+  private static @NotNull String getShortParameterName(PsiSubstitutor substitutor, PsiParameter p) {
     return PsiNameHelper.getShortClassName(substitutor.substitute(p.getType()).getPresentableText(false));
   }
 

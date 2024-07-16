@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.jps.entities.groupPath
 import com.intellij.util.containers.Interner
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 
-class UnloadedModuleDescriptionBridge private constructor(
+internal class UnloadedModuleDescriptionBridge private constructor(
   private val name: String,
   private val dependencyModuleNames: List<String>,
   private val contentRoots: List<VirtualFilePointer>,

@@ -270,6 +270,9 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           element.addContent(fingerprintElement);
         }
       }
+      if (descriptor instanceof ExportedInspectionsResultModifier) {
+        ((ExportedInspectionsResultModifier)descriptor).modifyResult(element);
+      }
     }
     catch (ProcessCanceledException e) {
       throw e;

@@ -27,7 +27,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.rt.execution.junit.FileComparisonData
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.*
 import com.intellij.testFramework.TemporaryDirectory.Companion.generateTemporaryPath
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -726,8 +726,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     try {
       assertSameLinesWithFile(filePath!!, expectedText!!)
     }
-    catch (e: AssertionError) {
-      if (e !is FileComparisonData) throw e
+    catch (e: FileComparisonFailedError) {
       val expected: String = e.expectedStringPresentation
       val actual: String = e.actualStringPresentation
       assertUnorderedElementsAreEqual(expected.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray(),

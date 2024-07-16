@@ -109,12 +109,12 @@ internal class IdeaFreezeReporter : PerformanceListener {
       dumpTask = object : SamplingTask(100, maxDumpDuration, coroutineScope) {
         override fun stop() {
           super.stop()
-          EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
+          EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
         }
 
         override suspend fun stopDumpingThreads() {
           super.stopDumpingThreads()
-          EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
+          EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
         }
       }
       EP_NAME.forEachExtensionSafe { it.start(reportDir) }
@@ -128,7 +128,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     val edtStack = dump.edtStackTrace
     if (edtStack != null) {
       stacktraceCommonPart = if (stacktraceCommonPart == null) {
-        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RemoveRedundantQualifierName")
+        @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
         java.util.List.of(*edtStack)
       }
       else {
@@ -191,7 +191,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
                           reportDir: Path?,
                           performanceWatcher: PerformanceWatcher,
                           finished: Boolean): IdeaLoggingEvent? {
-    var infos: List<Array<ThreadInfo>> = dumpTask.threadInfos
+    var infos = dumpTask.threadInfos.toList()
     val dumpInterval = (if (infos.isEmpty()) performanceWatcher.dumpInterval else dumpTask.dumpInterval).toLong()
     if (infos.isEmpty()) {
       infos = currentDumps.map { it.threadInfos }
@@ -314,7 +314,7 @@ private class CallTreeNode(private val stackTraceElement: StackTraceElement?,
 
   fun findDominantCommonStack(threshold: Long): CallTreeNode? {
     var node: CallTreeNode? = getMostHitChild() ?: return null
-    while (node != null && !node.children.isNullOrEmpty()) {
+    while (node != null && !node.children.isEmpty()) {
       val mostHitChild = node.getMostHitChild()
       if (mostHitChild == null || mostHitChild.time <= threshold) break
       node = mostHitChild

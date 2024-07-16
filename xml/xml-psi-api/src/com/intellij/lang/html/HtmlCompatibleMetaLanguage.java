@@ -25,7 +25,7 @@ public class HtmlCompatibleMetaLanguage extends MetaLanguage {
       () -> ContainerUtil.map2Set(EP_NAME.getExtensionList(), e -> e.language)
     ), EP_NAME, null);
 
-  public HtmlCompatibleMetaLanguage() {
+  private HtmlCompatibleMetaLanguage() {
     super("HtmlCompatible");
   }
 

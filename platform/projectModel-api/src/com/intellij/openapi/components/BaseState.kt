@@ -165,6 +165,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return true
   }
 
+  @ApiStatus.Internal
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
   /**
@@ -212,6 +213,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   fun __getProperties(): MutableList<StoredProperty<Any>> = properties
 }
 
+@ApiStatus.Internal
 interface StatePropertyFactory {
   fun bool(defaultValue: Boolean): StoredPropertyBase<Boolean>
 

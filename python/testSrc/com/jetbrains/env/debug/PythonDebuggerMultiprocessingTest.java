@@ -59,13 +59,14 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_args.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath("test_remote.py"), 2);
+        toggleBreakpoint(getFilePath("test_multiprocess_args_child.py"), 4);
         setWaitForTermination(false);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
+        eval("import sys");
         eval("sys.argv[1]").hasValue("'subprocess'");
         eval("sys.argv[2]").hasValue("'etc etc'");
 

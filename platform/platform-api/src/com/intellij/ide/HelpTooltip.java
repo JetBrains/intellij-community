@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -311,6 +312,7 @@ public class HelpTooltip {
   public HelpTooltip setBrowserLink(@NlsContexts.LinkLabel String linkLabel, URL url) {
     link = new BrowserLink(linkLabel, url.toExternalForm());
     link.setHorizontalTextPosition(SwingConstants.LEFT);
+    linkOriginalFontScaler = new JBFontScaler(link.getFont());
     return this;
   }
 
@@ -592,7 +594,7 @@ public class HelpTooltip {
     if (isTooltipDisabled(e.getComponent())) return;
     if (ScreenReader.isActive()) return; // Disable HelpTooltip in screen reader mode.
 
-    popupAlarm.addRequest(() -> {
+    popupAlarm.addRequest((ContextAwareRunnable) () -> {
       initialShowScheduled = false;
       if (masterPopupOpenCondition != null && !masterPopupOpenCondition.getAsBoolean()) {
         return;
@@ -625,7 +627,7 @@ public class HelpTooltip {
 
   private void scheduleHide(boolean force, int delay) {
     popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> hidePopup(force), delay);
+    popupAlarm.addRequest((ContextAwareRunnable)() -> hidePopup(force), delay);
   }
 
   protected void hidePopup(boolean force) {
@@ -696,6 +698,14 @@ public class HelpTooltip {
         }
       }
     }
+  }
+
+  boolean fromSameWindowAs(@NotNull Component component) {
+    if (myPopup != null && !myPopup.isDisposed()) {
+      Window popupWindow = SwingUtilities.getWindowAncestor(myPopup.getContent());
+      return component == popupWindow || SwingUtilities.getWindowAncestor(component) == popupWindow;
+    }
+    return false;
   }
 
   private final class Header extends BoundWidthLabel {

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list
 
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupStep
@@ -12,7 +13,7 @@ import javax.swing.JList
 private val Empty = object : PopupInlineActionsSupport {
   override fun calcExtraButtonsCount(element: Any?): Int = 0
   override fun calcButtonIndex(element: Any?, point: Point): Int? = null
-  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?) = InlineActionDescriptor({}, false)
+  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?) = InlineActionDescriptor({}, KeepPopupOnPerform.Always)
   override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> = emptyList()
   override fun getActiveButtonIndex(list: JList<*>): Int? = null
   override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String? = null

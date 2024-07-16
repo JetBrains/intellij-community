@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.google.common.collect.ObjectArrays;
@@ -38,18 +24,18 @@ import com.jetbrains.python.extensions.ModuleBasedContextAnchor;
 import com.jetbrains.python.extensions.ProjectSdkContextAnchor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.reflection.ReflectionUtilsKt;
+import com.jetbrains.python.reflection.SimplePropertiesProvider;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyBrowseActionListener;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
-import com.jetbrains.python.reflection.SimplePropertiesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
@@ -88,25 +74,23 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     return myPanel;
   }
 
-  @NotNull
   @Override
-  public List<String> getPropertyNames() {
+  public @NotNull List<String> getPropertyNames() {
     return new ArrayList<>(myCustomOptions.keySet());
   }
 
   @Override
-  public void setPropertyValue(@NotNull final String propertyName, @Nullable final Object propertyValue) {
+  public void setPropertyValue(final @NotNull String propertyName, final @Nullable Object propertyValue) {
     myCustomOptions.get(propertyName).setValue(propertyValue);
   }
 
-  @Nullable
   @Override
-  public Object getPropertyValue(@NotNull final String propertyName) {
+  public @Nullable Object getPropertyValue(final @NotNull String propertyName) {
     return myCustomOptions.get(propertyName).getValue();
   }
 
-  private PyTestSharedForm(@Nullable final Module module,
-                           @NotNull final PyAbstractTestConfiguration configuration) {
+  private PyTestSharedForm(final @Nullable Module module,
+                           final @NotNull PyAbstractTestConfiguration configuration) {
     myPathTarget = new TextFieldWithBrowseButton();
     final Project project = configuration.getProject();
 
@@ -137,7 +121,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   /**
    * Titles border used among test run configurations
    */
-  public static void setBorderToPanel(@NotNull final JPanel panel, @NotNull final @NlsSafe String title) {
+  public static void setBorderToPanel(final @NotNull JPanel panel, final @NotNull @NlsSafe String title) {
     panel.setBorder(IdeBorderFactory.createTitledBorder(title, false));
   }
 
@@ -145,8 +129,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
    * @param configuration configuration to configure form on creation
    * @param customOptions additional option names this form shall support. Make sure your configuration has appropriate properties.
    */
-  @NotNull
-  public static PyTestSharedForm create(@NotNull final PyAbstractTestConfiguration configuration,
+  public static @NotNull PyTestSharedForm create(final @NotNull PyAbstractTestConfiguration configuration,
                                         final PyTestCustomOption @NotNull ... customOptions) {
     final PyTestSharedForm form = new PyTestSharedForm(configuration.getModule(), configuration);
 
@@ -221,8 +204,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     return myOptionsForm;
   }
 
-  @NotNull
-  public String getTarget() {
+  public @NotNull String getTarget() {
     // We should always use system-independent path because only this type of path is processed correctly
     // when stored (folder changed to macros to prevent hard code)
     final String targetText = getActiveTextField().getText().trim();
@@ -230,7 +212,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   }
 
 
-  public void setTarget(@NotNull final String targetText) {
+  public void setTarget(final @NotNull String targetText) {
     getActiveTextField().setText(targetText);
   }
 
@@ -254,19 +236,18 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     }
   }
 
-  @NotNull
-  private TextAccessor getActiveTextField() {
+  private @NotNull TextAccessor getActiveTextField() {
     return (getTargetType() == PyRunTargetVariant.PATH ? myPathTarget : myPythonTarget);
   }
 
-  @SuppressWarnings("WeakerAccess") // Accessor for property
-  @NotNull
-  public PyRunTargetVariant getTargetType() {
+  // Accessor for property
+  @SuppressWarnings("WeakerAccess")
+  public @NotNull PyRunTargetVariant getTargetType() {
     return PyRunTargetVariant.valueOf(myButtonGroup.getSelection().getActionCommand());
   }
 
   @SuppressWarnings("unused") // Mutator for property
-  public void setTargetType(@NotNull final PyRunTargetVariant target) {
+  public void setTargetType(final @NotNull PyRunTargetVariant target) {
     final Enumeration<AbstractButton> elements = myButtonGroup.getElements();
     while (elements.hasMoreElements()) {
       final AbstractButton button = elements.nextElement();

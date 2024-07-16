@@ -81,6 +81,10 @@ public final class JsonPointerPosition {
     return checkPosInRange(pos) && steps.get(pos).isFromObject();
   }
 
+  public List<String> getStepNames() {
+    return ContainerUtil.map(steps, s -> s.getName());
+  }
+
   public @Nullable JsonPointerPosition skip(int count) {
     return checkPosInRangeIncl(count) ? new JsonPointerPosition(steps.subList(count, steps.size())) : null;
   }

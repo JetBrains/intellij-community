@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.icons.AllIcons
@@ -109,7 +109,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
   private fun tryOpenTab(fileEditor: FileEditor, project: Project, editorProviderId: String): Boolean {
     val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
     for (window in fileEditorManager.windows) {
-      for (composite in window.getComposites().toList()) {
+      for (composite in window.composites().toList()) {
         for (tab in composite.allEditors) {
           if (tab == fileEditor) {
             // move focus to the current window

@@ -174,14 +174,12 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ResultOfMethodCallIgnored";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass containingClass = (PsiClass)infos[0];
     final String className = containingClass.getName();
     return InspectionGadgetsBundle.message("result.of.method.call.ignored.problem.descriptor", className);
@@ -214,8 +212,8 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
     public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       if (PsiTypes.voidType().equals(LambdaUtil.getFunctionalInterfaceReturnType(expression))) {
         PsiElement resolve = expression.resolve();
-        if (resolve instanceof PsiMethod) {
-          visitCalledExpression(expression, (PsiMethod)resolve, null);
+        if (resolve instanceof PsiMethod method && !method.isConstructor()) {
+          visitCalledExpression(expression, method, null);
         }
       }
     }

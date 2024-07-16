@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
@@ -199,7 +199,7 @@ open class MoveKotlinDeclarationsProcessor(
                     }
                 }
 
-                MoveClassHandler.EP_NAME.extensions.filter { it !is MoveKotlinClassHandler }.forEach { handler ->
+                MoveClassHandler.EP_NAME.extensions.forEach { handler ->
                     handler.preprocessUsages(results)
                 }
 

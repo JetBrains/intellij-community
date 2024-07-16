@@ -20,6 +20,7 @@ object HuggingFaceURLProvider {
     return when(entityKind) {
       HuggingFaceEntityKind.MODEL -> URL("$baseURL/$entityId/raw/main/README.md")
       HuggingFaceEntityKind.DATASET -> URL("$baseURL/datasets/$entityId/raw/main/README.md")
+      HuggingFaceEntityKind.SPACE -> URL("$baseURL/spaces/$entityId/raw/main/README.md")
     }
   }
 
@@ -27,12 +28,15 @@ object HuggingFaceURLProvider {
     return when(entityKind) {
       HuggingFaceEntityKind.MODEL -> getModelCardLink(entityId)
       HuggingFaceEntityKind.DATASET -> getDatasetCardLink(entityId)
+      HuggingFaceEntityKind.SPACE -> getSpaceLink(entityId)
     }
   }
 
   fun getModelCardLink(modelId: String): URL = URL("$baseURL/$modelId")
 
   fun getDatasetCardLink(datasetId: String): URL = URL("$baseURL/datasets/$datasetId")
+
+  private fun getSpaceLink(spaceId: String): URL = URL("$baseURL/spaces/$spaceId")
 
   private fun createCommonParametersString(commonParameters: Map<String, String>): String {
     return commonParameters.entries.joinToString("&") {
@@ -72,6 +76,8 @@ object HuggingFaceURLProvider {
     return URL("$baseURL/api/models?$allParameters")
   }
 
+  fun fetchApiDataForModel(modelId: String) = URL("$baseURL/api/models/$modelId")
+
   fun fetchApiDataUrl(
     entityKind: HuggingFaceEntityKind,
     limit: Int = HuggingFaceConstants.HF_API_FETCH_PAGE_SIZE,
@@ -86,6 +92,7 @@ object HuggingFaceURLProvider {
     val expandParameters = when(entityKind) {
       HuggingFaceEntityKind.MODEL -> modelsExpandParameters
       HuggingFaceEntityKind.DATASET -> datasetsExpandParameters
+      HuggingFaceEntityKind.SPACE -> emptyList()  // todo: fill if support for HF spaces is needed
     }
 
     val encodedCommonParameters = createCommonParametersString(commonParameters)

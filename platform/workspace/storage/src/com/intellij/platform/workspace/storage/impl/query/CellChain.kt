@@ -9,7 +9,9 @@ import com.intellij.platform.workspace.storage.impl.cache.makeTokensForDiff
 import com.intellij.platform.workspace.storage.trace.ReadTraceHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 public class QueryId
 internal class CellId
 

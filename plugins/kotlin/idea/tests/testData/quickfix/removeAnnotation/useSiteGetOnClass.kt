@@ -1,5 +1,6 @@
 // "Remove annotation, since it has no effect. See https://youtrack.jetbrains.com/issue/KT-48141" "false"
 // IGNORE_K2
+// ACTION: Compiler warning 'INAPPLICABLE_TARGET_ON_PROPERTY_WARNING' options
 // ACTION: Create test
 // ACTION: Make internal
 // ACTION: Make private

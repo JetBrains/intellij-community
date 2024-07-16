@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyAccessibilityInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
+public final class GroovyAccessibilityInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
 
   private static final String SHORT_NAME = "GroovyAccessibility";
 

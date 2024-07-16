@@ -5,7 +5,6 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [foo()] = external foo()()
                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
                     UIdentifier (Identifier (foo)) [UIdentifier (Identifier (foo))]
-                    USimpleNameReferenceExpression (identifier = foo, resolvesTo = null) [foo] = external foo()()
                 UDeclarationsExpression [@kotlin.Suppress var a: int = 1] = Undetermined
                     ULocalVariable (name = a) [@kotlin.Suppress var a: int = 1]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress]
@@ -54,7 +53,6 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                     USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isBlank()] = external isBlank()()
                                         UIdentifier (Identifier (isBlank)) [UIdentifier (Identifier (isBlank))]
-                                        USimpleNameReferenceExpression (identifier = isBlank, resolvesTo = null) [isBlank] = external isBlank()()
                                 UExpressionList (when_entry) [{...] = Undetermined
                                     UYieldExpression [yield null] = UYieldResult(null)
                                         ULiteralExpression (value = null) [null] = null
@@ -64,7 +62,6 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                                         USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isNotEmpty()] = external isNotEmpty()()
                                             UIdentifier (Identifier (isNotEmpty)) [UIdentifier (Identifier (isNotEmpty))]
-                                            USimpleNameReferenceExpression (identifier = isNotEmpty, resolvesTo = null) [isNotEmpty] = external isNotEmpty()()
                                     ULiteralExpression (value = null) [null] = null
                                 UExpressionList (when_entry) [{...] = Undetermined
                                     UYieldExpression [yield null] = UYieldResult(null)

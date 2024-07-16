@@ -1,3 +1,3 @@
 package foo
 
-class UsedInJava
+class UsedInJavaZ808

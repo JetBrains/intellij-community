@@ -38,7 +38,7 @@ public interface CustomHighlighterRenderer {
    * @deprecated please use {@link #getOrder()} instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean isForeground() {
     return false;
   }

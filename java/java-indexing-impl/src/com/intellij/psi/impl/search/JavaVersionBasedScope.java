@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
@@ -16,14 +15,12 @@ import java.util.Objects;
  * A scope decorator that allows to prefer a particular Java class version from multi-release Jar dependencies
  */
 public final class JavaVersionBasedScope extends DelegatingGlobalSearchScope {
-  private final ProjectFileIndex myProjectFileIndex;
   private final LanguageLevel myLevel;
 
   public JavaVersionBasedScope(@NotNull Project project,
                                @NotNull GlobalSearchScope baseScope,
                                @NotNull LanguageLevel desiredLevel) {
     super(project, baseScope);
-    myProjectFileIndex = ProjectFileIndex.getInstance(project);
     // Set desired level to Java 8 if it's less than Java 8, to make all these scopes equal, so they could be deduplicated
     myLevel = desiredLevel.isLessThan(JavaMultiReleaseUtil.MIN_MULTI_RELEASE_VERSION)
               ? JavaMultiReleaseUtil.MAX_NON_MULTI_RELEASE_VERSION

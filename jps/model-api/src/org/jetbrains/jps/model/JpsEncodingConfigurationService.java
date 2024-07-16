@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -29,6 +30,7 @@ public abstract class JpsEncodingConfigurationService {
   @Nullable
   public abstract String getGlobalEncoding(@NotNull JpsGlobal global);
 
+  @ApiStatus.Internal
   public abstract void setGlobalEncoding(@NotNull JpsGlobal global, @Nullable String encoding);
 
   @Nullable
@@ -37,6 +39,7 @@ public abstract class JpsEncodingConfigurationService {
   @Nullable
   public abstract JpsEncodingProjectConfiguration getEncodingConfiguration(@NotNull JpsProject project);
 
+  @ApiStatus.Internal
   @NotNull
   public abstract JpsEncodingProjectConfiguration setEncodingConfiguration(@NotNull JpsProject project, @Nullable String projectEncoding,
                                                                            @NotNull Map<String, String> urlToEncoding);

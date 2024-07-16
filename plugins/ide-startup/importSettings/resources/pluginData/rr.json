@@ -15,6 +15,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
@@ -65,6 +70,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
+  },
+  {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
     "ideaId": "com.intellij.lang.jsgraphql"
@@ -78,6 +88,11 @@
     "vsCodeId": "HashiCorp.terraform",
     "ideaName": "Terraform and HCL",
     "ideaId": "org.intellij.plugins.hcl"
+  },
+  {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
+    "builtIn": true
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
@@ -100,6 +115,16 @@
     "ideaId": "com.intellij.ja"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
+    "ideaName": "Korean Language Pack / 한국어 언어 팩",
+    "ideaId": "com.intellij.ko"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
+    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
+    "ideaId": "com.intellij.zh"
+  },
+  {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
     "ideaId": "com.intellij.kubernetes"
@@ -113,6 +138,11 @@
     "vsCodeId": "ms-vscode-remote.remote-wsl",
     "ideaName": "WSL",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.node-debug2",
+    "ideaName": "Node.js",
+    "ideaId": "NodeJS"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
@@ -136,13 +166,23 @@
   },
   {
     "vsCodeId": "rust-lang.rust-analyzer",
-    "ideaName": "Rust Support",
-    "builtIn": true
+    "ideaName": "Rust",
+    "ideaId": "com.jetbrains.rust"
   },
   {
     "vsCodeId": "streetsidesoftware.code-spell-checker",
     "ideaName": "Grazie Lite",
     "ideaId": "tanvd.grazi"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

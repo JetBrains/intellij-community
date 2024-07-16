@@ -20,7 +20,9 @@ import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.config.ToggleBooleanProperty;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
   private TestFrameworkRunningModel myModel;
   public ScrollToTestSourceAction(final TestConsoleProperties properties) {

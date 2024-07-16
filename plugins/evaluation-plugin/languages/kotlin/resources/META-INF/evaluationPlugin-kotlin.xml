@@ -4,5 +4,6 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinMultiLineEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionContextEvaluationVisitor"/>
     <lineCompletionVisitorFactory implementation="com.intellij.cce.visitor.KotlinLineCompletionVisitorFactory"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinDocGenerationVisitor"/>
   </extensions>
 </idea-plugin>

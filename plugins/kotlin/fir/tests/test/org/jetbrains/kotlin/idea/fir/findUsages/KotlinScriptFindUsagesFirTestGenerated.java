@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.findUsages;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/findUsages/kotlinScript")
 public class KotlinScriptFindUsagesFirTestGenerated extends AbstractKotlinScriptFindUsagesFirTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K2;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -41,6 +48,11 @@ public class KotlinScriptFindUsagesFirTestGenerated extends AbstractKotlinScript
     @TestMetadata("dummy.0.kts")
     public void testDummy() throws Exception {
         runTest("../../idea/tests/testData/findUsages/kotlinScript/dummy.0.kts");
+    }
+
+    @TestMetadata("lambdas.0.kts")
+    public void testLambdas() throws Exception {
+        runTest("../../idea/tests/testData/findUsages/kotlinScript/lambdas.0.kts");
     }
 
     @TestMetadata("localClass.0.kts")

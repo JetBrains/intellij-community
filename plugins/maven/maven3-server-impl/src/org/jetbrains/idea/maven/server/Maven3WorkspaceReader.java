@@ -57,6 +57,10 @@ public class Maven3WorkspaceReader implements MavenWorkspaceReader {
 
   @Override
   public Model findModel(Artifact artifact) {
+    if (myWorkspaceReader instanceof MavenWorkspaceReader) {
+      Model modelFromWorkspace = ((MavenWorkspaceReader)myWorkspaceReader).findModel(artifact);
+      if (modelFromWorkspace != null) return modelFromWorkspace;
+    }
     return myMavenModelMap.get(new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion()));
   }
 }

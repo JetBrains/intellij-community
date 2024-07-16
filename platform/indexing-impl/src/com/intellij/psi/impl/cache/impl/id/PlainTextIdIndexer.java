@@ -6,11 +6,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+@Internal
 public final class PlainTextIdIndexer implements IdIndexer {
   private static final Key<Map<IdIndexEntry, Integer>> ID_INDEX_DATA_KEY = Key.create("plain.text.id.index");
 

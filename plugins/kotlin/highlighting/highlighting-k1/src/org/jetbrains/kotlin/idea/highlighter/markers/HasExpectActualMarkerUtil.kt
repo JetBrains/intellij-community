@@ -14,7 +14,8 @@ fun getModulesStringForExpectActualMarkerTooltip(
     return when (descriptors.size) {
         0 -> null
         1 -> descriptors.single().moduleNameForTooltip()
-        else -> descriptors.joinToString(", ", "[", "]") { it.moduleNameForTooltip() }
+        else -> descriptors.map { it.moduleNameForTooltip() }.sorted()
+            .joinToString(", ", prefix = "[", postfix = "]")
     }
 }
 

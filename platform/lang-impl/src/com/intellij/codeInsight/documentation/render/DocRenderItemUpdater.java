@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,6 +28,10 @@ public final class DocRenderItemUpdater implements Runnable {
     return ApplicationManager.getApplication().getService(DocRenderItemUpdater.class);
   }
 
+  public static void updateRenderers(@NotNull Collection<? extends DocRenderItem> items, boolean recreateContent, Runnable onAfterDone) {
+    getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.getFoldRegion()), recreateContent, onAfterDone);
+  }
+
   public static void updateRenderers(@NotNull Collection<? extends DocRenderItem> items, boolean recreateContent) {
     getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.getFoldRegion()), recreateContent);
   }
@@ -39,21 +44,30 @@ public final class DocRenderItemUpdater implements Runnable {
     if (items != null) updateRenderers(items, recreateContent);
   }
 
+  void updateFoldRegions(@NotNull Collection<? extends  CustomFoldRegion> foldRegions, boolean recreateContent, Runnable onAfterDone) {
+    if (foldRegions.isEmpty()) return;
+    boolean wasEmpty = myQueue.isEmpty();
+    for (CustomFoldRegion foldRegion : foldRegions) {
+      myQueue.merge(foldRegion, recreateContent, Boolean::logicalOr);
+    }
+    if (wasEmpty) processChunk(onAfterDone);
+  }
+
   void updateFoldRegions(@NotNull Collection<? extends CustomFoldRegion> foldRegions, boolean recreateContent) {
     if (foldRegions.isEmpty()) return;
     boolean wasEmpty = myQueue.isEmpty();
     for (CustomFoldRegion foldRegion : foldRegions) {
       myQueue.merge(foldRegion, recreateContent, Boolean::logicalOr);
     }
-    if (wasEmpty) processChunk();
+    if (wasEmpty) processChunk(null);
   }
 
   @Override
   public void run() {
-    processChunk();
+    processChunk(null);
   }
 
-  private void processChunk() {
+  private void processChunk(@Nullable Runnable onAfterDone) {
     long deadline = System.currentTimeMillis() + MAX_UPDATE_DURATION_MS;
     Map<Editor, EditorScrollingPositionKeeper> keepers = new HashMap<>();
     // This is a heuristic to lessen visual 'jumping' on editor opening. We'd like regions visible at target opening location to be updated
@@ -84,7 +98,8 @@ public final class DocRenderItemUpdater implements Runnable {
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
     editorTasks.entrySet().forEach((entry -> runFoldingTasks(entry.getKey(), entry.getValue())));
     keepers.values().forEach(k -> k.restorePosition(false));
-    if (!myQueue.isEmpty()) SwingUtilities.invokeLater(ThreadContext.captureThreadContext(this));
+    if (!myQueue.isEmpty()) SwingUtilities.invokeLater(ThreadContext.captureThreadContext(() -> processChunk(onAfterDone)));
+    if (myQueue.isEmpty() && onAfterDone != null) onAfterDone.run();
   }
 
   private static void runFoldingTasks(@NotNull Editor editor, @NotNull List<Runnable> tasks) {

@@ -9,7 +9,9 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Represents a single build target or a set of build targets which circularly depend on each other.
+ * Represents a single build target or a set of build targets which circularly depend on each other. 
+ * Currently, circular dependencies are allowed between {@link org.jetbrains.jps.incremental.ModuleBuildTarget} only, in that case targets
+ * which are included in the cycle, compose {@link ModuleChunk}. 
  */
 public final class BuildTargetChunk {
   private final Set<? extends BuildTarget<?>> myTargets;

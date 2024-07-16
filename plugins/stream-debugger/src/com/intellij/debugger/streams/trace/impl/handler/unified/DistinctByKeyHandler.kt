@@ -34,7 +34,7 @@ open class DistinctByKeyHandler(callNumber: Int,
 
   init {
     val arguments = myCall.arguments
-    assert(arguments.isNotEmpty(), { "Key extractor is not specified" })
+    assert(arguments.isNotEmpty()) { "Key extractor is not specified" }
     myKeyExtractor = arguments.first()
     myExtractorVariable = dsl.variable(ClassTypeImpl(myKeyExtractor.type), KEY_EXTRACTOR_VARIABLE_PREFIX + callNumber)
   }

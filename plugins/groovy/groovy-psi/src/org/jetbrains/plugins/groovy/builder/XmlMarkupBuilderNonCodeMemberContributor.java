@@ -15,7 +15,7 @@ import static com.intellij.psi.CommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_TYPE_KEY;
 
-public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsContributor {
+public final class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsContributor {
 
   private static final String FQN = "groovy.xml.MarkupBuilder";
   @NonNls private static final String ORIGIN_INFO = "via MarkupBuilder";

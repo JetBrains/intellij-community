@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -894,7 +895,7 @@ private val CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER")
 private val CMD_ENTER = KeyboardShortcut.fromString("meta ENTER")
 
 private fun isControlEnterOnDialog(component: Component?, sc: Shortcut): Boolean {
-  return ((CONTROL_ENTER == sc || SystemInfoRt.isMac && CMD_ENTER == sc)
+  return ((CONTROL_ENTER == sc || ClientSystemInfo.isMac() && CMD_ENTER == sc)
           && !IdeEventQueue.getInstance().isPopupActive && DialogWrapper.findInstance(component) != null)
 }
 

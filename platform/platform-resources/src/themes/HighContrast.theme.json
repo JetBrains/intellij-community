@@ -69,6 +69,13 @@
       "focusedSelectedButtonColor": "#0f6780"
     },
 
+    "DisclosureButton": {
+      "defaultBackground": "#281A33",
+      "hoverOverlay": "#450073",
+      "pressedOverlay": "#54008c",
+      "successBackground": "#092E15"
+    },
+
     "Borders": {
       "color": "#b3b3b3",
       "ContrastBorderColor": "#B3B3B3"
@@ -112,6 +119,7 @@
     },
 
     "Component": {
+      "focusedBorderColor": "#000000",
       "errorFocusColor": "#E6194B",
       "inactiveErrorFocusColor": "#800002",
       "warningFocusColor": "#F58231",
@@ -237,6 +245,7 @@
 
     "Notification": {
       "background": "#000080",
+      "iconHoverBackground": "#000000",
 
       "errorForeground": "#FFFFFF",
       "errorBackground": "#800002",
@@ -406,6 +415,13 @@
       "endBackground": "#FFD333FF"
     },
 
+    "Slider": {
+      "buttonColor": "#FFFFFF",
+      "buttonBorderColor": "#000000",
+      "tickColor": "#FFFFFF",
+      "trackColor": "#8c8c8c"
+    },
+
     "StatusBar.borderColor": "#b3b3b3",
 
     "TabbedPane": {
@@ -488,6 +504,12 @@
         "backgroundBrightness": 0.7
       },
       "FileHistory.Commit.selectedBranchBackground": "#0D0D40"
+    },
+
+    "CombinedDiff": {
+      "BlockBorder": {
+        "selectedActiveColor": "#1AEBFF"
+      }
     },
 
     "Lesson": {

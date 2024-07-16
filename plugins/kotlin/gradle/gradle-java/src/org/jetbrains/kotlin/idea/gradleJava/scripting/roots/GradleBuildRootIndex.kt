@@ -43,6 +43,7 @@ class GradleBuildRootIndex(private val project: Project) : StandaloneScriptsUpda
     private val byProjectDir = HashMap<String, GradleBuildRoot>()
 
     val list: Collection<GradleBuildRoot>
+        @Synchronized
         get() = byWorkingDir.values
 
     @Synchronized

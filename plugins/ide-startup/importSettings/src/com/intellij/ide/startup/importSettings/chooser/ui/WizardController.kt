@@ -1,58 +1,73 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contr(ibutors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
-import com.intellij.ide.startup.importSettings.data.WizardService
+import com.intellij.ide.startup.importSettings.data.StartupWizardService
 import com.intellij.ide.startup.importSettings.wizard.keymapChooser.KeymapChooserPage
 import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardPluginsPage
 import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardProgressPage
 import com.intellij.ide.startup.importSettings.wizard.themeChooser.ThemeChooserPage
 import com.intellij.util.ui.accessibility.ScreenReader
+import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 
 interface WizardController : BaseController {
   companion object {
-    fun createController(dialog: OnboardingDialog, service: WizardService, goBackAction: (() -> Unit)?): WizardController {
+    fun createController(dialog: OnboardingDialog, service: StartupWizardService, goBackAction: (() -> Unit)?): WizardController {
       return WizardControllerImpl(dialog, service, goBackAction)
     }
   }
 
   val goBackAction: (() -> Unit)?
 
-  val service: WizardService
+  val service: StartupWizardService
 
-  fun goToThemePage()
-  fun goToKeymapPage()
+  fun goToThemePage(isForwardDirection: Boolean)
+  fun goToKeymapPage(isForwardDirection: Boolean)
   fun goToPluginPage()
   fun goToInstallPluginPage(ids: List<String>)
   fun skipPlugins()
+
+  fun cancelPluginInstallation()
 }
 
 class WizardControllerImpl(dialog: OnboardingDialog,
-                           override val service: WizardService,
+                           override val service: StartupWizardService,
                            override val goBackAction: (() -> Unit)?) : WizardController, BaseControllerImpl(dialog) {
 
-  override fun goToThemePage() {
+  private val installationLifetimes = SequentialLifetimes(lifetime)
+
+  init {
+    service.shouldClose.advise(lifetime) {
+      dialog.dialogClose()
+    }
+  }
+
+  override fun goToThemePage(isForwardDirection: Boolean) {
     if (ScreenReader.isActive()) {
-      goToKeymapPage()
+      goToKeymapPage(isForwardDirection = true)
       return
     }
 
     val page = ThemeChooserPage(this)
     dialog.changePage(page)
+    page.onEnter(isForwardDirection)
   }
 
-  override fun goToKeymapPage() {
+  override fun goToKeymapPage(isForwardDirection: Boolean) {
     val page = KeymapChooserPage(this)
     dialog.changePage(page)
+    page.onEnter(isForwardDirection)
   }
 
   override fun goToPluginPage() {
     val page = WizardPluginsPage(this)
     dialog.changePage(page)
+    page.onEnter()
   }
 
   override fun goToInstallPluginPage(ids: List<String>) {
     if (ids.isNotEmpty()) {
-      val importProgress = service.getPluginService().install(ids)
+      val lifetime = installationLifetimes.next()
+      val importProgress = service.getPluginService().install(lifetime, ids)
       val page = WizardProgressPage(importProgress, this)
       dialog.changePage(page)
     }
@@ -64,5 +79,9 @@ class WizardControllerImpl(dialog: OnboardingDialog,
   override fun skipPlugins() {
     service.getPluginService().skipPlugins()
     dialog.dialogClose()
+  }
+
+  override fun cancelPluginInstallation() {
+    installationLifetimes.terminateCurrent()
   }
 }

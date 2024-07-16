@@ -21,4 +21,7 @@ public final class BreadcrumbsUtil {
     }
     return null;
   }
+
+  private BreadcrumbsUtil() {
+  }
 }

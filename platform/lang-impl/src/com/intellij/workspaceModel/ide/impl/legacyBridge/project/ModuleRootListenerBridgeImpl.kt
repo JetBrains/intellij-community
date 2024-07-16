@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.openapi.application.ApplicationManager
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleRootListenerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
@@ -63,14 +64,14 @@ internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
     val performUpdate = shouldFireRootsChanged(event, project)
     if (performUpdate) {
       LOG.trace { "Perform update" }
-      val rootsChangeInfo = EntityIndexingServiceEx.getInstanceEx().createWorkspaceChangedEventInfo(event.getAllChanges().toList())
+      val rootsChangeInfo = EntityIndexingServiceEx.getInstanceEx().createWorkspaceChangedEventInfo((event as VersionedStorageChangeInternal).getAllChanges().toList())
       projectRootManager.rootsChanged.rootsChanged(rootsChangeInfo)
     }
   }
 
   private fun shouldFireRootsChanged(events: VersionedStorageChange, project: Project): Boolean {
     val indexingService = EntityIndexingServiceEx.getInstanceEx()
-    return events.getAllChanges().any {
+    return (events as VersionedStorageChangeInternal).getAllChanges().any {
       indexingService.shouldCauseRescan(it.oldEntity, it.newEntity, project)
     }
   }

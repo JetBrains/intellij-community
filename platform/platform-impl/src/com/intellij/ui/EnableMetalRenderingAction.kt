@@ -33,8 +33,7 @@ class EnableMetalRenderingAction: ToggleAction(), DumbAware {
       val path = VMOptions.getUserOptionsFile()
       val vmOptions = path?.toFile()?.readLines()?.filter { !it.contains("sun.java2d.metal") }?.toList()
       if (vmOptions != null) {
-        val newVmOptions = if (state) ArrayList(vmOptions).also { it[0] = "-Dsun.java2d.metal=true" }
-                           else ArrayList(vmOptions).also { it[0] = "-Dsun.java2d.metal=false" }
+        val newVmOptions = vmOptions + "-Dsun.java2d.metal=$state"
         path.toFile().writeText(newVmOptions.joinToString("\n"))
       }
 

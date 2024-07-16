@@ -9,20 +9,20 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ide.CopyPasteManager
 import com.jediterm.terminal.TerminalOutputStream
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBufferEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.outputController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.simpleTerminalController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalFocusModel
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.outputController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.simpleTerminalController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalFocusModel
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
+import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import java.awt.datatransfer.DataFlavor
 
-class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor as? EditorEx ?: return
     when {

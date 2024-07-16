@@ -12,6 +12,7 @@ class VariableInplaceRenameHandlerWithFinishHook(private val onFinish: () -> Uni
         return object : RenamerImpl(elementToRename as PsiNamedElement, editor) {
             override fun performRefactoring(): Boolean {
                 try {
+                    @Suppress("SuspiciousPackagePrivateAccess") //workaround for bug in the inspection: KTIJ-29791
                     return super.performRefactoring()
                 } finally {
                     onFinish()

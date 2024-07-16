@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PagedStorage;
 import com.intellij.util.io.pagecache.impl.*;
 import com.intellij.util.io.storage.AbstractStorage;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 
+@Internal
 public final class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageWithRWLockedPageContent.class);
 

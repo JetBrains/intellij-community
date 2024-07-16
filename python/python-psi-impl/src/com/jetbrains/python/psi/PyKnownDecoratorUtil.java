@@ -69,6 +69,9 @@ public final class PyKnownDecoratorUtil {
     TYPING_RUNTIME_CHECKABLE_EXT("typing_extensions.runtime_checkable"),
     TYPING_FINAL("typing.final"),
     TYPING_FINAL_EXT("typing_extensions.final"),
+    TYPING_DEPRECATED("typing_extensions.deprecated"),
+
+    WARNING_DEPRECATED("warnings.deprecated"),
 
     REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr"),
 

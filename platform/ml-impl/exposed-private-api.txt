@@ -1,0 +1,4 @@
+com/intellij/codeInsight/completion/addingPolicy/PolicyController
+com/intellij/internal/ml/DecisionFunction
+com/intellij/internal/ml/WordsSplitter
+com/intellij/platform/ml/impl/turboComplete/SuggestionGeneratorExecutor

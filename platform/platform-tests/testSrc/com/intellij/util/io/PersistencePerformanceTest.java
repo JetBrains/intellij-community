@@ -13,7 +13,9 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
+import com.intellij.util.indexing.contentQueue.IndexingProgressReporter2;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
@@ -114,8 +116,11 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       ProgressManager.getInstance().runProcess(() -> {
         try {
           new IndexUpdateRunner(index, indexingRequest)
-            .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
-                        new ProjectDumbIndexingHistoryImpl(getProject()));
+            .indexFiles(getProject(),
+                        new IndexUpdateRunner.FileSet(getProject(), "test files",
+                                                      QueuedFiles.fromRequestsCollection(files, Collections.emptyList())),
+                        new ProjectDumbIndexingHistoryImpl(getProject()),
+                        IndexingProgressReporter2.Companion.createEmpty());
         }
         catch (Exception e) {
           throw new RuntimeException(e);

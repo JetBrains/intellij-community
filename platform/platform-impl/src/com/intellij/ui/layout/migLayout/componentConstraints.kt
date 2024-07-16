@@ -41,7 +41,7 @@ internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
-internal class DefaultComponentConstraintCreator(private val spacing: SpacingConfiguration) {
+internal class DefaultComponentConstraintCreator(spacing: SpacingConfiguration) {
   private val shortTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px!", false, true)
   private val mediumTextSizeSpec = ConstraintParser.parseBoundSize("${spacing.shortTextWidth}px::${spacing.maxShortTextWidth}px", false, true)
 

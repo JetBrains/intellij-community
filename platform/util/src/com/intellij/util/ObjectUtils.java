@@ -168,7 +168,10 @@ public final class ObjectUtils {
     return condition.test(obj) ? null : obj;
   }
 
-  @Contract("null, _ -> null")
+  /**
+   * @deprecated Use Kotlin takeIf
+   */
+  @Deprecated
   public static @Nullable <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
     return obj == defaultValue ? null : obj;
   }

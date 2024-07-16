@@ -32,7 +32,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MavenSettings implements SearchableConfigurable.Parent {
+public final class MavenSettings implements SearchableConfigurable.Parent {
   private final Configurable myConfigurable;
   private final List<Configurable> myChildren;
 

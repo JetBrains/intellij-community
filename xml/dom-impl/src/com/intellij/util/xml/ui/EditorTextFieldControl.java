@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -37,6 +37,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
       throw new UnsupportedOperationException("Shouldn't be shown");
     }
   };
+
   private final boolean myCommitOnEveryChange;
   private final DocumentListener myListener = new DocumentListener() {
     @Override
@@ -48,13 +49,12 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
     }
   };
 
-  protected EditorTextFieldControl(final DomWrapper<String> domWrapper, final boolean commitOnEveryChange) {
+  protected EditorTextFieldControl(DomWrapper<String> domWrapper, boolean commitOnEveryChange) {
     super(domWrapper);
     myCommitOnEveryChange = commitOnEveryChange;
   }
 
-
-  protected EditorTextFieldControl(final DomWrapper<String> domWrapper) {
+  protected EditorTextFieldControl(DomWrapper<String> domWrapper) {
     this(domWrapper, false);
   }
 
@@ -62,28 +62,28 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
   @Override
   protected void doReset() {
-    final EditorTextField textField = getEditorTextField(getComponent());
+    EditorTextField textField = getEditorTextField(getComponent());
     textField.getDocument().removeDocumentListener(myListener);
     super.doReset();
     textField.getDocument().addDocumentListener(myListener);
   }
 
   @Override
-  protected JComponent getComponentToListenFocusLost(final T component) {
+  protected JComponent getComponentToListenFocusLost(T component) {
     return getEditorTextField(getComponent());
   }
 
   @Override
-  protected JComponent getHighlightedComponent(final T component) {
+  protected JComponent getHighlightedComponent(T component) {
     return J_TEXT_FIELD;
   }
 
   @Override
   protected T createMainComponent(T boundedComponent) {
-    final Project project = getProject();
+    Project project = getProject();
     boundedComponent = createMainComponent(boundedComponent, project);
 
-    final EditorTextField editorTextField = getEditorTextField(boundedComponent);
+    EditorTextField editorTextField = getEditorTextField(boundedComponent);
     editorTextField.setSupplementary(true);
     editorTextField.getDocument().addDocumentListener(myListener);
     return boundedComponent;
@@ -97,46 +97,46 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
   }
 
   @Override
-  protected void setValue(final String value) {
+  protected void setValue(String value) {
     CommandProcessor.getInstance().runUndoTransparentAction(() -> WriteAction.run(() -> {
-      final T component = getComponent();
-      final Document document = getEditorTextField(component).getDocument();
+      T component = getComponent();
+      Document document = getEditorTextField(component).getDocument();
       document.replaceString(0, document.getTextLength(), value == null ? "" : value);
     }));
   }
 
   @Override
   protected void updateComponent() {
-    final DomElement domElement = getDomElement();
+    DomElement domElement = getDomElement();
     if (domElement == null || !domElement.isValid()) return;
 
-    final EditorTextField textField = getEditorTextField(getComponent());
-    final Project project = getProject();
+    EditorTextField textField = getEditorTextField(getComponent());
+    Project project = getProject();
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!project.isOpen()) return;
       if (!getDomWrapper().isValid()) return;
 
-      final DomElement domElement1 = getDomElement();
+      DomElement domElement1 = getDomElement();
       if (domElement1 == null || !domElement1.isValid()) return;
 
-      final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
-      final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement1);
-      final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement1);
-      final List<DomElementProblemDescriptor> warningProblems =
+      DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
+      DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement1);
+      List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement1);
+      List<DomElementProblemDescriptor> warningProblems =
         new ArrayList<>(holder.getProblems(domElement1, true, HighlightSeverity.WARNING));
       warningProblems.removeAll(errorProblems);
 
       Color background = getDefaultBackground();
-      if (errorProblems.size() > 0 && textField.getText().trim().length() == 0) {
+      if (!errorProblems.isEmpty() && textField.getText().trim().isEmpty()) {
         background = getErrorBackground();
       }
-      else if (warningProblems.size() > 0) {
+      else if (!warningProblems.isEmpty()) {
         background = getWarningBackground();
       }
 
-      final Editor editor = textField.getEditor();
+      Editor editor = textField.getEditor();
       if (editor != null) {
-        final MarkupModel markupModel = editor.getMarkupModel();
+        MarkupModel markupModel = editor.getMarkupModel();
         markupModel.removeAllHighlighters();
         if (!errorProblems.isEmpty() && editor.getDocument().getLineCount() > 0) {
           markupModel.addLineHighlighter(CodeInsightColors.ERRORS_ATTRIBUTES, 0, 0);
@@ -146,17 +146,16 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
       textField.setBackground(background);
     });
-
   }
 
   @Override
-  public boolean canNavigate(final DomElement element) {
+  public boolean canNavigate(DomElement element) {
     return getDomElement().equals(element);
   }
 
   @Override
-  public void navigate(final DomElement element) {
-    final EditorTextField field = getEditorTextField(getComponent());
+  public void navigate(DomElement element) {
+    EditorTextField field = getEditorTextField(getComponent());
     SwingUtilities.invokeLater(() -> {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
       field.selectAll();

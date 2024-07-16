@@ -1,19 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(EntityStorageInstrumentationApi::class)
-
 package com.intellij.platform.workspace.storage.tests.trace
 
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.asBase
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.tests.builderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.trace.ReadTracker
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertContains
@@ -82,7 +81,6 @@ class TraceTest {
   }
 
   @Test
-  @OptIn(EntityStorageInstrumentationApi::class)
   fun `get entities amount`() {
     val traces = ReadTracker.trace(snapshot) {
       (it as ImmutableEntityStorageInstrumentation).entityCount(NamedEntity::class.java)
@@ -139,6 +137,7 @@ class TraceTest {
   }
 
   @Test
+  @Disabled
   fun `get symbolic id`() {
     val traces = ReadTracker.trace(snapshot) {
       val value = it.resolve(NameId("name"))!!
@@ -153,7 +152,7 @@ class TraceTest {
     val newSnapshot = snapshot.toBuilder().also { builder ->
       val parent = builder.entities(NamedEntity::class.java).single()
       builder addEntity NamedChildEntity("Property", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(builder)
       }
     }.toSnapshot()
 

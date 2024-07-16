@@ -37,7 +37,7 @@ import java.util.List;
 
 import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
-public class GroovyIntroduceParameterObjectDelegate
+public final class GroovyIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<GrMethod, GrParameterInfo, GroovyIntroduceObjectClassDescriptor> {
   @Override
   public boolean isEnabledOn(PsiElement element) {

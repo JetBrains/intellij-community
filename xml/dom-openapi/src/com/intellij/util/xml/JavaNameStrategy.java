@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,9 +14,8 @@ import java.util.Arrays;
 public class JavaNameStrategy extends DomNameStrategy {
   public static final Function<String,String> DECAPITALIZE_FUNCTION = s -> StringUtil.decapitalize(s);
 
-  @NotNull
   @Override
-  public final String convertName(@NotNull String propertyName) {
+  public final @NotNull String convertName(@NotNull String propertyName) {
     return StringUtil.decapitalize(propertyName);
   }
 

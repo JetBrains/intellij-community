@@ -11,7 +11,16 @@ import java.awt.*;
  * Used to override caret attributes such as shape, size or painting color.
  */
 public final class CaretVisualAttributes {
+
+  /**
+   * @deprecated use {@link #getDefault()} instead
+   */
+  @Deprecated
   public static final CaretVisualAttributes DEFAULT = new CaretVisualAttributes(null, Weight.NORMAL, Shape.DEFAULT, 1.0f);
+
+  public static CaretVisualAttributes getDefault() {
+    return DEFAULT;
+  }
 
   private final @Nullable Color myColor;
   private final @NotNull Weight myWeight;

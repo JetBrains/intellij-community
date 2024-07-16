@@ -3,9 +3,9 @@ package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -382,7 +382,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (model != null) {
       for (int i = 0; i < model.getColumnCount(); i++) {
         TableColumn column = model.getColumn(i);
-        if (column != null) width += Math.max(column.getWidth(), column.getPreferredWidth());
+        if (column != null) width += column.getPreferredWidth();
       }
     }
     return width > 0 ? width : JBUI.scale(100);
@@ -792,7 +792,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   protected void processMouseEvent(MouseEvent e) {
     MouseEvent e2 = e;
 
-    if (SystemInfo.isMac) {
+    if (ClientSystemInfo.isMac()) {
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 

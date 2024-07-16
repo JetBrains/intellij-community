@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import it.unimi.dsi.fastutil.longs.LongArrayList
@@ -203,7 +202,6 @@ internal sealed interface ReadTrace {
   }
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
   val patternSet = ReadTraceHashSet(this.size)
   this@toTraces.forEach { (id, change) ->
@@ -220,9 +218,9 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
           }
         }
 
-        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
-        }
+        //if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+        //  patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        //}
       }
       is ChangeEntry.RemoveEntity -> {
         val ofClass = id.clazz.findWorkspaceEntity()
@@ -236,9 +234,9 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
           }
         }
 
-        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
-        }
+        //if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+        //  patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        //}
       }
       is ChangeEntry.ReplaceEntity -> {
         val ofClass = id.clazz.findWorkspaceEntity()
@@ -254,16 +252,15 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
         }
 
         // Because maybe we update the field that calculates symbolic id
-        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
-        }
+        //if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+        //  patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        //}
       }
     }
   }
   return patternSet
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun Sequence<EntityChange<*>>.toTraces(newSnapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
   val patternSet = ReadTraceHashSet()
   this.forEach { change ->
@@ -286,8 +283,8 @@ internal fun Sequence<EntityChange<*>>.toTraces(newSnapshot: ImmutableEntityStor
         }
       }
       is EntityChange.Removed<*> -> {
-        val ofClass = change.entity.getEntityInterface()
-        val entityData = change.entity.asBase().getData()
+        val ofClass = change.oldEntity.getEntityInterface()
+        val entityData = change.oldEntity.asBase().getData()
 
         patternSet.add(ReadTrace.EntitiesOfType(ofClass).hash)
 

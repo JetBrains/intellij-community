@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
@@ -14,13 +15,12 @@ import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.replaceFileAnnotationList
 
 class KotlinSuppressIntentionAction(
-  suppressAt: KtElement,
-  private val suppressionKey: String,
-  @FileModifier.SafeFieldForPreview private val kind: AnnotationHostKind
+    suppressAt: KtElement,
+    private val suppressionKey: String,
+    @FileModifier.SafeFieldForPreview private val kind: AnnotationHostKind
 ) : SuppressIntentionAction() {
     private val pointer = suppressAt.createSmartPointer()
 
@@ -76,9 +76,9 @@ class KotlinSuppressIntentionAction(
 
     override fun getFileModifierForPreview(target: PsiFile): KotlinSuppressIntentionAction {
         return KotlinSuppressIntentionAction(
-          PsiTreeUtil.findSameElementInCopy(pointer.element, target),
-          suppressionKey,
-          kind
+            PsiTreeUtil.findSameElementInCopy(pointer.element, target),
+            suppressionKey,
+            kind
         )
     }
 
@@ -94,7 +94,7 @@ class KotlinSuppressIntentionAction(
                     // packageDirective could be empty but suppression still should be added before it to generate consistent PSI
                     ktFile.addBefore(newAnnotationList, packageDirective) as KtFileAnnotationList
                 } else {
-                  replaceFileAnnotationList(ktFile, newAnnotationList)
+                    replaceFileAnnotationList(ktFile, newAnnotationList)
                 }
             ktFile.addAfter(psiFactory.createWhiteSpace(kind), createAnnotationList)
 

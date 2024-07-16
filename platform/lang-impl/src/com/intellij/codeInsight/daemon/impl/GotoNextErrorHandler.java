@@ -31,9 +31,15 @@ import java.awt.*;
 
 public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private final boolean myGoForward;
+  private final HighlightSeverity mySeverity;
 
   public GotoNextErrorHandler(boolean goForward) {
+    this (goForward, null);
+  }
+
+  public GotoNextErrorHandler(boolean goForward, @Nullable HighlightSeverity severity) {
     myGoForward = goForward;
+    mySeverity = severity;
   }
 
   @Override
@@ -78,8 +84,8 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     Document document = editor.getDocument();
     HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
     int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
-
     DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), info -> {
+      if (mySeverity != null && info.getSeverity() != mySeverity) return true;
       int startOffset = getNavigationPositionFor(info, document);
       if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
         infoToGo[0][0] = getBetterInfoThan(infoToGo[0][0], caretOffset, startOffset, info);

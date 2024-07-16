@@ -90,6 +90,17 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     // ----
   }
 
+  @Override
+  public void invalidateCaches() {
+    super.invalidateCaches();
+    if (state.myGradleHomes != null) {
+      state.myGradleHomes.clear();
+    }
+    if (state.myGradleVersions != null) {
+      state.myGradleVersions.clear();
+    }
+  }
+
   public static class MyState extends AbstractExternalSystemLocalSettings.State {
     public String myGradleUserHome;
     public Map<String/* project path */, String> myGradleHomes;

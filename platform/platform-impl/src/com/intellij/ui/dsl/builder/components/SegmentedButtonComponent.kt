@@ -179,6 +179,7 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
       }
       whenItemSelected {
         mutex.lockOrSkip {
+          if (property.get() == it) return@whenItemSelected
           property.set(it)
         }
       }

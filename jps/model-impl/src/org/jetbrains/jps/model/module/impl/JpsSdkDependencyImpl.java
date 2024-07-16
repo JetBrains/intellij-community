@@ -22,15 +22,15 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkDependency;
 
-public final class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDependencyImpl> implements JpsSdkDependency {
+final class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDependencyImpl> implements JpsSdkDependency {
   private final JpsSdkType<?> mySdkType;
 
-  public JpsSdkDependencyImpl(@NotNull JpsSdkType<?> sdkType) {
+  JpsSdkDependencyImpl(@NotNull JpsSdkType<?> sdkType) {
     super();
     mySdkType = sdkType;
   }
 
-  public JpsSdkDependencyImpl(JpsSdkDependencyImpl original) {
+  JpsSdkDependencyImpl(JpsSdkDependencyImpl original) {
     super(original);
     mySdkType = original.mySdkType;
   }

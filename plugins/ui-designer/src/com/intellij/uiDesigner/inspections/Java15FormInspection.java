@@ -25,7 +25,7 @@ import java.util.Collections;
 
 
 @SuppressWarnings("InspectionDescriptionNotFoundInspection")
-public class Java15FormInspection extends BaseFormInspection {
+public final class Java15FormInspection extends BaseFormInspection {
   public Java15FormInspection() {
     super("Since15");
   }

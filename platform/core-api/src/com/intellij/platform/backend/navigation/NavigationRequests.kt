@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.navigation
 
 import com.intellij.openapi.application.ApplicationManager
@@ -12,9 +12,11 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
 
+/**
+ * This interface isn't supposed to be used from plugins, call methods from [NavigationRequest.Companion] instead.
+ */
 @Internal
 interface NavigationRequests {
-
   companion object {
 
     @JvmStatic
@@ -30,7 +32,7 @@ interface NavigationRequests {
   fun directoryNavigationRequest(directory: PsiDirectory): NavigationRequest?
 
   /**
-   * Adapted version of [com.intellij.ide.util.EditSourceUtil.getDescriptor].
+   * An adapted version of [com.intellij.ide.util.EditSourceUtil.getDescriptor].
    */
   @Internal
   @Deprecated("Do not call this function by hand")

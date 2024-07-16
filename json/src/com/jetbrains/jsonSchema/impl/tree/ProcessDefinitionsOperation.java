@@ -7,6 +7,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.SchemaResolveState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -15,8 +16,10 @@ import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectMergerK
 public final class ProcessDefinitionsOperation extends Operation {
   private final JsonSchemaService myService;
 
-  public ProcessDefinitionsOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
-    super(sourceNode);
+  public ProcessDefinitionsOperation(@NotNull JsonSchemaObject sourceNode,
+                                     @NotNull JsonSchemaService service,
+                                     @Nullable JsonSchemaNodeExpansionRequest expansionRequest) {
+    super(sourceNode, expansionRequest);
     myService = service;
   }
 
@@ -34,7 +37,7 @@ public final class ProcessDefinitionsOperation extends Operation {
       if (!visited.add(definition)) break;
       current = getJsonSchemaObjectMerger().mergeObjects(current, definition, current);
     }
-    final Operation expandOperation = createExpandOperation(current, myService);
+    final Operation expandOperation = createExpandOperation(current, myService, myExpansionRequest);
     if (expandOperation != null) {
       myChildOperations.add(expandOperation);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
@@ -24,7 +24,7 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public final class PseudoLambdaReplaceTemplate {
-  private final static Logger LOG = Logger.getInstance(PseudoLambdaReplaceTemplate.class);
+  private static final Logger LOG = Logger.getInstance(PseudoLambdaReplaceTemplate.class);
 
   public enum LambdaRole {
     PREDICATE,
@@ -131,8 +131,7 @@ public final class PseudoLambdaReplaceTemplate {
     return validate(parameterTypes, returnType, null, method);
   }
 
-  @Nullable
-  public ValidationInfo validate(final PsiMethodCallExpression expression) {
+  public @Nullable ValidationInfo validate(final PsiMethodCallExpression expression) {
     final PsiType[] argumentTypes = expression.getArgumentList().getExpressionTypes();
     final PsiType methodReturnType = expression.getType();
     if (methodReturnType == null) {
@@ -341,8 +340,7 @@ public final class PseudoLambdaReplaceTemplate {
     return false;
   }
 
-  @NotNull
-  public PsiExpression convertToStream(@NotNull final PsiMethodCallExpression expression, @Nullable PsiMethod method, boolean force) {
+  public @NotNull PsiExpression convertToStream(final @NotNull PsiMethodCallExpression expression, @Nullable PsiMethod method, boolean force) {
     if (method == null) {
       method = expression.resolveMethod();
       if (method == null) {
@@ -412,8 +410,7 @@ public final class PseudoLambdaReplaceTemplate {
     return JavaPsiFacade.getElementFactory(project).createExpressionFromText(sb.toString(), null);
   }
 
-  @Nullable
-  private static String findSuitableTailMethodForCollection(PsiMethod lambdaHandler) {
+  private static @Nullable String findSuitableTailMethodForCollection(PsiMethod lambdaHandler) {
     final PsiType type = lambdaHandler.getReturnType();
     if (type instanceof PsiArrayType arrayType) {
       final PsiType arrayComponentType = arrayType.getComponentType();
@@ -479,8 +476,7 @@ public final class PseudoLambdaReplaceTemplate {
     return null;
   }
 
-  @NotNull
-  private static PsiExpression convertClassTypeExpression(PsiExpression expression) {
+  private static @NotNull PsiExpression convertClassTypeExpression(PsiExpression expression) {
     final PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       final PsiClass resolvedClass = ((PsiClassType)type).resolve();

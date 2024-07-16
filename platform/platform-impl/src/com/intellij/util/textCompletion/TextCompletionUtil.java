@@ -40,7 +40,7 @@ public final class TextCompletionUtil {
   public static @Nullable TextCompletionProvider getProvider(@NotNull PsiFile file) {
     TextCompletionProvider provider = file.getUserData(COMPLETING_TEXT_FIELD_KEY);
 
-    if (provider == null || (DumbService.isDumb(file.getProject()) && !DumbService.isDumbAware(provider))) {
+    if (provider == null || !DumbService.getInstance(file.getProject()).isUsableInCurrentContext(provider)) {
       return null;
     }
     return provider;

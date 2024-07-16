@@ -3,8 +3,6 @@
   <dependencies>
     <!--Any IDE but NOT PyCharm-->
     <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
-
-    <module name="intellij.python.community.impl"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

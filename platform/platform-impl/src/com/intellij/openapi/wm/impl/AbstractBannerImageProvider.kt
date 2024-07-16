@@ -15,7 +15,7 @@ import java.io.IOException
 import java.net.URL
 
 private const val TIMEOUT = 500L
-private val LOG = Logger.getInstance(AbstractBannerImageProvider::class.java)
+private val LOG = Logger.getInstance(OnboardingBackgroundImageProviderBase::class.java)
 
 @ApiStatus.Internal
 abstract class AbstractBannerImageProvider: BannerImageProvider {

@@ -29,7 +29,7 @@ private operator fun <T> Tuple2<*, T>.component2(): T = _2()
 class SmartCastCalculator(
   val bindingContext: BindingContext,
   private val containingDeclarationOrModule: DeclarationDescriptor,
-  contextElement: PsiElement,
+  val contextElement: PsiElement,
   receiver: KtExpression?,
   resolutionFacade: ResolutionFacade
 ) {

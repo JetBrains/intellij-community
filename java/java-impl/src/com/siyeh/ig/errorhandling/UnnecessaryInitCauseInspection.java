@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -27,15 +27,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class UnnecessaryInitCauseInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryInitCauseFix();
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.initcause.problem.descriptor");
   }
 
@@ -44,8 +42,7 @@ public final class UnnecessaryInitCauseInspection extends BaseInspection impleme
     return new UnnecessaryInitCauseVisitor();
   }
 
-  @Nullable
-  static PsiNewExpression findNewExpression(PsiExpression expression) {
+  static @Nullable PsiNewExpression findNewExpression(PsiExpression expression) {
     if (expression instanceof PsiNewExpression) {
       return (PsiNewExpression)expression;
     }
@@ -61,10 +58,8 @@ public final class UnnecessaryInitCauseInspection extends BaseInspection impleme
 
   private static class UnnecessaryInitCauseFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.initcause.quickfix");
     }
 
@@ -110,7 +105,7 @@ public final class UnnecessaryInitCauseInspection extends BaseInspection impleme
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String name = methodExpression.getReferenceName();
+      final @NonNls String name = methodExpression.getReferenceName();
       if (!"initCause".equals(name)) {
         return;
       }

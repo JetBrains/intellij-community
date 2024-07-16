@@ -8,12 +8,14 @@ import com.intellij.debugger.engine.PossiblySyncCommand;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -62,18 +64,21 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
     debugProcess.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
+        ExpressionEvaluator evaluator = null;
         try {
-          ExpressionEvaluator evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
+          evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
 
           if (!debugProcess.isAttached()) {
             throw EvaluateExceptionUtil.PROCESS_EXITED;
           }
           EvaluationContext thisEvaluationContext = evaluationContext.createEvaluationContext(value);
           Value labelValue = evaluator.evaluate(thisEvaluationContext);
+          JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(debugProcess.getProject(), evaluator, true, XEvaluationOrigin.RENDERER);
           String result = StringUtil.notNullize(DebuggerUtils.getValueAsString(thisEvaluationContext, labelValue));
           descriptor.setValueLabel(prefix(result));
         }
         catch (EvaluateException ex) {
+          JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(debugProcess.getProject(), evaluator, false, XEvaluationOrigin.RENDERER);
           descriptor.setValueLabelFailed(
             new EvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex));
         }

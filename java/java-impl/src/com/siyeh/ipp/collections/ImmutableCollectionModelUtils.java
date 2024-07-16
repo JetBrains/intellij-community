@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -37,8 +37,7 @@ final class ImmutableCollectionModelUtils {
 
   private static final CallMatcher MAP_ENTRY_CALL = staticCall(JAVA_UTIL_MAP, "entry").parameterCount(2);
 
-  @Nullable
-  static ImmutableCollectionModel createModel(@NotNull PsiMethodCallExpression call) {
+  static @Nullable ImmutableCollectionModel createModel(@NotNull PsiMethodCallExpression call) {
     CollectionType type = CollectionType.create(call);
     if (type == null) return null;
     if (!CodeBlockSurrounder.canSurround(call)) return null;
@@ -70,8 +69,7 @@ final class ImmutableCollectionModelUtils {
     ToMutableCollectionConverter.convert(model, updater);
   }
 
-  @Nullable
-  private static String getAssignedVariable(@NotNull PsiMethodCallExpression call) {
+  private static @Nullable String getAssignedVariable(@NotNull PsiMethodCallExpression call) {
     PsiElement parent = PsiTreeUtil.getParentOfType(call, PsiVariable.class, PsiAssignmentExpression.class);
     if (parent == null) return null;
     if (parent instanceof PsiVariable) {
@@ -91,8 +89,7 @@ final class ImmutableCollectionModelUtils {
     return ref.getText();
   }
 
-  @Nullable
-  private static String extractPutArgs(@NotNull PsiExpression entryExpression) {
+  private static @Nullable String extractPutArgs(@NotNull PsiExpression entryExpression) {
     if (entryExpression instanceof PsiReferenceExpression) {
       return MessageFormat.format("{0}.getKey(), {0}.getValue()", entryExpression.getText());
     }
@@ -144,8 +141,7 @@ final class ImmutableCollectionModelUtils {
       return String.format("new " + myMutableClass + "<>(%s)", StringUtil.notNullize(copyFrom));
     }
 
-    @Nullable
-    static CollectionType create(@NotNull PsiMethodCallExpression call) {
+    static @Nullable CollectionType create(@NotNull PsiMethodCallExpression call) {
       CollectionType type = MAPPER.mapFirst(call);
       if (type == null) return null;
       PsiType expectedType = ExpectedTypeUtils.findExpectedType(call, false);
@@ -209,11 +205,10 @@ final class ImmutableCollectionModelUtils {
       myUpdater.rename(declaredVariable, List.of(names));
     }
 
-    @Nullable
-    private PsiDeclarationStatement createDeclaration(@NotNull String name,
-                                                      @NotNull PsiType type,
-                                                      @NotNull ImmutableCollectionModel model,
-                                                      @NotNull PsiStatement usage) {
+    private @Nullable PsiDeclarationStatement createDeclaration(@NotNull String name,
+                                                                @NotNull PsiType type,
+                                                                @NotNull ImmutableCollectionModel model,
+                                                                @NotNull PsiStatement usage) {
       String initializerText = model.myType.getInitializerText(model.myIsVarArgCall ? null : model.myCall.getText());
       PsiExpression initializer = myElementFactory.createExpressionFromText(initializerText, null);
       PsiType rhsType = initializer.getType();
@@ -232,23 +227,20 @@ final class ImmutableCollectionModelUtils {
       return myCodeStyleManager.suggestUniqueVariableName(nameInfo, call, true).names;
     }
 
-    @NotNull
-    private String getPropertyName(@NotNull PsiMethodCallExpression call, @NotNull PsiType type) {
+    private @NotNull String getPropertyName(@NotNull PsiMethodCallExpression call, @NotNull PsiType type) {
       String propertyName = getPropertyNameByCall(call);
       if (propertyName != null) return propertyName;
       return myCodeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, type).names[0];
     }
 
-    @NotNull
-    private PsiStatement addUpdates(@NotNull String variable, @NotNull ImmutableCollectionModel model, @NotNull PsiStatement anchor) {
+    private @NotNull PsiStatement addUpdates(@NotNull String variable, @NotNull ImmutableCollectionModel model, @NotNull PsiStatement anchor) {
       if (!model.myIsVarArgCall) return anchor;
       return StreamEx.of(createUpdates(variable, model))
         .map(update -> myElementFactory.createStatementFromText(update, null))
         .foldLeft(anchor, (acc, update) -> BlockUtils.addAfter(acc, update));
     }
 
-    @NotNull
-    private static List<String> createUpdates(@NotNull String name, @NotNull ImmutableCollectionModel model) {
+    private static @NotNull List<String> createUpdates(@NotNull String name, @NotNull ImmutableCollectionModel model) {
       boolean isMapOfEntriesCall = "ofEntries".equals(model.myCall.getMethodExpression().getReferenceName());
       List<String> updates = new ArrayList<>();
       PsiExpression[] args = model.myCall.getArgumentList().getExpressions();
@@ -267,8 +259,7 @@ final class ImmutableCollectionModelUtils {
       return updates;
     }
 
-    @Nullable
-    private static String getPropertyNameByCall(@NotNull PsiMethodCallExpression call) {
+    private static @Nullable String getPropertyNameByCall(@NotNull PsiMethodCallExpression call) {
       PsiMethodCallExpression outerCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
       if (outerCall == null) return null;
       PsiMethod method = outerCall.resolveMethod();

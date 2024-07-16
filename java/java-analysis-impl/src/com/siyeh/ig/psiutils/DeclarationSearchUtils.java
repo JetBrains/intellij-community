@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -77,8 +76,7 @@ public final class DeclarationSearchUtils {
       return false;
     }
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(element.getProject());
-    final PsiSearchHelper.SearchCostResult cost =
-      searchHelper.isCheapEnoughToSearch(name, globalSearchScope, null, ProgressManager.getInstance().getProgressIndicator());
+    final PsiSearchHelper.SearchCostResult cost = searchHelper.isCheapEnoughToSearch(name, globalSearchScope, null);
     return cost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
            ? zeroResult
            : cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;

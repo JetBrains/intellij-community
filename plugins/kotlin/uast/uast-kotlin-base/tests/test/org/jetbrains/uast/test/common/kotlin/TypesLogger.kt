@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.common.kotlin
 
-import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
-import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
+import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.visitor.UastVisitor
@@ -30,18 +29,7 @@ class TypesLogger : UastVisitor {
             val value = node.getExpressionType()
             value?.let { psiType ->
                 builder.append(" : ")
-                psiType.annotations.takeIf { it.isNotEmpty() }?.joinTo(builder, ", ", "{", "}") { annotation ->
-                    "@${annotation.qualifiedName}(${
-                        annotation.attributes.joinToString { attr ->
-                            attr.attributeName + " = " + when (val v = attr.attributeValue) {
-                                is JvmAnnotationConstantValue -> v.constantValue
-                                is JvmAnnotationEnumFieldValue -> v.fieldName
-                                else -> v
-                            }
-                        }
-                    })"
-                }
-                builder.append(psiType)
+                builder.append(PsiClassRenderer.renderType(psiType))
             }
         }
         builder.appendLine()

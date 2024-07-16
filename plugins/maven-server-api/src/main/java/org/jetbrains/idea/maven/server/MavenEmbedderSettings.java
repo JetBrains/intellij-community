@@ -24,6 +24,7 @@ import java.io.Serializable;
  * @author Vladislav.Soroka
  */
 public class MavenEmbedderSettings implements Serializable {
+  private static final String DEFAULT_RESOLVER = "org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactResolver";
   @NotNull
   private final MavenServerSettings settings;
   @Nullable

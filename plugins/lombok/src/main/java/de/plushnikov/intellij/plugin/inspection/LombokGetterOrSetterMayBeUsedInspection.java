@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -13,6 +15,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.siyeh.ig.psiutils.CommentTracker;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJavaInspectionBase {
 
@@ -58,7 +60,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
       }
       boolean isLombokAnnotationAtClassLevel = true;
       for (PsiField field : psiClass.getFields()) {
-        PsiAnnotation annotation = field.getAnnotation(getAnnotationName());
+        PsiAnnotation annotation = PsiAnnotationSearchUtil.findAnnotation(field, getAnnotationName());
         if (annotation != null) {
           if (!annotation.getAttributes().isEmpty() || field.hasModifierProperty(PsiModifier.STATIC)) {
             isLombokAnnotationAtClassLevel = false;
@@ -183,7 +185,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
         removeMethodAndMoveJavaDoc(field, method);
       }
       for (PsiField annotatedField : annotatedFields) {
-        PsiAnnotation oldAnnotation = annotatedField.getAnnotation(getAnnotationName());
+        PsiAnnotation oldAnnotation = PsiAnnotationSearchUtil.findAnnotation(annotatedField, getAnnotationName());
         if (oldAnnotation != null) {
           new CommentTracker().deleteAndRestoreComments(oldAnnotation);
         }

@@ -118,7 +118,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
         return;
       }
 
-      if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
+      if (!DumbService.getInstance(myProject).isUsableInCurrentContext(cachedAction)) {
         DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
           CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()),
           DumbModeBlockedFunctionality.Intentions);
@@ -252,6 +252,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public ListSeparator getSeparatorAbove(IntentionActionWithTextCaching value) {
+    if (value.hasSeparatorAbove()) {
+      return new ListSeparator();
+    }
     List<IntentionActionWithTextCaching> values = getValues();
     int index = values.indexOf(value);
     if (index <= 0) return null;

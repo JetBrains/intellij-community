@@ -2,14 +2,30 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ProjectExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import kotlin.script.experimental.api.ScriptDiagnostic
+
+val SCRIPT_DEFINITIONS_SOURCES: ProjectExtensionPointName<ScriptDefinitionsSource> =
+    ProjectExtensionPointName("org.jetbrains.kotlin.scriptDefinitionsSource")
 
 @set: org.jetbrains.annotations.TestOnly
 var Application.isScriptChangesNotifierDisabled by NotNullableUserDataProperty(
@@ -25,7 +41,7 @@ fun scriptingDebugLog(file: KtFile, message: () -> String) {
 
 fun scriptingDebugLog(file: VirtualFile? = null, message: () -> String) {
     if (logger.isDebugEnabled) {
-        logger.debug("[KOTLIN_SCRIPTING] ${file?.let { file.path + " "} ?: ""}" + message())
+        logger.debug("[KOTLIN_SCRIPTING] ${file?.let { file.path + " " } ?: ""}" + message())
     }
 }
 
@@ -51,6 +67,40 @@ fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigura
         for (report in snapshot.reports) {
             if (report.severity >= ScriptDiagnostic.Severity.WARNING) {
                 scriptingWarnLog(report.message, report.exception)
+            }
+        }
+    }
+}
+
+fun getAllDefinitions(project: Project): List<ScriptDefinition> =
+    if (KotlinPluginModeProvider.isK2Mode()) {
+        K2ScriptDefinitionProvider.getInstanceIfCreated(project)?.currentDefinitions?.toList() ?: emptyList()
+    } else {
+        ScriptDefinitionsManager.getInstance(project).allDefinitions
+    }
+
+suspend fun configureGradleScriptsK2(
+    project: Project,
+    scripts: Set<ScriptModel>,
+    javaHome: String?,
+    storage: MutableEntityStorage? = null,
+) {
+    if (!KotlinPluginModeProvider.isK2Mode()) return
+
+    project.waitForSmartMode()
+
+    K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(scripts, javaHome)
+    project.createScriptModules(scripts, storage)
+
+    writeAction {
+        project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
+    }
+
+    for (script in scripts) {
+        if (project.isOpen && !project.isDisposed) {
+            readAction {
+                val ktFile = script.virtualFile.toPsiFile(project) as? KtFile ?: error("Cannot convert to PSI file: ${script.virtualFile}")
+                DaemonCodeAnalyzer.getInstance(project).restart(ktFile)
             }
         }
     }

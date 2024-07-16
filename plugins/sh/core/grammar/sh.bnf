@@ -133,8 +133,8 @@ private file ::=
 private simple_list ::= (commands_list newlines)*
 
 commands_list ::= pipeline_command (
-                     ('&&' | '||') newlines? pipeline_command
-                   | ('|' | '|&' | '&'| ';') pipeline_command?
+                     ('|' | '|&' | '&&' | '||') newlines pipeline_command
+                   | (';' | '&') pipeline_command?
                  )*
 
 pipeline_command ::=  '!'? command
@@ -200,7 +200,7 @@ private case_clause_list ::= case_clause (';;' (case_clause | newlines))* {pin("
 private case_clause_recover ::= !(esac)
 
 case_clause ::= newlines pattern ')' newlines compound_case_list? {pin=3}
-compound_case_list ::= pipeline_command_list end_of_list? newlines {pin(".*")=1 elementType=compound_list}
+compound_case_list ::= ((pipeline_command_list | pipeline_command) end_of_list? newlines)+ {pin(".*")=1 elementType=compound_list}
 pattern ::= '('? w+ ('|' w+)* {pin('.*')=1 recoverWhile = case_pattern_recover}
 private case_pattern_recover ::= !(')'|';;'|esac)
 
@@ -213,13 +213,13 @@ elif_clause ::= elif compound_list then_clause
 else_clause ::= else compound_list
 then_clause ::= then compound_list
 
-compound_list ::= newlines pipeline_command_list end_of_list newlines {pin(".*")=2 recoverWhile=compound_list_recover}
+compound_list ::= newlines ((pipeline_command_list | pipeline_command) end_of_list newlines)+ {pin(".*")=2 recoverWhile=compound_list_recover}
 private compound_list_recover ::= !(elif | else | then | fi)
 
-private pipeline_command_list ::= pipeline_command (pipeline_command_list_separator pipeline_command)* {
-  pin=1
-} // todo with pin
-private pipeline_command_list_separator ::= ('&&'|  '||' |  '&' |  ';' | '|' | '|&' | '\n') newlines
+pipeline_command_list ::= pipeline_command (
+                                             ('|' | '|&' | '&&' | '||') newlines pipeline_command
+                                             | ('&' | ';') pipeline_command
+                                           )+ {pin=2} // todo with pin
 
 function_definition ::= &(function | word '(') function_definition_inner {
   mixin="com.intellij.sh.psi.impl.ShFunctionDefinitionMixin"
@@ -247,7 +247,7 @@ block ::= '{' block_compound_list '}'  {
   elementTypeClass="com.intellij.sh.lexer.ShLazyBlockElementType"
 }
 
-block_compound_list ::= (nl pipeline_command_list | pipeline_command_list) end_of_list newlines {
+block_compound_list ::= newlines ((pipeline_command_list | pipeline_command) end_of_list newlines)+  {
   pin(".*")=1
   elementType=compound_list
   recoverWhile=block_compound_list_recover
@@ -257,9 +257,9 @@ private block_compound_list_recover ::= !('{' | '\n' | '}' | do | done | '(' | '
 simple_command ::= generic_command_directive (simple_command_element | <<keywordsRemapped>>)* {pin=1}
 generic_command_directive ::= simple_command_element_inner {extends=simple_command}
 simple_command_element ::= simple_command_element_inner
-private simple_command_element_inner ::=  literal assignment_command?
+private simple_command_element_inner ::= redirection
+                                        | literal assignment_command?
                                         | not_lvalue
-                                        | redirection
                                         | composed_var
                                         | heredoc
                                         | conditional_command
@@ -280,15 +280,14 @@ private composed_var_inner ::= arithmetic_expansion
 
 command_substitution_command ::= !<<isModeOn "BACKQUOTE">> OPEN_BACKQUOTE <<withOn "BACKQUOTE" list?>> CLOSE_BACKQUOTE {pin=2}
 
-arithmetic_expansion ::= '(''(' expression? ')'')'
+arithmetic_expansion ::= '((' expression? '))'
 
 old_arithmetic_expansion ::= ARITH_SQUARE_LEFT old_arithmetic_expansion_expression? ARITH_SQUARE_RIGHT {pin=1 extends=arithmetic_expansion}
 private old_arithmetic_expansion_expression ::= expression {pin=1 recoverWhile=old_arithmetic_expansion_expression_recover}
 private old_arithmetic_expansion_expression_recover ::= !(ARITH_SQUARE_RIGHT)
 
 subshell_command ::= '(' list ')'
-list ::= newlines pipeline_command_list end_of_list? newlines {pin(".*")=2 elementType=compound_list}
-private nl ::= '\n'+
+list ::= newlines ((pipeline_command_list | pipeline_command) end_of_list? newlines)+ {pin(".*")=2 elementType=compound_list}
 private end_of_list ::= '\n' | ';' | '&'
 
 shell_parameter_expansion ::= '{' shell_parameter_expansion_inner+ '}' {pin=1}
@@ -301,7 +300,7 @@ left assignment_command ::= array_expression? ('='|"+=") [assignment_list | <<pa
   mixin="com.intellij.sh.psi.impl.ShAssignmentCommandMixin"
 }
 
-literal ::= word | string | number | variable | <<arithmeticOperationsRemapped>> {
+literal ::=  <<arithmeticOperationsRemapped>> | string | number | variable | word {
   extends=simple_command_element
   implements="com.intellij.model.psi.UrlReferenceHost"
   mixin="com.intellij.sh.psi.impl.ShLiteralMixin"
@@ -313,7 +312,7 @@ variable ::= var { methods=[getReferences] }
 
 number ::= int | hex | octal
 string ::= OPEN_QUOTE (STRING_CONTENT | vars | <<notQuote>>)* CLOSE_QUOTE | RAW_STRING {pin(".*")=1}
-private w ::= string | number | not_lvalue | <<arithmeticOperationsRemapped>>
+private w ::= <<arithmeticOperationsRemapped>> | string | number | not_lvalue
 private newlines ::= '\n'*
 
 expression ::=

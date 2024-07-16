@@ -36,7 +36,8 @@ public class AssertJInliner implements CallInliner {
   );
   private static final CallMatcher INTERMEDIATE = CallMatcher.anyOf(
     CallMatcher.instanceCall("org.assertj.core.api.Descriptable", "describedAs", "as"),
-    CallMatcher.instanceCall("org.assertj.core.api.AbstractAssert", "describedAs", "as")
+    CallMatcher.instanceCall("org.assertj.core.api.AbstractAssert", "describedAs", "as", "withFailMessage", "overridingErrorMessage"),
+    CallMatcher.instanceCall("org.assertj.core.api.Assert", "withRepresentation", "withThreadDumpOnError")
   );
 
   private static final CallMatcher ASSERT_THAT = CallMatcher.anyOf(

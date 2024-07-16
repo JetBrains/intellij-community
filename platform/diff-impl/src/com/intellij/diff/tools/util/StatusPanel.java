@@ -4,6 +4,7 @@ package com.intellij.diff.tools.util;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,6 +33,8 @@ public class StatusPanel extends JPanel {
     String message = getMessage();
     myTextLabel.setVisible(message != null);
     myTextLabel.setText(message);
+    myTextLabel.setIcon(getStatusIcon());
+    myTextLabel.setForeground(getStatusForeground());
   }
 
   public void setBusy(boolean busy) {
@@ -49,5 +52,13 @@ public class StatusPanel extends JPanel {
   @Nullable
   protected String getMessage() {
     return null;
+  }
+
+  @Nullable
+  protected Icon getStatusIcon() { return null; }
+
+  @NotNull
+  protected Color getStatusForeground() {
+    return UIUtil.getLabelForeground();
   }
 }

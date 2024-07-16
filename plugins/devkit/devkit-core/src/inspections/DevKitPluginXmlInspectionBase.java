@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -16,6 +16,7 @@ import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
 /**
  * Check {@link #isAllowed} from {@link #checkDomElement} to skip non-relevant files.
+ * Do NOT invoke {@code super.checkDomElement()}.
  */
 public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInspection<IdeaPlugin> {
 

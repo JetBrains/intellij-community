@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.Objects;
 
 final class ClosureFolding {
-  @NotNull private final PsiAnonymousClass myAnonymousClass;
-  @NotNull private final PsiNewExpression myNewExpression;
-  @Nullable private final PsiClass myBaseClass;
-  @NotNull private final JavaFoldingBuilderBase myBuilder;
-  @NotNull private final PsiMethod myMethod;
-  @NotNull final PsiCodeBlock methodBody;
+  private final @NotNull PsiAnonymousClass myAnonymousClass;
+  private final @NotNull PsiNewExpression myNewExpression;
+  private final @Nullable PsiClass myBaseClass;
+  private final @NotNull JavaFoldingBuilderBase myBuilder;
+  private final @NotNull PsiMethod myMethod;
+  final @NotNull PsiCodeBlock methodBody;
   private final boolean myQuick;
 
   private ClosureFolding(@NotNull PsiAnonymousClass anonymousClass,
@@ -103,12 +103,11 @@ final class ClosureFolding {
     return myNewExpression.getTextRange().getStartOffset();
   }
 
-  @Nullable
-  private List<FoldingDescriptor> createDescriptors(@NotNull PsiElement classRBrace,
-                                                    int rangeStart,
-                                                    int rangeEnd,
-                                                    @NotNull String header,
-                                                    @NotNull String footer) {
+  private @Nullable List<FoldingDescriptor> createDescriptors(@NotNull PsiElement classRBrace,
+                                                              int rangeStart,
+                                                              int rangeEnd,
+                                                              @NotNull String header,
+                                                              @NotNull String footer) {
     if (rangeStart >= rangeEnd) return null;
 
     FoldingGroup group = FoldingGroup.newGroup("lambda");
@@ -122,8 +121,7 @@ final class ClosureFolding {
     return foldElements;
   }
 
-  @Nullable
-  private static String getClosureContents(int rangeStart, int rangeEnd, @NotNull CharSequence seq) {
+  private static @Nullable String getClosureContents(int rangeStart, int rangeEnd, @NotNull CharSequence seq) {
     int firstLineStart = CharArrayUtil.shiftForward(seq, rangeStart, " \t");
     if (firstLineStart < seq.length() - 1 && seq.charAt(firstLineStart) == '\n') firstLineStart++;
 
@@ -133,16 +131,14 @@ final class ClosureFolding {
     return seq.subSequence(firstLineStart, lastLineEnd).toString();
   }
 
-  @NotNull
-  private String getFoldingHeader() {
+  private @NotNull String getFoldingHeader() {
     String methodName = shouldShowMethodName() ? myMethod.getName() : "";
     String type = myQuick ? "" : getOptionalLambdaType();
     String params = StringUtil.join(myMethod.getParameterList().getParameters(), psiParameter -> psiParameter.getName(), ", ");
     return type + methodName + "(" + params + ") " + myBuilder.rightArrow() + " {";
   }
 
-  @Nullable
-  static ClosureFolding prepare(@NotNull PsiAnonymousClass anonymousClass, boolean quick, @NotNull JavaFoldingBuilderBase builder) {
+  static @Nullable ClosureFolding prepare(@NotNull PsiAnonymousClass anonymousClass, boolean quick, @NotNull JavaFoldingBuilderBase builder) {
     PsiElement parent = anonymousClass.getParent();
     if (parent instanceof PsiNewExpression && hasNoArguments((PsiNewExpression)parent)) {
       PsiClass baseClass = quick ? null : anonymousClass.getBaseClassType().resolve();
@@ -196,8 +192,7 @@ final class ClosureFolding {
     return !PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, context) || !LambdaUtil.isFunctionalClass(baseClass);
   }
 
-  @NotNull
-  private String getOptionalLambdaType() {
+  private @NotNull String getOptionalLambdaType() {
     if (myBuilder.shouldShowExplicitLambdaType(myAnonymousClass, myNewExpression)) {
       String baseClassName = Objects.requireNonNull(myAnonymousClass.getBaseClassType().resolve()).getName();
       if (baseClassName != null) {

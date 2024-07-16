@@ -21,6 +21,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -58,7 +59,7 @@ class InlineCompletionHandler(
   private val sessionManager = createSessionManager()
   private val typingTracker = InlineCompletionTypingTracker(parentDisposable)
 
-  private var customDocumentChangesAllowed = false
+  private val completionState = InlineCompletionState()
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -95,28 +96,40 @@ class InlineCompletionHandler(
   @RequiresEdt
   fun invokeEvent(event: InlineCompletionEvent) {
     ThreadingAssertions.assertEventDispatchThread()
-    LOG.trace("Start processing inline event $event")
 
-    val request = event.toRequest() ?: return
-    if (editor != request.editor) {
-      LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
+    if (completionState.isInvokingEvent) {
+      LOG.trace("Cannot process inline event $event: another event is being processed right now.")
       return
     }
 
-    if (sessionManager.updateSession(request)) {
-      return
+    completionState.isInvokingEvent = true
+    try {
+      LOG.trace("Start processing inline event $event")
+
+      val request = event.toRequest() ?: return
+      if (editor != request.editor) {
+        LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
+        return
+      }
+
+      if (sessionManager.updateSession(request)) {
+        return
+      }
+
+      val provider = getProvider(event) ?: return
+
+      // At this point, the previous session must be removed, otherwise, `init` will throw.
+      val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
+        sessionManager.sessionCreated(this)
+        guardCaretModifications()
+      }
+
+      executor.switchJobSafely(newSession::assignJob) {
+        invokeRequest(request, newSession)
+      }
     }
-
-    val provider = getProvider(event) ?: return
-
-    // At this point, the previous session must be removed, otherwise, `init` will throw.
-    val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
-      sessionManager.sessionCreated(this)
-      guardCaretModifications(request)
-    }
-
-    executor.switchJobSafely(newSession::assignJob) {
-      invokeRequest(request, newSession)
+    finally {
+      completionState.isInvokingEvent = false
     }
   }
 
@@ -142,6 +155,7 @@ class InlineCompletionHandler(
     editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
     PsiDocumentManager.getInstance(session.request.file.project).commitDocument(editor.document)
     session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
+    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     traceBlocking(InlineCompletionEventType.AfterInsert)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
@@ -255,10 +269,8 @@ class InlineCompletionHandler(
     if (event != null) {
       invokeEvent(event)
     }
-    else {
-      if (!customDocumentChangesAllowed) {
-        sessionManager.invalidate()
-      }
+    else if (!completionState.ignoreDocumentChanges) {
+      sessionManager.invalidate()
     }
   }
 
@@ -274,11 +286,50 @@ class InlineCompletionHandler(
   @RequiresEdt
   fun <T> withIgnoringDocumentChanges(block: () -> T): T {
     ThreadingAssertions.assertEventDispatchThread()
-    val currentCustomDocumentChangesAllowed = customDocumentChangesAllowed
-    customDocumentChangesAllowed = true
-    val result = block()
-    customDocumentChangesAllowed = currentCustomDocumentChangesAllowed
-    return result
+    val currentCustomDocumentChangesAllowed = completionState.ignoreDocumentChanges
+    completionState.ignoreDocumentChanges = true
+    return try {
+      block()
+    } finally {
+      check(completionState.ignoreDocumentChanges) {
+        "The state of disabling document changes tracker is switched outside."
+      }
+      completionState.ignoreDocumentChanges = currentCustomDocumentChangesAllowed
+    }
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @RequiresEdt
+  fun setIgnoringDocumentChanges(value: Boolean) {
+    ThreadingAssertions.assertEventDispatchThread()
+    completionState.ignoreDocumentChanges = value
+  }
+
+  /**
+   * By default, any caret movement to the non-expected position clears an inline completion session.
+   * The expected position is defined by [InlineCompletionRequest.endOffset].
+   *
+   * Some completion updates, like 'accept only the next word', cannot guess the next expected position,
+   * because this update is defined by implementation details of a particular provider.
+   * Therefore, with this method, any caret movement will update the expected offset of the inline completion.
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt
+  internal fun <T> withIgnoringCaretMovement(block: () -> T): T {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (completionState.ignoreCaretMovement) {
+      return block()
+    }
+    completionState.ignoreCaretMovement = true
+    return try {
+      block()
+    } finally {
+      check(completionState.ignoreCaretMovement) {
+        "The state of disabling caret movement tracker is switched outside."
+      }
+      completionState.ignoreCaretMovement = false
+    }
   }
 
   private suspend fun request(
@@ -403,9 +454,11 @@ class InlineCompletionHandler(
         traceBlocking(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
       }
 
-      override fun variantChanged(variantIndex: Int, oldText: String, newText: String) {
+      override fun variantChanged(variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>) {
         ThreadingAssertions.assertEventDispatchThread()
-        traceBlocking(InlineCompletionEventType.Change(variantIndex, oldText.length - newText.length))
+        val oldText = old.joinToString("") { it.text }
+        val newText = new.joinToString("") { it.text }
+        traceBlocking(InlineCompletionEventType.Change(variantIndex, new, oldText.length - newText.length))
       }
 
       override fun variantInvalidated(variantIndex: Int) {
@@ -425,17 +478,22 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
-  private fun InlineCompletionSession.guardCaretModifications(request: InlineCompletionRequest) {
-    val expectedOffset = {
-      // This caret listener might be disposed after context: ML-1438
-      if (!context.isDisposed) context.startOffset() ?: request.endOffset else -1
+  private fun InlineCompletionSession.guardCaretModifications() {
+    val listener = object : InlineSessionWiseCaretListener() {
+      override var completionOffset: Int
+        get() = if (!context.isDisposed) context.expectedStartOffset else -1
+        set(value) {
+          if (!context.isDisposed) context.expectedStartOffset = value
+        }
+
+      override val mode: Mode
+        get() = if (completionState.ignoreCaretMovement) Mode.ADAPTIVE else Mode.PROHIBIT_MOVEMENT
+
+      override fun cancel() {
+        if (!context.isDisposed) hide(context, FinishType.CARET_CHANGED)
+      }
     }
-    val cancel = {
-      if (!context.isDisposed) hide(context, FinishType.CARET_CHANGED)
-    }
-    val listener = InlineSessionWiseCaretListener(expectedOffset, cancel)
-    editor.caretModel.addCaretListener(listener)
-    whenDisposed { editor.caretModel.removeCaretListener(listener) }
+    editor.caretModel.addCaretListener(listener, this)
   }
 
   @RequiresBlockingContext
@@ -455,6 +513,12 @@ class InlineCompletionHandler(
     ThreadingAssertions.assertEventDispatchThread()
     executor.awaitAll()
   }
+
+  private class InlineCompletionState(
+    var ignoreDocumentChanges: Boolean = false,
+    var ignoreCaretMovement: Boolean = false,
+    var isInvokingEvent: Boolean = false
+  )
 
   companion object {
     private val LOG = thisLogger()

@@ -44,7 +44,6 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -155,7 +154,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       if (myConnection == null) {
         myConnection = myProject.getMessageBus().connect(this);
         myConnection.subscribe(GitRepository.GIT_REPO_CHANGE, this);
-        myConnection.subscribe(GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS, this);
+        myConnection.subscribe(GIT_AUTHENTICATION_SUCCESS, this);
       }
       updateBranchesWithOutgoing();
       updateIncomingScheduling();
@@ -367,7 +366,7 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       GitCommandResult lsRemoteResult =
         Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
       if (lsRemoteResult.success()) {
-        Map<String, String> hashWithNameMap = ContainerUtil.map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
+        Map<String, String> hashWithNameMap = ContainerUtil.map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseBranchesLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
         myErrorMap.remove(repository, remote);
         myAuthSuccessMap.putValue(repository, remote);

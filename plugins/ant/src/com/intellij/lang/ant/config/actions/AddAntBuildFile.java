@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
@@ -103,6 +103,9 @@ final class AddAntBuildFile extends AnAction {
             continue;
           }
           if (AntConfigurationBase.getInstance(project).getAntBuildFile(psiFile) != null) {
+            continue;
+          }
+          if ("http://maven.apache.org/POM/4.0.0".equals(rootTag.getNamespace())) {
             continue;
           }
           // found at least one candidate file

@@ -6,6 +6,8 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.smRunner.OutputEventSplitterBase
+import com.intellij.smRunner.OutputStreamType
+import com.intellij.smRunner.OutputType
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 
 /**

@@ -52,8 +52,7 @@ public final class MisspelledMethodNameInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.names.differ.only.by.case.problem.descriptor", infos[0]);
   }
 

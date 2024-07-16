@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.openapi.components.service
@@ -24,6 +24,8 @@ interface FileEditorProviderManager {
   fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider>
 
   suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider>
+
+  suspend fun getDumbUnawareProviders(project: Project, file: VirtualFile, excludeIds: Set<String>): List<FileEditorProvider>
 
   /**
    * @return `null` if no provider with specified `editorTypeId` exists.

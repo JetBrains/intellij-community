@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -17,8 +16,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.CredentialsType;
 import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.RemoteSdkException;
+import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.remote.ext.*;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -277,11 +276,6 @@ public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
   // TODO: (next) may propose to start DockerMachine - somewhere
 
-  public final @NotNull RemoteSdkCredentials computeSdkCredentials() throws ExecutionException, InterruptedException {
-    final T sdkData = createSdkDataInner();
-    return sdkData.getRemoteSdkCredentials(myProject, true);
-  }
-
   public @Nullable JComponent getPreferredFocusedComponent() {
     if (myNameVisible) {
       return myNameField;
@@ -428,7 +422,7 @@ public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     }
   }
 
-  public void updateModifiedValues(RemoteSdkCredentials data) {
+  public void updateModifiedValues(RemoteSdkProperties data) {
     myHelpersPathField.setText(data.getHelpersPath());
   }
 

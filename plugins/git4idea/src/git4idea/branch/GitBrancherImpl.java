@@ -50,6 +50,14 @@ class GitBrancherImpl implements GitBrancher {
     return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, indicator));
   }
 
+  private @NotNull GitBranchWorker newWorkerWithoutRollback(@NotNull ProgressIndicator indicator) {
+    return new GitBranchWorker(myProject, Git.getInstance(), new GitBranchUiHandlerImpl(myProject, indicator) {
+      @Override
+      public boolean showUnmergedFilesMessageWithRollback(@NotNull String operationName, @NotNull String rollbackProposal) {
+        return false;
+      }
+    });
+  }
   @Override
   public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, @Nullable Runnable callInAwtLater) {
     createBranch(name, startPoints, false, callInAwtLater);
@@ -190,10 +198,19 @@ class GitBrancherImpl implements GitBrancher {
   public void merge(@NotNull GitReference reference,
                     @NotNull DeleteOnMergeOption deleteOnMerge,
                     @NotNull List<? extends @NotNull GitRepository> repositories) {
+    merge(reference, deleteOnMerge, repositories, true);
+  }
+
+  @Override
+  public void merge(@NotNull GitReference reference,
+                    @NotNull DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends @NotNull GitRepository> repositories,
+                    @NotNull Boolean allowRollback) {
     new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", reference.getName()), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).merge(reference, deleteOnMerge, repositories);
+        GitBranchWorker worker = allowRollback ? newWorker(indicator) : newWorkerWithoutRollback(indicator);
+        worker.merge(reference, deleteOnMerge, repositories);
       }
     }.runInBackground();
   }

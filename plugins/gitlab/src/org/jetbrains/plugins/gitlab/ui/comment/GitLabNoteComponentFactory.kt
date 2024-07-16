@@ -29,6 +29,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsPickerComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.event.ActionListener
 import java.net.URL
@@ -42,7 +43,7 @@ internal object GitLabNoteComponentFactory {
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
              vm: GitLabNoteViewModel,
              place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
-    val textPanel = createTextPanel(cs, vm.bodyHtml, vm.serverUrl).let { panel ->
+    val textPanel = createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl).let { panel ->
       val actionsVm = vm.actionsVm ?: return@let panel
       EditableComponentFactory.wrapTextComponent(cs, panel, actionsVm.editVm) {
         GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
@@ -163,9 +164,10 @@ internal object GitLabNoteComponentFactory {
     return button
   }
 
-  fun createTextPanel(cs: CoroutineScope, textFlow: Flow<@Nls String>, baseUrl: URL): JComponent =
-    SimpleHtmlPane(baseUrl = baseUrl).apply {
+  fun createTextPanel(project: Project, cs: CoroutineScope, textFlow: Flow<@Nls String>, baseUrl: URL): JComponent =
+    SimpleHtmlPane(baseUrl = baseUrl, addBrowserListener = false).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       bindTextIn(cs, textFlow)
+      addGitLabHyperlinkListener(project)
     }
 }

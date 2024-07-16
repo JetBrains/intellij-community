@@ -135,9 +135,9 @@ public final class GradleBuildScriptClasspathSerializationService implements Ser
     if (reader.next() == null) return null;
     reader.stepIn();
     ClasspathEntryModel entryModel = new ClasspathEntryModelImpl(
-      readFilesSet(reader),
-      readFilesSet(reader),
-      readFilesSet(reader)
+      readFileSet(reader, null),
+      readFileSet(reader, null),
+      readFileSet(reader, null)
     );
     reader.stepOut();
     return entryModel;

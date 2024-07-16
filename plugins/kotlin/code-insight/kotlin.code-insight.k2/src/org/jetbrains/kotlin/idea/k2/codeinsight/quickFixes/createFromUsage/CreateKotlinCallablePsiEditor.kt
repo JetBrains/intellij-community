@@ -6,24 +6,24 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.createFromUsage.setupEditorSelection
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
+import org.jetbrains.kotlin.idea.refactoring.getContainer
+import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
@@ -34,10 +34,10 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  */
 internal data class NewCallableInfo(
     val definitionAsString: String,
-    val candidatesOfParameterNames: List<Collection<String>>,
-    val candidatesOfRenderedParameterTypes: List<List<String>>,
+    val parameterCandidates: List<CreateKotlinCallableAction.ParamCandidate>,
     val candidatesOfRenderedReturnType: List<String>,
     val containerClassFqName: FqName?,
+    val isForCompanion: Boolean,
 )
 
 /**
@@ -49,10 +49,37 @@ internal class CreateKotlinCallablePsiEditor(
     private val pointerToContainer: SmartPsiElementPointer<*>,
     private val callableInfo: NewCallableInfo,
 ) {
-    fun execute() {
+    fun execute(anchor: PsiElement, isExtension: Boolean, targetClass: PsiElement?) {
         val factory = KtPsiFactory(project)
         var function = factory.createFunction(callableInfo.definitionAsString)
-        function = pointerToContainer.element?.let { function.addToContainer(it) } as? KtNamedFunction ?: return
+        val passedContainerElement = pointerToContainer.element ?: return
+        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension
+            else passedContainerElement.getContainer() == anchor.getContainer()
+        val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
+            (anchor.getExtractionContainers().firstOrNull() ?: return)
+        } else {
+            passedContainerElement
+        }
+
+        val containerMaybeCompanion = if (callableInfo.isForCompanion) {
+            if (insertContainer is KtClass) {
+                insertContainer.getOrCreateCompanionObject()
+            } else {
+                val ktClass = targetClass as? KtClass
+                if (ktClass != null) {
+                    val hasCompanionObject = ktClass.companionObjects.isNotEmpty()
+                    val companion = ktClass.getOrCreateCompanionObject()
+                    if (!hasCompanionObject && isExtension) {
+                        companion.body?.delete()
+                    }
+                }
+                insertContainer
+            }
+        }
+        else insertContainer
+
+        function = CreateFromUsageUtil.placeDeclarationInContainer(function, containerMaybeCompanion, anchor)
+
         function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function) ?: return
         runTemplate(function)
     }
@@ -69,12 +96,11 @@ internal class CreateKotlinCallablePsiEditor(
         val editor = EditorHelper.openInEditor(file)
         val functionMarker = editor.document.createRangeMarker(function.textRange)
         moveCaretToCallable(editor, function)
-        val templateImpl = setupTemplate(function)
-        TemplateManager.getInstance(project)
-            .startTemplate(editor, templateImpl, buildTemplateListener(editor, file, functionMarker))
+        val template = setupTemplate(function)
+        TemplateManager.getInstance(project).startTemplate(editor, template, buildTemplateListener(editor, file, functionMarker))
     }
 
-    private fun setupTemplate(function: KtNamedFunction): TemplateImpl {
+    private fun setupTemplate(function: KtNamedFunction): Template {
         val builder = TemplateBuilderImpl(function)
         function.valueParameters.forEachIndexed { index, parameter -> builder.setupParameter(index, parameter) }
 
@@ -82,28 +108,19 @@ internal class CreateKotlinCallablePsiEditor(
         val returnType = function.typeReference
         if (returnType != null) builder.replaceElement(returnType, ExpressionForCreateCallable(callableInfo.candidatesOfRenderedReturnType))
 
-        return builder.buildInlineTemplate() as TemplateImpl
+        return builder.buildInlineTemplate()
     }
 
     private fun TemplateBuilderImpl.setupParameter(parameterIndex: Int, parameter: KtParameter) {
         // Set up template for the parameter name:
         val nameIdentifier = parameter.nameIdentifier ?: return
         replaceElement(
-            nameIdentifier, ParameterNameExpression(parameterIndex, callableInfo.candidatesOfParameterNames[parameterIndex].toList())
+            nameIdentifier, ParameterNameExpression(parameterIndex, callableInfo.parameterCandidates[parameterIndex].names.toList())
         )
 
         // Set up template for the parameter type:
         val parameterTypeElement = parameter.typeReference ?: return
-        replaceElement(parameterTypeElement, ExpressionForCreateCallable(callableInfo.candidatesOfRenderedParameterTypes[parameterIndex]))
-    }
-
-    private fun KtElement.addToContainer(container: PsiElement): PsiElement = when (container) {
-        is KtClassOrObject -> {
-            val classBody = container.getOrCreateBody()
-            classBody.addBefore(this, classBody.rBrace)
-        }
-
-        else -> container.add(this)
+        replaceElement(parameterTypeElement, ExpressionForCreateCallable(callableInfo.parameterCandidates[parameterIndex].renderedTypes))
     }
 
     private fun buildTemplateListener(editor: Editor, file: KtFile, functionMarker: RangeMarker): TemplateEditingAdapter {

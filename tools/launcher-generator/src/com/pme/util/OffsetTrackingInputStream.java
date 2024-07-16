@@ -1,13 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.pme.util;
 
+import java.io.Closeable;
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-
-public class OffsetTrackingInputStream implements DataInput {
+public class OffsetTrackingInputStream implements DataInput, Closeable {
   private final DataInputStream myBaseStream;
   private long myOffset = 0;
 
@@ -106,5 +105,10 @@ public class OffsetTrackingInputStream implements DataInput {
   @Override
   public String readUTF() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void close() throws IOException {
+    myBaseStream.close();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -17,7 +17,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -65,9 +65,9 @@ import javax.swing.event.HyperlinkListener
 import kotlin.math.max
 import kotlin.math.min
 
-internal class InitCtrlMouseHandlerActivity : ProjectActivity {
-  override suspend fun execute(project: Project) : Unit = blockingContext {
-    project.service<CtrlMouseHandler2>()
+private class InitCtrlMouseHandlerActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    project.serviceAsync<CtrlMouseHandler2>()
   }
 }
 

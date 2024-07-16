@@ -17,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * ```
  */
 @Internal
-public interface StickyLine : Comparable<StickyLine> {
+interface StickyLine : Comparable<StickyLine> {
 
   /**
    * The first logical line of scope used to pin corresponding editor's line on sticky panel.

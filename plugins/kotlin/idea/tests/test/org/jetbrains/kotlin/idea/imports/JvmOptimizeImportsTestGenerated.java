@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.imports;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -24,6 +25,12 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/jvm/allUnderImports")
         public static class AllUnderImports extends AbstractJvmOptimizeImportsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -112,6 +119,12 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/jvm")
         public static class Uncategorized extends AbstractJvmOptimizeImportsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -189,6 +202,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             @TestMetadata("KDocReference.kt")
             public void testKDocReference() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/KDocReference.kt");
+            }
+
+            @TestMetadata("KDocReference2.kt")
+            public void testKDocReference2() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/KDocReference2.kt");
             }
 
             @TestMetadata("KT10226.kt")
@@ -284,6 +302,12 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/basic")
         public static class Basic extends AbstractJvmOptimizeImportsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -377,6 +401,12 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/kt21515")
         public static class Kt21515 extends AbstractJvmOptimizeImportsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -410,6 +440,12 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common")
         public static class Uncategorized extends AbstractJvmOptimizeImportsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

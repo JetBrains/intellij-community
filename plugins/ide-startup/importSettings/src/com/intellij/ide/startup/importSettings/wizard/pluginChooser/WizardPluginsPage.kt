@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.pluginChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
@@ -89,7 +89,7 @@ class WizardPluginsPage(val controller: WizardController) : OnboardingPage {
   }
 
   private val backAction = controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
-    controller.goToKeymapPage()
+    controller.goToKeymapPage(isForwardDirection = false)
   }
 
   private val continueAction = controller.createDefaultButton(ImportSettingsBundle.message("plugins.page.ok.button.continue.without")) {
@@ -112,6 +112,10 @@ class WizardPluginsPage(val controller: WizardController) : OnboardingPage {
   }
 
   override val content: JComponent = contentPage
+
+  fun onEnter() {
+    pluginService.onStepEnter()
+  }
 }
 
 

@@ -8,7 +8,7 @@ import org.intellij.lang.regexp.RegExpLanguage;
 public class PythonRegexpLanguage extends Language {
   public static final PythonRegexpLanguage INSTANCE = new PythonRegexpLanguage();
 
-  public PythonRegexpLanguage() {
+  private PythonRegexpLanguage() {
     super(RegExpLanguage.INSTANCE, "PythonRegExp");
   }
 }

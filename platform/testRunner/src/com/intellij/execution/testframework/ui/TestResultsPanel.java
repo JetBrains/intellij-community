@@ -17,6 +17,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -130,6 +131,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     return splitVertically;
   }
 
+  @ApiStatus.Internal
   protected ToolbarPanel createToolbarPanel() {
     return new ToolbarPanel(myProperties, this);
   }

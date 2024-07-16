@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.util.ClassFilter;
@@ -7,12 +7,10 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,14 +22,14 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
   public static final Key<Boolean> CLASS_NAME_REFERENCE_FRAGMENT = Key.create("CLASS_NAME_REFERENCE_FRAGMENT");
   private final Project myProject;
   private PsiClass mySelectedClass;
-  @NlsContexts.DialogTitle private String myChooserTitle;
+  private @NlsContexts.DialogTitle String myChooserTitle;
 
-  public ClassNameReferenceEditor(@NotNull final Project project, @Nullable final PsiClass selectedClass) {
+  public ClassNameReferenceEditor(final @NotNull Project project, final @Nullable PsiClass selectedClass) {
     this(project, selectedClass, null);
   }
 
-  public ClassNameReferenceEditor(@NotNull final Project project, @Nullable final PsiClass selectedClass,
-                                  @Nullable final GlobalSearchScope resolveScope) {
+  public ClassNameReferenceEditor(final @NotNull Project project, final @Nullable PsiClass selectedClass,
+                                  final @Nullable GlobalSearchScope resolveScope) {
     super(null, project, s -> {
       PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
       final JavaCodeFragment fragment = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
@@ -52,7 +50,7 @@ public class ClassNameReferenceEditor extends ReferenceEditorWithBrowseButton {
     return myChooserTitle;
   }
 
-  public void setChooserTitle(@NlsContexts.DialogTitle final String chooserTitle) {
+  public void setChooserTitle(final @NlsContexts.DialogTitle String chooserTitle) {
     myChooserTitle = chooserTitle;
   }
 

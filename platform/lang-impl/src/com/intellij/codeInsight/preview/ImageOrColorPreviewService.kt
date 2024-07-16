@@ -86,6 +86,8 @@ internal class ImageOrColorPreviewService(
 
   private suspend fun doAttach(editor: Editor) {
     val psiFile = readAction {
+      if (project.isDisposed || editor.isDisposed)
+        return@readAction null
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument())
       if (psiFile == null || !psiFile.isValid || psiFile is PsiCompiledElement || !isSupportedFile(psiFile)) {
         null

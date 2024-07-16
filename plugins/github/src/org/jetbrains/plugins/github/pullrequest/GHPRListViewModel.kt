@@ -12,6 +12,7 @@ import com.intellij.ui.CollectionListModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -24,6 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchHistoryMode
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
+import org.jetbrains.plugins.github.util.GithubSettings
 import javax.swing.ListModel
 
 @ApiStatus.Experimental
@@ -37,6 +39,7 @@ class GHPRListViewModel internal constructor(
   private val interactionStateService = project.service<GHPRPersistentInteractionState>()
   private val repositoryDataService = dataContext.repositoryDataService
   private val listLoader = dataContext.listLoader
+  private val settings = GithubSettings.getInstance()
 
   val account: GithubAccount = dataContext.securityService.account
   private val currentUser: GHUser = dataContext.securityService.currentUser
@@ -69,17 +72,26 @@ class GHPRListViewModel internal constructor(
   private val outdatedState = MutableStateFlow(false)
   val outdated: SharedFlow<Boolean> = outdatedState.asSharedFlow()
 
-  private val hasUpdatesState = MutableStateFlow(false)
+  /**
+   * Whether the list view contains any PRs with updates, or `null` if it's unknown (because of the setting).
+   */
+  private val hasUpdatesState: MutableStateFlow<Boolean?> = MutableStateFlow(false)
   val hasUpdates = hasUpdatesState.asSharedFlow()
 
   init {
+    cs.launchNow {
+      interactionStateService.updateSignal.collectLatest {
+        checkIsSeenMarkers()
+      }
+    }
+
     val listenersDisposable = cs.nestedDisposable()
     listLoader.addLoadingStateChangeListener(listenersDisposable) {
       loadingState.value = listLoader.loading
 
       // If transitioning from loading to not loading, check for no updates
       if (!listLoader.loading) {
-        hasUpdatesState.value = listModel.items.any { !interactionStateService.isSeen(it, currentUser) }
+        checkIsSeenMarkers()
       }
     }
     listLoader.addErrorChangeListener(listenersDisposable) {
@@ -109,6 +121,15 @@ class GHPRListViewModel internal constructor(
       searchVm.searchState.collectLatest {
         listLoader.searchQuery = it.toQuery()
       }
+    }
+  }
+
+  private fun checkIsSeenMarkers() {
+    hasUpdatesState.update {
+      if (settings.isSeenMarkersEnabled) {
+        listModel.items.any { !interactionStateService.isSeen(it, currentUser) }
+      }
+      else null
     }
   }
 

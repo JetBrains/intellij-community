@@ -86,6 +86,9 @@ fun createVirtualEnvSynchronously(baseSdk: Sdk?,
   }
   if (!makeShared) {
     venvSdk.associateWithModule(module, projectPath)
+    ApplicationManager.getApplication().runWriteAction {
+      venvSdk.sdkModificator.commitChanges()
+    }
   }
   project.excludeInnerVirtualEnv(venvSdk)
   if (targetEnvironmentConfiguration.isLocal()) {

@@ -2,15 +2,16 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.psi.statistics.StatisticsInfo
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableSignatureRenderer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -22,31 +23,46 @@ object K2StatisticsInfoProvider {
     /**
      * The renderer skips some features of a declaration to provide concise (but still unambiguous) description of the declaration.
      */
-    private val renderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
-        annotationRenderer = annotationRenderer.with { annotationFilter = KtRendererAnnotationsFilter.NONE }
-        modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KtKeywordsRenderer.NONE }
+    @KaExperimentalApi
+    private val renderer = KaDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+        annotationRenderer = annotationRenderer.with { annotationFilter = KaRendererAnnotationsFilter.NONE }
+        modifiersRenderer = modifiersRenderer.with { keywordsRenderer = KaKeywordsRenderer.NONE }
 
-        returnTypeFilter = object : KtCallableReturnTypeFilter {
-            context(KtAnalysisSession)
-            override fun shouldRenderReturnType(type: KtType, symbol: KtCallableSymbol): Boolean = symbol !is KtFunctionLikeSymbol
+        returnTypeFilter = object : KaCallableReturnTypeFilter {
+            override fun shouldRenderReturnType(analysisSession: KaSession, type: KaType, symbol: KaCallableSymbol): Boolean {
+                return symbol !is KaFunctionSymbol
+            }
         }
 
-        callableSignatureRenderer = object : KtCallableSignatureRenderer {
-            context(KtAnalysisSession, KtDeclarationRenderer)
-            override fun renderCallableSignature(symbol: KtCallableSymbol, keyword: KtKeywordToken?, printer: PrettyPrinter) =
-                when (symbol) {
-                    is KtValueParameterSymbol -> returnTypeRenderer.renderReturnType(symbol, printer)
-                    else -> KtCallableSignatureRenderer.FOR_SOURCE.renderCallableSignature(symbol, keyword = null, printer)
+        callableSignatureRenderer = object : KaCallableSignatureRenderer {
+            override fun renderCallableSignature(
+                analysisSession: KaSession,
+                symbol: KaCallableSymbol,
+                keyword: KtKeywordToken?,
+                declarationRenderer: KaDeclarationRenderer,
+                printer: PrettyPrinter
+            ) {
+                return when (symbol) {
+                    is KaValueParameterSymbol -> {
+                        returnTypeRenderer.renderReturnType(analysisSession, symbol, declarationRenderer, printer)
+                    }
+                    else -> {
+                        KaCallableSignatureRenderer.FOR_SOURCE
+                            .renderCallableSignature(analysisSession, symbol, keyword = null, declarationRenderer, printer)
+                    }
                 }
+            }
         }
     }
 
-    context(KtAnalysisSession)
-    fun forDeclarationSymbol(symbol: KtDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
-        is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asFqNameString()?.let { StatisticsInfo(context, it) }
-        is KtCallableSymbol -> symbol.callableIdIfNonLocal?.let { callableId ->
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    fun forDeclarationSymbol(symbol: KaDeclarationSymbol, context: String = ""): StatisticsInfo = when (symbol) {
+        is KaClassLikeSymbol -> symbol.classId?.asFqNameString()?.let { StatisticsInfo(context, it) }
+        is KaCallableSymbol -> symbol.callableId?.let { callableId ->
             val containerFqName = callableId.classId?.asFqNameString() ?: callableId.packageName
-            StatisticsInfo(context, "$containerFqName###${prettyPrint { renderer.renderDeclaration(symbol, this) }}")
+            val declarationText = prettyPrint { renderer.renderDeclaration(analysisSession, symbol, this) }
+            StatisticsInfo(context, "$containerFqName###$declarationText")
         }
 
         else -> null

@@ -1,14 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
-import com.intellij.lang.java.lexer.JavaLexer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
@@ -70,8 +71,8 @@ class KotlinNameSuggester(
         fun shouldEscape(name: String): Boolean {
             return (escapeKotlinHardKeywords && name in KOTLIN_HARD_KEYWORDS)
                     || (escapeKotlinSoftKeywords && name in KOTLIN_SOFT_KEYWORDS)
-                    || (escapeJavaHardKeywords && JavaLexer.isKeyword(name, LanguageLevel.HIGHEST))
-                    || (escapeJavaSoftKeywords && JavaLexer.isSoftKeyword(name, LanguageLevel.HIGHEST))
+                    || (escapeJavaHardKeywords && PsiUtil.isKeyword(name, LanguageLevel.HIGHEST))
+                    || (escapeJavaSoftKeywords && PsiUtil.isSoftKeyword(name, LanguageLevel.HIGHEST))
         }
 
         fun escape(name: String): List<String> = escaper(name)
@@ -130,7 +131,7 @@ class KotlinNameSuggester(
      *  - `print(<selection>intArrayOf(5)</selection>)` -> {message, intArrayOf, ints}
      *  - `print(<selection>listOf(User("Mary"), User("John"))</selection>)` -> {message, listOf, users}
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun suggestExpressionNames(expression: KtExpression, validator: (String) -> Boolean = { true }): Sequence<String> {
         return (suggestNamesByValueArgument(expression, validator) +
                 suggestNameBySimpleExpression(expression, validator) +
@@ -162,9 +163,9 @@ class KotlinNameSuggester(
      *  - `intArrayOf(5)` -> {ints}
      *  - listOf(User("Mary"), User("John")) -> {users}
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun suggestNamesByType(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
-        val type = expression.getKtType() ?: return emptySequence()
+        val type = expression.expressionType ?: return emptySequence()
         return suggestTypeNames(type).map { name -> suggestNameByName(name, validator) }
     }
 
@@ -176,12 +177,12 @@ class KotlinNameSuggester(
      *  - `listOf(<selection>5</selection>)` -> {element}
      *  - `ints.filter <selection>{ it > 0 }</selection>` -> {predicate}
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun suggestNamesByValueArgument(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
-        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return emptySequence()
+        val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return emptySequence()
         val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return emptySequence()
         return suggestNameByValidIdentifierName(parameter.name.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
     }
@@ -193,10 +194,12 @@ class KotlinNameSuggester(
      *  - `IntArray` -> {ints}
      *  - `List<User>` -> {users}
      */
-    context(KtAnalysisSession)
-    fun suggestTypeNames(type: KtType): Sequence<String> {
+    context(KaSession)
+    fun suggestTypeNames(type: KaType): Sequence<String> {
         return sequence {
-            val primitiveType = getPrimitiveType(type)
+            val presentableType = getPresentableType(type)
+
+            val primitiveType = getPrimitiveType(presentableType)
             if (primitiveType != null) {
                 PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEachIndexed { index, s ->
                     // skip first item for the primitives like `int`
@@ -207,7 +210,7 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (type.isCharSequence || type.isString) {
+            if (presentableType.isCharSequence || presentableType.isString) {
                 registerCompoundName("string")
                 registerCompoundName("str")
                 registerCompoundName("s")
@@ -215,26 +218,22 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (type.isFunctionType) {
+            if (presentableType.isFunctionType) {
                 registerCompoundName("function")
                 registerCompoundName("fn")
                 registerCompoundName("f")
                 return@sequence
             }
 
-            tailrec fun getClassId(type: KtType): ClassId? = when (type) {
-                is KtDefinitelyNotNullType -> getClassId(type.original)
-                is KtFlexibleType -> getClassId(type.lowerBound)
-                is KtTypeParameterType -> {
-                    val bound = type.symbol.upperBounds.firstOrNull()
-                    if (bound != null) getClassId(bound) else null
-                }
-                is KtNonErrorClassType -> type.classId
+            fun getClassId(type: KaType): ClassId = when (type) {
+                is KaClassType -> type.classId
+                is KaTypeParameterType -> ClassId(FqName.ROOT, FqName.topLevel(type.name), false)
+
                 else -> ClassId(FqName.ROOT, FqName.topLevel(Name.identifier("Value")), false)
             }
 
-            suspend fun SequenceScope<String>.registerClassNames(type: KtType, preprocessor: (String) -> String = { it }) {
-                val classId = getClassId(type) ?: return
+            suspend fun SequenceScope<String>.registerClassNames(type: KaType, preprocessor: (String) -> String = { it }) {
+                val classId = getClassId(type)
 
                 KotlinNameSuggester(case, EscapingRules.NONE, ignoreCompanionNames)
                     .suggestClassNames(classId)
@@ -242,37 +241,40 @@ class KotlinNameSuggester(
                     .forEach { registerCompoundName(it) }
             }
 
-            if (type is KtNonErrorClassType) {
-                val elementType = getIterableElementType(type)
+            // when the presentable iterable element type is `Any`, don't suggest `anies`
+            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.isAny }
 
-                if (elementType != null) {
-                    registerClassNames(elementType) { Strings.pluralize(it) }
+            if (presentableElementType != null) {
+                registerClassNames(presentableElementType) { Strings.pluralize(it) }
+                return@sequence
+            }
+
+            val classId = getClassId(presentableType)
+            if (!classId.isLocal && !classId.isNestedClass) {
+                val fqName = classId.asSingleFqName().toUnsafe()
+
+                val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
+                if (primitiveElementType != null) {
+                    val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
+                    val chunk = Strings.pluralize(primitiveName)
+                    registerCompoundName(chunk)
                     return@sequence
                 }
 
-                val classId = type.classId
-                if (!classId.isLocal && !classId.isNestedClass) {
-                    val fqName = classId.asSingleFqName().toUnsafe()
-
-                    val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
-                    if (primitiveElementType != null) {
-                        val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
-                        val chunk = Strings.pluralize(primitiveName)
-                        registerCompoundName(chunk)
-                        return@sequence
-                    }
-
-                    val specialNames = getSpecialNames(fqName)
-                    if (specialNames != null) {
-                        specialNames.forEach { registerCompoundName(it) }
-                        return@sequence
-                    }
+                val specialNames = getSpecialNames(fqName)
+                if (specialNames != null) {
+                    specialNames.forEach { registerCompoundName(it) }
+                    return@sequence
                 }
-
-                registerClassNames(type)
             }
+
+            registerClassNames(presentableType)
         }
     }
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun getPresentableType(type: KaType): KaType = type.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
 
     /**
      * Suggests type alias name for a given type element.
@@ -281,7 +283,7 @@ class KotlinNameSuggester(
      *  - `Int?` -> NullableInt
      *  - `(String) -> Boolean` -> StringPredicate
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun suggestTypeAliasName(type: KtTypeElement): String {
         var isExactMatch = true
 
@@ -300,7 +302,7 @@ class KotlinNameSuggester(
                     type.parameters.forEach { process(it.typeReference?.typeElement) }
                     val returnType = type.returnTypeReference
                     if (returnType != null) {
-                        if (returnType.getKtType().isBoolean) {
+                        if (returnType.type.isBoolean) {
                             add("predicate")
                         } else {
                             add("to")
@@ -568,8 +570,8 @@ class KotlinNameSuggester(
     }
 }
 
-context(KtAnalysisSession)
-private fun getPrimitiveType(type: KtType): PrimitiveType? {
+context(KaSession)
+private fun getPrimitiveType(type: KaType): PrimitiveType? {
     return when {
         type.isBoolean -> PrimitiveType.BOOLEAN
         type.isChar -> PrimitiveType.CHAR
@@ -587,16 +589,16 @@ private val ITERABLE_LIKE_CLASS_IDS =
     listOf(FqNames.iterable, FqNames.array.toSafe())
         .map { ClassId.topLevel(it) }
 
-context(KtAnalysisSession)
-private fun getIterableElementType(type: KtType): KtType? {
-    if (type is KtNonErrorClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
-        return type.ownTypeArguments.singleOrNull()?.type
+context(KaSession)
+private fun getIterableElementType(type: KaType): KaType? {
+    if (type is KaClassType && type.classId in ITERABLE_LIKE_CLASS_IDS) {
+        return type.typeArguments.singleOrNull()?.type
     }
 
     for (supertype in type.getAllSuperTypes()) {
-        if (supertype is KtNonErrorClassType) {
+        if (supertype is KaClassType) {
             if (supertype.classId in ITERABLE_LIKE_CLASS_IDS) {
-                return supertype.ownTypeArguments.singleOrNull()?.type
+                return supertype.typeArguments.singleOrNull()?.type
             }
         }
     }

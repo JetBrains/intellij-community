@@ -35,24 +35,25 @@ public class MavenProjectProblem implements Serializable {
   private final String myPath;
   private final String myDescription;
   private final ProblemType myType;
+  private final Exception st;
   @Nullable
   private final MavenArtifact myMavenArtifact;
 
   public static MavenProjectProblem createStructureProblem(String path, String description, boolean recoverable) {
-    return createProblem(path, description, MavenProjectProblem.ProblemType.STRUCTURE, recoverable);
+    return createProblem(path, description, ProblemType.STRUCTURE, recoverable);
   }
 
   public static MavenProjectProblem createStructureProblem(String path, String description) {
-    return createProblem(path, description, MavenProjectProblem.ProblemType.STRUCTURE, false);
+    return createProblem(path, description, ProblemType.STRUCTURE, false);
   }
 
-  public static MavenProjectProblem createSyntaxProblem(String path, MavenProjectProblem.ProblemType type) {
+  public static MavenProjectProblem createSyntaxProblem(String path, ProblemType type) {
     return createProblem(path, MessageFormat.format("''{0}'' has syntax errors", new File(path).getName()), type, false);
   }
 
   public static MavenProjectProblem createProblem(String path,
                                                   String description,
-                                                  MavenProjectProblem.ProblemType type,
+                                                  ProblemType type,
                                                   boolean recoverable) {
     return new MavenProjectProblem(path, description, type, recoverable);
   }
@@ -89,6 +90,7 @@ public class MavenProjectProblem implements Serializable {
     myType = type;
     myRecoverable = recoverable;
     myMavenArtifact = mavenArtifact;
+    st = new Exception();
   }
 
   public String getPath() {

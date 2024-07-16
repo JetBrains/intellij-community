@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -37,7 +38,7 @@ internal class CompilerModuleExtensionBridge(
   private fun getCompilerOutput(): VirtualFileUrl? = when {
     isCompilerOutputPathInherited -> {
       val url = CompilerProjectExtension.getInstance(module.project)?.compilerOutputUrl
-      if (url != null) virtualFileManager.getOrCreateFromUri(url + "/" + PRODUCTION + "/" + getSanitizedModuleName()) else null
+      if (url != null) virtualFileManager.getOrCreateFromUrl(url + "/" + PRODUCTION + "/" + getSanitizedModuleName()) else null
     }
     else -> javaSettings?.compilerOutput
   }
@@ -45,7 +46,7 @@ internal class CompilerModuleExtensionBridge(
   private fun getCompilerOutputForTests(): VirtualFileUrl? = when {
     isCompilerOutputPathInherited -> {
       val url = CompilerProjectExtension.getInstance(module.project)?.compilerOutputUrl
-      if (url != null) virtualFileManager.getOrCreateFromUri(url + "/" + TEST + "/" + getSanitizedModuleName()) else null
+      if (url != null) virtualFileManager.getOrCreateFromUrl(url + "/" + TEST + "/" + getSanitizedModuleName()) else null
     }
     else -> javaSettings?.compilerOutputForTests
   }
@@ -75,15 +76,14 @@ internal class CompilerModuleExtensionBridge(
                        ?: error("Could not find entity for $module, ${module.hashCode()}, diff: ${entityStorage.base}")
     val moduleSource = moduleEntity.entitySource
 
-    val oldJavaSettings = javaSettings ?: (diff addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
-                                                                                   excludeOutput = true,
-                                                                                   entitySource = moduleSource
-    ) {
-      compilerOutput = null
-      compilerOutputForTests = null
-      languageLevelId = null
-      module = moduleEntity
-    })
+    val oldJavaSettings = javaSettings ?: let {
+      val updatedEntity = diff.modifyModuleEntity(moduleEntity) {
+        this.javaSettings = JavaModuleSettingsEntity(inheritedCompilerOutput = true,
+                                                     excludeOutput = true,
+                                                     entitySource = moduleSource)
+      }
+      updatedEntity.javaSettings!!
+    }
 
     diff.modifyEntity(JavaModuleSettingsEntity.Builder::class.java, oldJavaSettings, updater)
     changed = true
@@ -96,7 +96,7 @@ internal class CompilerModuleExtensionBridge(
 
   override fun setCompilerOutputPath(url: String?) {
     if (compilerOutputUrl == url) return
-    updateJavaSettings { compilerOutput = url?.let { virtualFileManager.getOrCreateFromUri(it) } }
+    updateJavaSettings { compilerOutput = url?.let { virtualFileManager.getOrCreateFromUrl(it) } }
   }
 
   override fun setCompilerOutputPathForTests(file: VirtualFile?) {
@@ -106,7 +106,7 @@ internal class CompilerModuleExtensionBridge(
 
   override fun setCompilerOutputPathForTests(url: String?) {
     if (compilerOutputUrlForTests == url) return
-    updateJavaSettings { compilerOutputForTests = url?.let { virtualFileManager.getOrCreateFromUri(it) } }
+    updateJavaSettings { compilerOutputForTests = url?.let { virtualFileManager.getOrCreateFromUrl(it) } }
   }
 
   override fun inheritCompilerOutputPath(inherit: Boolean) {

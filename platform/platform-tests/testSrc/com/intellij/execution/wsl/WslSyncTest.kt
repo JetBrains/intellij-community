@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.execution.wsl.sync.*
@@ -7,10 +7,12 @@ import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.basename
 import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.extension
 import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.extensions
 import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.fullname
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.testFramework.fixtures.TestFixtureRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.delete
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
@@ -32,11 +34,11 @@ class WslSyncTest(private val linToWin: Boolean) {
     lateinit var dir: String
       private set
 
-    override fun before() {
+    override fun before() = runWithJob {
       dir = wslRule.wsl.runCommand("mktemp", "-d").getOrThrow()
     }
 
-    override fun after() {
+    override fun after() = runWithJob {
       wslRule.wsl.runCommand("rm", "-rf", dir)
     }
   }
@@ -78,7 +80,7 @@ class WslSyncTest(private val linToWin: Boolean) {
     get() = wslRule.wsl.getUNCRootPath().resolve(linuxDirRule.dir)
 
   @Test
-  fun testLinksReported() {
+  fun testLinksReported() = runWithJob {
     val sources = arrayOf("source1", "another_source").map { FilePathRelativeToDir(it) }.toTypedArray()
     val storage: FileStorage<*, *>
     if (linToWin) {
@@ -100,11 +102,11 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun testNonExistingLinuxDir() {
+  fun testNonExistingLinuxDir() = runWithJob {
     Assert.assertTrue("Folder must be empty", LinuxFileStorage("/etc/foobarbuz", wslRule.wsl).isEmpty())
   }
   @Test
-  fun testLinks() {
+  fun testLinks() = runWithJob {
     val sources = arrayOf("source", "source_2").map { FilePathRelativeToDir(it) }.toTypedArray()
     val from: FileStorage<*, *>
     val to: FileStorage<*, *>
@@ -147,7 +149,7 @@ class WslSyncTest(private val linToWin: Boolean) {
    * Touch linux file, and see it is NOT copied since content is the same (although time differs)
    */
   @Test
-  fun syncDifferentRegister() {
+  fun syncDifferentRegister() = runWithJob {
     val win = winDirRule.newDirectoryPath()
 
     linuxDirAsPath.resolve("file.txt").createParentDirectories().createFile()
@@ -162,7 +164,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun syncEmptyFolder() {
+  fun syncEmptyFolder() = runWithJob {
     val windowsDir = winDirRule.newDirectoryPath()
     WslSync.syncWslFolders(linuxDirRule.dir, windowsDir, wslRule.wsl, linToWin)
     Assert.assertTrue(windowsDir.toFile().list()!!.isEmpty())
@@ -170,7 +172,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun syncFullThenChange() {
+  fun syncFullThenChange() = runWithJob {
     val numberOfFiles = 100
     val modifyEachFile = 3
 
@@ -225,7 +227,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun removeFiles() {
+  fun removeFiles() = runWithJob {
     val windowsDir = winDirRule.newDirectoryPath()
     val srcDir = if (linToWin) linuxDirAsPath else windowsDir
     val dstDir = if (linToWin) windowsDir else linuxDirAsPath
@@ -242,7 +244,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun syncWithExcludesOnly() {
+  fun syncWithExcludesOnly() = runWithJob {
     doSyncAndAssertFilePresence(
       setOf("файл.dll", "файл.tar.gz", "файл.zip", "debug", "debug.out", "idea.log"),
       setOf("файл.py", "файл.java", "файл-dll", "ddebug", "idea.log.bck"),
@@ -256,7 +258,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun syncWithIncludesOnly() {
+  fun syncWithIncludesOnly() = runWithJob {
     doSyncAndAssertFilePresence(
       setOf("файл.py", "файл.java", "файл-dll", "ddebug", "idea.log.bck"),
       setOf("файл.dll", "файл.tar.gz", "файл.zip", "debug", "debug.out", "idea.log"),
@@ -270,7 +272,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun syncWithExcludesAndIncludes() {
+  fun syncWithExcludesAndIncludes() = runWithJob {
     doSyncAndAssertFilePresence(
       setOf("файл.dll", "файл.gz", "файл.zip", "debug", "debug.out", "idea.log"),
       setOf("файл.py", "файл.tar.gz", "файл.java", "файл-dll", "ddebug", "debug.in", "idea.log.bck"),
@@ -286,7 +288,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun syncWithExcludesAndStubs() {
+  fun syncWithExcludesAndStubs() = runWithJob {
     doSyncAndAssertFilePresence(
       setOf(),
       setOf("файл.dll", "файл.gz", "файл.zip", "debug", "debug.out", "idea.log",
@@ -301,7 +303,7 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
-  fun syncWithIncludesAndStubs() {
+  fun syncWithIncludesAndStubs() = runWithJob {
     doSyncAndAssertFilePresence(
       setOf(),
       setOf("файл.dll", "файл.gz", "файл.zip", "debug", "debug.out", "idea.log",
@@ -344,5 +346,14 @@ class WslSyncTest(private val linToWin: Boolean) {
       }
     }
     Assert.assertEquals("Not all files synced", fileNamesToSync.size, dstDir.toFile().list()!!.size)
+  }
+}
+
+/** Provides a progress indicator + job, which is required for [com.intellij.openapi.progress.runBlockingCancellable] */
+private fun runWithJob(body: () -> Unit) {
+  runBlocking {
+    blockingContext {
+      body()
+    }
   }
 }

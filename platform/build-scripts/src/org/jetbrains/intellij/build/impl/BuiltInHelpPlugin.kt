@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.diagnostic.telemetry.helpers.use
@@ -10,19 +10,13 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
-import org.jetbrains.intellij.build.io.writeNewZip
+import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
+import org.jetbrains.intellij.build.productRunner.runJavaForIntellijModule
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val MODULE_NAME = "intellij.platform.builtInHelp"
-private val EXTRA_LIBRARIES = setOf(
-  "lucene-queryparser",
-  "lucene-highlighter",
-  "lucene-memory",
-  "lucene-sandbox",
-  "lucene-queries",
-  "jackson-dataformat-xml"
-)
+internal const val BUILT_IN_HELP_MODULE_NAME = "intellij.platform.builtInHelp"
+private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
   val productName = context.applicationInfo.fullProductName
@@ -32,35 +26,31 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
     return null
   }
 
-  return PluginLayout.plugin(MODULE_NAME) { spec ->
+  return PluginLayout.plugin(BUILT_IN_HELP_MODULE_NAME) { spec ->
     val productLowerCase = productName.replace(' ', '-').lowercase()
     spec.mainJarName = "$productLowerCase-help.jar"
     spec.directoryName = "${productName.replace(" ", "")}Help"
-    spec.excludeFromModule(MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
+    spec.excludeFromModule(BUILT_IN_HELP_MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
     spec.doNotCopyModuleLibrariesAutomatically(listOf("jsoup"))
     spec.withGeneratedResources { targetDir, buildContext ->
       val assetJar = targetDir.resolve("lib/help-$productLowerCase-assets.jar")
       buildResourcesForHelpPlugin(
         resourceRoot = resourceRoot,
-        classPath = buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(MODULE_NAME), false),
+        classPath = buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(BUILT_IN_HELP_MODULE_NAME), false),
         assetJar = assetJar,
         context = context,
       )
     }
     spec.withPatch { patcher, buildContext ->
-      patcher.patchModuleOutput(
-        moduleName = MODULE_NAME,
-        path = "META-INF/services/org.apache.lucene.codecs.Codec",
-        content = "org.apache.lucene.codecs.lucene50.Lucene50Codec"
-      )
-      patcher.patchModuleOutput(
-        moduleName = MODULE_NAME,
-        path = "META-INF/plugin.xml",
-        content = pluginXml(buildContext, pluginVersion),
-        overwrite = true
-      )
+      patcher.patchModuleOutput(moduleName = BUILT_IN_HELP_MODULE_NAME,
+                                path = "META-INF/services/org.apache.lucene.codecs.Codec",
+                                content = "org.apache.lucene.codecs.lucene50.Lucene50Codec")
+      patcher.patchModuleOutput(moduleName = BUILT_IN_HELP_MODULE_NAME,
+                                path = "META-INF/plugin.xml",
+                                content = pluginXml(buildContext, pluginVersion),
+                                overwrite = PatchOverwriteMode.TRUE)
     }
-    EXTRA_LIBRARIES.forEach { spec.withProjectLibrary(it) }
+    LUCENE_LIBRARIES.forEach { spec.withProjectLibrary(it) }
   }
 }
 
@@ -101,22 +91,18 @@ private val helpIndexerMutex = Mutex()
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").use {
     helpIndexerMutex.withLock {
-      runIdea(
-        context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
-        args = listOf(
-          resourceRoot.resolve("search").toString(),
-          resourceRoot.resolve("topics").toString()
-        ),
-        jvmArgs = emptyList(),
-        classPath = classPath
-      )
+      runJavaForIntellijModule(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
+                               args = listOf(resourceRoot.resolve("search").toString(),
+                            resourceRoot.resolve("topics").toString()),
+                               jvmArgs = emptyList(),
+                               classPath = classPath)
     }
-    writeNewZip(assetJar, compress = true) { zipCreator ->
+    writeNewZipWithoutIndex(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
       archiver.setRootDir(resourceRoot)
-      archiveDir(resourceRoot.resolve("topics"), archiver)
-      archiveDir(resourceRoot.resolve("images"), archiver)
-      archiveDir(resourceRoot.resolve("search"), archiver)
+      archiveDir(resourceRoot.resolve("topics"), archiver, null)
+      archiveDir(resourceRoot.resolve("images"), archiver, null)
+      archiveDir(resourceRoot.resolve("search"), archiver, null)
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -12,6 +12,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ExperimentalUI;
@@ -24,7 +25,7 @@ import java.util.Objects;
 /**
  * @author Dmitry Batkovich
  */
-public final class EditSettingsAction extends InspectionViewActionBase {
+public final class EditSettingsAction extends InspectionViewActionBase implements DumbAware {
   private static final Logger LOG = Logger.getInstance(EditSettingsAction.class);
 
   public EditSettingsAction() {

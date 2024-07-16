@@ -8,9 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.isStandalone
@@ -31,6 +31,7 @@ private val scriptResidenceExceptionProviders = listOf(
     ScriptResidenceExceptionProvider(".gradle.kts", true),
     ScriptResidenceExceptionProvider(".main.kts"),
     ScriptResidenceExceptionProvider(".space.kts"),
+    ScriptResidenceExceptionProvider(".inspection.kts"),
     ScriptResidenceExceptionProvider(".ws.kts", true),
     object : ScriptResidenceExceptionProvider(".teamcity.kts", true) {
         override fun isSupportedScriptExtension(virtualFile: VirtualFile): Boolean {
@@ -67,9 +68,15 @@ fun compilerAllowsAnyScriptsInSourceRoots(project: Project): Boolean {
 }
 
 @ApiStatus.Internal
+fun VirtualFile.isRunnableKotlinScript(project: Project): Boolean {
+    if (nameSequence.endsWith(".gradle.kts")) return false
+    return isStandaloneKotlinScript(project)
+}
+
+@ApiStatus.Internal
 fun VirtualFile.isStandaloneKotlinScript(project: Project): Boolean {
     val ktFile = (toPsiFile(project) as? KtFile)?.takeIf(KtFile::isScript) ?: return false
-    val scriptDefinition = ScriptDefinitionsManager.getInstance(project).findDefinition(KtFileScriptSource(ktFile))
+    val scriptDefinition = ScriptDefinitionProvider.getInstance(project)?.findDefinition(KtFileScriptSource(ktFile))
         ?: return false
     return scriptDefinition.compilationConfiguration[ScriptCompilationConfiguration.isStandalone] == true
 }

@@ -3,3 +3,5 @@
 fun test(i: Int?): IntArray? {
     return i?.let { <caret>intArrayOf(it) }
 }
+
+// IGNORE_K2

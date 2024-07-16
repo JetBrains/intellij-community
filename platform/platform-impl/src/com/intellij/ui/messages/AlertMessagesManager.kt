@@ -90,16 +90,17 @@ internal class AlertMessagesManager {
 
 private const val PARENT_WIDTH_KEY = "parent.width"
 
-private class AlertDialog(project: Project?,
-                          parentComponent: Component?,
-                          @NlsContexts.DialogMessage val myMessage: String?,
-                          @NlsContexts.DialogTitle val myTitle: String?,
-                          val myOptions: Array<String>,
-                          val myDefaultOptionIndex: Int,
-                          val myFocusedOptionIndex: Int,
-                          icon: Icon,
-                          doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
-                          val myHelpId: String?) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
+@ApiStatus.Internal
+class AlertDialog(project: Project?,
+                  parentComponent: Component?,
+                  @NlsContexts.DialogMessage val myMessage: String?,
+                  @NlsContexts.DialogTitle val myTitle: String?,
+                  val myOptions: Array<String>,
+                  val myDefaultOptionIndex: Int,
+                  val myFocusedOptionIndex: Int,
+                  icon: Icon,
+                  doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
+                  val myHelpId: String?) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 

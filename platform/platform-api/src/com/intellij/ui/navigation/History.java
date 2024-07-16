@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.Disposable;
@@ -17,15 +17,15 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public final class History {
   public static final DataKey<History> KEY = DataKey.create("History");
 
-  private final List<Place> myHistory = new ArrayList<>();
-  private int myCurrentPos;
-  private final Place.Navigator myRoot;
+  private final List<Place> history = new ArrayList<>();
+  private int currentPos;
+  private final Place.Navigator root;
 
-  private boolean myNavigatedNow;
-  private final CopyOnWriteArraySet<HistoryListener> myListeners = new CopyOnWriteArraySet<>();
+  private boolean navigatedNow;
+  private final CopyOnWriteArraySet<HistoryListener> listeners = new CopyOnWriteArraySet<>();
 
   public History(@NotNull Place.Navigator root) {
-    myRoot = root;
+    this.root = root;
   }
 
   @RequiresEdt
@@ -37,16 +37,16 @@ public final class History {
   }
 
   private synchronized void pushPlace(@NotNull Place place) {
-    while (myCurrentPos >= 0 && myCurrentPos < myHistory.size() - 1) {
-      myHistory.remove(myHistory.size() - 1);
+    while (currentPos >= 0 && currentPos < history.size() - 1) {
+      history.remove(history.size() - 1);
     }
 
-    if (!myHistory.isEmpty()) {
-      final Place prev = myHistory.get(myHistory.size() - 1);
+    if (!history.isEmpty()) {
+      final Place prev = history.get(history.size() - 1);
       if (prev.equals(place)) return;
 
       if (prev.isMoreGeneralFor(place)) {
-        myHistory.remove(prev);
+        history.remove(prev);
       }
     }
 
@@ -54,8 +54,8 @@ public final class History {
   }
 
   private synchronized void addPlace(Place place) {
-    myHistory.add(place);
-    myCurrentPos = myHistory.size() - 1;
+    history.add(place);
+    currentPos = history.size() - 1;
   }
 
   public void pushPlaceForElement(String name, Object value) {
@@ -67,7 +67,7 @@ public final class History {
   }
 
   public void navigateTo(Place place) {
-    myRoot.navigateTo(place, false);
+    root.navigateTo(place, false);
   }
 
   @RequiresEdt
@@ -81,40 +81,40 @@ public final class History {
     List<Place> places = new ArrayList<>();
     int first;
     synchronized (this) {
-      first = myCurrentPos + increment;
-      for (int idx = first; idx >= 0 && idx < myHistory.size(); idx += increment) {
-        places.add(myHistory.get(idx));
+      first = currentPos + increment;
+      for (int idx = first; idx >= 0 && idx < history.size(); idx += increment) {
+        places.add(history.get(idx));
       }
     }
-    int index = ContainerUtil.indexOf(places, place -> myRoot.isValid(place));
+    int index = ContainerUtil.indexOf(places, place -> root.isValid(place));
     return index == -1 ? -1 : first + index * increment;
   }
 
   private void goThere(final int nextPos) {
-    myNavigatedNow = true;
-    final Place next = myHistory.get(nextPos);
+    navigatedNow = true;
+    final Place next = history.get(nextPos);
     final Place from = getCurrent();
     fireStarted(from, next);
     try {
-      final ActionCallback callback = myRoot.navigateTo(next, false);
+      final ActionCallback callback = root.navigateTo(next, false);
       assert callback != null;
       callback.doWhenDone(() -> {
         synchronized (this) {
-          myCurrentPos = nextPos;
+          currentPos = nextPos;
         }
       }).doWhenProcessed(() -> {
-        myNavigatedNow = false;
+        navigatedNow = false;
         fireFinished(from, next);
       });
     }
     catch (Throwable e) {
-      myNavigatedNow = false;
+      navigatedNow = false;
       throw new RuntimeException(e);
     }
   }
 
   public boolean isNavigatingNow() {
-    return myNavigatedNow;
+    return navigatedNow;
   }
 
   public boolean canGoBack() {
@@ -134,19 +134,19 @@ public final class History {
 
   @RequiresEdt
   public synchronized void clear() {
-    myHistory.clear();
-    myCurrentPos = -1;
+    history.clear();
+    currentPos = -1;
   }
 
   public @NotNull Place query() {
-    final Place result = new Place();
-    myRoot.queryPlace(result);
+    Place result = new Place();
+    root.queryPlace(result);
     return result;
   }
 
   private synchronized Place getCurrent() {
-    if (myCurrentPos >= 0 && myCurrentPos < myHistory.size()) {
-      return myHistory.get(myCurrentPos);
+    if (currentPos >= 0 && currentPos < history.size()) {
+      return history.get(currentPos);
     } else {
       return null;
     }
@@ -170,26 +170,24 @@ public final class History {
   }
 
   public void addListener(final HistoryListener listener, Disposable parent) {
-    myListeners.add(listener);
+    listeners.add(listener);
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
-        myListeners.remove(listener);
+        listeners.remove(listener);
       }
     });
   }
 
   private void fireStarted(Place from, Place to) {
-    for (HistoryListener each : myListeners) {
+    for (HistoryListener each : listeners) {
       each.navigationStarted(from, to);
     }
   }
 
   private void fireFinished(Place from, Place to) {
-    for (HistoryListener each : myListeners) {
+    for (HistoryListener each : listeners) {
       each.navigationFinished(from, to);
     }
   }
-
-
 }

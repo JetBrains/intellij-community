@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
@@ -193,8 +193,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @NotNull
-  protected List<VirtualFile> getSourceRoots(@NotNull Project project, @Nullable PsiDirectory initialTargetDirectory) {
+  protected @NotNull List<VirtualFile> getSourceRoots(@NotNull Project project, @Nullable PsiDirectory initialTargetDirectory) {
     return JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
   }
 
@@ -208,8 +207,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     }
   }
 
-  @Nullable
-  public MoveDestination selectDirectory(final PackageWrapper targetPackage, final boolean showChooserWhenDefault) {
+  public @Nullable MoveDestination selectDirectory(final PackageWrapper targetPackage, final boolean showChooserWhenDefault) {
     final DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)getComboBox().getSelectedItem();
     if (selectedItem == null || selectedItem == DirectoryChooser.ItemWrapper.NULL) {
       return new MultipleRootsMoveDestination(targetPackage);
@@ -226,9 +224,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, selectedDestination);
   }
 
-  @Nls
-  @Nullable
-  private String getUpdateErrorMessage(ProjectFileIndex fileIndex, Object selectedItem) {
+  private @Nls @Nullable String getUpdateErrorMessage(ProjectFileIndex fileIndex, Object selectedItem) {
     if (myInitialTargetDirectory != null && selectedItem instanceof DirectoryChooser.ItemWrapper && selectedItem !=
                                                                                                     DirectoryChooser.ItemWrapper.NULL) {
       final PsiDirectory directory = ((DirectoryChooser.ItemWrapper)selectedItem).getDirectory();
@@ -342,12 +338,11 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @Nullable
-  private static DirectoryChooser.ItemWrapper chooseSelection(final VirtualFile initialTargetDirectorySourceRoot,
-                                                              final ProjectFileIndex fileIndex,
-                                                              final ArrayList<DirectoryChooser.ItemWrapper> items,
-                                                              final DirectoryChooser.ItemWrapper initial,
-                                                              final DirectoryChooser.ItemWrapper oldOne) {
+  private static @Nullable DirectoryChooser.ItemWrapper chooseSelection(final VirtualFile initialTargetDirectorySourceRoot,
+                                                                        final ProjectFileIndex fileIndex,
+                                                                        final ArrayList<DirectoryChooser.ItemWrapper> items,
+                                                                        final DirectoryChooser.ItemWrapper initial,
+                                                                        final DirectoryChooser.ItemWrapper oldOne) {
     if (initial != null || ((initialTargetDirectorySourceRoot == null || items.size() > 2) && items.contains(
       DirectoryChooser.ItemWrapper.NULL)) || items.isEmpty()) {
       return initial;

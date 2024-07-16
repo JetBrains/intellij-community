@@ -11,7 +11,6 @@ import com.intellij.grazie.utils.text
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
 import org.apache.commons.text.similarity.LevenshteinDistance
-import org.jetbrains.annotations.ApiStatus
 import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
 import org.languagetool.Tag
@@ -153,8 +152,8 @@ object LangTool : GrazieStateLifecycle {
     val accepted = ArrayList<IncorrectExample>()
     for (example in examples) {
       if (accepted.none { it.text.isSimilarTo(example.text) }) {
-        val firstCorrection = example.corrections.find { it.isNotBlank() }
-        accepted.add(IncorrectExample(example.example, ContainerUtil.createMaybeSingletonList(firstCorrection)))
+        val corrections = example.corrections.filter { it.isNotBlank() }.take(3)
+        accepted.add(IncorrectExample(example.example, corrections))
         if (accepted.size > 5) break
       }
     }

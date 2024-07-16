@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Maps;
@@ -41,15 +41,13 @@ public final class PyExceptionBreakpointType
     super("python-exception", PyBundle.message("debugger.exception.breakpoint.type"));
   }
 
-  @NotNull
   @Override
-  public Icon getEnabledIcon() {
+  public @NotNull Icon getEnabledIcon() {
     return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getDisabledIcon() {
+  public @NotNull Icon getDisabledIcon() {
     return AllIcons.Debugger.Db_disabled_exception_breakpoint;
   }
 
@@ -88,7 +86,7 @@ public final class PyExceptionBreakpointType
     private final HashMap<Integer, Pair<WeakReference<PyClass>, Boolean>> processedElements = Maps.newHashMap();
 
     @Override
-    public boolean isAccepted(@NotNull final PyClass pyClass) {
+    public boolean isAccepted(final @NotNull PyClass pyClass) {
       final VirtualFile virtualFile = pyClass.getContainingFile().getVirtualFile();
       if (virtualFile == null) {
         return false;
@@ -126,10 +124,9 @@ public final class PyExceptionBreakpointType
     return "";
   }
 
-  @Nullable
   @Override
-  public XDebuggerEditorsProvider getEditorsProvider(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint,
-                                                     @NotNull Project project) {
+  public @Nullable XDebuggerEditorsProvider getEditorsProvider(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint,
+                                                               @NotNull Project project) {
     return new PyDebuggerEditorsProvider();
   }
 
@@ -160,9 +157,8 @@ public final class PyExceptionBreakpointType
     private JCheckBox myIgnoreLibrariesCheckBox;
     private JBLabel myWarningIcon;
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       myNotifyOnTerminateCheckBox = new JCheckBox(PyBundle.message("debugger.exception.breakpoint.on.termination"));
       myNotifyOnRaiseCheckBox = new JCheckBox(PyBundle.message("debugger.exception.breakpoint.on.raise"));
       myIgnoreLibrariesCheckBox = new JCheckBox(PyBundle.message("debugger.exception.breakpoint.ignore.library.files"));

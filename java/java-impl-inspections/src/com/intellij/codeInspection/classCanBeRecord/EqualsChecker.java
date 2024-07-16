@@ -82,8 +82,8 @@ final class EqualsChecker {
       }
     }
     if (operand instanceof PsiBinaryExpression binOp && binOp.getOperationTokenType().equals(JavaTokenType.EQEQ)) {
-      PsiExpression lOperand = ((PsiBinaryExpression)operand).getLOperand();
-      PsiExpression rOperand = ((PsiBinaryExpression)operand).getROperand();
+      PsiExpression lOperand = binOp.getLOperand();
+      PsiExpression rOperand = binOp.getROperand();
       PsiField field = getField(lOperand, rOperand, that);
       if (field != null) {
         PsiType type = field.getType();

@@ -120,8 +120,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       if (dataSharingDisabledExternally || dataSharingEnabledByFreeLicense) {
         stateSupplier = new ConsentStateSupplier(consent, () -> consent.isAccepted());
         cb.setEnabled(false);
-        if (dataSharingDisabledExternally) cb.setSelected(false);
-        else if (dataSharingEnabledByFreeLicense) cb.setSelected(true);
+        cb.setSelected(!dataSharingDisabledExternally);
       }
       else {
         stateSupplier = new ConsentStateSupplier(consent, () -> cb.isSelected());

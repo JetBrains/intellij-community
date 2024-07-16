@@ -17,8 +17,8 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -68,6 +68,7 @@ public final class LengthOneStringsInConcatenationInspection extends BaseInspect
       if (ExpressionUtils.isConversionToStringNecessary(expression, false)) {
         return;
       }
+      if (!(expression.getValue() instanceof String s) || s.length() != 1) return;
       final String charLiteral = PsiLiteralUtil.charLiteralString(expression);
       if (charLiteral == null) {
         return;

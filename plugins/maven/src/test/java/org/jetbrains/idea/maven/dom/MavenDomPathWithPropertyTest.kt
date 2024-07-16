@@ -1,15 +1,15 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDomPathWithPropertyTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
-  fun testRename() = runBlocking {
+  fun testRename() = runBlocking(Dispatchers.EDT) {
     importProjectAsync(
       """
         <groupId>test</groupId>
@@ -57,7 +57,7 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testCompletionDirectoriesOnly() = runBlocking {
+  fun testCompletionDirectoriesOnly() = runBlocking(Dispatchers.EDT) {
     createProjectPom(
       """
             <groupId>test</groupId>

@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -17,7 +17,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements RefFunctionalExpression {
+public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implements RefFunctionalExpression {
+  private static final int IS_METHOD_REFERENCE_MASK = 0b1_00000000_00000000; // 17th bit
 
   RefFunctionalExpressionImpl(@NotNull UExpression expr, @NotNull PsiElement psi, @NotNull RefManager manager) {
     super(expr, psi, manager);
@@ -39,6 +40,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
       if (uMethodRef != null) {
         setParameters(uMethodRef.getUastParameters());
       }
+      setFlag(true, IS_METHOD_REFERENCE_MASK);
     }
     else {
       assert false;
@@ -86,7 +88,7 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
 
   @Override
   public void addDerivedReference(@NotNull RefOverridable reference) {
-    // do nothing
+    throw new AssertionError("Should not be called!");
   }
 
   @NotNull
@@ -109,9 +111,15 @@ public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements R
   }
 
   @Override
+  public boolean isMethodReference() {
+    LOG.assertTrue(isInitialized());
+    return checkFlag(IS_METHOD_REFERENCE_MASK);
+  }
+
+  @Override
   public void accept(@NotNull RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitFunctionalExpression(this));
+    if (visitor instanceof RefJavaVisitor javaVisitor) {
+      ReadAction.run(() -> javaVisitor.visitFunctionalExpression(this));
     }
     else {
       super.accept(visitor);

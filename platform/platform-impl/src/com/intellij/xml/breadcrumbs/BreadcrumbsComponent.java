@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
@@ -224,7 +224,7 @@ public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComp
   }
 
   private @Nullable List<Crumb> createCrumbList(final @NotNull FontMetrics fm, final @NotNull List<? extends T> elements, final int width) {
-    if (elements.size() == 0) {
+    if (elements.isEmpty()) {
       return null;
     }
 
@@ -296,7 +296,7 @@ public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComp
     }
 
     // set selected crumb
-    if (result.size() > 0) {
+    if (!result.isEmpty()) {
       for (int i = result.size() - 1; i >= 0; i--) {
         final Crumb c = result.get(i);
         if (!(c instanceof DummyCrumb)) {

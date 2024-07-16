@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -21,6 +22,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +67,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   public SettingsDialog(@NotNull Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
     super(project, true);
     myDimensionServiceKey = DIMENSION_KEY;
-    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory);
+    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
     myApplyButtonNeeded = true;
     myResetButtonNeeded = false;
     init(null, project);
@@ -78,7 +80,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
                         @Nullable String filter) {
     super(project, parentComponent, true, IdeModalityType.IDE);
     myDimensionServiceKey = DIMENSION_KEY;
-    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory);
+    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
     myApplyButtonNeeded = true;
     myResetButtonNeeded = false;
     init(null, project);
@@ -90,6 +92,11 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   protected @NotNull SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     return new SettingsTreeView(filter, groups);
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull SpotlightPainter spotlightPainterFactory(@Nullable Project project, @NotNull JComponent target, @NotNull Disposable parent, @NotNull SpotlightPainter.SpotlightPainterUpdater updater) {
+    return new SpotlightPainter(target, parent, updater);
   }
 
   private void init(@Nullable Configurable configurable, @Nullable Project project) {

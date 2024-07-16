@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -6,14 +6,11 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -73,12 +70,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       ActionContext context =
         ActionContext.from(editor, element.getContainingFile()).withElement(element);
       String name = getActionName(element);
-      ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return ReadAction.nonBlocking(() -> perform(context)).executeSynchronously();
-      }, name, true, context.project());
-      if (command == null) return;
-      CommandProcessor.getInstance().executeCommand(
-        context.project(), () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor), name, null);
+      ModCommandExecutor.executeInteractively(context, name, editor, () -> perform(context));
     }
     finally {
       final RefactoringEventData afterData = new RefactoringEventData();
@@ -117,10 +109,9 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
                                      @NotNull PsiVariable var,
                                      @Nullable PsiReferenceExpression refExpr,
                                      @NotNull InlineMode mode) {
-    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     List<PsiReferenceExpression> allRefs =
-      refExpr != null && (mode == InlineMode.INLINE_ONE || block == null) ? List.of(refExpr) :
-      VariableAccessUtils.getVariableReferences(var, block);
+      refExpr != null && mode == InlineMode.INLINE_ONE ? List.of(refExpr) :
+      VariableAccessUtils.getVariableReferences(var);
     if (allRefs.isEmpty()) {
       return ModCommand.error(RefactoringBundle.message("variable.is.never.used", var.getName()));
     }
@@ -216,7 +207,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       if (defToInline == local.getInitializer()) {
         // Do not rely on ref-def analysis in a simple case when we inline an initializer and there are no subsequent writes.
         // This allows inlining in the presense of syntax errors.
-        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, containerBlock);
+        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local);
         if (!ContainerUtil.exists(refs, ref -> PsiUtil.isAccessedForWriting(ref))) {
           simpleInlining = true;
           refsToInlineList.addAll(refs);
@@ -249,7 +240,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
 
-    if (mode == InlineMode.ASK && refExpr != null && refsToInlineList.size() > 1 &&
+    if (mode == InlineMode.ASK && refExpr != null && refsToInlineList.size() > 1 && refsToInlineList.contains(refExpr) &&
         EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
       return createChooser(local, refExpr, refsToInlineList);
     }

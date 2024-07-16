@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -301,7 +302,7 @@ public class PlainTextEditingTest extends EditingTestBase {
   public void testCalculatingLongLinesPositionPerformanceInEditorWithNoTabs() {
     final String longLine = StringUtil.repeatSymbol(' ', 1000000);
     configureFromFileText("x.txt", longLine);
-    PlatformTestUtil.newPerformanceTest("calcOffset", () -> {
+    PerformanceTestUtil.newPerformanceTest("calcOffset", () -> {
       for (int i = 0; i < 1000; i++) {
         int off = getEditor().logicalPositionToOffset(new LogicalPosition(0, longLine.length() - 1));
         assertEquals(longLine.length() - 1, off);

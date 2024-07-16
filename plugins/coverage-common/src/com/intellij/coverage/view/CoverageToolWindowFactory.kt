@@ -3,6 +3,7 @@ package com.intellij.coverage.view
 
 import com.intellij.coverage.CoverageBundle
 import com.intellij.coverage.actions.ExternalReportImportManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -13,7 +14,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 
-class CoverageToolWindowFactory : ToolWindowFactory {
+internal class CoverageToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val manager = toolWindow.contentManager
     manager.addContentManagerListener(object : ContentManagerListener {
@@ -27,7 +28,7 @@ class CoverageToolWindowFactory : ToolWindowFactory {
     val toolWindowEx = toolWindow as? ToolWindowEx ?: return
     toolWindowEx.emptyText
       ?.appendLine(CoverageBundle.message("coverage.import.report.toolwindow.empty.text"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-        ExternalReportImportManager.getInstance(toolWindow.project).chooseAndOpenSuites()
+        ExternalReportImportManager.getInstance(toolWindow.project).chooseAndOpenSuites(ExternalReportImportManager.Source.EMPTY_TOOLWINDOW)
       }
   }
 

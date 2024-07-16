@@ -85,7 +85,8 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
             PsiStatement[] range = Arrays.copyOfRange(statements, from, to);
             if (ContainerUtil.exists(range, e -> e instanceof PsiSwitchLabelStatementBase)) continue;
             TextRange textRange = getRange(range);
-            if (textRange.getLength() < minLength || textRange.getLength() > maxLength) continue;
+            int length = range[range.length - 1].getTextRange().getEndOffset() - range[0].getTextRange().getStartOffset();
+            if (length < minLength || textRange.getLength() > maxLength) continue;
             try {
               ControlFlowWrapper wrapper = new ControlFlowWrapper(fragment, range);
               Collection<PsiStatement> exitStatements = wrapper.prepareExitStatements(range);
@@ -118,11 +119,11 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
                   JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.parameters", inputVariables.size()),
                   inputVariables.size() - 1)));
               }
-              if (textRange.getLength() < 10_000) {
+              if (length < 10_000) {
                 fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
                   ExtractMethodRecommenderInspection.this, "minLength",
                   JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.length"),
-                  textRange.getLength() + 1)));
+                  length + 1)));
               }
               int firstLineBreak = textRange.substring(block.getText()).indexOf('\n');
               PsiElement anchor = block;

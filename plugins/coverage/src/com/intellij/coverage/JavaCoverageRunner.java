@@ -66,7 +66,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     final ProjectData projectData = suite.getCoverageData();
     if (projectData == null) return;
     IDEACoverageRunner.setExcludeAnnotations(project, projectData);
-    UnloadedUtil.appendUnloaded(projectData, new IdeaClassFinder(project, suite), false, suite.isBranchCoverage());
+    UnloadedUtil.appendUnloaded(projectData, new IdeaClassFinder(project, suite), suite.isBranchCoverage());
 
     final long generationStartNs = System.nanoTime();
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
@@ -132,7 +132,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   /**
    * @deprecated This method is not used anymore, as all the runners support JDK 7+.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean isJdk7Compatible() {
     return true;
   }

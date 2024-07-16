@@ -107,7 +107,7 @@ internal class ComparisonsBuilder(private val log: MetadataComparatorLog) {
   }
 }
 
-public object ComparisonUtil {
+internal object ComparisonUtil {
   internal fun compareMetadata(cacheMetadata: StorageMetadata, cacheMetadataName: String,
                                currentMetadata: StorageMetadata, currentMetadataName: String,
                                comparisons: ComparisonsBuilder.() -> Unit): ComparisonResult {

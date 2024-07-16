@@ -15,6 +15,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
@@ -574,9 +575,11 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     return outputs;
   }
 
-  private static JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
-    final RunProfileState state;
-    state = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build().getState();
+  private JavaParameters checkCanRun(RunConfiguration configuration) throws ExecutionException {
+    ExecutionEnvironment executionEnvironment =
+      ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+    Disposer.register(getTestRootDisposable(), executionEnvironment);
+    RunProfileState state = executionEnvironment.getState();
     assertNotNull(state);
     assertTrue(state instanceof JavaCommandLine);
     if (state instanceof TestPackage) {

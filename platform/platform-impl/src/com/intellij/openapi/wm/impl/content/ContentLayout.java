@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -85,7 +85,7 @@ public abstract class ContentLayout {
         Content content = manager.getContent(0);
         if (content == null) yield null;
         final String text = content.getDisplayName();
-        if (text != null && text.trim().length() > 0 && manager.canCloseContents()) {
+        if (text != null && !text.trim().isEmpty() && manager.canCloseContents()) {
           yield ":";
         }
         yield null;

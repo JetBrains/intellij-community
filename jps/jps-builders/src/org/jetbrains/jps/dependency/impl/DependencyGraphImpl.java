@@ -6,11 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
+import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -19,19 +18,18 @@ import static org.jetbrains.jps.javac.Iterators.*;
 
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
-  private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new GeneralJvmDifferentiateStrategy());
+  private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new KotlinSourceOnlyDifferentiateStrategy(), new GeneralJvmDifferentiateStrategy());
   private final Set<String> myRegisteredIndices;
 
-  public DependencyGraphImpl(MapletFactory containerFactory) throws IOException {
+  public DependencyGraphImpl(MapletFactory containerFactory) {
     super(containerFactory);
     addIndex(new SubclassesIndex(containerFactory));
-    addIndex(new ClassShortNameIndex(containerFactory));
     myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
   }
 
   @Override
-  public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources) throws IOException {
-    DeltaImpl delta = new DeltaImpl(completeSourceSet(compiledSources, deletedSources), deletedSources);
+  public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources, boolean isSourceOnly) {
+    Delta delta = isSourceOnly? new SourceOnlyDelta(myRegisteredIndices, compiledSources, deletedSources) : new DeltaImpl(compiledSources, deletedSources);
 
     Set<String> deltaIndices = collect(map(delta.getIndices(), index -> index.getName()), new HashSet<>());
     if (!myRegisteredIndices.equals(deltaIndices)) {
@@ -46,13 +44,13 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     String sessionName = params.getSessionName();
     Iterable<NodeSource> deltaSources = delta.getSources();
-    Set<NodeSource> allProcessedSources = collect(flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
+    Set<NodeSource> allProcessedSources = delta.isSourceOnly()? delta.getDeletedSources() : collect(flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
     Set<Node<?, ?>> nodesBefore = collect(flat(map(allProcessedSources, this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
-    Set<Node<?, ?>> nodesAfter = collect(flat(map(deltaSources, delta::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Set<Node<?, ?>> nodesAfter = delta.isSourceOnly()? Collections.emptySet() : collect(flat(map(deltaSources, delta::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
 
     // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
     // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
-    List<Node<?, ?>> deletedNodes = collect(filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
+    List<Node<?, ?>> deletedNodes = nodesBefore.isEmpty()? Collections.emptyList() : collect(filter(nodesBefore, n -> !nodesAfter.contains(n)), new ArrayList<>());
 
     if (!params.isCalculateAffected()) {
       return new DifferentiateResult() {
@@ -82,6 +80,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       private final Predicate<Node<?, ?>> ANY_CONSTRAINT = node -> true;
 
       final Set<NodeSource> compiledSources = deltaSources instanceof Set? (Set<NodeSource>)deltaSources : collect(deltaSources, new HashSet<>());
+      final Set<ReferenceID> deleted = collect(map(deletedNodes, n -> n.getReferenceID()), new HashSet<>());
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
       final Set<Predicate<Node<?, ?>>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
@@ -104,6 +103,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       @Override
       public boolean isCompiled(NodeSource src) {
         return compiledSources.contains(src);
+      }
+
+      @Override
+      public boolean isDeleted(ReferenceID id) {
+        return deleted.contains(id);
       }
 
       @Override
@@ -205,10 +209,36 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
         }
       }
     }
+
+    if (delta.isSourceOnly()) {
+      // Some nodes may be associated with multiple sources. In this case ensure that all these sources are sent to compilation
+      Set<NodeSource> inputSources = delta.getBaseSources();
+      Set<NodeSource> deleted = delta.getDeletedSources();
+      Predicate<? super NodeSource> srcFilter = diffContext.getParams().belongsToCurrentCompilationChunk().and(s -> !deleted.contains(s));
+      for (var node : flat(map(flat(inputSources, deleted), this::getNodes))) {
+        Iterable<NodeSource> nodeSources = getSources(node.getReferenceID());
+        if (count(nodeSources) > 1) {
+          List<NodeSource> filteredNodeSources = collect(filter(nodeSources, srcFilter::test), new SmartList<>());
+          // all sources associated with the node should be either marked 'dirty' or deleted
+          if (find(filteredNodeSources, s -> !inputSources.contains(s)) != null) {
+            for (NodeSource s : filteredNodeSources) {
+              diffContext.affectNodeSource(s);
+            }
+          }
+        }
+      }
+    }
+
     // do not include sources that were already compiled
     affectedSources.removeAll(allProcessedSources);
     // ensure sources explicitly marked by strategies are affected, even if these sources were compiled initially
     affectedSources.addAll(diffContext.affectedSources);
+
+    if (!delta.isSourceOnly()) {
+      // complete affected file set with source-delta dependencies
+      collect(differentiate(createDelta(affectedSources, Collections.emptyList(), true), params).getAffectedSources(), affectedSources);
+    }
+
 
     return new DifferentiateResult() {
       @Override
@@ -297,27 +327,6 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
         }
       });
     }
-  }
-
-  /**
-   * Returns a complete set of node sources based on the input set of node sources.
-   * Some nodes may be associated with multiple sources. If a source from the input set is associated with such a node,
-   * the method makes sure the output set contains the rest of the sources, the node is associated with
-   *
-   * @param sources        set of node sources to be completed.
-   * @param deletedSources registered deleted sources
-   * @return complete set of node sources, containing all sources associated with nodes affected by the sources from the input set.
-   */
-  private Set<NodeSource> completeSourceSet(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources) {
-    // ensure initial sources are in the result
-    Set<NodeSource> result = collect(sources, new HashSet<>());          // todo: check if a special hashing-policy set is required here
-    Set<NodeSource> deleted = collect(deletedSources, new HashSet<>());
-
-    Set<Node<?, ?>> affectedNodes = collect(flat(map(flat(result, deleted), s -> getNodes(s))), new HashSet<>());
-    for (var node : affectedNodes) {
-      collect(filter(getSources(node.getReferenceID()), s -> !result.contains(s) && !deleted.contains(s) && filter(getNodes(s).iterator(), affectedNodes::contains).hasNext()), result);
-    }
-    return result;
   }
 
   private static final class DiffChangeAdapter implements Difference.Change<Node<?, ?>, Difference> {

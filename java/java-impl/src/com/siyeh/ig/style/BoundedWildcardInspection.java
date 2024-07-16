@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
@@ -51,9 +51,8 @@ public final class BoundedWildcardInspection extends AbstractBaseJavaLocalInspec
   @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INSTANCE_METHODS = true;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
       public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
@@ -103,10 +102,8 @@ public final class BoundedWildcardInspection extends AbstractBaseJavaLocalInspec
       this.isExtends = isExtends;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "? " + (isExtends ? PsiKeyword.EXTENDS : PsiKeyword.SUPER));
     }
 
@@ -317,11 +314,10 @@ public final class BoundedWildcardInspection extends AbstractBaseJavaLocalInspec
     });
   }
 
-  @NotNull
-  private static PsiMethod createMethodCopy(@NotNull Project project,
-                                            PsiMethod method,
-                                            int methodParameterIndex, // -1 if no parameter to change
-                                            @NotNull PsiClassType newParameterExtends) {
+  private static @NotNull PsiMethod createMethodCopy(@NotNull Project project,
+                                                     PsiMethod method,
+                                                     int methodParameterIndex, // -1 if no parameter to change
+                                                     @NotNull PsiClassType newParameterExtends) {
     JavaDummyHolder dummyHolder = (JavaDummyHolder)DummyHolderFactory.createHolder(PsiManager.getInstance(project), method);
     PsiMethod methodCopy = (PsiMethod)dummyHolder.add(method);
 
@@ -337,9 +333,8 @@ public final class BoundedWildcardInspection extends AbstractBaseJavaLocalInspec
     return methodCopy;
   }
 
-  @NotNull
   // copies class and returns copy of the method in this class
-  private static PsiMethod createClassCopy(@NotNull Project project,
+  private static @NotNull PsiMethod createClassCopy(@NotNull Project project,
                                           @Nullable PsiField field,
                                           @NotNull PsiClass containingClass, @NotNull PsiMethod method,
                                           @NotNull PsiMethod methodCopy,

@@ -31,6 +31,10 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
     return project.getService(ProjectRootManager.class);
   }
 
+  @ApiStatus.Internal
+  protected ProjectRootManager() {
+  }
+
   /**
    * Returns the file index for the project.
    *

@@ -132,6 +132,10 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
       else -> Unit
     }
     remove(renderer.component)
+    if (!editor.isDisposed) {
+      revalidate()
+      repaint()
+    }
     return true
   }
 
@@ -153,6 +157,10 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
         }
       }
       else -> Unit
+    }
+    if (renderer.component.isVisible) {
+      revalidate()
+      repaint()
     }
   }
 

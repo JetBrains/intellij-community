@@ -2,8 +2,9 @@
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object SourceMapDataCache {
 
   private val cache: MutableMap<SourceMapDataImpl, SourceMapDataEx> =

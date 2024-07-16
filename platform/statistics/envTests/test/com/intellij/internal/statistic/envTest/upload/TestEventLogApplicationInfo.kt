@@ -2,7 +2,9 @@
 package com.intellij.internal.statistic.envTest.upload
 
 import com.intellij.internal.statistic.envTest.ApacheContainer
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
+import com.intellij.internal.statistic.eventLog.MachineId
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
@@ -19,6 +21,7 @@ internal class TestEventLogApplicationInfo(private val settingsUrl: String): Eve
   override fun getProductVersion(): String = PRODUCT_VERSION
   override fun getProductCode(): String = PRODUCT_CODE
   override fun getTemplateUrl(): String = settingsUrl
+  override fun getBaselineVersion(): Int = 201
 }
 
 internal class TestEventLogSendConfig(recorderId: String,

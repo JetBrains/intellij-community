@@ -16,9 +16,12 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.util.NotNullLazyValue
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 const val RECEIVER_NAME: String = "this"
 
+@ApiStatus.Internal
 @Deprecated("")
 /**
  * Use kotlin - base class is not required in this case (no boilerplate code)

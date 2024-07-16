@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntlibDomFileDescription extends AntFileDescription<AntDomAntlib> {
+public final class AntlibDomFileDescription extends AntFileDescription<AntDomAntlib> {
   private static final String ROOT_TAG_NAME = "antlib";
 
   public AntlibDomFileDescription() {

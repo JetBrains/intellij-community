@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
@@ -179,5 +180,6 @@ internal fun createKtFile(
 }
 
 internal fun refreshHints(project: Project) {
+    DeclarativeInlayHintsPassFactory.resetModificationStamp()
     InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
 }

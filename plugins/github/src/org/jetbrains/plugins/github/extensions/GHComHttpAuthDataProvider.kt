@@ -11,9 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.remote.GitHttpAuthDataProvider
-import git4idea.remote.hosting.GitHostingUrlUtil.match
+import git4idea.remote.hosting.GitHostingUrlUtil.matchHost
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath.DEFAULT_SERVER
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
@@ -24,7 +23,7 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
 
   @RequiresBackgroundThread
   override fun getAuthData(project: Project, url: String, login: String): AuthData? {
-    if (!match(DEFAULT_SERVER.toURI(), url)) return null
+    if (!matchHost(DEFAULT_SERVER.toURI(), url)) return null
 
     return runBlockingMaybeCancellable {
       getAuthDataOrCancel(project, url, login)
@@ -33,7 +32,7 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
 
   @RequiresBackgroundThread
   override fun getAuthData(project: Project, url: String): AuthData? {
-    if (!match(DEFAULT_SERVER.toURI(), url)) return null
+    if (!matchHost(DEFAULT_SERVER.toURI(), url)) return null
 
     return runBlockingMaybeCancellable {
       getAuthDataOrCancel(project, url, null)
@@ -44,7 +43,7 @@ private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
 private suspend fun getAuthDataOrCancel(project: Project, url: String, login: String?): AuthData {
   val accountManager = service<GHAccountManager>()
   val accountsWithTokens = accountManager.accountsState.value
-    .filter { match(it.server.toURI(), url) }
+    .filter { matchHost(it.server.toURI(), url) }
     .associateWith { accountManager.findCredentials(it) }
 
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {

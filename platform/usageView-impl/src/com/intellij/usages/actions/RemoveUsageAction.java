@@ -22,6 +22,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -29,6 +30,7 @@ import java.util.Arrays;
 /**
  * @author Manuel Stadelmann
  */
+@ApiStatus.Internal
 public class RemoveUsageAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {

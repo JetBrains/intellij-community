@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
 import java.util.Arrays;
 
-public class GrSortMapKeysIntention extends GrPsiUpdateIntention {
+public final class GrSortMapKeysIntention extends GrPsiUpdateIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {

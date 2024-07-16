@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -72,18 +72,21 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
     Project project = e.getProject();
     EditorWindow currentWindow = e.getData(EditorWindow.DATA_KEY);
 
-    Content content = currentWindow != null ? null : getContentFromEvent(e);
+    Content content = currentWindow == null ? getContentFromEvent(e) : null;
     if (content != null && content.isPinnable()) {
       return createHandler(content);
     }
 
-    final EditorWindow window = currentWindow != null ? currentWindow :
-                                project != null ? FileEditorManagerEx.getInstanceEx(project).getCurrentWindow() : null;
-    VirtualFile selectedFile = window == null ? null : getFileFromEvent(e, window);
-    if (selectedFile != null) {
-      return createHandler(window, selectedFile);
+    EditorWindow window;
+    if (currentWindow == null) {
+      window = project == null ? null : FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
     }
-    return null;
+    else {
+      window = currentWindow;
+    }
+
+    VirtualFile selectedFile = window == null ? null : getFileFromEvent(e, window);
+    return selectedFile == null ? null : createHandler(window, selectedFile);
   }
 
   protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
@@ -92,7 +95,9 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
 
   protected @Nullable Content getContentFromEvent(@NotNull AnActionEvent e) {
     Content content = getNonToolWindowContent(e);
-    if (content == null) content = getToolWindowContent(e);
+    if (content == null) {
+      content = getToolWindowContent(e);
+    }
     return content != null && content.isValid() ? content : null;
   }
 
@@ -106,7 +111,7 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
   }
 
   private static @NotNull Handler createHandler(final EditorWindow window, final VirtualFile selectedFile) {
-    return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(window.getSelectedFile())) {
+    return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(window.getContextFile())) {
       @Override
       void setPinned(boolean value) {
         window.setFilePinned(selectedFile, value);
@@ -117,13 +122,16 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
   private static @Nullable Content getNonToolWindowContent(@NotNull AnActionEvent e) {
     Content result = null;
     Content[] contents = e.getData(ViewContext.CONTENT_KEY);
-    if (contents != null && contents.length == 1) result = contents[0];
-    if (result != null && result.isPinnable()) return result;
+    if (contents != null && contents.length == 1) {
+      result = contents[0];
+    }
+    if (result != null && result.isPinnable()) {
+      return result;
+    }
 
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(e.getDataContext(), true);
     result = contentManager != null? contentManager.getSelectedContent() : null;
-    if (result != null && result.isPinnable()) return result;
-    return null;
+    return (result != null && result.isPinnable()) ? result : null;
   }
 
   private static @Nullable Content getToolWindowContent(@NotNull AnActionEvent e) {
@@ -144,9 +152,8 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
   }
 
   private static @Nullable VirtualFile getFileInWindow(@NotNull EditorWindow window) {
-    VirtualFile file = window.getSelectedFile();
-    if (file != null && window.isFileOpen(file)) return file;
-    return null;
+    VirtualFile file = window.getContextFile();
+    return file != null && window.isFileOpen(file) ? file : null;
   }
 
   @SuppressWarnings("ComponentNotRegistered")
@@ -162,10 +169,10 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
     }
   }
 
-  public static final class EW extends PinActiveTabAction {
+  static final class EW extends PinActiveTabAction {
     @Override
     protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-      return window.getSelectedFile();
+      return window.getContextFile();
     }
 
     @Override

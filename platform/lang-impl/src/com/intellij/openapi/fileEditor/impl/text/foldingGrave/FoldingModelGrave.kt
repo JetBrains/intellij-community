@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text.foldingGrave
 
 import com.intellij.openapi.Disposable
@@ -61,7 +61,7 @@ internal class FoldingModelGrave(
     if (file is VirtualFileWithId && editor.editorKind == EditorKind.MAIN_EDITOR) {
       val foldRegions = notZombieRegions(editor)
       if (foldRegions.isNotEmpty()) {
-        val foldingState = FoldingState.create(editor.document.contentHash(), foldRegions)
+        val foldingState = FoldingState.create(contentHash(editor.document), foldRegions)
         scope.launch(Dispatchers.IO) {
           cache[file.id] = foldingState
           logger.debug { "stored folding state ${foldingState} for $file" }

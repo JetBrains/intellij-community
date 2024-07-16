@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.themeChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.WizardLookAndFeelUtil
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardController
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.ide.startup.importSettings.data.ThemeService
+import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.dsl.builder.SegmentedButton
@@ -25,7 +27,8 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
 
   private val pages = mutableListOf<SchemePane>()
   private lateinit var segmentedButton: SegmentedButton<ThemeService.Theme>
-  private val schemesPane = JPanel(GridBagLayout())
+  val schemesPaneGridBagLayout = GridBagLayout()
+  private val schemesPane = JPanel(schemesPaneGridBagLayout)
   private val contentPage: JComponent
 
   private var activeScheme: SchemePane
@@ -48,7 +51,9 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       }
       val gbc = GridBagConstraints()
 
-      gbc.insets = JBUI.insetsRight(if(index < list.size - 1) 9 else 0)
+      gbc.insets = JBUI.insetsRight(if (index < list.size - 1) 9 else 0)
+      gbc.gridx = pages.size
+      gbc.gridy = 0
       gbc.weightx = 1.0
       gbc.weighty = 1.0
       gbc.fill = GridBagConstraints.BOTH
@@ -61,7 +66,8 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       }
     }
 
-    val centralPane = JPanel(BorderLayout(0, 0)).apply {
+
+    val centralPane = JPanel(BorderLayout(0, 0)).apply parentPanel@{
       val pane = panel {
         row {
           @Suppress("DialogTitleCapitalization")
@@ -70,7 +76,17 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
             border = UiUtils.HEADER_BORDER
           }.resizableColumn()
           segmentedButton = segmentedButton(service.themeList) { text = it.themeName }
-            .whenItemSelected { service.currentTheme = it }.apply {
+            .whenItemSelected {
+              service.currentTheme = it
+              val lafManager = LafManager.getInstance()
+              val laf = if (it.isDark)
+                lafManager.defaultDarkLaf
+              else lafManager.defaultLightLaf
+
+              if (laf != null) {
+                WizardLookAndFeelUtil.applyLookAndFeelToWizardWindow(laf, this@parentPanel)
+              }
+            }.apply {
               selectedItem = service.currentTheme
             }
         }
@@ -82,7 +98,9 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       border = UiUtils.CARD_BORDER
     }
 
-    activeScheme = pages[0]
+    activeScheme = service.initialSchemeId?.let { initialId ->
+      pages.firstOrNull { it.scheme.id == initialId }
+    } ?: pages[0]
     activePane(activeScheme)
 
     val backAction = controller.goBackAction?.let {
@@ -92,7 +110,7 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     }
 
     val continueAction = controller.createDefaultButton(ImportSettingsBundle.message("wizard.button.continue")) {
-      controller.goToKeymapPage()
+      controller.goToKeymapPage(isForwardDirection = true)
     }
 
     val buttons: List<JButton> = backAction?.let {
@@ -109,10 +127,28 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     assert(pages.isNotEmpty() && pages.contains(schemePane))
 
     activeScheme.active = false
+
+    var constraints = schemesPaneGridBagLayout.getConstraints(activeScheme.pane)
+    constraints.weightx = 1.0
+    schemesPaneGridBagLayout.setConstraints(activeScheme.pane, constraints)
+
     activeScheme = schemePane
     activeScheme.active = true
 
+    constraints = schemesPaneGridBagLayout.getConstraints(schemePane.pane)
+    constraints.weightx = 2.0
+    schemesPaneGridBagLayout.setConstraints(schemePane.pane, constraints)
+
+    SwingUtilities.invokeLater {
+      schemesPane.revalidate()
+      schemesPane.repaint()
+    }
+
     service.updateScheme(schemePane.scheme.id)
+  }
+
+  fun onEnter(isForwardDirection: Boolean) {
+    service.onStepEnter(isForwardDirection)
   }
 
   override val content: JComponent = contentPage

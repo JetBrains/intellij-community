@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class, ExperimentalStdlibApi::class)
 
 package com.intellij.openapi.actionSystem.impl
@@ -8,7 +8,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
-import com.intellij.icons.AllIcons
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
@@ -32,11 +32,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -68,18 +64,12 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.asCancellablePromise
 import java.awt.*
-import java.awt.event.FocusEvent
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
+import java.awt.event.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 import javax.swing.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -163,23 +153,43 @@ object Utils {
   }
 
   @JvmStatic
+  fun createAsyncDataContext(component: Component?): DataContext {
+    if (component == null) return DataContext.EMPTY_CONTEXT
+    return PreCachedDataContext(component)
+  }
+
+  @JvmStatic
+  fun createAsyncDataContext(dataContext: DataContext, provider: Any?): DataContext {
+    return when (val asyncContext = createAsyncDataContextImpl(dataContext)) {
+      DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
+        .prependProvider(provider)
+      is PreCachedDataContext -> asyncContext
+        .prependProvider(provider)
+      is CustomizedDataContext -> when (val o = asyncContext.customizedDelegate) {
+        is PreCachedDataContext -> o.prependProvider(provider)
+        else -> PreCachedDataContext.customize(o as AsyncDataContext, provider)
+      }
+      is AsyncDataContext -> PreCachedDataContext.customize(asyncContext, provider)
+      else -> dataContext.also {
+        reportUnexpectedDataContextKind(dataContext)
+      }
+    }
+  }
+
+  @JvmStatic
   private fun createAsyncDataContextImpl(dataContext: DataContext): DataContext = when {
     isAsyncDataContext(dataContext) -> dataContext
-    dataContext is EdtDataContext -> PreCachedDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
-    dataContext is CustomizedDataContext ->
-      when (val delegate = createAsyncDataContextImpl(dataContext.getParent())) {
-        DataContext.EMPTY_CONTEXT -> PreCachedDataContext(null)
-          .prependProvider(dataContext.customDataProvider)
-        is PreCachedDataContext -> delegate
-          .prependProvider(dataContext.customDataProvider)
-        else -> dataContext
-      }
-    !ApplicationManager.getApplication().isUnitTestMode() -> {
-      LOG.warn(Throwable("Unknown data context kind '${dataContext.javaClass.getName()}'. " +
-                         "Use EdtDataContext, CustomizedDataContext or SimpleDataContext"))
-      dataContext
+    dataContext is EdtDataContext -> createAsyncDataContext(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
+    !ApplicationManager.getApplication().isUnitTestMode() -> dataContext.also {
+      reportUnexpectedDataContextKind(dataContext)
     }
     else -> dataContext
+  }
+
+  private fun reportUnexpectedDataContextKind(dataContext: DataContext) {
+    LOG.error(PluginException.createByClass(
+      "Unknown data context kind '${dataContext.javaClass.getName()}'. " +
+      "Use DataManager.getDataContext, CustomizedDataContext, or SimpleDataContext", null, dataContext.javaClass))
   }
 
   @JvmStatic
@@ -191,12 +201,10 @@ object Utils {
   fun wrapToAsyncDataContext(dataContext: DataContext): DataContext = createAsyncDataContext(dataContext)
 
   @JvmStatic
-  fun freezeDataContext(dataContext: DataContext, missedKeys: Consumer<in String?>?): DataContext {
-    return if (dataContext is PreCachedDataContext) dataContext.frozenCopy(missedKeys) else dataContext
+  fun isAsyncDataContext(dataContext: DataContext): Boolean {
+    return dataContext === DataContext.EMPTY_CONTEXT || dataContext is AsyncDataContext ||
+           dataContext is CustomizedDataContext && dataContext.customizedDelegate is AsyncDataContext
   }
-
-  @JvmStatic
-  fun isAsyncDataContext(dataContext: DataContext): Boolean = dataContext === DataContext.EMPTY_CONTEXT || dataContext is AsyncDataContext
 
   @JvmStatic
   fun checkAsyncDataContext(dataContext: DataContext, place: String) {
@@ -212,13 +220,18 @@ object Utils {
    * in [AnAction.update] or [AnAction.actionPerformed]
    */
   @JvmStatic
-  fun getCachedDataContext(dataContext: DataContext): DataContext {
-    return DataContext { dataId: String? -> getRawDataIfCached(dataContext, dataId!!) }
+  fun getCachedOnlyDataContext(dataContext: DataContext): DataContext {
+    return AsyncDataContext { dataId: String -> getRawDataIfCached(dataContext, dataId, false) }
   }
 
   @JvmStatic
-  fun getRawDataIfCached(dataContext: DataContext, dataId: String): Any? = when (dataContext) {
-    is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId)
+  fun getUiOnlyDataContext(dataContext: DataContext): DataContext {
+    return AsyncDataContext { dataId: String -> getRawDataIfCached(dataContext, dataId, true) }
+  }
+
+  @JvmStatic
+  private fun getRawDataIfCached(dataContext: DataContext, dataId: String, uiOnly: Boolean): Any? = when (dataContext) {
+    is PreCachedDataContext -> dataContext.getRawDataIfCached(dataId, uiOnly)
     is EdtDataContext -> dataContext.getRawDataIfCached(dataId)
     else -> null
   }
@@ -384,6 +397,15 @@ object Utils {
     withProgressIcon(loadingIconPoint, component, place, task)
   }
 
+  suspend fun <T> withProgressIcon(dataContext: DataContext,
+                                   place: String,
+                                   task: suspend () -> T): T {
+    val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    val loadingIconPoint = if (component == null) null
+    else JBPopupFactory.getInstance().guessBestPopupLocation(dataContext)
+    return withProgressIcon(loadingIconPoint, component, place, task)
+  }
+
   @RequiresEdt
   suspend fun <T> withProgressIcon(loadingIconPoint: RelativePoint?,
                                    component: Component?,
@@ -454,13 +476,12 @@ object Utils {
         result = list
         if (expire?.invoke() == true) return@use
         val checked = group is CheckedActionGroup
-        val multiChoice = isMultiChoiceGroup(group)
         if (nativePeer == null) {
-          fillMenuInner(component as JComponent, list, checked, multiChoice, enableMnemonics,
+          fillMenuInner(component as JComponent, list, checked, enableMnemonics,
                         presentationFactory, asyncDataContext, place, isWindowMenu, useDarkIcons)
         }
         else {
-          fillMenuInnerMacNative(nativePeer, component as JFrame, list, checked, multiChoice, enableMnemonics,
+          fillMenuInnerMacNative(nativePeer, component as JFrame, list, checked, enableMnemonics,
                                  presentationFactory, asyncDataContext, place, useDarkIcons)
         }
       }
@@ -515,7 +536,6 @@ object Utils {
   private fun fillMenuInner(component: JComponent,
                             list: List<AnAction>,
                             checked: Boolean,
-                            multiChoice: Boolean,
                             enableMnemonics: Boolean,
                             presentationFactory: PresentationFactory,
                             context: DataContext,
@@ -527,9 +547,6 @@ object Utils {
     val children = ArrayList<Component>()
     for (action in filtered) {
       val presentation = presentationFactory.getPresentation(action)
-      if (multiChoice && action is Toggleable) {
-        presentation.isMultiChoice = true
-      }
       var childComponent: JComponent
       if (action is Separator) {
         childComponent = createSeparator(action.text, children.isEmpty())
@@ -584,7 +601,6 @@ object Utils {
                                      frame: JFrame,
                                      list: List<AnAction>,
                                      checked: Boolean,
-                                     multiChoice: Boolean,
                                      enableMnemonics: Boolean,
                                      presentationFactory: PresentationFactory,
                                      context: DataContext,
@@ -593,9 +609,6 @@ object Utils {
     val filtered = filterInvisible(list, presentationFactory, place)
     for (action in filtered) {
       val presentation = presentationFactory.getPresentation(action)
-      if (multiChoice && action is Toggleable) {
-        presentation.isMultiChoice = true
-      }
       val peer = when {
         action is Separator -> null
         action is ActionGroup && !isSubmenuSuppressed(presentation) -> createMacNativeActionMenu(
@@ -715,20 +728,14 @@ object Utils {
   }
 
   @JvmStatic
-  fun isMultiChoiceGroup(actionGroup: ActionGroup): Boolean {
-    val p = actionGroup.getTemplatePresentation()
-    if (p.isMultiChoice) return true
-    if (p.icon === AllIcons.Actions.GroupBy || p.icon === AllIcons.Actions.Show || p.icon === AllIcons.General.GearPlain || p.icon === AllIcons.Debugger.RestoreLayout) {
-      return true
-    }
-    if (actionGroup.javaClass == DefaultActionGroup::class.java) {
-      for (child in actionGroup.getChildren(null)) {
-        if (child is Separator) continue
-        if (child !is Toggleable) return false
-      }
-      return true
-    }
-    return false
+  fun isKeepPopupOpen(mode: KeepPopupOnPerform, event: InputEvent?): Boolean = when (mode) {
+    KeepPopupOnPerform.Never -> false
+    KeepPopupOnPerform.Always -> true
+    KeepPopupOnPerform.IfRequested ->
+      event is MouseEvent && UIUtil.isControlKeyDown(event)
+    KeepPopupOnPerform.IfPreferred ->
+      UISettings.getInstance().keepPopupsForToggles ||
+      event is MouseEvent && UIUtil.isControlKeyDown(event)
   }
 
   @JvmStatic
@@ -860,13 +867,25 @@ object Utils {
   }
 
   @JvmStatic
-  fun showPopupElapsedMillisIfConfigured(startNanos: Long, comp: Component) {
-    if (startNanos <= 0 || !Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) return
-    UiNotifyConnector.doWhenFirstShown(comp) {
-      UIUtil.getWindow(comp)?.addWindowListener(object : WindowAdapter() {
+  fun showPopupElapsedMillisIfConfigured(startNanos: Long, component: Component) {
+    if (startNanos <= 0 || !Registry.`is`("ide.diagnostics.show.context.menu.invocation.time")) {
+      return
+    }
+
+    UiNotifyConnector.doWhenFirstShown(component) {
+      UIUtil.getWindow(component)?.addWindowListener(object : WindowAdapter() {
         override fun windowOpened(e: WindowEvent) {
-          e.window.removeWindowListener(this)
           val time = TimeoutUtil.getDurationMillis(startNanos)
+
+          System.getProperty("perf.test.popup.name")?.let { popupName ->
+            val startTimeUnixNano = startNanos + StartUpMeasurer.getStartTimeUnixNanoDiff()
+            getTracer(false).spanBuilder("popupShown#$popupName")
+              .setStartTimestamp(startTimeUnixNano, TimeUnit.NANOSECONDS)
+              .startSpan()
+              .end(startTimeUnixNano + TimeUnit.MILLISECONDS.toNanos(time), TimeUnit.NANOSECONDS)
+          }
+
+          e.window.removeWindowListener(this)
           @Suppress("DEPRECATION", "removal", "HardCodedStringLiteral")
           Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Popup invocation took $time ms",
                        NotificationType.INFORMATION).notify(null)
@@ -1011,7 +1030,7 @@ object Utils {
 
 @ApiStatus.Internal
 suspend fun rearrangeByPromoters(actions: List<AnAction>, dataContext: DataContext): List<AnAction> {
-  val frozenContext = Utils.freezeDataContext(dataContext, null)
+  val frozenContext = Utils.getUiOnlyDataContext(dataContext)
   return SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
     try {
       readActionUndispatchedForActionExpand {
@@ -1119,6 +1138,7 @@ suspend fun runEdtLoop(mainJob: Job, expire: (() -> Boolean)?, contextComponent:
   try {
     ThreadingAssertions.assertEventDispatchThread()
     while (true) {
+      //runInterruptible()
       // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
       // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
       // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
@@ -1216,6 +1236,9 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
   try {
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(ctx + context + Context.current().asContextElement(), block)
+  }
+  catch (pce : ProcessCanceledException) {
+    throw pce
   }
   catch (ce: CancellationException) {
     throw CeProcessCanceledException(ce)

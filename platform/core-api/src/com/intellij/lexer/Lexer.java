@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * Interface for breaking a file into a sequence of tokens.
  *
  * @see LexerBase for certain methods' implementation
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/implementing-lexer.html">Implementing Lexer (IntelliJ Platform Docs)</a>
+ * @see RestartableLexer
  */
 public abstract class Lexer {
   private static final Logger LOG = Logger.getInstance(Lexer.class);

@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +38,7 @@ public abstract class IdFilter {
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");
   private static final Key<CachedValue<IdFilter>> OUTSIDE_PROJECT = Key.create("OUTSIDE_PROJECT");
 
+  @Internal
   public enum FilterScopeType {
     OTHER {
       @Override
@@ -110,7 +111,7 @@ public abstract class IdFilter {
 
   public abstract boolean containsFileId(int id);
 
-  @ApiStatus.Internal
+  @Internal
   @NotNull
   public FilterScopeType getFilteringScopeType() {
     return FilterScopeType.OTHER;

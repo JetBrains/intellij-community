@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +42,7 @@ public final class BuildDataManager {
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
 
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
-  private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
+  private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED? 1 : 0) + (JavaBuilderUtil.isDepGraphEnabled()? 2 : 0);
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";
@@ -83,10 +83,12 @@ public final class BuildDataManager {
       if (JavaBuilderUtil.isDepGraphEnabled()) {
         myMappings = null;
         createDependencyGraph(mappingsRoot, false);
+        FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot(), false)); // delete older mappings data if available
         LOG.info("Using DependencyGraph-based build incremental analysis");
       }
       else {
         myMappings = new Mappings(mappingsRoot, relativizer);
+        FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot(), true)); // delete dep-graph data if available
         myMappings.setProcessConstantsIncrementally(isProcessConstantsIncrementally());
       }
     }
@@ -357,7 +359,11 @@ public final class BuildDataManager {
   }
 
   public static File getMappingsRoot(final File dataStorageRoot) {
-    return new File(dataStorageRoot, JavaBuilderUtil.isDepGraphEnabled()? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
+    return getMappingsRoot(dataStorageRoot, JavaBuilderUtil.isDepGraphEnabled());
+  }
+
+  private static File getMappingsRoot(final File dataStorageRoot, boolean forDepGraph) {
+    return new File(dataStorageRoot, forDepGraph? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
   }
 
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
@@ -521,10 +527,10 @@ public final class BuildDataManager {
       private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
       @Override
-      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) throws IOException {
+      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException {
         lock.readLock().lock();
         try {
-          return delegate.createDelta(sourcesToProcess, deletedSources);
+          return delegate.createDelta(sourcesToProcess, deletedSources, isSourceOnly);
         }
         finally {
           lock.readLock().unlock();

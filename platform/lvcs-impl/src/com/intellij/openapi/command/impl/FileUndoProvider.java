@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.configurationStore.StorageManagerFileWriteRequestor;
@@ -49,7 +49,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     if (!(localHistory instanceof LocalHistoryImpl)) return;
     myLocalHistory = ((LocalHistoryImpl)localHistory).getFacade();
     myGateway = ((LocalHistoryImpl)localHistory).getGateway();
-    if (myLocalHistory == null || myGateway == null) return; // local history was not initialized (e.g. in headless environment)
+    if (myLocalHistory == null) return; // local history was not initialized (e.g. in headless environment)
 
     ((LocalHistoryImpl)localHistory).addVFSListenerAfterLocalHistoryOne(this, project);
     myLocalHistory.addListener(new LocalHistoryFacade.Listener() {

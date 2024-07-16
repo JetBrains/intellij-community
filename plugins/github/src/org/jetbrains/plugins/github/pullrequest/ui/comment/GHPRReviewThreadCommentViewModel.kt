@@ -64,7 +64,7 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
   thread: GHPRReviewThreadViewModel,
   initialDataWithIndex: IndexedValue<GHPullRequestReviewComment>
 ) : GHPRReviewThreadCommentViewModel {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Thread Comment View Model"))
+  private val cs = parentCs.childScope("GitHub Pull Request Thread Comment View Model")
   private val reviewData = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
@@ -119,7 +119,7 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
 
   override fun delete() {
     taskLauncher.launch {
-      reviewData.deleteComment(EmptyProgressIndicator(), id)
+      reviewData.deleteComment(id)
     }
   }
 
@@ -131,7 +131,7 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
     : CodeReviewSubmittableTextViewModelBase(project, cs, initialText), CodeReviewTextEditingViewModel {
     override fun save() {
       submit { text ->
-        val updated = reviewData.updateComment(EmptyProgressIndicator(), id, text).await()
+        val updated = reviewData.updateComment(id, text)
         dataState.update {
           it.copy(value = updated)
         }

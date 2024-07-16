@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
@@ -279,6 +280,10 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     Component c = renderer == null ? null : renderer.getListCellRendererComponent(this, value, index, true, true);
     if (c != null) {
       c = ExpandedItemRendererComponentWrapper.unwrap(c);
+    }
+
+    if (c instanceof KotlinUIDslRendererComponent uiDslRendererComponent) {
+      return uiDslRendererComponent.getCopyText();
     }
 
     SimpleColoredComponent coloredComponent = null;

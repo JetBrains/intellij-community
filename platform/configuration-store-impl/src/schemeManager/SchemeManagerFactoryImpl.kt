@@ -2,14 +2,13 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
-import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -21,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -36,6 +36,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open fun createFileChangeSubscriber(): FileChangeSubscriber? = null
 
+  @ApiStatus.Internal
   final override fun <T: Scheme, MutableT : T> create(
     directoryName: String,
     processor: SchemeProcessor<T, MutableT>,
@@ -74,7 +75,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     managers.remove(schemeManager)
   }
 
-  open fun checkPath(originalPath: String): String {
+  internal open fun checkPath(originalPath: String): String {
     when {
       originalPath.contains('\\') -> LOG.error("Path must be system-independent, use forward slash instead of backslash")
       originalPath.isEmpty() -> LOG.error("Path must not be empty")
@@ -82,7 +83,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     return originalPath
   }
 
-  abstract fun pathToFile(path: String): Path
+  internal abstract fun pathToFile(path: String): Path
 
   fun process(processor: (SchemeManagerImpl<Scheme, Scheme>) -> Unit) {
     for (manager in managers) {
@@ -163,16 +164,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
-    private fun <T : Scheme, M:T>addVfsListener(schemeManager: SchemeManagerImpl<T, M>) {
-      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
-    }
-
     override fun createFileChangeSubscriber(): FileChangeSubscriber {
       return { schemeManager ->
         if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
-          StartupManagerEx.getInstanceEx(project).runAfterOpened {
-            addVfsListener(schemeManager)
-          }
+          project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
         }
       }
     }
@@ -195,6 +190,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   }
 
   @TestOnly
+  @ApiStatus.Internal
   class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
     override fun pathToFile(path: String): Path = basePath.resolve(path)
   }

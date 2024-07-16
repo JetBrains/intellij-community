@@ -17,11 +17,14 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.CeProcessCanceledException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
@@ -34,6 +37,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 /**
  * @author Alexander Lobas
@@ -174,7 +179,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     else {
       return JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+        null, group, context, ActionSelectionAid.MNEMONICS, true);
     }
   }
 
@@ -183,7 +188,8 @@ public final class SettingsEntryPointAction extends ActionGroup
     final @NotNull PresentationFactory myPresentationFactory;
 
     MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory) {
-      super(null, group, context, false, false, true, true, null, -1, null, null, presentationFactory, false);
+      super(null, null, group, context, ActionPlaces.POPUP, presentationFactory,
+            ActionPopupOptions.mnemonicsAndDisabled(), null);
       myPresentationFactory = presentationFactory;
     }
 
@@ -311,6 +317,12 @@ public final class SettingsEntryPointAction extends ActionGroup
             updates = true;
             break;
           }
+        }
+        catch (ProcessCanceledException pce) {
+          throw pce;
+        }
+        catch (CancellationException ex) {
+          throw new CeProcessCanceledException(ex);
         }
         catch (Exception e) {
           LOG.error(e);

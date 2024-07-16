@@ -1,14 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,11 +56,10 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
     };
   }
 
-  @Nullable
-  public static CreateMissingDeconstructionRecordClassBranchesFix create(@NotNull PsiSwitchBlock switchBlock,
-                                                                         @NotNull PsiClass selectorType,
-                                                                         @NotNull Map<PsiType, Set<List<PsiType>>> missedBranches,
-                                                                         @NotNull List<? extends PsiCaseLabelElement> elements) {
+  public static @Nullable CreateMissingDeconstructionRecordClassBranchesFix create(@NotNull PsiSwitchBlock switchBlock,
+                                                                                   @NotNull PsiClass selectorType,
+                                                                                   @NotNull Map<PsiType, Set<List<PsiType>>> missedBranches,
+                                                                                   @NotNull List<? extends PsiCaseLabelElement> elements) {
     if (missedBranches.isEmpty()) {
       return null;
     }
@@ -104,10 +105,9 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
     return new CreateMissingDeconstructionRecordClassBranchesFix(switchBlock, new HashSet<>(missedLabels), allLabels, shortenLabels);
   }
 
-  @Nullable
-  private static List<String> getMissedLabels(@NotNull PsiSwitchBlock block,
-                                              @NotNull Map<PsiType, Set<List<PsiType>>> branchesByType,
-                                              boolean shorten)  {
+  private static @Nullable List<String> getMissedLabels(@NotNull PsiSwitchBlock block,
+                                                        @NotNull Map<PsiType, Set<List<PsiType>>> branchesByType,
+                                                        boolean shorten)  {
     List<String> result = new ArrayList<>();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(block.getProject());
     for (Map.Entry<PsiType, Set<List<PsiType>>> branches : branchesByType.entrySet()) {
@@ -120,7 +120,10 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
       PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(recordType));
       if (recordClass == null || !recordClass.isRecord()) return null;
       for (PsiRecordComponent recordComponent : recordClass.getRecordComponents()) {
-        String nextName = codeStyleManager.suggestUniqueVariableName(recordComponent.getName(), block, false);
+        String nextName = new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE)
+          .byName(recordComponent.getName())
+          .skipNames(variableNames)
+          .generate(false);
         variableNames.add(nextName);
       }
       for (List<PsiType> branch : branches.getValue()) {

@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -17,7 +17,7 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.util.descriptors.ConfigFileItem
 import org.jetbrains.kotlin.config.KotlinModuleKind
 
-interface KotlinSettingsEntity : ModuleSettingsBase {
+interface KotlinSettingsEntity : ModuleSettingsFacetBridgeEntity {
     val sourceRoots: List<String>
     val configFileItems: List<ConfigFileItem>
 
@@ -42,10 +42,10 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
     val kind: KotlinModuleKind
 
     //non-trivial parameters
-    val compilerArguments: String
-    val compilerSettings: CompilerSettingsData
+    val compilerArguments: String?
+    val compilerSettings: CompilerSettingsData?
 
-    val targetPlatform: String
+    val targetPlatform: String?
     val externalSystemRunTasks: List<String>
     val version: Int
     val flushNeeded: Boolean
@@ -54,36 +54,35 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         get() = KotlinSettingsId(name, moduleId)
 
     //region generated code
-    @GeneratedCodeApiVersion(2)
-    interface Builder : KotlinSettingsEntity, ModuleSettingsBase.Builder<KotlinSettingsEntity>,
-                        WorkspaceEntity.Builder<KotlinSettingsEntity> {
+    @GeneratedCodeApiVersion(3)
+    interface Builder : WorkspaceEntity.Builder<KotlinSettingsEntity>, ModuleSettingsFacetBridgeEntity.Builder<KotlinSettingsEntity> {
         override var entitySource: EntitySource
         override var name: String
         override var moduleId: ModuleId
-        override var sourceRoots: MutableList<String>
-        override var configFileItems: MutableList<ConfigFileItem>
-        override var module: ModuleEntity
-        override var useProjectSettings: Boolean
-        override var implementedModuleNames: MutableList<String>
-        override var dependsOnModuleNames: MutableList<String>
-        override var additionalVisibleModuleNames: MutableSet<String>
-        override var productionOutputPath: String?
-        override var testOutputPath: String?
-        override var sourceSetNames: MutableList<String>
-        override var isTestModule: Boolean
-        override var externalProjectId: String
-        override var isHmppEnabled: Boolean
-        override var pureKotlinSourceFolders: MutableList<String>
-        override var kind: KotlinModuleKind
-        override var compilerArguments: String
-        override var compilerSettings: CompilerSettingsData
-        override var targetPlatform: String
-        override var externalSystemRunTasks: MutableList<String>
-        override var version: Int
-        override var flushNeeded: Boolean
+        var sourceRoots: MutableList<String>
+        var configFileItems: MutableList<ConfigFileItem>
+        var module: ModuleEntity.Builder
+        var useProjectSettings: Boolean
+        var implementedModuleNames: MutableList<String>
+        var dependsOnModuleNames: MutableList<String>
+        var additionalVisibleModuleNames: MutableSet<String>
+        var productionOutputPath: String?
+        var testOutputPath: String?
+        var sourceSetNames: MutableList<String>
+        var isTestModule: Boolean
+        var externalProjectId: String
+        var isHmppEnabled: Boolean
+        var pureKotlinSourceFolders: MutableList<String>
+        var kind: KotlinModuleKind
+        var compilerArguments: String?
+        var compilerSettings: CompilerSettingsData?
+        var targetPlatform: String?
+        var externalSystemRunTasks: MutableList<String>
+        var version: Int
+        var flushNeeded: Boolean
     }
 
-    companion object : EntityType<KotlinSettingsEntity, Builder>(ModuleSettingsBase) {
+    companion object : EntityType<KotlinSettingsEntity, Builder>(ModuleSettingsFacetBridgeEntity) {
         @JvmOverloads
         @JvmStatic
         @JvmName("create")
@@ -96,23 +95,18 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             implementedModuleNames: List<String>,
             dependsOnModuleNames: List<String>,
             additionalVisibleModuleNames: Set<String>,
-            productionOutputPath: String?,
-            testOutputPath: String?,
             sourceSetNames: List<String>,
             isTestModule: Boolean,
             externalProjectId: String,
             isHmppEnabled: Boolean,
             pureKotlinSourceFolders: List<String>,
             kind: KotlinModuleKind,
-            compilerArguments: String,
-            compilerSettings: CompilerSettingsData,
-            targetPlatform: String,
             externalSystemRunTasks: List<String>,
             version: Int,
             flushNeeded: Boolean,
             entitySource: EntitySource,
-            init: (Builder.() -> Unit)? = null
-        ): KotlinSettingsEntity {
+            init: (Builder.() -> Unit)? = null,
+        ): Builder {
             val builder = builder()
             builder.name = name
             builder.moduleId = moduleId
@@ -122,17 +116,12 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
             builder.implementedModuleNames = implementedModuleNames.toMutableWorkspaceList()
             builder.dependsOnModuleNames = dependsOnModuleNames.toMutableWorkspaceList()
             builder.additionalVisibleModuleNames = additionalVisibleModuleNames.toMutableWorkspaceSet()
-            builder.productionOutputPath = productionOutputPath
-            builder.testOutputPath = testOutputPath
             builder.sourceSetNames = sourceSetNames.toMutableWorkspaceList()
             builder.isTestModule = isTestModule
             builder.externalProjectId = externalProjectId
             builder.isHmppEnabled = isHmppEnabled
             builder.pureKotlinSourceFolders = pureKotlinSourceFolders.toMutableWorkspaceList()
             builder.kind = kind
-            builder.compilerArguments = compilerArguments
-            builder.compilerSettings = compilerSettings
-            builder.targetPlatform = targetPlatform
             builder.externalSystemRunTasks = externalSystemRunTasks.toMutableWorkspaceList()
             builder.version = version
             builder.flushNeeded = flushNeeded
@@ -142,27 +131,26 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
         }
     }
     //endregion
-
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(
+fun MutableEntityStorage.modifyKotlinSettingsEntity(
     entity: KotlinSettingsEntity,
-    modification: KotlinSettingsEntity.Builder.() -> Unit
-): KotlinSettingsEntity = modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
+    modification: KotlinSettingsEntity.Builder.() -> Unit,
+): KotlinSettingsEntity {
+    return modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
+}
 
-var ModuleEntity.Builder.kotlinSettings: @Child List<KotlinSettingsEntity>
-        by WorkspaceEntity.extension()
+var ModuleEntity.Builder.kotlinSettings: @Child List<KotlinSettingsEntity.Builder>
+        by WorkspaceEntity.extensionBuilder(KotlinSettingsEntity::class.java)
 //endregion
-
 
 data class CompilerSettingsData(
     val additionalArguments: String,
     val scriptTemplates: String,
     val scriptTemplatesClasspath: String,
     val copyJsLibraryFiles: Boolean,
-    val outputDirectoryForJsLibraryFiles: String,
-    val isInitialized: Boolean
+    val outputDirectoryForJsLibraryFiles: String
 )
 
 val ModuleEntity.kotlinSettings: List<@Child KotlinSettingsEntity>

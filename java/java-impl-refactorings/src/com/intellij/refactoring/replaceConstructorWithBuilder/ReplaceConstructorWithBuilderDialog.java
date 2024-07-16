@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -25,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
@@ -86,7 +86,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
   @Override
   protected String getHelpId() {
-    return "replace_constructor_with_builder_dialog";
+    return HelpID.REPLACE_CONSTRUCTOR_WITH_BUILDER;
   }
 
   @Override

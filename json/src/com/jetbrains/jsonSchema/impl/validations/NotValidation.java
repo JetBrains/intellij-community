@@ -10,18 +10,20 @@ import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.MatchResult;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 public final class NotValidation implements JsonSchemaValidation {
   public static final NotValidation INSTANCE = new NotValidation();
   @Override
-  public void validate(JsonValueAdapter propValue,
-                       JsonSchemaObject schema,
-                       JsonSchemaType schemaType,
-                       JsonValidationHost consumer,
-                       JsonComplianceCheckerOptions options) {
-    final MatchResult result = consumer.resolve(schema.getNot());
+  public void validate(@NotNull JsonValueAdapter propValue,
+                       @NotNull JsonSchemaObject schema,
+                       @Nullable JsonSchemaType schemaType,
+                       @NotNull JsonValidationHost consumer,
+                       @NotNull JsonComplianceCheckerOptions options) {
+    final MatchResult result = consumer.resolve(schema.getNot(), propValue);
     if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
 
     // if 'not' uses reference to owning schema back -> do not check, seems it does not make any sense

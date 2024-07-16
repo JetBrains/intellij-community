@@ -48,6 +48,8 @@ internal fun generateIconClasses(config: IconClasses = IntellijIconClassGenerato
 
   val modules = config.modules
 
+  // TODO: update copyright into svg icons
+
   if (System.getenv("OPTIMIZE_ICONS") != "false") {
     val optimizer = ImageSizeOptimizer(home)
     modules.parallelStream().forEach { optimizer.optimizeIcons(it, config.getConfigForModule(it.name)) }

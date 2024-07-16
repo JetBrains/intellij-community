@@ -29,10 +29,12 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
     fun testAnyType() = doTest()
     fun testArrays() = doTest()
+    fun testAssertApply() = doTest()
     fun testBoolean() = doTest()
     fun testBooleanConst() = doTest()
     fun testBoxedInt() = doTest()
     fun testBrokenCode() = doTest()
+    fun testCallWithSideEffect() = doTest()
     fun testCastArray() = doTest()
     fun testCastGenericMethodReturn() = doTest()
     fun testClassRef() = doTest()
@@ -93,6 +95,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testSuppressions() = doTest()
     fun testTopLevelDeclaration() = doTest()
     fun testTryCatch() = doTest()
+    fun testTryCatchReturnValue() = doTest()
     fun testTryCatchInsideFinally() = doTest()
     fun testTryFinally() = doTest()
     fun testTypeCast() = doTest()
@@ -100,6 +103,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testUInt() = doTest()
     fun testUsefulNull() = doTest()
     fun testWhen() = doTest()
+    fun testWhenInLambda() = doTest()
     fun testWhenIsObject() = doTest()
     fun testWhileLoop() = doTest()
 

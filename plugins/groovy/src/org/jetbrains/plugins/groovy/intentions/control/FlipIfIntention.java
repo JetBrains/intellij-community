@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author Max Medvedev
  */
-public class FlipIfIntention extends GrPsiUpdateIntention {
+public final class FlipIfIntention extends GrPsiUpdateIntention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final GrIfStatement ifStatement = (GrIfStatement)element.getParent();

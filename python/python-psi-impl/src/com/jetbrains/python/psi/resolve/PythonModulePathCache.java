@@ -68,7 +68,7 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
           entity = ((EntityChange.Replaced<ModuleEntity>)change).getOldEntity();
         }
         else if (change instanceof EntityChange.Removed) {
-          entity = ((EntityChange.Removed<ModuleEntity>)change).getEntity();
+          entity = ((EntityChange.Removed<ModuleEntity>)change).getOldEntity();
         }
         if (entity != null) {
           var module = ModuleEntityUtils.findModule(entity, event.getStorageBefore());

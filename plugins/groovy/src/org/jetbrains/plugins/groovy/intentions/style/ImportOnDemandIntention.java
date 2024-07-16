@@ -36,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 /**
  * @author Maxim.Medvedev
  */
-public class ImportOnDemandIntention extends GrPsiUpdateIntention {
+public final class ImportOnDemandIntention extends GrPsiUpdateIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {

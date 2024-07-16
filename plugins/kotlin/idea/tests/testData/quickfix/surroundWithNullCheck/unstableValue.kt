@@ -1,5 +1,5 @@
 // "Surround with null check" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (x!!) call
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Introduce local variable

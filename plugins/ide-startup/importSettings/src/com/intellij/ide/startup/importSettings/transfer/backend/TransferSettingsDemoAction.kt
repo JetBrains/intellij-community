@@ -5,7 +5,7 @@ package com.intellij.ide.startup.importSettings.transfer.backend
 
 import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.TransferSettingsModel
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext

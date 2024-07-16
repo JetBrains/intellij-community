@@ -165,4 +165,3 @@ public class MyJavaClass {
         return 1;
     }
 }
-// IGNORE_K2

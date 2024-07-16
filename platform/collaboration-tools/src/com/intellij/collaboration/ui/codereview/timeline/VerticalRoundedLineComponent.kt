@@ -8,7 +8,7 @@ import java.awt.geom.Line2D
 import javax.swing.JComponent
 import javax.swing.plaf.ComponentUI
 
-class VerticalRoundedLineComponent(val lineWidth: Int) : JComponent() {
+internal class VerticalRoundedLineComponent(val lineWidth: Int) : JComponent() {
 
   init {
     updateUI()

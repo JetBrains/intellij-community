@@ -21,7 +21,7 @@ import java.nio.ByteOrder;
 
 @ApiStatus.Internal
 public final class CharSequenceAccess {
-  static final Access<CharSequence> INSTANCE = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN
+  public static final Access<CharSequence> INSTANCE = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN
                                              ? LittleEndianCharSequenceAccess.INSTANCE
                                              : BigEndianCharSequenceAccess.INSTANCE;
 

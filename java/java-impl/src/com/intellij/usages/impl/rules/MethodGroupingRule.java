@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -28,16 +28,14 @@ import java.util.Objects;
 
 public class MethodGroupingRule extends SingleParentUsageGroupingRule {
   private static final Logger LOG = Logger.getInstance(MethodGroupingRule.class);
-  @NotNull
-  private final UsageViewSettings myUsageViewSettings;
+  private final @NotNull UsageViewSettings myUsageViewSettings;
 
   public MethodGroupingRule(@NotNull UsageViewSettings usageViewSettings) {
     myUsageViewSettings = usageViewSettings;
   }
 
-  @Nullable
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (!(usage instanceof PsiElementUsage)) return null;
     PsiElement psiElement = ((PsiElementUsage)usage).getElement();
     PsiFile containingFile = psiElement.getContainingFile();
@@ -71,8 +69,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     private final Icon myIcon;
     private final Project myProject;
 
-    @NotNull
-    private final UsageViewSettings myUsageViewSettings;
+    private final @NotNull UsageViewSettings myUsageViewSettings;
 
     MethodUsageGroup(PsiMethod psiMethod, @NotNull UsageViewSettings usageViewSettings) {
       myName = PsiFormatUtil.formatMethod(
@@ -115,8 +112,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return myName;
     }
 
@@ -170,17 +166,15 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       return myName.compareToIgnoreCase(other.myName);
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
       if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
         return (DataProvider)this::getSlowData;
       }
       return null;
     }
 
-    @Nullable
-    private Object getSlowData(@NotNull String dataId) {
+    private @Nullable Object getSlowData(@NotNull String dataId) {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getMethod();
       }

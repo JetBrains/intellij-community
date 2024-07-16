@@ -2,8 +2,8 @@
 package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.openapi.editor.Document
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentInnerSpacesLength
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem

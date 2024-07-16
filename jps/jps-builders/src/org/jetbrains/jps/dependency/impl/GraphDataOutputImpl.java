@@ -1,15 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
+import com.intellij.util.SmartList;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.ExternalizableGraphElement;
+import org.jetbrains.jps.dependency.FactoredExternalizableGraphElement;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GraphDataOutputImpl implements GraphDataOutput {
 
@@ -92,13 +97,39 @@ public class GraphDataOutputImpl implements GraphDataOutput {
   @Override
   public <T extends ExternalizableGraphElement> void writeGraphElement(@NotNull T elem) throws IOException {
     writeUTF(elem.getClass().getName());
+    if (elem instanceof FactoredExternalizableGraphElement) {
+      writeGraphElement(((FactoredExternalizableGraphElement<?>)elem).getFactorData());
+    }
     elem.write(this);
   }
 
   @Override
   public <T extends ExternalizableGraphElement> void writeGraphElementCollection(Class<? extends T> elemType, @NotNull Iterable<T> col) throws IOException {
     writeUTF(elemType.getName());
-    RW.writeCollection(this, col, elem -> elem.write(this));
+    if (FactoredExternalizableGraphElement.class.isAssignableFrom(elemType)) {
+      Map<ExternalizableGraphElement, List<FactoredExternalizableGraphElement<?>>> elemGroups = new HashMap<>();
+      for (T e : col) {
+        FactoredExternalizableGraphElement<?> fe = (FactoredExternalizableGraphElement<?>)e;
+        elemGroups.computeIfAbsent(fe.getFactorData(), k -> new SmartList<>()).add(fe);
+      }
+      writeInt(elemGroups.size());
+      for (Map.Entry<ExternalizableGraphElement, List<FactoredExternalizableGraphElement<?>>> entry : elemGroups.entrySet()) {
+        RW.writeCollection(this, entry.getValue(), new RW.Writer<>() {
+          private boolean commonPartWritten;
+          @Override
+          public void write(FactoredExternalizableGraphElement<?> elem) throws IOException {
+            if (!commonPartWritten) {
+              commonPartWritten = true;
+              writeGraphElement(entry.getKey());
+            }
+            elem.write(GraphDataOutputImpl.this);
+          }
+        });
+      }
+    }
+    else {
+      RW.writeCollection(this, col, elem -> elem.write(this));
+    }
   }
 
   public static GraphDataOutput wrap(DataOutput out) {
@@ -110,14 +141,11 @@ public class GraphDataOutputImpl implements GraphDataOutput {
   }
 
   public static GraphDataOutput wrap(DataOutput out, @Nullable StringEnumerator enumerator) {
-    if (enumerator != null) {
-      return new GraphDataOutputImpl(out) {
-        @Override
-        public void writeUTF(@NotNull String s) throws IOException {
-          writeInt(enumerator.toNumber(s));
-        }
-      };
-    }
-    return wrap(out);
+    return enumerator == null? wrap(out) : new GraphDataOutputImpl(out) {
+      @Override
+      public void writeUTF(@NotNull String s) throws IOException {
+        writeInt(enumerator.toNumber(s));
+      }
+    };
   }
 }

@@ -46,7 +46,7 @@ public final class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBas
     }
     final JsonPointerPosition position = walker.findPosition(context, true);
     if (position == null || position.isEmpty()) return null;
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, schemaObject, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(project, schemaObject, position, walker.createValueAdapter(context)).resolve();
     for (JsonSchemaObject schema : schemas) {
       String injection = schema.getLanguageInjection();
       if (injection != null) {

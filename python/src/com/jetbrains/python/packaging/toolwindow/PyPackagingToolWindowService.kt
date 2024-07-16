@@ -16,15 +16,14 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.python.PyBundle.*
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.reportRawProgress
+import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.packaging.*
@@ -47,7 +46,6 @@ import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.sdk.sdkFlavor
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
@@ -55,7 +53,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   private var toolWindowPanel: PyPackagingToolWindowPanel? = null
   lateinit var manager: PythonPackageManager
-  private var installedPackages: List<InstalledPackage> = emptyList()
+  private var installedPackages: Map<String, InstalledPackage> = emptyMap()
   internal var currentSdk: Sdk? = null
   private var searchJob: Job? = null
   private var currentQuery: String = ""
@@ -85,7 +83,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       searchJob?.cancel()
       searchJob = serviceScope.launch {
 
-        val installed = installedPackages.filter { pkg ->
+        val installed = installedPackages.values.filter { pkg ->
           when {
             pkg.instance is CondaPackage && !pkg.instance.installedWithPip -> StringUtil.containsIgnoreCase(pkg.name, query)
             else -> StringUtil.containsIgnoreCase(normalizePackageName(pkg.name), normalizePackageName(query))
@@ -109,7 +107,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         PyPackagesViewData(repository, shownPackages, moreItems = packages.size - PACKAGES_LIMIT)
       }.toList()
 
-      toolWindowPanel?.resetSearch(installedPackages, packagesByRepository + invalidRepositories)
+      toolWindowPanel?.resetSearch(installedPackages.values.toList(), packagesByRepository + invalidRepositories)
     }
   }
 
@@ -188,20 +186,39 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun refreshInstalledPackages() {
     val packages = manager.installedPackages.map {
-      val repository = installedPackages.find { pkg -> pkg.name == it.name }?.repository ?: PyEmptyPackagePackageRepository
-      val specification = repository.createPackageSpecification(it.name)
-      val latestVersion = manager.repositoryManager.getLatestVersion(specification)
-      val currentVersion = PyPackageVersionNormalizer.normalize(it.version)
+      val repository = installedPackages.values.find { pkg -> pkg.name == it.name }?.repository ?: PyEmptyPackagePackageRepository
 
-      val upgradeTo = if (latestVersion != null
-                          && currentVersion != null
-                          && PyPackageVersionComparator.compare(latestVersion, currentVersion) > 0) latestVersion else null
 
-      InstalledPackage(it, repository, upgradeTo)
+      InstalledPackage(it, repository, null)
     }
+    installedPackages = packages.associateBy { it.name }
 
-    withContext(Dispatchers.Main) {
-      installedPackages = packages
+    invokeUpdateLatestVersion()
+  }
+
+  private suspend fun invokeUpdateLatestVersion() {
+    serviceScope.launch(Dispatchers.Default) {
+      val proccessPackages = installedPackages
+      val updatedPackages = proccessPackages.map { (name, pyPackage: InstalledPackage) ->
+        val specification = pyPackage.repository.createPackageSpecification(pyPackage.name)
+        val latestVersion = manager.repositoryManager.getLatestVersion(specification)
+        val currentVersion = PyPackageVersionNormalizer.normalize(pyPackage.instance.version)
+
+        val upgradeTo = if (latestVersion != null && currentVersion != null &&
+                            PyPackageVersionComparator.compare(latestVersion, currentVersion) > 0) {
+          latestVersion
+        }
+        else {
+          null
+        }
+        name to upgradeTo
+      }.toMap()
+
+      installedPackages = installedPackages.map {
+        val newVersion = updatedPackages[it.key]
+        it.key to it.value.withNextVersion(newVersion)
+      }.toMap()
+      handleSearch(currentQuery)
     }
   }
 
@@ -232,7 +249,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   suspend fun convertToHTML(contentType: String?, description: String): String {
     return withContext(Dispatchers.IO) {
       when (contentType?.split(';')?.firstOrNull()?.trim()) {
-        "text/markdown" -> markdownToHtml(description, ProjectRootManager.getInstance(project).contentRoots.first(), project)
+        "text/markdown" -> markdownToHtml(description)
         "text/x-rst", "" -> rstToHtml(description, currentSdk!!)
         else -> description
       }
@@ -270,12 +287,14 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
     val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
 
-    val output = withBackgroundProgressIndicator(project, message("python.toolwindow.packages.converting.description.progress"), cancellable = true) {
-      val processInput = handler.processInput
-      processInput.use {
-        processInput.write(text.toByteArray())
+    val output = withBackgroundProgress(project, message("python.toolwindow.packages.converting.description.progress"), cancellable = true) {
+      reportRawProgress {
+        val processInput = handler.processInput
+        processInput.use {
+          processInput.write(text.toByteArray())
+        }
+        handler.runProcess(10 * 60 * 1000)
       }
-      handler.runProcess(10 * 60 * 1000)
     }
 
     return when {
@@ -284,8 +303,12 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private fun markdownToHtml(text: String, homeDir: VirtualFile, project: Project): String {
-    return wrapHtml(MarkdownUtil.generateMarkdownHtml(homeDir, text, project))
+  private fun markdownToHtml(text: String): String {
+    val mdHtml = PyPIPackageRanking::class.java.getResource("/packaging/md.template.html")?.readText() ?: error("Cannot get md template")
+    val quotedText = text.replace("`", "\\`")
+
+    val prepared = mdHtml.replace("{MD_TEXT}", "\n" + quotedText)
+    return prepared
   }
 
   override fun dispose() {
@@ -297,13 +320,15 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   fun reloadPackages() {
     serviceScope.launch(Dispatchers.IO) {
-      withBackgroundProgressIndicator(project, message("python.packaging.loading.packages.progress.text"), cancellable = false) {
-        manager.reloadPackages()
-        manager.repositoryManager.refreshCashes()
-        refreshInstalledPackages()
+      withBackgroundProgress(project, message("python.packaging.loading.packages.progress.text"), cancellable = false) {
+        reportRawProgress {
+          manager.reloadPackages()
+          manager.repositoryManager.refreshCashes()
+          refreshInstalledPackages()
 
-        withContext(Dispatchers.Main) {
-          handleSearch("")
+          withContext(Dispatchers.Main) {
+            handleSearch("")
+          }
         }
       }
     }
@@ -350,7 +375,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   private fun Sequence<String>.limitDisplayableResult(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
     return drop(skipItems)
       .take(PACKAGES_LIMIT)
-      .map { pkg -> installedPackages.find { it.name.lowercase() == pkg.lowercase() } ?: InstallablePackage(pkg, repository) }
+      .map { pkg -> installedPackages.values.find { it.name.lowercase() == pkg.lowercase() } ?: InstallablePackage(pkg, repository) }
       .toList()
   }
 

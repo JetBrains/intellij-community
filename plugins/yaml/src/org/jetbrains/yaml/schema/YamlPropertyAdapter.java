@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.RecursionManager;
@@ -25,46 +25,40 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
 
   public YamlPropertyAdapter(@NotNull PsiElement property) {myProperty = property;}
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myProperty instanceof YAMLKeyValue ? ((YAMLKeyValue)myProperty).getKeyText() : myProperty.getText();
   }
 
-  @Nullable
   @Override
-  public JsonValueAdapter getNameValueAdapter() {
+  public @Nullable JsonValueAdapter getNameValueAdapter() {
     if (!(myProperty instanceof YAMLKeyValue)) return null;
     PsiElement key = ((YAMLKeyValue)myProperty).getKey();
     if (key == null) return null;
     return new YamlPropertyKeyAdapter(key);
   }
 
-  @NotNull
   @Override
-  public Collection<JsonValueAdapter> getValues() {
+  public @NotNull Collection<JsonValueAdapter> getValues() {
     YAMLValue value = myProperty instanceof YAMLKeyValue ? ((YAMLKeyValue)myProperty).getValue() : null;
     return value != null
            ? Collections.singletonList(createValueAdapterByType(value))
            : ContainerUtil.createMaybeSingletonList(createEmptyValueAdapter(myProperty, false));
   }
 
-  @NotNull
   @Override
-  public PsiElement getDelegate() {
+  public @NotNull PsiElement getDelegate() {
     return myProperty;
   }
 
-  @Nullable
   @Override
-  public JsonObjectValueAdapter getParentObject() {
+  public @Nullable JsonObjectValueAdapter getParentObject() {
     YAMLMapping parentMapping = myProperty instanceof YAMLKeyValue ? ((YAMLKeyValue)myProperty).getParentMapping() :
                                 ObjectUtils.tryCast(myProperty.getParent(), YAMLMapping.class);
     return parentMapping != null ? new YamlObjectAdapter(parentMapping) : null;
   }
 
-  @NotNull
-  public static JsonValueAdapter createValueAdapterByType(@NotNull YAMLValue value) {
+  public static @NotNull JsonValueAdapter createValueAdapterByType(@NotNull YAMLValue value) {
     if (value instanceof YAMLAlias) {
       PsiElement result = YamlObjectAdapter.resolveYamlAlias(value);
       if (result instanceof YAMLValue) {
@@ -77,8 +71,7 @@ public class YamlPropertyAdapter implements JsonPropertyAdapter {
     return new YamlGenericValueAdapter(value);
   }
 
-  @Nullable
-  public static JsonValueAdapter createEmptyValueAdapter(@NotNull PsiElement context, boolean pinSelf) {
+  public static @Nullable JsonValueAdapter createEmptyValueAdapter(@NotNull PsiElement context, boolean pinSelf) {
     if (context instanceof YAMLKeyValue && ((YAMLKeyValue)context).getValue() == null) {
       PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(context);
       if (PsiUtilCore.getElementType(next) == YAMLTokenTypes.EOL) {

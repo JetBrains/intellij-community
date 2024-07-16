@@ -18,4 +18,5 @@ inline fun inlineCall(l: () -> Unit) {
     l()
 }
 
-// STEP_OVER: 6
+// STEP_OVER: 99
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

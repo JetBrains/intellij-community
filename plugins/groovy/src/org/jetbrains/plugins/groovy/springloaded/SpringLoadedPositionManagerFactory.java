@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Factory for position manager to debug classes reloaded by com.springsource.springloaded
  */
-public class SpringLoadedPositionManagerFactory extends PositionManagerFactory {
+public final class SpringLoadedPositionManagerFactory extends PositionManagerFactory {
 
   public static final Key<Boolean> FORCE_SPRINGLOADED = Key.create("springloaded.debugger.force");
 

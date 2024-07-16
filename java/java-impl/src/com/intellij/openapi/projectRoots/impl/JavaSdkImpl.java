@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -59,9 +59,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
 
@@ -175,8 +172,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return binPath + File.separator + VM_EXE_NAME;
   }
 
-  @NotNull
-  private static String getConvertedHomePath(@NotNull Sdk sdk) {
+  private static @NotNull String getConvertedHomePath(@NotNull Sdk sdk) {
     String homePath = sdk.getHomePath();
     assert homePath != null : sdk;
     String path = FileUtil.toSystemDependentName(homePath);
@@ -288,25 +284,18 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
-    attachIDEAAnnotationsToJdk(modificator);
-  }
-
-  // return true on success
-  public static boolean attachIDEAAnnotationsToJdk(@NotNull SdkModificator modificator) {
     List<String> pathsChecked = new ArrayList<>();
     VirtualFile root = internalJdkAnnotationsPath(pathsChecked, false);
     if (root != null && !isInternalJdkAnnotationRootCorrect(root)) {
       root = null;
     }
     if (root == null) {
-      String msg = "Paths checked:\n"+
-      StringUtil.join(pathsChecked, path -> {
-        File file = new File(path);
-        File parentFile = file.getParentFile();
-        return " "+path+"; exists: "+file.exists()+(parentFile == null ? "" : "; siblings: "+Arrays.toString(parentFile.list()));
+      var msg = "Paths checked:\n" + StringUtil.join(pathsChecked, path -> {
+        File file = new File(path), parentFile = file.getParentFile();
+        return " " + path + "; exists: " + file.exists() + (parentFile == null ? "" : "; siblings: " + Arrays.toString(parentFile.list()));
       }, "\n");
       LOG.error("JDK annotations not found", msg);
-      return false;
+      return;
     }
 
     OrderRootType annoType = AnnotationOrderRootType.getInstance();
@@ -314,7 +303,6 @@ public final class JavaSdkImpl extends JavaSdk {
       modificator.removeRoot(root, annoType);
     }
     modificator.addRoot(root, annoType);
-    return true;
   }
 
   // return true on success
@@ -338,12 +326,12 @@ public final class JavaSdkImpl extends JavaSdk {
         SdkModificator modificator = sdk.getSdkModificator();
       return new Pair<>(root, modificator);
     })
-      .finishOnUiThread(ModalityState.nonModal(), rootAndModifiactor -> {
-        if (rootAndModifiactor == null) {
+      .finishOnUiThread(ModalityState.nonModal(), rootAndModificator -> {
+        if (rootAndModificator == null) {
           return;
         }
-        VirtualFile root = rootAndModifiactor.first;
-        SdkModificator modificator = rootAndModifiactor.second;
+        VirtualFile root = rootAndModificator.first;
+        SdkModificator modificator = rootAndModificator.second;
         OrderRootType annoType = AnnotationOrderRootType.getInstance();
         if (modificator.getRoots(annoType).length != 0) {
           modificator.removeRoot(root, annoType);
@@ -355,7 +343,7 @@ public final class JavaSdkImpl extends JavaSdk {
       .then(file -> file != null);
   }
 
-  // does this file look like the genuine root for all correct annotations.xml
+  // whether this file look like the genuine root for all correct `annotations.xml` files
   private static boolean isInternalJdkAnnotationRootCorrect(@NotNull VirtualFile root) {
     String relPath = "java/awt/event/annotations.xml";
     VirtualFile xml = root.findFileByRelativePath(relPath);
@@ -368,7 +356,7 @@ public final class JavaSdkImpl extends JavaSdk {
     Iterable<BaseExternalAnnotationsManager.AnnotationData> data = loaded.get("java.awt.event.InputEvent int getModifiers()");
     BaseExternalAnnotationsManager.AnnotationData magicAnno = ContainerUtil.find(data, ann -> ann.toString().startsWith(MagicConstant.class.getName() + "("));
     if (magicAnno != null) return true;
-    reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: "+data);
+    reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: " + data);
     return false;
   }
 
@@ -429,13 +417,12 @@ public final class JavaSdkImpl extends JavaSdk {
   @Override
   public String getVersionString(@NotNull String sdkHome) {
     var info = getInfo(sdkHome);
-    if (info == null) return null;
-    return info.displayVersionString();
+    return info != null ? info.displayVersionString() : null;
   }
 
   @Override
-  public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
-    JavaVersion version = getJavaVersion(sdk);
+  public @Nullable JavaSdkVersion getVersion(@NotNull Sdk sdk) {
+    var version = getJavaVersion(sdk);
     return version != null ? JavaSdkVersion.fromJavaVersion(version) : null;
   }
 
@@ -465,8 +452,9 @@ public final class JavaSdkImpl extends JavaSdk {
 
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));
     if (JdkVersionDetector.isVersionString(jdkName)) {
-      sdkModificator.setVersionString(jdkName);  // must be set after home path, otherwise setting home path clears the version string
-    } else {
+      sdkModificator.setVersionString(jdkName);  // must be set after the home path, otherwise setting a home path clears the version string
+    }
+    else {
       sdkModificator.setVersionString(this.getVersionString(home));
     }
 
@@ -633,8 +621,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
-  @NotNull
-  private static String vfsPath(@NotNull Path path) {
+  private static @NotNull String vfsPath(@NotNull Path path) {
     return FileUtil.toSystemIndependentName(path.toAbsolutePath().toString());
   }
 

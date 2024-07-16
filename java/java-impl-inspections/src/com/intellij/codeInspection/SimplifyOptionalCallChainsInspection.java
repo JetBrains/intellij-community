@@ -19,17 +19,22 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -73,32 +78,26 @@ public final class SimplifyOptionalCallChainsInspection extends AbstractBaseJava
       CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isEmpty").parameterCount(0)
     );
 
+  private static final List<ChainSimplificationCase<?>> ourCases = List.of(
+    new IfPresentFoldedCase(),
+    new MapUnwrappingCase(),
+    new OrElseNonNullCase(OrElseType.OrElse),
+    new OrElseNonNullCase(OrElseType.OrElseGet),
+    new FlipPresentOrEmptyCase(true),
+    new FlipPresentOrEmptyCase(false),
+    new OrElseReturnCase(OrElseType.OrElse),
+    new OrElseReturnCase(OrElseType.OrElseGet),
+    new RewrappingCase(RewrappingCase.Type.OptionalGet),
+    new RewrappingCase(RewrappingCase.Type.OrElseNull),
+    new MapOrElseCase(OrElseType.OrElseGet),
+    new MapOrElseCase(OrElseType.OrElse),
+    new OptionalOfNullableOrElseNullCase(),
+    new OptionalOfNullableStringCase()
+  );
 
-  private static final CallMapper<OptionalSimplificationFix> ourMapper;
-
-  static {
-    List<ChainSimplificationCase<?>> cases = Arrays.asList(
-      new IfPresentFoldedCase(),
-      new MapUnwrappingCase(),
-      new OrElseNonNullCase(OrElseType.OrElse),
-      new OrElseNonNullCase(OrElseType.OrElseGet),
-      new FlipPresentOrEmptyCase(true),
-      new FlipPresentOrEmptyCase(false),
-      new OrElseReturnCase(OrElseType.OrElse),
-      new OrElseReturnCase(OrElseType.OrElseGet),
-      new RewrappingCase(RewrappingCase.Type.OptionalGet),
-      new RewrappingCase(RewrappingCase.Type.OrElseNull),
-      new MapOrElseCase(OrElseType.OrElseGet),
-      new MapOrElseCase(OrElseType.OrElse),
-      new OptionalOfNullableOrElseNullCase(),
-      new OptionalOfNullableStringCase()
-    );
-    ourMapper = new CallMapper<>();
-    for (ChainSimplificationCase<?> theCase : cases) {
-      CallHandler<OptionalSimplificationFix> handler = CallHandler.of(theCase.getMatcher(), theCase);
-      ourMapper.register(handler);
-    }
-  }
+  private static final CallMapper<OptionalSimplificationFix> ourMapper =
+    StreamEx.of(ourCases).map(theCase -> CallHandler.of(theCase.getMatcher(), theCase)).foldLeft(
+      new CallMapper<>(), CallMapper::register);
 
   @Override
   public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
@@ -686,9 +685,9 @@ public final class SimplifyOptionalCallChainsInspection extends AbstractBaseJava
       if (nextStatement == null) return null;
       PsiExpression lambdaExpr = extractMappingExpression(nextStatement, returnVar);
       if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
-      if (!ReferencesSearch.search(returnVar).allMatch(reference ->
-                                                         PsiTreeUtil.isAncestor(statement, reference.getElement(), false) ||
-                                                         PsiTreeUtil.isAncestor(nextStatement, reference.getElement(), false))) {
+      if (!ContainerUtil.and(VariableAccessUtils.getVariableReferences(returnVar), reference ->
+        PsiTreeUtil.isAncestor(statement, reference, false) ||
+        PsiTreeUtil.isAncestor(nextStatement, reference, false))) {
         return null;
       }
       return new Context(lambdaExpr, nextStatement, statement, returnVar, call);

@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyExpressionConverter extends ExpressionConverter {
+public final class GroovyExpressionConverter extends ExpressionConverter {
   @Override
   protected PsiElement convert(PsiElement expression, Project project) {
     return GroovyPsiElementFactory.getInstance(project).createExpressionFromText(expression.getText(), expression);

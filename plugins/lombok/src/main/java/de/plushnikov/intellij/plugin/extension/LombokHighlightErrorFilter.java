@@ -11,7 +11,7 @@ import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LombokHighlightErrorFilter implements HighlightInfoFilter {
+public final class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
   public LombokHighlightErrorFilter() {
   }

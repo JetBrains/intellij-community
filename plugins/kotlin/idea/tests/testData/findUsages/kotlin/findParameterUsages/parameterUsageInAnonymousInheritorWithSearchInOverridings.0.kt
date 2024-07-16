@@ -12,3 +12,5 @@ val d = object : MyInterface {
         val param2 = param
     }
 }
+
+// ISSUE: KTIJ-29711

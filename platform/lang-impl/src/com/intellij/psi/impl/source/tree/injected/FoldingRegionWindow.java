@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   private final EditorWindow myEditorWindow;
 

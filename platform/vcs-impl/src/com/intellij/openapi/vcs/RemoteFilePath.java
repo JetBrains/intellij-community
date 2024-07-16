@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -69,12 +68,6 @@ public class RemoteFilePath implements FilePath {
     return getPath();
   }
 
-  @Nullable
-  @Override
-  public Document getDocument() {
-    return null;
-  }
-
   @NotNull
   @Override
   public Charset getCharset() {
@@ -92,14 +85,6 @@ public class RemoteFilePath implements FilePath {
   @Override
   public FileType getFileType() {
     return FileTypeManager.getInstance().getFileTypeByFileName(getName());
-  }
-
-  @Override
-  public void refresh() {
-  }
-
-  @Override
-  public void hardRefresh() {
   }
 
   @NotNull

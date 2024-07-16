@@ -1,7 +1,7 @@
 // "Replace scope function with safe (?.) call" "false"
 // WITH_STDLIB
 // ACTION: Add 'return@let'
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (b!!) call
 // ACTION: Introduce local variable
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check

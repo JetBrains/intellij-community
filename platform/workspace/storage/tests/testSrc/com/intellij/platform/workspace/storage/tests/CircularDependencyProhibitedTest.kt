@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -14,8 +14,8 @@ class CircularDependencyProhibitedTest {
     val entity = builder addEntity ChainedEntity("Data", MySource)
 
     assertThrows<IllegalStateException> {
-      builder.modifyEntity(entity) {
-        this.parent = entity
+      builder.modifyChainedEntity(entity) {
+        this.parent = this
       }
     }
   }
@@ -26,8 +26,8 @@ class CircularDependencyProhibitedTest {
     val entity = builder addEntity ChainedEntity("Data", MySource)
 
     assertThrows<IllegalStateException> {
-      builder.modifyEntity(entity) {
-        this.child = entity
+      builder.modifyChainedEntity(entity) {
+        this.child = this
       }
     }
   }
@@ -38,8 +38,8 @@ class CircularDependencyProhibitedTest {
     val entity = builder addEntity TreeEntity("data", MySource)
 
     assertThrows<IllegalStateException> {
-      builder.modifyEntity(entity) {
-        this.children = listOf(entity)
+      builder.modifyTreeEntity(entity) {
+        this.children = listOf(this)
       }
     }
   }
@@ -50,8 +50,8 @@ class CircularDependencyProhibitedTest {
     val entity = builder addEntity TreeEntity("data", MySource)
 
     assertThrows<IllegalStateException> {
-      builder.modifyEntity(entity) {
-        this.parentEntity = entity
+      builder.modifyTreeEntity(entity) {
+        this.parentEntity = this
       }
     }
   }
@@ -62,8 +62,8 @@ class CircularDependencyProhibitedTest {
     val entity = builder addEntity CompositeChildAbstractEntity(MySource)
 
     assertThrows<IllegalStateException> {
-      builder.modifyEntity(entity) {
-        this.children = listOf(entity)
+      builder.modifyCompositeChildAbstractEntity(entity) {
+        this.children = listOf(this)
       }
     }
   }
@@ -74,8 +74,8 @@ class CircularDependencyProhibitedTest {
     val entity = builder addEntity CompositeChildAbstractEntity(MySource)
 
     assertThrows<IllegalStateException> {
-      builder.modifyEntity(entity) {
-        this.parentInList = entity
+      builder.modifyCompositeChildAbstractEntity(entity) {
+        this.parentInList = this
       }
     }
   }

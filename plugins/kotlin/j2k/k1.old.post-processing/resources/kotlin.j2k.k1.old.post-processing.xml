@@ -2,8 +2,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
-            serviceInterface="org.jetbrains.kotlin.j2k.J2KPostProcessingRegistrar"
-            serviceImplementation="org.jetbrains.kotlin.idea.j2k.old.post.processing.J2KPostProcessingRegistrarImpl"/>
+            serviceInterface="org.jetbrains.kotlin.j2k.OldJ2KPostProcessingRegistrar"
+            serviceImplementation="org.jetbrains.kotlin.idea.j2k.old.post.processing.OldJ2KPostProcessingRegistrarImpl"/>
   </extensions>
 
   <dependencies>

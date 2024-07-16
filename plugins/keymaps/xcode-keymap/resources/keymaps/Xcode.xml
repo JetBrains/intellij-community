@@ -79,7 +79,7 @@
     <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
     <keyboard-shortcut first-keystroke="meta shift DIVIDE"/>
   </action>
-  <action id="SwiftGenerateDocComment">
+  <action id="Swift.GenerateDocComment">
     <keyboard-shortcut first-keystroke="meta alt SLASH"/>
     <keyboard-shortcut first-keystroke="meta alt DIVIDE"/>
   </action>

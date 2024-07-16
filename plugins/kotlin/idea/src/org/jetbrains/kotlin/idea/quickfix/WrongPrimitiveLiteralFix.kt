@@ -8,10 +8,10 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.ExpressionCodegen
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -31,7 +31,7 @@ private val valueRanges = mapOf(
     StandardNames.FqNames._long to Long.MIN_VALUE..Long.MAX_VALUE
 )
 
-class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) : KotlinQuickFixAction<KtExpression>(element) {
+internal class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) : KotlinQuickFixAction<KtExpression>(element) {
 
     private val typeName = DescriptorUtils.getFqName(type.constructor.declarationDescriptor!!)
     private val expectedTypeIsFloat = KotlinBuiltIns.isFloat(type)
@@ -69,7 +69,9 @@ class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) 
         }
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = isAvailable()
+
+    fun isAvailable(): Boolean {
         if (constValue == null) return false
         if (expectedTypeIsFloat || expectedTypeIsDouble || expectedTypeIsUnsigned) return true
 

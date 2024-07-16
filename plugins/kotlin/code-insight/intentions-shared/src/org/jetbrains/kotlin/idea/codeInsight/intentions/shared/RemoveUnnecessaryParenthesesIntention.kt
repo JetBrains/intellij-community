@@ -8,9 +8,9 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.codeinsight.utils.appendSemicolonBeforeLambdaContainingElement
-import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeUnnecessaryParentheses
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
 
 @ApiStatus.Internal
 @IntellijInternalApi
@@ -24,31 +24,6 @@ class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtPare
     }
 
     override fun applyTo(element: KtParenthesizedExpression, editor: Editor?) {
-        val commentSaver = CommentSaver(element)
-        val innerExpression = element.expression ?: return
-        val binaryExpressionParent = element.parent as? KtBinaryExpression
-        val replaced = if (binaryExpressionParent != null &&
-            innerExpression is KtBinaryExpression &&
-            binaryExpressionParent.right == element
-        ) {
-            val ktPsiFactory = KtPsiFactory(element.project)
-            val newElement = ktPsiFactory.createExpressionByPattern(
-                "$0 $1 $2 $3 $4",
-                binaryExpressionParent.left!!,
-                binaryExpressionParent.operationReference,
-                innerExpression.left!!,
-                innerExpression.operationReference,
-                innerExpression.right!!,
-            )
-            val replace = binaryExpressionParent.replace(newElement)
-            replace.replace(ktPsiFactory.createExpression(replace.text))
-        } else
-            element.replace(innerExpression)
-
-        if (innerExpression.firstChild is KtLambdaExpression) {
-            KtPsiFactory(element.project).appendSemicolonBeforeLambdaContainingElement(replaced)
-        }
-
-        commentSaver.restore(replaced)
+        element.removeUnnecessaryParentheses()
     }
 }

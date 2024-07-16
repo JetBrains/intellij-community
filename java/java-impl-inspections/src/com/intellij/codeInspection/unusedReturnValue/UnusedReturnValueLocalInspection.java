@@ -7,7 +7,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.psi.*;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -15,8 +14,6 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 @SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedReturnValue
 public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -56,7 +53,7 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
     }
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
-    if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {
+    if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, null, u -> {
       if (!atLeastOneUsageExists[0]) atLeastOneUsageExists[0] = true;
       PsiElement element = u.getElement();
       if (element instanceof PsiReferenceExpression) {

@@ -5,13 +5,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiConstantEvaluationHelper.AuxEvaluator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -31,8 +30,8 @@ class KotlinFirConstantExpressionEvaluator : ConstantExpressionEvaluator {
         val ktExpression = expression.unwrapped as? KtExpression ?: return null
         val analyze = {
             analyze(ktExpression) {
-                ktExpression.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
-                    ?.takeUnless { it is KtConstantValue.KtErrorConstantValue }?.value
+                ktExpression.evaluate()
+                    ?.takeUnless { it is KaConstantValue.ErrorValue }?.value
             }
         }
 
@@ -40,7 +39,7 @@ class KotlinFirConstantExpressionEvaluator : ConstantExpressionEvaluator {
             return analyze()
         }
 
-        @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
         return allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze()

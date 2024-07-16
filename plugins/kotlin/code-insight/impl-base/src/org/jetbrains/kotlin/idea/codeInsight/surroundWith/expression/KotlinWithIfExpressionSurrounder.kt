@@ -2,56 +2,44 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 
-import com.intellij.codeInsight.CodeInsightUtilBase
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
+import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.KotlinTryFinallySurrounder.moveCaretToBlockCenter
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.sure
 
 class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpressionSurrounder() {
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun isApplicable(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
-            allowAnalysisFromWriteAction {
-                return super.isApplicable(expression) && analyze(expression) {
-                    expression.getKtType()?.isBoolean == true
-                }
+            return super.isApplicable(expression) && analyze(expression) {
+              expression.expressionType?.isBoolean == true
             }
         }
     }
 
-    override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange {
+    override fun surroundExpression(context: ActionContext, expression: KtExpression, updater: ModPsiUpdater) {
+        val project = context.project
         val factory = KtPsiFactory(project)
         val replaceResult = expression.replace(
           factory.createIf(
             expression,
-            factory.createBlock("blockStubContentToBeRemovedLater"),
+            factory.createBlock(""),
             if (withElse) factory.createEmptyBody() else null
             )
         ) as KtExpression
 
         val ifExpression = KtPsiUtil.deparenthesizeOnce(replaceResult) as KtIfExpression
-
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(ifExpression)
-
-        val firstStatementInThenRange = (ifExpression.then as? KtBlockExpression).sure {
+        moveCaretToBlockCenter(context, updater, ifExpression.then.sure {
             "Then branch should exist and be a block expression"
-        }.statements.first().textRange
-
-        editor.document.deleteString(firstStatementInThenRange.startOffset, firstStatementInThenRange.endOffset)
-
-        return TextRange(firstStatementInThenRange.startOffset, firstStatementInThenRange.startOffset)
+        })
     }
 
     @NlsSafe
-    override fun getTemplateDescription() = "if (expr) { ... }" + (if (withElse) " else { ... }" else "")
+    override fun getTemplateDescription(): String = "if (expr) { ... }" + (if (withElse) " else { ... }" else "")
 }

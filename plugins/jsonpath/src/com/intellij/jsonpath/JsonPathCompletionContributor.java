@@ -14,12 +14,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -130,7 +128,7 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
       if (injectionHost != null) {
         PsiFile hostFile = injectionHost.getContainingFile();
         if (hostFile != null) {
-          visitJsonPathLiteralsInFile(injectedLanguageManager, hostFile, propertyName -> {
+          visitJsonPathLiteralsInFile(injectedLanguageManager, hostFile, injectionHost, propertyName -> {
             addCompletionElement(result, propertyName);
           });
         }
@@ -165,15 +163,19 @@ public final class JsonPathCompletionContributor extends CompletionContributor {
       }
     }
 
-    private void visitJsonPathLiteralsInFile(InjectedLanguageManager injectedLanguageManager,
-                                             PsiFile hostFile,
-                                             Consumer<String> pathNameConsumer) {
+    private void visitJsonPathLiteralsInFile(@NotNull InjectedLanguageManager injectedLanguageManager,
+                                             @NotNull PsiFile hostFile,
+                                             @Nullable PsiLanguageInjectionHost fromHost,
+                                             @NotNull Consumer<String> pathNameConsumer) {
+      PsiManager psiManager = hostFile.getManager();
+
       hostFile.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement element) {
           super.visitElement(element);
 
-          if (element instanceof PsiLanguageInjectionHost) {
+          if (element instanceof PsiLanguageInjectionHost
+              && !psiManager.areElementsEquivalent(element, fromHost)) { // ignore file where we are asking for completion
             List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
             if (files == null) return;
 

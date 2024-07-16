@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.mock.AnotherMockFacetType
@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
@@ -59,8 +59,8 @@ class FacetWorkspaceModelTest {
     runWriteActionAndWait {
       projectModel.project.workspaceModel.updateProjectModel { builder ->
         val moduleEntity = builder.entities(ModuleEntity::class.java).first()
-        builder addEntity FacetEntity("myName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {
-          this.module = moduleEntity
+        builder.modifyModuleEntity(moduleEntity) {
+         this.facets += FacetEntity("myName", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, moduleEntity.entitySource)
         }
       }
     }
@@ -88,8 +88,8 @@ class FacetWorkspaceModelTest {
       projectModel.project.workspaceModel.updateProjectModel { builder ->
         val moduleEntity = builder.entities(ModuleEntity::class.java).first()
         Assert.assertTrue(moduleEntity.facets.isEmpty())
-        builder.modifyEntity(moduleEntity) {
-          this.facets = listOf(FacetEntity("myName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource))
+        builder.modifyModuleEntity(moduleEntity) {
+          this.facets = listOf(FacetEntity("myName", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, moduleEntity.entitySource))
         }
       }
     }

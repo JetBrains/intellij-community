@@ -73,6 +73,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
     myRepositoriesTable.setDefaultRenderer(IndexUpdatingState.class, new MyIconCellRenderer());
 
     myRepositoriesTable.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.repositories.no"));
+    myRepositoriesTable.getAccessibleContext().setAccessibleName(MavenConfigurableBundle.message("maven.settings.repositories.table.accessible.name"));
 
     updateButtonsState();
   }
@@ -80,16 +81,15 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   private void updateButtonsState() {
     boolean hasSelection = !myRepositoriesTable.getSelectionModel().isSelectionEmpty();
     myUpdateButton.setEnabled(hasSelection);
+    myUpdateButton.setFocusable(hasSelection);
   }
 
   public void updateIndexHint(int row) {
   }
 
   private void doUpdateIndex() {
-    MavenRepositoryInfo repositoryInfo = getSelectedIndices().stream().findFirst().orElse(null);
-    if (repositoryInfo != null) {
-      MavenSystemIndicesManager.getInstance().updateIndexContent(repositoryInfo, myProject);
-    }
+    getSelectedIndices().stream().findFirst()
+      .ifPresent(repositoryInfo -> MavenSystemIndicesManager.getInstance().updateIndexContent(repositoryInfo, myProject));
   }
 
   private List<MavenRepositoryInfo> getSelectedIndices() {

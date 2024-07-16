@@ -125,9 +125,6 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.IF_KEYWORD:
         return findChildByType(IF_KEYWORD);
 
@@ -152,6 +149,9 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
           if (child.getPsi() instanceof PsiStatement) return child;
         }
+        return null;
+
+      default:
         return null;
     }
   }

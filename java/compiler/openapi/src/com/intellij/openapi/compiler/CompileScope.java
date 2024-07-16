@@ -70,7 +70,7 @@ public interface CompileScope extends ExportableUserDataHolder {
   }
 
   /**
-   * @return similar to {getAffectedModules}, but is more precise about which kinds of source roots are affected: production and/or tests
+   * @return similar to {@link #getAffectedModules}, but is more precise about which kinds of source roots are affected: production and/or tests
    */
   default Collection<ModuleSourceSet> getAffectedSourceSets() {
     List<ModuleSourceSet> sets = new SmartList<>();

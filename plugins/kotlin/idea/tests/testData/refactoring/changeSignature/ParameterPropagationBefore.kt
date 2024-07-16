@@ -41,4 +41,3 @@ fun test() {
     J().bar(true)
     J().baz()
 }
-// IGNORE_K2

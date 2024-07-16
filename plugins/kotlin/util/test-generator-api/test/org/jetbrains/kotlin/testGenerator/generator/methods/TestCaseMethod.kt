@@ -20,6 +20,7 @@ data class TestCaseMethod(
     private val passTestDataPath: Boolean,
     val file: File,
     val ignored: Boolean,
+    private val annotations: List<TAnnotation> = emptyList()
 ) : TestMethod {
     override val methodName = run {
         "test" + when (val qualifier = File(localPath).parentFile?.systemIndependentPath ?: "") {
@@ -37,7 +38,8 @@ data class TestCaseMethod(
             isCompilerTestData,
             passTestDataPath,
             f,
-            ignored
+            ignored,
+            annotations
         )
     }
 
@@ -47,6 +49,8 @@ data class TestCaseMethod(
     override fun Code.render() {
         if (ignored) return
         appendAnnotation(TAnnotation<TestMetadata>(localPath))
+        annotations.forEach { appendAnnotation(it) }
+
         appendBlock("public void $methodName() throws Exception") {
             if (!passTestDataPath) {
                 append("performTest();")

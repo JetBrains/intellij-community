@@ -30,7 +30,7 @@ public final class GenerateAction extends DumbAwareAction {
     ListPopup popup =
       JBPopupFactory.getInstance().createActionGroupPopup(
         CodeInsightBundle.message("generate.list.popup.title"),
-        wrapGroup(getGroup(), dataContext, project),
+        wrapGroup(getGroup(), project, e),
         dataContext,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
         false);
@@ -56,22 +56,24 @@ public final class GenerateAction extends DumbAwareAction {
     return (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GENERATE);
   }
 
-  private static DefaultActionGroup wrapGroup(DefaultActionGroup actionGroup, DataContext dataContext, @NotNull Project project) {
+  private static DefaultActionGroup wrapGroup(@NotNull DefaultActionGroup actionGroup,
+                                              @NotNull Project project,
+                                              @NotNull AnActionEvent event) {
     final DefaultActionGroup copy = new DefaultActionGroup();
-    for (final AnAction action : actionGroup.getChildren(null)) {
+    for (final AnAction action : actionGroup.getChildren(event.getActionManager())) {
       if (DumbService.isDumb(project) && !action.isDumbAware()) {
         continue;
       }
 
-      if (action instanceof GenerateActionPopupTemplateInjector) {
-        final AnAction editTemplateAction = ((GenerateActionPopupTemplateInjector)action).createEditTemplateAction(dataContext);
+      if (action instanceof GenerateActionPopupTemplateInjector o) {
+        final AnAction editTemplateAction = o.createEditTemplateAction(event.getDataContext());
         if (editTemplateAction != null) {
           copy.add(new GenerateWrappingGroup(action, editTemplateAction));
           continue;
         }
       }
-      if (action instanceof DefaultActionGroup) {
-        copy.add(wrapGroup((DefaultActionGroup)action, dataContext, project));
+      if (action instanceof DefaultActionGroup o) {
+        copy.add(wrapGroup(o, project, event));
       }
       else {
         copy.add(action);

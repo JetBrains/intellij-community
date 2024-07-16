@@ -22,7 +22,7 @@ class DeclarativeHintsSettingsProvider : InlaySettingsProvider {
 
   override fun getSupportedLanguages(project: Project): Collection<Language> {
     return InlayHintsProviderExtensionBean.EP.extensionList.asSequence()
-      .map { Language.findLanguageByID(it.language!!)!! }
+      .mapNotNull { Language.findLanguageByID(it.language!!) ?: error("Language with id ${it.language} not found") }
       .toHashSet()
   }
 }

@@ -5,12 +5,14 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
 
+@Internal
 public abstract class AbstractMapForwardIndexAccessor<Key, Value, DataType> extends AbstractForwardIndexAccessor<Key, Value, DataType> {
   public AbstractMapForwardIndexAccessor(@NotNull DataExternalizer<DataType> externalizer) {
     super(externalizer);

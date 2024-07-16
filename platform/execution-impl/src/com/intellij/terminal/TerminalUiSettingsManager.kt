@@ -131,6 +131,7 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     fun getInstance(): TerminalUiSettingsManager = service()
   }
 
+  /** [org.jetbrains.plugins.terminal.fus.TerminalSettingsStateCollector.GROUP] must be updated if any new value added or renamed. */
   enum class CursorShape(val text: @Nls String) {
     BLOCK(IdeBundle.message("terminal.cursor.shape.block.name")),
     UNDERLINE(IdeBundle.message("terminal.cursor.shape.underline.name")),

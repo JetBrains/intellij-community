@@ -337,6 +337,10 @@ public final class VcsLogUtil {
                                                        @NotNull Collection<? extends VcsLogProvider> logProviders) {
     Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
+    return getVcsDisplayName(vcs);
+  }
+
+  public static @Nls @NotNull String getVcsDisplayName(@NotNull Set<AbstractVcs> vcs) {
     if (vcs.size() != 1) return VcsLogBundle.message("vcs");
     return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
   }
@@ -346,10 +350,15 @@ public final class VcsLogUtil {
   }
 
   public static boolean isProjectLog(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    return Arrays.stream(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots())
+    Set<VirtualFile> projectRoots = Arrays.stream(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots())
       .map(VcsRoot::getPath)
-      .collect(Collectors.toSet())
-      .containsAll(providers.keySet());
+      .collect(Collectors.toSet());
+    return projectRoots.containsAll(providers.keySet());
+  }
+
+  public static boolean isProjectLogForVcs(@NotNull Project project, @NotNull Collection<VirtualFile> roots, @NotNull AbstractVcs vcs) {
+    VirtualFile[] projectRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
+    return ContainerUtil.newHashSet(projectRoots).containsAll(roots);
   }
 
   public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable) {
@@ -405,7 +414,11 @@ public final class VcsLogUtil {
    */
   public static boolean canRequestMore(@NotNull VisiblePack visiblePack) {
     if (!visiblePack.canRequestMore()) return false;
-    return !MORE_REQUESTED.get(visiblePack, false);
+    return !isMoreRequested(visiblePack);
+  }
+
+  public static @NotNull Boolean isMoreRequested(@NotNull VisiblePack visiblePack) {
+    return MORE_REQUESTED.get(visiblePack, false);
   }
 
   private static final @NotNull Key<Boolean> MORE_REQUESTED = Key.create("MORE_REQUESTED");

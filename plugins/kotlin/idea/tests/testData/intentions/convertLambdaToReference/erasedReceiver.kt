@@ -3,3 +3,5 @@
 class Generic<T : Any> {
     val y = { arg: T <caret>-> arg.hashCode() }
 }
+
+// IGNORE_K2

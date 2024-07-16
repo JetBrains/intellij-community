@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.url
 
 import com.intellij.openapi.util.io.FileUtil
@@ -12,7 +12,9 @@ import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
   private var emptyUrl: VirtualFileUrl? = null
@@ -21,24 +23,24 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val rootNode = FilePathNode(0, 0)
 
   @Synchronized
-  override fun getOrCreateFromUri(uri: String): VirtualFileUrl {
+  override fun getOrCreateFromUrl(uri: String): VirtualFileUrl {
     if (uri.isEmpty()) return getEmptyUrl()
     return add(uri)
   }
 
-  override fun findByUri(uri: String): VirtualFileUrl? {
+  override fun findByUrl(uri: String): VirtualFileUrl? {
     return findBySegments(splitNames(uri))
   }
 
   @Synchronized
-  internal fun fromUriSegments(uriSegments: List<String>): VirtualFileUrl {
+  internal fun fromUrlSegments(uriSegments: List<String>): VirtualFileUrl {
     if (uriSegments.isEmpty()) return getEmptyUrl()
     return addSegments(null, uriSegments)
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
     val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(path)
-    return getOrCreateFromUri(url)
+    return getOrCreateFromUrl(url)
   }
 
   @Synchronized

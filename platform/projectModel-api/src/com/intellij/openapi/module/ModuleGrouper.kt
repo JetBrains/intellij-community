@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
  * groups are specified explicitly and the new one where modules are grouped accordingly to their qualified names.
  */
 @ApiStatus.Experimental
-abstract class ModuleGrouper {
+abstract class ModuleGrouper @ApiStatus.Internal protected constructor() {
   /**
    * Returns names of parent groups for a module
    */
@@ -69,8 +69,10 @@ abstract class ModuleGrouper {
   /**
    * If [description] itself can be considered as a group, returns its groups. Otherwise returns null.
    */
+  @ApiStatus.Internal
   abstract fun getModuleAsGroupPath(description: ModuleDescription): List<String>?
 
+  @ApiStatus.Internal
   abstract fun getAllModules(): Array<Module>
 
   /**
@@ -100,5 +102,6 @@ abstract class ModuleGrouper {
   }
 }
 
+@ApiStatus.Internal
 fun isQualifiedModuleNamesEnabled(project: Project): Boolean = Registry.`is`("project.qualified.module.names") &&
                                                                !ModuleManager.getInstance(project).hasModuleGroups()

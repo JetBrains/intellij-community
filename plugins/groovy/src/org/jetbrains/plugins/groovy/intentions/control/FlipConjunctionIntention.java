@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class FlipConjunctionIntention extends GrPsiUpdateIntention {
+public final class FlipConjunctionIntention extends GrPsiUpdateIntention {
   @Override
   public @NotNull String getText(@NotNull PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression)element;

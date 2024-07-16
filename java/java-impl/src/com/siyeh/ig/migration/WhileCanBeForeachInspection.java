@@ -22,12 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -51,14 +49,12 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "WhileLoopReplaceableByForEach";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("while.can.be.foreach.problem.descriptor");
   }
 
@@ -77,8 +73,7 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
     return new WhileCanBeForeachVisitor();
   }
 
-  @Nullable
-  static PsiStatement getPreviousStatement(PsiElement context) {
+  static @Nullable PsiStatement getPreviousStatement(PsiElement context) {
     final PsiElement prevStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(context);
     if (!(prevStatement instanceof PsiStatement)) {
       return null;
@@ -89,8 +84,7 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
   private static class WhileCanBeForeachFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("foreach.replace.quickfix");
     }
 
@@ -137,7 +131,7 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
       final PsiStatement firstStatement = ForCanBeForeachInspection.getFirstStatement(body);
       final boolean isDeclaration = ForCanBeForeachInspection.isIteratorNextDeclaration(firstStatement, iterator, contentType);
       final PsiStatement statementToSkip;
-      @NonNls final String contentVariableName;
+      final @NonNls String contentVariableName;
       if (isDeclaration) {
         final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)firstStatement;
         final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
@@ -147,8 +141,7 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
         statementToSkip = declarationStatement;
       }
       else {
-        if (collection instanceof PsiReferenceExpression) {
-          final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)collection;
+        if (collection instanceof PsiReferenceExpression referenceElement) {
           final String collectionName = referenceElement.getReferenceName();
           contentVariableName = ForCanBeForeachInspection.createNewVariableName(whileStatement, iteratorContentType, collectionName);
         }
@@ -158,7 +151,7 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
         statementToSkip = null;
       }
       CommentTracker ct = new CommentTracker();
-      @NonNls final StringBuilder newStatement = new StringBuilder();
+      final @NonNls StringBuilder newStatement = new StringBuilder();
       newStatement.append("for(");
       if (JavaCodeStyleSettings.getInstance(whileStatement.getContainingFile()).GENERATE_FINAL_PARAMETERS) {
         newStatement.append("final ");
@@ -171,10 +164,8 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
       newStatement.append(ct.text(collection)).append(')');
 
       ForCanBeForeachInspection.replaceIteratorNext(body, contentVariableName, iterator, contentType, statementToSkip, ct, newStatement);
-      final Query<PsiReference> query = ReferencesSearch.search(iterator);
       boolean deleteIterator = true;
-      for (PsiReference usage : query) {
-        final PsiElement element = usage.getElement();
+      for (PsiReferenceExpression element : VariableAccessUtils.getVariableReferences(iterator)) {
         if (PsiTreeUtil.isAncestor(whileStatement, element, true)) {
           continue;
         }

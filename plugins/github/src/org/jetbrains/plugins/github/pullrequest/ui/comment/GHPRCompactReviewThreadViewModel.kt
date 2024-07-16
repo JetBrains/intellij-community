@@ -2,20 +2,18 @@
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.async.classAsCoroutineName
-import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.combineStateIn
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -61,7 +59,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
   private val dataProvider: GHPRDataProvider,
   initialData: GHPullRequestReviewThread
 ) : GHPRCompactReviewThreadViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
   private val reviewData: GHPRReviewDataProvider = dataProvider.reviewData
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
@@ -73,25 +71,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
 
   override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
 
-  private val commentsVms = dataState
-    .map { it.comments.withIndex() }
-    .mapDataToModel({ it.value.id }, { createComment(it) }, { update(it) })
-    .stateIn(cs, SharingStarted.Eagerly, emptyList())
   private val repliesFolded = MutableStateFlow(initialData.comments.size > 3)
-
-  override val comments: StateFlow<List<GHPRCompactReviewThreadViewModel.CommentItem>> =
-    commentsVms.combineState(repliesFolded) { comments, folded ->
-      if (!folded || comments.size <= 3) {
-        comments.map { GHPRCompactReviewThreadViewModel.CommentItem.Comment(it) }
-      }
-      else {
-        listOf(
-          GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.first()),
-          GHPRCompactReviewThreadViewModel.CommentItem.Expander(comments.size - 2) { repliesFolded.value = false },
-          GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.last())
-        )
-      }
-    }
 
   override val canCreateReplies: StateFlow<Boolean> = dataState.mapState { it.viewerCanReply }
   private val _isWritingReply = MutableStateFlow(false)
@@ -101,6 +81,25 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
   override val canChangeResolvedState: StateFlow<Boolean> =
     dataState.mapState { it.viewerCanResolve || it.viewerCanUnresolve }
   override val isResolved: StateFlow<Boolean> = dataState.mapState { it.isResolved }
+
+  // have to do it LAST, bc comment VMs depend on thread fields
+  // so they have to be initialized first
+  private val commentsVms = dataState
+    .map { it.comments.withIndex() }
+    .mapDataToModel({ it.value.id }, { createComment(it) }, { update(it) })
+    .stateIn(cs, SharingStarted.Eagerly, emptyList())
+  override val comments = combineStateIn(cs, commentsVms, repliesFolded) { comments, folded ->
+    if (!folded || comments.size <= 3) {
+      comments.map { GHPRCompactReviewThreadViewModel.CommentItem.Comment(it) }
+    }
+    else {
+      listOf(
+        GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.first()),
+        GHPRCompactReviewThreadViewModel.CommentItem.Expander(comments.size - 2) { repliesFolded.value = false },
+        GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.last())
+      )
+    }
+  }
 
   override fun startWritingReply() {
     _isWritingReply.value = true
@@ -116,11 +115,11 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
     taskLauncher.launch {
       val newData = try {
         if (resolved) {
-          reviewData.unresolveThread(EmptyProgressIndicator(), id)
+          reviewData.unresolveThread(id)
         }
         else {
-          reviewData.resolveThread(EmptyProgressIndicator(), id)
-        }.asDeferred().await()
+          reviewData.resolveThread(id)
+        }
       }
       catch (e: Exception) {
         if (e is ProcessCanceledException || e is CancellationException) return@launch
@@ -147,7 +146,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
     override fun submit() {
       val replyId = dataState.value.comments.firstOrNull()?.id ?: return
       submit {
-        reviewData.addComment(EmptyProgressIndicator(), replyId, it).asDeferred().await()
+        reviewData.addComment(replyId, it)
         text.value = ""
       }
     }

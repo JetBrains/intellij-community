@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import org.intellij.lang.annotations.MagicConstant;
@@ -23,9 +23,8 @@ final class PersistentFSHeaders {
 
   //CONNECTION_STATUS header field values:
   //@formatter:off
-  static final int CONNECTED_MAGIC      = 0x12ad34e4;
-  static final int SAFELY_CLOSED_MAGIC  = 0x1f2f3f4f;
-  static final int CORRUPTED_MAGIC      = 0xabcf7f7f;
+  static final int IN_USE_STAMP         = 0x12ad34e4;
+  static final int SAFELY_CLOSED_STAMP  = 0;
   //@formatter:on
 
   @MagicConstant(flagsFromClass = PersistentFSHeaders.class)

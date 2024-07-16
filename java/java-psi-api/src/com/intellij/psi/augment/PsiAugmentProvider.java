@@ -251,9 +251,8 @@ public abstract class PsiAugmentProvider implements PossiblyDumbAware {
   }
 
   private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
-    boolean dumb = DumbService.isDumb(project);
     for (PsiAugmentProvider provider : EP.getValue().getExtensionList()) {
-      if (!dumb || DumbService.isDumbAware(provider)) {
+      if (DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
         try {
           boolean goOn = processor.process(provider);
           if (!goOn) break;

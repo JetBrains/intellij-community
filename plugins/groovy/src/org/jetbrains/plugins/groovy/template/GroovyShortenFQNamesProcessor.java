@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor, DumbAware {
+public final class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor, DumbAware {
 
   @Override
   public void processText(final Project project,

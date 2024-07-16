@@ -11,6 +11,8 @@ import kotlin.math.max
 interface NotebookCellLinesLexer {
   fun markerSequence(chars: CharSequence, ordinalIncrement: Int, offsetIncrement: Int, defaultLanguage: Language): Sequence<Marker>
 
+  private data class IntervalInfo(val lineNumber: Int, val cellType: CellType, val markersAtLInes: MarkersAtLines, val data: KeyFMap)
+
   data class Marker(
     val ordinal: Int,
     val type: CellType,
@@ -18,15 +20,20 @@ interface NotebookCellLinesLexer {
     val length: Int,
     val data: KeyFMap,
   ) : Comparable<Marker> {
+    val endOffset: Int
+      get() = offset + length
+
     override fun compareTo(other: Marker): Int = offset - other.offset
   }
 
   companion object {
-    fun <Lex : Lexer> defaultMarkerSequence(underlyingLexerFactory: () -> Lex,
-                                            getCellTypeAndData: (lexer: Lex) -> Pair<CellType, KeyFMap>?,
-                                            chars: CharSequence,
-                                            ordinalIncrement: Int,
-                                            offsetIncrement: Int): Sequence<Marker> = sequence {
+    fun <Lex : Lexer> defaultMarkerSequence(
+      underlyingLexerFactory: () -> Lex,
+      getCellTypeAndData: (lexer: Lex) -> Pair<CellType, KeyFMap>?,
+      chars: CharSequence,
+      ordinalIncrement: Int,
+      offsetIncrement: Int,
+    ): Sequence<Marker> = sequence {
       val lexer = underlyingLexerFactory()
       lexer.start(chars, 0, chars.length)
       var ordinal = 0
@@ -57,27 +64,26 @@ interface NotebookCellLinesLexer {
       return result
     }
 
+    private fun toIntervalsInfo(
+      document: Document,
+      markers: List<Marker>,
+      firstMarkerData: KeyFMap,
+      lastMarkerData: KeyFMap,
+    ): List<IntervalInfo> {
+      val m = mutableListOf<IntervalInfo>()
+
+      // add first if necessary
+      if (markers.isEmpty() || document.getLineNumber(markers.first().offset) != 0) {
+        m += IntervalInfo(0, CellType.RAW, MarkersAtLines.NO, firstMarkerData)
+      }
+
+      for (marker in markers) {
+        m += IntervalInfo(document.getLineNumber(marker.offset), marker.type, MarkersAtLines.TOP, marker.data)
+      }
+
+      // marker for the end
+      m += IntervalInfo(max(document.lineCount, 1), CellType.RAW, MarkersAtLines.NO, lastMarkerData)
+      return m
+    }
   }
-}
-
-private data class IntervalInfo(val lineNumber: Int, val cellType: CellType, val markersAtLInes: MarkersAtLines, val data: KeyFMap)
-
-private fun toIntervalsInfo(document: Document,
-                            markers: List<NotebookCellLinesLexer.Marker>,
-                            firstMarkerData: KeyFMap,
-                            lastMarkerData: KeyFMap): List<IntervalInfo> {
-  val m = mutableListOf<IntervalInfo>()
-
-  // add first if necessary
-  if (markers.isEmpty() || document.getLineNumber(markers.first().offset) != 0) {
-    m += IntervalInfo(0, CellType.RAW, MarkersAtLines.NO, firstMarkerData)
-  }
-
-  for (marker in markers) {
-    m += IntervalInfo(document.getLineNumber(marker.offset), marker.type, MarkersAtLines.TOP, marker.data)
-  }
-
-  // marker for the end
-  m += IntervalInfo(max(document.lineCount, 1), CellType.RAW, MarkersAtLines.NO, lastMarkerData)
-  return m
 }

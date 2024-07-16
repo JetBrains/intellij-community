@@ -15,8 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
@@ -42,7 +40,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL;
+import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
+import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -53,8 +52,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
   public boolean onlyReportSwitchExpressions = true;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.default.problem.descriptor");
   }
@@ -75,10 +73,8 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
       super(PsiElement.class);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.default.quickfix");
     }
 
@@ -245,8 +241,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
     return null;
   }
 
-  @Nullable
-  private static PsiElement retrieveUnnecessaryDefault(PsiSwitchBlock switchBlock) {
+  private static @Nullable PsiElement retrieveUnnecessaryDefault(PsiSwitchBlock switchBlock) {
     final PsiExpression expression = switchBlock.getExpression();
     if (expression == null) {
       return null;
@@ -259,7 +254,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
     if (result == null) {
       return null;
     }
-    final CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchBlock);
-    return completenessResult == COMPLETE_WITHOUT_UNCONDITIONAL ? result : null;
+    final CompletenessResult completenessResult = evaluateSwitchCompleteness(switchBlock, false);
+    return completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL ? result : null;
   }
 }

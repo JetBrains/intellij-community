@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.table.size
 import git4idea.i18n.GitBundle
+import git4idea.rebase.GitSquashedCommitsMessage
 import git4idea.rebase.log.*
 
 internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
@@ -20,7 +21,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     val selectedCommitDetails = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selection)
     val dialog = GitNewCommitMessageActionDialog(
       commitEditingData,
-      originMessage = selectedCommitDetails.map(VcsCommitMetadata::getFullMessage).toSet().joinToString("\n".repeat(3)),
+      originMessage = GitSquashedCommitsMessage.prettySquash(selectedCommitDetails.map(VcsCommitMetadata::getFullMessage)),
       title = GitBundle.message("rebase.log.squash.new.message.dialog.title"),
       dialogLabel = GitBundle.message("rebase.log.squash.new.message.dialog.label")
     )

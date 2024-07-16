@@ -18,9 +18,7 @@ import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
@@ -83,9 +81,12 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     isInitializeStarted = new AtomicBoolean();
     myPostponedRunnables = ContainerUtil.createConcurrentList();
     myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, 0.25f);
+    if (ExperimentalUI.isNewUI()) {
+      ScrollableContentBorder.setup(myThreeComponentsSplitter, Side.LEFT);
+    }
     myBuildsList = new JBList<>();
     myBuildsList.setModel(new DefaultListModel<>());
-    myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
+    updateBuildsListRowHeight();
     AnsiEscapeDecoder ansiEscapeDecoder = new AnsiEscapeDecoder();
     myBuildsList.installCellRenderer(obj -> {
       JPanel panel = new JPanel(new BorderLayout());
@@ -107,6 +108,10 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     myViewMap = new ConcurrentHashMap<>();
     myBuildsMap = new ConcurrentHashMap<>();
     myProgressWatcher = new ProgressWatcher();
+  }
+
+  private void updateBuildsListRowHeight() {
+    myBuildsList.setFixedCellHeight(JBUI.scale(UIUtil.LIST_FIXED_CELL_HEIGHT * 2));
   }
 
   @Override
@@ -135,7 +140,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       if (isInitializeStarted.get()) {
         clearOldBuilds(runOnEdt, startBuildEvent);
       }
-      buildInfo = new AbstractViewManager.BuildInfo(((StartBuildEvent)event).getBuildDescriptor());
+      buildInfo = new AbstractViewManager.BuildInfo(startBuildEvent.getBuildDescriptor());
       myBuildsMap.put(buildId, buildInfo);
     }
     else {
@@ -265,7 +270,11 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
           myToolbarActions = new DefaultActionGroup();
           ActionToolbar tb = ActionManager.getInstance().createActionToolbar("BuildView", myToolbarActions, false);
           tb.setTargetComponent(consoleComponent);
-          tb.getComponent().setBorder(JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true));
+          if (!ExperimentalUI.isNewUI()) {
+            tb.getComponent().setBorder(
+              JBUI.Borders.merge(tb.getComponent().getBorder(), JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 0, 1), true)
+            );
+          }
           consoleComponent.add(tb.getComponent(), BorderLayout.WEST);
 
           myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true) {
@@ -458,6 +467,12 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     @Override
     public @NotNull String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.problem");
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      updateBuildsListRowHeight();
     }
   }
 

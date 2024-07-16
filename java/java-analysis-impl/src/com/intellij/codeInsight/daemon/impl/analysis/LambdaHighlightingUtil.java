@@ -78,12 +78,12 @@ public final class LambdaHighlightingUtil {
     return !(parent instanceof PsiExpressionList) && !(parent instanceof PsiExpression);
   }
 
-  public static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiType functionalInterfaceType) {
-    if (functionalInterfaceType instanceof PsiIntersectionType) {
+  public static @NlsContexts.DetailedDescription String checkInterfaceFunctional(@NotNull PsiElement context, @NotNull PsiType functionalInterfaceType) {
+    if (functionalInterfaceType instanceof PsiIntersectionType intersection) {
       Set<MethodSignature> signatures = new HashSet<>();
       Map<PsiType, MethodSignature> typeAndSignature = new HashMap<>();
-      for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
-        if (checkInterfaceFunctional(type) == null) {
+      for (PsiType type : intersection.getConjuncts()) {
+        if (checkInterfaceFunctional(context, type) == null) {
           MethodSignature signature = getFunction(PsiUtil.resolveClassInType(type));
           LOG.assertTrue(signature != null, type.getCanonicalText());
           signatures.add(signature);
@@ -114,7 +114,7 @@ public final class LambdaHighlightingUtil {
           }
         }
       }
-      for (PsiType type : ((PsiIntersectionType)functionalInterfaceType).getConjuncts()) {
+      for (PsiType type : intersection.getConjuncts()) {
         if (typeAndSignature.containsKey(type)) {
           continue;
         }
@@ -140,6 +140,10 @@ public final class LambdaHighlightingUtil {
           .message("target.method.is.generic");
       }
       return checkInterfaceFunctional(aClass);
+    }
+    if (IncompleteModelUtil.isIncompleteModel(context) &&
+        IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
+      return null;
     }
     return JavaErrorBundle.message("not.a.functional.interface", functionalInterfaceType.getPresentableText());
   }

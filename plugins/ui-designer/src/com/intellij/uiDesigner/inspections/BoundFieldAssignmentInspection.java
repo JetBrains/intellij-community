@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-public class BoundFieldAssignmentInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class BoundFieldAssignmentInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull String getGroupDisplayName() {
     return UIDesignerBundle.message("form.inspections.group");

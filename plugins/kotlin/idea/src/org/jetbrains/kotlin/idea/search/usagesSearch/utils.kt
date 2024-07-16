@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.util.FuzzyType
 import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
 import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
+import org.jetbrains.kotlin.idea.util.makeNullable
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -46,6 +47,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.types.DelegatingSimpleType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.isValidOperator
 
@@ -228,6 +230,9 @@ private fun PsiElement.resolveTargetToDescriptor(isDestructionDeclarationSearch:
 private fun containsTypeOrDerivedInside(declaration: KtDeclaration, typeToSearch: FuzzyType): Boolean {
 
     fun KotlinType.containsTypeOrDerivedInside(): Boolean {
+        if (this is DelegatingSimpleType && this.isMarkedNullable) {
+            return typeToSearch.makeNullable().checkIsSuperTypeOf(this) != null
+        }
         return typeToSearch.checkIsSuperTypeOf(this) != null || arguments.any { !it.isStarProjection && it.type.containsTypeOrDerivedInside() }
     }
 

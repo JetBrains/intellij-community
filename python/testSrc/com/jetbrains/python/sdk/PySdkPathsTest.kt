@@ -38,11 +38,6 @@ class PySdkPathsTest {
   @JvmField
   val projectModel = ProjectModelRule()
 
-  @Before
-  fun setUp() {
-    Assume.assumeTrue("Test has to be executed on a new implementation of SDK", GlobalSdkTableBridge.isEnabled())
-  }
-
   @Test
   fun sysPathEntryIsExcludedPath() {
     val sdk = PythonMockSdk.create()

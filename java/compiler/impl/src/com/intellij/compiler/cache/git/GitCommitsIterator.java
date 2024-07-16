@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache.git;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,14 +29,14 @@ public class GitCommitsIterator implements Iterator<String> {
 
   @Override
   public boolean hasNext() {
-    if (repositoryCommits.size() > 0) {
+    if (!repositoryCommits.isEmpty()) {
       if (currentPosition < repositoryCommits.size()) return true;
       if (fetchedCount >= MAX_FETCH_SIZE) {
         LOG.info("Exceeded fetch limit for git commits");
         return false;
       }
       fetchOldCommits(repositoryCommits.get(currentPosition - 1));
-      if (repositoryCommits.size() > 0) {
+      if (!repositoryCommits.isEmpty()) {
         currentPosition = 0;
         return true;
       }
@@ -46,7 +46,7 @@ public class GitCommitsIterator implements Iterator<String> {
 
   @Override
   public String next() {
-    if (repositoryCommits.size() == 0 || currentPosition >= repositoryCommits.size()) throw new NoSuchElementException();
+    if (repositoryCommits.isEmpty() || currentPosition >= repositoryCommits.size()) throw new NoSuchElementException();
     String result = repositoryCommits.get(currentPosition);
     currentPosition++;
     return result;

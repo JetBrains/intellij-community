@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowsGroup
@@ -20,11 +20,11 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
@@ -33,13 +33,12 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
-import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import javax.swing.JComponent
 
@@ -84,22 +83,32 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   private fun createAction(activateAction: ActivateToolWindowAction) = MyButtonAction(activateAction)
 
-  private class MyButtonAction(val activateAction: ActivateToolWindowAction)
-    : DumbAwareToggleAction(activateAction.templateText, null, activateAction.templatePresentation.icon), CustomComponentAction {
+  private class MyButtonAction(activateAction: ActivateToolWindowAction)
+    : AnActionWrapper(activateAction), DumbAware, Toggleable, CustomComponentAction {
     private var project: Project? = null
 
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+    private val toolWindowId get() = (delegate as ActivateToolWindowAction).toolWindowId
 
-    override fun isSelected(e: AnActionEvent): Boolean {
-      activateAction.update(e)
-      e.presentation.isVisible = buttonState.isPinned(activateAction.toolWindowId)
-      return e.project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(activateAction.toolWindowId)?.isVisible == true
+    override fun actionPerformed(e: AnActionEvent) {
+      val state = !isSelected(e)
+      setSelected(e, state)
+      Toggleable.setSelected(e.presentation, state)
     }
 
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = buttonState.isPinned(toolWindowId)
+      Toggleable.setSelected(e.presentation, isSelected(e))
+    }
+
+    private fun isSelected(e: AnActionEvent): Boolean {
+      return e.project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(toolWindowId)?.isVisible == true
+    }
+
+    private fun setSelected(e: AnActionEvent, state: Boolean) {
       val project = e.project ?: return
       val twm = ToolWindowManager.getInstance(project)
-      val toolWindowId = activateAction.toolWindowId
+      val toolWindowId = toolWindowId
       val toolWindow = twm.getToolWindow(toolWindowId)
       val visible = toolWindow?.isVisible == true
       if (visible == state) {
@@ -114,7 +123,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
         }
       }
       else {
-        activateAction.actionPerformed(e)
+        super.actionPerformed(e)
       }
     }
 
@@ -127,14 +136,14 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
         private fun createPopupGroup(): DefaultActionGroup {
           val group = DefaultActionGroup()
-          group.add(TogglePinActionBase(activateAction.toolWindowId))
+          group.add(TogglePinActionBase(toolWindowId))
           group.addSeparator()
           group.add(SquareStripeButton.createMoveGroup())
           return group
         }
 
         override val toolWindow: ToolWindowImpl?
-          get() = project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(activateAction.toolWindowId) as? ToolWindowImpl
+          get() = project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(toolWindowId) as? ToolWindowImpl
 
         override fun addNotify() {
           super.addNotify()
@@ -161,6 +170,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
         object : AnActionWrapper(ac) {
           override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
           override fun update(e: AnActionEvent) {
+            super.update(e)
             e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(TogglePinAction(ac.toolWindowId)))
           }
         }
@@ -190,10 +200,11 @@ class StripeActionGroup: ActionGroup(), DumbAware {
   @Service(Service.Level.PROJECT)
   private class ButtonsRepaintService(project: Project): Disposable {
     private val buttons = ContainerUtil.createWeakSet<ActionButton>()
+    private val alarm = SingleAlarm(this::repaintButtons, 0, this, modalityState = ModalityState.any())
     init {
       project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
         override fun stateChanged(toolWindowManager: ToolWindowManager) {
-          UIUtil.invokeLaterIfNeeded(this@ButtonsRepaintService::repaintButtons)
+          alarm.cancelAndRequest()
         }
       })
     }
@@ -211,7 +222,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     @RequiresEdt
     fun repaintButtons() {
       val toolbars = buttons.mapNotNullTo(LinkedHashSet()) { ActionToolbar.findToolbarBy(it) }
-      toolbars.forEach { it.updateActionsImmediately() }
+      toolbars.forEach { it.updateActionsAsync() }
     }
 
     override fun dispose() {
@@ -220,7 +231,12 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
 }
 
-private open class TogglePinActionBase(val toolWindowId: String): DumbAwareAction(ActionsBundle.messagePointer("action.TopStripePinButton.text")) {
+private open class TogglePinActionBase(val toolWindowId: String)
+  : DumbAwareAction(ActionsBundle.messagePointer("action.TopStripePinButton.text")) {
+  init {
+    templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfPreferred
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun update(e: AnActionEvent) {
     val pinned = buttonState.isPinned(toolWindowId)
@@ -236,18 +252,19 @@ private open class TogglePinActionBase(val toolWindowId: String): DumbAwareActio
     ActionToolbarImpl.updateAllToolbarsImmediately()
   }
 }
-private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWindowId), KeepingPopupOpenAction {
+
+private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWindowId) {
   override fun update(e: AnActionEvent) {
     super.update(e)
     val pinned = Toggleable.isSelected(e.presentation)
-    e.presentation.icon = if (!pinned) ExpUiIcons.General.Pin else ExpUiIcons.General.PinSelected
-    e.presentation.selectedIcon = if (!pinned) ExpUiIcons.General.PinHovered else ExpUiIcons.General.PinSelectedHovered
+    e.presentation.icon = if (!pinned) AllIcons.General.Pin else AllIcons.General.PinSelected
+    e.presentation.selectedIcon = if (!pinned) AllIcons.General.PinHovered else AllIcons.General.PinSelectedHovered
     e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)
   }
 }
 
 @Service
-@State(name = "SingleStripeButtonsState", storages = [Storage("window.state.xml")])
+@State(name = "SingleStripeButtonsState", storages = [Storage("window.state.xml", roamingType = RoamingType.DISABLED)])
 private class ButtonsStateService: PersistentStateComponent<Element> {
   private val pinnedIds = linkedSetOf("Database", "Project", "Services")
 

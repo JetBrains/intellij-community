@@ -27,8 +27,7 @@ public final class ParameterNamingConventionInspection extends
   private static final int DEFAULT_MAX_LENGTH = 20;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MethodParameterNamingConvention";
   }
 

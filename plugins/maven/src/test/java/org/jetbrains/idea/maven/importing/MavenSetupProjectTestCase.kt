@@ -28,7 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
 abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
   fun generateProject(id: String): ProjectInfo {
-    val name = "${System.currentTimeMillis()}-$id"
+    val name = "${System.currentTimeMillis()}-$id-$name"
     createProjectSubFile("$name-external-module/pom.xml", MavenBuildFileBuilder("$name-external-module").generate())
     createProjectSubFile("$name-project/$name-module/pom.xml", MavenBuildFileBuilder("$name-module").generate())
     val buildScript = MavenBuildFileBuilder("$name-project")

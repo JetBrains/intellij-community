@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractMultiPlatformCompletionTest : AbstractMultiModuleTest() {
+
     protected fun doTest(testPath: String) {
         setupMppProjectFromDirStructure(File(testPath))
         val file = project.findFileWithCaret() as KtFile

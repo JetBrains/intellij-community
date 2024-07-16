@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.*;
 
 public final class CreateDefaultBranchFix extends BaseSwitchFix {
-  @NonNls private static final String PLACEHOLDER_NAME = "$EXPRESSION$";
+  private static final @NonNls String PLACEHOLDER_NAME = "$EXPRESSION$";
   private final @IntentionName String myMessage;
 
   public CreateDefaultBranchFix(@NotNull PsiSwitchBlock block, @IntentionName String message) {
@@ -47,10 +47,8 @@ public final class CreateDefaultBranchFix extends BaseSwitchFix {
     return presentation == null ? null : presentation.withFixAllOption(this);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("create.default.branch.fix.family.name");
   }
 

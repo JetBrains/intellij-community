@@ -16,11 +16,14 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -44,6 +47,11 @@ public final class AssertMessageNotStringInspection extends BaseInspection {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("onlyWarnOnBoolean", InspectionGadgetsBundle.message("assert.message.not.string.only.warn.boolean.option")));
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ASSERTIONS);
   }
 
   @Override

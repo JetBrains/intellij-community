@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -36,24 +35,22 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
       String newName = renamesMap.get(element);
 
       String prefix = "";
-      if (element instanceof PsiDirectory/* || element instanceof PsiClass*/) {
+      if (element instanceof PsiDirectory) {
         String fullName = UsageViewUtil.getLongName(element);
-        int lastDot = fullName.lastIndexOf('.');
-        if (lastDot >= 0 &&
-            lastDot + 1 < fullName.length() && ((PsiDirectory)element).getName().equals(fullName.substring(lastDot + 1))) {
-          prefix = fullName.substring(0, lastDot + 1);
+        int lastSlash = fullName.lastIndexOf('/');
+        if (lastSlash >= 0) {
+          prefix = fullName.substring(0, lastSlash + 1);
         }
       }
 
-      processedElementsHeaders.add(StringUtil.capitalize(
-        RefactoringBundle.message("0.to.be.renamed.to.1.2", UsageViewUtil.getType(element), prefix, newName)));
+      processedElementsHeaders.add(RefactoringBundle.message("0.to.be.renamed.to.1.2", UsageViewUtil.getType(element), prefix, newName));
       codeReferences.add(UsageViewUtil.getType(element) + " " + UsageViewUtil.getLongName(element));
     }
 
 
-    myProcessedElementsHeader = StringUtil.join(ArrayUtilRt.toStringArray(processedElementsHeaders), ", ");
-    myCodeReferencesText =  RefactoringBundle.message("references.in.code.to.0", StringUtil.join(ArrayUtilRt.toStringArray(codeReferences),
-                                                                                                 ", "));
+    myProcessedElementsHeader = StringUtil.capitalize(StringUtil.join(ArrayUtilRt.toStringArray(processedElementsHeaders), ", "));
+    myCodeReferencesText =
+      RefactoringBundle.message("references.in.code.to.0", StringUtil.join(ArrayUtilRt.toStringArray(codeReferences), ", "));
   }
 
   @Override

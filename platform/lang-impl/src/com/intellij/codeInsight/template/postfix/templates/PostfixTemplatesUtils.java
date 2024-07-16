@@ -10,13 +10,20 @@ import com.intellij.codeInsight.template.postfix.templates.editable.EditablePost
 import com.intellij.codeInsight.template.postfix.templates.editable.EditablePostfixTemplateWithMultipleExpressions;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
+import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.LazyKt;
@@ -54,7 +61,8 @@ public final class PostfixTemplatesUtils {
   }
 
   /**
-   * Surrounds a given expression with the provided surrounder.
+   * Surrounds a given expression with the provided surrounder. 
+   * May execute asynchronously and return null (in this case, the selection/caret will be updated automatically).
    * @return range to select/position the caret
    */
   @Nullable
@@ -63,6 +71,25 @@ public final class PostfixTemplatesUtils {
                                    @NotNull PsiElement expr) {
     Project project = expr.getProject();
     PsiElement[] elements = {expr};
+    if (surrounder instanceof ModCommandSurrounder modCommandSurrounder) {
+      ActionContext context = ActionContext.from(editor, expr.getContainingFile());
+      ReadAction.nonBlocking(
+          () -> modCommandSurrounder.isApplicable(elements) ? modCommandSurrounder.surroundElements(context, elements) : null)
+        .expireWhen(() -> project.isDisposed() || editor.isDisposed())
+        .finishOnUiThread(ModalityState.nonModal(), command -> {
+          if (command == null) {
+            showErrorHint(project, editor);
+          }
+          else {
+            CommandProcessor.getInstance().executeCommand(
+              project, () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor),
+              CodeInsightBundle.message("command.expand.postfix.template"),
+              PostfixLiveTemplate.POSTFIX_TEMPLATE_ID);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
+      return null;
+    }
     if (surrounder.isApplicable(elements)) {
       return surrounder.surroundElements(project, editor, elements);
     }

@@ -4,12 +4,13 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class SdkAdditionalDataBase implements SdkAdditionalData {
   private static final Logger LOG = Logger.getInstance(SdkAdditionalDataBase.class);
 
-  private @Nullable Throwable myCommitStackTrace = null;
+  private final @NotNull AtomicReference<Throwable> myCommitStackTraceRef = new AtomicReference<>();
 
   /**
    * This method is intended to commit encapsulated objects (mark them as read-only) if they require access control.
@@ -20,9 +21,8 @@ public abstract class SdkAdditionalDataBase implements SdkAdditionalData {
 
   @Override
   public final void markAsCommited() {
-    if (myCommitStackTrace == null) {
-      myCommitStackTrace = new Throwable("SdkAdditionalData commit trace");
-      markInternalsAsCommited(myCommitStackTrace);
+    if (myCommitStackTraceRef.get() == null && myCommitStackTraceRef.compareAndSet(null, new Throwable("SdkAdditionalData commit trace"))) {
+      markInternalsAsCommited(myCommitStackTraceRef.get());
     }
   }
 
@@ -32,11 +32,12 @@ public abstract class SdkAdditionalDataBase implements SdkAdditionalData {
    **/
   protected final void assertWritable() {
     if (!isWritable()) {
-      LOG.error(new Throwable("Additional sdk data can't be directly modified, see javadoc for the assertion.", myCommitStackTrace));
+      LOG.error(
+        new Throwable("Additional sdk data can't be directly modified, see javadoc for the assertion.", myCommitStackTraceRef.get()));
     }
   }
 
   protected final boolean isWritable() {
-    return myCommitStackTrace == null;
+    return myCommitStackTraceRef.get() == null;
   }
 }

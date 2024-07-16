@@ -21,8 +21,12 @@ import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.*
 import kotlin.io.path.absolute
 import kotlin.io.path.exists
+
 
 /**
  * This command will filter vcs log tab data by set of filters on the root directory
@@ -47,7 +51,7 @@ class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCorout
     withContext(Dispatchers.IO) {
       val vcsLogData = logManager.dataManager
       val (dataPack, commitStage) = VcsLogFiltererImpl(vcsLogData)
-        .filter(vcsLogData.dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal,
+        .filter(vcsLogData.dataPack, VisiblePack.EMPTY, PermanentGraph.Options.Default,
                 generateVcsFilter(context.project.guessProjectDir(), extractCommandArgument(PREFIX), vcsLogData),
                 CommitCountStage.ALL)
 
@@ -79,6 +83,12 @@ class FilterVcsLogTabCommand(text: String, line: Int) : PerformanceCommandCorout
               throw FileNotFoundException(value)
             }
           }
+        }
+        "date" -> {
+          val zoneId = ZoneId.of("UTC")
+          val (after, before) = value.split(" ")
+          result
+            .add(VcsLogFilterObject.fromDates(Date.from(LocalDate.parse(after).atStartOfDay(zoneId).toInstant()), Date.from(LocalDate.parse(before).atStartOfDay(zoneId).toInstant())))
         }
       }
     }

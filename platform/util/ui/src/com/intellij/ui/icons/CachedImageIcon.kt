@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 @file:OptIn(ExperimentalSerializationApi::class)
 
@@ -71,11 +71,14 @@ open class CachedImageIcon private constructor(
   // isDark is not defined in most cases, and we use a global state at the call moment.
   private val attributes: IconAttributes = IconAttributes(),
   private val iconCache: ScaledIconCache = ScaledIconCache(),
-) : CopyableIcon, ScalableIcon, DarkIconProvider, IconWithToolTip {
+) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip {
   private var pathTransformModCount = -1
 
-  val originalPath: String?
+  override val originalPath: String?
     get() = originalLoader?.path
+
+  override val expUIPath: String?
+    get() = originalLoader?.expUIPath
 
   @TestOnly
   internal constructor(file: Path, scaleContext: ScaleContext)
@@ -408,6 +411,7 @@ private class CustomColorPatcherStrategy(override val colorPatcher: SVGLoader.Sv
   }
 }
 
+@Internal
 fun decodeCachedImageIconFromByteArray(byteArray: ByteArray): Icon? {
   val descriptor = ProtoBuf.decodeFromByteArray<ImageDataLoaderDescriptor>(byteArray)
   return CachedImageIcon(descriptor.createIcon() ?: return null)

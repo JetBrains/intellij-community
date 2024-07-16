@@ -39,6 +39,12 @@ final class FileLoader implements Loader {
   private final @NotNull Predicate<? super String> nameFilter;
   private final @NotNull Path path;
 
+  private static final AtomicLong tempCounter = new AtomicLong();
+
+  static {
+    tempCounter.set(System.currentTimeMillis() - 1707826225241L);
+  }
+
   FileLoader(@NotNull Path path) {
     this.path = path;
     this.nameFilter = __ -> true;
@@ -284,8 +290,9 @@ final class FileLoader implements Loader {
       }
 
       if (isClassPathIndexEnabled) {
+        Path tempFile = null;
         try {
-          Path tempFile = indexFile.getParent().resolve("classpath.index.tmp");
+          tempFile = indexFile.getParent().resolve("classpath.index." + Long.toUnsignedString(tempCounter.getAndIncrement()) + ".tmp");
           saveIndex(loaderData, tempFile);
           try {
             Files.move(tempFile, indexFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
@@ -295,6 +302,12 @@ final class FileLoader implements Loader {
           }
         }
         catch (IOException e) {
+          try {
+            Files.deleteIfExists(tempFile);
+          }
+          catch (IOException ignore) {
+          }
+
           //noinspection CallToPrintStackTrace
           e.printStackTrace();
         }

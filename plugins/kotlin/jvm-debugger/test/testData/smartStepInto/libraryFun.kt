@@ -1,8 +1,9 @@
 fun foo() {
-    arrayListOf(1, 2).count()<caret>
+    arrayListOf(producer(), 2).count()<caret>
 }
+
+fun producer() = 42
 
 fun <T> List<T>.count(): Int = size
 
-// EXISTS: arrayListOf(vararg Int), count()
-// IGNORE_K2
+// EXISTS: producer(), count(), arrayListOf(T)

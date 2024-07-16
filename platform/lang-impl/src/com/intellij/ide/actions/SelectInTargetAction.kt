@@ -78,6 +78,9 @@ private class SelectInTargetActionImpl<T : SelectInTarget>(
       e.presentation.icon = getIcon()
     }
     e.presentation.isEnabled = isSelectable()
+
+    val project = e.project
+    e.presentation.isVisible = project != null && target.isAvailable(project)
   }
 
   fun doPerform() {
@@ -106,12 +109,7 @@ private class SelectInTargetActionImpl<T : SelectInTarget>(
   }
 
   private fun isSelectable(): Boolean {
-    return if (DumbService.isDumb(selectInContext.project) && !DumbService.isDumbAware(target)) {
-      false
-    }
-    else {
-      target.canSelect(selectInContext)
-    }
+    return DumbService.getInstance(selectInContext.project).isUsableInCurrentContext(target) && target.canSelect(selectInContext)
   }
 
 }

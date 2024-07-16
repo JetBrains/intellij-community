@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplaceGetOrSet")
 
 package com.intellij.ui
@@ -234,11 +234,12 @@ object AppUIUtil {
       .replace("intellij-idea", "idea").replace("android-studio", "studio") // backward compatibility
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
     var wmClass = if (name.startsWith(VENDOR_PREFIX)) name else VENDOR_PREFIX + name
-    if (PluginManagerCore.isRunningFromSources()) wmClass += "-debug"
+    if (PluginManagerCore.isRunningFromSources()) {
+      wmClass += "-debug"
+    }
     return wmClass
   }
 
-  @JvmStatic
   fun showConsentsAgreementIfNeeded(log: Logger, filter: Predicate<in Consent?>): Boolean {
     val (first, second) = ConsentOptions.getInstance().getConsents(filter)
     if (!second) {
@@ -268,7 +269,6 @@ object AppUIUtil {
     setUseDarkIcons(isDarcula)
   }
 
-  @JvmStatic
   fun confirmConsentOptions(consents: List<Consent>): Boolean {
     if (consents.isEmpty()) {
       return false

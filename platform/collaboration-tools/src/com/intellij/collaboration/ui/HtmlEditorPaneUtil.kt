@@ -161,6 +161,8 @@ private object InlineIconExtension : ExtendableHTMLViewFactory.Extension {
   }
 }
 
+// TODO - merge with FitToWidthImageViewExtension, Base64ImagesExtension and HiDpiImagesExtension,
+//        deprecate HtmlEditorPaneUtil
 private object ScalingImageExtension : ExtendableHTMLViewFactory.Extension {
   override fun invoke(elem: Element, view: View): View {
     if (view is ImageView) {

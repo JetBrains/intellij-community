@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -128,7 +128,7 @@ public final class ExpectedTypeUtil {
     }
 
     @Override
-    public PsiField @NotNull [] findDeclaredFields(@NotNull final PsiManager manager, @NotNull String name) {
+    public PsiField @NotNull [] findDeclaredFields(final @NotNull PsiManager manager, @NotNull String name) {
       List<PsiField> fields = new ArrayList<>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiField field = aClass.findFieldByName(name, true);
@@ -138,7 +138,7 @@ public final class ExpectedTypeUtil {
     }
 
     @Override
-    public PsiMethod @NotNull [] findDeclaredMethods(@NotNull final PsiManager manager, @NotNull String name) {
+    public PsiMethod @NotNull [] findDeclaredMethods(final @NotNull PsiManager manager, @NotNull String name) {
       List<PsiMethod> methods = new ArrayList<>();
       for (PsiClass aClass : myOccurrenceClasses) {
         final PsiMethod[] occMethod = aClass.findMethodsByName(name, true);
@@ -148,8 +148,7 @@ public final class ExpectedTypeUtil {
     }
   }
 
-  @Nullable
-  public static PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, boolean forCompletion) {
+  public static @Nullable PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, boolean forCompletion) {
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiExpression[] args = callExpr.getArgumentList().getExpressions();

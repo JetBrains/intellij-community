@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -36,7 +36,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
 
     override val uselessNames = uselessFqNames.keys.toShortNames()
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
         expression: KtQualifiedExpression,
         calleeExpression: KtExpression,
@@ -45,7 +45,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         val newName = (conversion as? Conversion.Replace)?.replacementName
 
         val safeExpression = expression as? KtSafeQualifiedExpression
-        val notNullType = expression.receiverExpression.isDefinitelyNotNull()
+        val notNullType = expression.receiverExpression.isDefinitelyNotNull
         val defaultRange =
             TextRange(expression.operationTokenNode.startOffset, calleeExpression.endOffset).shiftRight(-expression.startOffset)
         if (newName != null && (notNullType || safeExpression != null)) {
@@ -82,7 +82,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createRenameUselessCallFix(
         expression: KtQualifiedExpression,
         newFunctionName: String

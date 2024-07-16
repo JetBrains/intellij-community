@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.k2.navigation
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
 abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceResolveTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
@@ -29,10 +28,10 @@ abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceRe
     override fun performAdditionalResolveChecks(results: List<PsiElement>) {
         for (result in results) {
             val navigationElement = result.navigationElement
-            val ktModule = ProjectStructureProvider.getModule(project, navigationElement, null)
+            val module = KaModuleProvider.getModule(project, navigationElement, useSiteModule = null)
             UsefulTestCase.assertTrue(
-                "reference should be resolved to the psi element from ${KtLibrarySourceModule::class} but was resolved to ${ktModule::class}",
-                ktModule is KtLibrarySourceModule
+                "reference should be resolved to the psi element from ${KaLibrarySourceModule::class} but was resolved to ${module::class}",
+                module is KaLibrarySourceModule
             )
         }
     }
@@ -61,7 +60,7 @@ abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceRe
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 }

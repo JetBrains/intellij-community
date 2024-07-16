@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -20,7 +21,6 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
-
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -65,24 +65,33 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   protected void paintDarculaBackground(Graphics g, JTextComponent component) {
+    if (component.getClientProperty(JBTextField.IS_FORCE_INNER_BACKGROUND_PAINT) != Boolean.TRUE &&
+        (!component.isEnabled() || !component.isEditable())) {
+      return;
+    }
+
     Graphics2D g2 = (Graphics2D)g.create();
     Rectangle r = new Rectangle(component.getSize());
     JBInsets.removeFrom(r, paddings());
 
     try {
+      var darculaTextBorderNew = getDarculaTextBorderNew(component);
+      if (darculaTextBorderNew != null) {
+        darculaTextBorderNew.paintTextBackground(g2, component, component.getBackground());
+        return;
+      }
+
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
       g2.translate(r.x, r.y);
 
-      if (component.isEnabled() && component.isEditable()) {
-        float arc = isSearchField(component) || isNewUiTheme(component) ? COMPONENT_ARC.getFloat() : 0.0f;
-        float bw = bw();
+      float arc = isSearchField(component) ? COMPONENT_ARC.getFloat() : 0.0f;
+      float bw = bw();
 
-        g2.setColor(component.getBackground());
-        g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-      }
+      g2.setColor(component.getBackground());
+      g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     }
     finally {
       g2.dispose();
@@ -96,14 +105,16 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       return JBInsets.create(0, 3);
     }
 
-    return isNewUiTheme(c) ? new JBInsets(2, 9, 2, 6) : JBInsets.create(2, 6);
+    return getDarculaTextBorderNew(c) == null ? JBInsets.create(2, 6) : new JBInsets(2, 9, 2, 6);
   }
 
   protected float bw() {
     return BW.getFloat();
   }
 
-  private static boolean isNewUiTheme(@Nullable Component c) {
-    return c instanceof JComponent jComponent && jComponent.getBorder() instanceof DarculaTextBorderNew;
+  private static DarculaTextBorderNew getDarculaTextBorderNew(@Nullable Component c) {
+    return c instanceof JComponent jComponent && jComponent.getBorder() instanceof DarculaTextBorderNew darculaTextBorder
+           ? darculaTextBorder
+           : null;
   }
 }

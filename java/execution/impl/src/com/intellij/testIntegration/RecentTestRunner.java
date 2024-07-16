@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import org.jetbrains.annotations.NotNull;
 
 public interface RecentTestRunner {
@@ -86,18 +87,11 @@ class RecentTestRunnerImpl implements RecentTestRunner {
   }
 
   private void run(@NotNull String url) {
-    Location location = myTestLocator.getLocation(url);
+    Location<?> location = myTestLocator.getLocation(url);
     if (location == null) {
       return;
     }
-
-    DataContext data = dataId -> {
-      if (Location.DATA_KEY.is(dataId)) {
-        return location;
-      }
-      return null;
-    };
-
-    myCurrentAction.actionPerformed(AnActionEvent.createFromAnAction(myCurrentAction, null, "", data));
+    DataContext context = SimpleDataContext.getSimpleContext(Location.DATA_KEY, location);
+    myCurrentAction.actionPerformed(AnActionEvent.createFromAnAction(myCurrentAction, null, "", context));
   }
 }

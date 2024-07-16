@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -39,9 +39,8 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
     super(node);
   }
 
-  @NotNull
   @Override
-  public NameValuePairElement getNode() {
+  public @NotNull NameValuePairElement getNode() {
     ASTNode node = super.getNode();
     if (!(node instanceof NameValuePairElement)) {
       String parents = String.join("; ", SyntaxTraverser.psiApi().parents(this).takeWhile(Objects::nonNull)
@@ -84,9 +83,8 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
     return node == null ? null : (PsiAnnotationMemberValue)node.getPsi();
   }
 
-  @NotNull
   @Override
-  public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
+  public @NotNull PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
     getValue().replace(newValue);
     return getValue();
   }
@@ -94,8 +92,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   private volatile Reference<PsiAnnotationMemberValue> myDetachedValue;
 
   @Override
-  @Nullable
-  public PsiAnnotationMemberValue getDetachedValue() {
+  public @Nullable PsiAnnotationMemberValue getDetachedValue() {
     PsiNameValuePairStub stub = getStub();
     if (stub != null) {
       String text = stub.getValue();
@@ -120,8 +117,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   @Override
   public PsiReference getReference() {
     return new PsiReference() {
-      @Nullable
-      private PsiClass getReferencedClass() {
+      private @Nullable PsiClass getReferencedClass() {
         LOG.assertTrue(getParent() instanceof PsiAnnotationParameterList && getParent().getParent() instanceof PsiAnnotation);
         PsiAnnotation annotation = (PsiAnnotation)getParent().getParent();
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
@@ -130,15 +126,13 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
         return target instanceof PsiClass ? (PsiClass)target : null;
       }
 
-      @NotNull
       @Override
-      public PsiElement getElement() {
+      public @NotNull PsiElement getElement() {
         return PsiNameValuePairImpl.this;
       }
 
-      @NotNull
       @Override
-      public TextRange getRangeInElement() {
+      public @NotNull TextRange getRangeInElement() {
         PsiIdentifier id = getNameIdentifier();
         if (id != null) {
           return new TextRange(0, id.getTextLength());
@@ -158,8 +152,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
       }
 
       @Override
-      @NotNull
-      public String getCanonicalText() {
+      public @NotNull String getCanonicalText() {
         String name = getName();
         return name != null ? name : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
       }

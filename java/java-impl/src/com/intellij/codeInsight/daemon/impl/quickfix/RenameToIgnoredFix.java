@@ -15,6 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -22,36 +28,60 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class RenameToIgnoredFix extends RenameElementFix {
+import java.util.List;
+
+public class RenameToIgnoredFix extends PsiUpdateModCommandAction<PsiVariable> {
   private static final String PREFIX = "ignored";
+  private final String myName;
 
-  private RenameToIgnoredFix(@NotNull PsiNamedElement place, @NotNull String name) {
-    super(place, name);
+  private RenameToIgnoredFix(@NotNull PsiVariable place, @NotNull String name) {
+    super(place);
+    myName = name;
   }
+
+  @Override
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiVariable variable, @NotNull ModPsiUpdater updater) {
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
+    variable.setName(myName);
+    for (PsiReferenceExpression reference : references) {
+      reference.bindToElement(variable);
+    }
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiVariable variable) {
+    return Presentation.of(CodeInsightBundle.message("rename.named.element.text", variable.getName(), myName));
+  }
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return JavaBundle.message("intention.family.name.rename.to.ignored");
+  }
+
 
   /**
    * @param useElementNameAsSuffix if true, let the fix suggest the variable name that consists of the "ignored" and name of the element
    *                               e.g. ignoredVar
    *                               <p>if false, let the fix suggest the variable that consists of the "ignored" and some number
    *                               e.g. ignored1.
-   *                               If variable can be unnamed (place and language level allows, and it's totally unused), renaming to unnamed
+   *                               If a variable can be unnamed (place and language level allows, and it's totally unused), renaming to unnamed
    *                               will be suggested instead.
    */
-  public static RenameToIgnoredFix createRenameToIgnoreFix(@NotNull PsiNamedElement element, boolean useElementNameAsSuffix) {
-    if (element instanceof PsiVariable variable && canBeUnnamed(variable)
-        && !VariableAccessUtils.variableIsUsed(variable, PsiUtil.getVariableCodeBlock(variable, null))) {
+  public static RenameToIgnoredFix createRenameToIgnoreFix(@NotNull PsiVariable variable, boolean useElementNameAsSuffix) {
+    if (canBeUnnamed(variable) && !VariableAccessUtils.variableIsUsed(variable, PsiUtil.getVariableCodeBlock(variable, null))) {
       return new RenameToIgnoredFix(variable, "_");
     }
     String baseName = "";
     if (useElementNameAsSuffix) {
-      String elementName = element.getName();
+      String elementName = variable.getName();
       if (elementName != null) {
         baseName = StringUtil.capitalize(elementName);
       }
     }
-    return new RenameToIgnoredFix(element, JavaCodeStyleManager.getInstance(element.getProject())
-      .suggestUniqueVariableName(PREFIX + baseName, element, true));
+    return new RenameToIgnoredFix(variable, JavaCodeStyleManager.getInstance(variable.getProject())
+      .suggestUniqueVariableName(PREFIX + baseName, variable, true));
   }
 
   private static boolean canBeUnnamed(PsiVariable variable) {

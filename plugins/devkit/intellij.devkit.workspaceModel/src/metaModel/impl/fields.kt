@@ -55,7 +55,8 @@ class ExtPropertyImpl<T : Obj, V>(
   content: Boolean,
   override val module: ObjModule,
   override val moduleLocalId: Int,
-  sourceElement: SourceElement
+  override val annotations: List<ObjAnnotation>,
+  sourceElement: SourceElement,
 ) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourceElement), ExtProperty<T, V> {
   override fun toString(): String = "$name (${receiver.name})"
 }

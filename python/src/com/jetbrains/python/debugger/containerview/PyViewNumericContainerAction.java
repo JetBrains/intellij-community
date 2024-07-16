@@ -64,11 +64,15 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
     }
 
     String nodeType = debugValue.getType();
-    if ("ndarray".equals(nodeType)) {
+    if ("ndarray".equals(nodeType) ||
+        "EagerTensor".equals(nodeType) ||
+        "ResourceVariable".equals(nodeType) ||
+        "SparseTensor".equals(nodeType) ||
+        "Tensor".equals(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
       e.getPresentation().setVisible(true);
     }
-    else if ("DataFrame".equals(nodeType) || "GeoDataFrame".equals(nodeType)) {
+    else if ("DataFrame".equals(nodeType) || "GeoDataFrame".equals(nodeType) || "Dataset".equals(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.dataframe"));
       e.getPresentation().setVisible(true);
     }

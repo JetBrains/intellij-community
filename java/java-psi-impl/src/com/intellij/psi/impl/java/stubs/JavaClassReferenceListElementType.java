@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -39,9 +39,8 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     return new PsiReferenceListImpl(node);
   }
 
-  @NotNull
   @Override
-  public PsiClassReferenceListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiClassReferenceListStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     JavaClassReferenceListElementType type = (JavaClassReferenceListElementType)node.getTokenType();
     return new PsiClassReferenceListStubImpl(type, parentStub, getTexts(tree, node));
   }
@@ -64,9 +63,8 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     }
   }
 
-  @NotNull
   @Override
-  public PsiClassReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiClassReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     int len = dataStream.readVarInt();
     TypeInfo[] infos = len == 0 ? TypeInfo.EMPTY_ARRAY : new TypeInfo[len];
     for (int i = 0; i < infos.length; i++) {
@@ -102,8 +100,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     }
   }
 
-  @NotNull
-  public static PsiReferenceList.Role elementTypeToRole(@NotNull IElementType type) {
+  public static @NotNull PsiReferenceList.Role elementTypeToRole(@NotNull IElementType type) {
     if (type == JavaStubElementTypes.EXTENDS_BOUND_LIST) return PsiReferenceList.Role.EXTENDS_BOUNDS_LIST;
     if (type == JavaStubElementTypes.EXTENDS_LIST) return PsiReferenceList.Role.EXTENDS_LIST;
     if (type == JavaStubElementTypes.IMPLEMENTS_LIST) return PsiReferenceList.Role.IMPLEMENTS_LIST;

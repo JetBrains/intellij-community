@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.impl.TextCutStrategy;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -231,7 +232,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
     g.setColor(c.isEnabled() ? c.getForeground() : UIUtil.getLabelDisabledForeground());
 
     int baseline = c.getBaseline(textBounds.width, textBounds.height);
-    String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width);
+    String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width, g);
     Rectangle strBounds = metrics.getStringBounds(text, g).getBounds();
     strBounds.setLocation(Math.max(0, (int)(textBounds.getCenterX() - strBounds.getCenterX())), baseline);
 
@@ -307,7 +308,7 @@ public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyC
     if (!StringUtil.isEmpty(combo.getText())) {
       FontMetrics metrics = c.getFontMetrics(c.getFont());
       String text = getText(combo);
-      res.width += metrics.stringWidth(text);
+      res.width += PaintUtil.getStringWidth(text, c.getGraphics(), metrics);
       res.height = Math.max(res.height, metrics.getHeight());
       skipNextGap = false;
     }

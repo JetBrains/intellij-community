@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -7,14 +8,21 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 
 fun ObjClass<*>.implWsEntityCode(): String {
-  return """
-package ${module.name}    
+  val inheritanceModifier = when {
+    openness.extendable && !openness.instantiatable -> "abstract"
+    openness.extendable && openness.instantiatable -> "open"
+    else -> ""
+  }
 
-@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})
-@${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})
-$generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
+  return """
+package ${module.implPackage}    
+
+${implWsEntityAnnotations}
+@OptIn($WorkspaceEntityInternalApi::class)
+internal $inheritanceModifier class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """
     private companion object {
@@ -23,7 +31,7 @@ $generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abs
 ${getLinksOfConnectionIds(this)}
     }"""
   }
-        
+    ${allFields.find { it.name == "symbolicId" }?.let { "override val symbolicId: ${it.valueType.javaType} = super.symbolicId\n" } ?: ""}
     ${allFields.filter { it.name !in listOf("entitySource", "symbolicId") }.lines("    ") { implWsEntityFieldCode }.trimEnd()}
 
     override val entitySource: EntitySource
@@ -41,6 +49,17 @@ ${getLinksOfConnectionIds(this)}
 }
     """.trimIndent()
 }
+
+private val ObjClass<*>.implWsEntityAnnotations: String
+  get() {
+    return lines {
+      if (additionalAnnotations.isNotEmpty()) {
+        line(additionalAnnotations)
+      }
+      line("@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})")
+      lineNoNl("@${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})")
+    }
+  }
 
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
   return lines(2) {

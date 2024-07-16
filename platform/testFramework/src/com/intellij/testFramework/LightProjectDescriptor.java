@@ -15,14 +15,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -112,9 +108,7 @@ public class LightProjectDescriptor {
     VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
     assert dummyRoot != null;
     dummyRoot.refresh(false, false);
-    VirtualFile srcRoot = doCreateSourceRoot(dummyRoot, srcPath);
-    registerSourceRoot(module.getProject(), srcRoot);
-    return srcRoot;
+    return doCreateSourceRoot(dummyRoot, srcPath);
   }
 
   protected VirtualFile doCreateSourceRoot(VirtualFile root, String srcPath) {
@@ -128,21 +122,6 @@ public class LightProjectDescriptor {
     }
 
     return srcRoot;
-  }
-
-  protected void registerSourceRoot(Project project, VirtualFile srcRoot) {
-    IndexableFileSet indexableFileSet = new IndexableFileSet() {
-      @Override
-      public boolean isInSet(@NotNull VirtualFile file) {
-        return file.getFileSystem() == srcRoot.getFileSystem() && project.isOpen();
-      }
-    };
-    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    fileBasedIndex.registerIndexableSet(indexableFileSet, project);
-    Disposer.register(project, () -> {
-      fileBasedIndex.onProjectClosing(indexableFileSet);
-      IndexingTestUtil.waitUntilIndexesAreReady(project);
-    });
   }
 
   protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {

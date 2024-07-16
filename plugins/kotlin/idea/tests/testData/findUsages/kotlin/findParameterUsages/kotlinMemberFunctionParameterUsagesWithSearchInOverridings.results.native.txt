@@ -1,0 +1,3 @@
+Value read 16 val t2: T = t
+Value read 8 println(t)
+Value read 9 return t

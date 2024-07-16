@@ -10,7 +10,7 @@ plugins {
 }
 
 enum class PythonType { PYTHON, CONDA }
-
+// If you decided to change a default path, make sure to update in `community/python/testSrc/com/jetbrains/env/PyEnvTestSettings.kt`
 val pythonsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHONS", File(buildDir, "pythons").path))
 val venvsDirectory = File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", File(buildDir, "envs").path))
 
@@ -125,7 +125,7 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
 }
 
 createPython("py312_django_latest", "3.12",
-             listOf("django", "behave-django", "behave", "pytest", "untangle"),
+             listOf("django", "behave-django", "behave", "pytest", "untangle", "djangorestframework"),
              listOf("python3.12", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
 
 if (isUnix && !isMacOs) {
@@ -140,6 +140,10 @@ else {
                listOf(),
                listOf("python3.7"))
 }
+
+createPython("py27", "2.7",
+             listOf(),
+             listOf("python2.7"))
 
 createPython("py38", "3.8",
              listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",

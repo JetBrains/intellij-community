@@ -6,7 +6,16 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import java.util.Comparator;
 
 public class FileNameComparator implements Comparator<String> {
+
+  /**
+   * @deprecated use {@link #getInstance()} instead
+   */
+  @Deprecated
   public static final Comparator<String> INSTANCE = new FileNameComparator();
+
+  public static Comparator<String> getInstance() {
+    return INSTANCE;
+  }
 
   @Override
   public int compare(String s1, String s2) {

@@ -18,10 +18,5 @@
  * are supported via {@link com.intellij.platform.workspace.storage.SymbolicEntityId}. Properties of entities may be of a restricted set of
  * types only, see {@link com.intellij.platform.workspace.storage.WorkspaceEntity} for details. It's possible to link objects of arbitrary
  * types with entities using {@link com.intellij.platform.workspace.storage.ExternalEntityMapping}.
- * <p>
- * All classes in this package <strong>are experimental</strong> and their API may change in future versions.
  */
-@ApiStatus.Experimental
 package com.intellij.platform.workspace.storage;
-
-import org.jetbrains.annotations.ApiStatus;

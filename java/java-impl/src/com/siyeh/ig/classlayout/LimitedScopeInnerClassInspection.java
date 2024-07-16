@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public final class LimitedScopeInnerClassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("limited.scope.inner.class.problem.descriptor");
   }
 
@@ -59,8 +58,9 @@ public final class LimitedScopeInnerClassInspection extends BaseInspection {
       }
       else {
         PsiElement lBrace = aClass.getLBrace();
-        assert lBrace != null;
-        registerErrorAtOffset(aClass, 0, lBrace.getStartOffsetInParent());
+        if (lBrace != null) {
+          registerErrorAtOffset(aClass, 0, lBrace.getStartOffsetInParent());
+        }
       }
     }
   }

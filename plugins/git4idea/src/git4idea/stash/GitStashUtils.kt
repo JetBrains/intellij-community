@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitStashUtils")
 
 package git4idea.stash
@@ -72,8 +72,8 @@ object GitStashOperations {
 
   @JvmStatic
   fun dropStashWithConfirmation(project: Project, parentComponent: Component?, stash: StashInfo): Boolean {
-    val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("git.unstash.drop.confirmation.title", stash.stash),
-                                                   GitBundle.message("git.unstash.drop.confirmation.message", stash.stash,
+    val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("unstash.drop.confirmation.title", stash.stash),
+                                                   GitBundle.message("unstash.drop.confirmation.message", stash.stash,
                                                                      stash.message)).icon(Messages.getQuestionIcon())
     val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
     if (!confirmed) return false
@@ -97,8 +97,8 @@ object GitStashOperations {
 
   @JvmStatic
   fun clearStashesWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component?): Boolean {
-    val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("git.unstash.clear.confirmation.title"),
-                                                   GitBundle.message("git.unstash.clear.confirmation.message")).icon(Messages.getWarningIcon())
+    val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("unstash.clear.confirmation.title"),
+                                                   GitBundle.message("unstash.clear.confirmation.message")).icon(Messages.getWarningIcon())
     val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
     if (!confirmed) return false
 
@@ -106,7 +106,10 @@ object GitStashOperations {
     h.addParameters("clear")
     try {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable<Unit, VcsException> { Git.getInstance().runCommand(h).throwOnError() },
+        ThrowableComputable<Unit, VcsException> {
+          Git.getInstance().runCommand(h).throwOnError()
+          refreshStash(project, root)
+        },
         GitBundle.message("unstash.clearing.stashes"),
         false,
         project
@@ -162,7 +165,7 @@ object GitStashOperations {
     if (!completed) return false
 
     VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.UNSTASH_PATCH_APPLIED, "",
-                                                   VcsBundle.message("patch.apply.success.applied.text"))
+                                                   GitBundle.message("unstash.stash.applied"))
     return true
   }
 
@@ -397,19 +400,6 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
   return result
 }
 
-fun createStashHandler(project: Project, root: VirtualFile, keepIndex: Boolean = false, message: String = ""): GitLineHandler {
-  val handler = GitLineHandler(project, root, GitCommand.STASH)
-  handler.addParameters("save")
-  if (keepIndex) {
-    handler.addParameters("--keep-index")
-  }
-  val msg = message.trim()
-  if (msg.isNotEmpty()) {
-    handler.addParameters(msg)
-  }
-  return handler
-}
-
 private fun createUnstashHandler(project: Project, stash: StashInfo, branch: String?,
                                  popStash: Boolean, reinstateIndex: Boolean): GitLineHandler {
   val h = GitLineHandler(project, stash.root, GitCommand.STASH)
@@ -426,18 +416,35 @@ private fun createUnstashHandler(project: Project, stash: StashInfo, branch: Str
   return h
 }
 
-fun createStashPushHandler(project: Project, root: VirtualFile, files: Collection<FilePath>, vararg parameters: String): GitLineHandler {
+fun createStashHandler(project: Project, root: VirtualFile, keepIndex: Boolean = false, message: String = ""): GitLineHandler {
+  return createStashHandler(project, root, emptyList(), buildList {
+    if (keepIndex) add("--keep-index")
+    val msg = message.trim()
+    if (msg.isNotEmpty()) {
+      add("--message")
+      add(msg)
+    }
+  })
+}
+
+fun createStashHandler(project: Project, root: VirtualFile, files: Collection<FilePath>, vararg parameters: String): GitLineHandler {
+  return createStashHandler(project, root, files, parameters.toList())
+}
+
+private fun createStashHandler(project: Project, root: VirtualFile, files: Collection<FilePath>, parameters: List<String>): GitLineHandler {
   val handler = GitLineHandler(project, root, GitCommand.STASH)
   handler.addParameters("push")
-  handler.addParameters(*parameters)
-  if (GitVersionSpecialty.STASH_PUSH_PATHSPEC_FROM_FILE_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))) {
-    handler.addParameters("--pathspec-from-file=-")
-    handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(VcsFileUtil.toRelativePaths(root, files),
-                                                                      "\n", handler.charset, false))
-  }
-  else {
-    handler.endOptions()
-    handler.addRelativePaths(files)
+  handler.addParameters(parameters)
+  if (files.isNotEmpty()) {
+    if (GitVersionSpecialty.STASH_PUSH_PATHSPEC_FROM_FILE_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))) {
+      handler.addParameters("--pathspec-from-file=-")
+      handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(VcsFileUtil.toRelativePaths(root, files),
+                                                                        "\n", handler.charset, false))
+    }
+    else {
+      handler.endOptions()
+      handler.addRelativePaths(files)
+    }
   }
   return handler
 }

@@ -64,7 +64,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   }
 
   @Override
-  public String getErrorMessage(final String s, final ConvertContext context) {
+  public String getErrorMessage(final String s, final @NotNull ConvertContext context) {
     final ParentType parent = getParent(context);
     return CodeInsightBundle
       .message("error.cannot.resolve.0.1", JavaPsiBundle.message("element.method"), getReferenceCanonicalText(s, getMethodParams(parent)));
@@ -79,7 +79,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
 
   @Override
   public boolean isReferenceTo(@NotNull final PsiElement element, final String stringValue, final PsiMethod resolveResult,
-                               final ConvertContext context) {
+                               final @NotNull ConvertContext context) {
     if (super.isReferenceTo(element, stringValue, resolveResult, context)) return true;
 
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
@@ -109,7 +109,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
 
   @Override
   @NotNull
-  public Collection<? extends PsiMethod> getVariants(final ConvertContext context) {
+  public Collection<? extends PsiMethod> getVariants(final @NotNull ConvertContext context) {
     Set<PsiMethod> methodList = new LinkedHashSet<>();
     Processor<PsiMethod> processor = CommonProcessors.notNullProcessor(Processors.cancelableCollectProcessor(methodList));
     processMethods(context, processor, s -> {
@@ -139,7 +139,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   }
 
   @Override
-  public PsiMethod fromString(final String methodName, final ConvertContext context) {
+  public PsiMethod fromString(final String methodName, final @NotNull ConvertContext context) {
     final CommonProcessors.FindFirstProcessor<PsiMethod> processor = new CommonProcessors.FindFirstProcessor<>();
     processMethods(context, processor, s -> {
       final PsiMethod method = findMethod(s, methodName, getMethodParams(getParent(context)));
@@ -155,7 +155,7 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
   }
 
   @Override
-  public String toString(final PsiMethod method, final ConvertContext context) {
+  public String toString(final PsiMethod method, final @NotNull ConvertContext context) {
     return method.getName();
   }
 

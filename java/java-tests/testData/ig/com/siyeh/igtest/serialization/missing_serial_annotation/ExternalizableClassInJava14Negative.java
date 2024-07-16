@@ -3,7 +3,7 @@ import java.io.*;
 class Test implements Externalizable {
 
   private static final long serialVersionID = 7874493593505141603L;
-  static final long serialVersionUID = 7874493593505141603L;
+  static final long <warning descr="'serialVersionUID' can be annotated with '@Serial' annotation">serialVersionUID</warning> = 7874493593505141603L;
 
   private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[0];
 

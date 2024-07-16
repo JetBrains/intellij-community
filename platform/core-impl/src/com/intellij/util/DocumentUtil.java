@@ -47,6 +47,12 @@ public final class DocumentUtil {
     CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(runnable));
   }
 
+  /**
+   * Calculates offset of the first non-whitespace character of the {@code line}
+   * In case of empty line it returns line start's offset.
+   *
+   * @see #getLineStartIndentedOffset(Document, int)
+   */
   public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
@@ -157,15 +163,16 @@ public final class DocumentUtil {
   }
 
   private static int getIndentLengthAtLineStart(@NotNull Document document, int lineOffset) {
+    CharSequence content = document.getImmutableCharSequence();
     int result = 0;
-    while (lineOffset + result < document.getTextLength() &&
-           Character.isWhitespace(document.getCharsSequence().charAt(lineOffset + result))) {
+    while (lineOffset + result < content.length()) {
+      char ch = content.charAt(lineOffset + result);
+      if (!Character.isWhitespace(ch) || ch == '\n' || ch == '\r') {
+        break;
+      }
       result++;
     }
-    if (result + lineOffset > document.getTextLength()) {
-      result--;
-    }
-    return Math.max(result, 0);
+    return result;
   }
 
   /**
@@ -187,6 +194,9 @@ public final class DocumentUtil {
 
   /**
    * Calculates offset of the first non-whitespace character of the {@code line}
+   * In case of empty line it returns line end's offset.
+   *
+   * @see #getFirstNonSpaceCharOffset(Document, int)
    */
   public static int getLineStartIndentedOffset(@NotNull Document document, int line) {
     int lineStartOffset = document.getLineStartOffset(line);

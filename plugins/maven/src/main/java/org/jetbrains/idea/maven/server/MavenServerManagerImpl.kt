@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
@@ -164,7 +165,9 @@ internal class MavenServerManagerImpl : MavenServerManager {
   }
 
   override suspend fun getConnector(project: Project, workingDirectory: String): MavenServerConnector {
-    var connector = doGetConnector(project, workingDirectory)
+    var connector = blockingContext {
+      doGetConnector(project, workingDirectory)
+    }
     if (!connector.ping()) {
       shutdownConnector(connector, true)
       connector = doGetConnector(project, workingDirectory)

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GrMethodInplaceRenameHandler extends MemberInplaceRenameHandler {
+public final class GrMethodInplaceRenameHandler extends MemberInplaceRenameHandler {
   @Override
   protected boolean isAvailable(@Nullable PsiElement element, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!editor.getSettings().isVariableInplaceRenameEnabled()) return false;

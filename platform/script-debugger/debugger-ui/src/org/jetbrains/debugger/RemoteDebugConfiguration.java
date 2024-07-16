@@ -33,18 +33,21 @@ import javax.swing.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-public abstract class RemoteDebugConfiguration extends LocatableConfigurationBase implements RunConfigurationWithSuppressedDefaultRunAction, DebuggableRunConfiguration {
+/**
+ * @deprecated scriptDebugger.ui is deprecated
+ */
+@Deprecated
+public abstract class RemoteDebugConfiguration extends LocatableConfigurationBase
+  implements RunConfigurationWithSuppressedDefaultRunAction, DebuggableRunConfiguration {
+  private final int defaultPort;
   private final SerializationFilter serializationFilter = new SkipEmptySerializationFilter() {
     @Override
     protected ThreeState accepts(@NotNull String name, @NotNull Object beanValue) {
       return name.equals("port") ? ThreeState.fromBoolean(!beanValue.equals(defaultPort)) : ThreeState.UNSURE;
     }
   };
-
   private String host;
-
   private int port;
-  private final int defaultPort;
 
   public RemoteDebugConfiguration(Project project, @NotNull ConfigurationFactory factory, String name, int defaultPort) {
     super(project, factory, name);

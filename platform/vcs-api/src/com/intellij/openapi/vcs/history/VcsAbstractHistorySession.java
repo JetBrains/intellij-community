@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -65,9 +66,14 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
    * This method should return actual value for current revision (it can be changed after submit for example)
    * @return current file revision, null if file does not exist anymore
    */
-
   @Nullable
   protected abstract VcsRevisionNumber calcCurrentRevisionNumber();
+
+  @Nullable
+  @ApiStatus.Internal
+  public final VcsRevisionNumber calcCurrentRevisionNumberForCache() {
+    return calcCurrentRevisionNumber();
+  }
 
   @Override
   public final VcsRevisionNumber getCurrentRevisionNumber() {

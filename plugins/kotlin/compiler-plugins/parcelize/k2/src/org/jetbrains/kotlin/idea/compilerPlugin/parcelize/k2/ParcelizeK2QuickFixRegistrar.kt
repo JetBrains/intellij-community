@@ -1,18 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
 
 import com.intellij.codeInsight.intention.IntentionAction
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtCompilerPluginDiagnostic0
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtCompilerPluginDiagnostic1
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic0
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic1
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.diagnostics.AbstractKtDiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory1
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactoryFromIntentionActions
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.*
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
@@ -60,9 +60,9 @@ class ParcelizeK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             ParcelRemoveCustomCreatorProperty.FACTORY
         )
 
-        registerApplicator(
-            createApplicatorForFactory<KtCompilerPluginDiagnostic1>(KtErrorsParcelize.CLASS_SHOULD_BE_PARCELIZE) { diagnostic ->
-                val parameterSymbol = diagnostic.parameter1 as? KtClassOrObjectSymbol
+        registerFactory(
+            createApplicatorForFactory<KaCompilerPluginDiagnostic1>(KtErrorsParcelize.CLASS_SHOULD_BE_PARCELIZE) { diagnostic ->
+                val parameterSymbol = diagnostic.parameter1 as? KaClassSymbol
                 val parameterPsi = parameterSymbol?.psi as? KtClassOrObject
                 if (parameterPsi != null) {
                     listOf(AnnotateWithParcelizeQuickFix(parameterPsi))
@@ -78,8 +78,8 @@ private fun KtQuickFixesListBuilder.registerQuickFixForDiagnosticFactory(
     diagnosticFactory: KtDiagnosticFactory0,
     quickFixFactory: QuickFixesPsiBasedFactory<*>
 ) {
-    registerApplicator(
-        createApplicatorForFactory<KtCompilerPluginDiagnostic0>(diagnosticFactory) {
+    registerFactory(
+        createApplicatorForFactory<KaCompilerPluginDiagnostic0>(diagnosticFactory) {
             quickFixFactory.createQuickFix(it.psi)
         }
     )
@@ -89,17 +89,17 @@ private fun KtQuickFixesListBuilder.registerQuickFixForDiagnosticFactory(
     diagnosticFactory: KtDiagnosticFactory1<*>,
     quickFixFactory: QuickFixesPsiBasedFactory<*>
 ) {
-    registerApplicator(
-        createApplicatorForFactory<KtCompilerPluginDiagnostic1>(diagnosticFactory) {
+    registerFactory(
+        createApplicatorForFactory<KaCompilerPluginDiagnostic1>(diagnosticFactory) {
             quickFixFactory.createQuickFix(it.psi)
         }
     )
 }
 
-private inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<*>> createApplicatorForFactory(
+private inline fun <reified DIAGNOSTIC : KaDiagnosticWithPsi<*>> createApplicatorForFactory(
     factory: AbstractKtDiagnosticFactory,
-    crossinline createQuickFixes:  context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>
-) = diagnosticFixFactoryFromIntentionActions(DIAGNOSTIC::class) { diagnostic ->
+    crossinline createQuickFixes: context(KaSession)(DIAGNOSTIC) -> List<IntentionAction>
+) = KotlinQuickFixFactory.IntentionBased { diagnostic: DIAGNOSTIC ->
     if (diagnostic.factoryName == factory.name) {
         createQuickFixes(analysisSession, diagnostic)
     } else {

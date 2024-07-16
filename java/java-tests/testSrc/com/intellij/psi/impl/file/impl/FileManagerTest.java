@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ui.UIUtil;
 
 import java.io.File;
@@ -330,7 +331,7 @@ public class FileManagerTest extends JavaPsiTestCase {
 
     assertFalse(oldTimestamp == newTimestamp);
 
-    VirtualFileManager.getInstance().syncRefresh();
+    VfsTestUtil.syncRefresh();
     UIUtil.dispatchAllInvocationEvents();
 
     fileManager.checkConsistency();

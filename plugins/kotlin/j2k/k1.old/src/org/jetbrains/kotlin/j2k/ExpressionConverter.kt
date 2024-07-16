@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.j2k.ast.Function
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.isInSingleLine
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -182,6 +183,7 @@ class DefaultExpressionConverter : JavaElementVisitor(), ExpressionConverter {
         }
     }
 
+    @Suppress("DuplicatedCode")
     private fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
         if (left.isNullLiteral() || (right?.isNullLiteral() == true)) return true
         when (val type = left.type) {

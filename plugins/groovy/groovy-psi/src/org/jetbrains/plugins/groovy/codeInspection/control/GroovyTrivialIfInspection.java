@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceStatement;
 
-public class GroovyTrivialIfInspection extends BaseInspection {
+public final class GroovyTrivialIfInspection extends BaseInspection {
 
   @NotNull
   @Override

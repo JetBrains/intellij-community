@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.reset;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -8,12 +8,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitActivity;
@@ -38,9 +40,8 @@ import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operat
 
 public class GitResetOperation {
 
-
   private final @NotNull Project myProject;
-  private final @NotNull Map<GitRepository, Hash> myCommits;
+  private final @NotNull Map<GitRepository, @NotNull String> myCommits;
   private final @NotNull GitResetMode myMode;
   private final @NotNull ProgressIndicator myIndicator;
   private final @NotNull Git myGit;
@@ -52,11 +53,12 @@ public class GitResetOperation {
                            @NotNull Map<GitRepository, Hash> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator) {
-    this(project, targetCommits, mode, indicator, new OperationPresentation());
+    this(project, ContainerUtil.map2Map(targetCommits.entrySet(), e -> Pair.create(e.getKey(), e.getValue().asString())),
+         mode, indicator, new OperationPresentation());
   }
 
   public GitResetOperation(@NotNull Project project,
-                           @NotNull Map<GitRepository, Hash> targetCommits,
+                           @NotNull Map<GitRepository, @NotNull String> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator,
                            @NotNull OperationPresentation operationPresentation) {
@@ -70,14 +72,14 @@ public class GitResetOperation {
     myUiHandler = new GitBranchUiHandlerImpl(myProject, indicator);
   }
 
-  public void execute() {
+  public boolean execute() {
     saveAllDocuments();
     Map<GitRepository, GitCommandResult> results = new HashMap<>();
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message(myPresentation.activityName), GitActivity.Reset)) {
-      for (Map.Entry<GitRepository, Hash> entry : myCommits.entrySet()) {
+      for (Map.Entry<GitRepository, String> entry : myCommits.entrySet()) {
         GitRepository repository = entry.getKey();
         VirtualFile root = repository.getRoot();
-        String target = entry.getValue().asString();
+        String target = entry.getValue();
         GitLocalChangesWouldBeOverwrittenDetector detector = new GitLocalChangesWouldBeOverwrittenDetector(root, RESET);
 
         Hash startHash = getHead(repository);
@@ -96,6 +98,8 @@ public class GitResetOperation {
       }
     }
     notifyResult(results);
+
+    return ContainerUtil.all(results.values(), GitCommandResult::success);
   }
 
   private GitCommandResult proposeSmartReset(@NotNull GitLocalChangesWouldBeOverwrittenDetector detector,

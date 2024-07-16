@@ -2,10 +2,8 @@
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
-import com.intellij.coverage.CoverageBundle;
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageLogger;
-import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.*;
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -18,17 +16,18 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -48,13 +47,13 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
+import javax.swing.event.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -70,8 +69,8 @@ import java.util.List;
 
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
-  @NonNls public static final String HELP_ID = "reference.toolWindows.Coverage";
-  public static final Icon FILTER_ICON = AllIcons.General.Filter;
+  @NonNls static final String HELP_ID = "reference.toolWindows.Coverage";
+  private static final Icon FILTER_ICON = AllIcons.General.Filter;
 
   private final CoverageTableModel myModel;
   private final JBTreeTable myTable;
@@ -83,15 +82,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private boolean myHasVCSFilter = false;
   private boolean myHasFullyCoveredFilter = false;
 
-
-  public CoverageView(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
+  public CoverageView(Project project, CoverageSuitesBundle bundle) {
     myProject = project;
-    myStateBean = stateBean;
+    myStateBean = CoverageViewManager.getInstance(project).getStateBean();
     mySuitesBundle = bundle;
-    myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle, myStateBean);
-    myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle, stateBean);
+    myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle);
+    myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle);
 
-    myModel = new CoverageTableModel(mySuitesBundle, stateBean, project, myTreeStructure);
+    myModel = new CoverageTableModel(mySuitesBundle, project, myTreeStructure);
     Disposer.register(this, myModel);
     myTable = new JBTreeTable(myModel);
     TreeUtil.expand(myTable.getTree(), 2);
@@ -134,11 +132,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     final CoverageRowSorter rowSorter = new CoverageRowSorter(myTable, myModel);
     myTable.setRowSorter(rowSorter);
-    if (stateBean.mySortingColumn < 0 || stateBean.mySortingColumn >= myModel.getColumnCount()) {
-      stateBean.myAscendingOrder = true;
-      stateBean.mySortingColumn = 0;
+    if (myStateBean.mySortingColumn < 0 || myStateBean.mySortingColumn >= myModel.getColumnCount()) {
+      myStateBean.myAscendingOrder = true;
+      myStateBean.mySortingColumn = 0;
     }
-    final RowSorter.SortKey sortKey = new RowSorter.SortKey(stateBean.mySortingColumn, stateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
+    var sortKey = new RowSorter.SortKey(myStateBean.mySortingColumn, myStateBean.myAscendingOrder ? SortOrder.ASCENDING : SortOrder.DESCENDING);
     rowSorter.setSortKeys(Collections.singletonList(sortKey));
     addToCenter(myTable);
 
@@ -157,34 +155,63 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
 
-    myTable.getTree().registerKeyboardAction(e -> resetView(), KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK), JComponent.WHEN_FOCUSED);
+    myTable.getTree().registerKeyboardAction(e -> resetView(null),
+                                             KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH,
+                                                                    ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK
+                                                                                             : InputEvent.CTRL_DOWN_MASK),
+                                             WHEN_FOCUSED);
     myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
-    myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK), ACTION_DRILL_DOWN);
+    myTable.getTree().getInputMap(WHEN_FOCUSED).put(
+      KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
+      ACTION_DRILL_DOWN);
     myTable.getTree().getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {
         enterSelected(true);
       }
     });
+    addLoggingListeners();
   }
 
   private void resetIfAllFiltered(AbstractTreeNode<?> root, ActionToolbar actionToolbar) {
-    if (myViewExtension.hasVCSFilteredNodes() && myStateBean.isShowOnlyModified() && myStateBean.isDefaultFilters()) {
-      if (!myViewExtension.hasChildren(root)) {
-        myStateBean.setShowOnlyModified(false);
-        resetView();
+    // This call must come first for correct hasVCSFilteredNodes call
+    boolean hasChildren = myViewExtension.hasChildren(root);
+    if (hasVCSFilteredNodes() && myStateBean.isShowOnlyModified() && myStateBean.isDefaultFilters()) {
+      if (!hasChildren) {
+        resetView(() -> myStateBean.setShowOnlyModified(false));
       }
       else {
-        final String message = CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName());
-        final GotItTooltip gotIt = new GotItTooltip("coverage.view.elements.filter", message, this);
+        GotItTooltip gotIt = createGotIt();
         if (gotIt.canShow()) {
-          final JComponent filterAction = findToolbarActionButtonWithIcon(actionToolbar, FILTER_ICON);
+          final JComponent filterAction = ActionButtonUtil.findToolbarActionButton(actionToolbar, button -> button.getIcon() == FILTER_ICON);
           if (filterAction != null) {
             gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
           }
         }
       }
     }
+  }
+
+  private @NotNull GotItTooltip createGotIt() {
+    String branchName = getFilteredBranchName();
+    if (branchName != null) {
+      return new GotItTooltip("coverage.view.elements.by.branch.filter",
+                              CoverageBundle.message("coverage.filter.branch.gotit", myViewExtension.getElementsName()),
+                              this);
+    }
+    return new GotItTooltip("coverage.view.elements.filter",
+                            CoverageBundle.message("coverage.filter.gotit", myViewExtension.getElementsName()),
+                            this);
+  }
+
+  private boolean hasVCSFilteredNodes() {
+    var filter = getModifiedFilesFilter();
+    return filter != null && filter.getHasFilteredFiles();
+  }
+
+  private @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
+    CoverageAnnotator annotator = mySuitesBundle.getCoverageEngine().getCoverageAnnotator(myProject);
+    return annotator.getModifiedFilesFilter();
   }
 
   private void setUpShowRootNode(ActionToolbar actionToolbar) {
@@ -229,6 +256,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
               called = true;
               setWidth(nodeRoot);
               resetIfAllFiltered(nodeRoot, actionToolbar);
+              logTotalCoverage(nodeRoot);
             }
           }
         }
@@ -252,7 +280,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private void setUpEmptyText() {
-    boolean hasVcsFiltered = myViewExtension.hasVCSFilteredNodes();
     boolean hasFullyCovered = myViewExtension.hasFullyCoveredNodes();
     myTable.getTree().getEmptyText().clear();
     final StatusText emptyText = myTable.getTable().getEmptyText();
@@ -273,16 +300,14 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       });
       emptyText.appendText(" " + CoverageBundle.message("coverage.view.edit.run.configuration.2"));
     }
-    if (hasVcsFiltered && myStateBean.isShowOnlyModified()) {
+    if (myStateBean.isShowOnlyModified() && hasVCSFilteredNodes()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.unmodified.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        myStateBean.setShowOnlyModified(false);
-        resetView();
+        resetView(() -> myStateBean.setShowOnlyModified(false));
       });
     }
     if (hasFullyCovered && myStateBean.isHideFullyCovered()) {
       emptyText.appendLine(CoverageBundle.message("coverage.show.fully.covered.elements", myViewExtension.getElementsName()), SimpleTextAttributes.LINK_ATTRIBUTES, e -> {
-        myStateBean.setHideFullyCovered(false);
-        resetView();
+        resetView(() -> myStateBean.setHideFullyCovered(false));
       });
     }
   }
@@ -294,7 +319,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
   }
 
-  public void saveSize() {
+  void saveSize() {
     final int columns = myTable.getTable().getColumnCount();
     final List<Integer> widths = new ArrayList<>();
     final TableColumnModel columnModel = myTable.getTable().getColumnModel();
@@ -378,21 +403,15 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     boolean hasFilters = false;
     final DefaultActionGroup filtersActionGroup = new DefaultActionGroup();
-    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
-      filtersActionGroup.add(new ShowOnlyModifiedAction());
+    if (ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss() && getModifiedFilesFilter() != null) {
+      filtersActionGroup.add(new ShowOnlyModifiedAction(getModifiedActionName()));
       hasFilters = true;
       myHasVCSFilter = true;
-    }
-    else {
-      myStateBean.setShowOnlyModified(false);
     }
     if (myViewExtension.supportFlattenPackages()) {
       filtersActionGroup.add(new HideFullyCoveredAction());
       hasFilters = true;
       myHasFullyCoveredFilter = true;
-    }
-    else {
-      myStateBean.setHideFullyCovered(false);
     }
     if (hasFilters) {
       filtersActionGroup.setPopup(true);
@@ -432,6 +451,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (element == null) return;
     if (myModel.isLeaf(path.getLastPathComponent())) {
       if (element.canNavigate()) {
+        CoverageLogger.logNavigation(myProject);
         element.navigate(true);
       }
       return;
@@ -458,11 +478,11 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     return getLast(getSelectedPath());
   }
 
-  public boolean canSelect(VirtualFile file) {
+  boolean canSelect(VirtualFile file) {
     return myViewExtension.canSelectInCoverageView(file);
   }
 
-  public void select(VirtualFile file) {
+  void select(VirtualFile file) {
     select(myViewExtension.getElementToSelect(file));
   }
 
@@ -477,9 +497,52 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     return null;
   }
 
-  private void resetView() {
-    myTreeStructure.reset();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> myModel.reset(true));
+  private void resetView(@Nullable Runnable updateSettings) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (updateSettings != null) {
+        updateSettings.run();
+      }
+      myTreeStructure.reset();
+      myModel.reset(true);
+    });
+  }
+
+  private void addLoggingListeners() {
+    myTable.getTree().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        CoverageLogger.logTreeNodeSelected(myProject);
+      }
+    });
+    myTable.getTree().addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        logToggle(event, true);
+      }
+
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+        logToggle(event, false);
+      }
+
+      private void logToggle(TreeExpansionEvent event, boolean expanded) {
+        AbstractTreeNode<?> treeNode = getLast(event.getPath());
+        if (treeNode == null) return;
+        boolean isRoot = myModel.getRoot() == treeNode;
+        CoverageLogger.logTreeNodeExpansionToggle(myProject, isRoot, expanded);
+      }
+    });
+  }
+
+  private void logTotalCoverage(AbstractTreeNode<?> root) {
+    for (int column = 1; column < myModel.getColumnCount(); column++) {
+      String columnName = myModel.getColumnName(column);
+      Object valueAt = myModel.getValueAt(root, column);
+      if (valueAt instanceof String s) {
+        PercentageRecord percentage = PercentageParser.parse(s);
+        CoverageLogger.logCoverageMetrics(myProject, columnName, percentage.getPercentage(), percentage.getTotal());
+      }
+    }
   }
 
   private final class FlattenPackagesAction extends ToggleAction {
@@ -495,8 +558,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setFlattenPackages(state);
-      resetView();
+      resetView(() -> myStateBean.setFlattenPackages(state));
     }
 
     @Override
@@ -518,8 +580,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setHideFullyCovered(state);
-      resetView();
+      resetView(() -> myStateBean.setHideFullyCovered(state));
     }
 
     @Override
@@ -530,8 +591,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
   private final class ShowOnlyModifiedAction extends ToggleAction {
 
-    private ShowOnlyModifiedAction() {
-      super(CoverageBundle.messagePointer("coverage.show.only.modified.elements", myViewExtension.getElementsCapitalisedName()));
+    private ShowOnlyModifiedAction(@NlsActions.ActionText String name) {
+      super(name);
     }
 
     @Override
@@ -541,14 +602,28 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myStateBean.setShowOnlyModified(state);
-      resetView();
+      resetView(() -> myStateBean.setShowOnlyModified(state));
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
     }
+  }
+
+  private @Nls @NotNull String getModifiedActionName() {
+    String elementName = myViewExtension.getElementsCapitalisedName();
+    String branchName = getFilteredBranchName();
+    if (branchName != null) {
+      return CoverageBundle.message("coverage.show.only.elements.in.feature.branch", elementName, branchName);
+    } else {
+      return CoverageBundle.message("coverage.show.only.modified.elements", elementName);
+    }
+  }
+
+  private @Nullable String getFilteredBranchName() {
+    ModifiedFilesFilter filter = getModifiedFilesFilter();
+    return filter == null ? null : filter.getBranchName();
   }
 
   private void select(Object object) {
@@ -609,12 +684,5 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         }
       }).submit(AppExecutorUtil.getAppExecutorService());
     }
-  }
-
-  private static JComponent findToolbarActionButtonWithIcon(ActionToolbar toolbar, Icon icon) {
-    return UIUtil.uiTraverser(toolbar.getComponent())
-      .filter(ActionButton.class)
-      .filter(button -> button.getIcon() == icon)
-      .first();
   }
 }

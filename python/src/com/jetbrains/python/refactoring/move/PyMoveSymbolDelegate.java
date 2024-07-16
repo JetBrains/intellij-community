@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -160,8 +160,7 @@ public final class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     return document.getLineNumber(selectionModel.getSelectionStart()) != document.getLineNumber(selectionModel.getSelectionEnd());
   }
 
-  @NotNull
-  private static List<PyElement> collectAllMovableElementsInSelection(@NotNull Editor editor, @NotNull PyFile pyFile) {
+  private static @NotNull List<PyElement> collectAllMovableElementsInSelection(@NotNull Editor editor, @NotNull PyFile pyFile) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     final List<PyElement> members = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);

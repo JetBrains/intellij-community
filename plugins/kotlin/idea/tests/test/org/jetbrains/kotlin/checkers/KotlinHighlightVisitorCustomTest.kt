@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.checkers
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -13,6 +14,9 @@ import org.junit.runner.RunWith
 @TestMetadata("testData/checker/custom")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinHighlightVisitorCustomTest : AbstractKotlinHighlightVisitorTest() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     @TestMetadata("noUnusedParameterWhenCustom.kt")
     fun testNoUnusedParameterWhenCustom() {

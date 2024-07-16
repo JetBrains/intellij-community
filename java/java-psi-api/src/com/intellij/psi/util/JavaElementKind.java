@@ -35,6 +35,7 @@ public enum JavaElementKind {
   PACKAGE_STATEMENT("element.package.statement"),
   PARAMETER("element.parameter"),
   PATTERN_VARIABLE("element.pattern_variable"),
+  PERMITS_LIST("element.permits.list"),
   RECEIVER_PARAMETER("element.receiver.parameter"),
   RECORD("element.record"),
   RECORD_COMPONENT("element.record_component"),
@@ -44,6 +45,7 @@ public enum JavaElementKind {
   THROWS_LIST("element.throws.list"),
   TYPE_ARGUMENTS("element.type.arguments"),
   TYPE_PARAMETER("element.type.parameter"),
+  TYPE_PARAMETERS("element.type.parameters"),
   UNKNOWN("element.unknown"),
   VARIABLE("element.variable");
 
@@ -136,6 +138,9 @@ public enum JavaElementKind {
       }
       return FIELD;
     }
+    if (element instanceof PsiTypeParameterList) {
+      return TYPE_PARAMETERS;
+    }
     if (element instanceof PsiReferenceParameterList) {
       return TYPE_ARGUMENTS;
     }
@@ -144,8 +149,11 @@ public enum JavaElementKind {
       if (role == PsiReferenceList.Role.THROWS_LIST) {
         return THROWS_LIST;
       }
-      if (role == PsiReferenceList.Role.EXTENDS_LIST) {
+      else if (role == PsiReferenceList.Role.EXTENDS_LIST) {
         return EXTENDS_LIST;
+      }
+      else if (role == PsiReferenceList.Role.PERMITS_LIST) {
+        return PERMITS_LIST;
       }
     }
     if (element instanceof PsiAnnotation) {

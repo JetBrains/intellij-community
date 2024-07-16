@@ -7,8 +7,10 @@ import com.intellij.webSymbols.WebSymbolTypeSupport
 import com.intellij.webSymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP
 import com.intellij.webSymbols.webTypes.json.WebTypes
 import com.intellij.webSymbols.webTypes.json.jsTypesSyntaxWithLegacy
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 interface WebTypesSymbolTypeSupportFactory {
 
   fun createTypeSupport(webTypes: WebTypes, project: Project?, context: List<VirtualFile>): WebSymbolTypeSupport

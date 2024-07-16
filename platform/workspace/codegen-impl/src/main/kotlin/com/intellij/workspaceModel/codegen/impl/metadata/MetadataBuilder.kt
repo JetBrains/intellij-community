@@ -103,7 +103,7 @@ private class ValueTypeMetadataBuilder(private val property: TypeProperty<*>,
 private fun ObjClass<*>.buildEntity(propertyBuilder: MetadataBuilder<TypeProperty<*>>): String =
   getEntityMetadataConstructor(
     fqName = fullName,
-    entityDataFqName = getJavaFullName(javaDataName, module.name),
+    entityDataFqName = getJavaFullName(javaDataName, module.implPackage),
     supertypes = allSuperClasses.map { it.fullName },
       properties = allFieldsWithOwnExtensions.map { propertyBuilder.buildMetadata(it) },
     extProperties = module.extensions

@@ -46,6 +46,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   @Nullable
   XStackFrame getCurrentStackFrame();
 
+  @Nullable
   XSuspendContext getSuspendContext();
 
   /**

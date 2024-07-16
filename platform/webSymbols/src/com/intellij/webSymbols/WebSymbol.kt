@@ -17,6 +17,7 @@ import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
@@ -49,7 +50,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
+interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrioritizedScope {
 
   /**
    * Specifies where this symbol comes from. Besides descriptive information like
@@ -198,7 +199,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
    * Symbols with higher priority will have precedence over those with lower priority,
    * when matching is performed. Symbols with higher priority will also show higher on the completion list.
    */
-  val priority: Priority?
+  override val priority: Priority?
     get() = null
 
   /**
@@ -313,6 +314,13 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
    * The dereferenced symbol should be valid, i.e. any PSI based properties should return valid PsiElements.
    */
   override fun createPointer(): Pointer<out WebSymbol>
+
+  /**
+   * Return `true` if the symbol should be present in the query results
+   * in the particular context. By default, the current symbol framework is checked.
+   */
+  fun matchContext(context: WebSymbolsContext): Boolean =
+    origin.framework == null || context.framework == null || origin.framework == context.framework
 
   /**
    * Returns `true` if two symbols are the same or equivalent for resolve purposes.

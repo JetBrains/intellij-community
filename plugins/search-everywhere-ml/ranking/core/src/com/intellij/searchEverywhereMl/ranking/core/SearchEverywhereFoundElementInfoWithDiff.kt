@@ -12,21 +12,21 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
  */
 internal open class SearchEverywhereFoundElementInfoBeforeDiff(
   element: Any,
-  val sePriority: Int,
+  val heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   val mlWeight: Double?,
   val mlFeatures: List<EventPair<*>>
-) : SearchEverywhereFoundElementInfo(element, sePriority, contributor)
+) : SearchEverywhereFoundElementInfo(element, heuristicPriority, contributor)
 
 /**
  * This class is used to display orderingDiff information and store seSearchPosition for OpenFeaturesInScratchFileAction
  */
 internal open class SearchEverywhereFoundElementInfoAfterDiff(
   element: Any,
-  sePriority: Int,
+  heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   mlWeight: Double?,
   mlFeatures: List<EventPair<*>>,
   val orderingDiff: Int,
   val seSearchPosition: Int
-) : SearchEverywhereFoundElementInfoWithMl(element, sePriority, contributor, mlWeight, mlFeatures)
+) : SearchEverywhereFoundElementInfoWithMl(element, heuristicPriority, contributor, mlWeight, mlFeatures)

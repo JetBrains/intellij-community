@@ -28,8 +28,9 @@ object HuggingFaceHttpClient {
       val linkHeader = connection.getHeaderField("Link")
       connection.disconnect()
       HfHttpResponseWithHeaders(content, linkHeader)
-    }.onFailure {
-      thisLogger().warn("Failed to download: $url", it)
     }
+    //}.onFailure {
+    //  thisLogger().warn("Failed to download: $url", it)
+    //}
   }
 }

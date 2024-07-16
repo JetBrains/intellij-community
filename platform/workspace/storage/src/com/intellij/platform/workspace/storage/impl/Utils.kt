@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.Modification
 
 // Just a wrapper for entity id in THIS store
@@ -40,7 +38,7 @@ internal fun checkCircularDependency(connectionId: ConnectionId, childId: Int, p
   if (connectionId.parentClass == connectionId.childClass && childId == parentId) {
     val parentEntityId = createEntityId(parentId, connectionId.parentClass)
     val entityData = storage.entityDataByIdOrDie(parentEntityId)
-    val entityPresentation = entityData.symbolicId()?.toString() ?: entityData.toString()
+    val entityPresentation = (entityData.createEntity(storage) as? WorkspaceEntityWithSymbolicId)?.symbolicId?.toString() ?: entityData.toString()
     error("""Trying to make a circular dependency in entities by setting an entity as a child of itself.
           |Entity class: ${connectionId.parentClass.findWorkspaceEntity()}
           |Entity: $entityPresentation
@@ -55,7 +53,7 @@ internal fun checkCircularDependency(connectionId: ConnectionId, childId: Int, p
 internal fun checkCircularDependency(childId: EntityId, parentId: EntityId, storage: AbstractEntityStorage) {
   if (childId == parentId) {
     val entityData = storage.entityDataByIdOrDie(parentId)
-    val entityPresentation = entityData.symbolicId()?.toString() ?: entityData.toString()
+    val entityPresentation = (entityData.createEntity(storage) as? WorkspaceEntityWithSymbolicId)?.symbolicId?.toString() ?: entityData.toString()
     error("""Trying to make a circular dependency in entities by setting an entity as a child of itself.
           |Entity class: ${parentId.clazz.findWorkspaceEntity()}
           |Entity: $entityPresentation
@@ -64,6 +62,7 @@ internal fun checkCircularDependency(childId: EntityId, parentId: EntityId, stor
 }
 
 internal fun WorkspaceEntity.asBase(): WorkspaceEntityBase = this as WorkspaceEntityBase
+internal fun <T : WorkspaceEntity> WorkspaceEntity.Builder<T>.asBase(): ModifiableWorkspaceEntityBase<T, *> = this as ModifiableWorkspaceEntityBase<T, *>
 
 internal val EntityStorage.mutable: MutableEntityStorage
   get() = this as MutableEntityStorage

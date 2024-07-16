@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,20 +19,16 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     applicationInfoModule = "intellij.pycharm.community"
     brandingResourcePaths = listOf(communityHome.resolve("python/resources"))
     customJvmMemoryOptions = persistentMapOf("-Xms" to "256m", "-Xmx" to "1500m")
-    additionalVmOptions += "-Dide.show.tips.on.startup.default.value=false"
     scrambleMainJar = false
     buildSourcesArchive = true
-
-    /* main module for JetBrains Client isn't available in the intellij-community project, 
-       so this property is set only when PyCharm Community is built from the intellij-ultimate project. */
-    embeddedJetBrainsClientMainModule = null
 
     productLayout.mainModules = listOf("intellij.pycharm.community.main")
     productLayout.productApiModules = listOf("intellij.xml.dom")
     productLayout.productImplementationModules = listOf(
       "intellij.xml.dom.impl",
-      "intellij.platform.main",
+      "intellij.platform.starter",
       "intellij.pycharm.community",
+      "intellij.platform.whatsNew",
     )
     productLayout.bundledPluginModules.addAll(
       listOf(
@@ -49,6 +46,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true
+    qodanaProductProperties = QodanaProductProperties("QDPYC", "Qodana Community for Python")
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {

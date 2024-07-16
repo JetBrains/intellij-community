@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -12,16 +12,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +88,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  public @NotNull List<PsiFile> getAllFiles() {
+  public @NotNull List<@NotNull PsiFile> getAllFiles() {
     return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
@@ -117,13 +118,14 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
         file = alreadyCreated;
       }
     }
-    return ObjectUtils.nullizeIfDefaultValue(file, PsiUtilCore.NULL_PSI_FILE);
+    return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
   }
 
   @Override
   public final PsiFile getCachedPsi(@NotNull Language target) {
     if (target != getBaseLanguage()) return null;
-    return ObjectUtils.nullizeIfDefaultValue(myPsiFile, PsiUtilCore.NULL_PSI_FILE);
+    PsiFile obj = myPsiFile;
+    return obj == PsiUtilCore.NULL_PSI_FILE ? null : obj;
   }
 
   @Override
@@ -185,10 +187,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY))) {
       return false;
     }
-    if (vFile instanceof LightVirtualFile) {
-      VirtualFile original = ((LightVirtualFile)vFile).getOriginalFile();
-      if (original != null) return checkFileSizeLimit(original);
-    }
+    VirtualFile original = VirtualFileUtil.originalFile(vFile);
+    if (original != null) return checkFileSizeLimit(original);
     return true;
   }
 
@@ -196,9 +196,14 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
+  @ApiStatus.Internal
+  public static void clearFileSizeLimitCheck(@NotNull VirtualFile vFile) {
+    vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, null);
+  }
+
   public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, long maxBytes) {
     if (vFile instanceof LightVirtualFile && !vFile.getFileType().isBinary()) {
-      // this is an optimization in order to avoid conversion of [large] file contents to bytes
+      // this is an optimization to avoid conversion of [large] file contents to bytes
       int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
       if (lengthInChars < maxBytes / 2) {
         return false;

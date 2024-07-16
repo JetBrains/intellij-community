@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -39,7 +40,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -178,7 +179,8 @@ public final class DvcsUtil {
     };
   }
 
-  public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);
+  public static final Comparator<Repository> REPOSITORY_COMPARATOR =
+    Comparator.comparing(DvcsUtil::getShortRepositoryName, NaturalComparator.INSTANCE);
 
   public static void assertFileExists(File file, @NonNls @Nls String message) throws IllegalStateException {
     if (!file.exists()) {
@@ -531,16 +533,16 @@ public final class DvcsUtil {
 
   @NotNull
   @RequiresBackgroundThread
-  public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
-                                                                                              @NotNull List<? extends VcsFullCommitDetails> commits) {
-    Map<R, List<VcsFullCommitDetails>> groupedCommits = new HashMap<>();
-    for (VcsFullCommitDetails commit : commits) {
+  public static <R extends Repository> Map<R, List<VcsCommitMetadata>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
+                                                                                              @NotNull List<? extends VcsCommitMetadata> commits) {
+    Map<R, List<VcsCommitMetadata>> groupedCommits = new HashMap<>();
+    for (VcsCommitMetadata commit : commits) {
       R repository = repoManager.getRepositoryForRoot(commit.getRoot());
       if (repository == null) {
         LOG.info("No repository found for commit " + commit);
         continue;
       }
-      List<VcsFullCommitDetails> commitsInRoot = groupedCommits.computeIfAbsent(repository, __ -> new ArrayList<>());
+      List<VcsCommitMetadata> commitsInRoot = groupedCommits.computeIfAbsent(repository, __ -> new ArrayList<>());
       commitsInRoot.add(commit);
     }
     return groupedCommits;

@@ -1155,19 +1155,22 @@ public final class LambdaUtil {
   }
 
   public static @NotNull PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
-    String canonicalText = type.getCanonicalText();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+    PsiTypeElement typeElement = factory.createTypeElement(type);
     if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, expression)) {
+      String canonicalText = type.getCanonicalText();
       final String arrayInitializer = "new " + canonicalText + "[]{0}";
-      PsiNewExpression newExpr = (PsiNewExpression)JavaPsiFacade.getElementFactory(expression.getProject())
-        .createExpressionFromText(arrayInitializer, expression);
+      PsiNewExpression newExpr = (PsiNewExpression)factory.createExpressionFromText(arrayInitializer, expression);
       final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
       LOG.assertTrue(initializer != null);
       return initializer.getInitializers()[0].replace(expression);
     }
 
-    final String callableWithExpectedType = "(java.util.concurrent.Callable<" + canonicalText + ">)() -> x";
-    PsiTypeCastExpression typeCastExpr = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expression.getProject())
-                                      .createExpressionFromText(callableWithExpectedType, expression);
+    final String callableWithExpectedType = "(java.util.concurrent.Callable<T>)() -> x";
+    PsiTypeCastExpression typeCastExpr = (PsiTypeCastExpression)factory.createExpressionFromText(callableWithExpectedType, expression);
+    PsiTypeElement castType = Objects.requireNonNull(typeCastExpr.getCastType());
+    PsiJavaCodeReferenceElement callableRef = Objects.requireNonNull(castType.getInnermostComponentReferenceElement());
+    Objects.requireNonNull(callableRef.getParameterList()).getTypeParameterElements()[0].replace(typeElement);
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)typeCastExpr.getOperand();
     LOG.assertTrue(lambdaExpression != null);
     PsiElement body = lambdaExpression.getBody();

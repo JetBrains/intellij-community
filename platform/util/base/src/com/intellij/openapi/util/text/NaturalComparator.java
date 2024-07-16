@@ -9,7 +9,7 @@ import java.util.Comparator;
 
 /**
  * Implementation of
- * <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html">"Sorting for Humans: Natural Sort Order"</a>.
+ * <a href="https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/">"Sorting for Humans: Natural Sort Order"</a>.
  *
  * @author Bas Leijdekkers
  */
@@ -23,6 +23,14 @@ public final class NaturalComparator implements Comparator<String> {
     if (s1 == null) return -1;
     if (s2 == null) return +1;
     return naturalCompare(s1, s2, s1.length(), s2.length(), true, false);
+  }
+
+  @Contract(pure = true)
+  public static int naturalCompare(@NotNull String s1,
+                                   @NotNull String s2,
+                                   boolean ignoreCase,
+                                   boolean likeFileNames) {
+    return naturalCompare(s1, s2, s1.length(), s2.length(), ignoreCase, likeFileNames);
   }
 
   @Contract(pure = true)

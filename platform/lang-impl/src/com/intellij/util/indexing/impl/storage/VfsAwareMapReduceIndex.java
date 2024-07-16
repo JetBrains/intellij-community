@@ -23,17 +23,19 @@ import com.intellij.util.indexing.storage.MapReduceIndexBase;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
 
+@Internal
 public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
   extends MapReduceIndexBase<Key, Value, FileCachedData> {
   private static final Logger LOG = Logger.getInstance(VfsAwareMapReduceIndex.class);
 
-  @ApiStatus.Internal
+  @Internal
   public static final int VERSION = 0;
 
   static {

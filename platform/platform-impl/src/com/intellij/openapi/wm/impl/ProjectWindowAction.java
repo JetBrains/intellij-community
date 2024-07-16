@@ -82,7 +82,7 @@ public final class ProjectWindowAction extends ToggleAction implements DumbAware
   }
 
   private @Nullable Project findProject() {
-    if (LightEditService.WINDOW_NAME.equals(myProjectName)) {
+    if (LightEditService.getWindowName().equals(myProjectName)) {
       return LightEditService.getInstance().getProject();
     }
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();

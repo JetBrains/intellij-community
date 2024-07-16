@@ -4,7 +4,6 @@ UFile (package = )
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                 UIdentifier (Identifier (lazy))
-                USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null)
                 ULambdaExpression
                     UBlockExpression
                         UReturnExpression
@@ -15,7 +14,6 @@ UFile (package = )
             UAnnotation (fqName = kotlin.Suppress)
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                 UIdentifier (Identifier (lazy))
-                USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null)
                 ULambdaExpression
                     UBlockExpression
                         UReturnExpression
@@ -29,7 +27,6 @@ UFile (package = )
                     ULocalVariable (name = sdCardPathLocal)
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                             UIdentifier (Identifier (lazy))
-                            USimpleNameReferenceExpression (identifier = lazy, resolvesTo = null)
                             ULambdaExpression
                                 UBlockExpression
                                     UReturnExpression

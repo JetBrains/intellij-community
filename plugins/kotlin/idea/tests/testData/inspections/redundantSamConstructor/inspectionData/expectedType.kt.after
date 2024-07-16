@@ -4,6 +4,6 @@ import a.*
 import a.A.*
 
 fun testExpectedType() {
-    val s1: JFunction1<String> = A.expectedType({ })
-    val s2: JFunction1<String> = expectedType({ })
+    val s1: JFunction1<String> = A.expectedType { }
+    val s2: JFunction1<String> = expectedType { }
 }

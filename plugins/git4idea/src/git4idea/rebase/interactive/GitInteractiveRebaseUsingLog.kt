@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserImpl
@@ -52,7 +53,7 @@ internal fun getEntriesUsingLog(
     throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNEXPECTED_HASH)
   }
 
-  if (details.any { it.subject.startsWith("fixup!") || it.subject.startsWith("squash!") }) {
+  if (details.any { detail -> GitSquashedCommitsMessage.isAutosquashCommitMessage(detail.subject) } ) {
     throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.FIXUP_SQUASH)
   }
 
@@ -111,21 +112,31 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
     if (rebaseFailed) {
       return super.collectNewEntries(entries)
     }
+    if (validateEntries(entries)) {
+      processModel(rebaseTodoModel)
+      return rebaseTodoModel.convertToEntries()
+    } else {
+      myRebaseEditorShown = false
+      rebaseFailed = true
+      LOG.error(
+        "Incorrect git-rebase-todo file was generated",
+        Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
+        Attachment("expected.txt", entries.joinToString("\n"))
+      )
+      throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
+    }
+  }
+
+  private fun validateEntries(entries: List<GitRebaseEntry>): Boolean {
+    if (entriesGeneratedUsingLog.size != entries.size) return false
+
     entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
       val realEntry = entries[i]
       if (!generatedEntry.equalsWithReal(realEntry)) {
-        myRebaseEditorShown = false
-        rebaseFailed = true
-        LOG.error(
-          "Incorrect git-rebase-todo file was generated",
-          Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
-          Attachment("expected.txt", entries.joinToString("\n"))
-        )
-        throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
+        return false
       }
     }
-    processModel(rebaseTodoModel)
-    return rebaseTodoModel.convertToEntries()
+    return true
   }
 }
 
@@ -144,7 +155,7 @@ internal class GitRebaseEntryGeneratedUsingLog(details: VcsCommitMetadata) :
   GitRebaseEntryWithDetails(GitRebaseEntry(Action.PICK, details.id.asString(), details.subject.trimStart()), details) {
 
   fun equalsWithReal(realEntry: GitRebaseEntry) =
-    action == realEntry.action &&
-    commit.startsWith(realEntry.commit) &&
-    subject == realEntry.subject
+    if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(realEntry.commit).matches()) {
+      action == realEntry.action && (commit.startsWith(realEntry.commit) || realEntry.commit.startsWith(commit))
+    } else false
 }

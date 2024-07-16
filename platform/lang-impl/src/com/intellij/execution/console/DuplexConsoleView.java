@@ -286,10 +286,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
       if (action2 instanceof ToggleUseSoftWrapsToolbarAction) {
         return new MergedWrapTextAction(((ToggleUseSoftWrapsToolbarAction)action1), (ToggleUseSoftWrapsToolbarAction)action2);
       }
-      else if (action2 instanceof ScrollToTheEndToolbarAction) {
-        return new MergedToggleAction(((ToggleAction)action1), (ToggleAction)action2);
-      }
-      else if (action2 instanceof ClearConsoleAction) {
+      else if (action2 instanceof ClearConsoleAction || action2 instanceof ScrollToTheEndToolbarAction) {
         return new MergedAction(action1, action2);
       }
       else {

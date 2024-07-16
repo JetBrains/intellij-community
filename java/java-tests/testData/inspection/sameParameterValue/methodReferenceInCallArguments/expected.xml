@@ -3,7 +3,7 @@
   <problem>
   <file>Test.java</file>
   <line>8</line>
-  <description>Actual value of parameter 'string' is always 'hello'</description>
+  <description>Value of parameter 'string' is always 'hello'</description>
 </problem>
 
 </problems>

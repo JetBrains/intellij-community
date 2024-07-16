@@ -2,22 +2,22 @@
 package org.jetbrains.idea.maven.search
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.refactoring.rename.RenameDialog
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
   private fun renameDirectory(directory: PsiDirectory, newName: String) {
     val renameDialog = RenameDialog(project, directory, directory, null)
     renameDialog.performRename(newName)
   }
 
   @Test
-  fun testDirectoryRenameModuleReferenceChanged() = runBlocking {
+  fun testDirectoryRenameModuleReferenceChanged() = runBlocking(Dispatchers.EDT) {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -50,7 +50,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testParentDirectoryRenameModuleReferenceChanged() = runBlocking {
+  fun testParentDirectoryRenameModuleReferenceChanged() = runBlocking(Dispatchers.EDT) {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -84,7 +84,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDirectoryRenameModuleRelativeReferenceChanged() = runBlocking {
+  fun testDirectoryRenameModuleRelativeReferenceChanged() = runBlocking(Dispatchers.EDT) {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -118,7 +118,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDirectoryRenameModuleParentPathReferenceChanged() = runBlocking {
+  fun testDirectoryRenameModuleParentPathReferenceChanged() = runBlocking(Dispatchers.EDT) {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -162,7 +162,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDirectoryRenameModuleWeirdNameReferenceChanged() = runBlocking {
+  fun testDirectoryRenameModuleWeirdNameReferenceChanged() = runBlocking(Dispatchers.EDT) {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -196,7 +196,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testParentDirectoryRenameModuleWeirdNameReferenceChanged() = runBlocking {
+  fun testParentDirectoryRenameModuleWeirdNameReferenceChanged() = runBlocking(Dispatchers.EDT) {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
@@ -231,7 +231,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
 
 
   @Test
-  fun testIncorrectModuleNameWithNewLineRenameModuleReferenceChanged() = runBlocking {
+  fun testIncorrectModuleNameWithNewLineRenameModuleReferenceChanged() = runBlocking(Dispatchers.EDT) {
     val parentFile = createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>

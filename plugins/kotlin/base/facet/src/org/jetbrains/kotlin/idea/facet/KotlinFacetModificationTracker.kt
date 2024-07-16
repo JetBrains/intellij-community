@@ -10,7 +10,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
@@ -59,4 +59,4 @@ class KotlinFacetModificationTracker(project: Project) :
     }
 }
 
-fun ModuleSettingsBase.isKotlinFacet(): Boolean = name == KotlinFacetType.NAME
+fun ModuleSettingsFacetBridgeEntity.isKotlinFacet(): Boolean = name == KotlinFacetType.NAME

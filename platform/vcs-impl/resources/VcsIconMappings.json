@@ -1,0 +1,10 @@
+{
+  "icons": {
+    "new": {
+      "stash.svg": [
+        "icons/Shelve.svg",
+        "icons/Stash.svg"
+      ]
+    }
+  }
+}

@@ -1,0 +1,16 @@
+package test.pkg
+
+public abstract annotation A {
+}
+
+public class Foo {
+    @test.pkg.A
+    public fun Foo() {
+    }
+    public fun foo1() : int {
+    }
+    public fun foo2() : java.lang.String {
+    }
+    public fun foo3() : T {
+    }
+}

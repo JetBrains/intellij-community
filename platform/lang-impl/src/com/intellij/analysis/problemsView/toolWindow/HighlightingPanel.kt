@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -21,6 +22,8 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.CancellablePromise
@@ -49,9 +52,9 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   override fun getSortFoldersFirst(): Option? = null
   override fun getTreeExpander(): TreeExpander? = null
 
-  override fun getData(dataId: String): Any? {
-    if (CommonDataKeys.VIRTUAL_FILE.`is`(dataId)) return getCurrentFile()
-    return super.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[CommonDataKeys.VIRTUAL_FILE] = getCurrentFile()
   }
 
   override fun getSortBySeverity(): Option? {
@@ -146,6 +149,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     return null
   }
 
+  @RequiresBackgroundThread
   private fun updateStatus() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val status = ClientId.withClientId(session.clientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
@@ -163,6 +167,8 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   private fun getCurrentStatus(): Status {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val file = getCurrentFile() ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))

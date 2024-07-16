@@ -29,7 +29,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 

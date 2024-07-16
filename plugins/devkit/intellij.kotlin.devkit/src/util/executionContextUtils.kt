@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.kotlin.util
 import com.intellij.psi.PsiElement
 import org.jetbrains.idea.devkit.kotlin.util.ExecutionContextType.*
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -30,7 +30,7 @@ private fun PsiElement.findParentSuspendingLambda(): KtLambdaExpression? {
     if (containingArgument != null) {
       val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return@getParentOfTypesAndPredicate false
       analyze(callExpression) {
-        val functionCall = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return@getParentOfTypesAndPredicate false
+        val functionCall = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return@getParentOfTypesAndPredicate false
         val lambdaArgumentType = functionCall.argumentMapping[it]?.returnType ?: return@getParentOfTypesAndPredicate false
         return@getParentOfTypesAndPredicate lambdaArgumentType.isSuspendFunctionType
       }

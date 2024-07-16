@@ -234,7 +234,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       count++
     }
 
-    fun getChildForClassName(name: String): DisposerNode = children.getOrPut(name, { DisposerNode(name) })
+    fun getChildForClassName(name: String): DisposerNode = children.getOrPut(name) { DisposerNode(name) }
   }
 
   private enum class SubTreeUpdaterOperation  { PROCESS_CHILDREN, UPDATE_SIZE }

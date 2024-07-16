@@ -32,6 +32,8 @@ interface ObjClass<T : Obj> : ObjType<T> {
 
   val openness: Openness
 
+  val annotations: List<ObjAnnotation>
+
   enum class Openness(
     val instantiatable: Boolean = false,
     val extendable: Boolean = false,
@@ -74,4 +76,9 @@ interface ObjClass<T : Obj> : ObjType<T> {
 interface TypeParameter : Obj {
   val name: String
   val lowerBound: ObjType<*>
+}
+
+interface ObjAnnotation {
+  val fqName: String
+  val pathSegments: List<String>
 }

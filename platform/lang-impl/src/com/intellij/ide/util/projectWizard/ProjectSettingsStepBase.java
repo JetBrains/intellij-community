@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
@@ -191,15 +193,21 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   protected void registerValidators() {
+    addLocationChangeListener(event -> checkValid());
+    checkWebProjectValid();
+  }
+
+  @ApiStatus.Internal
+  protected void addLocationChangeListener(@NotNull Consumer<? super DocumentEvent> listener) {
+    if (myLocationField == null) return;
     DocumentListener documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        checkValid();
+        listener.accept(e);
       }
     };
     myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
     Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
-    checkWebProjectValid();
   }
 
   private void checkWebProjectValid() {

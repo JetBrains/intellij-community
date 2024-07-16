@@ -25,12 +25,16 @@ import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.testframework.sm.vcs.RunTestsBeforeCheckinHandler.Companion.showFailedTests
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -55,7 +59,7 @@ private val LOG = logger<RunTestsCheckinHandlerFactory>()
 
 @Service(Service.Level.PROJECT)
 @State(name = "TestsVcsConfig", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyState> {
+private class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyState> {
   class MyState {
     var enabled = false
     var configuration: ConfigurationBean? = null
@@ -69,7 +73,7 @@ class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyS
   }
 }
 
-class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
+private class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     if (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler) {
       return RunTestsBeforeCheckinHandler(panel.project)
@@ -78,7 +82,7 @@ class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   }
 }
 
-class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblemWithDetails {
+private class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblemWithDetails {
   override val text: String
     get() {
       var str = ""
@@ -112,16 +116,17 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
     get() = ExecutionBundle.message("commit.checks.run.configuration.failed.show.details.action")
 }
 
-data class FailureDescription(val historyFileName: String,
+private data class FailureDescription(val historyFileName: String,
                               val failed: Int,
                               val ignored: Int,
                               val configuration: RunnerAndConfigurationSettings?,
                               val configName: String?)
 
-private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
-  if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
+private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? {
+  return if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
+}
 
-class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
+private class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
   private val settings: TestsVcsConfiguration get() = project.getService(TestsVcsConfiguration::class.java)
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.POST_COMMIT
@@ -293,13 +298,19 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
 
     return BooleanCommitOption.createLink(project, this, disableWhenDumb = true, initialText, settings.myState::enabled,
                                           SmRunnerBundle.message("link.label.choose.configuration.before.commit")) { sourceLink, linkData ->
-      JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser(linkData))
+      JBPopupFactory.getInstance().createActionGroupPopup(null,
+                                                          createConfigurationChooser(linkData),
+                                                          SimpleDataContext.EMPTY_CONTEXT,
+                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                          false)
+        .showUnderneathOf(sourceLink)
     }
   }
 
   private fun createConfigurationChooser(linkContext: BooleanCommitOption.LinkContext): ActionGroup {
-    fun testConfiguration(it: RunConfiguration) =
-      it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
+    fun testConfiguration(it: RunConfiguration): Boolean {
+      return it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
+    }
 
     val result = DefaultActionGroup()
     val runManager = RunManagerImpl.getInstanceImpl(project)
@@ -359,5 +370,4 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
       Disposer.dispose(executionConsole)
     }
   }
-
 }

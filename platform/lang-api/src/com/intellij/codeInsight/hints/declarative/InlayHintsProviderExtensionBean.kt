@@ -103,7 +103,7 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
   }
 
   fun getProviderName(): @Nls String {
-    return getLocalizedString(bundle, nameKey!!)!!
+    return getLocalizedString(bundle, nameKey!!) ?: error("Provider with nameKey $nameKey has no localized name")
   }
 
   fun getDescription(): @Nls String? {
@@ -126,5 +126,9 @@ class InlayHintsProviderExtensionBean : CustomLoadingExtensionPointBean<InlayHin
     }
     val resourceBundle = DynamicBundle.getResourceBundle(descriptor.classLoader, baseName)
     return AbstractBundle.message(resourceBundle, key)
+  }
+
+  override fun toString(): String {
+    return "InlayHintsProvider(language=$language, group=$group, providerId=$providerId)"
   }
 }

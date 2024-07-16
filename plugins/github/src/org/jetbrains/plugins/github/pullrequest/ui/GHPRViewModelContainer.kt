@@ -2,14 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.collaboration.async.cancelledWith
+import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
-import com.intellij.collaboration.ui.codereview.diff.model.getSelected
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -83,7 +85,7 @@ internal class GHPRViewModelContainer(
 
   init {
     cs.launchNow {
-      dataProvider.stateData.stateChangeSignal.collectLatest {
+      dataProvider.detailsData.stateChangeSignal.collectLatest {
         projectVm.refreshPrOnCurrentBranch()
       }
     }
@@ -92,10 +94,16 @@ internal class GHPRViewModelContainer(
   private fun GHPRInfoViewModel.setup() {
     cs.launchNow {
       detailsVm.flatMapLatest { detailsVmResult ->
-        detailsVmResult.getOrNull()?.changesVm?.changeListVm?.flatMapLatest {
-          it.getOrNull()?.changesSelection ?: flowOf(null)
-        } ?: flowOf(null)
-      }.filterNotNull().collect(diffSelectionRequests)
+        detailsVmResult.getOrNull()?.changesVm?.changeListVm ?: flowOf(null)
+      }.map {
+        it?.getOrNull() as? CodeReviewChangeListViewModelBase
+      }.collectScoped { vm ->
+        vm?.handleSelection {
+          if (it != null) {
+            diffSelectionRequests.tryEmit(it)
+          }
+        }
+      }
     }
   }
 
@@ -107,11 +115,12 @@ internal class GHPRViewModelContainer(
     }
 
     cs.launchNow {
-      diffVm.flatMapLatest {
-        it.result?.getOrNull()?.producers?.map { state -> (state.getSelected() as? CodeReviewDiffRequestProducer)?.change } ?: flowOf(null)
-      }.collectLatest {
-        if (lazyInfoVm.isInitialized() && it != null) {
-          lazyInfoVm.value.detailsVm.value.getOrNull()?.changesVm?.selectChange(it)
+      diffVm.collectScoped {
+        it.getOrNull()?.handleSelection { producer ->
+          val change = producer?.asSafely<CodeReviewDiffRequestProducer>()?.change
+          if (lazyInfoVm.isInitialized() && change != null) {
+            lazyInfoVm.value.detailsVm.value.getOrNull()?.changesVm?.selectChange(change)
+          }
         }
       }
     }

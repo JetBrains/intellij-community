@@ -2,7 +2,7 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.getContinuationOfTypeOrAny
@@ -28,7 +28,7 @@ internal class UastDescriptorLightSuspendContinuationParameter(
 
     private val _annotations: Array<PsiAnnotation>
         get() = annotationsPart.getOrBuild {
-            arrayOf(UastFakeLightNullabilityAnnotation(KtTypeNullability.NON_NULLABLE, this))
+            arrayOf(UastFakeLightNullabilityAnnotation(KaTypeNullability.NON_NULLABLE, this))
         }
 
     override fun getAnnotations(): Array<PsiAnnotation> {

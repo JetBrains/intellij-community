@@ -29,10 +29,15 @@ public abstract class RepositoryImpl implements Repository {
   private boolean myDisposed;
 
   protected RepositoryImpl(@NotNull Project project,
-                           @NotNull VirtualFile dir,
-                           @NotNull Disposable parentDisposable) {
+                           @NotNull VirtualFile dir) {
     myProject = project;
     myRootDir = dir;
+  }
+
+  protected RepositoryImpl(@NotNull Project project,
+                           @NotNull VirtualFile dir,
+                           @NotNull Disposable parentDisposable) {
+    this(project, dir);
     Disposer.register(parentDisposable, this);
   }
 

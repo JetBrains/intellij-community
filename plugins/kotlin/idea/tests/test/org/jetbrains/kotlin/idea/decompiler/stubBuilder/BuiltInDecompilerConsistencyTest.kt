@@ -28,9 +28,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
-    private val classFileDecompiler = KotlinClassFileDecompiler()
-    private val builtInsDecompiler = KotlinBuiltInDecompiler()
-
     override fun setUp() {
         super.setUp()
         BuiltInDefinitionFile.FILTER_OUT_CLASSES_EXISTING_AS_JVM_CLASS_FILES = false
@@ -49,10 +46,11 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
             // ExperimentalStdlibApi is incorrectly written in built-ins, see KT-53073
             excludedClasses = setOf("ExperimentalStdlibApi",
             // annotation arguments defaults are not written in built-ins KT-58052
-                                    "Deprecated", "RequiresOptIn", "DeprecatedSinceKotlin")
+                                    "Deprecated", "RequiresOptIn", "DeprecatedSinceKotlin"),
+            classNameForDirectorySearch = "Int",
         )
         doTest("kotlin.annotation", excludedClasses = setOf("Retention"))
-        doTest("kotlin.collections")
+        doTest("kotlin.collections", classNameForDirectorySearch = "List")
         doTest("kotlin.ranges")
         doTest("kotlin.reflect", 3,
                setOf("KTypeProjection") // TODO: seems @JvmField is @OptionalExpectation that makes KTypeProjection actual one
@@ -61,8 +59,15 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
 
     // Check stubs for decompiled built-in classes against stubs for decompiled JVM class files, assuming the latter are well tested
     // Check only those classes, stubs for which are present in the stub for a decompiled .kotlin_builtins file
-    private fun doTest(packageFqName: String, minClassesEncountered: Int = 5, excludedClasses: Set<String> = emptySet()) {
-        val dir = findDir(packageFqName, project)
+    private fun doTest(
+        packageFqName: String,
+        minClassesEncountered: Int = 5,
+        excludedClasses: Set<String> = emptySet(),
+        classNameForDirectorySearch: String? = null, // workaround for KTIJ-28858
+    ) {
+        val classFileDecompiler = KotlinClassFileDecompiler()
+        val builtInsDecompiler = KotlinBuiltInDecompiler()
+        val dir = findDir(packageFqName, project, classNameForDirectorySearch)
         val groupedByExtension = dir.children.groupBy { it.extension }
         val builtInsFile = groupedByExtension.getValue(BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION).single()
 
@@ -106,11 +111,16 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 }
 
-internal fun findDir(packageFqName: String, project: Project): VirtualFile {
-    val randomClassInPackage = KotlinFullClassNameIndex.getAllKeys(project).first {
-        it.startsWith("$packageFqName.") && "." !in it.substringAfter("$packageFqName.")
-    }
-    val classes = KotlinFullClassNameIndex.get(randomClassInPackage, project, GlobalSearchScope.allScope(project))
-    val firstClass = classes.firstOrNull() ?: error("No classes with this name found: $randomClassInPackage (package name $packageFqName)")
+internal fun findDir(
+    packageFqName: String,
+    project: Project,
+    classNameForDirectorySearch: String? = null // workaround for KTIJ-28858
+): VirtualFile {
+    val classInPackage = classNameForDirectorySearch?.let { "$packageFqName.$classNameForDirectorySearch" }
+        ?: KotlinFullClassNameIndex.getAllKeys(project).first {
+            it.startsWith("$packageFqName.") && "." !in it.substringAfter("$packageFqName.")
+        }
+    val classes = KotlinFullClassNameIndex.get(classInPackage, project, GlobalSearchScope.allScope(project))
+    val firstClass = classes.firstOrNull() ?: error("No classes with this name found: $classInPackage (package name $packageFqName)")
     return firstClass.containingFile.virtualFile.parent
 }

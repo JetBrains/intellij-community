@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.util.registry.Registry
@@ -92,18 +91,18 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     taskNotificationListener: ExternalSystemTaskNotificationListener,
     project: Project
   ): SdkInfo? {
-    val settings = use(project) { GradleSettings.getInstance(it) }
+    val settings = project.lock { GradleSettings.getInstance(it) }
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
 
     val originalGradleJvm = projectSettings.gradleJvm
-    val provider = use(project) { getGradleJvmLookupProvider(it, projectSettings) }
-    var sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, originalGradleJvm) }
+    val provider = project.lock { getGradleJvmLookupProvider(it, projectSettings) }
+    var sdkInfo = project.lock { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, originalGradleJvm) }
     if (sdkInfo is SdkInfo.Undefined || sdkInfo is SdkInfo.Unresolved || sdkInfo is SdkInfo.Resolving) {
       waitForGradleJvmResolving(provider, task, taskNotificationListener)
       if (projectSettings.gradleJvm == null) {
         projectSettings.gradleJvm = originalGradleJvm ?: ExternalSystemJdkUtil.USE_PROJECT_JDK
       }
-      sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
+      sdkInfo = project.lock { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
     }
 
     val gradleJvm = projectSettings.gradleJvm
@@ -156,12 +155,16 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       }
     else null
 
-  private fun <R> use(project: Project, action: (Project) -> R): R {
+  /**
+   * Critical execution section.
+   * An explicit WriteAction is required to prevent the project from disposing.
+   */
+  private fun <R> Project.lock(action: (Project) -> R): R {
     return invokeAndWaitIfNeeded {
       runWriteAction {
-        when (project.isDisposed) {
+        when (isDisposed) {
           true -> throw ProcessCanceledException()
-          else -> action(project)
+          else -> action(this)
         }
       }
     }
@@ -178,7 +181,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     lookupProvider: SdkLookupProvider,
     task: ExternalSystemTask,
     taskNotificationListener: ExternalSystemTaskNotificationListener
-  ): Sdk? {
+  ) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       LOG.error("Do not perform synchronous wait for sdk downloading in EDT - causes deadlock.")
       throw jdkConfigurationException("gradle.jvm.is.being.resolved.error")
@@ -190,9 +193,8 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       submitProgressStatus(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.is.being.resolved"))
     }
     whenTaskCanceled(task) { progressIndicator.cancel() }
-    val result = lookupProvider.blockingGetSdk()
+    lookupProvider.waitForLookup()
     submitProgressFinished(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.has.been.resolved"))
-    return result
   }
 
 

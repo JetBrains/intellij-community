@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.parcelize.ParcelizeAnnotationChecker
 import org.jetbrains.kotlin.parcelize.ParcelizeDeclarationChecker
+import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
@@ -21,8 +22,8 @@ class IdeParcelizeDeclarationCheckerComponentContainerContributor : StorageCompo
         if (platform.isJvm()) {
             val moduleInfo = moduleDescriptor.moduleInfo
             if (moduleInfo is ModuleSourceInfo && ParcelizeAvailability.isAvailable(moduleInfo.module)) {
-                container.useInstance(ParcelizeDeclarationChecker())
-                container.useInstance(ParcelizeAnnotationChecker())
+                container.useInstance(ParcelizeDeclarationChecker(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES))
+                container.useInstance(ParcelizeAnnotationChecker(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES))
             }
         }
     }

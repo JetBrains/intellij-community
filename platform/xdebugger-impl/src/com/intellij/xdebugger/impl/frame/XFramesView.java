@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.HighlightingPassesCache;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -44,8 +45,10 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAbove;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +73,7 @@ public final class XFramesView extends XDebugView {
   private final @NotNull WeakReference<XDebugSessionImpl> mySessionRef;
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
+  private final JScrollPane myScrollPane;
   private final ComboBox<XExecutionStack> myThreadComboBox;
   private final Map<XExecutionStack, XStackFrame> myExecutionStacksWithSelection = new HashMap<>();
   private final AutoScrollToSourceHandler myFrameSelectionHandler;
@@ -154,7 +158,10 @@ public final class XFramesView extends XDebugView {
       }
     });
 
-    myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
+    Component framesList = DebuggerUIUtil.shouldUseAntiFlickeringPanel() ?
+                           new AntiFlickeringPanel(myFramesList) : myFramesList;
+    myScrollPane = ScrollPaneFactory.createScrollPane(framesList);
+    myMainPanel.add(myScrollPane, BorderLayout.CENTER);
 
     myThreadComboBox = new XDebuggerEmbeddedComboBox<>();
     myThreadComboBox.setSwingPopup(false);
@@ -400,6 +407,10 @@ public final class XFramesView extends XDebugView {
     myRefresh = event == SessionEvent.SETTINGS_CHANGED;
 
     if (event == SessionEvent.BEFORE_RESUME) {
+      if (DebuggerUIUtil.freezePaintingToReduceFlickering(myFramesList.getParent())) {
+        myScrollPane.getHorizontalScrollBar().setValue(0);
+        myScrollPane.getVerticalScrollBar().setValue(0);
+      }
       return;
     }
 
@@ -703,7 +714,7 @@ public final class XFramesView extends XDebugView {
       if (toSelect instanceof XStackFrame) {
         if (myFramesList.selectFrame((XStackFrame)toSelect)) return true;
         if (myAllFramesLoaded && myFramesList.getSelectedValue() == null) {
-          LOG.error("Frame was not found, " + myToSelect.getClass() + " must correctly override equals");
+          LOG.warn("Frame was not found, it was either hidden without placeholder (" + HiddenStackFramesItem.class + ") or " + myToSelect.getClass() + " must correctly override equals");
         }
       }
       else if (toSelect instanceof Integer) {
@@ -726,6 +737,11 @@ public final class XFramesView extends XDebugView {
       }
       return selectCurrentFrame();
     }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull ComboBox<XExecutionStack> getThreadComboBox() {
+    return myThreadComboBox;
   }
 
   /**

@@ -163,6 +163,7 @@ fun getExecutionOperation(project: Project, parentDisposable: Disposable): Obser
         null -> OperationExecutionStatus.Failure()
         else -> OperationExecutionStatus.Failure(cause)
       }
+      executionOperation.traceStart(executionId)
       executionOperation.traceFinish(executionId, status)
     }
 

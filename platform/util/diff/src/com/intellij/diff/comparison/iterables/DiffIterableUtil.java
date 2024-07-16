@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison.iterables;
 
 import com.intellij.diff.comparison.CancellationChecker;
@@ -19,6 +19,9 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class DiffIterableUtil {
+
+  private DiffIterableUtil() { }
+
   @TestOnly
   private static boolean SHOULD_VERIFY_ITERABLE = false;
 

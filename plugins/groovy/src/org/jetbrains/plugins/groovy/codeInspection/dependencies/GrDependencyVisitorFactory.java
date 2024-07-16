@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 
-class GrDependencyVisitorFactory extends DependencyVisitorFactory {
+final class GrDependencyVisitorFactory extends DependencyVisitorFactory {
   @NotNull
   @Override
   public PsiElementVisitor getVisitor(@NotNull DependenciesBuilder.DependencyProcessor processor,

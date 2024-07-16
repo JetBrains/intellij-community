@@ -175,12 +175,17 @@ final class FileTrees {
     try {
       return DebugUtil.performPsiModification("reconcilePsi", () -> {
         if (myRefToPsi != null) {
-          assert myRefToPsi.length == (stubList != null ? stubList.size() : nodeList.size()) : "Cached PSI count doesn't match actual one";
+          assert myRefToPsi.length == (stubList != null ? stubList.size() : nodeList.size())
+            : "Cached PSI count doesn't match actual one. " +
+              "myRefToPsi.length=" + myRefToPsi.length + ", " +
+              "stubList.size=" + (stubList == null ? "null" : stubList.size()) + ", " +
+              "nodeList.size=" + (nodeList == null ? "null" : nodeList.size());
           bindSubstratesToCachedPsi(stubList, nodeList);
         }
 
         if (stubList != null && nodeList != null) {
-          assert stubList.size() == nodeList.size() : "Stub count doesn't match stubbed node length";
+          assert stubList.size() == nodeList.size() : "Stub count (" + stubList.size() + ") doesn't match " +
+                                                      "stubbed node length (" + nodeList.size() + ")";
 
           FileTrees result = switchToSpineRefs(srcSpine);
           bindStubsWithAst(srcSpine, stubList, nodeList, takePsiFromStubs);

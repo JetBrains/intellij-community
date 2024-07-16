@@ -16,6 +16,37 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
     doTest();
   }
 
+  public void testNestedDeconstructionPatterns() {
+    doTest("""
+    final class Test {
+        public static void main(String[] args) {
+            final var nullLevel2 = new Level1(null);
+            final var nullLevel3 = new Level1(new Level2(null));
+            final var full = new Level1(new Level2(new Level3()));
+            System.out.println(getLevel3(null));
+            System.out.println(getLevel3(nullLevel2));
+            System.out.println(getLevel3(nullLevel3));
+            System.out.println(getLevel3(full));
+        }
+    
+        private static Level3 getLevel3(final Level1 level1) {
+            return switch (level1) {
+                case Level1(Level2(var something)) -> something;
+                case null, default -> null;
+            };
+        }
+    
+        static class Level3 {
+        }
+    
+        record Level2(Level3 something) {
+        }
+    
+        record Level1(Level2 level2) {
+        }
+    }""");
+  }
+
   public void testSwitchExpression() {
     doTest("""
              class X {

@@ -8,7 +8,10 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
@@ -19,22 +22,22 @@ import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.ui.JBUI
 import org.cef.browser.CefBrowser
 import org.cef.handler.CefLoadHandlerAdapter
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ClipboardUtils
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.InlayDimensions
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.MouseWheelUtils
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.dataframe.DataFrameCSVAdapter
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.runAsyncInlay
@@ -42,13 +45,8 @@ import org.jetbrains.plugins.notebooks.visualization.r.ui.ToolbarUtil
 import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.event.ActionEvent
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
 import java.io.File
-import javax.swing.AbstractAction
 import javax.swing.JComponent
-import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import kotlin.math.max
 import kotlin.math.min
@@ -120,10 +118,13 @@ abstract class InlayOutput(parent: Disposable, val editor: Editor, private val c
   }
 
   private fun createToolbar(): JComponent {
-    return ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + createClearAction()).apply {
-      isOpaque = true
-      background = UiCustomizer.instance.getTextOutputBackground(editor)
-    }
+    val toolbar = ToolbarUtil.createEllipsisToolbar("NotebooksInlayOutput", actions + createClearAction())
+
+    toolbar.targetComponent = toolbarPane // ToolbarPane will be in context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+    toolbar.component.isOpaque = true
+    toolbar.component.background = UiCustomizer.instance.getTextOutputBackground(editor)
+
+    return toolbar.component
   }
 
   protected fun saveWithFileChooser(@Nls title: String,
@@ -232,7 +233,7 @@ class InlayOutputText(parent: Disposable, editor: Editor, clearAction: () -> Uni
     toolbarPane.dataComponent = console.component
 
     val consoleEditor = console.editor as EditorEx
-    initOutputTextConsole(editor, parent, consoleEditor, scrollPaneTopBorderHeight)
+    initOutputTextConsole(editor, consoleEditor, scrollPaneTopBorderHeight)
     ApplicationManager.getApplication().messageBus.connect(console)
       .subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
         updateOutputTextConsoleUI(consoleEditor, editor)
@@ -323,28 +324,36 @@ object EmptySoftWrapPainter : SoftWrapPainter {
   override fun reinit() {}
 }
 
+internal class NotebookOutputSelectAllAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    // for some reason, EDITOR and HOST_EDITOR are always null for console output components. this is a workaround.
+    val editor = e.getData(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE)
+
+    e.presentation.isEnabled = editor?.contentComponent?.hasFocus() == true && editor.getUserData(NOTEBOOKS_CONSOLE_OUTPUT_KEY) == true
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val editor = e.getData(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE) ?: return
+    editor.selectionModel.setSelection(0, editor.document.text.length)
+  }
+}
+
+private val NOTEBOOKS_CONSOLE_OUTPUT_KEY = Key.create<Boolean>("NOTEBOOKS_CONSOLE_OUTPUT")
+
 fun initOutputTextConsole(editor: Editor,
-                          parent: Disposable,
                           consoleEditor: EditorEx,
                           scrollPaneTopBorderHeight: Int) {
   updateOutputTextConsoleUI(consoleEditor, editor)
   consoleEditor.apply {
     isRendererMode = true
     scrollPane.border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(scrollPaneTopBorderHeight))
-    MouseWheelUtils.wrapMouseWheelListeners(scrollPane, parent)
     contentComponent.putClientProperty("AuxEditorComponent", true)
+    putUserData(NOTEBOOKS_CONSOLE_OUTPUT_KEY, true)
   }
-
-  @NonNls
-  val actionNameSelect = VisualizationBundle.message("action.name.output.select.all")
-  val actionSelect = object : AbstractAction(actionNameSelect) {
-    override fun actionPerformed(e: ActionEvent) {
-      consoleEditor.selectionModel.setSelection(0, consoleEditor.document.text.length)
-    }
-  }
-  consoleEditor.contentComponent.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK),
-                                              actionNameSelect)
-  consoleEditor.contentComponent.actionMap.put(actionNameSelect, actionSelect)
 
   consoleEditor.settings.isUseSoftWraps = true
 }
@@ -362,12 +371,11 @@ fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
 class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
 
   private val jbBrowser: JBCefBrowser = JBCefBrowser().also { Disposer.register(parent, it) }
-  private val heightJsCallback = JBCefJSQuery.create(jbBrowser)
-  private val saveJsCallback = JBCefJSQuery.create(jbBrowser)
+  private val heightJsCallback = JBCefJSQuery.create(jbBrowser as JBCefBrowserBase)
+  private val saveJsCallback = JBCefJSQuery.create(jbBrowser as JBCefBrowserBase)
   private var height: Int = 0
 
   init {
-    MouseWheelUtils.wrapMouseWheelListeners(jbBrowser.component, parent)
     heightJsCallback.addHandler {
       val height = it.toInt()
       if (this.height != height) {
@@ -447,7 +455,6 @@ class InlayOutputTable(val parent: Disposable, editor: Editor, clearAction: () -
 
   init {
     toolbarPane.dataComponent = inlayTablePage
-    MouseWheelUtils.wrapMouseWheelListeners(inlayTablePage.scrollPane, parent)
   }
 
   override fun clear() {}

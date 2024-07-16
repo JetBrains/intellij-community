@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiParameter;
@@ -12,8 +12,8 @@ import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiParameterStub {
-  private final static byte ELLIPSIS = 0x01;
-  private final static byte GENERATED_NAME = 0x02;
+  private static final byte ELLIPSIS = 0x01;
+  private static final byte GENERATED_NAME = 0x02;
 
   private static byte packFlags(boolean isEllipsis, boolean generatedName) {
     byte flags = 0;
@@ -43,8 +43,7 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
   }
 
   @Override
-  @NotNull
-  public TypeInfo getType() {
+  public @NotNull TypeInfo getType() {
     return myType;
   }
 
@@ -58,9 +57,8 @@ public class PsiParameterStubImpl extends StubBase<PsiParameter> implements PsiP
     return null;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 

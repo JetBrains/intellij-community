@@ -98,4 +98,3 @@ fun <T> T.intLambda(l: () -> Int) {
 fun <T> T.samIntLambda(l: SamLambda) {
     l.run()
 }
-// IGNORE_K2

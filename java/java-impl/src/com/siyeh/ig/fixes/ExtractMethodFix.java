@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class ExtractMethodFix extends RefactoringInspectionGadgetsFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("extract.method.quickfix");
   }
 
@@ -34,9 +33,8 @@ public class ExtractMethodFix extends RefactoringInspectionGadgetsFix {
     return element;
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public @NotNull RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createExtractMethodHandler();
   }
 }

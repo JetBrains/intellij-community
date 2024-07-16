@@ -49,6 +49,7 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
@@ -69,7 +70,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   private val myProject: Project?,
   defaultMessage: LogMessage?,
   private var updateControlsJob: Job = SupervisorJob()
-) : DialogWrapper(myProject, true), MessagePoolListener, DataProvider {
+) : DialogWrapper(myProject, true), MessagePoolListener, UiCompatibleDataProvider {
   private val myAssigneeVisible: Boolean =
     (ApplicationManager.getApplication().isInternal || PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))) &&
     Registry.`is`("ea.enable.developers.list", true)
@@ -736,8 +737,9 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
   }
 
-  override fun getData(dataId: String): Any? =
-    if (CURRENT_TRACE_KEY.`is`(dataId)) selectedMessage().throwableText else null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[CURRENT_TRACE_KEY] = selectedMessage().throwableText
+  }
 
   /* helpers */
   private class MessageCluster(val first: AbstractMessage) {
@@ -1002,6 +1004,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use {@link PluginUtil#findPluginId} ", ReplaceWith("PluginUtil.getInstance().findPluginId(t)"))
     fun findPluginId(t: Throwable): PluginId? =
       PluginUtil.getInstance().findPluginId(t)

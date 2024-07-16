@@ -7,6 +7,7 @@ import com.intellij.facet.impl.FacetUtil
 import com.intellij.ide.IdeEventQueue
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryLibraryType
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -26,7 +27,9 @@ import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
+import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -123,7 +126,9 @@ class UpdateConfigurationQuickFixTest : BasePlatformTestCase() {
     }
 
     fun testAddKotlinReflect() {
-        configureRuntime("actualRuntime")
+        // The configurator uses a stable Kotlin version which has kotlin-reflect available on maven-central
+        val configurator = findApplicableConfigurator(project.modules.first())
+        configurator.configure(project, emptyList())
         myFixture.configureByText(
             "foo.kt", """class Foo(val prop: Any) {
                 fun func() {}

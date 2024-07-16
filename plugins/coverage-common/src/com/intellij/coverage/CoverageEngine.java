@@ -150,7 +150,9 @@ public abstract class CoverageEngine {
    * @param psiFile file
    * @return false if coverage N/A for given file
    */
-  public abstract boolean coverageEditorHighlightingApplicableTo(@NotNull final PsiFile psiFile);
+  public boolean coverageEditorHighlightingApplicableTo(@NotNull final PsiFile psiFile) {
+    return true;
+  }
 
   /**
    * Checks whether file is accepted by coverage filters or not. Is used in Project View Nodes annotator.
@@ -159,13 +161,16 @@ public abstract class CoverageEngine {
    * @param suite   Coverage suite
    * @return true if included in coverage
    */
-  public abstract boolean acceptedByFilters(@NotNull final PsiFile psiFile, @NotNull final CoverageSuitesBundle suite);
+  public boolean acceptedByFilters(@NotNull final PsiFile psiFile, @NotNull final CoverageSuitesBundle suite) {
+    return true;
+  }
 
   /**
    * E.g., all *.class files for java source file with several classes
    *
    * @return files
    */
+  @ApiStatus.Internal
   @NotNull
   public Set<File> getCorrespondingOutputFiles(@NotNull final PsiFile srcFile,
                                                @Nullable final Module module,
@@ -179,6 +184,7 @@ public abstract class CoverageEngine {
    *
    * @return True, if should stop and wait for compilation (e.g., for Java). False if we can ignore output (e.g., for Ruby)
    */
+  @ApiStatus.Internal
   public boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
                                                 @NotNull final Runnable chooseSuiteAction) {
     return false;
@@ -188,8 +194,9 @@ public abstract class CoverageEngine {
    * Qualified name same as in coverage raw project data
    * E.g., java class qualified name by *.class file of some Java class in corresponding source file
    */
+  @ApiStatus.Internal
   @Nullable
-  public String getQualifiedName(@NotNull final File outputFile,
+  protected String getQualifiedName(@NotNull final File outputFile,
                                  @NotNull final PsiFile sourceFile) {
     return null;
   }
@@ -200,12 +207,15 @@ public abstract class CoverageEngine {
    * a valid parameter for {@link com.intellij.rt.coverage.data.ProjectData#getClassData(String)}).
    */
   @NotNull
-  public abstract Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile);
+  public Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile) {
+    return Collections.emptySet();
+  }
 
   /**
    * Decide to include a file or not in a coverage report if coverage data isn't available for the file.
    * E.g., file wasn't touched by coverage util
    */
+  @ApiStatus.Internal
   public boolean includeUntouchedFileInCoverage(@NotNull final String qualifiedName,
                                                 @NotNull final File outputFile,
                                                 @NotNull final PsiFile sourceFile,
@@ -218,6 +228,7 @@ public abstract class CoverageEngine {
    *
    * @return List (probably empty) of code lines or null if all lines should be marked as uncovered
    */
+  @ApiStatus.Internal
   @Nullable
   public List<Integer> collectSrcLinesForUntouchedFile(@NotNull final File classFile,
                                                        @NotNull final CoverageSuitesBundle suite) {
@@ -235,6 +246,7 @@ public abstract class CoverageEngine {
    * @param lineData    the coverage data for the line.
    * @return the text to show.
    */
+  @ApiStatus.Internal
   public String generateBriefReport(@NotNull Editor editor,
                                     @NotNull PsiFile psiFile,
                                     int lineNumber,
@@ -248,6 +260,7 @@ public abstract class CoverageEngine {
   /**
    * Content of a brief report which will be shown by click on coverage icon
    */
+  @ApiStatus.Internal
   public String generateBriefReport(@NotNull CoverageSuitesBundle bundle,
                                     @NotNull Editor editor,
                                     @NotNull PsiFile psiFile,
@@ -271,6 +284,7 @@ public abstract class CoverageEngine {
                              @NotNull final CoverageSuitesBundle currentSuite) {
   }
 
+  @ApiStatus.Internal
   @NotNull
   public ExportToHTMLDialog createGenerateReportDialog(@NotNull final Project project,
                                                        @NotNull final DataContext dataContext,
@@ -291,14 +305,17 @@ public abstract class CoverageEngine {
     return dialog;
   }
 
+  @ApiStatus.Internal
   public boolean coverageProjectViewStatisticsApplicableTo(VirtualFile fileOrDir) {
     return false;
   }
 
-  public Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, @NotNull Editor editor) {
+  @ApiStatus.Internal
+  protected Object @NotNull [] postProcessExecutableLines(Object @NotNull [] lines, @NotNull Editor editor) {
     return lines;
   }
 
+  @ApiStatus.Internal
   public CoverageLineMarkerRenderer getLineMarkerRenderer(int lineNumber,
                                                           @Nullable final String className,
                                                           @NotNull final TreeMap<Integer, LineData> lines,
@@ -312,30 +329,37 @@ public abstract class CoverageEngine {
                    subCoverageActive);
   }
 
-  public boolean shouldHighlightFullLines() {
-    return false;
-  }
-
   /**
    * @return true if highlighting should skip the line as it represents no actual source code
    */
-  public boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
+  @ApiStatus.Internal
+  protected boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
     return false;
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   @NotNull
   public CoverageEditorAnnotator createSrcFileAnnotator(PsiFile file, Editor editor) {
     return new CoverageEditorAnnotatorImpl(file, editor);
   }
 
+  @ApiStatus.Internal
   public static @TabTitle String getEditorTitle() {
     return CoverageBundle.message("coverage.tab.title");
   }
 
+  /**
+   * @deprecated Use {@link #createCoverageViewExtension(Project, CoverageSuitesBundle)}
+   */
+  @Deprecated
   public CoverageViewExtension createCoverageViewExtension(Project project,
                                                            CoverageSuitesBundle suiteBundle,
-                                                           CoverageViewManager.StateBean stateBean) {
+                                                           @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    return createCoverageViewExtension(project, suiteBundle);
+  }
+
+  public CoverageViewExtension createCoverageViewExtension(Project project,
+                                                           CoverageSuitesBundle suiteBundle) {
     return null;
   }
 
@@ -345,12 +369,14 @@ public abstract class CoverageEngine {
     return ReadAction.compute(() -> projectFileIndex.isInLibraryClasses(file) && !projectFileIndex.isInSource(file));
   }
 
-  public boolean isInLibrarySource(Project project, VirtualFile file) {
+  @ApiStatus.Internal
+  protected boolean isInLibrarySource(Project project, VirtualFile file) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     return ReadAction.compute(() -> projectFileIndex.isInLibrarySource(file));
   }
 
+  @ApiStatus.Internal
   public boolean canHavePerTestCoverage(@NotNull final RunConfigurationBase<?> conf) {
     return false;
   }
@@ -358,6 +384,7 @@ public abstract class CoverageEngine {
   /**
    * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
    */
+  @ApiStatus.Internal
   public Set<String> getTestsForLine(Project project, CoverageSuitesBundle bundle, String classFQName, int lineNumber) {
     return Collections.emptySet();
   }
@@ -365,10 +392,12 @@ public abstract class CoverageEngine {
   /**
    * @return true, if test data was collected
    */
+  @ApiStatus.Internal
   public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
     return false;
   }
 
+  @ApiStatus.Internal
   public List<PsiElement> findTestsByNames(final String @NotNull [] testNames, @NotNull final Project project) {
     return Collections.emptyList();
   }
@@ -376,6 +405,7 @@ public abstract class CoverageEngine {
   /**
    * To support per test coverage. Return file name which contains traces for a given test
    */
+  @ApiStatus.Internal
   @Nullable
   public String getTestMethodName(@NotNull final PsiElement element, @NotNull final AbstractTestProxy testProxy) {
     return null;
@@ -388,25 +418,11 @@ public abstract class CoverageEngine {
    * @param suite              suite to find corresponding traces
    * @param trace              class - lines map, corresponding to the lines covered by sanitizedTestNames
    */
+  @ApiStatus.Internal
   public void collectTestLines(List<String> sanitizedTestNames, CoverageSuite suite, Map<String, Set<Integer>> trace) { }
 
+  @ApiStatus.Internal
   protected void deleteAssociatedTraces(CoverageSuite suite) { }
-
-  /**
-   * @deprecated Use {@link #getTestsForLine(Project, CoverageSuitesBundle, String, int)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public Set<String> getTestsForLine(Project ignoredProject, String ignoredClassFQName, int ignoredLineNumber) {
-    return Collections.emptySet();
-  }
-
-  /**
-   * @deprecated Use {@link #wasTestDataCollected(Project, CoverageSuitesBundle)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public boolean wasTestDataCollected(Project ignoredProject) {
-    return false;
-  }
 
   /**
    * @deprecated Is not used

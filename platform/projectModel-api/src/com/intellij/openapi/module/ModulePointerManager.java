@@ -11,6 +11,10 @@ public abstract class ModulePointerManager {
     return project.getService(ModulePointerManager.class);
   }
 
+  @ApiStatus.Internal
+  protected ModulePointerManager() {
+  }
+
   public abstract @NotNull ModulePointer create(@NotNull Module module);
 
   public abstract @NotNull ModulePointer create(@NotNull String moduleName);

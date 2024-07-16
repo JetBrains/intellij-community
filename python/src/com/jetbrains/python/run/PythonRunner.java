@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -28,8 +29,7 @@ import static com.jetbrains.python.inspections.PyInterpreterInspection.Interpret
 
 public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
   @Override
-  @NotNull
-  public String getRunnerId() {
+  public @NotNull String getRunnerId() {
     return "PythonRunner";
   }
 
@@ -51,9 +51,8 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
     }
   }
 
-  @NotNull
   @Override
-  protected Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment env, @NotNull RunProfileState state) {
+  protected @NotNull Promise<@Nullable RunContentDescriptor> execute(@NotNull ExecutionEnvironment env, @NotNull RunProfileState state) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
@@ -84,7 +83,7 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
           () -> promise.setResult(DefaultProgramRunnerKt.showRunContent(executionResult, env)),
           ModalityState.any());
       }
-      catch (Exception e) {
+      catch (ExecutionException e) {
         promise.setError(e);
       }
     });

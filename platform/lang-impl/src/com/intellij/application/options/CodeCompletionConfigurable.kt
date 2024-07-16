@@ -25,9 +25,7 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.selected
 
 class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.code.completion"), "reference.settingsdialog.IDE.editor.code.completion"),

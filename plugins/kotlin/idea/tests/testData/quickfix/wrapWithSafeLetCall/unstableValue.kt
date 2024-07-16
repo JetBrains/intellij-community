@@ -1,6 +1,6 @@
 // "Wrap with '?.let { ... }' call" "false"
 // WITH_STDLIB
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (x!!) call
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Replace with safe (?.) call

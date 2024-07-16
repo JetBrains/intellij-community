@@ -41,7 +41,7 @@ enum Operation {
 enum enumWithTypeParameterInValueOf {
   ;
 
-  <error descr="'valueOf(String)' clashes with 'valueOf(String)'; both methods have same erasure"><error descr="'valueOf(String)' is already defined in 'enumWithTypeParameterInValueOf'">static <T> void valueOf(String s)</error></error> {}
+  <error descr="'valueOf(String)' clashes with 'valueOf(String)'; both methods have same erasure">static <T> void valueOf(String s)</error> {}
 }
 
 class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error> {

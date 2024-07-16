@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -14,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
@@ -22,6 +24,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -592,6 +595,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     void stopBeat() {
       if (myFuture != null) {
         myFuture.cancel(false);
+        myFuture = null;
       }
     }
 
@@ -601,7 +605,21 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       myFuture = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> {
         beat();
       }, pulseTimeoutMillis, pulseTimeoutMillis, TimeUnit.MILLISECONDS);
-      Disposer.register(ApplicationManager.getApplication(), () -> stopBeat());
+      //noinspection TestOnlyProblems
+      Job contextJob = Cancellation.currentJob();
+      if (contextJob != null) {
+        // The spawned process is bound to the container that invoked it
+        // Using Application as a default container is a bad guess, as it does not allow
+        // proper disposal of the closing of the actual container
+        // which may lead to project leaks, in this particular case.
+        contextJob.invokeOnCompletion((__) -> {
+          stopBeat();
+          return null;
+        });
+      }
+      else {
+        Disposer.register(ApplicationManager.getApplication(), () -> stopBeat());
+      }
     }
 
     public boolean beat() {

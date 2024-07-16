@@ -40,7 +40,7 @@ class Bar extends Foo {
 
   @Override
   void test2(Point[] points) {
-    for (Point(<error descr="Incompatible types. Found: 'int', required: 'double'">int x</error>, <error descr="Incompatible types. Found: 'int', required: 'double'">int y</error>) : points) {}
+    for (<error descr="Pattern 'Point' is not exhaustive on 'Point'">Point(int x, int y)</error> : points) {}
   }
 
   @Override

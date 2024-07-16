@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.array;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -51,17 +51,14 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
   }
 
   @Override
-  @Nullable
-  @NlsSafe
-  public Object getCellEditorValue() {
+  public @Nullable @NlsSafe Object getCellEditorValue() {
     if (myEditor.getEditor() != null) {
       return myEditor.getEditor().getDocument().getText();
     }
     return null;
   }
 
-  @NotNull
-  private KeyAdapter getActionsAdapter(final int rowIndex, final int vColIndex) {
+  private @NotNull KeyAdapter getActionsAdapter(final int rowIndex, final int vColIndex) {
     return new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -103,7 +100,7 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
     public MyTableEditor(Project project,
                          XDebuggerEditorsProvider debuggerEditorsProvider,
                          @Nullable @NonNls String historyId,
-                         @Nullable XSourcePosition sourcePosition, @NotNull XExpression text, @NotNull final KeyAdapter actionAdapter) {
+                         @Nullable XSourcePosition sourcePosition, @NotNull XExpression text, final @NotNull KeyAdapter actionAdapter) {
       super(project, debuggerEditorsProvider, EvaluationMode.CODE_FRAGMENT, historyId, sourcePosition);
       myExpression = XExpressionImpl.changeMode(text, getMode());
       myEditorTextField = new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType()) {
@@ -141,15 +138,13 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
     }
 
     @Override
-    @Nullable
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       final Editor editor = myEditorTextField.getEditor();
       return editor != null ? editor.getContentComponent() : null;
     }
 
-    @Nullable
     @Override
-    public Editor getEditor() {
+    public @Nullable Editor getEditor() {
       return myEditorTextField.getEditor();
     }
 

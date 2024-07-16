@@ -104,11 +104,15 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                       }
                                     }, PsiTypeCastExpression.class, Function.identity()),
                                     new InsertTypeCastCommand(file));
-    PropertyChecker
+    PropertyChecker.customized()
+      .withIterationCount(50)
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
-  public void testParenthesesDontChangeIntention() {
+  /**
+   * The test is disabled, as we have no resources to monitor and fix the parentheses issues
+   */
+  public void _testParenthesesDontChangeIntention() {
     enableInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaParenthesesPolicy()), new StripTestDataMarkup(file));

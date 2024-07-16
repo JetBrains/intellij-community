@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.OpaquePanel;
-import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
@@ -64,13 +63,13 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   public BranchActionGroupPopup(@Nullable @NlsContexts.PopupTitle String title,
                                 @NotNull Project project,
-                                @NotNull Condition<? super AnAction> preselectActionCondition,
+                                @NotNull Condition<? super AnAction> preselectCondition,
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey,
                                 @NotNull DataContext dataContext) {
     super(title,
           ActionGroupUtil.forceRecursiveUpdateInBackground(createBranchSpeedSearchActionGroup(actions)),
-          dataContext, ActionPlaces.getPopupPlace(BRANCH_POPUP), preselectActionCondition, true);
+          dataContext, ActionPlaces.getPopupPlace(BRANCH_POPUP), preselectCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
     myKey = buildDimensionKey(dimensionKey);
@@ -428,7 +427,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
   }
 
-  private static class MoreAction extends DumbAwareAction implements KeepingPopupOpenAction {
+  private static class MoreAction extends DumbAwareAction {
 
     @NotNull private final Project myProject;
     @Nullable private final @NonNls String mySettingName;
@@ -443,6 +442,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                boolean defaultExpandValue,
                boolean hasFavorites) {
       super();
+      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.Always);
       myProject = project;
       mySettingName = settingName;
       myDefaultExpandValue = defaultExpandValue;

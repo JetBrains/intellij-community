@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtImportOptimizerResult
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.components.KaImportOptimizerResult
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
 import org.jetbrains.kotlin.name.parentOrNull
@@ -19,13 +19,13 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
 
     override fun analyzeImports(file: KtFile): KotlinOptimizeImportsFacility.ImportData {
         // Import optimizer might be called from reformat action in EDT, see KTIJ-25031
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         val importAnalysis = allowAnalysisOnEdt {
             // Import optimizer might invoke be from write action in refactorings
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(file) {
-                    analyseImports(file)
+                    analyzeImportsToOptimize(file)
                 }
             }
         }
@@ -34,7 +34,7 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
         return K2ImportData(unusedImports.toList())
     }
 
-    private fun computeUnusedImports(file: KtFile, result: KtImportOptimizerResult): Set<KtImportDirective> {
+    private fun computeUnusedImports(file: KtFile, result: KaImportOptimizerResult): Set<KtImportDirective> {
         val existingImports = file.importDirectives
         if (existingImports.isEmpty()) return emptySet()
 

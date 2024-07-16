@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -34,8 +34,7 @@ public final class PackageUtil {
     return aPackage.getDirectories(scopeToShow);
   }
 
-  @NotNull
-  static GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
+  static @NotNull GlobalSearchScope getScopeToShow(@NotNull Project project, @Nullable Module module, boolean forLibraries) {
     if (module == null) {
       if (forLibraries) {
         return new ProjectLibrariesSearchScope(project);
@@ -56,21 +55,19 @@ public final class PackageUtil {
     return qName.isEmpty();
   }
 
-  @NotNull
-  public static Collection<AbstractTreeNode<?>> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
-                                                                       @NotNull Project project,
-                                                                       @NotNull ViewSettings settings,
-                                                                       @Nullable Module module,
-                                                                       final boolean inLibrary) {
+  public static @NotNull Collection<AbstractTreeNode<?>> createPackageViewChildrenOnFiles(@NotNull List<? extends VirtualFile> sourceRoots,
+                                                                                          @NotNull Project project,
+                                                                                          @NotNull ViewSettings settings,
+                                                                                          @Nullable Module module,
+                                                                                          final boolean inLibrary) {
     return new PackageNodeBuilder(module, inLibrary).createPackageViewChildrenOnFiles(sourceRoots, project, settings);
   }
 
-  @NotNull
-  public static String getNodeName(@NotNull ViewSettings settings,
-                                   PsiPackage aPackage,
-                                   final PsiPackage parentPackageInTree,
-                                   @NotNull String defaultShortName,
-                                   boolean isFQNameShown) {
+  public static @NotNull String getNodeName(@NotNull ViewSettings settings,
+                                            PsiPackage aPackage,
+                                            final PsiPackage parentPackageInTree,
+                                            @NotNull String defaultShortName,
+                                            boolean isFQNameShown) {
     final String name;
     if (isFQNameShown) {
       name = settings.isAbbreviatePackageNames() ?

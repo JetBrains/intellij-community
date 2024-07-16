@@ -313,8 +313,7 @@ public final class GroovySmartCompletionContributor extends CompletionContributo
     if (pparent instanceof GrVariable) {
       return ((GrVariable)pparent).getDeclaredType();
     }
-    else if (pparent instanceof GrAssignmentExpression) {
-      GrAssignmentExpression assignment = (GrAssignmentExpression)pparent;
+    else if (pparent instanceof GrAssignmentExpression assignment) {
 
       GrExpression lvalue = assignment.getLValue();
       GrExpression rvalue = assignment.getRValue();

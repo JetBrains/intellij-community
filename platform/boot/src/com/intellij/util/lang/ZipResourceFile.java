@@ -18,7 +18,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 final class ZipResourceFile implements ResourceFile {
   private final ZipFile zipFile;
   private final boolean defineClassUsingBytes;
@@ -29,7 +28,7 @@ final class ZipResourceFile implements ResourceFile {
     ZipFilePool pool = ZipFilePool.POOL;
     try {
       if (pool == null) {
-        zipFile = ImmutableZipFile.load(file);
+        zipFile = ZipFile.load(file);
       }
       else {
         Object zipFile = pool.loadZipFile(file);

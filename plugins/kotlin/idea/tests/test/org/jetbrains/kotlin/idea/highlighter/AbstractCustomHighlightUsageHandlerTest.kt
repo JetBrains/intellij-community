@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.range
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -53,7 +53,7 @@ abstract class AbstractCustomHighlightUsageHandlerTest : KotlinLightCodeInsightF
 
         val ranges = editor.markupModel.allHighlighters
             .filter { it.textAttributesKey == EditorColors.SEARCH_RESULT_ATTRIBUTES || it.textAttributesKey == EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES }
-            .mapNotNull { it.range }
+            .mapNotNull { it.asTextRange }
 
         val infos = ranges.toHashSet()
             .map {

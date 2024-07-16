@@ -6,18 +6,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
-import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 import org.jetbrains.kotlin.onboarding.FeedbackBundle
+import org.jetbrains.kotlin.onboarding.FeedbackNotificationWithKotlinLogo
 
 class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override val surveyId: String = "k2_feedback"
-    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 3, 18)
-    override val requireIdeEAP: Boolean = true
+    override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 11, 1)
+    override val requireIdeEAP: Boolean = false
 
-    private val suitableIdeVersion = "2024.1"
+    private val suitableIdeVersion = "2024.2"
 
     override fun checkIdeIsSuitable(): Boolean {
         return PlatformUtils.isIdeaUltimate() || PlatformUtils.isIdeaCommunity()
@@ -25,7 +25,7 @@ class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     override fun checkExtraConditionSatisfied(project: Project): Boolean {
         return suitableIdeVersion == ApplicationInfo.getInstance().shortVersion &&
-                K2UserTracker.getInstance().shouldShowK2FeedbackDialog()
+                K2UserTracker.getInstance().shouldShowK2FeedbackDialog(project)
     }
 
     override fun updateStateAfterDialogClosedOk(project: Project) {
@@ -36,8 +36,8 @@ class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
         return K2FeedbackDialog(project, forTest)
     }
 
-    override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
-        return RequestFeedbackNotification(
+    override fun createNotification(project: Project, forTest: Boolean): FeedbackNotificationWithKotlinLogo {
+        return FeedbackNotificationWithKotlinLogo(
             "Feedback In IDE",
             FeedbackBundle.message("notification.k2.satisfaction.request.title"),
             FeedbackBundle.message("notification.k2.satisfaction.request.content")

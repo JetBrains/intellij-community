@@ -510,6 +510,10 @@ private class StackedCompositeBindingContextTrace(
         }
 
         override fun addOwnDataTo(trace: BindingTrace, commitDiagnostics: Boolean) = throw UnsupportedOperationException()
+
+        override fun getProject(): Project? {
+            return this@StackedCompositeBindingContextTrace.project
+        }
     }
 
     override fun <K : Any?, V : Any?> get(slice: ReadOnlySlice<K, V>, key: K): V? =

@@ -22,7 +22,7 @@ class PluginXmlReaderTest {
   fun `single module`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("plugin.main", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin.main", listOf("plugin"), emptyList()),
     )
     writePluginXml(tempDirectory.rootPath / "plugin", 
         """
@@ -31,7 +31,8 @@ class PluginXmlReaderTest {
             </idea-plugin>  
         """.trimIndent()
     )
-    val pluginModules = PluginXmlReader.loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository)
+    val pluginModules = PluginXmlReader.loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
+                                                          ResourceFileResolver.createDefault(repository))
     val main = pluginModules.single()
     assertEquals("plugin.main", main.moduleId.stringId)
     assertEquals(ModuleImportance.FUNCTIONAL, main.importance)
@@ -41,8 +42,8 @@ class PluginXmlReaderTest {
   fun `multiple modules`() {
     val repository = createRepository(
       tempDirectory.rootPath,
-      RawRuntimeModuleDescriptor("plugin.main", listOf("plugin"), emptyList()),
-      RawRuntimeModuleDescriptor("plugin.optional", emptyList(), listOf("plugin.main")),
+      RawRuntimeModuleDescriptor.create("plugin.main", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor.create("plugin.optional", emptyList(), listOf("plugin.main")),
     )
     @Suppress("XmlUnusedNamespaceDeclaration") 
     writePluginXml(tempDirectory.rootPath / "plugin", 
@@ -63,7 +64,8 @@ class PluginXmlReaderTest {
             </idea-plugin>  
         """.trimIndent()
     )
-    val pluginModules = PluginXmlReader.loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository)
+    val pluginModules = PluginXmlReader.loadPluginModules(repository.getModule(RuntimeModuleId.raw("plugin.main")), repository, 
+                                                          ResourceFileResolver.createDefault(repository))
     assertEquals(3, pluginModules.size)
     val (main, optional, unknown) = pluginModules
     assertEquals("plugin.main", main.moduleId.stringId)

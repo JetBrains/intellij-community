@@ -2,29 +2,31 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReferenceService
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
-import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossiblyNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossiblyNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.moveToConstructor
@@ -36,13 +38,14 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-class JoinDeclarationAndAssignmentInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtProperty, JoinDeclarationAndAssignmentInspection.Context>() {
+internal class JoinDeclarationAndAssignmentInspection :
+    KotlinApplicableInspectionBase.Simple<KtProperty, JoinDeclarationAndAssignmentInspection.Context>() {
+
     data class Context(
         val assignment: KtBinaryExpression,
         val canEraseDeclaredType: Boolean,
         val canOmitDeclaredType: Boolean,
-        val movePropertyToConstructorInfo: MovePropertyToConstructorInfo?
+        val movePropertyToConstructorInfo: MovePropertyToConstructorInfo?,
     )
 
     @JvmField
@@ -55,27 +58,26 @@ class JoinDeclarationAndAssignmentInspection :
         )
     )
 
-    override fun getActionFamilyName() = KotlinBundle.message("join.declaration.and.assignment")
-
     override fun getProblemDescription(element: KtProperty, context: Context) = KotlinBundle.message("can.be.joined.with.assignment")
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitProperty(property: KtProperty) {
-                visitTargetElement(property, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitProperty(property: KtProperty) {
+            visitTargetElement(property, holder, isOnTheFly)
         }
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> = ApplicabilityRanges.SELF
-
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     override fun prepareContext(element: KtProperty): Context? {
         val assignment = findFirstAssignment(element) ?: return null
         val initializer = assignment.right ?: return null
 
-        val initializerType = initializer.getKtType()
-        val propertyType = element.typeReference?.getKtType()
+        val initializerType = initializer.expressionType
+        val propertyType = element.typeReference?.type
 
         if (initializer.hasReference(element)) return null
         if (initializer.dependsOnNextSiblingsOfProperty(element)) return null
@@ -97,7 +99,7 @@ class JoinDeclarationAndAssignmentInspection :
             }
         }
 
-        val hasTypeParameters = !initializerType?.expandedClassSymbol?.typeParameters.isNullOrEmpty()
+        val hasTypeParameters = !initializerType?.expandedSymbol?.typeParameters.isNullOrEmpty()
         val canOmitDeclaredType =
             if (hasTypeParameters) false
             else equalTypes || !element.isVar && isSubtype
@@ -113,13 +115,13 @@ class JoinDeclarationAndAssignmentInspection :
         )
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun Sequence<PsiElement>.anyHasSmartCast(element: KtProperty): Boolean {
         val declarationName = element.name ?: return false
 
         fun PsiElement.hasSmartCast(element: KtProperty): Boolean {
             return anyDescendantOfType<KtNameReferenceExpression> {
-                it.text == declarationName && it.reference?.resolve() == element && it.getSmartCastInfo() != null
+                it.text == declarationName && it.reference?.resolve() == element && it.smartCastInfo != null
             }
         }
 
@@ -134,48 +136,61 @@ class JoinDeclarationAndAssignmentInspection :
                 && element.receiverTypeReference == null
                 && element.name != null
 
-    override fun apply(element: KtProperty, context: Context, project: Project, updater: ModPsiUpdater) {
-        if (element.typeReference == null) return
+    override fun createQuickFix(
+        element: KtProperty,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtProperty>() {
 
-        val assignment = updater.getWritable(context.assignment)
-        val movePropertyToConstructorInfo = context.movePropertyToConstructorInfo?.toWritable(updater)
-        val initializer = assignment.right ?: return
+        override fun getFamilyName(): String =
+            KotlinBundle.message("join.declaration.and.assignment")
 
-        element.initializer = initializer
-        if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifier(KtTokens.LATEINIT_KEYWORD)
+        override fun applyFix(
+            project: Project,
+            element: KtProperty,
+            updater: ModPsiUpdater,
+        ) {
+            if (element.typeReference == null) return
 
-        val grandParent = (assignment.parent as? KtBlockExpression)?.parent
-        val initializerBlock = grandParent as? KtAnonymousInitializer
-        val secondaryConstructor = grandParent as? KtSecondaryConstructor
+            val assignment = updater.getWritable(context.assignment)
+            val movePropertyToConstructorInfo = context.movePropertyToConstructorInfo?.toWritable(updater)
+            val initializer = assignment.right ?: return
 
-        val newProperty = if (!element.isLocal && (initializerBlock != null || secondaryConstructor != null)) {
-            moveComments(from = assignment, to = element)
-            assignment.deleteWithPreviousWhitespace()
-            if ((initializerBlock?.body as? KtBlockExpression)?.contentRange()?.isEmpty == true) initializerBlock.deleteWithPreviousWhitespace()
-            val secondaryConstructorBlock = secondaryConstructor?.bodyBlockExpression
-            if (secondaryConstructorBlock?.contentRange()?.isEmpty == true) secondaryConstructorBlock.deleteWithPreviousWhitespace()
-            element
-        } else {
-            moveComments(from = element, to = assignment)
-            assignment.replaced(element).also {
-                element.deleteWithPreviousWhitespace()
+            element.initializer = initializer
+            if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifier(KtTokens.LATEINIT_KEYWORD)
+
+            val grandParent = (assignment.parent as? KtBlockExpression)?.parent
+            val initializerBlock = grandParent as? KtAnonymousInitializer
+            val secondaryConstructor = grandParent as? KtSecondaryConstructor
+
+            val newProperty = if (!element.isLocal && (initializerBlock != null || secondaryConstructor != null)) {
+                moveComments(from = assignment, to = element)
+                assignment.deleteWithPreviousWhitespace()
+                if ((initializerBlock?.body as? KtBlockExpression)?.contentRange()?.isEmpty == true) initializerBlock.deleteWithPreviousWhitespace()
+                val secondaryConstructorBlock = secondaryConstructor?.bodyBlockExpression
+                if (secondaryConstructorBlock?.contentRange()?.isEmpty == true) secondaryConstructorBlock.deleteWithPreviousWhitespace()
+                element
+            } else {
+                moveComments(from = element, to = assignment)
+                assignment.replaced(element).also {
+                    element.deleteWithPreviousWhitespace()
+                }
             }
-        }
 
-        if (movePropertyToConstructorInfo != null) {
-            newProperty.moveToConstructor(movePropertyToConstructorInfo)
-            return
-        }
+            if (movePropertyToConstructorInfo != null) {
+                newProperty.moveToConstructor(movePropertyToConstructorInfo)
+                return
+            }
 
-        if (context.canEraseDeclaredType) {
-            newProperty.typeReference = null
-            updater.update(newProperty, false)
-        } else {
-            updater.update(newProperty, context.canOmitDeclaredType)
+            if (context.canEraseDeclaredType) {
+                newProperty.typeReference = null
+                updater.update(newProperty, false)
+            } else {
+                updater.update(newProperty, context.canOmitDeclaredType)
+            }
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun canBeMovedToConstructor(element: KtProperty, initializer: KtExpression): Boolean {
         if (element.isLocal) return false
         if (element.getter != null || element.setter != null || element.delegate != null) return false
@@ -185,7 +200,7 @@ class JoinDeclarationAndAssignmentInspection :
         val containingClass = constructor.getContainingClassOrObject()
         if (containingClass.isData()) return false
 
-        val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KtValueParameterSymbol ?: return false
+        val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return false
         if (element.nameAsName != paramSymbol.name) return false
 
         val parameter = paramSymbol.psi as? KtParameter ?: return false
@@ -247,7 +262,7 @@ class JoinDeclarationAndAssignmentInspection :
 
     private fun List<PsiElement>.hasComments(): Boolean = any { it is PsiComment }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun findFirstAssignment(property: KtProperty): KtBinaryExpression? {
         if (property.typeReference == null) return null
 
@@ -264,7 +279,7 @@ class JoinDeclarationAndAssignmentInspection :
             return null
         }
 
-        val assignmentCall = firstAssignment.left?.resolveCall()?.singleVariableAccessCall()?.symbol ?: return null
+        val assignmentCall = firstAssignment.left?.resolveToCall()?.singleVariableAccessCall()?.symbol ?: return null
         if (assignmentCall != property.getVariableSymbol()) return null
 
         if (propertyContainer !is KtClassBody) return firstAssignment
@@ -332,19 +347,19 @@ class JoinDeclarationAndAssignmentInspection :
             .asSequence()
             .map { it.resolve() }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun Sequence<PsiElement>.anyOfHasReference(element: KtProperty) = any { it.hasReference(element) }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun PsiElement.hasReference(element: KtProperty): Boolean {
-        val declarationName = (element.getSymbol() as? KtPossiblyNamedSymbol)?.name.toString()
+        val declarationName = (element.symbol as? KaPossiblyNamedSymbol)?.name.toString()
         return anyDescendantOfType<KtNameReferenceExpression> {
             it.text == declarationName && it.reference?.isReferenceTo(element) ?: false
         }
     }
 
-    context(KtAnalysisSession)
-    private fun isSubtype(type: KtType?, superType: KtType?): Boolean {
+    context(KaSession)
+    private fun isSubtype(type: KaType?, superType: KaType?): Boolean {
         if (type == null || superType == null) return false
         return type.isPossiblySubTypeOf(superType)
     }
@@ -353,8 +368,8 @@ class JoinDeclarationAndAssignmentInspection :
 
     private fun PsiElement.nextSiblings(): Sequence<PsiElement> = siblings(forward = true, withItself = false)
 
-    context(KtAnalysisSession)
-    private fun equalNullableTypes(type1: KtType?, type2: KtType?): Boolean {
+    context(KaSession)
+    private fun equalNullableTypes(type1: KaType?, type2: KaType?): Boolean {
         if (type1 == null) return type2 == null
         if (type2 == null) return false
         return type1.isEqualTo(type2)

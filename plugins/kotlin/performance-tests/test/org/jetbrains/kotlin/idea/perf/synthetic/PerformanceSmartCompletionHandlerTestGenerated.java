@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class PerformanceSmartCompletionHandlerTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/testData/handlers/smart/lambda")
     public static class Lambda extends AbstractPerformanceSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
         }
@@ -70,6 +77,12 @@ public abstract class PerformanceSmartCompletionHandlerTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/testData/handlers/smart/lambdaSignature")
     public static class LambdaSignature extends AbstractPerformanceSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
         }
@@ -88,6 +101,12 @@ public abstract class PerformanceSmartCompletionHandlerTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/testData/handlers/smart/suspendLambdaSignature")
     public static class SuspendLambdaSignature extends AbstractPerformanceSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
         }
@@ -106,6 +125,12 @@ public abstract class PerformanceSmartCompletionHandlerTestGenerated extends Abs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/testData/handlers/smart")
     public static class Uncategorized extends AbstractPerformanceSmartCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
         }

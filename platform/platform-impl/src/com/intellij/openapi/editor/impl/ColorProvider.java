@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -16,6 +17,7 @@ import java.util.List;
 /**
  * Defines common contract for target {@link Color} retrieving.
  */
+@ApiStatus.Internal
 public abstract class ColorProvider {
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -30,7 +30,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLib
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalEntityBridgeAndEventHandler
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -264,17 +263,15 @@ class GlobalWorkspaceModel : Disposable {
       val entitySourceCopy = (libraryEntity.entitySource as? JpsGlobalFileEntitySource)?.copy(vfuManager) ?: libraryEntity.entitySource
       val excludedRootsCopy = libraryEntity.excludedRoots.map { it.copy(entitySourceCopy, vfuManager) }
       val libraryPropertiesCopy = libraryEntity.libraryProperties?.copy(entitySourceCopy)
-      val libraryEntityCopy = LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {
+      val libraryEntityCopy = mutableEntityStorage addEntity  LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {
+        typeId = libraryEntity.typeId
         excludedRoots = excludedRootsCopy
         libraryProperties = libraryPropertiesCopy
       }
-      mutableEntityStorage.addEntity(libraryEntityCopy)
       val libraryBridge = storage.libraryMap.getDataByEntity(libraryEntity)
       if (libraryBridge != null) mutableEntityStorage.mutableLibraryMap.addIfAbsent(libraryEntityCopy, libraryBridge)
     }
 
-    // If registry flag for SDK is disabled we don't need to apply its data to the storage
-    if (!GlobalSdkTableBridge.isEnabled()) return mutableEntityStorage
     // Copying sdks
     storage.entities(SdkEntity::class.java).forEach { sdkEntity ->
       if (!globalEntitiesFilter.invoke(sdkEntity.entitySource)) return@forEach
@@ -283,11 +280,10 @@ class GlobalWorkspaceModel : Disposable {
       }
 
       val entitySourceCopy = (sdkEntity.entitySource as JpsGlobalFileEntitySource).copy(vfuManager)
-      val sdkEntityCopy = SdkEntity(sdkEntity.name, sdkEntity.type, sdkRootsCopy, sdkEntity.additionalData, entitySourceCopy) {
+      val sdkEntityCopy = mutableEntityStorage addEntity SdkEntity(sdkEntity.name, sdkEntity.type, sdkRootsCopy, sdkEntity.additionalData, entitySourceCopy) {
         homePath = sdkEntity.homePath?.createCopyAtManager(vfuManager)
         version = sdkEntity.version
       }
-      mutableEntityStorage.addEntity(sdkEntityCopy)
       val sdkBridge = storage.getExternalMapping(SDK_BRIDGE_MAPPING_ID).getDataByEntity(sdkEntity)
       if (sdkBridge != null) {
         mutableEntityStorage.getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID).addIfAbsent(sdkEntityCopy, sdkBridge)
@@ -348,14 +344,14 @@ class GlobalWorkspaceModel : Disposable {
   }
 }
 
-private fun VirtualFileUrl.createCopyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.getOrCreateFromUri(url)
+private fun VirtualFileUrl.createCopyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.getOrCreateFromUrl(url)
 
-private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFileUrlManager): ExcludeUrlEntity =
+private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFileUrlManager): ExcludeUrlEntity.Builder =
   ExcludeUrlEntity(url.createCopyAtManager(manager), entitySource)
 
-private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPropertiesEntity {
+private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPropertiesEntity.Builder {
   val originalPropertiesXmlTag = propertiesXmlTag
-  return LibraryPropertiesEntity(libraryType, entitySource) {
+  return LibraryPropertiesEntity(entitySource) {
     this.propertiesXmlTag = originalPropertiesXmlTag
   }
 }

@@ -4,17 +4,15 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.DeleteCatchSectionFix;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -33,8 +31,7 @@ public final class CaughtExceptionImmediatelyRethrownInspection extends BaseInsp
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final PsiTryStatement tryStatement = (PsiTryStatement)infos[0];
     final boolean removeTryCatch = tryStatement.getCatchSections().length == 1 && tryStatement.getFinallyBlock() == null &&
       tryStatement.getResourceList() == null;
@@ -84,9 +81,7 @@ public final class CaughtExceptionImmediatelyRethrownInspection extends BaseInsp
       if (isSuperClassExceptionCaughtLater(parameter, catchSection)) {
         return;
       }
-      final Query<PsiReference> query = ReferencesSearch.search(parameter);
-      for (PsiReference reference : query) {
-        final PsiElement element = reference.getElement();
+      for (PsiReferenceExpression element : VariableAccessUtils.getVariableReferences(parameter)) {
         if (element != expression) {
           return;
         }
@@ -136,8 +131,7 @@ public final class CaughtExceptionImmediatelyRethrownInspection extends BaseInsp
     }
 
     private static void processExceptionClasses(PsiType type, Processor<? super PsiClass> processor) {
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
+      if (type instanceof PsiClassType classType) {
         final PsiClass aClass = classType.resolve();
         if (aClass != null) {
           processor.process(aClass);

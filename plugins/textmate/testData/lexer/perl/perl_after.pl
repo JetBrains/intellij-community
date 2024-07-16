@@ -1,6 +1,5 @@
 source.perl;comment.line.number-sign.perl;punctuation.definition.comment.perl: [0, 1], {#}
-source.perl;comment.line.number-sign.perl: [1, 15], {!/usr/bin/perl}
-source.perl: [15, 16], {
+source.perl;comment.line.number-sign.perl: [1, 16], {!/usr/bin/perl
 }
 source.perl: [16, 17], {
 }
@@ -10,12 +9,10 @@ source.perl: [20, 29], { strict;
 source.perl: [29, 30], {
 }
 source.perl;comment.line.number-sign.perl;punctuation.definition.comment.perl: [30, 31], {#}
-source.perl;comment.line.number-sign.perl: [31, 59], { cwd should be $TM_DIRECTORY}
-source.perl: [59, 60], {
+source.perl;comment.line.number-sign.perl: [31, 60], { cwd should be $TM_DIRECTORY
 }
 source.perl;comment.line.number-sign.perl;punctuation.definition.comment.perl: [60, 61], {#}
-source.perl;comment.line.number-sign.perl: [61, 91], { filename to check is $ARGV[0]}
-source.perl: [91, 92], {
+source.perl;comment.line.number-sign.perl: [61, 92], { filename to check is $ARGV[0]
 }
 source.perl: [92, 93], {
 }
@@ -356,8 +353,7 @@ source.perl: [1109, 1111], {;
 source.perl: [1111, 1112], {
 }
 source.perl;comment.line.number-sign.perl;punctuation.definition.comment.perl: [1112, 1113], {#}
-source.perl;comment.line.number-sign.perl: [1113, 1141], { link line numbers to source}
-source.perl: [1141, 1142], {
+source.perl;comment.line.number-sign.perl: [1113, 1142], { link line numbers to source
 }
 source.perl;variable.other.readwrite.global.perl;punctuation.definition.variable.perl: [1142, 1143], {$}
 source.perl;variable.other.readwrite.global.perl: [1143, 1148], {lines}

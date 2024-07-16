@@ -25,19 +25,19 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalUiSettingsManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackSurveyKt;
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptions;
+import org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurveyKt;
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle;
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
@@ -78,25 +78,54 @@ public final class TerminalSettingsPanel {
   private ComboBox<TerminalUiSettingsManager.CursorShape> myCursorShape;
   private JBCheckBox myUseOptionAsMetaKey;
 
-  private JPanel myNewUiPanel;
+  private JPanel myNewUiSettingsPanel;
   private JBCheckBox myNewUiCheckbox;
   private JBLabel myBetaLabel;
+  private JPanel myNewUiChildSettingsPanel;
+
+  private JPanel myPromptStyleButtonsPanel;
+  private JBRadioButton mySingleLineButton;
+  private JBRadioButton myDoubleLineButton;
+  private JBRadioButton myShellPromptButton;
+  private JPanel myShellPromptButtonPanel;
 
   private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
+  private BlockTerminalOptions myBlockTerminalOptions;
 
   private final List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
 
-  public JComponent createPanel(@NotNull Project project,
-                                @NotNull TerminalOptionsProvider provider,
-                                @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
+  public JComponent createPanel(
+    @NotNull Project project,
+    @NotNull TerminalOptionsProvider provider,
+    @NotNull TerminalProjectOptionsProvider projectOptionsProvider,
+    @NotNull BlockTerminalOptions blockTerminalOptions
+  ) {
     myProject = project;
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
+    myBlockTerminalOptions = blockTerminalOptions;
 
-    myNewUiPanel.setVisible(ExperimentalUI.isNewUI());
+    myNewUiSettingsPanel.setVisible(ExperimentalUI.isNewUI());
     myBetaLabel.setIcon(AllIcons.General.Beta);
+    myNewUiChildSettingsPanel.setBorder(JBUI.Borders.emptyLeft(28));
+    myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
+    // Show child New Terminal settings as disabled if New Terminal is not selected
+    updateNewUiPanelState();
+    myNewUiCheckbox.addChangeListener(__ -> updateNewUiPanelState());
+
+    myPromptStyleButtonsPanel.setBorder(JBUI.Borders.empty(4, 20, 0, 0));
+    // UI Designer is unable to create a ContextHelpLabel, because it doesn't have a default constructor.
+    // So, I have to create and add it manually.
+    var shellPromptDescription = ContextHelpLabel.create(TerminalBundle.message("settings.shell.prompt.description"));
+    shellPromptDescription.setBorder(JBUI.Borders.emptyLeft(6));
+    myShellPromptButtonPanel.add(shellPromptDescription);
+
+    var buttonGroup = new ButtonGroup();
+    buttonGroup.add(mySingleLineButton);
+    buttonGroup.add(myDoubleLineButton);
+    buttonGroup.add(myShellPromptButton);
 
     myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.project.settings")));
     myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.application.settings")));
@@ -170,8 +199,15 @@ public final class TerminalSettingsPanel {
     }
   }
 
+  private void updateNewUiPanelState() {
+    UIUtil.uiTraverser(myNewUiChildSettingsPanel).forEach(c -> {
+      c.setEnabled(myNewUiCheckbox.isSelected());
+    });
+  }
+
   public boolean isModified() {
     return myNewUiCheckbox.isSelected() != Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
+           || (myBlockTerminalOptions.getPromptStyle() != getSelectedPromptStyle())
            || !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
@@ -201,6 +237,7 @@ public final class TerminalSettingsPanel {
         }, ModalityState.nonModal());
       }
     }
+    myBlockTerminalOptions.setPromptStyle(getSelectedPromptStyle());
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
@@ -227,6 +264,10 @@ public final class TerminalSettingsPanel {
 
   public void reset() {
     myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
+    var promptStyle = myBlockTerminalOptions.getPromptStyle();
+    mySingleLineButton.setSelected(promptStyle == TerminalPromptStyle.SINGLE_LINE);
+    myDoubleLineButton.setSelected(promptStyle == TerminalPromptStyle.DOUBLE_LINE);
+    myShellPromptButton.setSelected(promptStyle == TerminalPromptStyle.SHELL);
     myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
@@ -243,6 +284,19 @@ public final class TerminalSettingsPanel {
     myEnvVarField.setData(myProjectOptionsProvider.getEnvData());
     myCursorShape.setItem(myOptionsProvider.getCursorShape());
     myEnvVarField.setEnabled(TrustedProjects.isTrusted(myProject));
+  }
+
+  private TerminalPromptStyle getSelectedPromptStyle() {
+    if (mySingleLineButton.isSelected()) {
+      return TerminalPromptStyle.SINGLE_LINE;
+    }
+    else if (myDoubleLineButton.isSelected()) {
+      return TerminalPromptStyle.DOUBLE_LINE;
+    }
+    else if (myShellPromptButton.isSelected()) {
+      return TerminalPromptStyle.SHELL;
+    }
+    throw new IllegalStateException("None of prompt style radio buttons are selected");
   }
 
   public Color getDefaultValueColor() {
@@ -291,10 +345,21 @@ public final class TerminalSettingsPanel {
     List<String> shells = new ArrayList<>();
     if (SystemInfo.isUnix) {
       addIfExists(shells, "/bin/bash");
+      addIfExists(shells, "/usr/bin/bash");
+      addIfExists(shells, "/usr/local/bin/bash");
+      addIfExists(shells, "/opt/homebrew/bin/bash");
+
+      addIfExists(shells, "/bin/zsh");
       addIfExists(shells, "/usr/bin/zsh");
       addIfExists(shells, "/usr/local/bin/zsh");
+      addIfExists(shells, "/opt/homebrew/bin/zsh");
+
+      addIfExists(shells, "/bin/fish");
       addIfExists(shells, "/usr/bin/fish");
       addIfExists(shells, "/usr/local/bin/fish");
+      addIfExists(shells, "/opt/homebrew/bin/fish");
+
+      addIfExists(shells, "/opt/homebrew/bin/pwsh");
     }
     else if (SystemInfo.isWindows) {
       File powershell = PathEnvironmentVariableUtil.findInPath("powershell.exe");

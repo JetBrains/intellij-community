@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -43,9 +43,9 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
-import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
-import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -70,18 +70,16 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
+  public @NotNull PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
     return findCompiledElement(myProject, psiClass, scope -> {
       String fqn = psiClass.getQualifiedName();
       return fqn != null ? Arrays.asList(JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope)) : Collections.emptyList();
     });
   }
 
-  @NotNull
   @Override
-  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+  public @NotNull PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
     return findCompiledElement(myProject, module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
   }
 
@@ -115,9 +113,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     return original;
   }
 
-  @NotNull
   @Override
-  public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
+  public @NotNull PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     Function<VirtualFile, VirtualFile> finder = null;
     Predicate<PsiFile> filter = null;
 
@@ -181,9 +178,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     return Stream.concat(modelRoots, synthRoots);
   }
 
-  @NotNull
   @Override
-  public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
+  public @NotNull LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
     // For default project, do not look into virtual file system.
     // It is important for Upsource, where operations are done in default project to
     // prevent expensive look-up into VFS
@@ -214,8 +210,7 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
    * @param virtualFile virtual file for which language level is requested.
    * @return language level for classes root or null if file is not under a library source root or no matching classes root is found.
    */
-  @Nullable
-  private LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
+  private @Nullable LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     VirtualFile folder = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
@@ -243,8 +238,7 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     return null;
   }
 
-  @Nullable
-  private PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile, @Nullable String className) {
+  private @Nullable PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile, @Nullable String className) {
     if (className != null) {
       final VirtualFile classFile = dirFile.findChild(StringUtil.getQualifiedName(className, StdFileTypes.CLASS.getDefaultExtension()));
       if (classFile != null) {
@@ -273,9 +267,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     return importHelper.getDefaultAnchor(list, statement);
   }
 
-  @Nullable
   @Override
-  public PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
+  public @Nullable PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
     CodeStyleSettings settings = CodeStyle.getSettings(aClass.getContainingFile());
     MemberOrderService service = ApplicationManager.getApplication().getService(MemberOrderService.class);
     PsiElement anchor = null;
@@ -399,6 +392,116 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
         return List.of(
           new SnippetRegionSymbol(file,
                                   start.range().shiftRight(markupContext.getTextRange().getStartOffset())));
+      }
+    };
+  }
+
+  @Override
+  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token) {
+    return new PsiSymbolReference() {
+      @Override
+      public @NotNull PsiElement getElement() {
+        return token;
+      }
+
+      @Override
+      public @NotNull TextRange getRangeInElement() {
+        return token.getTextRangeInParent().shiftLeft(1);
+      }
+
+      @Override
+      public @NotNull Collection<? extends Symbol> resolveReference() {
+        final PsiDocComment docComment = PsiTreeUtil.getParentOfType(token, PsiDocComment.class);
+        if (docComment == null) return List.of();
+        if (docComment.getOwner() instanceof PsiMethod method) {
+          final PsiDocTagImpl docTag = PsiTreeUtil.getParentOfType(token, PsiDocTagImpl.class);
+          var containingClass = method.getContainingClass();
+          if (containingClass == null) return List.of();
+
+          final var valueElement = token.getParent() instanceof PsiDocTag tag ? tag.getValueElement() : null;
+          final var target = findTargetRecursively(containingClass, method, docTag, valueElement != null ? valueElement.getText() : null, false, new HashSet<>());
+          if (target != null) {
+            return List.of(new SnippetRegionSymbol(target.getContainingFile(), getSnippetRange(target)));
+          }
+        }
+
+        return List.of();
+      }
+
+      private static TextRange getSnippetRange(PsiElement target) {
+        if (target instanceof PsiDocTag) {
+          final var lines = target.getText().split("\n");
+          if (lines.length > 1 && lines[lines.length - 1].matches("\\s*\\*\\s*")) {
+            return target.getTextRange().grown(-lines[lines.length - 1].length());
+          }
+        }
+        return target.getTextRange();
+      }
+
+      /**
+       * Performs Automatic Supertype Search as described in the JavaDoc Documentation Comment Specification.
+       */
+      private static @Nullable PsiElement findTargetRecursively(@NotNull PsiClass psiClass,
+                                                                @NotNull PsiMethod method,
+                                                                @Nullable PsiDocTag docTag,
+                                                                @Nullable String explicitSuper,
+                                                                boolean checkClass,
+                                                                @NotNull HashSet<PsiClass> visitedSet) {
+        if ("java.lang.Object".equals(psiClass.getQualifiedName())) return null;
+        if (visitedSet.contains(psiClass)) return null;
+
+        visitedSet.add(psiClass);
+
+        // Check class
+        PsiElement target = null;
+        if (checkClass) target = findTarget(psiClass, method, docTag, explicitSuper);
+        if (target != null) return target;
+
+        // Check super class
+        final PsiClass superClass = psiClass.getSuperClass();
+        if (superClass != null) {
+          target = findTargetRecursively(superClass, method, docTag, explicitSuper, true, visitedSet);
+          if (target != null) return target;
+        }
+
+        // Check interfaces
+        var targetInInterface = Stream.concat(Stream.of(psiClass.getImplementsListTypes()), Stream.of(psiClass.getExtendsListTypes()))
+          .map(type -> type.resolve())
+          .map(resolvedType -> findTarget(resolvedType, method, docTag, explicitSuper))
+          .filter(Objects::nonNull)
+          .findFirst();
+
+        return targetInInterface.orElse(null);
+      }
+
+      private static @Nullable PsiElement findTarget(@Nullable PsiClass psiClass,
+                                                     @NotNull PsiMethod method,
+                                                     @Nullable PsiDocTag docTag,
+                                                     @Nullable String explicitSuper) {
+        if (psiClass == null || explicitSuper != null && !explicitSuper.equals(psiClass.getName())) {
+          return null;
+        }
+
+        final var matchedMethod = psiClass.findMethodBySignature(method, false);
+        if (matchedMethod == null) return null;
+
+        PsiDocComment docComment = matchedMethod.getDocComment();
+        if (docComment == null) return null;
+
+        // inheritDoc is not in a tag -> the target is the PsiDocComment
+        if (docTag == null) return docComment;
+
+        // Searching for a matching tag
+        final PsiDocTagValue tagValue = docTag.getValueElement();
+        for (PsiDocTag tag : docComment.findTagsByName(docTag.getName())) {
+          final var matchedTagValueElement = tag.getValueElement();
+          if (tagValue != null && matchedTagValueElement == null) continue;
+          if (tagValue == null || tagValue.getText().equals(matchedTagValueElement.getText())) {
+            return tag;
+          }
+        }
+
+        return null;
       }
     };
   }

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,6 +43,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * or the current project is a dummy or default project.
    */
   @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
   public abstract @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.lang.ASTNode;
@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,27 +22,23 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
+  public @NotNull PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
     return psiClass;
   }
 
-  @NotNull
   @Override
-  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+  public @NotNull PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
     return module;
   }
 
-  @NotNull
   @Override
-  public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
+  public @NotNull PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     return clsFile;
   }
 
-  @NotNull
   @Override
-  public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
+  public @NotNull LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
     return PsiUtil.getLanguageLevel(myProject);
   }
 
@@ -65,8 +62,12 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  public Project getProject() {
+  @Override
+  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token) {
+    throw new UnsupportedOperationException();
+  }
+
+  public @NotNull Project getProject() {
     return myProject;
   }
 }

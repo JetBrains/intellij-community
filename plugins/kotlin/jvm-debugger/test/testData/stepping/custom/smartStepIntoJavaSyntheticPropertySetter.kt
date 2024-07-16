@@ -25,4 +25,3 @@ public class MyJavaClass {
         this.foo = foo;
     }
 }
-// IGNORE_K2

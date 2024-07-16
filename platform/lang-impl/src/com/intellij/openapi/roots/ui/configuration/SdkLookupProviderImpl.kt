@@ -7,8 +7,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.AsyncPromise
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
@@ -24,9 +23,6 @@ class SdkLookupProviderImpl : SdkLookupProvider {
     return CommonSdkLookupBuilder(lookup = ::lookup)
   }
 
-  @TestOnly
-  fun getSdkPromiseForTests(): AsyncPromise<Sdk?>? = context?.getSdkPromiseForTests()
-
   override fun getSdkInfo(): SdkInfo {
     return context?.getSdkInfo() ?: SdkInfo.Undefined
   }
@@ -35,8 +31,14 @@ class SdkLookupProviderImpl : SdkLookupProvider {
     return context?.getSdk()
   }
 
+  @Deprecated("Consider using the SdkLookupProvider.waitForLookup with the SdkLookupUtil.getSdk")
   override fun blockingGetSdk(): Sdk? {
-    return context?.blockingGetSdk()
+    waitForLookup()
+    return getSdk()
+  }
+
+  override fun waitForLookup() {
+    context?.waitForSdkResolution()
   }
 
   private fun lookup(builder: CommonSdkLookupBuilder) {
@@ -55,20 +57,39 @@ class SdkLookupProviderImpl : SdkLookupProvider {
         onSdkResolved = { sdk ->
           context.setSdk(sdk)
           builder.onSdkResolved(sdk)
+          context.notifySdkIsResolved()
         }
       )
     service<SdkLookup>().lookup(parameters)
   }
 
   private class SdkLookupContext(val progressIndicator: ProgressIndicator) {
-    private val sdk = AsyncPromise<Sdk?>()
+
+    private val sdk = AtomicReference<Sdk?>(null)
+
     private val sdkInfo = AtomicReference<SdkInfo>(SdkInfo.Unresolved)
 
-    @TestOnly
-    fun getSdkPromiseForTests() = sdk
-    fun getSdkInfo(): SdkInfo = sdkInfo.get()
-    fun getSdk(): Sdk? = if (getSdkInfo() is SdkInfo.Resolved) sdk.get() else null
-    fun blockingGetSdk(): Sdk? = sdk.get()
+    private val sdkLookupWaiter = CountDownLatch(1)
+
+    fun getSdkInfo(): SdkInfo {
+      return sdkInfo.get()
+    }
+
+    fun getSdk(): Sdk? {
+      val sdkInfo = getSdkInfo()
+      if (sdkInfo !is SdkInfo.Resolved) {
+        return null
+      }
+      return sdk.get()
+    }
+
+    fun notifySdkIsResolved() {
+      sdkLookupWaiter.countDown()
+    }
+
+    fun waitForSdkResolution() {
+      sdkLookupWaiter.await()
+    }
 
     fun setSdkInfo(sdk: Sdk?) {
       when (sdk) {
@@ -82,7 +103,7 @@ class SdkLookupProviderImpl : SdkLookupProvider {
         null -> sdkInfo.set(SdkInfo.Undefined)
         else -> sdkInfo.set(SdkInfo.Resolved(sdk.name, sdk.versionString, sdk.homePath))
       }
-      this.sdk.setResult(sdk)
+      this.sdk.set(sdk)
     }
   }
 }

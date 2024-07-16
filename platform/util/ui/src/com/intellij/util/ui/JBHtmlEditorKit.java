@@ -38,6 +38,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private final @NotNull HTMLEditorKit.LinkController myLinkController = new MouseExitSupportLinkController();
   private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
   private final boolean myDisableLinkedCss;
+  private boolean myUnderlineHoveredHyperlink = true;
 
   private @Nullable CSSFontResolver myFontResolver;
 
@@ -72,6 +73,17 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     myViewFactory = viewFactory;
     myDisableLinkedCss = disableLinkedCss;
     myStyle = defaultStyle;
+  }
+
+  /**
+   * Toggle whether hyperlinks are underlined when hovered.
+   *
+   * This is useful if another implementation needs to apply a different style
+   * to hyperlinks when hovered (this can be done by adding a {@link HyperlinkListener}
+   * to the {@link JEditorPane}).
+   */
+  public void setUnderlineHoveredHyperlink(boolean underlineHoveredHyperlink) {
+    myUnderlineHoveredHyperlink = underlineHoveredHyperlink;
   }
 
   /**
@@ -135,7 +147,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         pane.removePropertyChangeListener(this);
       }
     });
-    pane.addHyperlinkListener(myHyperlinkListener);
+    if (myUnderlineHoveredHyperlink) {
+      pane.addHyperlinkListener(myHyperlinkListener);
+    }
 
     java.util.List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
     java.util.List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());

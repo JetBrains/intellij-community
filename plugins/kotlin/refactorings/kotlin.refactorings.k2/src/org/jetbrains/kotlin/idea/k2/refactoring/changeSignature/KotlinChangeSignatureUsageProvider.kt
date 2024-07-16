@@ -92,7 +92,7 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                         }
                     }
                 }
-                LOG.error("Unsupported element: ${element.javaClass}")
+                LOG.debug("Unsupported element: ${element.javaClass}")
             }
         }
         return null

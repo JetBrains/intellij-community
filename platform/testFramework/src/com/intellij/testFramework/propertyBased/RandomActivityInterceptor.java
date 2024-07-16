@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -63,6 +64,8 @@ public class RandomActivityInterceptor extends UiInterceptors.UiInterceptor<Obje
       content.setSelectedIndex(index);
       assertTrue(popup.canClose()); // calls cancelHandler
       popup.closeOk(null);
+    } else if (component instanceof ConflictsDialog) {
+      // Do nothing, just ignore conflicts
     } else {
       throw new UnsupportedOperationException(
         String.format("Cannot intercept UI component %s (class: %s)", component, component.getClass()));

@@ -7,37 +7,119 @@ package com.intellij.concurrency
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.Cancellation
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.*
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
+import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Supplier
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG: Logger = Logger.getInstance("#com.intellij.concurrency")
 
-private val tlCoroutineContext: ThreadLocal<CoroutineContext?> = ThreadLocal()
+/**
+ * This class contains an overriding coroutine context for [IntellijCoroutines.currentThreadCoroutineContext].
+ *
+ * ## Rule
+ * The rule of selection is the following:
+ * [context] is taken only if [snapshot] is equal to [IntellijCoroutines.currentThreadCoroutineContext] __as a pointer__.
+ *
+ * The idea is that we can perform a one-direction transition from the suspending to the non-suspending execution context.
+ * When the transition occurs, we remember [IntellijCoroutines.currentThreadCoroutineContext] of this transition,
+ * and all later thread context modifications happen witnessed by this remembered coroutine context.
+ * If [IntellijCoroutines.currentThreadCoroutineContext] changes, then the overriding thread context is no longer valid,
+ * hence we prioritize [IntellijCoroutines.currentThreadCoroutineContext] again.
+ *
+ * ## Motivation
+ * In suspending code, thread context must be taken from coroutines:
+ * ```kotlin
+ * val a : A
+ * withContext(a) {
+ *   assertEquals(a, currentThreadContext()[A])
+ * }
+ * ```
+ *
+ * But the explicit installation of thread context takes precedence:
+ * ```kotlin
+ * withContext(a) {
+ *   installThreadContext(b).use {
+ *     assertEquals(b, currentThreadContext())
+ *   }
+ * }
+ * ```
+ *
+ * In some cases, within one thread coroutine context may have priority again:
+ * ```kotlin
+ * installThreadContext(b).use {
+ *   scope.launch(start = CoroutineStart.UNDISPATCHED) {
+ *     assertNotEquals(b, currentThreadContext())
+ *   }
+ * }
+ * ```
+ */
+private data class InstalledThreadContext(
+  /**
+   * - [snapshot] === `null`: [IntellijCoroutines.currentThreadCoroutineContext] is not installed,
+   *   i.e., the computation does not originate in coroutines;
+   * - [snapshot] !== `null`: we override [IntellijCoroutines.currentThreadCoroutineContext] which is equal to [snapshot].
+   */
+  val snapshot: CoroutineContext?,
+  /**
+   * The overriding coroutine context.
+   * It can be explicitly reset, so `null` is a permitted value.
+   */
+  val context: CoroutineContext?
+)
+
+private val INITIAL_THREAD_CONTEXT = InstalledThreadContext(null, null)
+
+private val tlCoroutineContext: ThreadLocal<InstalledThreadContext> = ThreadLocal.withInitial {
+  INITIAL_THREAD_CONTEXT
+}
+
+private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) -> CoroutineContext?): CoroutineContext? {
+  if (!useImplicitBlockingContext) {
+    return tlCoroutineContext.get().context
+  }
+  @OptIn(InternalCoroutinesApi::class)
+  val suspendingContext = IntellijCoroutines.currentThreadCoroutineContext()
+  val (snapshot, overridingContext) = tlCoroutineContext.get()
+  if (suspendingContext === snapshot) {
+    return overridingContext
+  }
+  else {
+    return getter(suspendingContext)
+  }
+}
 
 @VisibleForTesting
 fun currentThreadContextOrNull(): CoroutineContext? {
-  return tlCoroutineContext.get()
+  return currentThreadContextOrFallback { null }
 }
+
 
 /**
  * @return current thread context
  */
 fun currentThreadContext(): CoroutineContext {
   checkContextInstalled()
-  return tlCoroutineContext.get() ?: EmptyCoroutineContext
+  return currentThreadContextOrFallback { it?.minusKey(ContinuationInterceptor) } ?: EmptyCoroutineContext
 }
 
 private fun checkContextInstalled() {
-  if (LoadingState.APP_STARTED.isOccurred && isCheckContextAssertions && tlCoroutineContext.get() == null && !isKnownViolator()) {
-    LOG.warn("Missing thread context. Most likely there is no `blockingContext` on the boundary of coroutine code and blocking code.", Throwable())
+  if (isCheckContextAssertions
+      && LoadingState.APP_STARTED.isOccurred
+      && currentThreadContextOrFallback { it } == null
+      && !isKnownViolator()) {
+    LOG.warn("Missing thread context", Throwable())
   }
 }
 
@@ -46,6 +128,27 @@ private val VIOLATORS : List<String> = listOf(
    * EDT-level checks, operating on lower level than contexts
    */
   "com.intellij.diagnostic",
+  "com.intellij.openapi.wm.impl",
+  "com.intellij.model.SideEffectGuard",
+  "com.intellij.openapi.editor.impl",
+  "com.intellij.ui.components",
+  "com.intellij.openapi.progress.util",
+  "com.intellij.openapi.application.impl.NonBlockingReadActionImpl\$Submission.reschedule",
+  "com.intellij.openapi.keymap.impl.SystemShortcuts",
+  "com.intellij.ide.IdeKeyboardFocusManager",
+  "com.intellij.execution.process.ProcessIOExecutorService",
+  "com.intellij.util.animation",
+  "com.intellij.util.ui",
+  "com.intellij.ide.ui.popup",
+  "com.intellij.ui",
+  "org.jetbrains.io",
+  "com.intellij.javascript.webSymbols.nodejs.WebTypesNpmLoader",
+  "com.intellij.tasks",
+  "com.intellij.util.concurrency.Invoker",
+  /**
+   * Platform runnables within NBRA, there is no user logic there
+   */
+  "com.intellij.openapi.application.constraints",
   /*
    * TODO, is not needed on current stage
    */
@@ -67,6 +170,12 @@ private val VIOLATORS : List<String> = listOf(
    */
   "com.intellij.openapi.extensions.impl.ExtensionPointImpl.getExtensionList",
   "com.intellij.openapi.extensions.impl.ExtensionPointImpl.getExtensions",
+  /**
+   * Definitely TODO
+   */
+  "com.intellij.serviceContainer.LazyExtensionInstance.createInstance",
+  "com.intellij.ui.icons",
+  "com.intellij.ui.tree",
   /*
    * TODO
    */
@@ -87,6 +196,7 @@ private val VIOLATORS : List<String> = listOf(
    */
   "com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl.scheduleUpdateRunnable",
   "com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl.stopProcess",
+  "com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl",
   /*
    * TODO
    */
@@ -103,6 +213,51 @@ private fun isKnownViolator() : Boolean {
   return VIOLATORS.any { badTrace -> stackTrace.any { it.startsWith(badTrace) } }
 }
 
+private val shouldWarnAccidentalCancellation = SystemProperties.getBooleanProperty("ide.warn.accidental.cancellation", false)
+
+/**
+ * In the IntelliJ codebase, there are some areas that are not supposed to meet [com.intellij.openapi.progress.ProcessCanceledException],
+ * but they do not have any syntactic markup preventing cancellation.
+ * We call these areas "implicitly non-cancellable".
+ * Since the introduction of implicit blocking context ([IJPL-445](https://youtrack.jetbrains.com/issue/IJPL-445/Reconsider-blockingContext)),
+ * every implicitly non-cancellable section has become cancellable.
+ * This can introduce hard-to-debug regressions when some part of the code accidentally dies due to cancellation.
+ *
+ * A natural example is the cleanup phase of the resource management frameworks
+ * ([com.intellij.openapi.util.Disposer], [Job] or [com.jetbrains.rd.util.lifetime.Lifetime]).
+ * It is often assumed that the code executed at the end of the lifecycle is non-cancellable,
+ * but it was not enforced by the platform before.
+ *
+ * To fix this regression, two options are available:
+ * - Easy, but not recommended: the authors of the code need to make the implicitly non-cancellable section explicit.
+ *   It can be achieved by [Cancellation.executeInNonCancelableSection].
+ * - Difficult, but recommended: refactor the code in a way that the implicit non-cancellable does not use heavy platform functions
+ *   that are checked for cancellation.
+ */
+internal fun warnAccidentalCancellation() {
+  if (!shouldWarnAccidentalCancellation) {
+    return
+  }
+  if (Cancellation.isInNonCancelableSection()) {
+    return
+  }
+  @OptIn(InternalCoroutinesApi::class)
+  val kotlinCoroutineContext = IntellijCoroutines.currentThreadCoroutineContext()
+  val (snapshot, _) = tlCoroutineContext.get()
+  if (snapshot === kotlinCoroutineContext) {
+    // someone installed the context before, so no regressions here are expected
+    return
+  }
+  if (kotlinCoroutineContext?.get(Job.Key)?.isActive == false) {
+    // the code is executing under a canceled Job, which means that the first checkCancelled will throw.
+    // this was not the case before, as the old thread context was not explicitly set.
+    LOG.warn("""Detected a cancellation in an implicit non-cancellable section.
+The code executing here will be aborted because of cancellation.
+If this behavior is unexpected, please consult the documentation for com.intellij.concurrency.ThreadContext.warnAccidentalCancellation.""",
+             Throwable("Querying stacktrace"))
+  }
+}
+
 /**
  * Resets the current thread context to initial value.
  *
@@ -110,7 +265,42 @@ private fun isKnownViolator() : Boolean {
  */
 fun resetThreadContext(): AccessToken {
   return withThreadLocal(tlCoroutineContext) { _ ->
-    null
+    @OptIn(InternalCoroutinesApi::class)
+    val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
+    InstalledThreadContext(currentSnapshot, null)
+  }
+}
+
+/**
+ * Runs [action] with the cancellation guarantees of [job].
+ *
+ * Consider the following example:
+ * ```kotlin
+ * fun computeSomethingUseful() {
+ *    preComputation()
+ *    application.executeOnPooledThread(::executeInLoop)
+ *    postComputation()
+ * }
+ *
+ * fun executeInLoop() {
+ *   doSomething()
+ *   ProgressManager.checkCancelled()
+ *   Thread.sleep(1000)
+ *   executeInLoop()
+ * }
+ * ```
+ *
+ * If someone wants to track the execution of `computeSomethingUseful`, most likely they are not interested in `executeInLoop`,
+ * as it is a daemon computation that can be only canceled.
+ * It can be a launch of an external process, or some periodic diagnostic check.
+ *
+ * In this case, the platform offers to weaken the cancellation guarantees for the computation:
+ * it still would be cancellable on project closing or component unloading, but it would not be bound to the context cancellation.
+ */
+@Experimental
+fun <T> escapeCancellation(job: Job, action: () -> T): T {
+  return installThreadContext(currentThreadContext() + job + BlockingJob(job), true).use {
+    action()
   }
 }
 
@@ -121,11 +311,13 @@ fun resetThreadContext(): AccessToken {
  * @return handle to restore the previous thread context
  */
 fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = false): AccessToken {
-  return withThreadLocal(tlCoroutineContext) { previousContext: CoroutineContext? ->
-    if (!replace && previousContext != null) {
-      LOG.error("Thread context was already set: $previousContext")
+  return withThreadLocal(tlCoroutineContext) { previousContext ->
+    @OptIn(InternalCoroutinesApi::class)
+    val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
+    if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
+      LOG.error("Thread context was already set: $previousContext. \n Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack.")
     }
-    coroutineContext
+    InstalledThreadContext(currentSnapshot, coroutineContext)
   }
 }
 
@@ -218,11 +410,38 @@ fun captureThreadContext(runnable: Runnable): Runnable {
 }
 
 /**
+ * Same as [captureThreadContext] but for [Supplier]
+ */
+fun <T> captureThreadContext(s : Supplier<T>) : Supplier<T> {
+  val c = captureCallableThreadContext(s::get)
+  return Supplier(c::call)
+}
+
+/**
+ * Same as [captureThreadContext] but for [Consumer]
+ */
+fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
+  val f = capturePropagationContext(c::accept)
+  return Consumer(f::apply)
+}
+
+/**
  * Same as [captureThreadContext] but for [Function]
  */
-fun <T, U> captureThreadContext(f : Function<in T, out U>) : Function<in T, out U> {
-  return capturePropagationAndCancellationContext(f)
+fun <T, U> captureThreadContext(f : Function<T, U>) : Function<T, U> {
+  return capturePropagationContext(f)
 }
+
+/**
+ * We do not want to mark any custom context elements as internal at all.
+ * However, currently it is required until the platform team fixes context invariants.
+ * In this doc comment, we shall list all elements that are currently internal. If you want to add something here,
+ * please consult with the platform team.
+ *
+ * - `ComponentManagerElement`, because not all entry points to coroutine come from containers at the moment.
+ */
+@Internal
+interface InternalCoroutineContextKey<T : CoroutineContext.Element> : CoroutineContext.Key<T>
 
 /**
  * Strips off internal elements from thread contexts.
@@ -238,6 +457,7 @@ fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element>
       // An ideal solution would be to provide a way to merge several thread contexts under one, but there is no real need in it yet.
       BlockingJob -> Unit
       CoroutineName -> Unit
+      is InternalCoroutineContextKey<*> -> Unit
       @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") kotlinx.coroutines.CoroutineId -> Unit
       else -> acc.add(element)
     }

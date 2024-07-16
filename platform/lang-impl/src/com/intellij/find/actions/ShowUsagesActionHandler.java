@@ -7,12 +7,16 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageSearchPresentation;
 import com.intellij.usages.UsageSearcher;
+import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.impl.UsageViewPopupManager;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +50,17 @@ public interface ShowUsagesActionHandler {
 
   @NotNull List<EventPair<?>> getEventData();
 
-  void beforeClose(@NonNls String reason);
+  default void afterOpen(@NotNull AbstractPopup popup) { }
+
+  default void beforeClose(@NonNls String reason) { }
 
   boolean navigateToSingleUsageImmediately();
 
   @NotNull List<EventPair<?>> buildFinishEventData(@Nullable UsageInfo selectedUsage);
+
+  default UsageViewImpl createUsageView(Project project) {
+    return project.getService(UsageViewPopupManager.class).createUsageViewPopup(getTargetLanguage());
+  }
 
   static @PopupAdvertisement @Nullable String getSecondInvocationHint(@NotNull ShowUsagesActionHandler actionHandler) {
     KeyboardShortcut shortcut = ShowUsagesAction.getShowUsagesShortcut();

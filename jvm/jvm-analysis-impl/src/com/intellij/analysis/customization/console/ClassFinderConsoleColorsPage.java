@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.customization.console;
 
+import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -21,22 +22,34 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Map;
 
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE;
+
 public final class ClassFinderConsoleColorsPage implements ColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
   public static final TextAttributesKey
     TERMINAL_CLASS_NAME_LOG_REFERENCE = TextAttributesKey.createTextAttributesKey("TERMINAL_CLASS_NAME_LOG_REFERENCE");
 
+  public static final TextAttributesKey
+    LOG_STRING_PLACEHOLDER = TextAttributesKey.createTextAttributesKey("LOG_STRING_PLACEHOLDER", VALID_STRING_ESCAPE);
+
   private static final String DEMO_TEXT =
     """
       com.example.<className>ClassName</className>
+            
+      log.info("<placeholder>{}</placeholder> <placeholder>{}</placeholder>", "arg1", "arg2")
       """;
 
   private static final AttributesDescriptor LOG_CLASS_NAME =
     new AttributesDescriptor(OptionsBundle.messagePointer("options.language.defaults.class.name"), TERMINAL_CLASS_NAME_LOG_REFERENCE);
-  private static final AttributesDescriptor[] ATTRS = {LOG_CLASS_NAME,};
+
+  private static final AttributesDescriptor LOG_STRING_PLACEHOLDER_NAME =
+    new AttributesDescriptor(JvmAnalysisBundle.messagePointer("jvm.options.general.color.descriptor.logging.string.placeholder"),
+                             LOG_STRING_PLACEHOLDER);
+  private static final AttributesDescriptor[] ATTRS = {LOG_CLASS_NAME, LOG_STRING_PLACEHOLDER_NAME,};
 
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS =
-    Map.of("className", TERMINAL_CLASS_NAME_LOG_REFERENCE);
+    Map.of("className", TERMINAL_CLASS_NAME_LOG_REFERENCE,
+           "placeholder", LOG_STRING_PLACEHOLDER);
 
   @Override
   public @NotNull Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {

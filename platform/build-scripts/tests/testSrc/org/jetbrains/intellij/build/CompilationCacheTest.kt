@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.runBlocking
@@ -35,6 +35,7 @@ class CompilationCacheTest {
         // parent of classOutput dir is used as a cache dir, so, do not pass temp dir directly as classOutput
         classOutput = outDir.resolve("classes"),
         metadataFile = metadataFile,
+        skipUnpack = false,
         saveHash = false,
       )
     }

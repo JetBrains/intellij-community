@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
@@ -49,7 +49,10 @@ import org.jetbrains.annotations.SystemIndependent;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -492,7 +495,9 @@ public class RecentProjectPanel extends JPanel {
 
     @NlsSafe String getTitle2Text(ReopenProjectAction action, JComponent pathLabel, int leftOffset) {
       String fullText = action.getProjectPath();
-      if (fullText == null || fullText.length() == 0) return " ";
+      if (fullText.isEmpty()) {
+        return " ";
+      }
 
       fullText = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(fullText), false);
 
@@ -650,7 +655,7 @@ public class RecentProjectPanel extends JPanel {
           final long startTime = System.currentTimeMillis();
           boolean pathIsValid;
           try {
-            pathIsValid = !RecentProjectsManagerBase.isFileSystemPath(path) || isPathAvailable(path);
+            pathIsValid = !RecentProjectsManagerBase.Companion.isFileSystemPath$intellij_platform_ide_impl(path) || isPathAvailable(path);
           }
           catch (Exception e) {
             pathIsValid = false;

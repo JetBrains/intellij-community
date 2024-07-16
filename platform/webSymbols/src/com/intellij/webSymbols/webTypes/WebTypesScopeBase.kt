@@ -115,17 +115,30 @@ abstract class WebTypesScopeBase :
                             val enablementRules: EnablementRules?,
                             val disablementRules: DisablementRules?)
 
-      val rulesPerKind = contextsConfigs.values.asSequence()
+      val deprecatedContextConfigRules = contextsConfigs.values.asSequence()
         .flatMap { it.additionalProperties.entries }
         .filter { (name, config) -> name != null && config.kind != null }
         .map { (name, config) -> RulesEntry(config.kind, name, config.enableWhen?.wrap(), config.disableWhen?.wrap()) }
-        .plus(
-          frameworkConfigs
-            .filter { (webTypes, _) -> webTypes.framework != null }
-            .map { (webTypes, config) ->
-              RulesEntry(KIND_FRAMEWORK, webTypes.framework, config.enableWhen?.wrap(), config.disableWhen?.wrap())
-            }
-        )
+
+      val contextConfigRules = contextsConfigs.values.asSequence()
+        .flatMap { it.additionalProperties.entries }
+        .filter { (kind, kindConfig) -> kind != null && kindConfig.kind == null }
+        .flatMap { (kind, kindConfig) ->
+          kindConfig.additionalProperties.asSequence()
+            .filter { it.key != null }
+            .map { (name, config) -> RulesEntry(kind, name, config.enableWhen?.wrap(), config.disableWhen?.wrap())
+          }
+        }
+      val frameworkConfigRules = frameworkConfigs
+        .filter { (webTypes, _) -> webTypes.framework != null }
+        .map { (webTypes, config) ->
+          RulesEntry(KIND_FRAMEWORK, webTypes.framework, config.enableWhen?.wrap(), config.disableWhen?.wrap())
+        }
+
+
+      val rulesPerKind = deprecatedContextConfigRules
+        .plus(contextConfigRules)
+        .plus(frameworkConfigRules)
         .groupBy { it.kind }
 
       val result = MultiMap.create<ContextKind, WebSymbolsContextKindRules>()
@@ -136,32 +149,6 @@ abstract class WebTypesScopeBase :
         result.putValue(kind, WebSymbolsContextKindRules.create(enablementRules, disablementRules))
       }
       result
-    }
-
-  private fun <T> createEnablementCache(accessor: (config: FrameworkConfig) -> T?,
-                                        accessor2: (config: ContextConfig) -> T?): ClearableLazyValue<Map<String, Map<String, List<T>>>> =
-    ClearableLazyValue.create {
-      val result = mutableMapOf<String, MutableMap<String, MutableList<T>>>()
-      for (entry in contextsConfigs) {
-        for ((name, config) in entry.value.additionalProperties) {
-          val kind = config.kind ?: continue
-          val rules = accessor2(config) ?: continue
-          result
-            .getOrPut(kind) { mutableMapOf() }
-            .getOrPut(name) { mutableListOf() }
-            .add(rules)
-        }
-      }
-      for ((webTypes, config) in frameworkConfigs) {
-        val framework = webTypes.framework ?: continue
-        val rules = accessor(config) ?: continue
-        result
-          .getOrPut(KIND_FRAMEWORK) { mutableMapOf() }
-          .getOrPut(framework) { mutableListOf() }
-          .add(rules)
-      }
-      // Make the map not mutable
-      result.mapValues { (_, map) -> map.mapValues { (_, innerMap) -> innerMap.toList() } }
     }
 
   private fun createNameConversionRulesCache(): ClearableLazyValue<Map<FrameworkId, WebSymbolNameConversionRules>> =
@@ -193,7 +180,7 @@ abstract class WebTypesScopeBase :
 
     override val framework: FrameworkId? = webTypes.framework
     override val library: String? = webTypes.name
-    private val contextExpr = webTypes.context
+    private val contextExpr = webTypes.requiredContext ?: webTypes.context
 
     private val descriptionRenderer: (String) -> String =
       when (webTypes.descriptionMarkupWithLegacy) {

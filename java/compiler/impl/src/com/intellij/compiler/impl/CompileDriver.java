@@ -124,11 +124,9 @@ public final class CompileDriver {
         buildManager.postponeBackgroundTasks();
         buildManager.cancelAutoMakeTasks(myProject);
         TaskFuture<?> future = compileInExternalProcess(compileContext, true);
-        if (future != null) {
-          while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
-            if (indicator.isCanceled()) {
-              future.cancel(false);
-            }
+        while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
+          if (indicator.isCanceled()) {
+            future.cancel(false);
           }
         }
       }
@@ -221,7 +219,7 @@ public final class CompileDriver {
     return scopes;
   }
 
-  @Nullable
+  @NotNull
   private TaskFuture<?> compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = ReadAction.compute(() -> CompileScopeUtil.fetchFiles(compileContext));
@@ -450,20 +448,18 @@ public final class CompileDriver {
         }
 
         TaskFuture<?> future = compileInExternalProcess(compileContext, false);
-        if (future != null) {
-          Tracer.Span compileInExternalProcessSpan = Tracer.start("compile in external process");
-          while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
-            if (indicator.isCanceled()) {
-              future.cancel(false);
-            }
+        Tracer.Span compileInExternalProcessSpan = Tracer.start("compile in external process");
+        while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
+          if (indicator.isCanceled()) {
+            future.cancel(false);
           }
-          compileInExternalProcessSpan.complete();
-          if (!executeCompileTasks(compileContext, false)) {
-            COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
-          }
-          if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
-            COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.ERRORS);
-          }
+        }
+        compileInExternalProcessSpan.complete();
+        if (!executeCompileTasks(compileContext, false)) {
+          COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
+        }
+        if (compileContext.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
+          COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.ERRORS);
         }
       }
       catch (ProcessCanceledException ignored) {
@@ -564,7 +560,7 @@ public final class CompileDriver {
         }
 
         String wrappedMessage = _status == ExitStatus.UP_TO_DATE ? statusMessage : HtmlChunk.link("#", statusMessage).toString();
-        Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(wrappedMessage, messageType.toNotificationType())
+        Notification notification = CompilerManager.getNotificationGroup().createNotification(wrappedMessage, messageType.toNotificationType())
           .setListener(new BuildToolWindowActivationListener(compileContext))
           .setImportant(false);
         compileContext.getBuildSession().registerCloseAction(notification::expire);

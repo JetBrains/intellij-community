@@ -390,6 +390,7 @@ public class GitImpl extends GitImplBase {
                                                 @NotNull String startPoint,
                                                 boolean force) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setSilent(false);
     h.setStdoutSuppressed(false);
     if (force) {
       h.addParameters("-f");
@@ -404,6 +405,7 @@ public class GitImpl extends GitImplBase {
                                                @NotNull String upstreamBranchName,
                                                @NotNull String branchName) {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setSilent(false);
     h.setStdoutSuppressed(false);
     if (GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository)) {
       h.addParameters("--set-upstream-to", upstreamBranchName, branchName);

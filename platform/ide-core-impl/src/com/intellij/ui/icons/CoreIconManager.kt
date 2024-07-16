@@ -40,7 +40,7 @@ import javax.swing.Icon
 class CoreIconManager : IconManager, CoreAwareIconManager {
   override fun getPlatformIcon(id: PlatformIcons): Icon {
     return when (id) {
-      PlatformIcons.Public -> AllIcons.Nodes.Public
+      PlatformIcons.Public -> AllIcons.Nodes.C_public
       PlatformIcons.Private -> AllIcons.Nodes.C_private
       PlatformIcons.Protected -> AllIcons.Nodes.C_protected
       PlatformIcons.Local -> AllIcons.Nodes.C_plocal
@@ -110,8 +110,13 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
   }
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
+    return loadRasterizedIcon(path, null, classLoader, cacheKey, flags)
+  }
+
+  override fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
     assert(!path.startsWith('/'))
     return loadRasterizedIcon(path = path,
+                              expUIPath = expUIPath,
                               classLoader = classLoader,
                               cacheKey = cacheKey,
                               flags = flags,

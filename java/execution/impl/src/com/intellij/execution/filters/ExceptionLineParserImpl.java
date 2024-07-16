@@ -8,12 +8,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -268,7 +267,6 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
   }
 
   static final class ExceptionFinder implements HyperlinkInfoFactory.HyperlinkHandler {
-    private static final long LINK_INFO_TIMEOUT_MS = 300L;
     private final ExceptionLineRefiner myElementMatcher;
     private final int myLineNumber;
     private final int myTextEndOffset;
@@ -298,18 +296,21 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
 
-      ThrowableComputable<LinkInfo, RuntimeException> computable = () -> ReadAction.compute(
-        () -> computeLinkInfo(project, file, startOffset, endOffset, targetEditor, originalEditor));
-      LinkInfo info = ProgressIndicatorUtils.withTimeout(LINK_INFO_TIMEOUT_MS, () -> SlowOperations.allowSlowOperations(computable));
-      if (info == null) return;
-      if (info.myTarget != null) {
-        TextRange range = info.myTarget.getTextRange();
-        targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
-      }
+      long stamp = document.getModificationStamp();
+      ReadAction.nonBlocking(() -> computeLinkInfo(project, file, startOffset, endOffset, targetEditor, originalEditor))
+        .expireWhen(() -> project.isDisposed() || targetEditor.isDisposed() || document.getModificationStamp() != stamp)
+        .finishOnUiThread(ModalityState.nonModal(), info -> {
+          if (info == null) return;
+          if (info.myTarget != null) {
+            TextRange range = info.myTarget.getTextRange();
+            targetEditor.getCaretModel().moveToOffset(range.getStartOffset());
+          }
 
-      if (info.myAction != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-        displayAnalysisAction(project, info, targetEditor);
-      }
+          if (info.myAction != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+            displayAnalysisAction(project, info, targetEditor);
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
 
     private @Nullable LinkInfo computeLinkInfo(@NotNull Project project,

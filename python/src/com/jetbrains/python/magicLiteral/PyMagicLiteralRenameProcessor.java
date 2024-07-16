@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.magicLiteral;
 
 import com.google.common.base.Preconditions;
@@ -20,15 +20,15 @@ import org.jetbrains.annotations.Nullable;
  */
 final class PyMagicLiteralRenameProcessor extends RenamePsiElementProcessor {
   @Override
-  public boolean canProcessElement(@NotNull final PsiElement element) {
+  public boolean canProcessElement(final @NotNull PsiElement element) {
     return (PyMagicLiteralTools.couldBeMagicLiteral(element));
   }
 
   @Override
-  public void renameElement(@NotNull final PsiElement element,
-                            @NotNull final String newName,
+  public void renameElement(final @NotNull PsiElement element,
+                            final @NotNull String newName,
                             final UsageInfo @NotNull [] usages,
-                            @Nullable final RefactoringElementListener listener) {
+                            final @Nullable RefactoringElementListener listener) {
     Preconditions.checkArgument(canProcessElement(element), "Element can't be renamed, call #canProcessElement first " + element);
     element.replace(PyElementGenerator.getInstance(element.getProject()).createStringLiteral((PyStringLiteralExpression)element, newName));
     for (final UsageInfo usage : usages) {

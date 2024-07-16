@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.psi.patternMatching;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -28,6 +29,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/controlStructures/blocks")
             public static class Blocks extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -51,6 +58,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/controlStructures")
             public static class Uncategorized extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -128,6 +141,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/declarations/classesAndObjects")
             public static class ClassesAndObjects extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -169,6 +188,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/unifier/equivalence/declarations/localCallables/lambdas")
                 public static class Lambdas extends AbstractK1PsiUnifierTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -203,6 +228,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                         runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/singleParam.kt");
                     }
 
+                    @TestMetadata("singleParamTypeError.kt")
+                    public void testSingleParamTypeError() throws Exception {
+                        runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/singleParamTypeError.kt");
+                    }
+
                     @TestMetadata("unitCoercion.kt")
                     public void testUnitCoercion() throws Exception {
                         runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/unitCoercion.kt");
@@ -212,6 +242,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/unifier/equivalence/declarations/localCallables")
                 public static class Uncategorized extends AbstractK1PsiUnifierTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -251,6 +287,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/declarations/typeParameters")
             public static class TypeParameters extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -268,6 +310,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/expressions/callableReferences")
             public static class CallableReferences extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -291,6 +339,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/expressions/calls")
             public static class Calls extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -384,6 +438,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/expressions/casts")
             public static class Casts extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -410,6 +470,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/unifier/equivalence/expressions/conventions/assignments")
                 public static class Assignments extends AbstractK1PsiUnifierTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -443,6 +509,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/unifier/equivalence/expressions/conventions/invoke")
                 public static class Invoke extends AbstractK1PsiUnifierTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -471,6 +543,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/unifier/equivalence/expressions/conventions")
                 public static class Uncategorized extends AbstractK1PsiUnifierTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -545,6 +623,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/expressions/misc")
             public static class Misc extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -568,6 +652,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/expressions/super")
             public static class Super extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -596,6 +686,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/expressions/this")
             public static class This extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -654,6 +750,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/unifier/equivalence/expressions")
             public static class Uncategorized extends AbstractK1PsiUnifierTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -666,6 +768,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @TestMetadata("const.kt")
                 public void testConst() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/const.kt");
+                }
+
+                @TestMetadata("importedObjectMethod.kt")
+                public void testImportedObjectMethod() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/importedObjectMethod.kt");
                 }
 
                 @TestMetadata("object.kt")
@@ -713,6 +820,12 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/unifier/equivalence/types")
         public static class Types extends AbstractK1PsiUnifierTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

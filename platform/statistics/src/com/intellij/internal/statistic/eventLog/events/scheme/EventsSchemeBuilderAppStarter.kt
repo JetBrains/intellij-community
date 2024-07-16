@@ -24,9 +24,6 @@ private val LOG: Logger
   get() = logger<EventsSchemeBuilderAppStarter>()
 
 internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
-  override val commandName: String
-    get() = "buildEventsScheme"
-
   override fun main(args: List<String>) {
     var outputFile: String? = null
     var pluginsFile: String? = null

@@ -1,30 +1,60 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.util.application
 import com.intellij.util.asSafely
-import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
-import com.intellij.util.indexing.dependencies.FileIndexingStamp
-import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
-import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute
+import com.intellij.util.indexing.dependencies.*
+import com.intellij.util.indexing.impl.perFileVersion.LongFileAttribute
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import kotlin.concurrent.Volatile
 
 /**
  * An object dedicated to manage persistent `isIndexed` file flag.
  */
 @ApiStatus.Internal
 object IndexingFlag {
-  private val attribute = FileAttribute("indexing.flag", 0, true)
+
+  @JvmStatic
+  fun isIndexedFlagDisabled(): Boolean = isIndexedFlagDisabled(ApplicationManager.getApplication())
+
+  @TestOnly
+  @JvmStatic
+  private val ENABLE_IS_INDEXED_FLAG_KEY: Key<Boolean> = Key("is_indexed_flag_enabled")
 
   @Volatile
-  private var persistence = IntFileAttribute.overFastAttribute(attribute)
+  @JvmStatic
+  private var indexedFlagDisabled: Boolean? = null
+
+  @JvmStatic
+  private fun isIndexedFlagDisabled(app: Application): Boolean {
+    if (indexedFlagDisabled == null) {
+      if (app.isUnitTestMode) {
+        val enableByTestModeFlags = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)
+        if (enableByTestModeFlags != null) {
+          indexedFlagDisabled = !enableByTestModeFlags
+          return !enableByTestModeFlags
+        }
+      }
+      indexedFlagDisabled = Registry.`is`("indexing.disable.virtual.file.system.entry.is.file.indexed", false)
+    }
+    return indexedFlagDisabled!!
+  }
+
+  private val attribute = FileAttribute("indexing.flag", 1, true)
+
+  @Volatile
+  private var persistence = LongFileAttribute.overFastAttribute(attribute)
   private val hashes = StripedIndexingStampLock()
 
   @JvmStatic
@@ -36,7 +66,7 @@ object IndexingFlag {
   }
 
   private fun VirtualFile.asApplicable(): VirtualFileWithId? {
-    return asSafely<VirtualFileWithId>()?.let { if (VfsData.isIndexedFlagDisabled()) null else it }
+    return asSafely<VirtualFileWithId>()?.let { if (isIndexedFlagDisabled()) null else it }
   }
 
   @JvmStatic
@@ -72,9 +102,9 @@ object IndexingFlag {
   }
 
   private fun setFileIndexed(fileId: Int, stamp: FileIndexingStamp) {
-    if (!VfsData.isIndexedFlagDisabled()) {
+    if (!isIndexedFlagDisabled()) {
       stamp.store { s ->
-        persistence.writeInt(fileId, s)
+        persistence.writeLong(fileId, s)
       }
     }
   }
@@ -82,8 +112,15 @@ object IndexingFlag {
   @JvmStatic
   fun isFileIndexed(file: VirtualFile, stamp: FileIndexingStamp): Boolean {
     return file.asApplicable()?.let { fileWithId ->
-      stamp.isSame(persistence.readInt(fileWithId.id))
+      stamp.isSame(persistence.readLong(fileWithId.id))
     } ?: false
+  }
+
+  @JvmStatic
+  fun isFileChanged(file: VirtualFile, stamp: FileIndexingStamp): IsFileChangedResult {
+    return file.asApplicable()?.let { fileWithId ->
+      stamp.isFileChanged(persistence.readLong(fileWithId.id).toFileModCount())
+    } ?: IsFileChangedResult.UNKNOWN
   }
 
   @JvmStatic
@@ -117,7 +154,7 @@ object IndexingFlag {
   }
 
   fun reloadAttributes() {
-    persistence = IntFileAttribute.overFastAttribute(attribute)
+    persistence = LongFileAttribute.overFastAttribute(attribute)
   }
 
   @JvmStatic

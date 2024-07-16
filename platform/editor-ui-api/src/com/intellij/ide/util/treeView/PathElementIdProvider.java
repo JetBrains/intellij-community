@@ -2,6 +2,7 @@
 package com.intellij.ide.util.treeView;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A tree node providing a string ID to identify it when storing/restoring state.
@@ -13,7 +14,11 @@ import org.jetbrains.annotations.NotNull;
  *   use the directory's name as a unique ID.
  * </p>
  * <p>
- *   Nodes may implement this interface and provide their own string IDs.
+ *   Every node is identified using its type ID and path element ID. A node implementing this
+ *   interface must implement {@link #getPathElementId()} to provide its own path element ID,
+ *   and may also optionally implement {@link #getPathElementType()} to provide the type ID,
+ *   though it's normally not necessary because the default algorithm based on the node's
+ *   actual class works fast and well enough..
  * </p>
  */
 public interface PathElementIdProvider {
@@ -25,4 +30,16 @@ public interface PathElementIdProvider {
    * @return this node's string ID
    */
   @NotNull String getPathElementId();
+
+  /**
+   * Returns the ID of the node's type.
+   * <p>
+   *   Unlike {@link #getPathElementId()}, it's allowed to return {@code null}, which means
+   *   use the default type string based on the node's actual class.
+   * </p>
+   * @return this node type's string iD
+   */
+  default @Nullable String getPathElementType() {
+    return null;
+  }
 }

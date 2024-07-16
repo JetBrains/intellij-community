@@ -21,7 +21,7 @@ import com.intellij.psi.PsiClass;
  * Nikolay.Tropin
  * 2014-12-01
  */
-public class GenerateToStringInterfaceFilter implements GenerateToStringClassFilter {
+public final class GenerateToStringInterfaceFilter implements GenerateToStringClassFilter {
 
     @Override
     public boolean canGenerateToString(PsiClass psiClass) {

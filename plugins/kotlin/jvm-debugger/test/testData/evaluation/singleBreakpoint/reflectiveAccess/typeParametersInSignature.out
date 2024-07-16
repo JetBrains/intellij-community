@@ -1,0 +1,9 @@
+LineBreakpoint created at typeParametersInSignature.kt:4
+Run Java
+Connected to the target VM
+typeParametersInSignature.kt:4
+Compile bytecode for bar1("")
+Compile bytecode for "".bar2()
+Disconnected from the target VM
+
+Process finished with exit code 0

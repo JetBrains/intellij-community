@@ -6,7 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class PackageSetFactoryImpl extends PackageSetFactory {
+final class PackageSetFactoryImpl extends PackageSetFactory {
   private static final Logger LOG = Logger.getInstance(PackageSetFactoryImpl.class);
 
   public PackageSetFactoryImpl() {
@@ -30,7 +30,7 @@ public final class PackageSetFactoryImpl extends PackageSetFactory {
       public void extensionAdded(@NotNull PackageSetParserExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
         for (Project project : ProjectManager.getInstance().getOpenProjects()) {
           for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
-            ServiceKt.getStateStore(project).reloadState(holder.getClass());
+            IComponentStoreKt.getStateStore(project).reloadState(holder.getClass());
             holder.fireScopeListeners();
           }
         }

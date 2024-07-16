@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.proxy.CommonProxy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -15,9 +16,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @deprecated use {@link JdkProxyProvider#getProxySelector()} or {@link IdeProxySelector}
+ */
+@SuppressWarnings("removal")
+@Deprecated
 public final class IdeaWideProxySelector extends ProxySelector {
   private static final Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
   private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
+
+  private static volatile long ourProxyAutoDetectDurationMs = -1L;
 
   private final HttpConfigurable myHttpConfigurable;
   private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<>();
@@ -82,7 +90,12 @@ public final class IdeaWideProxySelector extends ProxySelector {
     }
 
     if (pair == null) {
+      var searchStartMs = System.currentTimeMillis();
       ProxySelector newProxySelector = NetUtils.getProxySelector(pacUrlForUse);
+      if (pacUrlForUse == null) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourProxyAutoDetectDurationMs = System.currentTimeMillis() - searchStartMs;
+      }
 
       pair = Pair.create(newProxySelector, pacUrlForUse);
       myPacProxySelector.lazySet(pair);
@@ -108,6 +121,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
   @Override
   public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     if (myHttpConfigurable.USE_PROXY_PAC) {
+      // FIXME bug here! scheme is never used in proxy code, uri.getScheme() -> null
       myHttpConfigurable.removeGeneric(new CommonProxy.HostInfo(uri.getScheme(), uri.getHost(), uri.getPort()));
       LOG.debug("generic proxy credentials (if were saved) removed");
       return;
@@ -118,5 +132,13 @@ public final class IdeaWideProxySelector extends ProxySelector {
       LOG.debug("connection failed message passed to http configurable");
       myHttpConfigurable.LAST_ERROR = ioe.getMessage();
     }
+  }
+
+  /**
+   * @return duration that proxy auto-detection took (ms), or -1 in case automatic proxy detection wasn't triggered
+   */
+  @ApiStatus.Internal
+  public static long getProxyAutoDetectDurationMs() {
+    return ourProxyAutoDetectDurationMs;
   }
 }

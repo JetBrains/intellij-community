@@ -22,46 +22,32 @@ import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.application
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.asCancellablePromise
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.jupiter.api.extension.InvocationInterceptor
-import org.junit.jupiter.api.extension.ReflectiveInvocationContext
-import java.lang.reflect.Method
+import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertNotNull
 
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
  */
 @TestApplication
-@ExtendWith(CancellationPropagationTest.Enabler::class)
 class CancellationPropagationTest {
-
-  class Enabler : InvocationInterceptor {
-
-    override fun interceptTestMethod(
-      invocation: InvocationInterceptor.Invocation<Void>,
-      invocationContext: ReflectiveInvocationContext<Method>,
-      extensionContext: ExtensionContext,
-    ) {
-      runWithCancellationPropagationEnabled {
-        invocation.proceed()
-      }
-    }
-  }
-
   private val service = AppExecutorUtil.getAppExecutorService()
   private val scheduledService = AppExecutorUtil.getAppScheduledExecutorService()
 
@@ -304,6 +290,7 @@ class CancellationPropagationTest {
       service.scheduleWithFixedDelay(it.runnable(), 5, 10, TimeUnit.MILLISECONDS)
     }
     doTestScheduleWithFixedDelay(service)
+    doTestNoErrorsWhenOuterJobDied(service)
   }
 
   private suspend fun doTestJobIsCancelledByFuture(submit: (() -> Unit) -> Future<*>) {
@@ -407,6 +394,29 @@ class CancellationPropagationTest {
     assertSame(throwable, ce.cause)
   }
 
+  private fun doTestNoErrorsWhenOuterJobDied(service: ScheduledExecutorService) {
+    // scheduled executor service should not throw exceptions when the outer scope is canceled
+    // it was the case previously, because internal continuations were resumed multiple times, which is forbidden
+    val counter = AtomicInteger(0)
+    val errorList = AtomicReference(emptyList<Throwable?>())
+
+    LoggedErrorProcessor.executeWith<Nothing>(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        // errors here are unexpected
+        errorList.updateAndGet { it + listOf(t) }
+        return EnumSet.of(Action.RETHROW)
+      }
+    }) {
+      withRootJob { outerJob ->
+        // enable cancellation propagation
+        service.scheduleWithFixedDelay({ if (counter.incrementAndGet() == 3) outerJob.cancel() }, 0, 100, TimeUnit.MILLISECONDS)
+      }
+      // after the root job dies, we give some scheduled tasks a chance to run
+      Thread.sleep(1000)
+    }
+    assertTrue(errorList.get().isEmpty())
+  }
+
   @Test
   fun `future is completed before job is completed`() {
     var childFuture1 by AtomicReference<Future<*>>()
@@ -441,7 +451,7 @@ class CancellationPropagationTest {
     }
     lock.timeoutWaitUp()
     rootJob.cancel()
-    waitAssertCompletedWith(childFuture, CeProcessCanceledException::class)
+    waitAssertCompletedWithCancellation(childFuture)
     rootJob.timeoutJoinBlocking()
   }
 
@@ -503,7 +513,7 @@ class CancellationPropagationTest {
     childFuture1CanThrow.up()
     waitAssertCompletedWith(childFuture1, E::class)
     childFuture2CanFinish.up()
-    waitAssertCompletedWith(childFuture2, CeProcessCanceledException::class)
+    waitAssertCompletedWithCancellation(childFuture2)
     waitAssertCancelled(rootJob)
   }
 
@@ -625,7 +635,7 @@ class CancellationPropagationTest {
     }
 
   @Test
-  fun `blockingContextScope fails with exception even in cancelled state`() : Unit = timeoutRunBlocking {
+  fun `blockingContextScope fails with exception even in cancelled state`(): Unit = timeoutRunBlocking {
     // this scenario represents a case where an error occurs during the cleanup after cancellation
     // we should not silently swallow the error, since it is important to know that the cleanup went wrong
     try {
@@ -642,7 +652,8 @@ class CancellationPropagationTest {
           }
         }
       }
-    } catch (e : TestLoggerAssertionError) {
+    }
+    catch (e: TestLoggerAssertionError) {
       // TODO: the same as in `blockingContextScope save error`
       assertInstanceOf<MyException>(e.cause)
     }
@@ -741,5 +752,98 @@ class CancellationPropagationTest {
     withRootJob {
       AsyncPromise<Unit>().apply { setError("bad") }.then {}
     }.join()
+  }
+
+  @Test
+  @OptIn(DelicateCoroutinesApi::class)
+  fun `promise onSuccess should not get completion context`() {
+    lateinit var tc: CoroutineContext
+    val cf = CompletableFuture<Unit>()
+    cf.asCancellablePromise().onSuccess {
+      tc = currentThreadContext()
+    }
+    GlobalScope.launch {
+      cf.complete(Unit)
+    }.timeoutJoinBlocking()
+    assertSame(EmptyCoroutineContext, tc)
+  }
+
+  @Test
+  @OptIn(DelicateCoroutinesApi::class)
+  fun `promise onError should not get completion context`() {
+    val throwable = object : Throwable() {}
+    lateinit var tc: CoroutineContext
+    val cf = CompletableFuture<Unit>()
+    cf.asCancellablePromise().onError {
+      tc = currentThreadContext()
+    }
+    GlobalScope.launch {
+      cf.completeExceptionally(throwable)
+    }.timeoutJoinBlocking()
+    assertSame(EmptyCoroutineContext, tc)
+  }
+
+  @Test
+  fun `runAsCoroutinesThrows PCE`(): Unit = timeoutRunBlocking {
+    assertThrows<ProcessCanceledException> {
+      runAsCoroutine(Continuation(EmptyCoroutineContext + Job()) {}, true) {
+        throw CancellationException()
+      }
+    }
+
+    assertThrows<ProcessCanceledException> {
+      val j = Job()
+      runAsCoroutine(Continuation(j) {}, true) {
+        j.cancel()
+      }
+    }
+  }
+
+  @Test
+  fun `external cancellation of scheduled runnable`(): Unit = timeoutRunBlocking {
+    val semaphore = Semaphore(1)
+    val normalExecutionCounter = AtomicInteger(0)
+    assertThrows<CancellationException> {
+      blockingContextScope {
+        val j = currentThreadContext().job
+        val future = ApplicationManager.getApplication().executeOnPooledThread {
+          j.cancel()
+          semaphore.up()
+          normalExecutionCounter.incrementAndGet()
+        }
+        semaphore.waitFor()
+        normalExecutionCounter.incrementAndGet()
+        assertThrows<CancellationException> {
+          future.get()
+        }
+      }
+    }
+    assertEquals(2, normalExecutionCounter.get())
+  }
+
+  @Test
+  fun `invokeLater throws PCE`(): Unit = timeoutRunBlocking {
+    blockingContextScope {
+      ApplicationManager.getApplication().invokeLater {
+        throw ProcessCanceledException()
+      }
+    }
+  }
+
+  @Test
+  fun `invokeAndWait propagates cancellation`(): Unit = timeoutRunBlocking {
+    val semaphore = Semaphore(1)
+    val job = launch(Dispatchers.Default) {
+      blockingContext {
+        semaphore.up()
+        application.invokeAndWait {
+          while (true) {
+            Cancellation.checkCancelled()
+          }
+        }
+      }
+    }
+    semaphore.timeoutWaitUp()
+    job.cancel()
   }
 }

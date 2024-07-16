@@ -7,9 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JavaHomeFinderMac extends JavaHomeFinderBasic {
   public static final String JAVA_HOME_FIND_UTIL = "/usr/libexec/java_home";
@@ -28,6 +33,7 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
       roots.forEach(root -> {
         result.addAll(scanAll(root.resolve("System/Library/Java/JavaVirtualMachines"), true));
       });
+      result.addAll(findJavaInstalledByBrew());
       return result;
     });
 
@@ -77,5 +83,43 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
     }
 
     return result;
+  }
+
+  private static void processSubfolders(@Nullable Path dir, Consumer<? super Path> processor) {
+    if (dir == null || !Files.isDirectory(dir) || Files.isSymbolicLink(dir)) { return; }
+    try (Stream<Path> files = Files.list(dir)) {
+      files.forEach(candidate -> {
+        if (Files.isDirectory(candidate)) {
+          processor.accept(candidate);
+        }
+      });
+    } catch (IOException ignore) {}
+  }
+
+  /**
+   * Finds directories for JDKs installed by <a href="https://brew.sh/">homebrew</a>.
+   */
+  private @NotNull Set<String> findJavaInstalledByBrew() {
+    var found = new HashSet<String>();
+    var paths = List.of("/opt/homebrew/Cellar/", "/usr/homebrew/Cellar/");
+    for (String path : paths) {
+      Path parentFolder = getPathInUserHome(path);
+      // JDKs installed by Homebrew can be hidden in `libexec`
+      processSubfolders(parentFolder, formula -> {
+        processSubfolders(formula, version -> {
+          processSubfolders(version, subFolder -> {
+            if (subFolder.getFileName().toString().equals("libexec")) {
+              found.addAll(
+                scanAll(subFolder, true).stream()
+                  .filter(jdkPath -> !Files.isSymbolicLink(Path.of(jdkPath)))
+                  .collect(Collectors.toSet())
+              );
+            }
+          });
+        });
+      });
+    }
+
+    return found;
   }
 }

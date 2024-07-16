@@ -46,10 +46,10 @@ class X {
   }
 
   int instanceofTest(Object obj) {
-    if (obj instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>(Integer<error descr="')' expected"> </error><error descr="Cannot resolve symbol 'i'">i</error> && predicate()<error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {
+    if (obj instanceof<error descr="')' expected"><error descr="Type expected"> </error></error><error descr="Not a statement">(Integer</error><error descr="')' expected"> </error><error descr="Cannot resolve symbol 'i'">i</error> && predicate()<error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {
       return 1;
     }
-    if (obj instanceof<error descr="')' expected"><error descr="Type expected"> </error></error>(String<error descr="')' expected"> </error><error descr="Cannot resolve symbol 's'">s</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {
+    if (obj instanceof<error descr="')' expected"><error descr="Type expected"> </error></error><error descr="Not a statement">(String</error><error descr="')' expected"> </error><error descr="Cannot resolve symbol 's'">s</error><error descr="Unexpected token">)</error><error descr="Unexpected token">)</error> {
       return 3;
     }
     return 2;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -149,21 +149,20 @@ public final class StringTemplateMigrationInspection extends AbstractBaseJavaLoc
           operand = PsiUtil.skipParenthesizedExprDown(parenthesized);
         }
         if (operand instanceof PsiLiteralExpression literal) {
-          if (ExpressionUtils.hasStringType(literal)) {
-            String value = (String)literal.getValue();
-            if (value == null) return null; // error in string literal
-            String escaped = StringUtil.escapeStringCharacters(value);
+          Object value = literal.getValue();
+          if (ExpressionUtils.hasStringType(literal) && value == null) return null; // error in literal
+          if (value instanceof String || value instanceof Character) {
+            String string = String.valueOf(value);
+            String escaped = StringUtil.escapeStringCharacters(string);
             content.append(textBlock ? PsiLiteralUtil.escapeTextBlockCharacters(escaped, false, true, false) : escaped);
-          }
-          else {
-            toTemplateExpression(content, isStringFound, literal);
+            continue;
           }
         }
-        else {
-          toTemplateExpression(content, isStringFound, operand);
-        }
+        toTemplateExpression(content, isStringFound, operand);
       }
-      return textBlock ? CommonClassNames.JAVA_LANG_STRING_TEMPLATE + ".STR.\"\"\"\n" + content + "\"\"\"" : CommonClassNames.JAVA_LANG_STRING_TEMPLATE + ".STR.\"" + content + "\"";
+      return textBlock
+             ? CommonClassNames.JAVA_LANG_STRING_TEMPLATE + ".STR.\"\"\"\n" + content + "\"\"\""
+             : CommonClassNames.JAVA_LANG_STRING_TEMPLATE + ".STR.\"" + content + "\"";
     }
 
     private static boolean useTextBlockTemplate(PsiPolyadicExpression expression) {

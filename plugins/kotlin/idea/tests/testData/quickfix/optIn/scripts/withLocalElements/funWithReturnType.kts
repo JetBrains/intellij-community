@@ -1,9 +1,9 @@
 // "Opt in for 'Library' on 'bar'" "true"
-// ACTION: Add '-opt-in=FunWithReturnType.Library' to module light_idea_test_case compiler arguments
 // ACTION: Add full qualifier
 // ACTION: Convert to block body
 // ACTION: Introduce import alias
 // ACTION: Opt in for 'Library' in containing file 'funWithReturnType.kts'
+// ACTION: Opt in for 'Library' in module 'light_idea_test_case'
 // ACTION: Opt in for 'Library' on 'bar'
 // ACTION: Remove explicit type specification
 // RUNTIME_WITH_SCRIPT_RUNTIME

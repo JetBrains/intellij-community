@@ -25,7 +25,7 @@ import java.awt.*;
 import static java.lang.Character.*;
 
 public final class EditorActionUtil {
-  static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
+  public static final Object EDIT_COMMAND_GROUP = Key.create("EditGroup");
   public static final Object DELETE_COMMAND_GROUP = Key.create("DeleteGroup");
 
   private EditorActionUtil() {
@@ -317,7 +317,7 @@ public final class EditorActionUtil {
                                           @Nullable IElementType rightTokenType) {
     return leftTokenType != null &&
            rightTokenType != null &&
-           LanguageWordBoundaryFilter.INSTANCE.forLanguage(rightTokenType.getLanguage())
+           LanguageWordBoundaryFilter.getInstance().forLanguage(rightTokenType.getLanguage())
              .isWordBoundary(leftTokenType, rightTokenType);
   }
 

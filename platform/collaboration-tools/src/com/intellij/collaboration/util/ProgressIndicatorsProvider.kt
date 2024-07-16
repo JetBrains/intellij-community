@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import java.util.concurrent.ConcurrentHashMap
 
+@Deprecated("Please migrate to coroutines")
 class ProgressIndicatorsProvider : Disposable {
   private val indicators = ConcurrentHashMap.newKeySet<ProgressIndicator>()
 

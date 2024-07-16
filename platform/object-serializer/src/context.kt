@@ -3,11 +3,13 @@ package com.intellij.serialization
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Constructor
 
 // not fully initialized object may be passed (only created instance without properties) if an object has PropertyMapping annotation
 typealias BeanConstructed = (instance: Any) -> Any
 
+@ApiStatus.Internal
 class NonDefaultConstructorInfo(@JvmField val names: List<String>, @JvmField val constructor: Constructor<*>)
 
 typealias PropertyMappingProvider = (beanClass: Class<*>) -> NonDefaultConstructorInfo?

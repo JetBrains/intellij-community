@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
 
@@ -11,7 +10,7 @@ class KtRemoveEmptyCompanionObjectFixTest : KtCompanionObjectInExtensionInspecti
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/removeEmptyCompanionObjectFix"
 
-  private val quickFixName = DevKitKotlinBundle.message("inspections.remove.empty.companion.object.fix.text")
+  private val quickFixName = "Remove empty companion object"
 
   fun testEmptyBlockCompanionObject() {
     doTest(quickFixName)

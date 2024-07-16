@@ -4,6 +4,7 @@ package org.jetbrains.jps.model.serialization.artifact;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
@@ -17,6 +18,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class JpsArtifactSerializer {
   private static final JpsPackagingElementSerializer<?>[] STANDARD_SERIALIZERS = {
     new ArtifactRootElementSerializer(),

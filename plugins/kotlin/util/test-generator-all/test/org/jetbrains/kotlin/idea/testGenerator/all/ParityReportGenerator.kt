@@ -4,19 +4,22 @@ package org.jetbrains.kotlin.idea.testGenerator.all
 import org.jetbrains.kotlin.fe10.testGenerator.assembleK1Workspace
 import org.jetbrains.kotlin.fir.testGenerator.assembleK2Workspace
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.testGenerator.generator.SuiteElement
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
 import org.jetbrains.kotlin.testGenerator.generator.toRelativeStringSystemIndependent
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory
 import org.jetbrains.kotlin.testGenerator.model.TWorkspace
 import java.io.File
 import java.util.Date
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.math.roundToInt
 
-fun main() {
+fun main(vararg args: String) {
     val k2Workspace = assembleK2Workspace()
     val k1Workspace = assembleK1Workspace()
 
-    ParityReportGenerator.generateReport(k1Workspace = k1Workspace, k2Workspace = k2Workspace)
+    ParityReportGenerator.generateReport(k1Workspace = k1Workspace, k2Workspace = k2Workspace, detailed = args.any { it == "detailed" })
 }
 
 object ParityReportGenerator {
@@ -24,18 +27,26 @@ object ParityReportGenerator {
     data class Variation(
         val name: String,
         val ignoreDirectives: Set<String>,
+        val totalByCategory: MutableMap<GroupCategory, AtomicInteger> = mutableMapOf<GroupCategory, AtomicInteger>(),
+        val successByCategory: MutableMap<GroupCategory, AtomicInteger> = mutableMapOf<GroupCategory, AtomicInteger>(),
         val successTestClasses: MutableMap<String, AtomicInteger> = mutableMapOf<String, AtomicInteger>()
     ) {
-        fun totalCount(): Int = successTestClasses.map { it.value }.sumOf { it.get() }
+        fun totalCount(): Int {
+            return successTestClasses.map { it.value }.sumOf { it.get() }
+        }
     }
 
     private const val PIPE = " | "
     private const val SUCCESS_RATE_THRESHOLD = 85
 
     val k1Variation = Variation("K1", setOf("// IGNORE_K1", "/* IGNORE_K1", "\"enabledInK1\": \"false\""))
-    val k2Variation = Variation("K2", setOf("// IGNORE_K2", "/* IGNORE_K2", "\"enabledInK2\": \"false\""))
+    val k2Variation = Variation("K2", setOf("// IGNORE_K2", "/* IGNORE_K2", "\"enabledInK2\": \"false\"", "// IGNORE_FOR_K2_CODE", "// IGNORE_K2_SMART_STEP_INTO"))
 
-    fun generateReport(k1Workspace: TWorkspace, k2Workspace: TWorkspace) {
+    fun generateReport(
+        k1Workspace: TWorkspace,
+        k2Workspace: TWorkspace,
+        detailed: Boolean,
+    ) {
         val md = buildString {
             appendLine("# K2/K1 feature parity report").appendLine().appendLine()
             appendLine("Generated on ${Date()}").appendLine()
@@ -47,16 +58,18 @@ object ParityReportGenerator {
             val k1InvertedFileCases = toInvertedFileCases(k1Cases)
             val k2InvertedFileCases = toInvertedFileCases(k2Cases)
 
-            reportK1OnlyFilesDetails(k1InvertedFileCases, k2InvertedFileCases, extraBuilder)
+            reportK1OnlyFilesDetails(k1InvertedFileCases, k2InvertedFileCases, detailed, extraBuilder)
             reportSharedFilesDetails(k1InvertedFileCases, k2InvertedFileCases, this)
 
-            append(extraBuilder)
+            if (detailed) {
+                append(extraBuilder)
+            }
         }
         File(KotlinRoot.DIR, "k2-k1-parity-report.md").writeText(md.replace("\n", System.lineSeparator()))
     }
 
     data class CaseNameFile(val generatedClassName: String, val testCaseMethod: TestCaseMethod, val fileName: String)
-    data class Case(val clusterName: String, val files: List<CaseNameFile>)
+    data class Case(val clusterName: String, val category: GroupCategory, val files: List<CaseNameFile>)
 
     private fun buildCases(clusterName: String, workspace: TWorkspace, stringBuilder: StringBuilder): List<Case> =
         buildList<Case> {
@@ -65,56 +78,77 @@ object ParityReportGenerator {
                 for (suite in group.suites) {
                     if (!suite.commonSuite) continue
 
-                    val singleModel = suite.models.singleOrNull()
-                    val suiteElements: List<SuiteElement> = buildList {
-                        if (singleModel != null) {
-                            val suiteElement = SuiteElement.create(
-                                group,
-                                suite,
-                                singleModel,
-                                suite.generatedClassName.substringAfterLast('.'),
-                                isNested = false
-                            )
-                            add(suiteElement)
-                        } else {
-                            addAll(suite.models
-                                .map { SuiteElement.create(group, suite, it, it.testClassName, isNested = true) })
-                        }
-                    }
+                    // k1 tests are run only on those platforms
+                    val platforms = suite.platforms.filter { it == KMPTestPlatform.Unspecified || it == KMPTestPlatform.Jvm }
 
-                    val testCaseMethods = suiteElements.fold(mutableMapOf<String, List<TestCaseMethod>>()) { acc, curr ->
-                        curr.testCaseMethods().forEach { (k, v) ->
-                            acc[k] = (acc[k] ?: ArrayList<TestCaseMethod>()) + v
-                        }
-                        acc
-                    }
-                    if (testCaseMethods.any { it.value.any { !it.file.exists() } }) {
-                        error(testCaseMethods.flatMap { it.value.filter { !it.file.exists() } }.joinToString())
-                    }
-                    testCaseMethods.forEach { (className, files) ->
-                        val testDataMethodFiles = files.filter { it.file.isFile }
-                        val fs = if (testDataMethodFiles.isEmpty()) {
-                            files.mapNotNull {
-                                val f = File(it.file, it.file.name + ".kt")
-                                if (!f.isFile) return@mapNotNull null
-                                it.copy(file = f)
+                    for (platform in platforms) {
+                        val singleModel = suite.models.singleOrNull()
+                        val suiteElements: List<SuiteElement> = buildList {
+                            if (singleModel != null) {
+                                val suiteElement = SuiteElement.create(
+                                    group,
+                                    suite,
+                                    singleModel,
+                                    suite.generatedClassFqName(platform).substringAfterLast('.'),
+                                    platform,
+                                    isNested = false
+                                )
+                                fun addSuiteElement(e: SuiteElement) {
+                                this += e
+                                e.nestedSuites.forEach(::addSuiteElement)
                             }
-                        } else {
-                            testDataMethodFiles
+                            addSuiteElement(suiteElement)
+                            } else {
+                                addAll(suite.models
+                                           .map {
+                                               SuiteElement.create(
+                                                   group,
+                                                   suite,
+                                                   it,
+                                                   it.testClassName,
+                                                   platform,
+                                                   isNested = true
+                                               )
+                                           })
+                            }
                         }
 
-                        if (fs.isEmpty()) {
-                            if (files.any { it.file.isDirectory }) {
-                                val directories = files
-                                    .filter { it.file.isDirectory }
-                                    .map { it.file.toRelativeKotlinRoot() }
-                                stringBuilder.appendLine().appendLine("$className has directories")
-                                for (s in directories) {
-                                    stringBuilder.append(" * ").appendLine(s)
+                        val testCaseMethods = suiteElements.fold(mutableMapOf<String, List<TestCaseMethod>>()) { acc, curr ->
+                            curr.testCaseMethods(platform).forEach { (k, v) ->
+                                acc[k] = (acc[k] ?: ArrayList<TestCaseMethod>()) + v
+                            }
+                            acc
+                        }
+                        if (testCaseMethods.any { it.value.any { !it.file.exists() } }) {
+                            error(testCaseMethods.flatMap { it.value.filter { !it.file.exists() } }.joinToString())
+                        }
+                        testCaseMethods.forEach { (className, files) ->
+                            val testDataMethodFiles = files.filter { it.file.isFile }
+                            val fs = if (testDataMethodFiles.isEmpty()) {
+                                files.mapNotNull {
+                                    val f = File(it.file, it.file.name + ".kt")
+                                    if (!f.isFile) return@mapNotNull null
+                                    it.copy(file = f)
                                 }
+                            } else {
+                                testDataMethodFiles
                             }
-                        } else {
-                            this.add(Case(clusterName, fs.map { CaseNameFile(className, it, it.file.toRelativeKotlinRoot()) }))
+
+                            if (fs.isEmpty()) {
+                                if (files.any { it.file.isDirectory }) {
+                                    val directories = files
+                                        .filter { it.file.isDirectory }
+                                        .map { it.file.toRelativeKotlinRoot() }
+                                    stringBuilder.appendLine().appendLine("$className has directories")
+                                    directories.forEach { stringBuilder.append(" * ").appendLine(it) }
+                                }
+                            } else {
+                                this += Case(
+                                    clusterName,
+                                    category = group.category,
+                                    fs.map { CaseNameFile(className, it, it.file.toRelativeKotlinRoot()) }
+                                )
+                            }
                         }
                     }
                 }
@@ -133,7 +167,34 @@ object ParityReportGenerator {
             }
         }
 
-    private fun reportSharedFilesDetails(invertedK1FileCases: Map<String, Case>, invertedK2FileCases: Map<String, Case>, stringBuilder: StringBuilder) {
+    private fun handleCategories(invertedFileCases: Map<String, Case>, variation: Variation, ignored: BooleanArray) {
+        invertedFileCases.forEach { (fileName, case) ->
+            val category = case.category
+            val file = File(KotlinRoot.DIR, fileName)
+            val caseNameFile: CaseNameFile = case.files.firstOrNull() ?: return@forEach
+            ignored.fill(false)
+            if (caseNameFile.testCaseMethod.ignored) {
+                ignored[1] = true
+            }
+            file.handleIgnored(k1Variation, k2Variation, ignored = ignored) {
+                if (variation != it) return@handleIgnored
+                val counter = it.successByCategory.computeIfAbsent(category) { AtomicInteger() }
+                counter.incrementAndGet()
+            }
+            variation.totalByCategory.computeIfAbsent(category) { AtomicInteger() }.incrementAndGet()
+        }
+    }
+
+    private fun reportSharedFilesDetails(
+        invertedK1FileCases: Map<String, Case>,
+        invertedK2FileCases: Map<String, Case>,
+        stringBuilder: StringBuilder
+    ) {
+        val testClassesPerCategory = mutableMapOf<GroupCategory, AtomicInteger>()
+        val ignored = BooleanArray(2)
+        handleCategories(invertedK1FileCases, k1Variation, ignored)
+        handleCategories(invertedK2FileCases, k2Variation, ignored)
+
         val sharedFiles = buildList<Pair<String, Case>> {
             for (invertedK2FileCasesEntry in invertedK2FileCases) {
                 val fileName: String = invertedK2FileCasesEntry.key
@@ -145,7 +206,6 @@ object ParityReportGenerator {
 
         val testClassesPerClassName = mutableMapOf<String, AtomicInteger>()
         val extensions = mutableSetOf<String>()
-        val ignored = BooleanArray(2)
         for (fileNameToCase in sharedFiles) {
             val fileName = fileNameToCase.first
             val case: Case = fileNameToCase.second
@@ -154,20 +214,26 @@ object ParityReportGenerator {
 
             val caseNameFile: CaseNameFile = case.files.firstOrNull() ?: continue
 
-            testClassesPerClassName.computeIfAbsent(caseNameFile.generatedClassName){ AtomicInteger() }.incrementAndGet()
+            val generatedClassName = caseNameFile.generatedClassName
+            testClassesPerClassName.computeIfAbsent(generatedClassName) { AtomicInteger() }.incrementAndGet()
 
             ignored.fill(false)
             if (caseNameFile.testCaseMethod.ignored) {
                 ignored[1] = true
             }
-            k1Variation.successTestClasses.computeIfAbsent(caseNameFile.generatedClassName) { AtomicInteger() }
-            k2Variation.successTestClasses.computeIfAbsent(caseNameFile.generatedClassName) { AtomicInteger() }
+
+            k1Variation.successTestClasses.computeIfAbsent(generatedClassName) { AtomicInteger() }
+            k2Variation.successTestClasses.computeIfAbsent(generatedClassName) { AtomicInteger() }
+
             file.handleIgnored(k1Variation, k2Variation, ignored = ignored) {
-                it.successTestClasses[caseNameFile.generatedClassName]!!.incrementAndGet()
+                it.successTestClasses[generatedClassName]!!.incrementAndGet()
             }
         }
 
         with(stringBuilder) {
+            k2Categories(testClassesPerCategory)
+            categoriesParity(testClassesPerCategory)
+
             appendLine("## Shared cases")
             appendLine("shared ${sharedFiles.size} files out of ${k2Variation.successTestClasses.size} cases").appendLine()
 
@@ -186,11 +252,11 @@ object ParityReportGenerator {
                 val lastPart = substringAfter.substringBefore("$")
                 "$firstPart$$lastPart"
             }.map {
-                StatusLine(it.key, it.value.sumOf { it.k2 }, it.value.sumOf { it.k1 }, it.value.sumOf { it.files })
+                StatusLine(it.key, it.value.sumOf { it.first }, it.value.sumOf { it.second }, it.value.sumOf { it.files })
             }.groupBy {
                 it.name.substringBefore("$")
             }.map {
-                StatusLine(it.key, it.value.map { it.k2 }.min(), it.value.map { it.k1 }.min(), it.value.sumOf { it.files }) to it.value
+                StatusLine(it.key, it.value.map { it.first }.min(), it.value.map { it.second }.min(), it.value.sumOf { it.files }) to it.value
             }
                 .sortedWith(compareBy({ it.first.rate }, { it.first.name }))
                 .forEach {
@@ -198,12 +264,13 @@ object ParityReportGenerator {
                     val second = it.second
                     // no reasons to report all sub-elements if total it is 100%
                     if (first.rate == 100) {
-                        val line = StatusLine("[${first.name}]", second.sumOf { it.k2 }, second.sumOf { it.k1 }, second.sumOf { it.files })
+                        val line = StatusLine("[${first.name}]", second.sumOf { it.first }, second.sumOf { it.second }, second.sumOf { it.files })
                         appendLine(line.renderToMd())
                     } else {
                         // summary
                         if (first.name != second.first().name && second.size > 1) {
-                            val line = StatusLine("[${first.name}]", second.sumOf { it.k2 }, second.sumOf { it.k1 }, second.sumOf { it.files })
+                            val line =
+                                StatusLine("[${first.name}]", second.sumOf { it.first }, second.sumOf { it.second }, second.sumOf { it.files })
                             appendLine(line.renderToMd())
                         }
                         // detailed
@@ -221,29 +288,77 @@ object ParityReportGenerator {
             appendLine(extensions.joinToString()).appendLine()
             appendLine("---")
             appendLine("## Total ")
-            appendLine(" * K1: $successK1 rate: ${Math.round(100.0 * successK1 / sharedFiles.size)} % of $totalPerCase files")
-            appendLine(" * K2: $successK2 rate: ${Math.round(100.0 * successK2 / sharedFiles.size)} % of $totalPerCase files")
+            appendLine(" * K1: $successK1 rate: ${(100.0 * successK1 / sharedFiles.size).roundToInt()} % of $totalPerCase files")
+            appendLine(" * K2: $successK2 rate: ${(100.0 * successK2 / sharedFiles.size).roundToInt()} % of $totalPerCase files")
             appendLine("---").appendLine()
         }
     }
 
+    private fun StringBuilder.k2Categories(testClassesPerCategory: MutableMap<GroupCategory, AtomicInteger>) {
+        appendLine("## K2 Success rate per category")
+        appendLine()
+        appendLine(
+            """
+                   Success rate is ratio of 
+                   number of files successfully passed in a category 
+                   to total number of files in this category.
+                """.trimIndent()
+        )
+        appendLine()
+        appendLine("| Status | Category | Success rate, % | Success files | Total files |")
+        appendLine("| -- | -- | --  | -- | -- |")
+        GroupCategory.entries.forEach {
+            val k2 = k2Variation.successByCategory[it]?.get() ?: 0
+            val total = k2Variation.totalByCategory[it]?.get() ?: 0
+            if (k2 == 0 && total == 0) return@forEach
+            val statusLine = StatusLine(it.name, k2, total, testClassesPerCategory[it]?.get() ?: 0)
+            appendLine(statusLine.renderToMd())
+        }
+        appendLine()
+    }
+
+
+    private fun StringBuilder.categoriesParity(testClassesPerCategory: MutableMap<GroupCategory, AtomicInteger>) {
+        appendLine("## K2/K1 parity per category ")
+        appendLine()
+        appendLine(
+            """
+                   Success rate is ratio of 
+                   number of files successfully passed in K2 in a category 
+                   to number of files successfully passed in K1 in the same category.
+                """.trimIndent()
+        )
+        appendLine()
+        appendLine("| Status | Category | Success rate, % | K2 files | K1 files |")
+        appendLine("| -- | -- | --  | -- | -- |")
+        GroupCategory.entries.forEach {
+            val k2 = k2Variation.successByCategory[it]?.get() ?: 0
+            val k1 = k1Variation.successByCategory[it]?.get() ?: 0
+            if (k2 == 0 && k1 == 0) return@forEach
+            val statusLine = StatusLine(it.name, k2, k1, testClassesPerCategory[it]?.get() ?: 0)
+            appendLine(statusLine.renderToMd())
+        }
+        appendLine()
+    }
+
     private data class StatusLine(
         val name: String,
-        val k2: Int,
-        val k1: Int,
+        val first: Int,
+        val second: Int,
         val files: Int
     ) {
-        val rate: Int = if (k1 > 0) Math.round(100.0 * k2 / k1).toInt() else 100
+        val rate: Int = if (second > 0) (100.0 * first / second).roundToInt() else 100
         val passed = rate >= SUCCESS_RATE_THRESHOLD
 
         fun renderToMd(): String {
-          val shortName = if (!name[0].isLetter()) (name[0] + name.substringAfterLast('.')) else name.substringAfterLast('.')
-          return PIPE + listOf(if (passed) ":white_check_mark:" else ":x:", shortName, rate, k2, k1, files).joinToString(
-            PIPE) + PIPE
+            val shortName = if (!name[0].isLetter()) (name[0] + name.substringAfterLast('.')) else name.substringAfterLast('.')
+            return PIPE + listOf(if (passed) ":white_check_mark:" else ":x:", shortName, rate, first, second, files).joinToString(
+                PIPE
+            ) + PIPE
         }
     }
 
-    private fun File.handleIgnored(vararg variations: Variation, ignored: BooleanArray, action:(Variation) -> Unit) {
+    private fun File.handleIgnored(vararg variations: Variation, ignored: BooleanArray, action: (Variation) -> Unit) {
         val readText = readText()
         for ((idx, variation) in variations.withIndex()) {
             if (!ignored[idx] && variation.ignoreDirectives.any { readText.contains(it) }) {
@@ -258,7 +373,12 @@ object ParityReportGenerator {
         }
     }
 
-    private fun reportK1OnlyFilesDetails(invertedK1FileCases: Map<String, Case>, invertedK2FileCases: Map<String, Case>, stringBuilder: StringBuilder) {
+    private fun reportK1OnlyFilesDetails(
+        invertedK1FileCases: Map<String, Case>,
+        invertedK2FileCases: Map<String, Case>,
+        detailed: Boolean,
+        stringBuilder: StringBuilder
+    ) {
         val k1OnlyCases = mutableSetOf<Case>()
         val k1OnlyFiles = buildSet<String> {
             for (invertedK1FileCasesEntry in invertedK1FileCases) {
@@ -271,11 +391,13 @@ object ParityReportGenerator {
             }
         }
 
-        with(stringBuilder) {
-            appendLine("## K1 only cases").appendLine()
-            appendLine("${k1OnlyCases.size} K1 only cases (${k1OnlyFiles.size} files):").appendLine()
-            k1OnlyCases.flatMap { it.files }.map { " * " + it.generatedClassName }.toSortedSet().forEach { appendLine(it) }
-            appendLine("---")
+        if (detailed) {
+            with(stringBuilder) {
+                appendLine("## K1 only cases").appendLine()
+                appendLine("${k1OnlyCases.size} K1 only cases (${k1OnlyFiles.size} files):").appendLine()
+                k1OnlyCases.flatMap { it.files }.map { " * " + it.generatedClassName }.toSortedSet().forEach { appendLine(it) }
+                appendLine("---")
+            }
         }
     }
 }

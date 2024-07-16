@@ -9,11 +9,11 @@ import org.jetbrains.jps.model.java.LanguageLevel;
 
 import java.util.Objects;
 
-public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectExtensionImpl> implements JpsJavaProjectExtension {
+class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectExtensionImpl> implements JpsJavaProjectExtension {
   private String myOutputUrl;
   private LanguageLevel myLanguageLevel;
 
-  public JpsJavaProjectExtensionImpl() {
+  JpsJavaProjectExtensionImpl() {
   }
 
   private JpsJavaProjectExtensionImpl(JpsJavaProjectExtensionImpl original) {

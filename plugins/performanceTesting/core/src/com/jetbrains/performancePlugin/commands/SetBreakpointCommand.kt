@@ -89,7 +89,8 @@ class SetBreakpointCommand(text: String, line: Int) : AbstractCallbackBasedComma
         breakpointProperties = lambdaVariant.createProperties()!!
       }
       else {
-        breakpointType = breakpointTypes.first()
+        @Suppress("UNCHECKED_CAST")
+        breakpointType = breakpointTypes.first() as XLineBreakpointType<XBreakpointProperties<*>>
         breakpointProperties = breakpointType.createBreakpointProperties(file, lineNumber - 1)!!
       }
       val breakpoint = breakpointManager.addLineBreakpoint(breakpointType, filePath, lineNumber - 1, breakpointProperties)

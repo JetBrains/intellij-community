@@ -13,7 +13,7 @@ fun foo(a: A, <warning descr="[UNUSED_PARAMETER] Parameter 'c' is never used">c<
 }
 
 fun f(<warning descr="[UNUSED_PARAMETER] Parameter 'p' is never used">p</warning>: Int): Int {
-    val <error descr="">p</error> = 2
-    val <error descr="">p</error> = 3
+    val <error descr=""><warning descr="[NAME_SHADOWING] Name shadowed: p"><warning descr="[UNUSED_VARIABLE] Variable 'p' is never used">p</warning></warning></error> = 2
+    val <error descr=""><warning descr="[NAME_SHADOWING] Name shadowed: p">p</warning></error> = 3
     return p
 }

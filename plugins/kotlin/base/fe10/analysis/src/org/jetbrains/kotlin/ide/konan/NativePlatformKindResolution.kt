@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.ide.konan
 
@@ -142,7 +142,7 @@ internal fun KotlinLibrary.createKlibPackageFragmentProvider(
 }
 
 /**
- * @see [org.jetbrains.kotlin.types.typeUtil.closure].
+ * @see [org.jetbrains.kotlin.utils.closure].
  */
 private fun <T> Collection<T>.lazyClosure(f: (T) -> Collection<T>): Sequence<T> = sequence {
     if (isEmpty()) return@sequence

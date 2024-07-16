@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
@@ -69,17 +69,14 @@ import java.util.regex.Pattern;
 
 public final class PyInterpreterInspection extends PyInspection {
 
-  @NotNull
-  private static final Logger LOGGER = Logger.getInstance(PyInterpreterInspection.class);
+  private static final @NotNull Logger LOGGER = Logger.getInstance(PyInterpreterInspection.class);
 
-  @NotNull
-  private static final Pattern NAME = Pattern.compile("Python (?<version>\\d\\.\\d+)\\s*(\\((?<name>.+?)\\))?");
+  private static final @NotNull Pattern NAME = Pattern.compile("Python (?<version>\\d\\.\\d+)\\s*(\\((?<name>.+?)\\))?");
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull final LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 final @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -184,8 +181,7 @@ public final class PyInterpreterInspection extends PyInspection {
       registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
 
-    @Nullable
-    private static LocalQuickFix getSuitableSdkFix(@Nullable String name, @NotNull Module module) {
+    private static @Nullable LocalQuickFix getSuitableSdkFix(@Nullable String name, @NotNull Module module) {
       // this method is based on com.jetbrains.python.sdk.PySdkExtKt.suggestAssociatedSdkName
       // please keep it in sync with the mentioned method and com.jetbrains.python.PythonSdkConfigurator.configureSdk
 
@@ -249,18 +245,16 @@ public final class PyInterpreterInspection extends PyInspection {
       return null;
     }
 
-    @NotNull
-    private static List<Sdk> getExistingSdks() {
+    private static @NotNull List<Sdk> getExistingSdks() {
       final ProjectSdksModel model = new ProjectSdksModel();
       model.reset(null);
       return ContainerUtil.filter(model.getSdks(), it -> it.getSdkType() instanceof PythonSdkType);
     }
 
-    @Nullable
-    private static PyDetectedSdk detectAssociatedViaRootNameEnv(@NotNull String associatedName,
-                                                                @NotNull Module module,
-                                                                @NotNull List<Sdk> existingSdks,
-                                                                @NotNull UserDataHolderBase context) {
+    private static @Nullable PyDetectedSdk detectAssociatedViaRootNameEnv(@NotNull String associatedName,
+                                                                          @NotNull Module module,
+                                                                          @NotNull List<Sdk> existingSdks,
+                                                                          @NotNull UserDataHolderBase context) {
       return findAssociatedViaRootNameEnv(
         associatedName,
         PySdkExtKt.detectVirtualEnvs(module, existingSdks, context),
@@ -268,11 +262,10 @@ public final class PyInterpreterInspection extends PyInspection {
       );
     }
 
-    @Nullable
-    private static PyDetectedSdk detectSystemWideSdk(@NotNull String version,
-                                                     @NotNull Module module,
-                                                     @NotNull List<Sdk> existingSdks,
-                                                     @NotNull UserDataHolderBase context) {
+    private static @Nullable PyDetectedSdk detectSystemWideSdk(@NotNull String version,
+                                                               @NotNull Module module,
+                                                               @NotNull List<Sdk> existingSdks,
+                                                               @NotNull UserDataHolderBase context) {
       final LanguageLevel parsedVersion = LanguageLevel.fromPythonVersion(version);
 
       if (parsedVersion.toString().equals(version)) {
@@ -285,10 +278,9 @@ public final class PyInterpreterInspection extends PyInspection {
       return null;
     }
 
-    @Nullable
-    private static PyDetectedSdk findAssociatedViaRootNameEnv(@NotNull String associatedName,
-                                                              @NotNull List<PyDetectedSdk> envs,
-                                                              @NotNull Function<PyDetectedSdk, String> envRootName) {
+    private static @Nullable PyDetectedSdk findAssociatedViaRootNameEnv(@NotNull String associatedName,
+                                                                        @NotNull List<PyDetectedSdk> envs,
+                                                                        @NotNull Function<PyDetectedSdk, String> envRootName) {
       return StreamEx
         .of(envs)
         .filter(sdk -> associatedName.equals(envRootName.apply(sdk)))
@@ -300,14 +292,12 @@ public final class PyInterpreterInspection extends PyInspection {
         .orElse(null);
     }
 
-    @Nullable
-    private static String getVirtualEnvRootName(@NotNull PyDetectedSdk sdk) {
+    private static @Nullable String getVirtualEnvRootName(@NotNull PyDetectedSdk sdk) {
       final String path = sdk.getHomePath();
       return path == null ? null : getEnvRootName(PythonSdkUtil.getVirtualEnvRoot(path));
     }
 
-    @Nullable
-    private static String getEnvRootName(@Nullable File envRoot) {
+    private static @Nullable String getEnvRootName(@Nullable File envRoot) {
       return envRoot == null ? null : PathUtil.getFileName(envRoot.getPath());
     }
 
@@ -350,8 +340,7 @@ public final class PyInterpreterInspection extends PyInspection {
     }
   }
 
-  @Nullable
-  private static Module guessModule(@NotNull PsiElement element) {
+  private static @Nullable Module guessModule(@NotNull PsiElement element) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module == null) {
       Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
@@ -369,16 +358,14 @@ public final class PyInterpreterInspection extends PyInspection {
 
   public static final class InterpreterSettingsQuickFix implements LocalQuickFix {
 
-    @NotNull
-    private final Module myModule;
+    private final @NotNull Module myModule;
 
     public InterpreterSettingsQuickFix(@NotNull Module module) {
       myModule = module;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PlatformUtils.isPyCharm()
              ? PyPsiBundle.message("INSP.interpreter.interpreter.settings")
              : PyPsiBundle.message("INSP.interpreter.configure.python.interpreter");
@@ -431,7 +418,7 @@ public final class PyInterpreterInspection extends PyInspection {
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element == null) return;
 
@@ -444,15 +431,11 @@ public final class PyInterpreterInspection extends PyInspection {
 
   private static final class UseProvidedInterpreterFix implements LocalQuickFix {
 
-    @NotNull
-    private final Module myModule;
+    private final @NotNull Module myModule;
 
-    @NotNull
-    private final PyProjectSdkConfigurationExtension myExtension;
+    private final @NotNull PyProjectSdkConfigurationExtension myExtension;
 
-    @NotNull
-    @IntentionName
-    private final String myName;
+    private final @NotNull @IntentionName String myName;
 
     private UseProvidedInterpreterFix(@NotNull Module module,
                                       @NotNull PyProjectSdkConfigurationExtension extension,
@@ -484,10 +467,9 @@ public final class PyInterpreterInspection extends PyInspection {
     }
   }
 
-  private static abstract class UseInterpreterFix<T extends Sdk> implements LocalQuickFix {
+  private abstract static class UseInterpreterFix<T extends Sdk> implements LocalQuickFix {
 
-    @NotNull
-    protected final T mySdk;
+    protected final @NotNull T mySdk;
 
     protected UseInterpreterFix(@NotNull T sdk) {
       mySdk = sdk;
@@ -511,8 +493,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
   private static final class UseExistingInterpreterFix extends UseInterpreterFix<Sdk> {
 
-    @NotNull
-    private final Module myModule;
+    private final @NotNull Module myModule;
 
     private UseExistingInterpreterFix(@NotNull Sdk existingSdk, @NotNull Module module) {
       super(existingSdk);
@@ -528,13 +509,11 @@ public final class PyInterpreterInspection extends PyInspection {
 
   private static final class UseDetectedInterpreterFix extends UseInterpreterFix<PyDetectedSdk> {
 
-    @NotNull
-    private final List<Sdk> myExistingSdks;
+    private final @NotNull List<Sdk> myExistingSdks;
 
     private final boolean myAssociate;
 
-    @NotNull
-    private final Module myModule;
+    private final @NotNull Module myModule;
 
     private UseDetectedInterpreterFix(@NotNull PyDetectedSdk detectedSdk,
                                       @NotNull List<Sdk> existingSdks,

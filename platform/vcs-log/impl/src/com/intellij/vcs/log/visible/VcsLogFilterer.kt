@@ -7,11 +7,13 @@ import com.intellij.vcs.log.graph.PermanentGraph
 
 interface VcsLogFilterer {
 
+  val initialCommitCount: CommitCountStage get() = CommitCountStage.INITIAL
+
   fun canFilterEmptyPack(filters: VcsLogFilterCollection): Boolean = false
 
   fun filter(dataPack: DataPack,
              oldVisiblePack: VisiblePack,
-             sortType: PermanentGraph.SortType,
+             graphOptions: PermanentGraph.Options,
              filters: VcsLogFilterCollection,
              commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage>
 }

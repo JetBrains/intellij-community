@@ -3,11 +3,13 @@ package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link SoftWrap} implementation that is built around {@link TextChangeImpl}.
  */
+@ApiStatus.Internal
 public final class SoftWrapImpl implements SoftWrap {
 
   private final TextChangeImpl myChange;

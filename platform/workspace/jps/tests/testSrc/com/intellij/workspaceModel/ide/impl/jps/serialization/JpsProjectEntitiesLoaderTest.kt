@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.util.io.write
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File
@@ -86,7 +86,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(projectDir.absolutePath, JpsPathUtil.urlToOsPath(assertOneElement(mainModule.contentRoots.toList()).url.url))
     val mainModuleSrc = assertOneElement(mainModule.sourceRoots.toList())
     assertEquals(File(projectDir, "src").absolutePath, JpsPathUtil.urlToOsPath(mainModuleSrc.url.url))
-    assertEquals(JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, mainModuleSrc.rootType)
+    assertEquals(JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, mainModuleSrc.rootTypeId)
 
     assertEquals(6, mainModule.dependencies.size)
     assertEquals(InheritedSdkDependency, mainModule.dependencies[0])
@@ -207,7 +207,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val storage = loadProject(projectDir)
     val module = assertOneElement(storage.entities(ModuleEntity::class.java).toList())
     val sourceRoot = assertOneElement(module.sourceRoots.toList())
-    assertEquals("erlang-include", sourceRoot.rootType)
+    assertEquals(SourceRootTypeId("erlang-include"), sourceRoot.rootTypeId)
     assertNull(sourceRoot.customSourceRootProperties)
   }
 
@@ -216,7 +216,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).associateBy { it.name }
     val single = modules.getValue("single").facets.single()
-    assertEquals("foo", single.facetType)
+    assertEquals("foo", single.typeId.name)
     assertEquals("Foo", single.name)
     assertEquals("""
                     <configuration>

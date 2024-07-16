@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -50,8 +51,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  @NotNull
-  public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
+  public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
     PsiElement element = getPsiElement();
     if (element instanceof PsiPackage) {
       return new FindPackageUsagesDialog(element, getProject(), myFactory.getFindPackageOptions(), toShowInNewTab, mustOpenInNewTab, isSingleFile, this);
@@ -123,7 +123,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
         }
       }
     }
-    else if (element instanceof PsiMethod && myFactory.getFindMethodOptions().isSearchForBaseMethod) {
+    else if (element instanceof PsiMethod && myFactory.getFindMethodOptions().isSearchForBaseMethod &&
+             //temporary workaround
+             !DumbService.isDumb(element.getProject())) {
       return SuperMethodWarningUtil.getTargetMethodCandidates((PsiMethod)element, Collections.emptyList());
     }
     return myElementsToSearch.length == 0 ? new PsiElement[]{element} : myElementsToSearch;
@@ -176,8 +178,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  @NotNull
-  public FindUsagesOptions getFindUsagesOptions(@Nullable final DataContext dataContext) {
+  public @NotNull FindUsagesOptions getFindUsagesOptions(final @Nullable DataContext dataContext) {
     PsiElement element = getPsiElement();
     if (element instanceof PsiPackage) {
       return myFactory.getFindPackageOptions();
@@ -198,14 +199,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
   }
 
   @Override
-  protected Set<String> getStringsToSearch(@NotNull final PsiElement element) {
+  protected Set<String> getStringsToSearch(final @NotNull PsiElement element) {
     return JavaFindUsagesHelper.getElementNames(element);
   }
 
   @Override
-  public boolean processElementUsages(@NotNull final PsiElement element,
-                                      @NotNull final Processor<? super UsageInfo> processor,
-                                      @NotNull final FindUsagesOptions options) {
+  public boolean processElementUsages(final @NotNull PsiElement element,
+                                      final @NotNull Processor<? super UsageInfo> processor,
+                                      final @NotNull FindUsagesOptions options) {
     return JavaFindUsagesHelper.processElementUsages(element, options, processor);
   }
 
@@ -215,9 +216,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
            new JavaNonCodeSearchElementDescriptionProvider().getElementDescription(psiElement, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
   }
 
-  @NotNull
   @Override
-  public Collection<PsiReference> findReferencesToHighlight(@NotNull final PsiElement target, @NotNull final SearchScope searchScope) {
+  public @NotNull Collection<PsiReference> findReferencesToHighlight(final @NotNull PsiElement target, final @NotNull SearchScope searchScope) {
     if (target instanceof PsiMethod) {
       Set<PsiMethod> superTargets = new LinkedHashSet<>();
       PsiMethod[] superMethods = ((PsiMethod)target).findDeepestSuperMethods();
@@ -247,8 +247,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
     return super.findReferencesToHighlight(target, searchScope);
   }
 
-  @NotNull
-  protected static String getActionString() {
+  protected static @NotNull String getActionString() {
     return FindBundle.message("find.super.method.warning.action.verb");
   }
 }

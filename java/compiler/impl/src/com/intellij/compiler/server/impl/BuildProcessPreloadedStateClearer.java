@@ -11,6 +11,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,7 @@ public final class BuildProcessPreloadedStateClearer implements WorkspaceModelCh
     if (needFSRescan) {
       BuildManager.getInstance().clearState(myProject);
     }
-    else if (event.getAllChanges().iterator().hasNext()) {
+    else if (((VersionedStorageChangeInternal)event).getAllChanges().iterator().hasNext()) {
       BuildManager.getInstance().cancelPreloadedBuilds(myProject);
     }
   }

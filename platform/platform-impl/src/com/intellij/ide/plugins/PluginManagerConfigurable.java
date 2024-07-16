@@ -12,10 +12,13 @@ import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.ide.plugins.enums.SortBy;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.marketplace.statistics.features.PluginManagerSearchResultFeatureProvider;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -53,6 +56,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -223,6 +227,8 @@ public final class PluginManagerConfigurable
     createMarketplaceTab();
     createInstalledTab();
 
+    PluginManagerUsageCollector.sessionStarted();
+
     myCardPanel = new MultiPanel() {
       @Override
       protected JComponent create(Integer key) {
@@ -320,7 +326,9 @@ public final class PluginManagerConfigurable
 
     DataContext context = DataManager.getInstance().getDataContext(component);
 
-    JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actions, context, false, false, false, true, null, -1, null, null);
+    JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(
+      null, null, actions, context, ActionPlaces.POPUP, new PresentationFactory(),
+      ActionPopupOptions.honorMnemonics(), null);
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -686,7 +694,7 @@ public final class PluginManagerConfigurable
           MarketplaceSortByAction addAction = null;
 
           if (updateAction.myState) {
-            for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+            for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
               MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
               if (sortByAction != updateAction && sortByAction.myState) {
                 sortByAction.myState = false;
@@ -702,7 +710,7 @@ public final class PluginManagerConfigurable
               return;
             }
 
-            for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+            for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
               MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
               if (sortByAction.myOption == SortBy.RELEVANCE) {
                 sortByAction.myState = true;
@@ -768,8 +776,11 @@ public final class PluginManagerConfigurable
           new SearchResultPanel(marketplaceController, panel, true, 0, 0) {
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+              int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
               try {
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
+
+                Map<IdeaPluginDescriptor, Double> pluginToScore = null;
 
                 if (parser.internal) {
                   PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
@@ -837,10 +848,15 @@ public final class PluginManagerConfigurable
 
                   ContainerUtil.removeDuplicates(result.descriptors);
 
+                  final var localRanker = MarketplaceLocalRanker.getInstanceIfEnabled();
+                  if (localRanker != null) {
+                    pluginToScore = localRanker.rankPlugins(parser, result.descriptors);
+                  }
+
                   if (!result.descriptors.isEmpty()) {
                     String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
 
-                    for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+                    for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
                       MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
                       sortByAction.setState(parser);
                       if (sortByAction.myState) {
@@ -864,7 +880,8 @@ public final class PluginManagerConfigurable
                   }
                 }
 
-                PluginManagerUsageCollector.performMarketplaceSearch(ProjectUtil.getActiveProject(), parser, result.descriptors);
+                PluginManagerUsageCollector.performMarketplaceSearch(
+                  ProjectUtil.getActiveProject(), parser, result.descriptors, searchIndex, pluginToScore);
               }
               catch (IOException e) {
                 LOG.info(e);
@@ -1039,7 +1056,7 @@ public final class PluginManagerConfigurable
       public void hideSearchPanel() {
         super.hideSearchPanel();
         if (myInstalledSearchSetState) {
-          for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+          for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
             ((InstalledSearchOptionAction)action).setState(null);
           }
         }
@@ -1115,7 +1132,7 @@ public final class PluginManagerConfigurable
           };
 
           if (updateAction.myState) {
-            for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+            for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
               if (action != updateAction) {
                 ((InstalledSearchOptionAction)action).myState = false;
               }
@@ -1160,12 +1177,13 @@ public final class PluginManagerConfigurable
 
           @Override
           protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
+            int searchIndex = PluginManagerUsageCollector.updateAndGetSearchIndex();
             myPluginModel.setInvalidFixCallback(null);
 
             SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
 
             if (myInstalledSearchSetState) {
-              for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+              for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
                 ((InstalledSearchOptionAction)action).setState(parser);
               }
             }
@@ -1220,7 +1238,8 @@ public final class PluginManagerConfigurable
             }
 
             result.descriptors.addAll(descriptors);
-            PluginManagerUsageCollector.performInstalledTabSearch(ProjectUtil.getActiveProject(), parser, result.descriptors);
+            PluginManagerUsageCollector.performInstalledTabSearch(
+              ProjectUtil.getActiveProject(), parser, result.descriptors, searchIndex, null);
 
             if (!result.descriptors.isEmpty()) {
               if (parser.invalid) {
@@ -1984,6 +2003,7 @@ public final class PluginManagerConfigurable
       return () -> {
       };
     }
+
     if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
     }

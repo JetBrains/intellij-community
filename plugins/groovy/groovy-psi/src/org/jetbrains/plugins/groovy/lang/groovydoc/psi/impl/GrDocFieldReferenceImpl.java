@@ -48,7 +48,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
           }
         }
       }
-    } else if (resolved instanceof GrField field && ((GrField) resolved).isProperty()) {
+    } else if (resolved instanceof GrField field && field.isProperty()) {
       final String oldName = getReferenceName();
       if (oldName != null && oldName.equals(field.getName())) {
         if (oldName.startsWith("get")) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.actions.scrolling
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -8,12 +9,12 @@ import com.intellij.openapi.project.DumbAware
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 
-class AutoScrollAction : ToggleAction(), DumbAware {
+private class AutoScrollAction : ToggleAction(), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     val splitFileEditor = MarkdownActionUtil.findSplitEditor(e)
     if (splitFileEditor == null) return false
 
-    e.presentation.isEnabled = splitFileEditor.layout == TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW
+    e.presentation.isEnabled = splitFileEditor.getLayout() == TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW
 
     return splitFileEditor.isAutoScrollPreview
   }

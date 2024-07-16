@@ -10,7 +10,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +24,10 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public final class FileTypeIndex {
+
+  private FileTypeIndex() {
+  }
+
   /**
    * @deprecated please don't use this index directly.
    *
@@ -30,7 +36,7 @@ public final class FileTypeIndex {
    * {@link #processFiles(FileType, Processor, GlobalSearchScope)} instead
    */
   @Deprecated
-  @ApiStatus.Internal
+  @Internal
   public static final ID<FileType, Void> NAME = ID.create("filetypes");
 
   @Nullable
@@ -59,12 +65,13 @@ public final class FileTypeIndex {
     return true;
   }
 
-  @ApiStatus.Experimental
+  @Experimental
   @Topic.AppLevel
   public static final Topic<IndexChangeListener> INDEX_CHANGE_TOPIC =
     new Topic<>(IndexChangeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
-  @ApiStatus.Experimental
+  @Experimental
+  @OverrideOnly
   public interface IndexChangeListener {
     /**
      * This event means that the set of files corresponding to the {@code fileType} has changed

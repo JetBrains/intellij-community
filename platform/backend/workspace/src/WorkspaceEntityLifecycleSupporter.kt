@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -16,9 +16,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.OverrideOnly
 @ApiStatus.Experimental
-public interface WorkspaceEntityLifecycleSupporter<E : WorkspaceEntity> {
+public interface WorkspaceEntityLifecycleSupporter<E : WorkspaceEntity, M: WorkspaceEntity.Builder<E>> {
   public companion object {
-    public val EP_NAME: ExtensionPointName<WorkspaceEntityLifecycleSupporter<out WorkspaceEntity>> =
+    public val EP_NAME: ExtensionPointName<WorkspaceEntityLifecycleSupporter<out WorkspaceEntity, out WorkspaceEntity.Builder<out WorkspaceEntity>>> =
       ExtensionPointName.create("com.intellij.workspaceModel.entityLifecycleSupporter")
   }
 
@@ -31,11 +31,11 @@ public interface WorkspaceEntityLifecycleSupporter<E : WorkspaceEntity> {
    *        The entity shouldn't be added to any store, just created.
    *        It would be added later automatically if such an entity is not added yet.
    */
-  public fun createSampleEntity(project: Project): E?
+  public fun createSampleEntity(project: Project): M?
 
   /**
    * Suitable equality for [E].
    * It is expected that `haveEqualData(createInitialEntity(project), createInitialEntity(project)) == true`
    */
-  public fun haveEqualData(first: E, second: E): Boolean
+  public fun haveEqualData(first: M, second: E): Boolean
 }

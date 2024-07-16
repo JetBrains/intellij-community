@@ -7,7 +7,6 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -27,11 +26,21 @@ public abstract class CoverageViewExtension {
   protected final CoverageViewManager.StateBean myStateBean;
   protected final CoverageDataManager myCoverageDataManager;
 
-  public CoverageViewExtension(@NotNull Project project, CoverageSuitesBundle suitesBundle, CoverageViewManager.StateBean stateBean) {
+  /**
+   * @deprecated Use {@link CoverageViewExtension#CoverageViewExtension(Project, CoverageSuitesBundle)}
+   */
+  @Deprecated
+  public CoverageViewExtension(@NotNull Project project,
+                               CoverageSuitesBundle suitesBundle,
+                               @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    this(project, suitesBundle);
+  }
+
+  public CoverageViewExtension(@NotNull Project project, CoverageSuitesBundle suitesBundle) {
     assert !project.isDefault() : "Should not run coverage for default project";
     myProject = project;
     mySuitesBundle = suitesBundle;
-    myStateBean = stateBean;
+    myStateBean = CoverageViewManager.getInstance(myProject).getStateBean();
     myCoverageDataManager = CoverageDataManager.getInstance(myProject);
   }
 
@@ -48,14 +57,15 @@ public abstract class CoverageViewExtension {
   @NotNull
   public abstract AbstractTreeNode<?> createRootNode();
 
+  void onRootReset() {
+  }
+
+  @ApiStatus.Internal
   public boolean hasChildren(AbstractTreeNode<?> node) {
-    return !getChildrenNodes(node).isEmpty();
+    return !node.getChildren().isEmpty();
   }
 
-  public boolean hasVCSFilteredNodes() {
-    return false;
-  }
-
+  @ApiStatus.Internal
   public boolean hasFullyCoveredNodes() {
     return false;
   }
@@ -64,14 +74,16 @@ public abstract class CoverageViewExtension {
     return object instanceof VirtualFile && PsiManager.getInstance(myProject).findFile((VirtualFile)object) != null;
   }
 
+  @ApiStatus.Internal
   @Nullable
   public PsiElement getElementToSelect(Object object) {
     if (object instanceof PsiElement) return (PsiElement)object;
     return object instanceof VirtualFile ? PsiManager.getInstance(myProject).findFile((VirtualFile)object) : null;
   }
 
+  @ApiStatus.Internal
   @Nullable
-  public VirtualFile getVirtualFile(Object object) {
+  protected VirtualFile getVirtualFile(Object object) {
     if (object instanceof PsiElement) {
       if (object instanceof PsiDirectory) return ((PsiDirectory)object).getVirtualFile();
       final PsiFile containingFile = ((PsiElement)object).getContainingFile();
@@ -83,6 +95,7 @@ public abstract class CoverageViewExtension {
     return object instanceof VirtualFile ? (VirtualFile)object : null;
   }
 
+  @ApiStatus.Internal
   public boolean supportFlattenPackages() {
     return false;
   }
@@ -110,7 +123,7 @@ public abstract class CoverageViewExtension {
    * The root node should return a correct list of children instead.
    */
   @NotNull
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<AbstractTreeNode<?>> createTopLevelNodes() {
     return Collections.emptyList();
   }
@@ -131,10 +144,5 @@ public abstract class CoverageViewExtension {
   @Deprecated
   public String getSummaryForRootNode(@NotNull AbstractTreeNode<?> ignoredNode) {
     return null;
-  }
-
-
-  public static boolean isModified(FileStatus status) {
-    return status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN;
   }
 }

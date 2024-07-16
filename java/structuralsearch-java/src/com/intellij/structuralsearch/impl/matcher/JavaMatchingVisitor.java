@@ -72,16 +72,19 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final MatchingHandler handler = comment.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler substitutionHandler) {
-      final IElementType tokenType = other.getTokenType();
-      final int length = other.getTextLength();
-      final int start = tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
-      final int end = tokenType == JavaTokenType.END_OF_LINE_COMMENT || length < 4 ? length : length - 2;
       final RegExpPredicate predicate = substitutionHandler.findPredicate(RegExpPredicate.class);
       if (predicate != null) {
         predicate.setNodeTextGenerator(e -> JavaMatchUtil.getCommentText((PsiComment)e).trim());
         myMatchingVisitor.setResult(substitutionHandler.handle(other, myMatchingVisitor.getMatchContext()));
       }
       else {
+        final String text = other.getText();
+        final int length = text.length();
+        final IElementType tokenType = other.getTokenType();
+        int start = tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
+        while (start < length && text.charAt(start) == ' ') start++;
+        int end = tokenType == JavaTokenType.END_OF_LINE_COMMENT || length < 4 ? length : length - 2;
+        while (end > 0 && text.charAt(end - 1) == ' ') end--;
         myMatchingVisitor.setResult(substitutionHandler.handle(other, start, end, myMatchingVisitor.getMatchContext()));
       }
     }
@@ -542,8 +545,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           break;
         }
       }
-      if (unmatchedSubstitutionHandler instanceof SubstitutionHandler) {
-        final SubstitutionHandler handler = (SubstitutionHandler)unmatchedSubstitutionHandler;
+      if (unmatchedSubstitutionHandler instanceof SubstitutionHandler handler) {
         for (PsiElement element : unmatchedElements) {
           handler.handle(element, context);
         }
@@ -793,8 +795,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                                 : getInnermostComponent(matchedType);
 
     PsiElement[] typeParameters = null;
-    if (matchedElement instanceof PsiJavaCodeReferenceElement) {
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)matchedElement;
+    if (matchedElement instanceof PsiJavaCodeReferenceElement referenceElement) {
       typeParameters = getTypeParameters(referenceElement, shouldReplaceDiamondWithExplicitTypes(patternElement));
     }
     else if (matchedElement instanceof PsiTypeParameter) {
@@ -827,8 +828,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
     }
-    if (patternElement instanceof PsiJavaCodeReferenceElement) {
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)patternElement;
+    if (patternElement instanceof PsiJavaCodeReferenceElement referenceElement) {
       final PsiReferenceParameterList list = referenceElement.getParameterList();
       boolean typeParametersMatched = false;
       if (list != null) {
@@ -1826,15 +1826,17 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     context.pushResult();
     try {
-      final PsiDocComment docComment = method.getDocComment();
-      if (docComment != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other.getDocComment()))) return;
-      if (method.hasTypeParameters() && !myMatchingVisitor.setResult(
-        myMatchingVisitor.match(method.getTypeParameterList(), other.getTypeParameterList()))) return;
-
+      final PsiElement docComment = method.getFirstChild();
+      if (docComment instanceof PsiComment && !myMatchingVisitor.setResult(myMatchingVisitor.match(docComment, other.getFirstChild()))) {
+        return;
+      }
+      if (method.hasTypeParameters() && 
+          !myMatchingVisitor.setResult(myMatchingVisitor.match(method.getTypeParameterList(), other.getTypeParameterList()))) {
+        return;
+      }
       if (!myMatchingVisitor.setResult(checkHierarchy(other, method))) {
         return;
       }
-
       if (!myMatchingVisitor.setResult((!method.isConstructor() || other.isConstructor()) &&
                                        (isTypedVar || myMatchingVisitor.matchText(methodNameNode, other.getNameIdentifier())) &&
                                        myMatchingVisitor.match(method.getModifierList(), other.getModifierList()))) {

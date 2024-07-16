@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor
 import com.intellij.refactoring.changeSignature.MethodCallUsageInfo
@@ -12,19 +11,22 @@ import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinChangeSignatureConflictingUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinPropertyCallUsage
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.conflicts.areSameSignatures
+import org.jetbrains.kotlin.idea.refactoring.conflicts.checkNewPropertyConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
@@ -63,13 +65,33 @@ class KotlinChangeSignatureConflictSearcher(
 
 
         val parametersToRemove = originalInfo.parametersToRemove
-        checkParametersToDelete(function, parametersToRemove)
+        if (originalInfo.checkUsedParameters) {
+            checkParametersToDelete(function, parametersToRemove)
+        }
 
         for (parameter in originalInfo.getNonReceiverParameters()) {
-
-            if (parameter.oldName != parameter.name && !parameter.isNewParameter) {//todo conflicts with new parameter
+            val parameterName = parameter.name
+            if (parameter.oldName != parameterName || parameter.isNewParameter) {
                 val unresolvableCollisions = mutableListOf<UsageInfo>()
-                checkRedeclarationConflicts(function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)], parameter.name, unresolvableCollisions)
+                val ktParameter = if (!parameter.isNewParameter)
+                    function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)]
+                else null
+                if (ktParameter != null) {
+                    checkRedeclarationConflicts(ktParameter, parameterName, unresolvableCollisions)
+                }
+                else {
+                    if (originalInfo.getNonReceiverParameters().any { it != parameter && it.name == parameterName }) {
+                        result.putValue(function, KotlinBundle.message("text.duplicating.parameter", parameterName))
+                    }
+                }
+
+                if (function is KtConstructor<*> && parameter.valOrVar != KotlinValVar.None && !(ktParameter != null && ktParameter.hasValOrVar())) {
+
+                    val containingClass = function.containingClassOrObject
+                    if (containingClass != null) {
+                        checkNewPropertyConflicts(containingClass, parameterName, unresolvableCollisions)
+                    }
+                }
                 for (info in unresolvableCollisions) {
                     when (info) {
                         is BasicUnresolvableCollisionUsageInfo -> {
@@ -98,7 +120,9 @@ class KotlinChangeSignatureConflictSearcher(
         for (usageInfo in usageInfos) {
             when (usageInfo) {
                 is KotlinOverrideUsageInfo -> {
-                    checkParametersToDelete(usageInfo.element as KtCallableDeclaration, parametersToRemove)
+                    if (originalInfo.checkUsedParameters) {
+                        checkParametersToDelete(usageInfo.element as KtCallableDeclaration, parametersToRemove)
+                    }
                 }
                 is OverriderUsageInfo -> {
                     JavaChangeSignatureUsageProcessor.ConflictSearcher.checkParametersToDelete(usageInfo.overridingMethod, parametersToRemove, result)
@@ -116,12 +140,13 @@ class KotlinChangeSignatureConflictSearcher(
         return result
     }
 
-    context(KtAnalysisSession)
-    private fun KtPsiFactory.createContextType(text: String, context: KtElement): KtType? {
-        return createTypeCodeFragment(text, context).getContentElement()?.getKtType()
+    context(KaSession)
+    private fun KtPsiFactory.createContextType(text: String, context: KtElement): KaType? {
+        return createTypeCodeFragment(text, context).getContentElement()?.type
     }
-    context(KtAnalysisSession)
-    private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KtDeclarationSymbol): Boolean {
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KaDeclarationSymbol): Boolean {
         val factory = KtPsiFactory(function.project)
         val newReceiverType = originalInfo.receiverParameterInfo?.currentType?.text?.let {
             factory.createContextType(it, function)
@@ -131,13 +156,13 @@ class KotlinChangeSignatureConflictSearcher(
                 factory.createContextType(it, function)
             }
         }
-        return candidateSymbol is KtFunctionLikeSymbol &&
+        return candidateSymbol is KaFunctionSymbol &&
                 areSameSignatures(
                     newReceiverType,
                     candidateSymbol.receiverType,
                     newParameterTypes,
                     candidateSymbol.valueParameters.map { it.returnType }, //todo currently context receiver can't be changed
-                    (function.getSymbol() as? KtFunctionLikeSymbol)?.contextReceivers ?: emptyList(),
+                    (function.symbol as? KaFunctionSymbol)?.contextReceivers ?: emptyList(),
                     candidateSymbol.contextReceivers
                 )
     }
@@ -146,7 +171,6 @@ class KotlinChangeSignatureConflictSearcher(
         callableDeclaration: KtCallableDeclaration,
         toRemove: BooleanArray,
     ) {
-        val scope = LocalSearchScope(callableDeclaration)
         val valueParameters = callableDeclaration.valueParameters
         val hasReceiver = callableDeclaration.receiverTypeReference != null
         if (hasReceiver && toRemove[0]) {
@@ -163,7 +187,7 @@ class KotlinChangeSignatureConflictSearcher(
         for ((i, parameter) in valueParameters.withIndex()) {
             val index = (if (hasReceiver) 1 else 0) + i
             if (toRemove[index]) {
-                registerConflictIfUsed(parameter, scope)
+                registerConflictIfUsed(parameter)
             }
         }
     }
@@ -222,10 +246,12 @@ class KotlinChangeSignatureConflictSearcher(
     }
 
     private fun registerConflictIfUsed(
-        element: PsiNamedElement,
-        scope: LocalSearchScope
+        element: PsiNamedElement
     ) {
-        if (ReferencesSearch.search(element, scope).findFirst() != null) {
+        if (ReferencesSearch.search(element).filtering { ref ->
+                val refElement = ref.element
+                !(refElement is KtSimpleNameExpression && refElement.parent is KtValueArgumentName)
+            }.findFirst() != null) {
             result.putValue(element, KotlinBundle.message("parameter.used.in.declaration.body.warning", element.name.toString()))
         }
     }

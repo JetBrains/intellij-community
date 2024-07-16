@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
 
 /**
@@ -10,7 +11,7 @@ import java.util.Objects
  *
  * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#getBundlingRestrictions()
  */
-class PluginBundlingRestrictions private constructor(
+class PluginBundlingRestrictions(
   /**
    * Change this value if the plugin works on some OS only and therefore don't need to be bundled with distributions for other OS.
    */
@@ -61,14 +62,22 @@ class PluginBundlingRestrictions private constructor(
 
     @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_RELEASE"))
     var includeInEapOnly: Boolean
+      @ApiStatus.ScheduledForRemoval
+      @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_RELEASE"))
       get() = includeInDistribution == PluginDistribution.NOT_FOR_RELEASE
+      @ApiStatus.ScheduledForRemoval
+      @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_RELEASE"))
       set(_) {
         includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
       }
 
     @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS"))
     var includeInNightlyOnly: Boolean
+      @ApiStatus.ScheduledForRemoval
+      @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS"))
       get() = includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS
+      @ApiStatus.ScheduledForRemoval
+      @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS"))
       set(_) {
         includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.google.common.base.CaseFormat;
@@ -375,9 +375,9 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
       Set.of(
         "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
-        "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
         "com.intellij.notification.impl.NotificationGroupEP.DisplayType",
-        "com.intellij.codeInsight.hints.InlayGroup"
+        "com.intellij.codeInsight.hints.InlayGroup",
+        "com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind" // Kotlin naming style
       );
 
     private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
@@ -388,13 +388,13 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     PsiEnumConstantResolvingConverter(String enumFqn) { myEnumFqn = enumFqn; }
 
     @Override
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
       return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, myEnumFqn);
     }
 
     @NotNull
     @Override
-    public Collection<? extends PsiEnumConstant> getVariants(ConvertContext context) {
+    public Collection<? extends PsiEnumConstant> getVariants(@NotNull ConvertContext context) {
       PsiClass enumClass = getEnumClass(context);
       if (enumClass == null) return Collections.emptyList();
 
@@ -409,7 +409,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
     @Nullable
     @Override
-    public PsiEnumConstant fromString(@Nullable String s, ConvertContext context) {
+    public PsiEnumConstant fromString(@Nullable String s, @NotNull ConvertContext context) {
       if (s == null) return null;
 
       PsiClass enumClass = getEnumClass(context);
@@ -421,7 +421,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
     @Nullable
     @Override
-    public String toString(@Nullable PsiEnumConstant constant, ConvertContext context) {
+    public String toString(@Nullable PsiEnumConstant constant, @NotNull ConvertContext context) {
       return constant == null ? null : toXmlName(constant);
     }
 

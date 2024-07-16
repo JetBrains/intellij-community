@@ -6,6 +6,7 @@ package com.intellij.coverage.view
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator
+import com.intellij.coverage.filters.ModifiedFilesFilter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -13,10 +14,11 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -33,12 +35,9 @@ data class CoverageNodeInfo(val id: String,
 
 class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAnnotator,
                              private val suite: CoverageSuitesBundle) : Disposable {
-  private val fileStatusManager = FileStatusManager.getInstance(project)
   private val state = CoverageViewManager.getInstance(project).stateBean
   private val cache = hashMapOf<String, PsiNamedElement?>()
 
-  var hasVCSFilteredChildren: Boolean = false
-    private set
   var hasFullyCoveredChildren: Boolean = false
     private set
   private val nodeMap = hashMapOf<String, CoverageTreeNode>()
@@ -61,13 +60,14 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
 
   fun getNodeInfo(id: String): CoverageNodeInfo? = nodeMap[id]?.userObject
 
-
+  @RequiresBackgroundThread
   private fun buildClassesTree() {
     val onlyModified = state.isShowOnlyModified
     val hideFullyCovered = state.isHideFullyCovered
     val flattenPackages = state.isFlattenPackages
+    val filter = getModifiedFilesFilter()
+    filter?.resetFilteredFiles()
 
-    hasVCSFilteredChildren = false
     hasFullyCoveredChildren = false
     val scope = suite.getSearchScope(project)
     val classes = annotator.classesCoverage.mapNotNull { (fqn, counter) ->
@@ -75,8 +75,7 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
         hasFullyCoveredChildren = true
         null
       }
-      else if (onlyModified && !isModified(fqn, scope)) {
-        hasVCSFilteredChildren = true
+      else if (onlyModified && filter != null && !isModified(fqn, scope, filter)) {
         null
       }
       else {
@@ -91,7 +90,11 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
       val packageName = StringUtil.getPackageName(clazz.id)
       if (flattenPackages) {
         root.userObject.counter.append(clazz.counter)
-        val psiPackage = getPsiPackage(packageName)!!
+        val psiPackage = getPsiPackage(packageName)
+        if (psiPackage == null) {
+          logSkippedPackage(packageName)
+          continue
+        }
         val node = root.getOrCreateChild(CoverageNodeInfo(packageName, packageName, psiPackage))
         node.userObject.counter.append(clazz.counter)
         node.getOrCreateChild(clazz)
@@ -104,7 +107,7 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
             val newId = if (node.userObject.id == ROOT_ID) part else "${node.userObject.id}.$part"
             val psiPackage = getPsiPackage(newId)
             if (psiPackage == null) {
-              LOG.warn("Failed to locate package $newId, skip it in coverage results")
+              logSkippedPackage(newId)
               continue@loop
             }
             node = node.getOrCreateChild(CoverageNodeInfo(newId, part, psiPackage))
@@ -159,12 +162,13 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
     return CoverageTreeNode(info).also { add(it) }
   }
 
-  private fun isModified(className: String, scope: GlobalSearchScope): Boolean = runReadAction {
+  private fun isModified(className: String, scope: GlobalSearchScope, filter: ModifiedFilesFilter): Boolean = runReadAction {
     val psiClass = getPsiClass(className, scope)?.takeIf { it.isValid } ?: return@runReadAction false
-    val virtualFile = psiClass.containingFile.virtualFile
-    val status = fileStatusManager.getStatus(virtualFile)
-    return@runReadAction CoverageViewExtension.isModified(status)
+    val virtualFile = PsiUtilCore.getVirtualFile(psiClass) ?: return@runReadAction false
+    filter.isFileModified(virtualFile)
   }
+
+  private fun getModifiedFilesFilter() = annotator.modifiedFilesFilter
 
   private fun getPsiClass(className: String, scope: GlobalSearchScope): PsiNamedElement? = cache.getOrPut(className) {
     DumbService.getInstance(project).runReadActionInSmartMode(Computable { JavaPsiFacade.getInstance(project).findClass(className, scope) })
@@ -189,3 +193,7 @@ class TypedTreeNode<E>(userObject: E) : DefaultMutableTreeNode(userObject) {
 }
 
 typealias CoverageTreeNode = TypedTreeNode<CoverageNodeInfo>
+
+private fun logSkippedPackage(packageName: String) {
+  LOG.warn("Failed to locate package $packageName, skip it in coverage results")
+}

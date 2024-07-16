@@ -17,6 +17,7 @@ public class ShLiteralImpl extends ShLiteralMixin implements ShLiteral {
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitLiteral(this);
   }

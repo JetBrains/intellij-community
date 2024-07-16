@@ -17,7 +17,7 @@ abstract class GitRepositoryStateActionGroup(private val repositoryState: Reposi
     val presentation = e.presentation
     presentation.isEnabledAndVisible = false
     val project = e.project ?: return
-    if (GitUtil.getRepositoriesInState(project, repositoryState).isNotEmpty()) {
+    if (GitUtil.getRepositoriesInStates(project, repositoryState).isNotEmpty()) {
       presentation.isEnabledAndVisible = true
     }
   }

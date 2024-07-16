@@ -8,7 +8,7 @@ interface Project : ProjectRef {
   fun isOpen(): Boolean
   fun isInitialized(): Boolean
 
-  fun getName(): String?
+  fun getName(): String
   fun getPresentableUrl(): String?
   fun getProjectFile(): VirtualFile?
 }

@@ -5,7 +5,9 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectStoreFactory
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ProjectStoreFactoryBase : ProjectStoreFactory {
   final override fun createDefaultProjectStore(project: Project): IComponentStore = DefaultProjectStoreImpl(project)
 }

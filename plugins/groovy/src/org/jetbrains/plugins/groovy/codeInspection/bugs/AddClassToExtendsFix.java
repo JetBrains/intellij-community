@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-import static com.intellij.psi.util.PointersKt.createSmartPointer;
+import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
 public class AddClassToExtendsFix extends GroovyFix {
   private final SmartPsiElementPointer<GrTypeDefinition> myPsiClassPointer;

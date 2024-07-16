@@ -1,0 +1,16 @@
+// "Move typealias to top level" "true"
+package bar
+
+import java.util.Hashtable
+
+typealias Foo = String
+
+class C {
+
+    fun bar(foo: Foo) {
+    }
+}
+
+fun baz() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix

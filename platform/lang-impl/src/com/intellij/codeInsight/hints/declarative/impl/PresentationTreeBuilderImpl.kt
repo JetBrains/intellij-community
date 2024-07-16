@@ -65,22 +65,27 @@ class PresentationTreeBuilderImpl private constructor(
       nodePayload = tag,
       data = null
     )
-    val expandedIndex = context.addNode(
-      parent = listIndex,
-      nodePayload = InlayTags.COLLAPSIBLE_LIST_EXPANDED_BRANCH_TAG,
-      data = null
-    )
-    val collapsedIndex = context.addNode(parent = listIndex,
-                                         nodePayload = InlayTags.COLLAPSIBLE_LIST_COLLAPSED_BRANCH_TAG,
-                                         data = null)
-    val expandedChildrenBuilder = PresentationTreeBuilderImpl(expandedIndex, context)
-    val collapsedChildrenBuilder = PresentationTreeBuilderImpl(collapsedIndex, context)
-    context.depth++
-    try {
-      expandedState(expandedChildrenBuilder)
-      collapsedState(collapsedChildrenBuilder)
-    } finally {
-      context.depth--
+
+    fun addChild(nodePayload: Byte, childBuilder: CollapsiblePresentationTreeBuilder.() -> Unit) {
+      val childIndex = context.addNode(listIndex, nodePayload, null)
+      context.depth++
+      try {
+        childBuilder(PresentationTreeBuilderImpl(childIndex, context))
+      } finally {
+        context.depth--
+      }
+    }
+
+    fun addExpandedChild() = addChild(InlayTags.COLLAPSIBLE_LIST_EXPANDED_BRANCH_TAG, expandedState)
+    fun addCollapsedChild() = addChild(InlayTags.COLLAPSIBLE_LIST_COLLAPSED_BRANCH_TAG, collapsedState)
+
+    if (tag == InlayTags.COLLAPSIBLE_LIST_IMPLICITLY_EXPANDED_TAG) {
+      addExpandedChild()
+      addCollapsedChild()
+    }
+    else {
+      addCollapsedChild()
+      addExpandedChild()
     }
   }
 

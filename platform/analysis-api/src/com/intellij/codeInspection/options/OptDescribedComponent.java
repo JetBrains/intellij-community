@@ -16,14 +16,12 @@ public sealed interface OptDescribedComponent permits OptCheckbox, OptExpandable
    * @return an equivalent component but with a description
    * @throws IllegalStateException if description was already set
    */
-  @Nullable
-  OptRegularComponent description(@NotNull @NlsContexts.Tooltip String description);
+  @NotNull OptRegularComponent description(@NotNull @NlsContexts.Tooltip String description);
 
   /**
    * @return the same component with an additional description
    */
-  @Nullable
-  OptRegularComponent description(@NotNull HtmlChunk description);
+  @NotNull OptRegularComponent description(@NotNull HtmlChunk description);
 
   /**
    * @return an additional description of the item (may contain simple HTML formatting only, no external images, etc.)

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 
-public class SearchEverywhereCommandInfo {
+public final class SearchEverywhereCommandInfo {
   private final String command;
   private final @Nls String definition;
   private final SearchEverywhereContributor<?> contributor;
@@ -29,6 +29,6 @@ public class SearchEverywhereCommandInfo {
   }
 
   public @NlsSafe String getCommandWithPrefix() {
-    return SearchTopHitProvider.getTopHitAccelerator() + command;
+    return SearchTopHitProvider.Companion.getTopHitAccelerator() + command;
   }
 }

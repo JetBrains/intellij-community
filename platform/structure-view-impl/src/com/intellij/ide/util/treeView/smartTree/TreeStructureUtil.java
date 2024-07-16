@@ -3,6 +3,7 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.ui.PlaceHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Maxim.Mossienko
  */
 public final class TreeStructureUtil {
+  @ApiStatus.Internal
   public static final String PLACE = "StructureViewPopup";
 
   private TreeStructureUtil() {}

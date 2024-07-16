@@ -12,6 +12,9 @@ import org.jetbrains.annotations.NotNull;
 
 public final class DescriptiveNameUtil {
 
+  private DescriptiveNameUtil() {
+  }
+
   @NotNull
   public static @NlsSafe String getMetaDataName(@NotNull PsiMetaData metaData) {
     String name = metaData.getName();

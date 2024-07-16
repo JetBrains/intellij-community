@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -24,10 +24,8 @@ public class AddAnnotationAttributeNameFix extends PsiUpdateModCommandAction<Psi
     myName = name;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.annotation.attribute.name.family.name");
   }
 
@@ -42,8 +40,7 @@ public class AddAnnotationAttributeNameFix extends PsiUpdateModCommandAction<Psi
       .withFixAllOption(this);
   }
 
-  @NotNull
-  public static List<IntentionAction> createFixes(@NotNull PsiNameValuePair pair) {
+  public static @NotNull List<IntentionAction> createFixes(@NotNull PsiNameValuePair pair) {
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value == null || pair.getName() != null) {
       return Collections.emptyList();
@@ -77,8 +74,7 @@ public class AddAnnotationAttributeNameFix extends PsiUpdateModCommandAction<Psi
     return false;
   }
 
-  @NotNull
-  private static Collection<String> getAvailableAnnotationMethodNames(@NotNull PsiNameValuePair pair) {
+  private static @NotNull Collection<String> getAvailableAnnotationMethodNames(@NotNull PsiNameValuePair pair) {
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value != null && pair.getName() == null) {
       final PsiElement parent = pair.getParent();
@@ -105,16 +101,14 @@ public class AddAnnotationAttributeNameFix extends PsiUpdateModCommandAction<Psi
     return Collections.emptyList();
   }
 
-  @NotNull
-  public static Set<String> getUsedAttributeNames(@NotNull PsiAnnotationParameterList parameterList) {
+  public static @NotNull Set<String> getUsedAttributeNames(@NotNull PsiAnnotationParameterList parameterList) {
     return Arrays.stream(parameterList.getAttributes())
               .map(PsiNameValuePair::getName)
               .filter(Objects::nonNull)
               .collect(Collectors.toSet());
   }
 
-  @Nullable
-  private static PsiClass getAnnotationClass(@NotNull PsiAnnotationParameterList parameterList) {
+  private static @Nullable PsiClass getAnnotationClass(@NotNull PsiAnnotationParameterList parameterList) {
     PsiElement parent = parameterList.getParent();
     return parent instanceof PsiAnnotation ? ((PsiAnnotation)parent).resolveAnnotationType() : null;
   }

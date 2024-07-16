@@ -21,18 +21,18 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 
-public final class JpsLibraryRootImpl extends JpsElementBase<JpsLibraryRootImpl> implements JpsLibraryRoot {
+final class JpsLibraryRootImpl extends JpsElementBase<JpsLibraryRootImpl> implements JpsLibraryRoot {
   private final String myUrl;
   private final JpsOrderRootType myRootType;
   private final InclusionOptions myOptions;
 
-  public JpsLibraryRootImpl(@NotNull String url, @NotNull JpsOrderRootType rootType, @NotNull InclusionOptions options) {
+  JpsLibraryRootImpl(@NotNull String url, @NotNull JpsOrderRootType rootType, @NotNull InclusionOptions options) {
     myUrl = url;
     myRootType = rootType;
     myOptions = options;
   }
 
-  public JpsLibraryRootImpl(JpsLibraryRootImpl original) {
+  JpsLibraryRootImpl(JpsLibraryRootImpl original) {
     myUrl = original.myUrl;
     myRootType = original.myRootType;
     myOptions = original.myOptions;

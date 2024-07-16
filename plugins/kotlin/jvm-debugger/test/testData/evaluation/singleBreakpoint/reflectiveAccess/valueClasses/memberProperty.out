@@ -1,0 +1,16 @@
+LineBreakpoint created at memberProperty.kt:12
+Run Java
+Connected to the target VM
+memberProperty.kt:12
+Compile bytecode for (uIntProp) as Any?
+Compile bytecode for uIntProp.toInt()
+Compile bytecode for uIntProp = 43u
+Compile bytecode for (intNProp) as Any?
+Compile bytecode for intNProp.x!!
+Compile bytecode for intNProp = IntN(45)
+Compile bytecode for (strProp) as Any?
+Compile bytecode for strProp.x!!
+Compile bytecode for strProp = OverStr("abacaba")
+Disconnected from the target VM
+
+Process finished with exit code 0

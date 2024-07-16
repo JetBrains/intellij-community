@@ -12,12 +12,13 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -55,7 +56,7 @@ class ProjectFileIndexPerformanceTest {
         builder addEntity ModuleEntity("big", listOf(InheritedSdkDependency, ModuleSourceDependency), NonPersistentEntitySource) {
           contentRoots = listOf(ContentRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource) {
             sourceRoots = listOf(
-              SourceRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, NonPersistentEntitySource))
+              SourceRootEntity(bigModuleRoot.toVirtualFileUrl(fileUrlManager), SourceRootTypeId(JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID), NonPersistentEntitySource))
           })
         }
         for (i in 0..499) {
@@ -86,8 +87,7 @@ class ProjectFileIndexPerformanceTest {
             contentRoots = listOf(
               ContentRootEntity(smallModuleRoot.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource) {
                 sourceRoots = listOf(
-                  SourceRootEntity(srcRoot.toVirtualFileUrl(fileUrlManager), JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID,
-                                   NonPersistentEntitySource))
+                  SourceRootEntity(srcRoot.toVirtualFileUrl(fileUrlManager), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, NonPersistentEntitySource))
                 excludedUrls = listOf(ExcludeUrlEntity(excludedRoot.toVirtualFileUrl(fileUrlManager), NonPersistentEntitySource))
               })
 
@@ -135,7 +135,7 @@ class ProjectFileIndexPerformanceTest {
     }
     val filesWithoutId = arrayOf(noId1, noId2, noId3)
     val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!
-    PlatformTestUtil.newPerformanceTest("Checking status of source files in ProjectFileIndex") {
+    PerformanceTestUtil.newPerformanceTest("Checking status of source files in ProjectFileIndex") {
       runReadAction {
         repeat(100) {
           assertFalse(fileIndex.isInContent(fsRoot))
@@ -157,7 +157,7 @@ class ProjectFileIndexPerformanceTest {
 
   @Test
   fun `access to excluded files`() {
-    PlatformTestUtil.newPerformanceTest("Checking status of excluded files in ProjectFileIndex") {
+    PerformanceTestUtil.newPerformanceTest("Checking status of excluded files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourExcludedFilesToTest) {
@@ -172,7 +172,7 @@ class ProjectFileIndexPerformanceTest {
   
   @Test
   fun `access to library files`() {
-    PlatformTestUtil.newPerformanceTest("Checking status of library files in ProjectFileIndex") {
+    PerformanceTestUtil.newPerformanceTest("Checking status of library files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourLibraryFilesToTest) {
@@ -193,7 +193,7 @@ class ProjectFileIndexPerformanceTest {
   
   @Test
   fun `access to library source files`() {
-    PlatformTestUtil.newPerformanceTest("Checking status of library source files in ProjectFileIndex") {
+    PerformanceTestUtil.newPerformanceTest("Checking status of library source files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourLibrarySourceFilesToTest) {
@@ -216,7 +216,7 @@ class ProjectFileIndexPerformanceTest {
   fun `access to index after change`() {
     val newRoot = runWriteActionAndWait { ourProjectRoot.subdir("newContentRoot") }
     val module = ourProjectModel.moduleManager.findModuleByName("big")!!
-    PlatformTestUtil.newPerformanceTest("Checking status of file after adding and removing content root") {
+    PerformanceTestUtil.newPerformanceTest("Checking status of file after adding and removing content root") {
       runReadAction {
         repeat(50) {
           assertFalse(fileIndex.isInContent(newRoot))

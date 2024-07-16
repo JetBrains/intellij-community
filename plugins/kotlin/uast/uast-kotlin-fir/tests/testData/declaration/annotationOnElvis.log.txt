@@ -18,7 +18,6 @@ UFile (package = test.pkg)
                                             USimpleNameReferenceExpression (identifier = x)
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                                 UIdentifier (Identifier (toString))
-                                                USimpleNameReferenceExpression (identifier = toString, resolvesTo = null)
                                 UIfExpression
                                     UBinaryExpression (operator = !=)
                                         USimpleNameReferenceExpression (identifier = varc0a87e31)

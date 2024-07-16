@@ -31,9 +31,11 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
                      end: Int): List<MatchResult> {
     val matcher = pattern.matcher(CharSequenceSubSequence(params.name, start, end))
     return if (matcher.find(0) && matcher.start() == 0)
-      listOf(MatchResult(WebSymbolNameSegment(start, start + matcher.end(),
-                                              owner?.let { listOf(it) } ?: emptyList(),
-                                              matchScore = getPatternCompletablePrefix(regex).length)))
+      listOf(MatchResult(WebSymbolNameSegment.create(
+        start, start + matcher.end(),
+        owner?.let { listOf(it) } ?: emptyList(),
+        matchScore = getPatternCompletablePrefix(regex).length
+      )))
     else emptyList()
   }
 

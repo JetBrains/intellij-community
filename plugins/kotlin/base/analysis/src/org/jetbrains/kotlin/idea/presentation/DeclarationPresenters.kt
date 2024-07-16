@@ -6,6 +6,7 @@ import com.intellij.ide.IconProvider
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.ItemPresentationProvider
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
@@ -15,6 +16,7 @@ import com.intellij.ui.ExperimentalUI
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import javax.swing.Icon
@@ -48,7 +50,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
         val name = declaration.fqName
         val parent = declaration.parent
         val containerText = if (name != null) {
-            val qualifiedContainer = name.parent().toString()
+            val qualifiedContainer = name.parent().takeUnless { it == FqName.ROOT }?.toString() ?: return null
             if (parent is KtFile && declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
                 KotlinBundle.message("presentation.text.in.container", parent.name, qualifiedContainer)
             } else {
@@ -123,7 +125,7 @@ class KtFunctionPresenter : ItemPresentationProvider<KtFunction> {
 }
 
 private fun getPresentationInContainer(param: Any): String {
-    if (ExperimentalUI.isNewUI()) {
+    if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.in.container.paren.no.brackets", param)
     } else {
         return KotlinBundle.message("presentation.text.in.container.paren", param)
@@ -131,7 +133,7 @@ private fun getPresentationInContainer(param: Any): String {
 }
 
 private fun getPresentationText(param: Any): String {
-    if (ExperimentalUI.isNewUI()) {
+    if (ExperimentalUI.isNewUI() && !ApplicationManager.getApplication().isUnitTestMode) {
         return KotlinBundle.message("presentation.text.paren.no.brackets", param)
     } else {
         return KotlinBundle.message("presentation.text.paren", param)

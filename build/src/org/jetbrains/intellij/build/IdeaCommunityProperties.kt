@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
@@ -31,7 +32,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.vcs.testFramework",
       "intellij.platform.externalSystem.testFramework",
       "intellij.maven.testFramework",
-      "intellij.platform.reproducibleBuilds.diffTool",
+      "intellij.tools.reproducibleBuilds.diff",
     )
   }
 
@@ -47,12 +48,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     useSplash = true
     buildCrossPlatformDistribution = true
 
-    /* main module for JetBrains Client isn't available in the intellij-community project, 
-       so this property is set only when IDEA CE is built from the intellij-ultimate project. */
-    embeddedJetBrainsClientMainModule = null
-
     productLayout.productImplementationModules = listOf(
-      "intellij.platform.main",
+      "intellij.platform.starter",
       "intellij.idea.community.customization",
     )
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
@@ -84,7 +81,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     baseDownloadUrl = "https://download.jetbrains.com/idea/"
     buildDocAuthoringAssets = true
 
-    additionalVmOptions += "-Dide.show.tips.on.startup.default.value=false"
+    qodanaProductProperties = QodanaProductProperties("QDJVMC", "Qodana Community for JVM")
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {

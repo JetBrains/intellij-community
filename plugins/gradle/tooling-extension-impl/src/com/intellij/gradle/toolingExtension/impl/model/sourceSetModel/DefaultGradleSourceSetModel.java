@@ -5,7 +5,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet;
-import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
 
 import java.io.File;
@@ -29,18 +28,6 @@ public final class DefaultGradleSourceSetModel implements GradleSourceSetModel {
     configurationArtifacts = new LinkedHashMap<>();
     sourceSets = new LinkedHashMap<>();
     additionalArtifacts = new ArrayList<>(0);
-  }
-
-  public DefaultGradleSourceSetModel(@NotNull GradleSourceSetModel sourceSetModel) {
-    sourceCompatibility = sourceSetModel.getSourceCompatibility();
-    targetCompatibility = sourceSetModel.getTargetCompatibility();
-    taskArtifacts = sourceSetModel.getTaskArtifacts();
-    configurationArtifacts = sourceSetModel.getConfigurationArtifacts();
-    sourceSets = new LinkedHashMap<>();
-    for (Map.Entry<String, ? extends ExternalSourceSet> entry : sourceSetModel.getSourceSets().entrySet()) {
-      sourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
-    }
-    additionalArtifacts = new ArrayList<>(sourceSetModel.getAdditionalArtifacts());
   }
 
   @Override

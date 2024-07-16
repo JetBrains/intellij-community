@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
@@ -21,8 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.project.IntelliJProjectConfiguration;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.UriUtil;
@@ -192,7 +192,7 @@ public class OutputChecker {
           System.out.println("Rest from actual text is: \"" + actual.substring(len) + "\"");
         }
 
-        throw new FileComparisonFailure(null, expected, actual, outFile.getPath());
+        throw new FileComparisonFailedError(null, expected, actual, outFile.getPath());
       }
     }
   }
@@ -263,6 +263,8 @@ public class OutputChecker {
       // Since Java 18, these options are added automatically to avoid garbled text in console
       // See JdkCommandLineSetup::appendEncoding and IDEA-291006
       result = result.replace("-Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 ", "");
+      result = result.replace("-Dkotlinx.coroutines.debug.enable.creation.stack.trace=false ", "");
+      result = result.replace("-Ddebugger.agent.enable.coroutines=true ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
       result = fixSlashes(result, JDK_HOME_STR);

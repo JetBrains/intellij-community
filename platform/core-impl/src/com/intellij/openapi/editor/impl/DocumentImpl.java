@@ -128,6 +128,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     myAssertThreading = !forUseInNonAWTThread;
   }
 
+  @ApiStatus.Internal
+  public static final Key<Boolean> IGNORE_RANGE_GUARDS_ON_FULL_UPDATE = Key.create("IGNORE_RANGE_GUARDS_ON_FULL_UPDATE");
+
   static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> RANGE_MARKERS_KEY = Key.create("RANGE_MARKERS_KEY");
   static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> PERSISTENT_RANGE_MARKERS_KEY = Key.create("PERSISTENT_RANGE_MARKERS_KEY");
   @ApiStatus.Internal
@@ -377,7 +380,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public void setReadOnly(boolean isReadOnly) {
     if (myIsReadOnly != isReadOnly) {
       myIsReadOnly = isReadOnly;
-      myPropertyChangeSupport.firePropertyChange(Document.PROP_WRITABLE, !isReadOnly, isReadOnly);
+      myPropertyChangeSupport.firePropertyChange(PROP_WRITABLE, !isReadOnly, isReadOnly);
     }
   }
 
@@ -641,10 +644,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
     CharSequence sToDelete = myText.subtext(startOffset, endOffset);
-    RangeMarker guard = getRangeGuard(startOffset, endOffset);
-    if (guard != null) {
-      throwGuardedFragment(guard, startOffset, sToDelete, changedPart);
+    if (!wholeTextReplaced && getUserData(IGNORE_RANGE_GUARDS_ON_FULL_UPDATE) != Boolean.TRUE) {
+      RangeMarker guard = getRangeGuard(startOffset, endOffset);
+      if (guard != null) {
+        throwGuardedFragment(guard, startOffset, sToDelete, changedPart);
+      }
     }
+
 
     ImmutableCharSequence newText;
     if (wholeTextReplaced && s instanceof ImmutableCharSequence) {
@@ -1194,7 +1200,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   @Override
   public String toString() {
-    return "DocumentImpl[" + FileDocumentManager.getInstance().getFile(this) +
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(this);
+    return "DocumentImpl[" + (virtualFile == null ? null : virtualFile.getName())+
            (isInEventsHandling() ? ",inEventHandling" : "") +
            (!myAssertThreading ? ",nonWriteThreadOnly" : "") +
            (myAcceptSlashR ? ",acceptSlashR" : "") +

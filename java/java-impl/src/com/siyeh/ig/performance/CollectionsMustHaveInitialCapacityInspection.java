@@ -16,7 +16,6 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
@@ -74,14 +73,12 @@ public final class CollectionsMustHaveInitialCapacityInspection
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CollectionWithoutInitialCapacity";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "collections.must.have.initial.capacity.problem.descriptor");
   }

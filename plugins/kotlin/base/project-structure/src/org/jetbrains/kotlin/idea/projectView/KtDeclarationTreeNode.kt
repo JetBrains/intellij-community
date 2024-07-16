@@ -10,7 +10,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 @ApiStatus.Internal
 class KtDeclarationTreeNode private constructor(
@@ -39,44 +41,62 @@ class KtDeclarationTreeNode private constructor(
 
         @ApiStatus.Internal
         @NlsSafe
-        fun tryGetRepresentableText(declaration: KtDeclaration, renderArguments: Boolean = true): String {
+        fun tryGetRepresentableText(declaration: KtDeclaration, renderReceiverType: Boolean = true, renderArguments: Boolean = true, renderReturnType: Boolean = true): String {
 
             fun KtProperty.presentableText() = buildString {
                 append(name.orErrorName())
-                typeReference?.text?.let { reference ->
-                    append(": ")
-                    append(reference)
+                if (renderReturnType) {
+                    typeReference?.text?.let { reference ->
+                        append(": ")
+                        append(reference)
+                    }
                 }
             }
 
-            fun KtFunction.presentableText() = buildString {
-                receiverTypeReference?.text?.let { receiverReference ->
-                    append(receiverReference)
-                    append('.')
-                }
-                append(name.orErrorName())
-                if (renderArguments) {
-                    append("(")
-                    val valueParameters = valueParameters
-                    valueParameters.forEachIndexed { index, parameter ->
-                        parameter.name?.let { parameterName ->
-                            append(parameterName)
-                            append(": ")
-                            Unit
-                        }
-                        parameter.typeReference?.text?.let { typeReference ->
-                            append(typeReference)
-                        }
-                        if (index != valueParameters.size - 1) {
-                            append(", ")
+            fun KtFunction.presentableText(): String {
+                val func = this
+                return buildString {
+                    if (renderReceiverType) {
+                        receiverTypeReference?.text?.let { receiverReference ->
+                            append(receiverReference)
+                            append('.')
                         }
                     }
-                    append(")")
-                }
+                    if (func is KtFunctionLiteral) {
+                        val calleeExpression =
+                            func.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java)?.calleeExpression
+                        val name =
+                            ((calleeExpression as? KtNameReferenceExpression)?.getReferencedNameAsName()?.asString())
+                                ?: func.name ?: SpecialNames.ANONYMOUS_STRING
+                        append(name)
+                    } else {
+                        append(name.orErrorName())
+                    }
+                    if (renderArguments) {
+                        append("(")
+                        val valueParameters = valueParameters
+                        valueParameters.forEachIndexed { index, parameter ->
+                            parameter.name?.let { parameterName ->
+                                append(parameterName)
+                                append(": ")
+                                Unit
+                            }
+                            parameter.typeReference?.text?.let { typeReference ->
+                                append(typeReference)
+                            }
+                            if (index != valueParameters.size - 1) {
+                                append(", ")
+                            }
+                        }
+                        append(")")
+                    }
 
-                typeReference?.text?.let { returnTypeReference ->
-                    append(": ")
-                    append(returnTypeReference)
+                    if (renderReturnType) {
+                        typeReference?.text?.let { returnTypeReference ->
+                            append(": ")
+                            append(returnTypeReference)
+                        }
+                    }
                 }
             }
 

@@ -6,11 +6,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.usages.rules.UsageInFiles;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class UsageDataUtil {
   public static VirtualFile @Nullable [] provideVirtualFileArray(Usage[] usages, UsageTarget[] usageTargets) {
     if (usages == null && usageTargets == null) {

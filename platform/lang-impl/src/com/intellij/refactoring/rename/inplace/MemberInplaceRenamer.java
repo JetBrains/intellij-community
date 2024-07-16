@@ -15,9 +15,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -36,6 +35,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageViewUtil;
@@ -99,6 +99,12 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       return currentFile;
     }
     return super.checkLocalScope();
+  }
+
+  @Override
+  protected @Nullable UnresolvableCollisionUsageInfo findCollision() {
+    // Collisions for members are processed by RenameProcessor using normal conflicts dialog
+    return null;
   }
 
   @Override
@@ -216,6 +222,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   protected void performRefactoringRename(String newName, StartMarkAction markAction) {
     try {
+      startDumbIfPossible();
+      tryRollback();
       final PsiNamedElement variable = getVariable();
       if (variable != null && !newName.equals(myOldName)) {
         if (isIdentifier(newName, variable.getLanguage())) {
@@ -302,15 +310,6 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
           return true;
         });
     }
-  }
-
-  @Override
-  protected void revertStateOnFinish() {
-    final Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
-    if (editor == FileEditorManager.getInstance(myProject).getSelectedTextEditor() && editor instanceof EditorImpl) {
-      ((EditorImpl)editor).startDumb();
-    }
-    revertState();
   }
 
   @Override

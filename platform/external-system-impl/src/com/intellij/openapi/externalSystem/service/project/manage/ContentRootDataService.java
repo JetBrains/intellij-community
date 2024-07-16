@@ -45,7 +45,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +164,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
         removeImportedExcludeFolders(contentEntry, modelsProvider, owner, project);
         importedContentEntries.add(contentEntry);
       }
-      logDebug("Importing content root '%s' for module '%s' forceDirectoriesCreation=[%b]",
+      logTrace("Importing content root '%s' for module '%s' forceDirectoriesCreation=[%b]",
                contentRoot.getRootPath(), module.getName(), forceDirectoriesCreation);
 
       Set<String> updatedSourceRoots = new HashSet<>();
@@ -206,12 +205,12 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     if (modelsProvider instanceof IdeModifiableModelsProviderImpl impl) {
       MutableEntityStorage diff = impl.getActualStorageBuilder();
 
-      VirtualFileUrl vfu = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUri(contentEntry.getUrl());
-      Pair<WorkspaceEntity, String> result = ContainerUtil.find(diff.getVirtualFileUrlIndex().findEntitiesByUrl(vfu).iterator(), pair -> {
-        return "url".equals(pair.component2()) && pair.component1() instanceof ContentRootEntity;
+      VirtualFileUrl vfu = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(contentEntry.getUrl());
+      WorkspaceEntity workspaceEntity = ContainerUtil.find(diff.getVirtualFileUrlIndex().findEntitiesByUrl(vfu).iterator(), entity -> {
+        return entity instanceof ContentRootEntity;
       });
 
-      if (result != null && result.component1() instanceof ContentRootEntity contentRootEntity) {
+      if (workspaceEntity instanceof ContentRootEntity contentRootEntity) {
         for (ExcludeUrlEntity excludeEntity : contentRootEntity.getExcludedUrls()) {
           if (isImportedEntity(owner, excludeEntity)) {
             diff.removeEntity(excludeEntity);
@@ -303,7 +302,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
     String url = pathToUrl(path);
     if (!Files.exists(Path.of(path))) {
-      logDebug("Source folder [%s] does not exist and will not be created, will add when dir is created", url);
+      logTrace("Source folder [%s] does not exist and will not be created, will add when dir is created", url);
       logUnitTest("Adding source folder listener to watch [%s] for creation in project [hashCode=%d]", url, module.getProject().hashCode());
       sourceFolderManager.addSourceFolder(module, url, sourceRootType);
     }
@@ -320,7 +319,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     String packagePrefix = sourceRoot.getPackagePrefix();
     String url = pathToUrl(sourceRoot.getPath());
 
-    logDebug("Importing root '%s' with packagePrefix=[%s] generated=[%b]", sourceRoot, packagePrefix, generated);
+    logTrace("Importing root '%s' with packagePrefix=[%s] generated=[%b]", sourceRoot, packagePrefix, generated);
 
     SourceFolder folder = findSourceFolder(contentEntry, sourceRoot);
     if (folder == null) {
@@ -382,9 +381,9 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     }
   }
 
-  private static void logDebug(@NotNull String format, Object... args) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format(format, args));
+  private static void logTrace(@NotNull String format, Object... args) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(String.format(format, args));
     }
   }
 
@@ -397,7 +396,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
         return;
       }
     }
-    logDebug("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName);
+    logTrace("Importing excluded root '%s' for content root '%s' of module '%s'", root, entry.getUrl(), moduleName);
     entry.addExcludeFolder(pathToUrl(rootPath), true);
   }
 

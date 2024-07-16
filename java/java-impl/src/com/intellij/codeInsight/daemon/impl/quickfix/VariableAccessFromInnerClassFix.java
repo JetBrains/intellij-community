@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -68,8 +68,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return switch (myFixType) {
       case MAKE_FINAL -> {
         Collection<PsiVariable> vars = getVariablesToFix();
@@ -87,8 +86,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("make.final.family");
   }
 
@@ -129,8 +127,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     }
   }
 
-  @NotNull
-  private Collection<PsiVariable> getVariablesToFix() {
+  private @NotNull Collection<PsiVariable> getVariablesToFix() {
     Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
     if (vars == null) {
       vars = ((UserDataHolderEx)myContext).putUserDataIfAbsent(VARS[myFixType], ContainerUtil.createConcurrentWeakMap());
@@ -142,9 +139,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         return finalVars.put(psiVariable, Boolean.TRUE) == null;
       }
 
-      @NotNull
       @Override
-      public Iterator<PsiVariable> iterator() {
+      public @NotNull Iterator<PsiVariable> iterator() {
         return finalVars.keySet().iterator();
       }
 

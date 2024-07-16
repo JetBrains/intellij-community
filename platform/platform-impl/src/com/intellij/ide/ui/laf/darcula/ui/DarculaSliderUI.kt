@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ui.JBColor
@@ -281,7 +281,7 @@ public class DarculaSliderUIThemes {
   val focusBorderThickness: Int
     get() = JBUI.scale(3)
   val focusedBorderColor: Color
-    get() = JBUI.CurrentTheme.Focus.focusColor()
+    get() = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
   val borderThickness: Int
     get() = JBUI.scale(1)
   val thumbOverhang: Int
@@ -295,7 +295,7 @@ public class DarculaSliderUIThemes {
   val tickColor: Color
     get() = JBColor.namedColor("Slider.tickColor", JBColor(0x999999, 0x808080))
   val focusedOuterColor: Color
-    get() = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
+    get() = JBUI.CurrentTheme.Focus.focusColor()
   val disabledButtonColor: Color
     get() = JBColor.PanelBackground
   val disabledButtonBorderColor: Color

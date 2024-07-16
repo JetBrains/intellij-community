@@ -479,6 +479,7 @@ public final class HighlightFixUtil {
                                            @NotNull PsiMethodCallExpression methodCall,
                                            @NotNull PsiExpressionList exprList,
                                            @Nullable HighlightInfo.Builder highlightInfo) {
+    if (methodCall.getMethodExpression().getQualifierExpression() != null) return;
     for (CandidateInfo methodCandidate : methodCandidates) {
       PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {

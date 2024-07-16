@@ -2049,7 +2049,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       if (body == null) return;
       List<PsiMethodCallExpression> calls = new ArrayList<>();
       PsiLocalVariable declaration = null;
-      for (PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(parameter, body)) {
+      for (PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(parameter)) {
         PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(ref);
         if (call != null) {
           calls.add(call);
@@ -2115,7 +2115,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       PsiElement body = lambda.getBody();
       if (body == null) return null;
       String methodName = null;
-      for (PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(parameter, body)) {
+      for (PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(parameter)) {
         PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(ref);
         if (call == null || !call.getArgumentList().isEmpty()) return null;
         String name = call.getMethodExpression().getReferenceName();
@@ -2311,8 +2311,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       final PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 1) return null;
       final PsiParameter parameter = parameters[0];
-      final PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      final List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(parameter, body);
+      final List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(parameter);
       if (references.size() != 1) return null;
       final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(references.get(0));
       if (call == null || !call.getArgumentList().isEmpty()) return null;

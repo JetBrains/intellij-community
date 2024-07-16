@@ -82,8 +82,7 @@ public final class StaticImportInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "static.import.problem.descriptor");
   }
@@ -106,8 +105,7 @@ public final class StaticImportInspection extends BaseInspection {
   private static class StaticImportFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("static.import.replace.quickfix");
     }
 

@@ -51,6 +51,7 @@ public class TryStatementPostfixTemplate extends PostfixTemplate implements Dumb
       return;
     }
 
+    editor.getSelectionModel().removeSelection();
     PsiElement element = file.findElementAt(range.getStartOffset());
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     assert tryStatement != null;

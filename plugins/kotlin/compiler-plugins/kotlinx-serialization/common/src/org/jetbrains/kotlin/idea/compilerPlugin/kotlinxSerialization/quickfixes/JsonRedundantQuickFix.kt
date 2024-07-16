@@ -69,6 +69,7 @@ internal class JsonRedundantQuickFix(expression: KtCallExpression) : KotlinQuick
             editor,
             KotlinBundle.message("title.select.target.code.block"),
             true,
+            null,
             { it },
             { onSelect(it) }
         )

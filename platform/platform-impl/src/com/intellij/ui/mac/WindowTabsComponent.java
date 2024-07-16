@@ -36,7 +36,6 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
 import com.intellij.util.ui.GraphicsUtil;
@@ -44,6 +43,7 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,9 +56,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public final class WindowTabsComponent extends JBTabsImpl {
   private static final String TITLE_LISTENER_KEY = "TitleListener";
 
@@ -100,8 +98,13 @@ public final class WindowTabsComponent extends JBTabsImpl {
   }
 
   @Override
-  protected @NotNull SingleRowLayout createSingleRowLayout() {
-    return new WindowTabsLayout(this);
+  protected @NotNull TabLayout createRowLayout() {
+    if (isSingleRow()) {
+      return new WindowTabsLayout(this);
+    }
+    else {
+      return super.createRowLayout();
+    }
   }
 
   @Override
@@ -146,7 +149,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
             if (_isSelectionClick(e)) {
               Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
               if (c instanceof InplaceButton) return;
-              myTabs.select(info, true);
+              tabs.select(info, true);
               JBPopup container = PopupUtil.getPopupContainerFor(label);
               if (container != null && ClientProperty.isTrue(container.getContent(), MorePopupAware.class)) {
                 container.cancel();
@@ -180,33 +183,33 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       public void setTabActions(ActionGroup group) {
         super.setTabActions(group);
-        if (myActionPanel != null) {
-          Container parent = myActionPanel.getParent();
-          parent.remove(myActionPanel);
-          parent.add(new Wrapper(myActionPanel) {
+        if (actionPanel != null) {
+          Container parent = actionPanel.getParent();
+          parent.remove(actionPanel);
+          parent.add(new Wrapper(actionPanel) {
             @Override
             public Dimension getPreferredSize() {
-              return myActionPanel.getPreferredSize();
+              return actionPanel.getPreferredSize();
             }
           }, BorderLayout.WEST);
 
-          myActionPanel.setBorder(JBUI.Borders.emptyLeft(6));
-          myActionPanel.setVisible(!showCloseActionOnHover());
+          actionPanel.setBorder(JBUI.Borders.emptyLeft(6));
+          actionPanel.setVisible(!showCloseActionOnHover());
         }
       }
 
       @Override
       protected void setHovered(boolean value) {
         super.setHovered(value);
-        if (myActionPanel != null) {
-          myActionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == myTabs.getPopupInfo());
+        if (actionPanel != null) {
+          actionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == tabs.getPopupInfo());
         }
       }
 
       @Override
       protected void handlePopup(MouseEvent e) {
         super.handlePopup(e);
-        JPopupMenu popup = myTabs.getActivePopup();
+        JPopupMenu popup = tabs.getActivePopup();
         if (popup != null) {
           popup.addPopupMenuListener(new PopupMenuListenerAdapter() {
             @Override
@@ -221,7 +224,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
             private void handle() {
               popup.removePopupMenuListener(this);
-              myActionPanel.setVisible(!showCloseActionOnHover() || isHovered());
+              actionPanel.setVisible(!showCloseActionOnHover() || isHovered());
             }
           });
         }
@@ -604,7 +607,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
       @Override
       public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
-        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, getInfoToLabel().get(info));
+        WindowFrameDockableContent content = new WindowFrameDockableContent(WindowTabsComponent.this, info, getTabLabel(info));
         info.setHidden(true);
         DockManagerImpl manager = getDockManager();
         updateDockContainers(manager);

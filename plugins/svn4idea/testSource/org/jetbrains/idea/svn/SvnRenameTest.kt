@@ -490,7 +490,7 @@ class SvnRenameTest : SvnTestCase() {
   /*
    * Try to workaround IDEA-182560
    */
-  private inline fun makeVfsRefreshBehaveMaybe(crossinline runnable: () -> Unit) {
+  private fun makeVfsRefreshBehaveMaybe(runnable: () -> Unit) {
     runInEdtAndWait(runnable)
   }
 }

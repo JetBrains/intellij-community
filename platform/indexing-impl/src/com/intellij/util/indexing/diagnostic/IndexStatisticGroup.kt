@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.internal.statistic.collectors.fus.PluginIdRuleValidator
@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.indexing.FileBasedIndex.RebuildRequestedByUserAction
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -15,7 +16,7 @@ import java.util.*
 
 @Internal
 object IndexStatisticGroup {
-  val GROUP = EventLogGroup("indexing.statistics", 13)
+  val GROUP = EventLogGroup("indexing.statistics", 17)
 
   private val indexIdField =
     EventFields.StringValidatedByCustomRule("index_id", IndexIdRuleValidator::class.java)
@@ -40,7 +41,7 @@ object IndexStatisticGroup {
   fun reportIndexRebuild(indexId: ID<*, *>,
                          cause: Throwable,
                          isInsideIndexInitialization: Boolean) {
-    val realCause = (if (cause.javaClass == Throwable::class.java) cause.cause else cause) ?: cause
+    val realCause = ExceptionUtil.getRootCause(cause)
     val causeClass = realCause.javaClass
 
     var requestorPluginID: PluginId? = null
@@ -170,6 +171,7 @@ object IndexStatisticGroup {
   }
 }
 
+@Internal
 class ProjectIndexingHistoryFusReporter : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = IndexStatisticGroup.GROUP
 }

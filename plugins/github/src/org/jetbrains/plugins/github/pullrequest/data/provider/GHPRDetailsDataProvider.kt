@@ -1,83 +1,52 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
+import com.intellij.collaboration.async.computationStateFlow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.CollectionDelta
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.awaitClose
+import com.intellij.collaboration.util.ComputedResult
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.future.asDeferred
-import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
-import java.util.concurrent.CompletableFuture
+import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 
 interface GHPRDetailsDataProvider {
-
+  @get:ApiStatus.Internal
   val loadedDetails: GHPullRequest?
 
-  @RequiresEdt
-  fun loadDetails(): CompletableFuture<GHPullRequest>
+  val stateChangeSignal: Flow<Unit>
 
-  @RequiresEdt
-  fun reloadDetails()
+  val detailsNeedReloadSignal: Flow<Unit>
+  val mergeabilityNeedsReloadSignal: Flow<Unit>
 
-  @RequiresEdt
-  fun addDetailsReloadListener(disposable: Disposable, listener: () -> Unit)
+  suspend fun loadDetails(): GHPullRequest
 
-  @RequiresEdt
-  fun loadDetails(disposable: Disposable, consumer: (CompletableFuture<GHPullRequest>) -> Unit) {
-    addDetailsReloadListener(disposable) {
-      consumer(loadDetails())
-    }
-    consumer(loadDetails())
-  }
+  suspend fun loadMergeabilityState(): GHPRMergeabilityState
 
-  @RequiresEdt
-  fun addDetailsLoadedListener(disposable: Disposable, listener: () -> Unit)
+  suspend fun updateDetails(title: String? = null, description: String? = null): GHPullRequest
 
-  @RequiresEdt
-  fun updateDetails(indicator: ProgressIndicator, title: String? = null, description: String? = null): CompletableFuture<GHPullRequest>
+  suspend fun adjustReviewers(delta: CollectionDelta<GHPullRequestRequestedReviewer>)
 
-  @RequiresEdt
-  fun adjustReviewers(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>)
-    : CompletableFuture<Unit>
+  suspend fun close()
 
-  @RequiresEdt
-  fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>)
-    : CompletableFuture<Unit>
+  suspend fun reopen()
 
-  @RequiresEdt
-  fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>)
-    : CompletableFuture<Unit>
+  suspend fun markReadyForReview()
+
+  suspend fun merge(commitMessage: Pair<String, String>, currentHeadRef: String)
+
+  suspend fun rebaseMerge(currentHeadRef: String)
+
+  suspend fun squashMerge(commitMessage: Pair<String, String>, currentHeadRef: String)
+
+  suspend fun signalDetailsNeedReload()
+
+  suspend fun signalMergeabilityNeedsReload()
 }
 
-fun GHPRDetailsDataProvider.detailsRequestFlow(): Flow<Deferred<GHPullRequest>> =
-  channelFlow {
-    val listenerDisposable = Disposer.newDisposable()
-    val cs = childScope()
-    loadDetails(listenerDisposable) { request ->
-      cs.async {
-        try {
-          request.asDeferred().await()
-        }
-        catch (e: ProcessCanceledException) {
-          cancel()
-          awaitCancellation()
-        }
-      }.let {
-        trySend(it)
-      }
-    }
-    awaitClose {
-      Disposer.dispose(listenerDisposable)
-    }
-  }.flowOn(Dispatchers.Main)
+val GHPRDetailsDataProvider.detailsComputationFlow: Flow<ComputedResult<GHPullRequest>>
+  get() = computationStateFlow(detailsNeedReloadSignal.withInitial(Unit)) { loadDetails() }
+
+val GHPRDetailsDataProvider.mergeabilityStateComputationFlow: Flow<ComputedResult<GHPRMergeabilityState>>
+  get() = computationStateFlow(mergeabilityNeedsReloadSignal.withInitial(Unit)) { loadMergeabilityState() }

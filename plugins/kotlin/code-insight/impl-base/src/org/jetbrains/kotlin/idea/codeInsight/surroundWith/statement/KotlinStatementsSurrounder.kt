@@ -1,22 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement
 
-import com.intellij.lang.surroundWith.Surrounder
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
+import com.intellij.lang.surroundWith.ModCommandSurrounder
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtExpression
 
-abstract class KotlinStatementsSurrounder : Surrounder {
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun isApplicable(elements: Array<PsiElement>): Boolean {
+abstract class KotlinStatementsSurrounder : ModCommandSurrounder() {
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    final override fun isApplicable(elements: Array<PsiElement>): Boolean {
         if (elements.isEmpty()) {
             return false
         }
@@ -24,11 +24,8 @@ abstract class KotlinStatementsSurrounder : Surrounder {
             val expr = elements[0] as KtExpression
             if (!isApplicableWhenUsedAsExpression) {
                 allowAnalysisOnEdt {
-                    @OptIn(KtAllowAnalysisFromWriteAction::class)
-                    allowAnalysisFromWriteAction {
-                        if (analyze(expr) { expr.isUsedAsExpression() }) {
-                            return false
-                        }
+                    if (analyze(expr) { expr.isUsedAsExpression }) {
+                        return false
                     }
                 }
             }
@@ -39,15 +36,22 @@ abstract class KotlinStatementsSurrounder : Surrounder {
     protected open val isApplicableWhenUsedAsExpression: Boolean = true
 
     @Throws(IncorrectOperationException::class)
-    override fun surroundElements(project: Project, editor: Editor, elements: Array<PsiElement>): TextRange? {
-        val container = elements[0].parent ?: return null
-        return surroundStatements(project, editor, container, elements)
+    final override fun surroundElements(context: ActionContext, elements: Array<out PsiElement>): ModCommand {
+        val container = elements[0].parent ?: return ModCommand.nop()
+        return ModCommand.psiUpdate(context) { updater ->
+            surroundStatements(
+                context,
+                updater.getWritable(container),
+                elements.map { updater.getWritable(it) }.toTypedArray(),
+                updater
+            )
+        }
     }
 
     protected abstract fun surroundStatements(
-        project: Project,
-        editor: Editor,
+        context: ActionContext,
         container: PsiElement,
-        statements: Array<PsiElement>
-    ): TextRange?
+        statements: Array<PsiElement>,
+        updater: ModPsiUpdater
+    )
 }

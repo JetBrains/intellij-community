@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -25,15 +25,13 @@ class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCod
     super(file, referenceElement);
   }
 
-  @NotNull
   @Override
-  protected String getBaseText() {
+  protected @NotNull String getBaseText() {
     return QuickFixBundle.message("static.import.constant.text");
   }
 
-  @NotNull
   @Override
-  protected String getMemberPresentableText(@NotNull PsiField field) {
+  protected @NotNull String getMemberPresentableText(@NotNull PsiField field) {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_NAME |
                                                PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                                PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
@@ -74,27 +72,23 @@ class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCod
   }
 
   @Override
-  @NotNull
-  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
+  protected @NotNull QuestionAction createQuestionAction(@NotNull List<? extends PsiField> methodsToImport, @NotNull Project project, Editor editor) {
     return new StaticImportMemberQuestionAction<PsiField>(project, editor, methodsToImport, myReferencePointer) {
-      @NotNull
       @Override
-      protected String getPopupTitle() {
+      protected @NotNull String getPopupTitle() {
         return QuickFixBundle.message("field.to.import.chooser.title");
       }
     };
   }
 
-  @Nullable
   @Override
-  protected PsiElement getQualifierExpression() {
+  protected @Nullable PsiElement getQualifierExpression() {
     PsiJavaCodeReferenceElement element = myReferencePointer.getElement();
     return element != null ? element.getQualifier() : null;
   }
 
-  @Nullable
   @Override
-  protected PsiElement resolveRef() {
+  protected @Nullable PsiElement resolveRef() {
     PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
     return referenceElement != null ? referenceElement.advancedResolve(true).getElement() : null;
   }

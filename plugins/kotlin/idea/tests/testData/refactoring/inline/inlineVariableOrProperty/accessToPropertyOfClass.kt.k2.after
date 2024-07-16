@@ -1,0 +1,13 @@
+class Foo(val i: Int) {
+    fun m() {
+        object : Runnable {
+            override fun run() {
+                if ((1..2).find<Int> {
+                        println(this@Foo.i)
+                        true
+                    } != 0) {
+                }
+            }
+        }
+    }
+}

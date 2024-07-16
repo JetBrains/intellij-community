@@ -7,6 +7,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -27,6 +28,8 @@ public class IncreaseLanguageLevelFixTest extends JavaCodeInsightFixtureTestCase
     assertEquals(LanguageLevel.JDK_1_6, PsiUtil.getLanguageLevel(myFixture.getFile()));
     IntentionAction fix = myFixture.findSingleIntention("Set language level");
     myFixture.launchAction(fix);
+    // new language level will be pushed during scanning
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     assertEquals(LanguageLevel.JDK_1_8, PsiUtil.getLanguageLevel(myFixture.getFile()));
   }
 

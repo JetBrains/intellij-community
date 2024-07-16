@@ -49,6 +49,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testSideEffect() { doTest(); }
+  
+  public void testParamAsAutocloseableRef() { doTest(); }
 
   public void testInlineWithTry() { doTest(); }
   public void testEmptyMethod() { doTest(); }
@@ -579,6 +581,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testSplitIfAndCollapseBack() { doTest(); }
   
   public void testThisVariableName() { doTest(); }
+  
+  public void testRenameLocalClass() { doTest(); }
+  
+  public void testRenameLocalClassDoubleConflict() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer.liveReload
 
 import com.google.common.net.HttpHeaders
@@ -199,7 +199,7 @@ class WebServerPageConnectionService {
 
   private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
     val gotItTooltip = GotItTooltip(SERVER_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
-    if (!gotItTooltip.canShow() || WebPreviewFileEditor.isPreviewOpened()) return
+    if (!gotItTooltip.canShow() || WebPreviewFileEditor.isPreviewOpened) return
 
     if (WebBrowserManager.BROWSER_RELOAD_MODE_DEFAULT !== ReloadMode.RELOAD_ON_SAVE) {
       Logger.getInstance(WebServerPageConnectionService::class.java).error(

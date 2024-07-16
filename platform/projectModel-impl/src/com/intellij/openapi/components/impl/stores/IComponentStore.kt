@@ -2,15 +2,17 @@
 package com.intellij.openapi.components.impl.stores
 
 import com.intellij.configurationStore.StateStorageManager
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@Internal
 interface IComponentStore {
   val storageManager: StateStorageManager
 
@@ -41,3 +43,12 @@ interface IComponentStore {
 
   fun release()
 }
+
+@Internal
+interface ComponentStoreOwner {
+  val componentStore: IComponentStore
+}
+
+@get:Internal
+val ComponentManager.stateStore: IComponentStore
+  get() = if (this is ComponentStoreOwner) this.componentStore else this.service<IComponentStore>()

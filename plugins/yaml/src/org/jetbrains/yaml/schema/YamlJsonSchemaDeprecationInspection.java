@@ -10,7 +10,6 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
 import com.jetbrains.jsonSchema.impl.MatchResult;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
@@ -48,7 +47,7 @@ public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectio
           return;
         }
 
-        final MatchResult result = new JsonSchemaResolver(project, schema, position).detailedResolve();
+        final MatchResult result = new JsonSchemaResolver(project, schema, position, walker.createValueAdapter(key)).detailedResolve();
         for (JsonSchemaObject object : result.mySchemas) {
           String message = object.getDeprecationMessage();
           if (message != null) {

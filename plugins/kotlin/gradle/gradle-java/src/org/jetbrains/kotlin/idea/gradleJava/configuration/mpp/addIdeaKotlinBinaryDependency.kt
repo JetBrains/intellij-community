@@ -16,17 +16,18 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNa
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.ifNull
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_NAME
 
 fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDependency): DataNode<out LibraryDependencyData>? {
 
     val dependencyNode = findLibraryDependencyNode(dependency) ?: run create@{
         val coordinates = dependency.coordinates ?: return null
-        val libraryData = LibraryData(coordinates.displayString, isUnresolved = dependency is IdeaKotlinUnresolvedBinaryDependency)
+        val libraryData = LibraryData(KotlinLibraryName(coordinates), isUnresolved = dependency is IdeaKotlinUnresolvedBinaryDependency)
         val libraryLevel = if (dependency.isIdeaProjectLevel) LibraryLevel.PROJECT else LibraryLevel.MODULE
         libraryData.setGroup(coordinates.group)
         libraryData.artifactId = coordinates.module
         libraryData.version = coordinates.version
-        libraryData.externalName = coordinates.identityString
+        libraryData.internalName = "$GRADLE_NAME: ${coordinates.displayString}"
         createChild(ProjectKeys.LIBRARY_DEPENDENCY, LibraryDependencyData(this.data, libraryData, libraryLevel))
     }
 

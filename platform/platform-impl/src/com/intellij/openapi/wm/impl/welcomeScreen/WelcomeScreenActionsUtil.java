@@ -33,10 +33,11 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.
 
 public final class WelcomeScreenActionsUtil {
 
+  // TODO use UpdateSession to expand actionGroup
   public static void collectAllActions(@NotNull DefaultActionGroup group, @NotNull ActionGroup actionGroup) {
     for (AnAction action : actionGroup.getChildren(null)) {
-      if (action instanceof ActionGroup && !((ActionGroup)action).isPopup()) {
-        collectAllActions(group, (ActionGroup)action);
+      if (action instanceof ActionGroup g && !g.isPopup()) {
+        collectAllActions(group, g);
       }
       else {
         // add actions group popup as is
@@ -191,9 +192,10 @@ public final class WelcomeScreenActionsUtil {
   public static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
                                                                @NotNull Function<? super AnAction, ? extends AnAction> wrapper,
                                                                int mainButtonsNum) {
+    ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
     collectAllActions(group, actionGroup);
-    AnAction[] actions = group.getChildren(null);
+    AnAction[] actions = group.getChildren(actionManager);
 
     DefaultActionGroup main = new DefaultActionGroup();
     DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true);

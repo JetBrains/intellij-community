@@ -47,7 +47,7 @@ interface SingleFileSourcesTracker {
 /**
  * This is a dummy implementation for the [SingleFileSourcesTracker] that makes sure no changes in behaviour are introduced to the platform
  */
-class DefaultSingleFileSourcesTracker : SingleFileSourcesTracker {
+internal class DefaultSingleFileSourcesTracker : SingleFileSourcesTracker {
   override fun isSingleFileSource(file: VirtualFile): Boolean = false
   override fun isSourceDirectoryInModule(dir: VirtualFile, module: Module): Boolean = false
   override fun getSourceDirectoryIfExists(file: VirtualFile): VirtualFile? = null

@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -685,7 +686,7 @@ public final class PyCallExpressionHelper {
                 }
               }
               PsiElement possible_class = firstArgRef.getReference().resolve();
-              if (possible_class instanceof PyClass first_class && ((PyClass)possible_class).isNewStyleClass(context)) {
+              if (possible_class instanceof PyClass first_class && first_class.isNewStyleClass(context)) {
                 return new Maybe<>(getSuperCallTypeForArguments(context, first_class, args[1]));
               }
             }
@@ -748,6 +749,34 @@ public final class PyCallExpressionHelper {
       return PyUnionType.union(superTypes);
     }
     return null;
+  }
+
+  /**
+   * {@code argument} can be (parenthesized) expression or a value of a {@link PyKeywordArgument}
+   */
+  @ApiStatus.Internal
+  @Nullable
+  public static List<PyCallableParameter> getMappedParameters(@NotNull PyExpression argument,
+                                                              @NotNull PyResolveContext resolveContext) {
+    while (argument.getParent() instanceof PyParenthesizedExpression parenthesizedExpr) {
+      argument = parenthesizedExpr;
+    }
+
+    if (argument.getParent() instanceof PyKeywordArgument keywordArgument) {
+      assert keywordArgument.getValueExpression() == argument;
+      argument = keywordArgument;
+    }
+
+    PsiElement parent = argument.getParent();
+    if (parent instanceof PyArgumentList) {
+      parent = parent.getParent();
+    }
+    if (!(parent instanceof PyCallSiteExpression callSite)) {
+      return null;
+    }
+
+    PyExpression finalArgument = argument;
+    return ContainerUtil.mapNotNull(mapArguments(callSite, resolveContext), mapping -> mapping.getMappedParameters().get(finalArgument));
   }
 
   /**

@@ -129,7 +129,8 @@ public class JBInsets extends Insets {
     return create(new UIDefaultsSupplier(key), defInsets);
   }
 
-  private static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
+  @ApiStatus.Internal
+  public static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
     // zero values will be overwritten by update()
     var result = new JBInsets(unscaledSupplier, unscaledDefault, 0, 0, 0, 0);
     result.update();

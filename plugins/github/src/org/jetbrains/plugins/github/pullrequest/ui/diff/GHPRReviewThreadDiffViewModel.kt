@@ -21,7 +21,7 @@ internal class MappedGHPRReviewThreadDiffViewModel(
   private val sharedVm: GHPRCompactReviewThreadViewModel,
   mapping: Flow<MappingData>
 ) : GHPRReviewThreadDiffViewModel, GHPRCompactReviewThreadViewModel by sharedVm {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val isVisible: StateFlow<Boolean> = mapping.map { it.isVisible }.stateInNow(cs, false)
   override val location: StateFlow<DiffLineLocation?> = mapping.map { it.location }.stateInNow(cs, null)

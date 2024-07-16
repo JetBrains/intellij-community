@@ -23,10 +23,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -61,6 +61,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
@@ -119,8 +120,6 @@ public abstract class UsefulTestCase extends TestCase {
   private static final ObjectIntMap<String> TOTAL_TEARDOWN_COST_MILLIS = new ObjectIntHashMap<>();
   private static final ObjectIntMap<String> TOTAL_TEARDOWN_COUNT = new ObjectIntHashMap<>();
 
-  protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
-
   private @Nullable Disposable myTestRootDisposable;
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
@@ -129,6 +128,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   static {
     initializeTestEnvironment();
+  }
+  protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
+  static {
+    assert LOG.getClass().getName().equals("com.intellij.testFramework.TestLoggerFactory$TestLogger") : "Logger must be queried after initializeTestEnvironment() call to get TestLogger, but got: "+LOG.getClass();
   }
 
   protected void setDefaultCodeInsightSettings(@NotNull CodeInsightSettings settings) {
@@ -490,6 +493,11 @@ public abstract class UsefulTestCase extends TestCase {
       UITestUtil.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
     }
+    else if (runFromCoroutine()) {
+      CoroutineKt.runTestInCoroutineScope(() -> {
+        defaultRunBare(wrappedRunnable);
+      }, getCoroutineTimeout());
+    }
     else {
       defaultRunBare(wrappedRunnable);
     }
@@ -524,6 +532,14 @@ public abstract class UsefulTestCase extends TestCase {
       return policy.runInDispatchThread();
     }
     return true;
+  }
+
+  protected boolean runFromCoroutine() {
+    return false;
+  }
+
+  protected Duration getCoroutineTimeout() {
+    return Duration.ofMinutes(1);
   }
 
   protected static <T extends Throwable> void edt(@NotNull ThrowableRunnable<T> runnable) throws T {
@@ -971,7 +987,7 @@ public abstract class UsefulTestCase extends TestCase {
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Objects.equals(expected, actual)) {
-      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
+      throw new FileComparisonFailedError(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
 
@@ -981,7 +997,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertTextEquals(@Nullable String message, @NotNull String expectedText, @NotNull String actualText) {
     if (!expectedText.equals(actualText)) {
-      throw new FileComparisonFailure(Strings.notNullize(message), expectedText, actualText, null);
+      throw new FileComparisonFailedError(Strings.notNullize(message), expectedText, actualText, null);
     }
   }
 

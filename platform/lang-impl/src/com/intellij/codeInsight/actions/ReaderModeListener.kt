@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -42,7 +43,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
         }
       }
 
-      for (editor in ClientEditorManager.getCurrentInstance().editors()) {
+      for (editor in ClientEditorManager.getCurrentInstance().editorsSequence()) {
         if (editor !is EditorImpl || editor.getProject() != project) {
           continue
         }
@@ -81,7 +82,8 @@ private class ReaderModeEditorSettingsListener : ProjectActivity {
         }
       }
     }
-    serviceAsync<EditorSettingsExternalizable>().addPropertyChangeListener(propertyChangeListener, project)
+    // TODO change to serviceAsync<...> when it is fixed for per-client services
+    service<EditorSettingsExternalizable>().addPropertyChangeListener(propertyChangeListener, project)
 
     val fontPreferences = serviceAsync<AppEditorFontOptions>().fontPreferences as FontPreferencesImpl
     fontPreferences.addChangeListener({

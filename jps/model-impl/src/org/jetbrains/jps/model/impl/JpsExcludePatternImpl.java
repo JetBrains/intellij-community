@@ -15,10 +15,12 @@
  */
 package org.jetbrains.jps.model.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
+@ApiStatus.Internal
 public final class JpsExcludePatternImpl extends JpsElementBase<JpsExcludePatternImpl> implements JpsExcludePattern {
   private final String myBaseDirUrl;
   private final String myPattern;

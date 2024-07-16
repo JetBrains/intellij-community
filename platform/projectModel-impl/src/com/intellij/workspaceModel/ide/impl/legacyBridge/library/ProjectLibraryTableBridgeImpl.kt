@@ -16,7 +16,7 @@ import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -29,8 +29,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
-class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
+internal class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -40,12 +41,12 @@ class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
-      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.entity) {
+      builder.mutableLibraryMap.getOrPutDataByEntity(addChange.newEntity) {
         LibraryBridgeImpl(
           libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
           project = project,
-          initialId = addChange.entity.symbolicId,
-          initialEntityStorage = WorkspaceModel.getInstance(project).internal.entityStorage,
+          initialId = addChange.newEntity.symbolicId,
+          initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage,
           targetBuilder = builder
         )
       }
@@ -53,11 +54,12 @@ class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
   }
 }
 
+@ApiStatus.Internal
 class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
 
-  private val entityStorage: VersionedEntityStorage = WorkspaceModel.getInstance(parentProject).internal.entityStorage
+  private val entityStorage: VersionedEntityStorage = (WorkspaceModel.getInstance(parentProject) as WorkspaceModelInternal).entityStorage
 
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
@@ -68,7 +70,7 @@ class ProjectLibraryTableBridgeImpl(
   }
 
   init {
-    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object  : WorkspaceModelChangeListener {
+    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       /**
        * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
        *   may lead to IDEA-324532.
@@ -83,8 +85,8 @@ class ProjectLibraryTableBridgeImpl(
         if (removeChanges.isEmpty()) return
 
         for (change in removeChanges) {
-          val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
-          LOG.debug { "Fire 'beforeLibraryRemoved' event for ${change.entity.name}, library = $library" }
+          val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity)
+          LOG.debug { "Fire 'beforeLibraryRemoved' event for ${change.oldEntity.name}, library = $library" }
           if (library != null) {
             dispatcher.multicaster.beforeLibraryRemoved(library)
           }
@@ -95,22 +97,21 @@ class ProjectLibraryTableBridgeImpl(
         if (!beforeCalled) return
         beforeCalled = false
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
-          .orderToRemoveReplaceAdd() // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
         if (changes.isEmpty()) return
 
         for (change in changes) {
           LOG.debug { "Process library change $change" }
           when (change) {
             is EntityChange.Added -> {
-              val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as? LibraryBridgeImpl
-                                            ?: error("Library bridge should be created in `before` method")
-                alreadyCreatedLibrary.entityStorage = entityStorage
-                alreadyCreatedLibrary.clearTargetBuilder()
+              val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.newEntity) as? LibraryBridgeImpl
+                                          ?: error("Library bridge should be created in `before` method")
+              alreadyCreatedLibrary.entityStorage = entityStorage
+              alreadyCreatedLibrary.clearTargetBuilder()
 
               dispatcher.multicaster.afterLibraryAdded(alreadyCreatedLibrary)
             }
             is EntityChange.Removed -> {
-              val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
+              val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity)
 
               if (library != null) {
                 // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
@@ -170,7 +171,8 @@ class ProjectLibraryTableBridgeImpl(
           }
         }
       }
-    } else {
+    }
+    else {
       for ((entity, library) in libraries) {
         targetBuilder.mutableLibraryMap.addIfAbsent(entity, library)
       }
@@ -268,11 +270,12 @@ class ProjectLibraryTableBridgeImpl(
     private val LOG = logger<ProjectLibraryTableBridgeImpl>()
   }
 }
+
 private fun List<EntityChange<LibraryEntity>>.filterProjectLibraryChanges(): List<EntityChange<LibraryEntity>> {
   return filter {
     when (it) {
-      is EntityChange.Added -> it.entity.tableId is LibraryTableId.ProjectLibraryTableId
-      is EntityChange.Removed -> it.entity.tableId is LibraryTableId.ProjectLibraryTableId
+      is EntityChange.Added -> it.newEntity.tableId is LibraryTableId.ProjectLibraryTableId
+      is EntityChange.Removed -> it.oldEntity.tableId is LibraryTableId.ProjectLibraryTableId
       is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.ProjectLibraryTableId
     }
   }

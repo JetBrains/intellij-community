@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -92,22 +92,20 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     super(project, descriptor, allowDelegation, context);
   }
 
-  @NotNull
-  public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
-                                                                @NotNull PsiMethod method,
-                                                                @NotNull List<? extends ParameterInfoImpl> parameterInfos,
-                                                                final boolean allowDelegation,
-                                                                final PsiReferenceExpression refExpr) {
+  public static @NotNull JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
+                                                                         @NotNull PsiMethod method,
+                                                                         @NotNull List<? extends ParameterInfoImpl> parameterInfos,
+                                                                         final boolean allowDelegation,
+                                                                         final PsiReferenceExpression refExpr) {
     return createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, null);
   }
 
-  @NotNull
-  public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
-                                                                @NotNull PsiMethod method,
-                                                                @NotNull List<? extends ParameterInfoImpl> parameterInfos,
-                                                                final boolean allowDelegation,
-                                                                final PsiReferenceExpression refExpr,
-                                                                @Nullable Consumer<? super List<ParameterInfo>> callback) {
+  public static @NotNull JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
+                                                                         @NotNull PsiMethod method,
+                                                                         @NotNull List<? extends ParameterInfoImpl> parameterInfos,
+                                                                         final boolean allowDelegation,
+                                                                         final PsiReferenceExpression refExpr,
+                                                                         @Nullable Consumer<? super List<ParameterInfo>> callback) {
     return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
       @Override
       protected int getSelectedIdx() {
@@ -137,10 +135,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     };
   }
 
-  @Nullable
   @Override
   @PsiModifier.ModifierConstant
-  protected String getVisibility() {
+  protected @Nullable String getVisibility() {
     //noinspection MagicConstant
     return super.getVisibility();
   }
@@ -256,9 +253,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return JavaFileType.INSTANCE;
   }
 
-  @NotNull
   @Override
-  protected JavaParameterTableModel createParametersInfoModel(@NotNull JavaMethodDescriptor descriptor) {
+  protected @NotNull JavaParameterTableModel createParametersInfoModel(@NotNull JavaMethodDescriptor descriptor) {
     final PsiParameterList parameterList = descriptor.getMethod().getParameterList();
     return new JavaParameterTableModel(parameterList, myDefaultValueContext, this);
   }
@@ -307,9 +303,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         return myRowRenderer;
       }
 
-      @NotNull
       @Override
-      protected JBTableRowEditor getRowEditor(final ParameterTableModelItemBase<ParameterInfoImpl> item) {
+      protected @NotNull JBTableRowEditor getRowEditor(final ParameterTableModelItemBase<ParameterInfoImpl> item) {
         return new JBTableRowEditor() {
           private EditorTextField myTypeEditor;
           private EditorTextField myNameEditor;
@@ -478,8 +473,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return getColumnWidth(1);
   }
 
-  @Nullable
-  private static PsiType getRowType(ParameterTableModelItemBase<ParameterInfoImpl> item) {
+  private static @Nullable PsiType getRowType(ParameterTableModelItemBase<ParameterInfoImpl> item) {
     try {
       return ((PsiTypeCodeFragment)item.typeCodeFragment).getType();
     }
@@ -544,8 +538,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return myMethod.getMethod();
   }
 
-  @Nullable
-  protected CanonicalTypes.Type getReturnType() {
+  protected @Nullable CanonicalTypes.Type getReturnType() {
     if (myReturnTypeField != null) {
       try {
         final PsiType type = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
@@ -559,8 +552,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return null;
   }
   
-  @Nullable
-  protected PsiType getNewReturnType() {
+  protected @Nullable PsiType getNewReturnType() {
     if (myReturnTypeField != null) {
       try {
         return ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();

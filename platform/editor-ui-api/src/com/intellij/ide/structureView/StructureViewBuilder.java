@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeExtensionFactory;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +23,10 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public interface StructureViewBuilder {
-  ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.structureViewBuilder");
 
-  StructureViewBuilderProvider PROVIDER =
-    new FileTypeExtensionFactory<>(StructureViewBuilderProvider.class, EP_NAME).get();
+  static @NotNull StructureViewBuilderProvider getProvider() {
+    return PROVIDER;
+  }
 
   /**
    * Returns the structure view implementation for the specified file
@@ -38,4 +39,14 @@ public interface StructureViewBuilder {
    */
   @NotNull
   StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project);
+
+  @ApiStatus.Internal
+  ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.structureViewBuilder");
+
+  /**
+   * @deprecated use {@link #getProvider()} instead
+   */
+  @Deprecated
+  StructureViewBuilderProvider PROVIDER =
+    new FileTypeExtensionFactory<>(StructureViewBuilderProvider.class, EP_NAME).get();
 }

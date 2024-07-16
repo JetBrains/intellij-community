@@ -26,4 +26,7 @@
     <keyboard-shortcut first-keystroke="alt open_bracket" />
   </action>
   <action id="EditorAddCaretPerSelectedLine"/>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="alt O"/>
+  </action>
 </keymap>

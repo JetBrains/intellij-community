@@ -50,4 +50,12 @@ public interface ModTemplateBuilder {
    */
   @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull String varName, @NotNull String dependantVariableName, 
                                     boolean alwaysStopAt);
+
+  /**
+   * Add a finish position to the template. The caret will be moved to a given position after the template is finished
+   * 
+   * @param offset finish position (offset within the file)
+   * @return this builder
+   */
+  @NotNull ModTemplateBuilder finishAt(int offset);
 }

@@ -43,7 +43,7 @@ internal class AnnotationsPreloader(private val project: Project) {
   }
 
   fun schedulePreloading(file: VirtualFile) {
-    if (project.isDisposed || file.fileType.isBinary) return
+    if (project.isDisposed) return
 
     updateQueue.queue(object : DisposableUpdate(project, file) {
       override fun doRun() {
@@ -51,6 +51,7 @@ internal class AnnotationsPreloader(private val project: Project) {
           val start = System.currentTimeMillis()
 
           if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
+          if (file.fileType.isBinary) return
           val annotationProvider = getAnnotationProvider(project, file) ?: return
 
           annotationProvider.populateCache(file)

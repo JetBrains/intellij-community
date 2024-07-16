@@ -17,6 +17,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -29,6 +30,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 object CommentTextFieldFactory {
+
+  /**
+   * Use [com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory] or create a standalone editor
+   */
+  @Obsolete
   fun create(
     project: Project?,
     document: Document,
@@ -92,7 +98,19 @@ object CommentTextFieldFactory {
   fun wrapWithLeftIcon(config: IconConfig, item: JComponent): JComponent {
     val (icon, iconGap) = config
     val iconLabel = JLabel(icon)
-    return JPanel(CommentFieldWithIconLayout(iconGap - CollaborationToolsUIUtil.getFocusBorderInset())).apply {
+    return JPanel(CommentFieldWithIconLayout(iconGap - CollaborationToolsUIUtil.getFocusBorderInset()) {
+      item.takeIf { it.isVisible }?.minimumSize?.height ?: 0
+    }).apply {
+      isOpaque = false
+      add(CommentFieldWithIconLayout.ICON, iconLabel)
+      add(CommentFieldWithIconLayout.ITEM, item)
+    }
+  }
+
+  internal fun wrapWithLeftIcon(config: IconConfig, item: JComponent, minimalItemHeightCalculator: () -> Int): JComponent {
+    val (icon, iconGap) = config
+    val iconLabel = JLabel(icon)
+    return JPanel(CommentFieldWithIconLayout(iconGap - CollaborationToolsUIUtil.getFocusBorderInset(), minimalItemHeightCalculator)).apply {
       isOpaque = false
       add(CommentFieldWithIconLayout.ICON, iconLabel)
       add(CommentFieldWithIconLayout.ITEM, item)
@@ -145,7 +163,8 @@ private class CommentTextField(
  * Same thing the other way around.
  */
 private class CommentFieldWithIconLayout(
-  private val gap: Int
+  private val gap: Int,
+  private val minimalItemHeightCalculator: () -> Int
 ) : LayoutManager {
 
   companion object {
@@ -192,7 +211,7 @@ private class CommentFieldWithIconLayout(
     val contentHeight = bounds.height
 
     val iconHeight = iconComponent?.takeIf { it.isVisible }?.preferredSize?.height ?: 0
-    val itemMinHeight = itemComponent?.takeIf { it.isVisible }?.minimumSize?.height ?: 0
+    val itemMinHeight = minimalItemHeightCalculator()
 
     iconComponent?.takeIf { it.isVisible }?.apply {
       val prefSize = preferredSize

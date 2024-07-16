@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.packaging.artifacts.*
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.useReactiveWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.query.entities
@@ -44,7 +44,7 @@ private class ArtifactListenerService(
 ) {
   fun <T : BuildArtifactsBeforeRunTaskBase<*>> start(providerId: Key<T>) {
     cs.launch {
-      project.workspaceModel.internal.flowOfDiff(query).collect {
+      (project.workspaceModel as WorkspaceModelInternal).flowOfDiff(query).collect {
         if (it.removed.any()) {
           writeAction {
             it.removed.forEach { artifactEntity ->

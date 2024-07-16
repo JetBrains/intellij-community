@@ -150,7 +150,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     return myCurrentTest != null && myCurrentTest.isInProgress();
   }
 
-  protected void scrollToBeginning() {
+  private void scrollToBeginning() {
     EdtInvocationManager.invokeLaterIfNeeded(() -> {
       if (!myDisposed) {
         myConsole.performWhenNoDeferredOutput(() -> {

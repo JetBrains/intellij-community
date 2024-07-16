@@ -13,12 +13,11 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api-providers" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.high-level-api" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-project-structure" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api-platform-interface" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
-    <orderEntry type="module" module-name="kotlin.idea" />
+    <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
     <orderEntry type="module" module-name="intellij.java" />
@@ -30,5 +29,8 @@
     <orderEntry type="module" module-name="kotlin.ide" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
+    <orderEntry type="module" module-name="intellij.performanceTesting.vcs" />
+    <orderEntry type="module" module-name="kotlin.idea" />
   </component>
 </module>

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.google.gson.GsonBuilder;
@@ -15,10 +15,6 @@ public interface JBAccountInfoServiceEx extends JBAccountInfoService{
     public String idToken;
 
     public RDClientData() {
-    }
-
-    public RDClientData(@Nullable String userId, @Nullable String loginName, @Nullable String email, @Nullable String idToken) {
-      this(userId != null? new JBAData(userId, loginName, email) : null, idToken);
     }
 
     public RDClientData(@Nullable JBAData userData, @Nullable String idToken) {
@@ -41,6 +37,5 @@ public interface JBAccountInfoServiceEx extends JBAccountInfoService{
 
   }
 
-  void update(RDClientData data);
-
+  void update(@Nullable RDClientData data);
 }

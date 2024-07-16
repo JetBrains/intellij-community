@@ -4,7 +4,6 @@ package org.jetbrains.debugger.sourcemap
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -13,11 +12,13 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.ScriptDebuggerUrls
 import java.io.File
 import java.nio.file.InvalidPathException
 import kotlin.io.path.Path
 
+@ApiStatus.Internal
 interface SourceFileResolver {
   /**
    * Return -1 if no match
@@ -26,6 +27,7 @@ interface SourceFileResolver {
   fun resolve(rawSources: List<String>): Int = -1
 }
 
+@ApiStatus.Internal
 class SourceResolver(private val rawSources: List<String>,
                      trimFileScheme: Boolean,
                      baseUrl: Url?,

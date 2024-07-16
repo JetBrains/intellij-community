@@ -36,7 +36,7 @@ import java.io.IOException;
 /**
  * @author Dmitry Avdeev
  */
-public class MavenTemplateFileProcessor extends ProjectTemplateFileProcessor {
+public final class MavenTemplateFileProcessor extends ProjectTemplateFileProcessor {
 
   @Nullable
   @Override

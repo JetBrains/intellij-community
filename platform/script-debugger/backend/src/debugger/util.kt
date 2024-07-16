@@ -6,10 +6,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.text.CharSequenceBackedByChars
 import com.intellij.util.io.addChannelListener
+import com.intellij.util.text.CharSequenceBackedByChars
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.CharBuffer
@@ -23,6 +24,7 @@ internal class LogEntry(val message: CharSequence, val marker: String) {
   internal val time = System.currentTimeMillis()
 }
 
+@ApiStatus.Internal
 class MessagingLogger internal constructor(debugFileBaseName: String, suffix: String) {
   private val processFuture: Future<*>
   private val queue = LinkedBlockingQueue<LogEntry>()
@@ -108,6 +110,7 @@ class MessagingLogger internal constructor(debugFileBaseName: String, suffix: St
   }
 }
 
+@ApiStatus.Internal
 fun createDebugLogger(key: String, suffix: String = ""): MessagingLogger? {
   var debugFile = Registry.stringValue(key)
   if (debugFile.isEmpty()) {

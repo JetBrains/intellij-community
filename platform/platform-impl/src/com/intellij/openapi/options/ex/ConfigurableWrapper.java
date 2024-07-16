@@ -9,12 +9,14 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
@@ -282,10 +284,12 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     markerText = text;
   }
 
-  private static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
+  @ApiStatus.Internal
+  public static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
     private Configurable[] myKids;
     private Comparator<Configurable> myComparator;
+    private Predicate<? super Configurable> myFilter;
     private boolean isInitialized;
 
     private CompositeWrapper(@NotNull ConfigurableEP ep, Configurable... kids) {
@@ -351,6 +355,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
           }
         }
       }
+      if (myFilter != null) {
+        list.removeIf(Predicate.not(myFilter));
+      }
       myKids = list.toArray(new Configurable[0]);
       isInitialized = true;
       ConfigurableCardPanel.warn(this, "children", time);
@@ -368,6 +375,10 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
         myKids = ArrayUtil.append(myKids, configurable);
       }
       return this;
+    }
+
+    public void setFilter(Predicate<? super Configurable> filter) {
+      myFilter = filter;
     }
   }
 }

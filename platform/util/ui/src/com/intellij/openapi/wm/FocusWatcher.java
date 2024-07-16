@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.SwingUndoUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,7 +20,7 @@ public class FocusWatcher extends BaseFocusWatcher {
   /**
    * Last component that had focus.
    */
-  private WeakReference<Component> myFocusedComponent;
+  private WeakReference<Component> focusedComponent;
 
   @Override
   protected void componentUnregistered(Component component, @Nullable AWTEvent cause) {
@@ -34,8 +35,8 @@ public class FocusWatcher extends BaseFocusWatcher {
     if (e.isTemporary() || !component.isShowing()) {
       return;
     }
-    if (component instanceof JTextComponent && ((JTextComponent)component).isEditable()) {
-      SwingUndoUtil.addUndoRedoActions((JTextComponent)component);
+    if (component instanceof JTextComponent textComponent && textComponent.isEditable()) {
+      SwingUndoUtil.addUndoRedoActions(textComponent);
     }
     setFocusedComponentImpl(component, e);
   }
@@ -52,9 +53,10 @@ public class FocusWatcher extends BaseFocusWatcher {
    * @return last focused component or {@code null}.
    */
   public final Component getFocusedComponent() {
-    return SoftReference.dereference(myFocusedComponent);
+    return SoftReference.dereference(focusedComponent);
   }
 
+  @ApiStatus.Internal
   public void setFocusedComponentImpl(Component component) {
     setFocusedComponentImpl(component, null);
   }
@@ -73,7 +75,7 @@ public class FocusWatcher extends BaseFocusWatcher {
   }
 
   private void _setFocused(final Component component, final AWTEvent cause) {
-    myFocusedComponent = new WeakReference<>(component);
+    focusedComponent = new WeakReference<>(component);
     focusedComponentChanged(component, cause);
   }
 
@@ -83,13 +85,13 @@ public class FocusWatcher extends BaseFocusWatcher {
 
   /**
    * Override this method to get notifications about focus. {@code FocusWatcher} invokes
-   * this method each time one of the populated  component gains focus. All "temporary" focus
-   * event are ignored.
+   * this method each time one of the populated components gains focus. All "temporary" focus events are ignored.
    *
-   * @param component currently focused component. The component can be {@code null}
+   * @param component currently focused component.
    */
   protected void focusedComponentChanged(@Nullable Component component, @Nullable AWTEvent cause) {}
 
+  @ApiStatus.Internal
   protected void focusLostImpl(FocusEvent e) {
   }
 }

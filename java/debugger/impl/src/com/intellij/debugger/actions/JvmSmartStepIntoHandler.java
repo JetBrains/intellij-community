@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -87,5 +88,10 @@ public abstract class JvmSmartStepIntoHandler {
       }
     }
     return targets;
+  }
+
+  @ApiStatus.Internal
+  public enum SmartStepIntoDetectionStatus {
+    SUCCESS, NO_TARGETS, TARGETS_MISMATCH, INTERNAL_ERROR, INVALID_POSITION, BYTECODE_NOT_AVAILABLE
   }
 }

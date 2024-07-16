@@ -23,6 +23,13 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
 
   protected val emailBlockWithAgreement = EmailBlock(myProject) { myShowFeedbackSystemInfoDialog() }
 
+  /**
+   * A Zendesk ticket will only be created if the user specifies an email.
+   *
+   * If you don't want support specialists to handle these tickets, then override this method appropriately and Zendesk created tickets will be automatically closed immediately after creation.
+   *
+   * By default, all feedback Zendesk tickets will be automatically closed after creation.
+   */
   protected open fun shouldAutoCloseZendeskTicket(): Boolean {
     return true
   }

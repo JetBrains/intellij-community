@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -7,9 +7,10 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.C
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
-import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.*
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalInvalidate
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalModify
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Revert
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Synchronize
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
@@ -25,8 +26,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.util.LocalTimeCounter.currentTime
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.Executor
@@ -166,10 +169,14 @@ class ProjectSettingsTracker(
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
       submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
-        val localFileSystem = LocalFileSystem.getInstance()
-        val settingsFiles = settingsPaths.map { Path.of(it) }
-        localFileSystem.refreshNioFiles(settingsFiles, isAsyncChangesProcessing, false) {
+        val settingsFiles = settingsPaths.mapNotNull { Path.of(it).refreshAndFindVirtualFileOrDirectory() }
+        if (settingsFiles.isEmpty()) {
           callback(settingsPaths)
+        }
+        else {
+          LocalFileSystem.getInstance().refreshFiles(settingsFiles, isAsyncChangesProcessing, false) {
+            callback(settingsPaths)
+          }
         }
       }
     }
@@ -242,7 +249,11 @@ class ProjectSettingsTracker(
     subscribeOnDocumentsAndVirtualFilesChanges(settingsAsyncSupplier, ProjectSettingsListener(), parentDisposable)
   }
 
-  data class State(var isDirty: Boolean = true, var settingsFiles: Map<String, Long> = emptyMap())
+  @Serializable
+  data class State(
+    @JvmField val isDirty: Boolean = true,
+    @JvmField val settingsFiles: Map<String, Long> = emptyMap()
+  )
 
   private class SettingsFilesStatus(
     val oldCRC: Map<String, Long>,

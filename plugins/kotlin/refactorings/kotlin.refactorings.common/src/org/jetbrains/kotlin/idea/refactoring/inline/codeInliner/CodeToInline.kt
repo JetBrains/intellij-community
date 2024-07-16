@@ -21,7 +21,7 @@ class CodeToInline(
     val mainExpression: KtExpression?,
     val originalDeclaration: KtDeclaration?,
     val statementsBefore: List<KtExpression>,
-    val fqNamesToImport: Collection<ImportPath>,
+    val fqNamesToImport: Collection<ResolvedImportPath>,
     val alwaysKeepMainExpression: Boolean,
     val extraComments: CommentHolder?,
 ) {

@@ -14,7 +14,6 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.SearchMap
-import com.intellij.webSymbols.utils.psiModificationCount
 import com.intellij.webSymbols.utils.qualifiedKind
 import com.intellij.webSymbols.utils.qualifiedName
 import java.util.*
@@ -67,7 +66,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
   private val requiresResolve: Boolean get() = true
 
   override fun getModificationCount(): Long =
-    project.psiModificationCount
+    PsiModificationTracker.getInstance(project).modificationCount
 
   final override fun equals(other: Any?): Boolean =
     other === this

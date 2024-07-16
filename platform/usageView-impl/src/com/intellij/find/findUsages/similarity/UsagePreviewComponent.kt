@@ -22,7 +22,7 @@ import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class UsagePreviewComponent private constructor(
+internal class UsagePreviewComponent private constructor(
   usageView: UsageView,
   usageInfo: UsageInfo,
   renderingData: SnippetRenderingData,

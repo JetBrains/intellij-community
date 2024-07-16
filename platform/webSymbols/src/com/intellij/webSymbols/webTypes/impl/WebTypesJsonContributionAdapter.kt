@@ -12,6 +12,7 @@ import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -65,6 +66,9 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
   open val contributionForQuery: GenericContributionsHost get() = contribution
 
   private var exclusiveContributions: Set<WebSymbolQualifiedKind>? = null
+
+  override fun matchContext(context: WebSymbolsContext): Boolean =
+    super.matchContext(context) && contribution.requiredContext.evaluate(context)
 
   fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
     (exclusiveContributions

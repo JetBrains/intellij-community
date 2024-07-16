@@ -9,9 +9,8 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractK2SharedQuickFixTest : AbstractQuickFixTest() {
-    override fun checkForUnexpectedErrors() {}
 
-    override fun isFirPlugin(): Boolean = true
+    override fun checkForUnexpectedErrors() {}
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -20,7 +19,7 @@ abstract class AbstractK2SharedQuickFixTest : AbstractQuickFixTest() {
     override fun tearDown() {
         runAll(
             { runInEdtAndWait { project.invalidateCaches() } },
-            { super.tearDown() }
+            { super.tearDown() },
         )
     }
 }

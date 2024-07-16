@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryValidator
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
@@ -16,22 +15,22 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
 /**
- * Generates a file with descriptors of modules for [com.intellij.platform.runtime.repository.RuntimeModuleRepository]. 
+ * Generates a file with descriptors of modules for [com.intellij.platform.runtime.repository.RuntimeModuleRepository].
  * Currently, this function uses information from [DistributionFileEntry] to determine which resources were copied to the distribution and
- * how they are organized. It would be better to rework this: load the module repository file produced during compilation, and use it 
- * (along with information from plugin.xml files and other files describing custom layouts of plugins if necessary) to determine which 
- * resources should be included in the distribution, instead of taking this information from the project model.  
+ * how they are organized. It would be better to rework this: load the module repository file produced during compilation, and use it
+ * (along with information from plugin.xml files and other files describing custom layouts of plugins if necessary) to determine which
+ * resources should be included in the distribution, instead of taking this information from the project model.
  */
 internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry>, context: BuildContext) {
-  val compiledModulesDescriptors = loadForCompiledModules(context)
+  val compiledModulesDescriptors = context.originalModuleRepository.rawRepositoryData
 
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
@@ -45,15 +44,19 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
   }
 
   if (repositoryEntries.all { it.distribution == null }) {
-    generateRepositoryForDistribution(context.paths.distAllDir, repositoryEntries, compiledModulesDescriptors,
-                                      context)
+    generateRepositoryForDistribution(
+      context.paths.distAllDir, repositoryEntries, compiledModulesDescriptors,
+      context
+    )
   }
   else {
     SUPPORTED_DISTRIBUTIONS.forEach { distribution ->
       val targetDirectory = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, context)
       val actualEntries = repositoryEntries.filter { it.distribution == null || it.distribution == distribution }
-      generateRepositoryForDistribution(targetDirectory, actualEntries, compiledModulesDescriptors,
-                                        context)
+      generateRepositoryForDistribution(
+        targetDirectory, actualEntries, compiledModulesDescriptors,
+        context
+      )
     }
   }
 }
@@ -64,22 +67,25 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
  */
 @ApiStatus.Internal
 fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
-  val compiledModulesDescriptors = loadForCompiledModules(context)
+  val compiledModulesDescriptors = context.originalModuleRepository.rawRepositoryData
   val actualEntries = entries.mapNotNull { entry ->
     if (entry.path.startsWith(targetDirectory)) {
-      RuntimeModuleRepositoryEntry(distribution = null,
-                                   relativePath = targetDirectory.relativize(entry.path).pathString,
-                                   origin = entry)
+      RuntimeModuleRepositoryEntry(
+        distribution = null,
+        relativePath = targetDirectory.relativize(entry.path).pathString,
+        origin = entry
+      )
     }
     else {
       context.messages.warning("${entry.path} entry is not under $targetDirectory")
       null
     }
   }
-  generateRepositoryForDistribution(targetDirectory = targetDirectory,
-                                    entries = actualEntries.toList(),
-                                    compiledModulesDescriptorsData = compiledModulesDescriptors,
-                                    context = context
+  generateRepositoryForDistribution(
+    targetDirectory = targetDirectory,
+    entries = actualEntries.toList(),
+    compiledModulesDescriptorsData = compiledModulesDescriptors,
+    context = context
   )
 }
 
@@ -111,28 +117,11 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
         context.messages.error("Cannot generate runtime module repository for cross-platform distribution: different dependencies for module '$moduleId', ${descriptor.dependencies} and $commonDependencies")
       }
     }
-    commonDescriptors.add(RawRuntimeModuleDescriptor(moduleId, commonResourcePaths.toList(), commonDependencies))
+    commonDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId, commonResourcePaths.toList(), commonDependencies))
   }
   val targetFile = context.paths.tempDir.resolve("cross-platform-module-repository").resolve(JAR_REPOSITORY_FILE_NAME)
   saveModuleRepository(commonDescriptors, targetFile, context)
   return targetFile
-}
-
-private fun loadForCompiledModules(context: BuildContext): RawRuntimeModuleRepositoryData {
-  // maybe it makes sense to produce the repository along with compiled classes and reuse it
-  CompilationTasks.create(context).generateRuntimeModuleRepository()
-
-  val repositoryForCompiledModulesPath = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
-  if (!repositoryForCompiledModulesPath.exists()) {
-    context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryForCompiledModulesPath doesn't exist")
-  }
-  return try {
-    RuntimeModuleRepositorySerialization.loadFromJar(repositoryForCompiledModulesPath)
-  }
-  catch (e: MalformedRepositoryException) {
-    context.messages.error("Failed to load runtime module repository: ${e.message}", e)
-    throw e
-  }
 }
 
 private data class RuntimeModuleRepositoryEntry(val distribution: SupportedDistribution?, val relativePath: String, val origin: DistributionFileEntry)
@@ -182,7 +171,7 @@ private fun generateRepositoryForDistribution(
     val actualResourcePaths = resourcePaths.mapTo(ArrayList()) {
       if (it.startsWith("$MODULES_DIR_NAME/")) it.removePrefix("$MODULES_DIR_NAME/") else "../$it"
     }
-    distDescriptors.add(RawRuntimeModuleDescriptor(moduleId.stringId, actualResourcePaths, actualDependencies))
+    distDescriptors.add(RawRuntimeModuleDescriptor.create(moduleId.stringId, actualResourcePaths, actualDependencies))
   }
 
   /* include descriptors of aggregating modules which don't have own resources (and therefore don't have DistributionFileEntry),
@@ -216,12 +205,15 @@ private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescripto
 }
 
 /**
- * Some project-level libraries and modules are copied to multiple places in the distribution. 
+ * Some libraries and modules are copied to multiple places in the distribution. 
  * In order to decide which location should be specified in the runtime descriptor, this method determines the main location used the
  * following heuristics:
  *   * the entry from IDE_HOME/lib is preferred (unless it's also included in a separate JAR in the split frontend part and scrambled there);
  *   * otherwise, the entry which is put to a separate JAR file is preferred;
  *   * otherwise, a JAR included in JetBrains Client is preferred.
+ *   * otherwise, a JAR located in a directory named 'client' or 'frontend' is preferred.
+ * 
+ * This heuristic is verified by RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct.  
  */
 private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<RuntimeModuleRepositoryEntry>,
                                                                context: BuildContext): Map<RuntimeModuleId, String> {
@@ -233,10 +225,20 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
                                                     || data.packMode == LibraryPackMode.MERGED 
                                                     || data.packMode == LibraryPackMode.STANDALONE_MERGED
   
+  fun ModuleLibraryFileEntry.isPackedIntoSingleJar(): Boolean {
+    val library = context.findRequiredModule(moduleName).libraryCollection.libraries.find { LibraryLicensesListGenerator.getLibraryName(it) == libraryName }
+    require(library != null) { "Cannot find module-level library '$libraryName' in '$moduleName'" }
+    return library.getFiles(JpsOrderRootType.COMPILED).size == 1 
+  }
+  
   val pathToEntries = entries.groupBy { it.relativePath }
 
+  //exclude libraries which may be packed in multiple JARs from consideration, because multiple entries may not indicate that a library is copied to multiple places in such cases,
+  //and all resource roots should be kept
   val moduleIdsToPaths = entries.asSequence()
-    .filter { entry -> entry.origin is ProjectLibraryEntry && entry.origin.isPackedIntoSingleJar() || entry.origin is ModuleOutputEntry }
+    .filter { entry -> entry.origin is ProjectLibraryEntry && entry.origin.isPackedIntoSingleJar()
+                       || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()                   
+                       || entry.origin is ModuleOutputEntry }
     .groupBy({ it.origin.runtimeModuleId }, { it.relativePath })
 
   fun DistributionFileEntry.isIncludedInJetBrainsClient() = 
@@ -245,7 +247,8 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
   fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
     val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
-                       paths.singleOrNull { pathToEntries[it]?.any { entry -> entry.origin.isIncludedInJetBrainsClient() } == true }
+                       paths.singleOrNull { pathToEntries[it]?.any { entry -> entry.origin.isIncludedInJetBrainsClient() } == true } ?:
+                       paths.singleOrNull { it.substringBeforeLast("/").substringAfterLast("/") in setOf("client", "frontend") }
     if (mainLocation != null) {
       return mainLocation
     }
@@ -320,11 +323,5 @@ const val MODULE_DESCRIPTORS_JAR_PATH: String = "$MODULES_DIR_NAME/$JAR_REPOSITO
 
 private val dependenciesToSkip = mapOf(
   //may be removed when IJPL-125 is fixed
-  "intellij.platform.buildScripts.downloader" to setOf("lib.zstd-jni", "lib.zstd-jni-windows-aarch64"),
-  //RDCT-488
-  "intellij.performanceTesting" to setOf(
-    "intellij.platform.vcs.impl", 
-    "intellij.platform.vcs.log",
-    "intellij.platform.vcs.log.impl",
-  )
+  "intellij.platform.buildScripts.downloader" to setOf("lib.zstd-jni"),
 )

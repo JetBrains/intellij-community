@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,6 @@ public class LibraryDataNodeSubstitutor {
   private @NotNull final ProjectResolverContext resolverContext;
   private @Nullable final File gradleUserHomeDir;
   private @Nullable final File gradleHomeDir;
-  private @Nullable final GradleVersion gradleVersion;
   private @NotNull final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap;
   private @NotNull final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap;
   private @NotNull final ArtifactMappingService artifactsMap;
@@ -41,14 +39,12 @@ public class LibraryDataNodeSubstitutor {
   public LibraryDataNodeSubstitutor(@NotNull ProjectResolverContext context,
                                     @Nullable File gradleUserHomeDir,
                                     @Nullable File gradleHomeDir,
-                                    @Nullable GradleVersion gradleVersion,
                                     @NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
                                     @NotNull Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap,
                                     @NotNull ArtifactMappingService artifactsMap) {
     resolverContext = context;
     this.gradleUserHomeDir = gradleUserHomeDir;
     this.gradleHomeDir = gradleHomeDir;
-    this.gradleVersion = gradleVersion;
     this.sourceSetMap = sourceSetMap;
     this.moduleOutputsMap = moduleOutputsMap;
     this.artifactsMap = artifactsMap;
@@ -106,6 +102,7 @@ public class LibraryDataNodeSubstitutor {
           if (binaryPath.isFile()) {
             final LibraryData extractedLibrary = new LibraryData(libraryDependencyData.getOwner(), "");
             extractedLibrary.addPath(LibraryPathType.BINARY, path);
+            var gradleVersion = resolverContext.getProjectGradleVersion();
             if (gradleHomeDir != null && gradleVersion != null) {
               attachGradleSdkSources(binaryPath, extractedLibrary, gradleHomeDir, gradleVersion);
             }

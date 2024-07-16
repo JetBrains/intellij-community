@@ -47,12 +47,12 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
         GitBranchPopupActions.truncateBranchName(branchName, repository.project)
       })
       return when (vm.actualChangesState.value) {
-        GitLabMergeRequestEditorReviewViewModel.ChangesState.Error -> GitCurrentBranchPresenter.Presentation(
+        GitLabMergeRequestEditorReviewViewModel.ChangesState.Error -> GitCurrentBranchPresenter.PresentationData(
           GitlabIcons.GitLabLogo,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.error", vm.mergeRequestIid, currentBranchName)
         )
-        GitLabMergeRequestEditorReviewViewModel.ChangesState.Loading -> GitCurrentBranchPresenter.Presentation(
+        GitLabMergeRequestEditorReviewViewModel.ChangesState.Loading -> GitCurrentBranchPresenter.PresentationData(
           CollaborationToolsUIUtil.animatedLoadingIcon,
           GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
           GitLabBundle.message("merge.request.on.branch.loading", vm.mergeRequestIid)
@@ -60,14 +60,14 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
         GitLabMergeRequestEditorReviewViewModel.ChangesState.NotLoaded,
         is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> {
           if (vm.localRepositorySyncStatus.value?.getOrNull()?.incoming == true) {
-            GitCurrentBranchPresenter.Presentation(
+            GitCurrentBranchPresenter.PresentationData(
               GitlabIcons.GitLabWarning,
               GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
               GitLabBundle.message("merge.request.on.branch.out.of.sync", vm.mergeRequestIid, currentBranchName)
             )
           }
           else {
-            GitCurrentBranchPresenter.Presentation(
+            GitCurrentBranchPresenter.PresentationData(
               GitlabIcons.GitLabLogo,
               GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
               GitLabBundle.message("merge.request.on.branch.description", vm.mergeRequestIid, currentBranchName)

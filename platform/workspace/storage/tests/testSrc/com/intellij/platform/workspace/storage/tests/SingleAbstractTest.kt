@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.platform.workspace.storage.tests
 
@@ -16,7 +16,7 @@ class SingleAbstractTest {
       child = ChildSingleFirstEntity("", "ChildData", MySource)
     }
 
-    assertEquals("ChildData", (entity.child as ChildSingleFirstEntity).firstData)
+    assertEquals("ChildData", (entity.child as ChildSingleFirstEntity.Builder).firstData)
   }
 
   @Test
@@ -25,7 +25,7 @@ class SingleAbstractTest {
       child = ChildSingleFirstEntity("ChildData", "Data", MySource)
     }
 
-    assertEquals("ChildData", (entity.child as ChildSingleFirstEntity).commonData)
+    assertEquals("ChildData", (entity.child as ChildSingleFirstEntity.Builder).commonData)
   }
 
   @Test

@@ -4,6 +4,7 @@
 
 package com.intellij.configurationStore
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -17,9 +18,11 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.Registry
@@ -28,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ThreeState
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.SettingsInternalApi
@@ -76,6 +80,14 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
 }
 
 @ApiStatus.Internal
+class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
+  override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
+    val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
+    componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs)
+  }
+}
+
+@ApiStatus.Internal
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = ConcurrentHashMap<String, ComponentInfo>()
 
@@ -85,14 +97,6 @@ abstract class ComponentStoreImpl : IComponentStore {
   open val loadPolicy: StateLoadPolicy
     get() = StateLoadPolicy.LOAD
 
-  /**
-   * Indicates whether this store's components might be overwritten without
-   * explicit user action (i.e., value is dropped if it's equal to the default).
-   *
-   * This is normally true for locally stored configs (application and default.project)
-   * and false for shareable configs (project and module stores), since we have
-   * the "write-protection" for the shareable configs
-   */
   protected open val allowSavingWithoutModifications: Boolean
     get() = false
 
@@ -462,11 +466,15 @@ abstract class ComponentStoreImpl : IComponentStore {
     sessionProducer.setState(component = info.component, componentName = effectiveComponentName, pluginId = info.pluginId, state = state)
   }
 
-  private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo {
+  private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo? {
+    if (info.stateSpec?.perClient == true && !ClientId.isCurrentlyUnderLocalId) {
+      // Register per-client components only for `ClientId.localId`
+      return null
+    }
+
     val existing = components.putIfAbsent(name, info)
     if (existing != null && existing.component !== info.component) {
-      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} " +
-                "(componentManager=${storageManager.componentManager})")
+      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} (componentManager=${storageManager.componentManager})")
       return existing
     }
     else {
@@ -478,9 +486,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     @Suppress("UNCHECKED_CAST")
     val component = info.component as PersistentStateComponent<Any>
     if (info.stateSpec == null) {
-      val configurationSchemaKey = info.configurationSchemaKey
-                                   ?: throw UnsupportedOperationException(
-                                     "configurationSchemaKey must be specified for ${component.javaClass.name}")
+      val configurationSchemaKey = info.configurationSchemaKey ?: throw UnsupportedOperationException("configurationSchemaKey must be specified for ${component.javaClass.name}")
       return initComponentWithoutStateSpec(component = component, configurationSchemaKey = configurationSchemaKey, pluginId = info.pluginId)
     }
     else {
@@ -629,7 +635,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val component = info.component as PersistentStateComponent<Any>
 
     // getting state after loading with an active controller can lead to unusual issues - disable write protection
-    if (useLoadedStateAsExisting && storage is XmlElementStorage && storage.controller == null && isUseLoadedStateAsExisting(storage)) {
+    if (useLoadedStateAsExisting && storage is XmlElementStorage && (storage.controller == null || project != null) && isUseLoadedStateAsExisting(storage)) {
       return storage.createGetSession(
         component = component,
         componentName = componentName,
@@ -743,20 +749,50 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
+  private fun reloadPerClientState(componentClass: Class<out PersistentStateComponent<*>>,
+                                   info: ComponentInfo,
+                                   changedStorages: Set<StateStorage>) {
+    if (ClientId.isCurrentlyUnderLocalId) {
+      throw AssertionError("This method must be called under remote client id")
+    }
+
+    val perClientComponent = (storageManager.componentManager ?: application).getService(componentClass)
+    if (perClientComponent == null || perClientComponent === info.component) {
+      LOG.error("Failed to reload per-client component '${info.stateSpec?.name ?: componentClass.simpleName}: " +
+                "looks like it is not registered as a per-client service " +
+                "(componentManager=${storageManager.componentManager})")
+      return
+    }
+
+    val newInfo = ComponentInfoImpl(info.pluginId, perClientComponent, info.stateSpec)
+    initComponent(info = newInfo, changedStorages = changedStorages.ifEmpty { null }, reloadData = ThreeState.YES)
+  }
+
   final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
+      if (stateSpec.perClient && !ClientId.isCurrentlyUnderLocalId) {
+        reloadPerClientState(it.javaClass, info, emptySet())
+        return
+      }
+
       initComponent(info = info, changedStorages = emptySet(), reloadData = ThreeState.YES)
     }
   }
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     val info = components.get(componentName) ?: return false
-    if (info.component !is PersistentStateComponent<*>) {
+    val component = info.component
+    if (component !is PersistentStateComponent<*>) {
       return false
     }
 
+    if (info.stateSpec?.perClient == true && !ClientId.isCurrentlyUnderLocalId) {
+      reloadPerClientState(component.javaClass, info, changedStorages)
+      return true
+    }
+    
     val isChangedStoragesEmpty = changedStorages.isEmpty()
     initComponent(info = info, changedStorages = if (isChangedStoragesEmpty) null else changedStorages, reloadData = ThreeState.UNSURE)
     return true

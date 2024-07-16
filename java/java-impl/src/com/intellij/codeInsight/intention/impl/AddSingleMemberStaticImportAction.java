@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -35,8 +35,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
   }
   
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.add.single.member.static.import.family");
   }
 
@@ -56,8 +55,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
    * @param element     target element that is static import candidate
    * @return            not-null qualified name of the class which method may be statically imported if any; {@code null} otherwise
    */
-  @Nullable
-  public static ImportAvailability getStaticImportClass(@NotNull PsiElement element) {
+  public static @Nullable ImportAvailability getStaticImportClass(@NotNull PsiElement element) {
     if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element)) return null;
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
@@ -153,8 +151,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
     return parameterList != null && parameterList.getFirstChild() != null;
   }
 
-  @Nullable
-  private static PsiClass getResolvedClass(PsiElement element, PsiMember resolved) {
+  private static @Nullable PsiClass getResolvedClass(PsiElement element, PsiMember resolved) {
     PsiClass aClass = resolved.getContainingClass();
     if (aClass != null && !PsiUtil.isAccessible(aClass.getProject(), aClass, element, null)) {
       final PsiElement qualifier = ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier();
@@ -203,7 +200,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
   }
 
   public static void bindAllClassRefs(final PsiFile file,
-                                      @NotNull final PsiElement resolved,
+                                      final @NotNull PsiElement resolved,
                                       final String referenceName,
                                       final PsiClass resolvedClass) {
     file.accept(new JavaRecursiveElementWalkingVisitor() {

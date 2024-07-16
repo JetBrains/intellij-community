@@ -93,8 +93,7 @@ class VcsLogFiltererTest {
     }
 
     val provider = object : TestVcsLogProvider() {
-      override fun getCommitsMatchingFilter(root: VirtualFile,
-                                            filterCollection: VcsLogFilterCollection,
+      override fun getCommitsMatchingFilter(root: VirtualFile, filterCollection: VcsLogFilterCollection, graphOptions: PermanentGraph.Options,
                                             maxCount: Int): List<TimedVcsCommit> {
         return listOf(2, 3, 4).map { commitId ->
           graph.allCommits.first { it.id == commitId }.toVcsCommit(graph.hashMap)
@@ -158,8 +157,7 @@ class VcsLogFiltererTest {
                                                 VcsLogFilterObject.fromPaths(listOf(filePath)))
 
     val provider = object : TestVcsLogProvider() {
-      override fun getCommitsMatchingFilter(root: VirtualFile,
-                                            filterCollection: VcsLogFilterCollection,
+      override fun getCommitsMatchingFilter(root: VirtualFile, filterCollection: VcsLogFilterCollection, graphOptions: PermanentGraph.Options,
                                             maxCount: Int): List<TimedVcsCommit> {
         return listOf(graph.allCommits.first { it.id == 2 }.toVcsCommit(graph.hashMap))
       }
@@ -290,17 +288,12 @@ class VcsLogFiltererTest {
       }.flatten()
       detailsCache.storeDetails(details)
 
-      val builder = VcsLogFiltererImpl(providers, hashMap, detailsCache, newTrivialDataGetter(), EmptyIndex())
-
-      return builder.filter(dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
+      val filterer = VcsLogFiltererImpl(providers, hashMap, detailsCache, newTrivialDataGetter(), EmptyIndex())
+      return filterer.filter(dataPack, VisiblePack.EMPTY, PermanentGraph.Options.Default, filters, filterer.initialCommitCount).first
     }
 
     private fun newTrivialDataGetter(): DataGetter<VcsFullCommitDetails> {
       return object : DataGetter<VcsFullCommitDetails> {
-        override fun getCachedDataOrPlaceholder(row: Int): VcsFullCommitDetails {
-          throw UnsupportedOperationException()
-        }
-
         override fun loadCommitsData(hashes: MutableList<Int>,
                                      consumer: Consumer<in MutableList<VcsFullCommitDetails>>,
                                      errorConsumer: Consumer<in Throwable>,

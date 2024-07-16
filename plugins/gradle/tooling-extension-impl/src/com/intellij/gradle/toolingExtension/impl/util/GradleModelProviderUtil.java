@@ -7,11 +7,9 @@ import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.BuildModelConsumer;
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public final class GradleModelProviderUtil {
 
@@ -19,31 +17,42 @@ public final class GradleModelProviderUtil {
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer consumer
+  ) {
+    buildModels(controller, Collections.singleton(buildModel), modelClass, consumer);
+  }
+
+  public static <M> void buildModels(
+    @NotNull BuildController controller,
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer
   ) {
     if (Objects.equals(System.getProperty("idea.parallelModelFetch.enabled"), "true")) {
-      buildModelsInParallel(controller, buildModel, modelClass, consumer);
+      buildModelsInParallel(controller, buildModels, modelClass, consumer);
     }
     else {
-      buildModelsInSequence(controller, buildModel, modelClass, consumer);
+      buildModelsInSequence(controller, buildModels, modelClass, consumer);
     }
   }
 
-  private static <M> void buildModelsInParallel(
+  public static <M> void buildModelsInParallel(
     @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
+    @NotNull Collection<? extends GradleBuild> buildModels,
     @NotNull Class<M> modelClass,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer consumer
   ) {
     List<BuildAction<Pair<BasicGradleProject, M>>> buildActions = new ArrayList<>();
-    for (BasicGradleProject gradleProject : buildModel.getProjects()) {
-      buildActions.add((BuildAction<Pair<BasicGradleProject, M>>)innerController -> {
-        M model = innerController.findModel(gradleProject, modelClass);
-        if (model == null) {
-          return null;
-        }
-        return new Pair<>(gradleProject, model);
-      });
+    for (GradleBuild buildModel : buildModels) {
+      for (BasicGradleProject gradleProject : buildModel.getProjects()) {
+        buildActions.add((BuildAction<Pair<BasicGradleProject, M>>)innerController -> {
+          M model = innerController.findModel(gradleProject, modelClass);
+          if (model == null) {
+            return null;
+          }
+          return new Pair<>(gradleProject, model);
+        });
+      }
     }
     List<Pair<BasicGradleProject, M>> models = controller.run(buildActions);
     for (Pair<BasicGradleProject, M> model : models) {
@@ -55,15 +64,28 @@ public final class GradleModelProviderUtil {
 
   private static <M> void buildModelsInSequence(
     @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
+    @NotNull Collection<? extends GradleBuild> buildModels,
     @NotNull Class<M> modelClass,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer consumer
   ) {
-    for (BasicGradleProject gradleProject : buildModel.getProjects()) {
-      M model = controller.findModel(gradleProject, modelClass);
-      if (model != null) {
-        consumer.consumeProjectModel(gradleProject, model, modelClass);
+    for (GradleBuild buildModel : buildModels) {
+      for (BasicGradleProject gradleProject : buildModel.getProjects()) {
+        M model = controller.findModel(gradleProject, modelClass);
+        if (model != null) {
+          consumer.consumeProjectModel(gradleProject, model, modelClass);
+        }
       }
+    }
+  }
+
+  public static <M> void buildModelsRecursively(
+    @NotNull BuildController controller,
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer
+  ) {
+    for (GradleBuild buildModel : buildModels) {
+      buildModelsRecursively(controller, buildModel, modelClass, consumer);
     }
   }
 
@@ -71,30 +93,15 @@ public final class GradleModelProviderUtil {
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer consumer
   ) {
-    traverseTree(buildModel.getRootProject(), BasicGradleProject::getChildren, (gradleProject) -> {
+    @NotNull BasicGradleProject root = buildModel.getRootProject();
+    GradleTreeTraverserUtil.breadthFirstTraverseTree(root, (gradleProject) -> {
       M model = controller.findModel(gradleProject, modelClass);
       if (model != null) {
         consumer.consumeProjectModel(gradleProject, model, modelClass);
       }
+      return gradleProject.getChildren();
     });
-  }
-
-  private static <T> void traverseTree(
-    @NotNull T root,
-    @NotNull Function<T, Iterable<? extends T>> children,
-    @NotNull Consumer<T> action
-  ) {
-    Queue<T> queue = new ArrayDeque<>();
-    action.accept(root);
-    queue.add(root);
-    while (!queue.isEmpty()) {
-      T parent = queue.remove();
-      for (T child : children.apply(parent)) {
-        action.accept(child);
-        queue.add(child);
-      }
-    }
   }
 }

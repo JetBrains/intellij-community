@@ -81,7 +81,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
 
     myFixture.testStructureView(component -> {
       component.setActionActive(PropertiesGrouper.ID, true);
-      component.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      component.setActionActive(Sorter.getAlphaSorterId(), true);
 
       PlatformTestUtil.assertTreeEqual(component.getTree(),
                                        """
@@ -129,7 +129,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
 
     myFixture.testStructureView(component -> {
       component.setActionActive(PropertiesGrouper.ID, true);
-      component.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      component.setActionActive(Sorter.getAlphaSorterId(), true);
       JTree tree = component.getTree();
       PlatformTestUtil.expandAll(tree);
       PlatformTestUtil.assertTreeEqual(tree,
@@ -182,7 +182,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
 
     myFixture.testStructureView(component -> {
       component.setActionActive(PropertiesGrouper.ID, true);
-      component.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      component.setActionActive(Sorter.getAlphaSorterId(), true);
       component.setActionActive(InheritedMembersNodeProvider.ID, false);
       component.setActionActive(PublicElementsFilter.ID, false);
 

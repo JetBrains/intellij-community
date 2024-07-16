@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -63,8 +63,8 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !DumbService.isDumb(project);
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+    return editor != null && !DumbService.isDumb(project);
   }
 
   @Override

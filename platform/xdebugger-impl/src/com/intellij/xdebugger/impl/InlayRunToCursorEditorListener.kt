@@ -119,7 +119,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (lineNumber < 0) {
       return true
     }
-    if (x > showInlayPopupWidth(editor)) {
+    if (x - editor.scrollingModel.horizontalScrollOffset > showInlayPopupWidth(editor)) {
       currentEditor.clear()
       currentLineNumber = -1
       return true
@@ -189,7 +189,9 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       }
       firstNonSpaceSymbol++
     }
-    return editor.offsetToXY(firstNonSpaceSymbol)
+    return editor.offsetToXY(firstNonSpaceSymbol).let {
+      Point(it.x - editor.scrollingModel.horizontalScrollOffset, it.y)
+    }
   }
 
   @RequiresEdt
@@ -199,7 +201,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
-    if (runToCursorService.isAtExecution(editor.virtualFile, lineNumber)) {
+    if (runToCursorService.isAtExecution(editor.virtualFile ?: return, lineNumber)) {
       showHint(editor, lineNumber, firstNonSpacePos, listOf(ActionManager.getInstance().getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
@@ -247,35 +249,16 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       actionsToShow = actions.take(numberOfActionsToShow)
     }
 
-    if (needShowOnGutter) {
-      val breakpointInsertionZoneRightOffset = if (EditorSettingsExternalizable.getInstance().isLineNumbersShown && UISettings.getInstance().showBreakpointsOverLineNumbers)
-        editorGutterComponentEx.lineNumberAreaOffset + editorGutterComponentEx.lineNumberAreaWidth
-      else
-        editorGutterComponentEx.whitespaceSeparatorOffset
-      if (editorGutterComponentEx.width + xPosition < breakpointInsertionZoneRightOffset) {
-        val fillingNumberOfActions = (editorGutterComponentEx.width + JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) - breakpointInsertionZoneRightOffset) / JBUI.scale(ACTION_BUTTON_SIZE)
-        if (fillingNumberOfActions <= 0) {
-          return
-        }
-        actionsToShow = actionsToShow.take(fillingNumberOfActions)
-      }
-    }
-
     val group = DefaultActionGroup(actionsToShow)
 
-    val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
-    if (gutterRenderer != null) {
-      return
-    }
-
-    if (needShowOnGutter && editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1) != null) {
+    if (needShowOnGutter && isGutterComponentOverlapped(editor, editorGutterComponentEx, xPosition, lineY, lineNumber, actionsToShow.size)) {
       return
     }
 
     val editorContentComponent = editor.contentComponent
     val position = SwingUtilities.convertPoint(
       editorContentComponent,
-      Point(xPosition, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE)) / 2),
+      Point(xPosition + editor.scrollingModel.horizontalScrollOffset, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE)) / 2),
       rootPane.layeredPane
     )
 
@@ -320,13 +303,33 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     clientHintManager.showEditorHint(hint, editor, hintInfo, position, flags, 0, true) { }
   }
 
+  private fun isGutterComponentOverlapped(editor: Editor, editorGutterComponentEx: EditorGutterComponentEx, xPosition: Int, lineY: Int, lineNumber: Int, actionsToShowNumber: Int): Boolean {
+    val visualLine = editor.logicalToVisualPosition(LogicalPosition(lineNumber, 0)).line
+    val renderersAndRectangles = editorGutterComponentEx.getGutterRenderersAndRectangles(visualLine)
+
+    val xStart = editorGutterComponentEx.width + xPosition
+    val toolbarWidth = JBUI.scale(ACTION_BUTTON_SIZE) * actionsToShowNumber
+    val toolbarRectangle = Rectangle(xStart, lineY, toolbarWidth, JBUI.scale(ACTION_BUTTON_SIZE))
+    for (rectangle: Rectangle in renderersAndRectangles.map { it.second }) {
+      if (rectangle.intersects(toolbarRectangle)) {
+        return true
+      }
+    }
+
+    val foldingAnchor = editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1)
+    if (foldingAnchor != null && foldingAnchor.document.getLineNumber(foldingAnchor.startOffset) == lineNumber) {
+      return true
+    }
+    return false
+  }
+
   private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {
+    val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
+                            ?: JBColor.PanelBackground
     return if (needShowOnGutter) {
-      JBColor.PanelBackground to null
+      hoverColor to null
     }
     else {
-      val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
-                              ?: JBColor.PanelBackground
       val textAttributesForLineStart = getEditorTextAttributesForTheLineStart(editor, lineNumber)
       val backgroundColor = textAttributesForLineStart?.backgroundColor
       if (backgroundColor != null) {

@@ -1,4 +1,4 @@
-// "Remove element" "true-preview"
+// "Remove throws list" "true-preview"
 record R() {
   R() {}
 }

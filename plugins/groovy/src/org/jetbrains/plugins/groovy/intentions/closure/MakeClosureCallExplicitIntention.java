@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class MakeClosureCallExplicitIntention extends GrPsiUpdateIntention {
+public final class MakeClosureCallExplicitIntention extends GrPsiUpdateIntention {
 
 
   @Override

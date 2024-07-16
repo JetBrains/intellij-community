@@ -155,7 +155,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof KotlinCommonCodeStyleSettings)) {
+        if (!(obj instanceof KotlinCommonCodeStyleSettings other)) {
             return false;
         }
 
@@ -163,7 +163,6 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
             return false;
         }
 
-        CommonCodeStyleSettings other = (CommonCodeStyleSettings) obj;
         if (!getSoftMargins().equals(other.getSoftMargins())) {
             return false;
         }

@@ -485,10 +485,9 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       return null;
     }
 
-    boolean dumb = myDumbService.isDumb();
     InjectionRegistrarImpl hostRegistrar = new InjectionRegistrarImpl(myProject, hostPsiFile, element, myDocManager);
     for (MultiHostInjector injector : infos) {
-      if (dumb && !DumbService.isDumbAware(injector)) {
+      if (!myDumbService.isUsableInCurrentContext(injector)) {
         continue;
       }
 

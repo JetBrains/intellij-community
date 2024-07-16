@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.search.usagesSearch
 
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.asJava.LightClassUtil
-import org.jetbrains.kotlin.asJava.LightClassUtil.PropertyAccessorsPsiMethods
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -19,32 +17,6 @@ import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
-import java.util.*
-
-fun PsiNamedElement.getAccessorNames(readable: Boolean = true, writable: Boolean = true): List<String> {
-    fun PropertyAccessorsPsiMethods.toNameList(): List<String> {
-        val getter = getter
-        val setter = setter
-
-        val result = ArrayList<String>()
-        if (readable && getter != null) result.add(getter.name)
-        if (writable && setter != null) result.add(setter.name)
-        return result
-    }
-
-    if (this !is KtDeclaration || KtPsiUtil.isLocal(this)) return Collections.emptyList()
-
-    when (this) {
-        is KtProperty ->
-            return LightClassUtil.getLightClassPropertyMethods(this).toNameList()
-        is KtParameter ->
-            if (hasValOrVar()) {
-                return LightClassUtil.getLightClassPropertyMethods(this).toNameList()
-            }
-    }
-
-    return Collections.emptyList()
-}
 
 fun PsiNamedElement.getClassNameForCompanionObject(): String? {
     return if (this is KtObjectDeclaration && this.isCompanion()) {

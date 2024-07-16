@@ -24,17 +24,15 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
         UMethod (name = call) [public static final fun call() : void {...}]
-            UBlockExpression [{...}] = external with(<init>(), {
+            UBlockExpression [{...}] = external with(A(), {
     return "def".with2Receivers(8, 7.0)
-})(external <init>()(), Undetermined)
+})(external A()(), Undetermined)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [global(2.2, 2)] = external global(2.2, 2)((float)2.200000047683716, 2)
                     UIdentifier (Identifier (global)) [UIdentifier (Identifier (global))]
-                    USimpleNameReferenceExpression (identifier = global, resolvesTo = null) [global] = external global(2.2, 2)((float)2.200000047683716, 2)
                     ULiteralExpression (value = 2.2) [2.2] = (float)2.200000047683716
                     ULiteralExpression (value = 2) [2] = 2
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [withDefault("bbb")] = external withDefault("bbb")("bbb")
                     UIdentifier (Identifier (withDefault)) [UIdentifier (Identifier (withDefault))]
-                    USimpleNameReferenceExpression (identifier = withDefault, resolvesTo = null) [withDefault] = external withDefault("bbb")("bbb")
                     UPolyadicExpression (operator = +) ["bbb"] = "bbb"
                         ULiteralExpression (value = "bbb") ["bbb"] = "bbb"
                 UQualifiedReferenceExpression ["abc".withReceiver(1, 1.2)] = external withReceiver(1, 1.2)(1, (float)1.2000000476837158)
@@ -42,19 +40,16 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         ULiteralExpression (value = "abc") ["abc"] = "abc"
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [withReceiver(1, 1.2)] = external withReceiver(1, 1.2)(1, (float)1.2000000476837158)
                         UIdentifier (Identifier (withReceiver)) [UIdentifier (Identifier (withReceiver))]
-                        USimpleNameReferenceExpression (identifier = withReceiver, resolvesTo = null) [withReceiver] = external withReceiver(1, 1.2)(1, (float)1.2000000476837158)
                         ULiteralExpression (value = 1) [1] = 1
                         ULiteralExpression (value = 1.2) [1.2] = (float)1.2000000476837158
                 UQualifiedReferenceExpression [Math.atan2(1.3, 3.4)] = external atan2(1.3, 3.4)(1.3, 3.4)
                     USimpleNameReferenceExpression (identifier = Math) [Math] = external Math()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [atan2(1.3, 3.4)] = external atan2(1.3, 3.4)(1.3, 3.4)
                         UIdentifier (Identifier (atan2)) [UIdentifier (Identifier (atan2))]
-                        USimpleNameReferenceExpression (identifier = atan2, resolvesTo = null) [atan2] = external atan2(1.3, 3.4)(1.3, 3.4)
                         ULiteralExpression (value = 1.3) [1.3] = 1.3
                         ULiteralExpression (value = 3.4) [3.4] = 3.4
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [<anonymous class>("param1", "param2")] = external <anonymous class>("param1", "param2")("param1", "param2")
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (unresolvedMethod))("param1", "param2")] = external UIdentifier (Identifier (unresolvedMethod))("param1", "param2")("param1", "param2")
                     UIdentifier (Identifier (unresolvedMethod)) [UIdentifier (Identifier (unresolvedMethod))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>("param1", "param2")("param1", "param2")
                     UPolyadicExpression (operator = +) ["param1"] = "param1"
                         ULiteralExpression (value = "param1") ["param1"] = "param1"
                     UPolyadicExpression (operator = +) ["param2"] = "param2"
@@ -67,7 +62,6 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = String) [String] = external String()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4)) [format("%i %i %i", 1, 2, 3)] = external format("%i %i %i", 1, 2, 3)("%i %i %i", 1, 2, 3)
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
-                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] = external format("%i %i %i", 1, 2, 3)("%i %i %i", 1, 2, 3)
                         UPolyadicExpression (operator = +) ["%i %i %i"] = "%i %i %i"
                             ULiteralExpression (value = "%i %i %i") ["%i %i %i"] = "%i %i %i"
                         ULiteralExpression (value = 1) [1] = 1
@@ -81,12 +75,10 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = String) [String] = external String()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [format("%i %i %i", arrayOf(1, 2, 3))] = external format("%i %i %i", arrayOf(1, 2, 3))("%i %i %i", external arrayOf(1, 2, 3)(1, 2, 3))
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
-                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] = external format("%i %i %i", arrayOf(1, 2, 3))("%i %i %i", external arrayOf(1, 2, 3)(1, 2, 3))
                         UPolyadicExpression (operator = +) ["%i %i %i"] = "%i %i %i"
                             ULiteralExpression (value = "%i %i %i") ["%i %i %i"] = "%i %i %i"
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(1, 2, 3)] = external arrayOf(1, 2, 3)(1, 2, 3)
                             UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
-                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] = external arrayOf(1, 2, 3)(1, 2, 3)
                             ULiteralExpression (value = 1) [1] = 1
                             ULiteralExpression (value = 2) [2] = 2
                             ULiteralExpression (value = 3) [3] = 3
@@ -98,18 +90,15 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = String) [String] = external String()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))] = external format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))("%i %i %i", external arrayOf(1, 2, 3)(1, 2, 3), external arrayOf(4, 5, 6)(4, 5, 6))
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
-                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] = external format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))("%i %i %i", external arrayOf(1, 2, 3)(1, 2, 3), external arrayOf(4, 5, 6)(4, 5, 6))
                         UPolyadicExpression (operator = +) ["%i %i %i"] = "%i %i %i"
                             ULiteralExpression (value = "%i %i %i") ["%i %i %i"] = "%i %i %i"
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(1, 2, 3)] = external arrayOf(1, 2, 3)(1, 2, 3)
                             UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
-                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] = external arrayOf(1, 2, 3)(1, 2, 3)
                             ULiteralExpression (value = 1) [1] = 1
                             ULiteralExpression (value = 2) [2] = 2
                             ULiteralExpression (value = 3) [3] = 3
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [arrayOf(4, 5, 6)] = external arrayOf(4, 5, 6)(4, 5, 6)
                             UIdentifier (Identifier (arrayOf)) [UIdentifier (Identifier (arrayOf))]
-                            USimpleNameReferenceExpression (identifier = arrayOf, resolvesTo = null) [arrayOf] = external arrayOf(4, 5, 6)(4, 5, 6)
                             ULiteralExpression (value = 4) [4] = 4
                             ULiteralExpression (value = 5) [5] = 5
                             ULiteralExpression (value = 6) [6] = 6
@@ -121,7 +110,6 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         USimpleNameReferenceExpression (identifier = String) [String] = external String()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [format("%i %i %i", "".chunked(2).toTypedArray())] = external format("%i %i %i", "".chunked(2).toTypedArray())("%i %i %i", external toTypedArray()())
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
-                        USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] = external format("%i %i %i", "".chunked(2).toTypedArray())("%i %i %i", external toTypedArray()())
                         UPolyadicExpression (operator = +) ["%i %i %i"] = "%i %i %i"
                             ULiteralExpression (value = "%i %i %i") ["%i %i %i"] = "%i %i %i"
                         UQualifiedReferenceExpression ["".chunked(2).toTypedArray()] = external toTypedArray()()
@@ -130,21 +118,16 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                                     ULiteralExpression (value = "") [""] = ""
                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [chunked(2)] = external chunked(2)(2)
                                     UIdentifier (Identifier (chunked)) [UIdentifier (Identifier (chunked))]
-                                    USimpleNameReferenceExpression (identifier = chunked, resolvesTo = null) [chunked] = external chunked(2)(2)
                                     ULiteralExpression (value = 2) [2] = 2
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toTypedArray()] = external toTypedArray()()
                                 UIdentifier (Identifier (toTypedArray)) [UIdentifier (Identifier (toTypedArray))]
-                                USimpleNameReferenceExpression (identifier = toTypedArray, resolvesTo = null) [toTypedArray] = external toTypedArray()()
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<init>(), { ...})] = external with(<init>(), {
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(A(), { ...})] = external with(A(), {
     return "def".with2Receivers(8, 7.0)
-})(external <init>()(), Undetermined)
+})(external A()(), Undetermined)
                     UIdentifier (Identifier (with)) [UIdentifier (Identifier (with))]
-                    USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] = external with(<init>(), {
-    return "def".with2Receivers(8, 7.0)
-})(external <init>()(), Undetermined)
-                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [A()] = external A()()
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                        USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>()()
+                        USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] = external A()
                     ULambdaExpression [{ ...}] = Undetermined
                         UBlockExpression [{...}] = Nothing
                             UReturnExpression [return "def".with2Receivers(8, 7.0)] = Nothing
@@ -153,7 +136,6 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                                         ULiteralExpression (value = "def") ["def"] = "def"
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] = external with2Receivers(8, 7.0)(8, (float)7.0)
                                         UIdentifier (Identifier (with2Receivers)) [UIdentifier (Identifier (with2Receivers))]
-                                        USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] = external with2Receivers(8, 7.0)(8, (float)7.0)
                                         ULiteralExpression (value = 8) [8] = 8
                                         ULiteralExpression (value = 7.0) [7.0] = (float)7.0
         UMethod (name = objectLiteral) [public static final fun objectLiteral() : void {...}]
@@ -164,10 +146,10 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         ULiteralExpression (value = "foo") ["foo"] = "foo"
                     UClass (name = null) [final class null : Parent {...}]
                         UMethod (name = ) [private fun () {...}]
-                            UBlockExpression [{...}] = external <init>(1, "foo")(1, "foo")
-                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, "foo")] = external <init>(1, "foo")(1, "foo")
+                            UBlockExpression [{...}] = external Parent(1, "foo")(1, "foo")
+                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [Parent(1, "foo")] = external Parent(1, "foo")(1, "foo")
                                     UIdentifier (Identifier (Parent)) [UIdentifier (Identifier (Parent))]
-                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Parent) [<init>] = external <init>(1, "foo")(1, "foo")
+                                    USimpleNameReferenceExpression (identifier = Parent, resolvesTo = PsiClass: Parent) [Parent] = external Parent()
                                     ULiteralExpression (value = 1) [1] = 1
                                     UPolyadicExpression (operator = +) ["foo"] = "foo"
                                         ULiteralExpression (value = "foo") ["foo"] = "foo"

@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class ExpandBooleanIntention extends GrPsiUpdateIntention {
+public final class ExpandBooleanIntention extends GrPsiUpdateIntention {
 
 
   @Override

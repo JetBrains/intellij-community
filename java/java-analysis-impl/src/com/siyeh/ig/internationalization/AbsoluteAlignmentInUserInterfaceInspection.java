@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -23,37 +23,33 @@ import java.util.Map;
 
 public final class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
 
-  private static final @NonNls Map<String, String> gridbagConstants = new HashMap<>();
-  static {
-    gridbagConstants.put("NORTHWEST", "FIRST_LINE_START");
-    gridbagConstants.put("NORTHEAST", "FIRST_LINE_END");
-    gridbagConstants.put("SOUTHWEST", "LAST_LINE_START");
-    gridbagConstants.put("SOUTHEAST", "LAST_LINE_END");
-  }
-  private static final @NonNls Map<String, String> borderLayoutConstants = new HashMap<>();
-  static {
-    borderLayoutConstants.put("NORTH", "PAGE_START");
-    borderLayoutConstants.put("SOUTH", "PAGE_END");
-    borderLayoutConstants.put("EAST", "LINE_END");
-    borderLayoutConstants.put("WEST", "LINE_START");
-  }
-  private static final @NonNls Map<String, String> flowLayoutConstants = new HashMap<>();
-  static {
-    flowLayoutConstants.put("LEFT", "LEADING");
-    flowLayoutConstants.put("RIGHT", "TRAILING");
-  }
-  private static final @NonNls Map<String, String> scrollPaneConstants = new HashMap<>();
-  static {
-    scrollPaneConstants.put("LOWER_LEFT_CORNER", "LOWER_LEADING_CORNER");
-    scrollPaneConstants.put("LOWER_RIGHT_CORNER", "LOWER_TRAILING_CORNER");
-    scrollPaneConstants.put("UPPER_LEFT_CORNER", "UPPER_LEADING_CORNER");
-    scrollPaneConstants.put("UPPER_RIGHT_CORNER", "UPPER_TRAILING_CORNER");
-  }
-  private static final @NonNls Map<String, String> boxLayoutConstants = new HashMap<>();
-  static {
-    boxLayoutConstants.put("X_AXIS", "LINE_AXIS");
-    boxLayoutConstants.put("Y_AXIS", "PAGE_AXIS");
-  }
+  private static final @NonNls Map<String, String> gridbagConstants = Map.of(
+    "NORTHWEST", "FIRST_LINE_START",
+    "NORTHEAST", "FIRST_LINE_END",
+    "SOUTHWEST", "LAST_LINE_START",
+    "SOUTHEAST", "LAST_LINE_END"
+  );
+
+  private static final @NonNls Map<String, String> borderLayoutConstants = Map.of(
+    "NORTH", "PAGE_START",
+    "SOUTH", "PAGE_END",
+    "EAST", "LINE_END",
+    "WEST", "LINE_START"
+  );
+  private static final @NonNls Map<String, String> flowLayoutConstants = Map.of(
+    "LEFT", "LEADING",
+    "RIGHT", "TRAILING"
+  );
+  private static final @NonNls Map<String, String> scrollPaneConstants = Map.of(
+    "LOWER_LEFT_CORNER", "LOWER_LEADING_CORNER",
+    "LOWER_RIGHT_CORNER", "LOWER_TRAILING_CORNER",
+    "UPPER_LEFT_CORNER", "UPPER_LEADING_CORNER",
+    "UPPER_RIGHT_CORNER", "UPPER_TRAILING_CORNER"
+  );
+  private static final @NonNls Map<String, String> boxLayoutConstants = Map.of(
+    "X_AXIS", "LINE_AXIS",
+    "Y_AXIS", "PAGE_AXIS"
+  );
 
   @NotNull
   @Override

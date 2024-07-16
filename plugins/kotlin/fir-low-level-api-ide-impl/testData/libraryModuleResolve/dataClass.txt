@@ -1,7 +1,7 @@
 public final data [ResolvedTo(BODY_RESOLVE)] class MyDataClass : R|kotlin/Any| {
     public final operator [ResolvedTo(BODY_RESOLVE)] fun component1(): R|kotlin/Int|
 
-    public final [ResolvedTo(BODY_RESOLVE)] fun copy([ResolvedTo(BODY_RESOLVE)] c: R|kotlin/Int| = this@R|library/MyDataClass|.R|library/MyDataClass.c|): R|library/MyDataClass|
+    public final [ResolvedTo(BODY_RESOLVE)] fun copy([ResolvedTo(BODY_RESOLVE)] c: R|kotlin/Int| = STUB): R|library/MyDataClass|
 
     public open operator [ResolvedTo(BODY_RESOLVE)] fun equals([ResolvedTo(BODY_RESOLVE)] other: R|kotlin/Any?|): R|kotlin/Boolean|
 

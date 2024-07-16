@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.toolbar.floating
 
+import com.intellij.codeInsight.daemon.impl.HintRenderer.Companion.BACKGROUND_ALPHA
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -13,11 +14,14 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.JComponent
 
+private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D))
+
 @ApiStatus.NonExtendable
 abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToolbarComponent, Disposable.Default {
 
   private val _parentDisposable: Disposable?
-  private val parentDisposable get() = _parentDisposable ?: this
+  private val parentDisposable: Disposable
+    get() = _parentDisposable ?: this
 
   private val transparentComponent = ToolbarTransparentComponent()
   private val componentAnimator = TransparentComponentAnimator(transparentComponent, parentDisposable)
@@ -45,9 +49,9 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
 
   protected fun init(targetComponent: JComponent) {
     setTargetComponent(targetComponent)
-    setMinimumButtonSize(Dimension(22, 22))
+    minimumButtonSize = Dimension(22, 22)
     setSkipWindowAdjustments(true)
-    setReservePlaceAutoPopupIcon(false)
+    isReservePlaceAutoPopupIcon = false
     isOpaque = false
     layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
 
@@ -108,21 +112,17 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     }
   }
 
-  companion object {
-    private const val BACKGROUND_ALPHA = 0.75f
-    private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBColor(0xEDEDED, 0x454A4D))
-  }
-
   private inner class ToolbarTransparentComponent : TransparentComponent {
-
     private val toolbar = this@AbstractFloatingToolbarComponent
 
     private var isVisible = false
     private var opacity: Float = 0.0f
 
-    fun getOpacity(): Float {
-      return opacity
+    init {
+      toolbar.putClientProperty(SUPPRESS_FAST_TRACK, true)
     }
+
+    fun getOpacity(): Float = opacity
 
     override fun setOpacity(opacity: Float) {
       this.opacity = opacity
@@ -131,9 +131,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     override val autoHideable: Boolean
       get() = toolbar.autoHideable
 
-    override fun isComponentOnHold(): Boolean {
-      return toolbar.isComponentOnHold()
-    }
+    override fun isComponentOnHold(): Boolean = toolbar.isComponentOnHold()
 
     override fun showComponent() {
       isVisible = true
@@ -145,16 +143,10 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
       toolbar.updateActionsImmediately(false)
     }
 
-    override fun repaintComponent() {
-      return toolbar.component.repaint()
-    }
+    override fun repaintComponent() = toolbar.component.repaint()
 
     fun fireActionsUpdated() {
       toolbar.isVisible = isVisible && toolbar.hasVisibleActions()
-    }
-
-    init {
-      toolbar.putClientProperty(SUPPRESS_FAST_TRACK, true)
     }
   }
 }

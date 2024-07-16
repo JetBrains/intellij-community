@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NonNls
  * - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each
  * - Prefer shorter group names; avoid common prefixes (such as "statistics.")
  */
-
-
 class EventLogGroup(@NonNls @EventIdName val id: String,
                     val version: Int,
                     val recorder: String,
@@ -33,7 +31,7 @@ class EventLogGroup(@NonNls @EventIdName val id: String,
   }
 
   /**
-   * New style API to record IDE events (e.g. invoked action, opened dialog) or state.
+   * New style API to record IDE events (e.g., invoked action, opened dialog) or state.
    *
    * For events with more than 3 fields use EventLogGroup.registerVarargEvent
    *
@@ -44,7 +42,7 @@ class EventLogGroup(@NonNls @EventIdName val id: String,
    * - Otherwise, create a YT issue in FUS project with group data scheme and descriptions to register it on the statistics metadata server
    *
    * To test collector:
-   * - If group is not registered on the server, add it to events test scheme with "Add Group to Events Test Scheme" action.
+   * - If a group is not registered on the server, add it to an events test scheme with "Add Group to Events Test Scheme" action.
    *   (com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction)
    *
    * @see registerVarargEvent
@@ -127,5 +125,9 @@ class EventLogGroup(@NonNls @EventIdName val id: String,
   private fun isEventIdValid(@NonNls @EventIdName eventId: String): Boolean {
     if (EventLogSystemEvents.SYSTEM_EVENTS.contains(eventId)) return true
     return registeredEventIds.isEmpty() || eventId in registeredEventIds
+  }
+
+  override fun toString(): String {
+    return "EventLogGroup(id='$id')"
   }
 }

@@ -127,8 +127,12 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
       }
     }
     if (debugProcess != null && debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
-      myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
-      myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
+      if (myClassName == null) {
+        myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
+      }
+      if (myPackageName == null) {
+        myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
+      }
     }
   }
 
@@ -256,6 +260,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   private void resetSourcePosition() {
     mySourcePosition = DebuggerUtilsEx.toSourcePosition(ObjectUtils.doIfNotNull(myXBreakpoint, XBreakpoint::getSourcePosition), myProject);
+    myClassName = null;
+    myPackageName = null;
   }
 
   @Nullable

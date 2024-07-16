@@ -6,12 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class ImaginaryCaretModel implements CaretModel {
   private final ImaginaryEditor myEditor;
   private final ImaginaryCaret myCaret;
@@ -53,12 +55,12 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public boolean supportsMultipleCarets() {
-    throw notImplemented();
+    return false;
   }
 
   @Override
   public int getMaxCaretCount() {
-    throw notImplemented();
+    return 1;
   }
 
   @Override
@@ -98,7 +100,6 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public void removeSecondaryCarets() {
-    throw notImplemented();
   }
 
   @Override

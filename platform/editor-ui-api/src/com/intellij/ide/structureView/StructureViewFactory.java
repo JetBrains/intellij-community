@@ -3,6 +3,7 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,5 +38,9 @@ public abstract class StructureViewFactory {
 
   public static StructureViewFactory getInstance(Project project) {
     return project.getService(StructureViewFactory.class);
+  }
+
+  @ApiStatus.Internal
+  protected StructureViewFactory() {
   }
 }

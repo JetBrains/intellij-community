@@ -5,6 +5,7 @@ import com.intellij.platform.runtime.product.IncludedRuntimeModule;
 import com.intellij.platform.runtime.product.ModuleImportance;
 import com.intellij.platform.runtime.repository.*;
 import com.intellij.platform.runtime.product.impl.IncludedRuntimeModuleImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ public final class RawIncludedRuntimeModule {
   private final RuntimeModuleId myModuleId;
   private final ModuleImportance myImportance;
 
+  @ApiStatus.Internal
   public RawIncludedRuntimeModule(@NotNull RuntimeModuleId moduleId, @NotNull ModuleImportance importance) {
     myModuleId = moduleId;
     myImportance = importance;

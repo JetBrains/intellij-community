@@ -11,7 +11,7 @@ import com.intellij.uiDesigner.GuiFormFileType;
 import org.jetbrains.annotations.NotNull;
 
 
-public class CreateFormFromTemplateHandler extends DefaultCreateFromTemplateHandler {
+public final class CreateFormFromTemplateHandler extends DefaultCreateFromTemplateHandler {
   @Override
   public boolean handlesTemplate(final @NotNull FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());

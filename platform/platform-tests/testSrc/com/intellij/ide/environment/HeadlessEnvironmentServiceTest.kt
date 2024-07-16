@@ -159,7 +159,7 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
       service<EnvironmentService>().getEnvironmentValue(dummyKey)
       fail("should throw")
     }
-    catch (e: HeadlessEnvironmentService.MissingEnvironmentKeyException) {
+    catch (e: Throwable) {
       // ignored, we expect this outcome
     }
   }

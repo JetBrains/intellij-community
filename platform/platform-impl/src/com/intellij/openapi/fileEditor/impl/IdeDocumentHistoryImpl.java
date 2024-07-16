@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -52,6 +52,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,35 +70,35 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private static final int BACK_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
   private static final int CHANGE_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
 
-  private final Project myProject;
+  private final Project project;
 
   private FileDocumentManager myFileDocumentManager;
 
-  private final LinkedList<PlaceInfo> myBackPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
-  private final LinkedList<PlaceInfo> myForwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  private final LinkedList<PlaceInfo> backPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  private final LinkedList<PlaceInfo> forwardPlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
   private boolean myBackInProgress;
-  private boolean myForwardInProgress;
+  private boolean forwardInProgress;
   private Object myCurrentCommandGroupId;
-  private Reference<Object> myLastGroupId; // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
-  private boolean myRegisteredBackPlaceInLastGroup;
+  private Reference<Object> lastGroupId; // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
+  private boolean registeredBackPlaceInLastGroup;
 
   // change's navigation
-  private final LinkedList<PlaceInfo> myChangePlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
-  private int myCurrentIndex;
+  private final LinkedList<PlaceInfo> changePlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
+  private int currentIndex;
 
-  private PlaceInfo myCommandStartPlace;
-  private boolean myCurrentCommandIsNavigation;
-  private boolean myCurrentCommandHasChanges;
+  private PlaceInfo commandStartPlace;
+  private boolean currentCommandIsNavigation;
+  private boolean currentCommandHasChanges;
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new HashSet<>();
-  private boolean myCurrentCommandHasMoves;
-  private boolean myReallyExcludeCurrentCommandFromNavigation;
+  private boolean currentCommandHasMoves;
+  private boolean reallyExcludeCurrentCommandFromNavigation;
 
   private final SynchronizedClearableLazy<PersistentHashMap<String, Long>> recentFileTimestampMap;
 
   private final RecentlyChangedFilesState state = new RecentlyChangedFilesState();
 
   public IdeDocumentHistoryImpl(@NotNull Project project) {
-    myProject = project;
+    this.project = project;
 
     MessageBusConnection busConnection = project.getMessageBus().connect(this);
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -127,10 +128,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
-        final VirtualFile file = getFileDocumentManager().getFile(document);
+        VirtualFile file = getFileDocumentManager().getFile(document);
         if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
           ThreadingAssertions.assertEventDispatchThread();
-          myCurrentCommandHasChanges = true;
+          currentCommandHasChanges = true;
           myChangedFilesInCurrentCommand.add(file);
         }
       }
@@ -143,12 +144,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
         Document document = e.getEditor().getDocument();
         if (getFileDocumentManager().getFile(document) != null) {
-          myCurrentCommandHasMoves = true;
+          currentCommandHasMoves = true;
         }
       }
     };
 
-    recentFileTimestampMap = new SynchronizedClearableLazy<>(() -> initRecentFilesTimestampMap(myProject));
+    recentFileTimestampMap = new SynchronizedClearableLazy<>(() -> initRecentFilesTimestampMap(this.project));
 
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(listener, this);
@@ -159,20 +160,20 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       public void extensionRemoved(@NotNull FileEditorProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         String editorTypeId = provider.getEditorTypeId();
         Predicate<PlaceInfo> clearStatePredicate = e -> editorTypeId.equals(e.getEditorTypeId());
-        if (myChangePlaces.removeIf(clearStatePredicate)) {
-          myCurrentIndex = myChangePlaces.size();
+        if (changePlaces.removeIf(clearStatePredicate)) {
+          currentIndex = changePlaces.size();
         }
-        myBackPlaces.removeIf(clearStatePredicate);
-        myForwardPlaces.removeIf(clearStatePredicate);
-        if (myCommandStartPlace != null && myCommandStartPlace.getEditorTypeId().equals(editorTypeId)) {
-          myCommandStartPlace = null;
+        backPlaces.removeIf(clearStatePredicate);
+        forwardPlaces.removeIf(clearStatePredicate);
+        if (commandStartPlace != null && commandStartPlace.getEditorTypeId().equals(editorTypeId)) {
+          commandStartPlace = null;
         }
       }
     }, this);
   }
 
   protected FileEditorManagerEx getFileEditorManager() {
-    return FileEditorManagerEx.Companion.getInstanceExIfCreated(myProject);
+    return FileEditorManagerEx.Companion.getInstanceExIfCreated(project);
   }
 
   private static @NotNull PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
@@ -267,25 +268,25 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final void onSelectionChanged() {
-    if (!myReallyExcludeCurrentCommandFromNavigation) {
-      myCurrentCommandIsNavigation = true;
+    if (!reallyExcludeCurrentCommandFromNavigation) {
+      currentCommandIsNavigation = true;
     }
-    myCurrentCommandHasMoves = true;
+    currentCommandHasMoves = true;
   }
 
   @Override
   public void reallyExcludeCurrentCommandAsNavigation() {
-    myReallyExcludeCurrentCommandFromNavigation = true;
-    myCurrentCommandIsNavigation = false;
+    reallyExcludeCurrentCommandFromNavigation = true;
+    currentCommandIsNavigation = false;
   }
 
   final void onCommandStarted(Object commandGroupId) {
     myCurrentCommandGroupId = commandGroupId;
-    myCommandStartPlace = getCurrentPlaceInfo();
-    myCurrentCommandIsNavigation = false;
-    myCurrentCommandHasChanges = false;
-    myCurrentCommandHasMoves = false;
-    myReallyExcludeCurrentCommandFromNavigation = false;
+    commandStartPlace = getCurrentPlaceInfo();
+    currentCommandIsNavigation = false;
+    currentCommandHasChanges = false;
+    currentCommandHasMoves = false;
+    reallyExcludeCurrentCommandFromNavigation = false;
     myChangedFilesInCurrentCommand.clear();
   }
 
@@ -313,44 +314,44 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   final void onCommandFinished(Project project, Object commandGroupId) {
-    Object lastGroupId = SoftReference.dereference(myLastGroupId);
-    if (!CommandMerger.canMergeGroup(commandGroupId, lastGroupId)) myRegisteredBackPlaceInLastGroup = false;
+    Object lastGroupId = SoftReference.dereference(this.lastGroupId);
+    if (!CommandMerger.canMergeGroup(commandGroupId, lastGroupId)) registeredBackPlaceInLastGroup = false;
     if (commandGroupId != lastGroupId) {
-      myLastGroupId = commandGroupId == null ? null : new WeakReference<>(commandGroupId);
+      this.lastGroupId = commandGroupId == null ? null : new WeakReference<>(commandGroupId);
     }
 
-    if (myCommandStartPlace != null && myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
+    if (commandStartPlace != null && currentCommandIsNavigation && currentCommandHasMoves) {
       if (!myBackInProgress) {
-        if (!myRegisteredBackPlaceInLastGroup) {
-          myRegisteredBackPlaceInLastGroup = true;
-          putLastOrMerge(myCommandStartPlace, BACK_QUEUE_LIMIT, false, commandGroupId);
-          registerViewed(myCommandStartPlace.myFile);
+        if (!registeredBackPlaceInLastGroup) {
+          registeredBackPlaceInLastGroup = true;
+          putLastOrMerge(commandStartPlace, BACK_QUEUE_LIMIT, false, commandGroupId);
+          registerViewed(commandStartPlace.myFile);
         }
-        if (!myForwardInProgress) {
-          myForwardPlaces.clear();
+        if (!forwardInProgress) {
+          forwardPlaces.clear();
         }
       }
       removeInvalidFilesFromStacks();
     }
 
-    if (myCurrentCommandHasChanges) {
-      setCurrentChangePlace(project == myProject);
+    if (currentCommandHasChanges) {
+      setCurrentChangePlace(project == this.project);
     }
-    else if (myCurrentCommandHasMoves) {
-      myCurrentIndex = myChangePlaces.size();
+    else if (currentCommandHasMoves) {
+      currentIndex = changePlaces.size();
     }
   }
 
   @Override
   public final void includeCurrentCommandAsNavigation() {
-    if (!myReallyExcludeCurrentCommandFromNavigation) {
-      myCurrentCommandIsNavigation = true;
+    if (!reallyExcludeCurrentCommandFromNavigation) {
+      currentCommandIsNavigation = true;
     }
   }
 
   @Override
   public void setCurrentCommandHasMoves() {
-    myCurrentCommandHasMoves = true;
+    currentCommandHasMoves = true;
   }
 
   @Override
@@ -364,7 +365,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       placeInfo = null;
     }
     if (placeInfo == null && acceptPlaceFromFocus) {
-      placeInfo = getPlaceInfoFromFocus(myProject);
+      placeInfo = getPlaceInfoFromFocus(project);
     }
     if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
       placeInfo = null;
@@ -385,7 +386,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     putLastOrMerge(placeInfo, CHANGE_QUEUE_LIMIT, true, myCurrentCommandGroupId);
-    myCurrentIndex = myChangePlaces.size();
+    currentIndex = changePlaces.size();
   }
 
   @Override
@@ -414,29 +415,29 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final void clearHistory() {
-    myBackPlaces.clear();
-    myForwardPlaces.clear();
-    myChangePlaces.clear();
+    backPlaces.clear();
+    forwardPlaces.clear();
+    changePlaces.clear();
 
-    myLastGroupId = null;
+    lastGroupId = null;
 
-    myCurrentIndex = 0;
-    myCommandStartPlace = null;
+    currentIndex = 0;
+    commandStartPlace = null;
   }
 
   @Override
   public final void back() {
     removeInvalidFilesFromStacks();
-    if (myBackPlaces.isEmpty()) {
+    if (backPlaces.isEmpty()) {
       return;
     }
 
-    PlaceInfo info = myBackPlaces.removeLast();
-    myProject.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false);
+    PlaceInfo info = backPlaces.removeLast();
+    project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false);
 
     PlaceInfo current = getCurrentPlaceInfo();
     if (current != null) {
-      myForwardPlaces.add(current);
+      forwardPlaces.add(current);
     }
 
     myBackInProgress = true;
@@ -455,24 +456,24 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     final PlaceInfo target = getTargetForwardInfo();
     if (target == null) return;
 
-    myForwardInProgress = true;
+    forwardInProgress = true;
     try {
       executeCommand(() -> gotoPlaceInfo(target), "", null);
     }
     finally {
-      myForwardInProgress = false;
+      forwardInProgress = false;
     }
   }
 
   private PlaceInfo getTargetForwardInfo() {
-    if (myForwardPlaces.isEmpty()) return null;
+    if (forwardPlaces.isEmpty()) return null;
 
-    PlaceInfo target = myForwardPlaces.removeLast();
+    PlaceInfo target = forwardPlaces.removeLast();
     PlaceInfo current = getCurrentPlaceInfo();
 
-    while (!myForwardPlaces.isEmpty()) {
+    while (!forwardPlaces.isEmpty()) {
       if (current != null && isSame(current, target)) {
-        target = myForwardPlaces.removeLast();
+        target = forwardPlaces.removeLast();
       }
       else {
         break;
@@ -483,24 +484,24 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final boolean isBackAvailable() {
-    return !myBackPlaces.isEmpty();
+    return !backPlaces.isEmpty();
   }
 
   @Override
   public final boolean isForwardAvailable() {
-    return !myForwardPlaces.isEmpty();
+    return !forwardPlaces.isEmpty();
   }
 
   @Override
   public final void navigatePreviousChange() {
     removeInvalidFilesFromStacks();
-    if (myCurrentIndex == 0) return;
+    if (currentIndex == 0) return;
     PlaceInfo currentPlace = getCurrentPlaceInfo();
-    for (int i = myCurrentIndex - 1; i >= 0; i--) {
-      PlaceInfo info = myChangePlaces.get(i);
+    for (int i = currentIndex - 1; i >= 0; i--) {
+      PlaceInfo info = changePlaces.get(i);
       if (currentPlace == null || !isSame(currentPlace, info)) {
         executeCommand(() -> gotoPlaceInfo(info, true), "", null);
-        myCurrentIndex = i;
+        currentIndex = i;
         break;
       }
     }
@@ -508,55 +509,55 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public @NotNull List<PlaceInfo> getBackPlaces() {
-    return Collections.unmodifiableList(myBackPlaces);
+    return Collections.unmodifiableList(backPlaces);
   }
 
   @Override
   public List<PlaceInfo> getChangePlaces() {
-    return Collections.unmodifiableList(myChangePlaces);
+    return Collections.unmodifiableList(changePlaces);
   }
 
   @Override
   public void removeBackPlace(@NotNull PlaceInfo placeInfo) {
-    removePlaceInfo(placeInfo, myBackPlaces, false);
+    removePlaceInfo(placeInfo, backPlaces, false);
   }
 
   @Override
   public void removeChangePlace(@NotNull PlaceInfo placeInfo) {
-    removePlaceInfo(placeInfo, myChangePlaces, true);
+    removePlaceInfo(placeInfo, changePlaces, true);
   }
 
   private void removePlaceInfo(@NotNull PlaceInfo placeInfo, @NotNull Collection<PlaceInfo> places, boolean changed) {
     boolean removed = places.remove(placeInfo);
     if (removed) {
-      myProject.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, changed);
+      project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(placeInfo, changed);
     }
   }
 
   @Override
   public final boolean isNavigatePreviousChangeAvailable() {
-    return myCurrentIndex > 0;
+    return currentIndex > 0;
   }
 
   void removeInvalidFilesFromStacks() {
-    removeInvalidFilesFrom(myBackPlaces);
+    removeInvalidFilesFrom(backPlaces);
 
-    removeInvalidFilesFrom(myForwardPlaces);
-    if (removeInvalidFilesFrom(myChangePlaces)) {
-      myCurrentIndex = myChangePlaces.size();
+    removeInvalidFilesFrom(forwardPlaces);
+    if (removeInvalidFilesFrom(changePlaces)) {
+      currentIndex = changePlaces.size();
     }
   }
 
   @Override
   public void navigateNextChange() {
     removeInvalidFilesFromStacks();
-    if (myCurrentIndex >= myChangePlaces.size()) return;
+    if (currentIndex >= changePlaces.size()) return;
     PlaceInfo currentPlace = getCurrentPlaceInfo();
-    for (int i = myCurrentIndex; i < myChangePlaces.size(); i++) {
-      PlaceInfo info = myChangePlaces.get(i);
+    for (int i = currentIndex; i < changePlaces.size(); i++) {
+      PlaceInfo info = changePlaces.get(i);
       if (currentPlace == null || !isSame(currentPlace, info)) {
         executeCommand(() -> gotoPlaceInfo(info), "", null);
-        myCurrentIndex = i + 1;
+        currentIndex = i + 1;
         break;
       }
     }
@@ -564,7 +565,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public boolean isNavigateNextChangeAvailable() {
-    return myCurrentIndex < myChangePlaces.size();
+    return currentIndex < changePlaces.size();
   }
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
@@ -576,7 +577,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public void gotoPlaceInfo(@NotNull PlaceInfo info) {
-    gotoPlaceInfo(info, ToolWindowManager.getInstance(myProject).isEditorComponentActive());
+    gotoPlaceInfo(info, ToolWindowManager.getInstance(project).isEditorComponentActive());
   }
 
   @Override
@@ -585,17 +586,17 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withUsePreviewTab(info.isPreviewTab())
       .withRequestFocus(requestFocus)
+      .withReuseOpen()
       .withOpenMode(info.getOpenMode());
     var editorsWithProviders = editorManager.openFile(info.getFile(), info.getWindow(), openOptions);
 
     editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
-    var editors = editorsWithProviders.getAllEditors();
-    var providers = editorsWithProviders.getAllProviders();
-    for (int i = 0; i < editors.size(); i++) {
-      String typeId = providers.get(i).getEditorTypeId();
+    var list = editorsWithProviders.getAllEditorsWithProviders();
+    for (FileEditorWithProvider item : list) {
+      String typeId = item.getProvider().getEditorTypeId();
       if (typeId.equals(info.getEditorTypeId())) {
-        editors.get(i).setState(info.getNavigationState());
+        item.getFileEditor().setState(info.getNavigationState());
       }
     }
   }
@@ -639,8 +640,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private void putLastOrMerge(@NotNull PlaceInfo next, int limit, boolean isChanged, Object groupId) {
-    LinkedList<PlaceInfo> list = isChanged ? myChangePlaces : myBackPlaces;
-    MessageBus messageBus = myProject.getMessageBus();
+    LinkedList<PlaceInfo> list = isChanged ? changePlaces : backPlaces;
+    MessageBus messageBus = project.getMessageBus();
     RecentPlacesListener listener = messageBus.syncPublisher(RecentPlacesListener.TOPIC);
     if (!list.isEmpty()) {
       PlaceInfo prev = list.getLast();
@@ -731,6 +732,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       return myIsPreviewTab;
     }
 
+    @ApiStatus.Internal
     public @Nullable FileEditorManagerImpl.OpenMode getOpenMode() {
       if (myNavigationState instanceof FileEditorStateWithPreferredOpenMode) {
         return ((FileEditorStateWithPreferredOpenMode)myNavigationState).getOpenMode();
@@ -741,7 +743,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final void dispose() {
-    myLastGroupId = null;
+    lastGroupId = null;
     PersistentHashMap<String, Long> map = recentFileTimestampMap.getValueIfInitialized();
     if (map != null) {
       try {
@@ -754,7 +756,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   protected void executeCommand(Runnable runnable, @NlsContexts.Command String name, Object groupId) {
-    CommandProcessor.getInstance().executeCommand(myProject, runnable, name, groupId);
+    CommandProcessor.getInstance().executeCommand(project, runnable, name, groupId);
   }
 
   @Override
@@ -776,30 +778,30 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     Topic<RecentPlacesListener> TOPIC = new Topic<>(RecentPlacesListener.class, Topic.BroadcastDirection.NONE);
 
     /**
-     * Fires on new place info adding into {@link #myChangePlaces} or {@link #myBackPlaces} infos a list
+     * Fires on new place info adding into {@link #changePlaces} or {@link #backPlaces} infos a list
      *
      * @param changePlace new place info
-     * @param isChanged   true if place info was added into the changed infos list {@link #myChangePlaces};
-     *                    false if place info was added into the back infos list {@link #myBackPlaces}
+     * @param isChanged   true if place info was added into the changed infos list {@link #changePlaces};
+     *                    false if place info was added into the back infos list {@link #backPlaces}
      */
     @Deprecated
     void recentPlaceAdded(@NotNull PlaceInfo changePlace, boolean isChanged);
 
     /**
-     * Fires on a place info removing from the {@link #myChangePlaces} or the {@link #myBackPlaces} infos list
+     * Fires on a place info removing from the {@link #changePlaces} or the {@link #backPlaces} infos list
      *
      * @param changePlace place info that was removed
-     * @param isChanged   true if place info was removed from the changed infos list {@link #myChangePlaces};
-     *                    false if place info was removed from the back infos list {@link #myBackPlaces}
+     * @param isChanged   true if place info was removed from the changed infos list {@link #changePlaces};
+     *                    false if place info was removed from the back infos list {@link #backPlaces}
      */
     void recentPlaceRemoved(@NotNull PlaceInfo changePlace, boolean isChanged);
 
     /**
-     * Fires on new place info adding into {@link #myChangePlaces} or {@link #myBackPlaces} infos a list
+     * Fires on new place info adding into {@link #changePlaces} or {@link #backPlaces} infos a list
      *
      * @param changePlace new place info
-     * @param isChanged   true if place info was added into the changed infos list {@link #myChangePlaces};
-     *                    false if place info was added into the back infos list {@link #myBackPlaces}
+     * @param isChanged   true if place info was added into the changed infos list {@link #changePlaces};
+     *                    false if place info was added into the back infos list {@link #backPlaces}
      * @param groupId     groupId of the command that caused the change place addition
      */
     default void recentPlaceAdded(@NotNull PlaceInfo changePlace, boolean isChanged, @Nullable Object groupId) {

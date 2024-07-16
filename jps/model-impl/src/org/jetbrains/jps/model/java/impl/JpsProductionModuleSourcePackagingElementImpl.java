@@ -8,13 +8,13 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.java.JpsProductionModuleSourcePackagingElement;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
-public final class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeElementBase<JpsProductionModuleSourcePackagingElementImpl>
+final class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeElementBase<JpsProductionModuleSourcePackagingElementImpl>
   implements JpsProductionModuleSourcePackagingElement {
 
   private static final JpsElementChildRole<JpsModuleReference>
     MODULE_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("module reference");
 
-  public JpsProductionModuleSourcePackagingElementImpl(JpsModuleReference moduleReference) {
+  JpsProductionModuleSourcePackagingElementImpl(JpsModuleReference moduleReference) {
     myContainer.setChild(MODULE_REFERENCE_CHILD_ROLE, moduleReference);
   }
 
@@ -28,9 +28,14 @@ public final class JpsProductionModuleSourcePackagingElementImpl extends JpsComp
     super(original);
   }
 
+  @Override
+  public @NotNull JpsProductionModuleSourcePackagingElementImpl createCopy() {
+    return new JpsProductionModuleSourcePackagingElementImpl(this);
+  }
+
   @NotNull
   @Override
-  public JpsProductionModuleSourcePackagingElementImpl createCopy() {
+  public JpsProductionModuleSourcePackagingElementImpl createElementCopy() {
     return new JpsProductionModuleSourcePackagingElementImpl(this);
   }
 

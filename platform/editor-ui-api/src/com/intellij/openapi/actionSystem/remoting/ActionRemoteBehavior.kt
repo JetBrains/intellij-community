@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.remoting
 
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 enum class ActionRemoteBehavior {
   /**
    * The action works only on a thin client
-    */
+   */
   FrontendOnly,
 
   /**
@@ -56,12 +57,31 @@ interface ActionRemoteBehaviorSpecification {
     override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
   }
 
+  interface BackendOnly : ActionRemoteBehaviorSpecification {
+    override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
+  }
+
   interface Duplicated : ActionRemoteBehaviorSpecification {
     override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.Duplicated
   }
 
   interface Disabled : ActionRemoteBehaviorSpecification {
     override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.Disabled
+  }
+
+
+  companion object {
+    fun ActionRemoteBehaviorSpecification.getActionBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior {
+      val declaredBehavior = getBehavior()
+      if (useDeclaredBehaviour) return declaredBehavior
+      if (!(PlatformUtils.isRider() || PlatformUtils.isCLion())) return declaredBehavior
+
+      return when (declaredBehavior) {
+        ActionRemoteBehavior.BackendOnly -> ActionRemoteBehavior.FrontendThenBackend
+        ActionRemoteBehavior.Disabled -> ActionRemoteBehavior.FrontendThenBackend
+        else -> declaredBehavior
+      }
+    }
   }
 }
 

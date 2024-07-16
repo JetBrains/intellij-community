@@ -22,7 +22,7 @@ import javax.xml.parsers.DocumentBuilder;
 import java.io.IOException;
 import java.io.StringReader;
 
-public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
+public final class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
 
   @Nullable
   @Override
@@ -40,7 +40,7 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
     return text;
   }
 
-  protected boolean isApplicable(PsiFile file) {
+  private boolean isApplicable(PsiFile file) {
     return file.getName().endsWith('.' + GradleConstants.EXTENSION);
   }
 

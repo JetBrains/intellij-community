@@ -37,7 +37,7 @@ public class HierarchicalFilePathComparator implements Comparator<FilePath> {
   public static final HierarchicalFilePathComparator NATURAL = new HierarchicalFilePathComparator(true) {
     @Override
     protected int compareFileNames(@NotNull CharSequence name1, @NotNull CharSequence name2) {
-      return FileNameComparator.INSTANCE.compare(name1.toString(), name2.toString());
+      return FileNameComparator.getInstance().compare(name1.toString(), name2.toString());
     }
   };
 

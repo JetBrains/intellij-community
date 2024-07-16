@@ -2,7 +2,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
 public final class ComplicatedTypesKt {
-    public static fun typeTokenOf() : java.lang.reflect.Type {
+    public static final fun typeTokenOf() : java.lang.reflect.Type {
         var base: TypeBase<T> = anonymous object : TypeBase<T>() {}
         var superType: java.lang.reflect.Type = TypeBase<T>.java.genericSuperclass!!
         return (superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()!!

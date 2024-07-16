@@ -16,6 +16,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getCallReferencedName
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getSafeReferencedName
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.isArgument
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -33,7 +37,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi2ir.deparenthesize
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
@@ -449,16 +452,6 @@ private fun KtLambdaExpression.parentValueArgument(): KtValueArgument? {
         parent
     } as? KtValueArgument
 }
-
-private fun KtCallExpression.getCallReferencedName(): String? =
-    (calleeExpression as? KtNameReferenceExpression)?.getSafeReferencedName()
-
-private fun KtNameReferenceExpression.getSafeReferencedName(): String = getReferencedNameAsName().render()
-
-private fun KtLambdaExpression.singleStatementOrNull(): KtExpression? = bodyExpression?.statements?.singleOrNull()
-
-private fun KtLambdaExpression.isArgument(): Boolean =
-    this === getStrictParentOfType<KtValueArgument>()?.getArgumentExpression()?.deparenthesize()
 
 private fun KtNameReferenceExpression.renderTargetReceiverType(
     context: BindingContext,

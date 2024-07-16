@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogRefManager;
@@ -13,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.function.Function;
 
 public final class HeadCommitsComparator implements Comparator<Integer> {
   private static final Logger LOG = Logger.getInstance(HeadCommitsComparator.class);
@@ -33,7 +33,7 @@ public final class HeadCommitsComparator implements Comparator<Integer> {
   public void reportNoRefs(int head) {
     if (!myErrorWasReported.containsKey(head)) {
       myErrorWasReported.put(head, head);
-      LOG.debug("No references found at head " + head + " which corresponds to hash " + myHashGetter.fun(head));
+      LOG.debug("No references found at head " + head + " which corresponds to hash " + myHashGetter.apply(head));
     }
   }
 
@@ -58,7 +58,7 @@ public final class HeadCommitsComparator implements Comparator<Integer> {
       return -1;
     }
     if (ref1.equals(ref2)) {
-      LOG.warn("Different heads " + myHashGetter.fun(head1) + " and " + myHashGetter.fun(head2) + " contain the same reference " + ref1);
+      LOG.warn("Different heads " + myHashGetter.apply(head1) + " and " + myHashGetter.apply(head2) + " contain the same reference " + ref1);
     }
 
     VirtualFile root1 = ref1.getRoot();

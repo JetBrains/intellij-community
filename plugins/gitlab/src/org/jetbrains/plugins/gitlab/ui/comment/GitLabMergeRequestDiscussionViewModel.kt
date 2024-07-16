@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
-import com.intellij.collaboration.async.mapModelsToViewModels
-import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
@@ -16,7 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
@@ -27,9 +23,9 @@ import java.util.*
 
 interface GitLabMergeRequestDiscussionViewModel : CodeReviewResolvableItemViewModel {
   val id: GitLabId
-  val notes: Flow<List<NoteItem>>
+  val notes: StateFlow<List<NoteItem>>
 
-  val replyVm: Flow<GitLabDiscussionReplyViewModel?>
+  val replyVm: StateFlow<GitLabDiscussionReplyViewModel?>
 
   val position: StateFlow<GitLabNotePosition?>
 
@@ -60,33 +56,29 @@ internal class GitLabMergeRequestDiscussionViewModelBase(
   override val isResolved: StateFlow<Boolean> = discussion.resolved
   override val canChangeResolvedState: StateFlow<Boolean> = MutableStateFlow(discussion.canResolve)
 
-  override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
+  override val replyVm: StateFlow<GitLabDiscussionReplyViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
       if (canAddNotes) GitLabDiscussionReplyViewModelImpl(this, project, currentUser, discussion)
       else null
-    }.modelFlow(cs, LOG)
+    }.stateInNow(cs, null)
 
-  // this is NOT a good way to do this, but a proper implementation would be waaaay too convoluted
-  @Volatile
-  private var initialNotesSize: Int? = null
-  override val notes: Flow<List<NoteItem>> = discussion.notes.onEach {
-    if (initialNotesSize == null) {
-      initialNotesSize = it.size
-    }
-  }.mapModelsToViewModels { note ->
+  private val initialNotesSize: Int = discussion.notes.value.size
+  private val notesVms = discussion.notes.mapModelsToViewModels { note ->
     GitLabNoteViewModelImpl(project, this, projectData, note, discussion.notes.map { it.firstOrNull()?.id == note.id }, currentUser)
-  }.combine(expandRequested) { notes, expanded ->
-    if (initialNotesSize!! <= 3 || notes.size <= 3 || expanded) {
-      notes.map { NoteItem.Note(it) }
+  }.stateInNow(cs, emptyList())
+  override val notes: StateFlow<List<NoteItem>> =
+    combineStateIn(cs, notesVms, expandRequested) { notes, expanded ->
+      if (initialNotesSize <= 3 || notes.size <= 3 || expanded) {
+        notes.map { NoteItem.Note(it) }
+      }
+      else {
+        mutableListOf(
+          NoteItem.Note(notes.first()),
+          NoteItem.Expander(notes.size - 2) { expandRequested.value = true },
+          NoteItem.Note(notes.last())
+        )
+      }
     }
-    else {
-      mutableListOf(
-        NoteItem.Note(notes.first()),
-        NoteItem.Expander(notes.size - 2) { expandRequested.value = true },
-        NoteItem.Note(notes.last())
-      )
-    }
-  }.modelFlow(cs, LOG)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override val position: StateFlow<GitLabNotePosition?> =
@@ -111,7 +103,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   project: Project,
   parentCs: CoroutineScope,
   note: GitLabMergeRequestDraftNote,
-  glProject: GitLabProjectCoordinates
+  mr: GitLabMergeRequest
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -120,16 +112,19 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = true
-  override val serverUrl: URL = glProject.serverPath.toURL()
+  override val serverUrl: URL = mr.glProject.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
   override val reactionsVm: GitLabReactionsViewModel? = null
 
-  override val body: Flow<String> = note.body
-  override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)
+  override val body: StateFlow<String> = note.body
+  override val bodyHtml: StateFlow<String> = body.mapStateInNow(cs) {
+    GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it)
+  }
 
-  override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
+  override val discussionState: StateFlow<GitLabDiscussionStateContainer> =
+    MutableStateFlow(GitLabDiscussionStateContainer.DEFAULT)
 
   val position: StateFlow<GitLabNotePosition?> = note.position
 }

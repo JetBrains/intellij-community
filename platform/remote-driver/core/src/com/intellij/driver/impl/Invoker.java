@@ -1,20 +1,18 @@
 package com.intellij.driver.impl;
 
-import com.intellij.driver.model.LocalRefDelegate;
+import com.intellij.driver.model.DriverIlligalStateException;
 import com.intellij.driver.model.OnDispatcher;
 import com.intellij.driver.model.ProductVersion;
-import com.intellij.driver.model.RemoteRefDelegate;
+import com.intellij.driver.model.RdTarget;
 import com.intellij.driver.model.transport.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginContentDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -30,19 +28,16 @@ import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.driver.model.transport.RemoteCall.isPassByValue;
 import static java.util.Objects.requireNonNull;
@@ -59,14 +54,15 @@ public class Invoker implements InvokerMBean {
   private final Map<String, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
 
   private final ClearableLazyValue<IJTracer> tracer;
-  private final Consumer<String> screenshotAction;
-  private final String refIdPrefix;
+  private final Function<String, String> screenshotAction;
   private final Supplier<? extends Context> timedContextSupplier;
 
-  public Invoker(@NotNull String refIdPrefix, @NotNull Supplier<? extends IJTracer> tracerSupplier,
+  private final RdTarget rdTarget;
+
+  public Invoker(RdTarget rdTarget, @NotNull Supplier<? extends IJTracer> tracerSupplier,
                  @NotNull Supplier<? extends Context> timedContextSupplier,
-                 @NotNull Consumer<String> screenshotAction) {
-    this.refIdPrefix = refIdPrefix;
+                 @NotNull Function<String, String> screenshotAction) {
+    this.rdTarget = rdTarget;
     this.timedContextSupplier = timedContextSupplier;
     this.tracer = new ClearableLazyValue<>() {
       @Override
@@ -98,7 +94,10 @@ public class Invoker implements InvokerMBean {
 
   @Override
   public void exit() {
-    ApplicationManager.getApplication().exit(true, true, false);
+    SwingUtilities.invokeLater(() -> {
+      var app = ApplicationManager.getApplication();
+      app.invokeLater(() -> app.exit(true, true, false), ModalityState.current());
+    });
   }
 
   @Override
@@ -126,16 +125,28 @@ public class Invoker implements InvokerMBean {
       instance = findInstance(call, callTarget.clazz());
     }
     catch (Exception e) {
-      LOG.error("Unable to get instance for " + call);
+      //we need to ignore caching check and not throw error
+      if (!call.getMethodName().equals("isShowing")) {
+        LOG.error("Unable to get instance for " + call);
+      }
 
-      throw new RuntimeException("Unable to get instance for " + call, e);
+      throw new DriverIlligalStateException("Unable to get instance for " + call, e);
     }
 
     if (call.getDispatcher() == OnDispatcher.EDT) {
       Object[] res = new Object[1];
+      ModalityState[] modalityState = new ModalityState[1];
+      try {
+        SwingUtilities.invokeAndWait(() -> {
+          modalityState[0] = ModalityState.current();
+        });
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
       ApplicationManager.getApplication().invokeAndWait(() -> {
         res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
-      });
+      }, modalityState[0]);
       result = res[0];
     }
     else {
@@ -155,7 +166,7 @@ public class Invoker implements InvokerMBean {
     // first lookup in the current session
     Session session = sessions.get(sessionId);
     if (session == null) {
-      throw new IllegalStateException("No such session " + sessionId);
+      throw new DriverIlligalStateException("No such session " + sessionId);
     }
 
     Object value = session.findReference(id);
@@ -167,9 +178,9 @@ public class Invoker implements InvokerMBean {
       if (value != null) return value;
     }
 
-    throw new IllegalStateException("No such reference with id " + id + ". " +
-                                    "It may happen if a weak reference to the variable expires. " +
-                                    "Please use `Driver.withContext { }` for hard variable references.");
+    throw new DriverIlligalStateException("No such reference with id " + id + ". " +
+                                          "It may happen if a weak reference to the variable expires. " +
+                                          "Please use `Driver.withContext { }` for hard variable references.");
   }
 
   private static @NotNull Object invokeConstructor(Constructor<?> constructor, Object[] transformedArgs) throws Exception {
@@ -236,6 +247,9 @@ public class Invoker implements InvokerMBean {
     if (call.getTimedSpan() == null || call.getTimedSpan().isEmpty()) {
       try {
         return supplier.call();
+      }
+      catch (InvocationTargetException e) {
+        throw new DriverIlligalStateException(e);
       }
       catch (Exception e) {
         ExceptionUtil.rethrow(e);
@@ -364,7 +378,8 @@ public class Invoker implements InvokerMBean {
       clazz = getClassLoader(call).loadClass(call.getClassName());
     }
     catch (ClassNotFoundException e) {
-      throw new IllegalStateException("No such class '" + call.getClassName() + "'", e);
+      throw new DriverIlligalStateException(
+        (rdTarget == RdTarget.DEFAULT ? "" : rdTarget + ": ") + "No such class '" + call.getClassName() + "'", e);
     }
     return clazz;
   }
@@ -378,7 +393,7 @@ public class Invoker implements InvokerMBean {
       String moduleId = StringsKt.substringAfter(pluginId, "/", pluginId);
 
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(mainId));
-      if (plugin == null) throw new IllegalStateException("No such plugin " + mainId);
+      if (plugin == null) throw new DriverIlligalStateException("No such plugin " + mainId);
 
       List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).content.modules;
       for (PluginContentDescriptor.ModuleItem module : modules) {
@@ -387,11 +402,11 @@ public class Invoker implements InvokerMBean {
         }
       }
 
-      throw new IllegalStateException("No such plugin module " + pluginId);
+      throw new DriverIlligalStateException("No such plugin module " + pluginId);
     }
 
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
-    if (plugin == null) throw new IllegalStateException("No such plugin " + pluginId);
+    if (plugin == null) throw new DriverIlligalStateException("No such plugin " + pluginId);
 
     return plugin.getClassLoader();
   }
@@ -409,16 +424,22 @@ public class Invoker implements InvokerMBean {
       if (serviceInterface != null) {
         serviceClass = findServiceInterface(clazz, serviceInterface);
         if (serviceClass == null) {
-          throw new IllegalStateException("Unable to find interface " + serviceInterface + " for service " + clazz);
+          throw new DriverIlligalStateException("Unable to find interface " + serviceInterface + " for service " + clazz);
         }
       }
 
       Object instance;
       if (projectInstance instanceof Project) {
         instance = ((Project)projectInstance).getService(serviceClass);
+        if (instance == null) {
+          instance = ((Project)projectInstance).getServices(serviceClass, ClientKind.CONTROLLER).get(0);
+        }
       }
       else {
         instance = ApplicationManager.getApplication().getService(serviceClass);
+        if (instance == null) {
+          instance = ApplicationManager.getApplication().getServices(serviceClass, ClientKind.CONTROLLER).get(0);
+        }
       }
       return instance;
     }
@@ -427,7 +448,7 @@ public class Invoker implements InvokerMBean {
       Ref ref = ((RefCall)call).getRef();
       Object reference = getReference(call.getSessionId(), ref.id());
 
-      if (reference == null) throw new IllegalStateException("No such ref exists " + ref);
+      if (reference == null) throw new DriverIlligalStateException("No such ref exists " + ref);
 
       return reference;
     }
@@ -518,10 +539,10 @@ public class Invoker implements InvokerMBean {
 
     Ref ref = putAdhocReference(result, session);
 
-    Stream<Object> stream =
-      result instanceof Collection<?> collection ? (Stream<Object>)collection.stream()
-                                                 : result.getClass().isArray() ? Arrays.stream((Object[])result)
-                                                                               : null;
+    var stream =
+      result instanceof Collection<?> collection ? collection.stream() :
+      result.getClass().isArray() ? Arrays.stream((Object[])result) :
+      null;
 
     if (stream == null) {
       return new RemoteCallResult(ref);
@@ -532,13 +553,6 @@ public class Invoker implements InvokerMBean {
   }
 
   private static @NotNull Ref putAdhocReference(@NotNull Object item, @NotNull Session session) {
-    if (item instanceof LocalRefDelegate<?> delegate) {
-      item = delegate.getLocalValue();
-    }
-    if (item instanceof RemoteRefDelegate<?> delegate) {
-      return delegate.getRemoteRef();
-    }
-
     return session.putReference(item);
   }
 
@@ -557,8 +571,12 @@ public class Invoker implements InvokerMBean {
   }
 
   @Override
-  public void takeScreenshot(@Nullable String outFolder) {
-    this.screenshotAction.accept(outFolder);
+  public String takeScreenshot(@Nullable String outFolder) {
+    return this.screenshotAction.apply(outFolder);
+  }
+
+  private String genId() {
+    return rdTarget.name() + "_" + REF_SEQUENCE.getAndIncrement();
   }
 
   interface Session {
@@ -582,13 +600,13 @@ public class Invoker implements InvokerMBean {
 
     @Override
     public @NotNull Ref putReference(@NotNull Object value) {
-      var id = refIdPrefix + REF_SEQUENCE.getAndIncrement();
+      var id = genId();
       variables.put(id, new HardReference(value));
 
       // also make variable available out ouf `driver.withContext { }` block as weak reference
       adhocReferenceMap.put(id, new WeakReference<>(value));
 
-      return RefProducer.makeRef(id, value);
+      return RefProducer.makeRef(id, rdTarget, value);
     }
   }
 
@@ -604,13 +622,12 @@ public class Invoker implements InvokerMBean {
 
     @Override
     public @NotNull Ref putReference(@NotNull Object value) {
-      var id = refIdPrefix + REF_SEQUENCE.getAndIncrement();
+      var id = genId();
       adhocReferenceMap.put(id, new WeakReference<>(value));
 
-      return RefProducer.makeRef(id, value);
+      return RefProducer.makeRef(id, rdTarget, value);
     }
   }
-
 }
 
 record CallTarget(@NotNull Class<?> clazz, @NotNull Method targetMethod) {
@@ -623,14 +640,15 @@ final class HardReference {
 }
 
 final class RefProducer {
-  public static @NotNull Ref makeRef(String id, @NotNull Object value) {
+  public static @NotNull Ref makeRef(String id, RdTarget rdTarget, @NotNull Object value) {
     if (value instanceof Ref) return (Ref)value;
 
     return new Ref(
       id,
       value.getClass().getName(),
       System.identityHashCode(value),
-      value.toString()
+      value.toString(),
+      rdTarget
     );
   }
 }

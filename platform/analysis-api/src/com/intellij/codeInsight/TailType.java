@@ -9,7 +9,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -76,19 +75,6 @@ public abstract class TailType {
   }
 
   //<editor-fold desc="Deprecated static constants">
-  /** @deprecated use {@link TailTypes#unknownType()} instead. */
-  @Deprecated(forRemoval = true)
-  public static final TailType UNKNOWN = new TailType() {
-    @Override
-    public int processTail(final Editor editor, final int tailOffset) {
-      return tailOffset;
-    }
-
-    public String toString() {
-      return "UNKNOWN";
-    }
-  };
-
   /** @deprecated use {@link TailTypes#noneType()} instead. */
   @Deprecated(forRemoval = true)
   public static final TailType NONE = new TailType() {
@@ -114,41 +100,6 @@ public abstract class TailType {
   @Deprecated(forRemoval = true)
   public static final TailType SPACE = new CharTailType(' ');
 
-  /**
-   * always insert a space
-   *
-   * @deprecated use {@link TailTypes#insertSpaceType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details.
-   */
-  @Deprecated(forRemoval = true)
-  public static final TailType INSERT_SPACE = new CharTailType(' ', false);
-
-  /**
-   * insert a space unless there's one at the caret position already, followed by a word or '@'
-   *
-   * @deprecated use {@link TailTypes#humbleSpaceBeforeWordType()} instead,
-   * see <a href="#deprecated-constants">Deprecated Constants</a> for details.
-   */
-  @Deprecated(forRemoval = true)
-  public static final TailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
-    @Override
-    public boolean isApplicable(@NotNull InsertionContext context) {
-      CharSequence text = context.getDocument().getCharsSequence();
-      int tail = context.getTailOffset();
-      if (text.length() > tail + 1 && text.charAt(tail) == ' ') {
-        char ch = text.charAt(tail + 1);
-        if (ch == '@' || Character.isLetter(ch)) {
-          return false;
-        }
-      }
-      return super.isApplicable(context);
-    }
-
-    @Override
-    public String toString() {
-      return "HUMBLE_SPACE_BEFORE_WORD";
-    }
-  };
-
   /** @deprecated use {@link TailTypes#dotType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
   @Deprecated(forRemoval = true)
   public static final TailType DOT = new CharTailType('.');
@@ -157,37 +108,5 @@ public abstract class TailType {
   @Deprecated(forRemoval = true)
   public static final TailType CASE_COLON = new CharTailType(':');
 
-  /** @deprecated use {@link TailTypes#equalsType()} instead, see <a href="#deprecated-constants">Deprecated Constants</a> for details. */
-  @Deprecated(forRemoval = true)
-  public static final TailType EQUALS = new CharTailType('=');
-
-  /** @deprecated use {@link TailTypes#conditionalExpressionColonType()} instead. */
-  @Deprecated(forRemoval = true)
-  public static final TailType COND_EXPR_COLON = new TailType() {
-    @Override
-    public int processTail(final Editor editor, final int tailOffset) {
-      Document document = editor.getDocument();
-      int textLength = document.getTextLength();
-      CharSequence chars = document.getCharsSequence();
-
-      int afterWhitespace = CharArrayUtil.shiftForward(chars, tailOffset, " \n\t");
-      if (afterWhitespace < textLength && chars.charAt(afterWhitespace) == ':') {
-        return moveCaret(editor, tailOffset, afterWhitespace - tailOffset + 1);
-      }
-      document.insertString(tailOffset, " : ");
-      return moveCaret(editor, tailOffset, 3);
-    }
-
-    public String toString() {
-      return "COND_EXPR_COLON";
-    }
-  };
-
-  /**
-   * @deprecated create <code>new CharTailType('(')</code> instance instead,
-   * see <a href="#deprecated-constants">Deprecated Constants</a> for details.
-   */
-  @Deprecated(forRemoval = true)
-  public static final TailType LPARENTH = new CharTailType('(');
   //</editor-fold>
 }

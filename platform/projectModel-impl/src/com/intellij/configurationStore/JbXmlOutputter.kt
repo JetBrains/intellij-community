@@ -179,9 +179,15 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
    */
   @Throws(IOException::class)
   fun printElement(out: Writer, element: Element, level: Int) {
+    printElementImpl(out, element, level, macroFilter != null)
+  }
+
+  @Throws(IOException::class)
+  private fun printElementImpl(out: Writer, element: Element, level: Int, substituteMacro: Boolean) {
     if (elementFilter != null && !elementFilter.accept(element, level)) {
       return
     }
+    val currentSubstituteMacro = substituteMacro && (macroFilter != null && !macroFilter.skipPathMacros(element))
 
     // Print the beginning of the tag plus attributes and any
     // necessary namespace declarations
@@ -189,12 +195,12 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     printQualifiedName(out, element)
 
     if (element.hasAttributes()) {
-      printAttributes(out, element.attributes)
+      printAttributes(out, element.attributes, currentSubstituteMacro)
     }
 
     // depending on the settings (newlines, textNormalize, etc.), we may or may not want to print all the content,
     // so determine the index of the start of the content we're interested in based on the current settings.
-    if (!writeContent(out, element, level)) {
+    if (!writeContent(out, element, level, currentSubstituteMacro)) {
       return
     }
 
@@ -204,7 +210,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   }
 
   @Throws(IOException::class)
-  protected open fun writeContent(out: Writer, element: Element, level: Int): Boolean {
+  protected open fun writeContent(out: Writer, element: Element, level: Int, substituteMacro: Boolean): Boolean {
     if (isForbidSensitiveData) {
       checkIsElementContainsSensitiveInformation(element)
     }
@@ -224,7 +230,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     if (nextNonText(content, start) < size) {
       // case Mixed Content - normal indentation
       newline(out)
-      printContentRange(out, content, start, size, level + 1)
+      printContentRange(out, content, start, size, level + 1, substituteMacro)
       newline(out)
       indent(out, level)
     }
@@ -248,7 +254,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
    * @param level   `int` level of indentation.
    */
   @Throws(IOException::class)
-  private fun printContentRange(out: Writer, content: List<Content>, start: Int, end: Int, level: Int) {
+  private fun printContentRange(out: Writer, content: List<Content>, start: Int, end: Int, level: Int, substituteMacro: Boolean) {
     var firstNode: Boolean // Flag for 1st node in content
     var next: Content       // Node we're about to print
     var first: Int
@@ -284,7 +290,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       indent(out, level)
 
       if (next is Element) {
-        printElement(out, next, level)
+        printElementImpl(out, next, level, substituteMacro)
       }
 
       index++
@@ -354,14 +360,14 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
    * @param out        `Writer` to use
    */
   @Throws(IOException::class)
-  private fun printAttributes(out: Writer, attributes: List<Attribute>) {
+  private fun printAttributes(out: Writer, attributes: List<Attribute>, substituteMacro: Boolean) {
     for (attribute in attributes) {
       out.write(' '.code)
       printQualifiedName(out, attribute)
       out.write('='.code)
       out.write('"'.code)
 
-      val value = if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
+      val value = if (macroMap != null && substituteMacro && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
         macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false)
       }
       else {

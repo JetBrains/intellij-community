@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunConfiguration.RestartSingletonResult
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.ExecutionManagerImpl.Companion.DELEGATED_RUN_PROFILE_KEY
@@ -52,7 +53,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.ContentManager
@@ -61,7 +62,10 @@ import com.intellij.util.Alarm
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.AsyncPromise
@@ -69,7 +73,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.BorderLayout
 import java.io.OutputStream
-import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -78,7 +81,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
-class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), Disposable {
+open class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), Disposable {
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
@@ -142,7 +145,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       }
 
       processHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, true)
-      GlobalScope.namedChildScope("Destroy " + processHandler.javaClass.name, Dispatchers.Default, true).launch {
+      GlobalScope.childScope("Destroy " + processHandler.javaClass.name, Dispatchers.Default, true).launch {
         if (processHandler is KillableProcess && processHandler.isProcessTerminating) {
           // process termination was requested, but it's still alive
           // in this case 'force quit' will be performed
@@ -206,7 +209,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED_TO_START)
     val executorId = environment.executor.id
     inProgress.remove(InProgressEntry(executorId, environment.runner.runnerId))
-    environment.callback?.processNotStarted()
+    environment.callback?.processNotStarted(e)
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processNotStarted(executorId, environment, e)
   }
 
@@ -274,7 +277,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       fun handleError(e: Throwable) {
         processNotStarted(environment, activity, e)
         if (e !is ProcessCanceledException) {
-          ProgramRunnerUtil.handleExecutionError(project, environment, e, environment.runProfile)
+          handleProgramRunnerExecutionError(project, environment, e, environment.runProfile)
           LOG.debug(e)
         }
       }
@@ -425,7 +428,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
             if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
               // we should stop here as before run task cannot be executed at all (possibly it's invalid)
               onCancelRunnable?.run()
-              ExecutionUtil.handleExecutionError(environment, ExecutionException(
+              handleExecutionError(environment, ExecutionException(
                 ExecutionBundle.message("dialog.message.cannot.start.before.run.task", settings)))
               return@executeOnPooledThread
             }
@@ -457,6 +460,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         EXECUTION_SESSION_ID_KEY.set(taskEnvironment, id)
         try {
           if (!provider.executeTask(projectContext, profile, taskEnvironment, task)) {
+            LOG.debug("Before launch task '$task' doesn't finish successfully, cancelling execution")
             if (onCancelRunnable != null) {
               SwingUtilities.invokeLater(onCancelRunnable)
             }
@@ -464,6 +468,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           }
         }
         catch (e: ProcessCanceledException) {
+          LOG.debug("Before launch task '$task' cancelled, cancelling execution", e)
           if (onCancelRunnable != null) {
             SwingUtilities.invokeLater(onCancelRunnable)
           }
@@ -496,7 +501,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           startRunnable.run()
         }
         catch (ignored: IndexNotReadyException) {
-          ExecutionUtil.handleExecutionError(environment, ExecutionException(
+          handleExecutionError(environment, ExecutionException(
             ExecutionBundle.message("dialog.message.cannot.start.while.indexing.in.progress")))
         }
       }
@@ -718,7 +723,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       if (runnerAndConfigurationSettings != null) {
         val targetManager = ExecutionTargetManager.getInstance(project)
         if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {
-          ExecutionUtil.handleExecutionError(environment, ExecutionException(
+          handleExecutionError(environment, ExecutionException(
             ProgramRunnerUtil.getCannotRunOnErrorMessage(environment.runProfile, environment.executionTarget)))
           processNotStarted(environment, null)
           return
@@ -773,7 +778,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         if (canRun || runAnyway) {
           val runner = ProgramRunner.getRunner(environment.executor.id, environment.runnerAndConfigurationSettings!!.configuration)
           if (runner == null) {
-            ExecutionUtil.handleExecutionError(environment,
+            handleExecutionError(environment,
                                                ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner",
                                                                                           environment.runProfile.name)))
           }
@@ -793,11 +798,11 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  private fun executeConfiguration(environment: ExecutionEnvironment,
-                                   runner: @NotNull ProgramRunner<*>,
-                                   assignNewId: Boolean,
-                                   project: @NotNull Project,
-                                   runnerAndConfigurationSettings: @Nullable RunnerAndConfigurationSettings?) {
+  protected open fun executeConfiguration(environment: ExecutionEnvironment,
+                                          runner: @NotNull ProgramRunner<*>,
+                                          assignNewId: Boolean,
+                                          project: @NotNull Project,
+                                          runnerAndConfigurationSettings: @Nullable RunnerAndConfigurationSettings?) {
     try {
       var effectiveEnvironment = environment
       if (runner != effectiveEnvironment.runner) {
@@ -809,8 +814,18 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       runner.execute(effectiveEnvironment)
     }
     catch (e: ExecutionException) {
-      ProgramRunnerUtil.handleExecutionError(project, environment, e, runnerAndConfigurationSettings?.configuration)
+      handleProgramRunnerExecutionError(project, environment, e, runnerAndConfigurationSettings?.configuration)
     }
+  }
+
+  @ApiStatus.Internal
+  protected open fun handleProgramRunnerExecutionError(project: Project, environment: ExecutionEnvironment, e: Throwable, profile: RunProfile?) {
+    ProgramRunnerUtil.handleExecutionError(project, environment, e, profile)
+  }
+
+  @ApiStatus.Internal
+  protected open fun handleExecutionError(environment: ExecutionEnvironment, e: ExecutionException) {
+    ExecutionUtil.handleExecutionError(environment, e)
   }
 
   override fun isStarting(executorId: String, runnerId: String): Boolean {
@@ -917,19 +932,25 @@ fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: 
 }
 
 private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivity? {
+  val isDumb = DumbService.isDumb(environment.project)
   val runConfiguration = environment.runnerAndConfigurationSettings?.configuration
   val configurationFactory = runConfiguration?.factory ?: return null
   val isRerun = environment.getUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN) == true
+  val isServiceView = RunDashboardManager.getInstance(environment.project).isShowInDashboard(runConfiguration)
 
   // The 'Rerun' button in the Run tool window will reuse the same ExecutionEnvironment object again.
   // If there are no processes to stop, the REPORT_NEXT_START_AS_RERUN won't be set in restartRunProfile(), so need to set it here.
-  if (!isRerun) environment.putUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN, true)
+  if (!isRerun) {
+    environment.putUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN, true)
+  }
+
   return when(val parentIdeActivity = environment.getUserData(ExecutionManagerImpl.PARENT_PROFILE_IDE_ACTIVITY)) {
     null -> RunConfigurationUsageTriggerCollector
-      .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun, environment.isRunningCurrentFile)
+      .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun,
+               environment.isRunningCurrentFile, isDumb, isServiceView)
     else -> RunConfigurationUsageTriggerCollector
       .triggerWithParent(parentIdeActivity, environment.project, configurationFactory, environment.executor, runConfiguration, isRerun,
-                         environment.isRunningCurrentFile)
+                         environment.isRunningCurrentFile, isDumb, isServiceView)
   }
 }
 

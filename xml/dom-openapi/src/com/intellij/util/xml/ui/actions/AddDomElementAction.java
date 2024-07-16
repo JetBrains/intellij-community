@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui.actions;
 
 import com.intellij.icons.AllIcons;
@@ -79,8 +79,7 @@ public abstract class AddDomElementAction extends AnAction {
     }
   }
 
-  @NlsActions.ActionText
-  protected String getActionText(final AnActionEvent e) {
+  protected @NlsActions.ActionText String getActionText(final AnActionEvent e) {
     return e.getPresentation().getText();
   }
 
@@ -146,8 +145,7 @@ public abstract class AddDomElementAction extends AnAction {
 
   protected abstract DomCollectionChildDescription @NotNull [] getDomCollectionChildDescriptions(final AnActionEvent e);
 
-  @Nullable
-  protected abstract DomElement getParentDomElement(final AnActionEvent e);
+  protected abstract @Nullable DomElement getParentDomElement(final AnActionEvent e);
 
   protected abstract JComponent getComponent(AnActionEvent e);
 

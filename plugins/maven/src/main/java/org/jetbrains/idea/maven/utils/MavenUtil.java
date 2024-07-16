@@ -809,7 +809,9 @@ public class MavenUtil {
       if (list == null) return false;
       Set<String> set = Set.of(list);
       return set.contains(M2_CONF_FILE) && set.contains(MVN_FILE);
-    } catch (Exception ignored) {}
+    }
+    catch (Exception ignored) {
+    }
     return false;
   }
 
@@ -1575,14 +1577,14 @@ public class MavenUtil {
     return baseDir.findFileByRelativePath(fileRelativePath);
   }
 
-  public static Path toPath(@Nullable MavenProject mavenProject, String path) {
+  public static MavenPathWrapper toPath(@Nullable MavenProject mavenProject, String path) {
     if (!Paths.get(path).isAbsolute()) {
       if (mavenProject == null) {
         throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
       }
       path = new File(mavenProject.getDirectory(), path).getPath();
     }
-    return new Path(path);
+    return new MavenPathWrapper(path);
   }
 
   public static @NotNull Sdk getJdk(@NotNull Project project, @NotNull String name) throws ExternalSystemJdkException {
@@ -1752,7 +1754,7 @@ public class MavenUtil {
   }
 
   public static MavenProjectModelReadHelper createModelReadHelper(Project project) {
-    return new MavenProjectModelServerModelReadHelper(project);
+    return MavenProjectModelReadHelper.getInstance(project);
   }
 
   public static Collection<File> collectClasspath(Collection<Class<?>> classes) {

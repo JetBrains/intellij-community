@@ -16,6 +16,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -86,7 +87,8 @@ public final class CleanupInspectionIntention implements IntentionAction, HighPr
     String message = null;
     if (!descriptions.isEmpty() && FileModificationService.getInstance().preparePsiElementForWrite(targetFile)) {
       AbstractPerformFixesTask fixesTask = CleanupInspectionUtil.getInstance()
-        .applyFixes(project, LangBundle.message("apply.fixes"), descriptions, myQuickfix.getClass(), myQuickfix.startInWriteAction());
+        .applyFixes(project, LangBundle.message("apply.fixes"), descriptions, ReportingClassSubstitutor.getClassToReport(myQuickfix), 
+                    myQuickfix.startInWriteAction());
 
       message = fixesTask.getResultMessage(myText);
     }

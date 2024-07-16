@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -111,7 +111,7 @@ object UastFacade : UastLanguagePlugin {
         clearCachedPlugin()
       }
     })
-    UastLanguagePlugin.extensionPointName.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null)
+    UastLanguagePlugin.EP.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null)
   }
 
   override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =

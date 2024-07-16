@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 
 import java.util.Map;
 
-public class GebContentDeclarationSearcher extends PomDeclarationSearcher {
+public final class GebContentDeclarationSearcher extends PomDeclarationSearcher {
   @Override
   public void findDeclarationsAt(@NotNull PsiElement element, int offsetInElement, @NotNull Consumer<? super PomTarget> consumer) {
     PsiElement grCall = element.getParent();

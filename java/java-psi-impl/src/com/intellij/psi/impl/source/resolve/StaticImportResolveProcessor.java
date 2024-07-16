@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
@@ -25,7 +25,7 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
   }
 
   @Override
-  public boolean execute(@NotNull final PsiElement candidate, @NotNull final ResolveState state) {
+  public boolean execute(final @NotNull PsiElement candidate, final @NotNull ResolveState state) {
     if (candidate instanceof PsiMember && ((PsiModifierListOwner)candidate).hasModifierProperty(PsiModifier.STATIC)) {
       if (candidate instanceof PsiField) {
         if (checkDomination((PsiMember)candidate, myFieldResults)) return true;
@@ -72,13 +72,13 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
   }
 
   @Override
-  public String getName(@NotNull final ResolveState state) {
+  public String getName(final @NotNull ResolveState state) {
     return myName;
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> T getHint(@NotNull final Key<T> hintKey) {
+  public <T> T getHint(final @NotNull Key<T> hintKey) {
     if (hintKey == NameHint.KEY) {
       return (T)this;
     }

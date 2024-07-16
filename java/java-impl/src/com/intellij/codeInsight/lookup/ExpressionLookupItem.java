@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -33,8 +33,7 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
     myAllLookupStrings = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(lookupStrings)));
   }
 
-  @Nullable
-  private static Icon getExpressionIcon(@NotNull PsiExpression expression) {
+  private static @Nullable Icon getExpressionIcon(@NotNull PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       final PsiElement element = ((PsiReferenceExpression)expression).resolve();
       if (element != null) {
@@ -47,9 +46,8 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiExpression getObject() {
+  public @NotNull PsiExpression getObject() {
     return myExpression;
   }
 
@@ -82,9 +80,8 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
     return myLookupString.hashCode();
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myLookupString;
   }
 

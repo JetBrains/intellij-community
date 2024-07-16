@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CommentHolder.Co
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-open class AbstractCodeToInlineBuilder(
+abstract class AbstractCodeToInlineBuilder(
     project: Project,
     protected val originalDeclaration: KtDeclaration?,
     protected val fallbackToSuperCall: Boolean = false,
@@ -39,25 +39,11 @@ open class AbstractCodeToInlineBuilder(
         }
     }
 
-    protected open fun prepareMutableCodeToInline(
+    protected abstract fun prepareMutableCodeToInline(
         mainExpression: KtExpression?,
         statementsBefore: List<KtExpression>,
         reformat: Boolean,
-    ): MutableCodeToInline {
-        val codeToInline = MutableCodeToInline(
-            mainExpression,
-            originalDeclaration,
-            statementsBefore.toMutableList(),
-            mutableSetOf(),
-            false,
-            extraComments = null,
-        )
-
-        if (originalDeclaration != null) {
-            saveComments(codeToInline, originalDeclaration)
-        }
-        return codeToInline
-    }
+    ): MutableCodeToInline
 
     fun prepareCodeToInlineWithAdvancedResolution(
         bodyOrExpression: KtExpression,

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.junit.runner.RunWith;
 
@@ -42,7 +43,7 @@ public class XmlParsingAdditionalTest extends BasePlatformTestCase {
     assertNotNull(doc);
 
     WriteCommandAction.writeCommandAction(project, file).run(
-      () -> PlatformTestUtil.newPerformanceTest("XML reparse using PsiBuilder", () -> {
+      () -> PerformanceTestUtil.newPerformanceTest("XML reparse using PsiBuilder", () -> {
         for (int i = 0; i < 10; i++) {
           final long start = System.nanoTime();
           doc.insertString(0, "<additional root=\"tag\"/>");

@@ -43,5 +43,6 @@ class VendorInfoPanel : JPanel(ListLayout.horizontal(JBUI.scale(5))) {
     traderStatus.text = IdeBundle.message(if (node.isTrader) "plugin.vendor.trader.label" else "plugin.vendor.non.trader.label")
     traderIcon.isVisible = node.isTrader
     nonTraderIcon.isVisible = !node.isTrader
+    isVisible = node.verifiedName != null
   }
 }

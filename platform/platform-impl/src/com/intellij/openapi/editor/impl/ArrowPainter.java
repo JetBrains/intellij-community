@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.paint.LinePainter2D;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -10,6 +11,7 @@ import java.awt.*;
 /**
  * Encapsulates the logic of drawing arrows at graphics buffer (primary usage is to draw tabulation symbols representation arrows).
  */
+@ApiStatus.Internal
 public final class ArrowPainter {
   private final ColorProvider myColorHolder;
   private final Computable<Integer> myWidthProvider;

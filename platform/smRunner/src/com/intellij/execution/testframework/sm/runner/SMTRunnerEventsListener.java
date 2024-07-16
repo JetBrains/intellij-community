@@ -5,12 +5,14 @@ import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Handles Test Runner events.
 */
+@ApiStatus.OverrideOnly
 public interface SMTRunnerEventsListener {
 
   @Topic.ProjectLevel

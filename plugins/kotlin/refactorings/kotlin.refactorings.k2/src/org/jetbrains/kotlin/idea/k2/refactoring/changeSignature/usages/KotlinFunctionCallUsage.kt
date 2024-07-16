@@ -2,43 +2,47 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiSuperMethodUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KtExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
@@ -47,15 +51,15 @@ internal class KotlinFunctionCallUsage(
     private val callee: PsiElement
 ) : UsageInfo(element), KotlinBaseChangeSignatureUsage {
 
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val indexToExpMap: Map<Int, SmartPsiElementPointer<KtExpression>>? = allowAnalysisFromWriteAction {
         allowAnalysisOnEdt {
             analyze(element) {
-                val ktCall = element.resolveCall()
+                val ktCall = element.resolveToCall()
                 val functionCall = ktCall?.singleFunctionCallOrNull()
                     ?: return@allowAnalysisOnEdt null
                 val partiallyAppliedSymbol = functionCall.partiallyAppliedSymbol
-                if (ktCall is KtErrorCallInfo && partiallyAppliedSymbol.signature.valueParameters.size != element.valueArguments.size) {
+                if (ktCall is KaErrorCallInfo && partiallyAppliedSymbol.signature.valueParameters.size != element.valueArguments.size) {
                     //don't update broken call sites e.g. if new parameter is added as follows
                     //first add new argument to all function usages and only then call refactoring to update function hierarchy
                     return@allowAnalysisOnEdt null
@@ -63,32 +67,50 @@ internal class KotlinFunctionCallUsage(
                 val receiverOffset = if (callee is KtCallableDeclaration && callee.receiverTypeReference != null) 1 else 0
                 val map = mutableMapOf<Int, SmartPsiElementPointer<KtExpression>>()
 
-                val oldIdxMap: Map<KtValueParameterSymbol, Int> = partiallyAppliedSymbol.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
+                val oldIdxMap: Map<KaValueParameterSymbol, Int> = partiallyAppliedSymbol.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
                 functionCall.argumentMapping.forEach { (expr, variableSymbol) ->
                     map[oldIdxMap[variableSymbol.symbol]!!] = expr.createSmartPointer()
                 }
-                if (receiverOffset > 0) {
-                    val receiver = ((partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver) as? KtExplicitReceiverValue)?.expression
-                    if (receiver != null) {
-                        map[0] = receiver.createSmartPointer()
+                for (entry in oldIdxMap.entries) {
+                    if (!map.containsKey(entry.value)) {
+                        entry.key.defaultValue?.let {
+                            //create copy because the (unused) parameter might be removed during introduce parameter refactoring
+                            map[entry.value] = (it.copy() as KtExpression).createSmartPointer()
+                        }
                     }
+                }
+                val receiver = ((partiallyAppliedSymbol.extensionReceiver
+                    ?: partiallyAppliedSymbol.dispatchReceiver) as? KaExplicitReceiverValue)?.expression
+                if (receiver != null) {
+                    val receiverPointer = receiver.createSmartPointer()
+                    if (receiverOffset > 0) map[0] = receiverPointer
+                    map[Int.MAX_VALUE] = receiverPointer
+                } else {
+                    val symbol = ((partiallyAppliedSymbol.extensionReceiver
+                        ?: partiallyAppliedSymbol.dispatchReceiver) as? KaImplicitReceiverValue)?.symbol
+                    val thisText = if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
+                        "this@" + symbol.name!!.asString()
+                    } else {
+                        "this"
+                    }
+                    map[Int.MAX_VALUE] = KtPsiFactory.contextual(callee).createExpression(thisText).createSmartPointer()
                 }
                 return@allowAnalysisOnEdt map
             }
         }
     }
 
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private val extensionReceiver: String? =
         allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 analyze(element) {
-                    val partiallyAppliedSymbol = element.resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol
+                    val partiallyAppliedSymbol = element.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol
                     when (val receiver = partiallyAppliedSymbol?.extensionReceiver) {
-                        is KtExplicitReceiverValue -> receiver.expression.text
-                        is KtImplicitReceiverValue -> {
+                        is KaExplicitReceiverValue -> receiver.expression.text
+                        is KaImplicitReceiverValue -> {
                             val symbol = receiver.symbol
-                            val thisText = if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
+                            val thisText = if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
                                 "this@" + symbol.name!!.asString()
                             } else {
                                 "this"
@@ -184,7 +206,11 @@ internal class KotlinFunctionCallUsage(
         val defaultValueForCall = parameter.defaultValueForCall
         val argValue = when {
             isInsideOfCallerBody -> psiFactory.createExpression(parameter.name)
-            defaultValueForCall != null -> defaultValueForCall
+            defaultValueForCall != null -> substituteReferences(
+                defaultValueForCall,
+                parameter.defaultValueParameterReferences,
+                psiFactory,
+            )
 
             else -> null
         }
@@ -197,7 +223,7 @@ internal class KotlinFunctionCallUsage(
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)//under potemkin progress
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)//under potemkin progress
     private fun updateArgumentsAndReceiver(
         changeInfo: KotlinChangeInfoBase,
         element: KtCallElement,
@@ -349,9 +375,101 @@ internal class KotlinFunctionCallUsage(
             identifier.replace(KtPsiFactory(project).createIdentifier(newName))
         }
     }
+
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    private fun substituteReferences(
+        expression: KtExpression,
+        referenceMap: MutableMap<PsiReference, Int>,
+        psiFactory: KtPsiFactory
+    ): KtExpression {
+        if (referenceMap.isEmpty()) return expression
+
+        var newExpression = expression.copy() as KtExpression
+
+        fun createNameCounterpartMap(from: KtElement, to: KtElement): Map<KtSimpleNameExpression, KtSimpleNameExpression> {
+            return from.collectDescendantsOfType<KtSimpleNameExpression>().zip(to.collectDescendantsOfType<KtSimpleNameExpression>()).toMap()
+        }
+
+        val nameCounterpartMap = createNameCounterpartMap(expression, newExpression)
+
+
+        fun needSeparateVariable(element: PsiElement): Boolean {
+            return when {
+                element is KtConstantExpression || element is KtThisExpression || element is KtSimpleNameExpression -> false
+                element is KtBinaryExpression && OperatorConventions.ASSIGNMENT_OPERATIONS.contains(element.operationToken) -> true
+                element is KtUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(element.operationToken) -> true
+                element is KtCallExpression -> true
+                else -> element.children.any { needSeparateVariable(it) }
+            }
+        }
+
+        val replacements = ArrayList<Pair<KtExpression, KtExpression>>()
+        loop@ for ((ref, paramIdx) in referenceMap.entries) {
+            var addReceiver: Boolean = paramIdx == Int.MAX_VALUE
+            var argumentExpression = indexToExpMap?.get(paramIdx)?.element ?: continue
+
+            if (argumentExpression.isPhysical &&  //don't create variable for default value expression
+                needSeparateVariable(argumentExpression)
+                && PsiTreeUtil.getNonStrictParentOfType(
+                    element,
+                    KtConstructorDelegationCall::class.java,
+                    KtSuperTypeListEntry::class.java,
+                    KtParameter::class.java
+                ) == null
+            ) {
+
+                allowAnalysisFromWriteAction {
+                    allowAnalysisOnEdt {
+                        K2IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+                            project, null, argumentExpression,
+                            isVar = false,
+                            occurrencesToReplace = listOf(argumentExpression),
+                            onNonInteractiveFinish = {
+                                argumentExpression = psiFactory.createExpression(it.name!!)
+                            })
+                    }
+                }
+            }
+
+            var expressionToReplace: KtExpression = nameCounterpartMap[ref.element] ?: continue
+            val parent = expressionToReplace.parent
+
+            if (parent is KtThisExpression) {
+                expressionToReplace = parent
+            }
+
+            if (addReceiver && expressionToReplace !is KtThisExpression) {
+                val callExpression = expressionToReplace.getParentOfTypeAndBranch<KtCallExpression>(true) { calleeExpression }
+                when {
+                    callExpression != null -> expressionToReplace = callExpression
+                    parent is KtOperationExpression && parent.operationReference == expressionToReplace -> continue@loop
+                }
+
+                val replacement = psiFactory.createExpression("${argumentExpression.text}.${expressionToReplace.text}")
+                replacements.add(expressionToReplace to replacement)
+            } else {
+                replacements.add(expressionToReplace to argumentExpression)
+            }
+        }
+
+        // Sort by descending offset so that call arguments are replaced before call itself
+        ContainerUtil.sort(replacements, Comparator<Pair<KtElement, KtElement>> { p1, p2 ->
+            PsiUtil.compareElementsByPosition(p2.first, p1.first)
+        })
+
+        for ((expressionToReplace, replacingExpression) in replacements) {
+            val replaced = expressionToReplace.replaced(replacingExpression)
+            if (expressionToReplace == newExpression) {
+                newExpression = replaced
+            }
+        }
+
+        return newExpression
+    }
+
 }
 
-@OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
 internal fun PsiElement.isCaller(u: Array<out UsageInfo>): Boolean {
     val callers = u.mapNotNull { (it as? CallerUsageInfo)?.element }
     val usagesSupport = KotlinSearchUsagesSupport.getInstance(project)

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.util.PersistentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.nio.file.Path;
 
 import static com.intellij.vcs.log.data.index.SqliteVcsLogStorageBackendKt.SQLITE_VCS_LOG_DB_FILENAME_PREFIX;
 
+@ApiStatus.Internal
 public final class VcsLogCachesInvalidator extends CachesInvalidator {
   private static final Logger LOG = Logger.getInstance(VcsLogCachesInvalidator.class);
 

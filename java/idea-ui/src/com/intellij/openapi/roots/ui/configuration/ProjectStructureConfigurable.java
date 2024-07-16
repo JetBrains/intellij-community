@@ -615,21 +615,15 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     return myContext;
   }
 
-  private class MyPanel extends JPanel implements DataProvider {
+  private class MyPanel extends JPanel implements UiDataProvider {
     MyPanel() {
       super(new BorderLayout());
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls final String dataId) {
-      if (KEY.is(dataId)) {
-        return ProjectStructureConfigurable.this;
-      } else if (History.KEY.is(dataId)) {
-        return getHistory();
-      } else {
-        return null;
-      }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(KEY, ProjectStructureConfigurable.this);
+      sink.set(History.KEY, getHistory());
     }
 
     @Override

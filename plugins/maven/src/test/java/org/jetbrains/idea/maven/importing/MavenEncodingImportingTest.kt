@@ -2,17 +2,18 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import junit.framework.TestCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.nio.charset.StandardCharsets
 
 class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = true
   @Test
-  fun testShouldSetEncodingForNewProject() = runBlocking {
+  fun testShouldSetEncodingForNewProject() = runBlocking(Dispatchers.EDT) {
     val subFile = createProjectSubFile("src/main/java/MyClass.java")
     importProjectAsync("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
@@ -25,7 +26,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile, true))
   }
 
-  @Test fun testShouldSetDifferentEncodingForSourceAndResource() = runBlocking {
+  @Test fun testShouldSetDifferentEncodingForSourceAndResource() = runBlocking(Dispatchers.EDT) {
     val srcFile = createProjectSubFile("src/main/java/MyClass.java")
     val resFile = createProjectSubFile("src/main/resources/data.properties")
     importProjectAsync("""<groupId>test</groupId>
@@ -52,7 +53,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.UTF_16LE, EncodingProjectManager.getInstance(project).getEncoding(resFile, true))
   }
 
-  @Test fun testShouldUseSrcEncodingForResFiles() = runBlocking {
+  @Test fun testShouldUseSrcEncodingForResFiles() = runBlocking(Dispatchers.EDT) {
     val resFile = createProjectSubFile("src/main/resources/data.properties")
     importProjectAsync("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
@@ -66,7 +67,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(resFile, true))
   }
 
-  @Test fun testShouldChangeEncoding() = runBlocking {
+  @Test fun testShouldChangeEncoding() = runBlocking(Dispatchers.EDT) {
     val subFile = createProjectSubFile("src/main/java/MyClass.java")
     importProjectAsync("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
@@ -89,7 +90,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile, true))
   }
 
-  @Test fun testShouldSetEncodingPerProject() = runBlocking {
+  @Test fun testShouldSetEncodingPerProject() = runBlocking(Dispatchers.EDT) {
 
     createModulePom("module1", """<parent>
                             <groupId>test</groupId>
@@ -130,7 +131,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile2, true))
   }
 
-  @Test fun testShouldSetEncodingPerProjectInSubsequentImport() = runBlocking {
+  @Test fun testShouldSetEncodingPerProjectInSubsequentImport() = runBlocking(Dispatchers.EDT) {
     createModulePom("module1", """
                           <parent>
                             <groupId>test</groupId>
@@ -182,7 +183,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile2, true))
   }
 
-  @Test fun testShouldSetEncodingToNewFiles() = runBlocking {
+  @Test fun testShouldSetEncodingToNewFiles() = runBlocking(Dispatchers.EDT) {
 
     createModulePom("module1", """<parent>
                             <groupId>test</groupId>
@@ -223,7 +224,7 @@ class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals(StandardCharsets.ISO_8859_1, EncodingProjectManager.getInstance(project).getEncoding(subFile2, true))
   }
 
-  @Test fun testShouldSetResourceEncodingAsProperties() = runBlocking {
+  @Test fun testShouldSetResourceEncodingAsProperties() = runBlocking(Dispatchers.EDT) {
     importProjectAsync("""<groupId>test</groupId>
                      <artifactId>project</artifactId>
                      <version>1</version>

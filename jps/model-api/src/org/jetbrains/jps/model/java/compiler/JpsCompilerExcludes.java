@@ -15,12 +15,16 @@
  */
 package org.jetbrains.jps.model.java.compiler;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.io.File;
 import java.util.Set;
 
 public interface JpsCompilerExcludes {
+  @ApiStatus.Internal
   void addExcludedFile(String url);
 
+  @ApiStatus.Internal
   void addExcludedDirectory(String url, boolean recursively);
 
   /**

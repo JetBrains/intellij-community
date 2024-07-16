@@ -186,7 +186,7 @@ public final class GroovyCompletionUtil {
 
     final PsiElement pparent = parent.getParent();
     if (!(pparent instanceof GrVariableDeclaration variableDeclaration)) return false;
-    if (((GrVariableDeclaration)pparent).isTuple()) return false;
+    if (variableDeclaration.isTuple()) return false;
 
     if (variableDeclaration.getTypeElementGroovy() != null) return false;
 
@@ -299,7 +299,7 @@ public final class GroovyCompletionUtil {
       }
     }
 
-    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() :   element.getText();
+    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : element.getText();
     if (name == null || !matcher.prefixMatches(name)) {
       return Collections.emptyList();
     }
@@ -310,7 +310,12 @@ public final class GroovyCompletionUtil {
     }
 
     LookupElementBuilder builder = LookupElementBuilder.create(element instanceof PsiPackage ? element : candidate, name);
-    return Collections.singletonList(setupLookupBuilder(element, candidate.getSubstitutor(), builder, position));
+    PsiSubstitutor substitutor = candidate.getSubstitutor();
+    String typeText = getTypeText(element, substitutor, position);
+    String tailText = getTailText(element, substitutor);
+    GroovyResolveResultLookupElementDecorator
+      groovyResolveResultLookupElementDecorator = new GroovyResolveResultLookupElementDecorator(typeText, tailText, setupLookupBuilder(element, builder, tailText, typeText));
+    return Collections.singletonList(groovyResolveResultLookupElementDecorator);
   }
 
   private static boolean setterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
@@ -333,45 +338,61 @@ public final class GroovyCompletionUtil {
     assert element != null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).withPresentableText(importedName);
-    return Collections.singletonList(setupLookupBuilder(element, substitutor, builder, null));
+    String typeText = getTypeText(element, substitutor, null);
+    String tailText = getTailText(element, substitutor);
+    GroovyResolveResultLookupElementDecorator
+      groovyResolveResultLookupElementDecorator = new GroovyResolveResultLookupElementDecorator(typeText, tailText, setupLookupBuilder(element, setupLookupBuilder(element, builder, tailText, typeText), tailText, typeText));
+    return Collections.singletonList(groovyResolveResultLookupElementDecorator);
   }
 
   public static LookupElement createLookupElement(PsiNamedElement o) {
     return setupLookupBuilder(o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, o.getName()), null);
   }
 
-  public static LookupElement setupLookupBuilder(PsiElement element,
-                                                 PsiSubstitutor substitutor,
-                                                 LookupElementBuilder builder,
+  public static LookupElementBuilder setupLookupBuilder(@NotNull PsiElement element,
+                                                 @NotNull PsiSubstitutor substitutor,
+                                                 @NotNull LookupElementBuilder builder,
                                                  @Nullable PsiElement position) {
+    String tailText = getTailText(element, substitutor);
+    String typeText = getTypeText(element, substitutor, position);
+    return setupLookupBuilder(element, builder, tailText, typeText);
+  }
+
+  private static LookupElementBuilder setupLookupBuilder(@NotNull PsiElement element,
+                                                 @NotNull LookupElementBuilder builder,
+                                                 @Nullable String tailText,
+                                                 @Nullable String typeText) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
     if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED)) {
       builder = builder.strikeout();
     }
-    builder = setTailText(element, builder, substitutor);
-    builder = setTypeText(element, builder, substitutor, position);
+    builder = tailText != null ? builder.withTailText(tailText) : builder;
+    builder = typeText != null ? builder.withTypeText(typeText) : builder;
     return builder;
   }
 
-  private static LookupElementBuilder setTailText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor) {
+  private static @Nullable String getTailText(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
       PsiClass aClass = ((PsiMethod)element).getContainingClass();
       if (aClass != null && aClass.isAnnotationType()) {
-        return builder;
+        return null;
       }
-      builder = builder.withTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                                PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
+      return PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS,
+                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE);
     }
     else if (element instanceof PsiClass psiClass) {
-      String tailText = getPackageText((PsiClass)element);
-      if ((substitutor == null || substitutor.getSubstitutionMap().isEmpty()) && psiClass.getTypeParameters().length > 0) {
-        tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), psiTypeParameter -> psiTypeParameter.getName(), "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
+      String tailText = getPackageText(psiClass);
+      if (substitutor.getSubstitutionMap().isEmpty() && psiClass.getTypeParameters().length > 0) {
+        tailText = "<" +
+                   StringUtil.join(psiClass.getTypeParameters(), psiTypeParameter -> psiTypeParameter.getName(),
+                                   "," + (showSpaceAfterComma(psiClass) ? " " : "")) +
+                   ">" +
+                   tailText;
       }
-      builder = builder.withTailText(tailText, true);
+      return tailText;
     }
-
-    return builder;
+    return null;
   }
 
   private static String getPackageText(PsiClass psiClass) {
@@ -384,11 +405,9 @@ public final class GroovyCompletionUtil {
     return CodeStyle.getLanguageSettings(element.getContainingFile(), GroovyLanguage.INSTANCE).SPACE_AFTER_COMMA;
   }
 
-
-  private static LookupElementBuilder setTypeText(PsiElement element,
-                                                  LookupElementBuilder builder,
-                                                  PsiSubstitutor substitutor,
-                                                  @Nullable PsiElement position) {
+  private static @Nullable String getTypeText(@NotNull PsiElement element,
+                                              @NotNull PsiSubstitutor substitutor,
+                                              @Nullable PsiElement position) {
     PsiType type = null;
     if (element instanceof GrVariable) {
       type = TypeInferenceHelper.getVariableTypeInContext(position, (GrVariable)element);
@@ -402,7 +421,7 @@ public final class GroovyCompletionUtil {
     else if (element instanceof GroovyProperty) {
       type = ((GroovyProperty)element).getPropertyType();
     }
-    return type != null ? builder.withTypeText(type.getPresentableText()) : builder;
+    return type != null ? type.getPresentableText() : null;
   }
 
   public static boolean hasConstructorParameters(@NotNull PsiClass clazz, @NotNull PsiElement place) {

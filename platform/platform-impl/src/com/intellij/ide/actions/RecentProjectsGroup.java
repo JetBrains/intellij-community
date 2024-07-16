@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -16,18 +15,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class RecentProjectsGroup extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification {
+public final class RecentProjectsGroup extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification.Disabled {
 
   public RecentProjectsGroup() {
     Presentation presentation = getTemplatePresentation();
     presentation.setText(ActionsBundle.messagePointer(SystemInfo.isMac ? "group.reopen.mac.text" : "group.reopen.win.text"));
   }
 
-  @NotNull
-  @Override
-  public ActionRemoteBehavior getBehavior() {
-    return ActionRemoteBehavior.Disabled;
-  }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -52,7 +46,7 @@ public final class RecentProjectsGroup extends ActionGroup implements DumbAware,
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    presentation.setEnabled(RecentProjectListActionProvider.getInstance().getActions(true).size() > 0);
+    presentation.setEnabled(!RecentProjectListActionProvider.getInstance().getActions(true).isEmpty());
   }
 
   @Override

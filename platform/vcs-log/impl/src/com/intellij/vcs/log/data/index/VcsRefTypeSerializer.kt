@@ -8,7 +8,7 @@ import java.io.DataOutput
  * Helper class for serializing and deserializing Int based [com.intellij.vcs.log.VcsRefType]
  * This ensures compatibility of API [com.intellij.vcs.log.VcsLogRefManager.serialize] and [com.intellij.vcs.log.VcsLogRefManager.deserialize]
  */
-class VcsRefTypeSerializer : DataInput, DataOutput {
+internal class VcsRefTypeSerializer : DataInput, DataOutput {
 
   private var type = 0
 

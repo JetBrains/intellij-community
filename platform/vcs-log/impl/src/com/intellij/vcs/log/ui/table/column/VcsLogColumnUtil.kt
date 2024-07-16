@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider.Companion.getExtensionsWithColumns
+import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider.WithColumn
 import org.jetbrains.annotations.ApiStatus
 
 internal fun VcsLogUiProperties.supportsColumnsReordering() = exists(CommonUiProperties.COLUMN_ID_ORDER)
@@ -114,4 +116,12 @@ private fun <T> VcsLogUiProperties.getPropertyValue(property: VcsLogUiProperty<T
   else {
     defaultValue
   }
+}
+
+internal fun getDynamicColumns(): List<VcsLogColumn<*>> {
+  val columns: MutableList<VcsLogColumn<*>> = ArrayList()
+  columns.addAll(getDefaultDynamicColumns())
+  columns.addAll(VcsLogCustomColumn.KEY.extensionList)
+  columns.addAll(getExtensionsWithColumns().map(WithColumn<*>::logColumn))
+  return columns.filter { it.isDynamic }
 }

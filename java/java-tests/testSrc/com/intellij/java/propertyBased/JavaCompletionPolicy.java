@@ -17,7 +17,6 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -139,7 +138,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
     }
-    if (JavaLexer.isSoftKeyword(leaf.getText(), LanguageLevel.JDK_1_9) &&
+    if (PsiUtil.isSoftKeyword(leaf.getText(), LanguageLevel.JDK_1_9) &&
         !PsiJavaModule.MODULE_INFO_FILE.equals(leaf.getContainingFile().getName())) {
       return false;
     }

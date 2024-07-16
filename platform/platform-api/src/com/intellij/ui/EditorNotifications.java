@@ -1,15 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.IntentionActionProvider;
 import com.intellij.codeInsight.intention.IntentionActionWithOptions;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,6 @@ import java.util.List;
 import java.util.function.Function;
 
 public abstract class EditorNotifications {
-
   private static final EditorNotifications NULL_IMPL = new EditorNotifications() {
     @Override
     public void updateNotifications(@NotNull VirtualFile file) {
@@ -76,6 +77,10 @@ public abstract class EditorNotifications {
 
   public static @NotNull EditorNotifications getInstance(@NotNull Project project) {
     return project.isDefault() ? NULL_IMPL : project.getService(EditorNotifications.class);
+  }
+
+  @ApiStatus.Internal
+  public void scheduleUpdateNotifications(@NotNull TextEditor editor) {
   }
 
   public abstract void updateNotifications(@NotNull VirtualFile file);

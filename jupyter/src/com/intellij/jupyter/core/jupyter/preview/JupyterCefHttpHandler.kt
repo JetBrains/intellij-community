@@ -2,7 +2,7 @@
 package com.intellij.jupyter.core.jupyter.preview
 
 
-import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtilRt
@@ -25,7 +25,7 @@ import java.nio.file.Path
 abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collection<String> = emptyList()) : HttpRequestHandler() {
 
   companion object {
-    private val allowedTypes = setOf("css", "js", "html", "svg", "woff2", "ttf")
+    private val allowedTypes = setOf("css", "js", "html", "svg", "woff", "woff2", "ttf")
     private const val JUPYTER_HTTP_URI = "jupyter"
     private const val prefix = "/$JUPYTER_HTTP_URI"
 
@@ -48,7 +48,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
       // After optimizations in PluginClassLoader, classLoader.getResource return null in debug,
       // so we have additional logic with PluginClassLoader.pluginDescriptor.
       val url = javaClass.classLoader.getResource(path)
-                ?: (javaClass.classLoader as? PluginClassLoader)?.pluginDescriptor?.getPluginPath()?.let { Path.of(it.toCanonicalPath(), path) }?.toUri()?.toURL()
+                ?: (javaClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.getPluginPath()?.let { Path.of(it.toCanonicalPath(), path) }?.toUri()?.toURL()
       if (url != null) {
         return url
       }

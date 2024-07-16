@@ -8,11 +8,13 @@ import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
+@Internal
 public interface IndexableFilesIndex {
 
   static @NotNull IndexableFilesIndex getInstance(@NotNull Project project) {

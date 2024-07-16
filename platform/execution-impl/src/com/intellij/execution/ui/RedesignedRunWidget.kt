@@ -141,7 +141,7 @@ private fun createRunActionToolbar(): ActionToolbar {
         JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
       }
       setForceMinimumSize(true)
-      setActionButtonBorder(JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGap(), JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
+      setActionButtonBorder(JBUI.CurrentTheme.RunWidget::toolbarBorderDirectionalGap, JBUI.CurrentTheme.RunWidget::toolbarBorderHeight)
       setCustomButtonLook(RunWidgetButtonLook())
       border = null
     }
@@ -434,13 +434,13 @@ private class MoreRunToolbarActions : TogglePopupAction(
 
   override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup {
     val selectedConfiguration = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration
-    val event = e.withDataContext(CustomizedDataContext.create(e.dataContext) { dataId ->
-      if (RUN_CONFIGURATION_KEY.`is`(dataId)) selectedConfiguration else null
+    val event = e.withDataContext(CustomizedDataContext.withSnapshot(e.dataContext) { sink ->
+      sink[RUN_CONFIGURATION_KEY] = selectedConfiguration
     })
     return super.createPopup(actionGroup, event, disposeCallback).also {
       (it.listStep as ActionPopupStep).setSubStepContextAdjuster { context, _ ->
-        CustomizedDataContext.create(context) { dataId ->
-          if (RUN_CONFIGURATION_KEY.`is`(dataId)) selectedConfiguration else null
+        CustomizedDataContext.withSnapshot(context) { sink ->
+          sink[RUN_CONFIGURATION_KEY] = selectedConfiguration
         }
       }
     }

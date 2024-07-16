@@ -6,6 +6,7 @@ import org.jdom.Element
 import org.jetbrains.idea.maven.model.*
 import java.io.File
 
+
 class MavenBuildPathsChange(private val transformer: (String) -> String,
                             private val needTransformConfiguration: (String) -> Boolean = { false }) {
   fun perform(model: MavenModel) = model.transformPaths()

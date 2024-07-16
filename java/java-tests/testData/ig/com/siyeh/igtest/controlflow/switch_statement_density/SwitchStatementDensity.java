@@ -12,7 +12,7 @@ public class SwitchStatementDensity
     public void fooBar()
     {
         final int bar = m_bar;
-        <warning descr="'switch' has too low of a branch density (19%)">switch</warning>(bar)
+        <warning descr="'switch' branch density is too low (19%)">switch</warning>(bar)
         {
             case 3:
             case 4:
@@ -48,7 +48,7 @@ public class SwitchStatementDensity
     }
 
     public int switchExpression(int e) {
-        return <warning descr="'switch' has too low of a branch density (11%)">switch</warning> (e) {
+        return <warning descr="'switch' branch density is too low (11%)">switch</warning> (e) {
             case 1:
                 System.out.println(e);
                 System.out.println(e);
@@ -76,7 +76,7 @@ public class SwitchStatementDensity
     }
 
     public void ruleBaseSwitch(String s) {
-        <warning descr="'switch' has too low of a branch density (9%)">switch</warning> (s) {
+        <warning descr="'switch' branch density is too low (9%)">switch</warning> (s) {
             case "one" -> {
                 System.out.println(1);
                 System.out.println(1);

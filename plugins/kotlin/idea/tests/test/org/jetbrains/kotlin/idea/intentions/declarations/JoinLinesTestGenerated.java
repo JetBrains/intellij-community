@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.intentions.declarations;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/joinLines/addSemicolon")
     public static class AddSemicolon extends AbstractJoinLinesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -115,6 +122,12 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/joinLines/declarationAndAssignment")
     public static class DeclarationAndAssignment extends AbstractJoinLinesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -208,6 +221,12 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/joinLines/initializerAndIfToElvis")
     public static class InitializerAndIfToElvis extends AbstractJoinLinesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -221,6 +240,12 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/joinLines/nestedIfs")
     public static class NestedIfs extends AbstractJoinLinesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -259,6 +284,12 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/joinLines/removeBraces")
     public static class RemoveBraces extends AbstractJoinLinesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -362,6 +393,12 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/joinLines/removeTrailingComma")
     public static class RemoveTrailingComma extends AbstractJoinLinesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -440,6 +477,12 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/joinLines/stringTemplate")
     public static class StringTemplate extends AbstractJoinLinesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -483,6 +526,12 @@ public abstract class JoinLinesTestGenerated extends AbstractJoinLinesTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/joinLines/whenEntry")
     public static class WhenEntry extends AbstractJoinLinesTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

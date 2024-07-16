@@ -27,6 +27,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class JsonSchemaReadTest extends BasePlatformTestCase {
@@ -57,9 +59,11 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
 
   public void testMainSchemaHighlighting() {
     final JsonSchemaService service = JsonSchemaService.Impl.get(getProject());
+    var versionsToTest = Stream.of(JsonSchemaVersion.SCHEMA_4, JsonSchemaVersion.SCHEMA_6, JsonSchemaVersion.SCHEMA_7).collect(Collectors.toSet());
     final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(getProject());
-    Assert.assertEquals(JsonSchemaProjectSelfProviderFactory.TOTAL_PROVIDERS, providers.size());
     for (JsonSchemaFileProvider provider: providers) {
+      if (!versionsToTest.contains(provider.getSchemaVersion())) continue;
+
       final VirtualFile mainSchema = provider.getSchemaFile();
       assertNotNull(mainSchema);
       assertTrue(service.isSchemaFile(mainSchema));

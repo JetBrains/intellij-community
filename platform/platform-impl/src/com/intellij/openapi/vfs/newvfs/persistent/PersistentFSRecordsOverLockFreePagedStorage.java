@@ -69,6 +69,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
 
   private final transient HeaderAccessor headerAccessor = new HeaderAccessor(this);
 
+  private final boolean wasClosedProperly;
 
   public PersistentFSRecordsOverLockFreePagedStorage(final @NotNull PagedFileStorageWithRWLockedPageContent storage) throws IOException {
     this.storage = storage;
@@ -80,6 +81,17 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
     allocatedRecordsCount.set(recordsCountInStorage);
 
     globalModCount.set(getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET));
+
+    int connectionStatus = getIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET);
+    wasClosedProperly = (connectionStatus == SAFELY_CLOSED_STAMP);
+    setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, IN_USE_STAMP);
+    force();//CONNECTION_STATUS change makes file dirty, but it is unexpected to have freshly opened storage dirty => flush it
+    //MAYBE RC: flushing on storage open is also not good for (startup) performance. Instead, we could update the position in
+    //          a page with raw update, without notifying storage of changes, which tricks storage think it is !dirty.
+    //          Normally this calls for a bug, but in this particular case flushing connection status change has no sense until
+    //          some _other_, actual change(s) happened -- i.e. if connection status change is the _only_ change happened, it is
+    //          perfectly fine to lose it, i.e. not store it on .force()/.close() -- we must store connection status only if
+    //          some other change(s) happened.
   }
 
   @VisibleForTesting
@@ -131,6 +143,12 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   @Override
   public int maxAllocatedID() {
     return allocatedRecordsCount.get();
+  }
+
+  @Override
+  public boolean isValidFileId(int recordId) {
+    final int allocatedSoFar = allocatedRecordsCount.get();
+    return FSRecords.NULL_FILE_ID < recordId && recordId <= allocatedSoFar;
   }
 
   @Override
@@ -346,11 +364,6 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
     }
 
     @Override
-    public int getConnectionStatus() throws IOException {
-      return records.getConnectionStatus();
-    }
-
-    @Override
     public int getVersion() throws IOException {
       return records.getVersion();
     }
@@ -358,11 +371,6 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
     @Override
     public int getGlobalModCount() {
       return records.getGlobalModCount();
-    }
-
-    @Override
-    public void setConnectionStatus(final int code) throws IOException {
-      records.setConnectionStatus(code);
     }
 
     @Override
@@ -664,14 +672,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public void setConnectionStatus(final int connectionStatus) throws IOException {
-    setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
-    //intentionally don't increment globalModCount
-  }
-
-  @Override
-  public int getConnectionStatus() throws IOException {
-    return getIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET);
+  public boolean wasClosedProperly() throws IOException {
+    return wasClosedProperly;
   }
 
   @Override
@@ -724,6 +726,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   @Override
   public void close() throws IOException {
     if (!storage.isClosed()) {
+      setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, SAFELY_CLOSED_STAMP);
+      
       force();
       storage.close();
     }
@@ -772,8 +776,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
-    final int recordsAllocatedSoFar = allocatedRecordsCount.get();
-    if (!(NULL_ID < recordId && recordId <= recordsAllocatedSoFar)) {
+    if (!isValidFileId(recordId)) {
+      final int recordsAllocatedSoFar = allocatedRecordsCount.get();
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + recordsAllocatedSoFar + "]");
     }

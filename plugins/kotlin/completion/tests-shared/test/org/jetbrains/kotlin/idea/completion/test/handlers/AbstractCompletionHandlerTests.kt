@@ -4,18 +4,19 @@ package org.jetbrains.kotlin.idea.completion.test.handlers
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.runTestIfNotDisabledByFileDirective
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.addCharacterCodingException
 import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.runTestIfNotDisabledByFileDirective
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.utils.addToStdlib.indexOfOrNull
 
@@ -28,6 +29,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
         const val COMPLETION_CHAR_PREFIX = "CHAR:"
         const val COMPLETION_CHARS_PREFIX = "CHARS:"
         const val CODE_STYLE_SETTING_PREFIX = "CODE_STYLE_SETTING:"
+        const val RETAIN_OVERRIDE_ANNOTATION_DIRECTIVE = "RETAIN_OVERRIDE_ANNOTATIONS:"
     }
 
     protected open fun doTest(testPath: String) {
@@ -36,10 +38,12 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                 test(testPath)
                 val originalTestFile = dataFile()
                 val extension = originalTestFile.extension
+                val k2Extension = IgnoreTests.FileExtension.FIR
                 val originalAfterFile = originalTestFile.withExtension("$extension.after")
-                val firAfterFile = originalTestFile.withExtension("fir.$extension.after")
-                IgnoreTests.cleanUpIdenticalFirTestFile(
+                val firAfterFile = originalTestFile.withExtension("$k2Extension.$extension.after")
+                IgnoreTests.cleanUpIdenticalK2TestFile(
                     originalTestFile,
+                    k2Extension,
                     additionalFileToMarkFirIdentical = originalAfterFile,
                     additionalFileToDeleteIfIdentical = firAfterFile,
                     additionalFilesToCompare = listOf(originalAfterFile to firAfterFile)
@@ -58,6 +62,13 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
         try {
             configureCodeStyleAndRun(project) {
                 val fileText = FileUtil.loadFile(testFile)
+                val annotationsToRetain = InTextDirectivesUtils.findStringWithPrefixes(fileText, RETAIN_OVERRIDE_ANNOTATION_DIRECTIVE)
+                if (annotationsToRetain != null) {
+                    OverrideImplementsAnnotationsFilter.EP_NAME.point.registerExtension(
+                        OverrideImplementsAnnotationsFilter { annotationsToRetain.split(',').toTypedArray() },
+                        testRootDisposable
+                    )
+                }
                 withCustomCompilerOptions(fileText, project, module) {
                     assertTrue("\"<caret>\" is missing in file \"$testFile\"", fileText.contains("<caret>"))
 

@@ -45,7 +45,7 @@ public class ApplyGradlePluginCallback extends NotificationListener.Adapter {
 
   @Override
   protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-    new GotoSourceNotificationCallback(myNotificationData, myProject).hyperlinkActivated(notification, event);
+    GradleNotificationCallbackUtil.navigateByNotificationData(myProject, myNotificationData);
 
     final AnAction action = ActionManager.getInstance().getAction(AddGradleDslPluginAction.ID);
     assert action instanceof AddGradleDslPluginAction;

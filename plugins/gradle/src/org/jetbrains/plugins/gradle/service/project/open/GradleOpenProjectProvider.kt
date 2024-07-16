@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.open
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
@@ -46,19 +46,13 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
       ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
 
       if (!Registry.`is`("external.system.auto.import.disabled")) {
-        ExternalSystemUtil.refreshProject(
-          externalProjectPath,
-          ImportSpecBuilder(project, SYSTEM_ID)
-            .usePreviewMode()
-            .use(MODAL_SYNC)
-        )
-
         ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-          ExternalSystemUtil.refreshProject(
-            externalProjectPath,
-            ImportSpecBuilder(project, SYSTEM_ID)
-              .callback(createFinalImportCallback(project, externalProjectPath))
-          )
+          val importSpec = ImportSpecBuilder(project, SYSTEM_ID)
+          if (!project.isTrusted()) {
+            importSpec.usePreviewMode()
+          }
+          importSpec.callback(createFinalImportCallback(project, externalProjectPath))
+          ExternalSystemUtil.refreshProject(externalProjectPath, importSpec)
         }
       }
     }

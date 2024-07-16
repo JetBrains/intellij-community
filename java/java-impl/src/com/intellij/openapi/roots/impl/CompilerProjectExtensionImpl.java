@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -121,7 +121,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     return (CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project);
   }
 
-  final static class MyProjectExtension extends ProjectExtension {
+  static final class MyProjectExtension extends ProjectExtension {
     private final Project myProject;
 
     MyProjectExtension(Project project) {
@@ -139,7 +139,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     }
   }
 
-  final static class MyWatchedRootsProvider implements WatchedRootsProvider {
+  static final class MyWatchedRootsProvider implements WatchedRootsProvider {
     @Override
     public @NotNull Set<String> getRootsToWatch(@NotNull Project project) {
       return CompilerProjectExtensionImpl.getRootsToWatch(project);

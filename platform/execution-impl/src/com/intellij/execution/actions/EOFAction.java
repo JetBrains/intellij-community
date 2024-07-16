@@ -1,17 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.google.common.base.Ascii;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.*;
-import com.intellij.execution.ui.layout.impl.ViewImpl;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.terminal.TerminalExecutionConsole;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,26 +25,17 @@ public final class EOFAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
+    return ActionUpdateThread.EDT;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     RunContentDescriptor descriptor = StopAction.getRecentlyStartedContentDescriptor(e.getDataContext());
-    boolean isConsoleSelected = descriptor != null && isConsoleSelected(descriptor);
+    ConsoleView console = UIUtil.getParentOfType(ConsoleView.class, IdeFocusManager.findInstance().getFocusOwner());
     ProcessHandler handler = descriptor != null ? descriptor.getProcessHandler() : null;
-    e.getPresentation().setEnabledAndVisible(isConsoleSelected
+    e.getPresentation().setEnabledAndVisible(console != null
                                              && handler != null
                                              && !handler.isProcessTerminated());
-  }
-
-  private static boolean isConsoleSelected(@NotNull RunContentDescriptor descriptor) {
-    RunnerLayoutUi runnerLayoutUi = descriptor.getRunnerLayoutUi();
-    if (runnerLayoutUi == null) return false;
-    ContentManager contentManager = runnerLayoutUi.getContentManager();
-    Content selectedContent = contentManager.getSelectedContent();
-    return selectedContent != null
-           && ExecutionConsole.CONSOLE_CONTENT_ID.equals(selectedContent.getUserData(ViewImpl.ID));
   }
 
   @Override

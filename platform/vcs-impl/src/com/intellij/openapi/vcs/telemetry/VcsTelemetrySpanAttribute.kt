@@ -12,6 +12,7 @@ object VcsTelemetrySpanAttribute {
 
   val VCS_LOG_FILTERS_LIST: AttributeKey<String> = AttributeKey.stringKey("filters")
   val VCS_LOG_SORT_TYPE: AttributeKey<String> = AttributeKey.stringKey("sortType")
+  val VCS_LOG_GRAPH_OPTIONS_TYPE: AttributeKey<String> = AttributeKey.stringKey("graphOptionsKind")
   val VCS_LOG_FILTERED_COMMIT_COUNT: AttributeKey<String> = AttributeKey.stringKey("filteredCommitCount")
   val VCS_LOG_REPOSITORY_COMMIT_COUNT: AttributeKey<Long> = AttributeKey.longKey("repositoryCommitCount")
   val VCS_LOG_FILTER_KIND: AttributeKey<String> = AttributeKey.stringKey("filterKind")

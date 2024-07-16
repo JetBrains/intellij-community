@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -27,6 +28,9 @@ class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPR
   @Serializable
   data class State(val prStates: List<PRState>)
 
+  private val stateFlow = MutableStateFlow(state)
+  val updateSignal: Flow<Unit> = stateFlow.map { }
+
   fun isSeen(pr: GHPullRequestShort, currentUser: GHUser): Boolean {
     if (pr.author?.id != currentUser.id && pr.reviewRequests.none { it.requestedReviewer?.id == currentUser.id }) {
       return true
@@ -39,17 +43,25 @@ class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPR
     // Cleanup state entries for PRs that have updates
     val clearBeforeTime = System.currentTimeMillis() - Duration.ofDays(Registry.intValue(CLEAR_AFTER_DAYS_KEY).toLong()).toMillis()
     if (!isSeen && lastSeen != null && lastSeen < clearBeforeTime) {
-      updateState { st -> st.copy(prStates = st.prStates.filterNot { it.id == pr.prId }) }
+      updateStateAndEmit { st -> st.copy(prStates = st.prStates.filterNot { it.id == pr.prId }) }
     }
 
     return isSeen
   }
 
   fun updateStateFor(prId: GHPRIdentifier, updater: (PRState?) -> PRState) {
-    updateState { st ->
+    updateStateAndEmit { st ->
       val prStatesExcludingCurrent = st.prStates.filterNot { it.id == prId }
       val addedState = updater(st.prStates.find { it.id == prId })
       st.copy(prStates = prStatesExcludingCurrent + listOf(addedState))
+    }
+  }
+
+  private fun updateStateAndEmit(updater: (State) -> State) {
+    updateState { st ->
+      updater(st)
+    }.also {
+      stateFlow.value = it
     }
   }
 }

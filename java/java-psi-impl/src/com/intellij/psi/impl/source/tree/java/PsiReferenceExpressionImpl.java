@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -193,8 +193,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       return result;
     }
 
-    @NotNull
-    private static List<ResolveResult[]> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull PsiFile containingFile) {
+    private static @NotNull List<ResolveResult[]> resolveAllQualifiers(@NotNull PsiReferenceExpressionImpl expression, @NotNull PsiFile containingFile) {
       // to avoid SOE, resolve all qualifiers starting from the innermost
       PsiElement qualifier = expression.getQualifier();
       if (qualifier == null) return Collections.emptyList();
@@ -340,8 +339,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     PsiElement element = resolve();
     if (element instanceof PsiClass) {
       String fqn = ((PsiClass)element).getQualifiedName();
@@ -493,9 +491,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     PsiScopesUtil.resolveAndWalk(filterProcessor, this, null, true);
   }
 
-  @NotNull
   @Override
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+  public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
     JavaResolveResult[] results = multiResolve(incompleteCode);
     return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
   }
@@ -592,8 +589,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  @NotNull
-  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
+  public @NotNull PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (getQualifierExpression() != null) {
       return renameDirectly(newElementName);
     }
@@ -622,8 +618,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return result;
   }
 
-  @NotNull
-  private PsiElement renameDirectly(@NotNull String newElementName) throws IncorrectOperationException {
+  private @NotNull PsiElement renameDirectly(@NotNull String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
@@ -726,8 +721,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
-  @NotNull
-  public static TreeElement createEmptyRefParameterList(@NotNull Project project) {
+  public static @NotNull TreeElement createEmptyRefParameterList(@NotNull Project project) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     return (TreeElement)Objects.requireNonNull(factory.createReferenceFromText("foo", null).getParameterList()).getNode();
   }
@@ -789,15 +783,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return PsiJavaCodeReferenceElementImpl.calcRangeInElement(this);
   }
 
@@ -807,8 +799,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  @NotNull
-  public String getClassNameText() {
+  public @NotNull String getClassNameText() {
     String cachedQName = myCachedQName;
     if (cachedQName == null) {
       myCachedQName = cachedQName = PsiNameHelper.getQualifiedClassName(getCachedNormalizedText(), false);
@@ -827,13 +818,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  @NotNull
-  public String getQualifiedName() {
+  public @NotNull String getQualifiedName() {
     return getCanonicalText();
   }
 
-  @NotNull
-  private String getCachedNormalizedText() {
+  private @NotNull String getCachedNormalizedText() {
     String whiteSpaceAndComments = myCachedNormalizedText;
     if (whiteSpaceAndComments == null) {
       myCachedNormalizedText = whiteSpaceAndComments = JavaSourceUtil.getReferenceText(this);

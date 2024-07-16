@@ -1,7 +1,7 @@
-LineBreakpoint created at suspendFunWithInner.kt:40
+LineBreakpoint created at suspendFunWithInner.kt:41
 Run Java
 Connected to the target VM
-suspendFunWithInner.kt:40
+suspendFunWithInner.kt:41
 Thread stack trace:
 	CoroutinePreflightFrame c:!LINE_NUMBER!, TestSuspendA$InClassB$InClassC (continuation)
 		($completion, $continuation, $result, inClassCMethodVal)
@@ -12,23 +12,29 @@ CoroutineInfo: 1 coroutine RUNNING
 		(methodVal)
 	CoroutineStackFrame invokeSuspend:!LINE_NUMBER!, SuspendFunWithInnerKt$main$1 (continuation)
 		(rootCoroutineVal)
-	CoroutineStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
 		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
-	CoroutineStackFrame run:!LINE_NUMBER!, DispatchedTask (kotlinx.coroutines)
+	KotlinStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	InlineStackFrame lambda 'withCoroutineContext' in 'run':!LINE_NUMBER!, DispatchedTask (kotlinx.coroutines)
 		($i$a$-withCoroutineContext-DispatchedTask$run$1, $i$f$withCoroutineContext, context, continuation, countOrElement$iv, delegate, exception, fatalException, job, oldValue$iv, state, taskContext, this)
-	CoroutineStackFrame processNextEvent:!LINE_NUMBER!, EventLoopImplBase (kotlinx.coroutines)
+	InlineStackFrame withCoroutineContext:!LINE_NUMBER!, DispatchedTask (kotlinx.coroutines)
+		($i$a$-withCoroutineContext-DispatchedTask$run$1, $i$f$withCoroutineContext, context, continuation, countOrElement$iv, delegate, exception, fatalException, job, oldValue$iv, state, taskContext, this)
+	KotlinStackFrame run:!LINE_NUMBER!, DispatchedTask (kotlinx.coroutines)
+		($i$a$-withCoroutineContext-DispatchedTask$run$1, $i$f$withCoroutineContext, context, continuation, countOrElement$iv, delegate, exception, fatalException, job, oldValue$iv, state, taskContext, this)
+	KotlinStackFrame processNextEvent:!LINE_NUMBER!, EventLoopImplBase (kotlinx.coroutines)
 		(delayed, task, this)
-	CoroutineStackFrame joinBlocking:!LINE_NUMBER!, BlockingCoroutine (kotlinx.coroutines)
+	KotlinStackFrame joinBlocking:!LINE_NUMBER!, BlockingCoroutine (kotlinx.coroutines)
 		(this)
-	CoroutineStackFrame runBlocking:!LINE_NUMBER!, BuildersKt__BuildersKt (kotlinx.coroutines)
+	KotlinStackFrame runBlocking:!LINE_NUMBER!, BuildersKt__BuildersKt (kotlinx.coroutines)
 		(block, context, contextInterceptor, coroutine, currentThread, eventLoop, newContext)
-	CoroutineStackFrame runBlocking:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
+	JavaStackFrame runBlocking:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
 		(block, context)
-	CoroutineStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt__BuildersKt (kotlinx.coroutines)
+	KotlinStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt__BuildersKt (kotlinx.coroutines)
 		()
-	CoroutineStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
+	JavaStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
 		()
-	CoroutineStackFrame main:!LINE_NUMBER!, SuspendFunWithInnerKt (continuation)
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendFunWithInnerKt (continuation)
 		(mainTestVal)
 Coroutine Creation Stack Trace
 	CreationCoroutineStackFrame createCoroutineUnintercepted:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt (kotlin.coroutines.intrinsics)

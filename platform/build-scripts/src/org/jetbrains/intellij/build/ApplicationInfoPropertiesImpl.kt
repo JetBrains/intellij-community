@@ -7,8 +7,8 @@ import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
-import org.jetbrains.intellij.build.impl.readSnapshotBuildNumber
 import org.jetbrains.jps.model.JpsProject
 import java.nio.file.Files
 import java.nio.file.Path
@@ -98,13 +98,7 @@ internal class ApplicationInfoPropertiesImpl(
     this.majorReleaseDate = run {
       val majorReleaseDate = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE)
                              ?: applicationInfoOverrides?.majorReleaseDate
-                             ?: buildTag.getAttributeValue("majorReleaseDate"))?.let {
-                               if (it == "") {
-                                return@let null
-                               } else {
-                                 return@let it
-                               }
-                             }
+                             ?: buildTag.getAttributeValue("majorReleaseDate"))?.takeIf { it.isNotEmpty() }
       when {
         isEAP -> {
           val buildDate = Instant.ofEpochSecond(buildOptions.buildDateInSeconds)
@@ -144,7 +138,7 @@ internal class ApplicationInfoPropertiesImpl(
 
 internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoProperties): String {
   val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
-  val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).takeWhile { it != '.' }
+  val snapshotBuildNumber = SnapshotBuildNumber.VALUE.takeWhile { it != '.' }
   check("${appInfo.majorVersion}${appInfo.minorVersion}".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
     "'major=${appInfo.majorVersion}' and 'minor=${appInfo.minorVersion}' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
   }

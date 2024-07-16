@@ -38,6 +38,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,6 +124,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected @Nullable <T> T getView(String viewId, Class<T> viewClass) {
     return ObjectUtils.tryCast(myViews.get(viewId), viewClass);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable XFramesView getFramesView() {
+    return getView(getFramesContentId(), XFramesView.class);
   }
 
   protected void initFocusingVariablesFromFramesView() {

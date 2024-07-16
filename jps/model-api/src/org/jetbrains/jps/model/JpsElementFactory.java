@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
@@ -31,15 +32,44 @@ public abstract class JpsElementFactory {
     return JpsServiceManager.getInstance().getService(JpsElementFactory.class);
   }
 
+  @ApiStatus.Internal
+  protected JpsElementFactory() {
+  }
+
+  /**
+   * JpsModel API isn't supposed to be used for creating model from scratch, use 
+   * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.
+   */
+  @ApiStatus.Internal
   public abstract JpsModel createModel();
 
+  /**
+   * JpsModel API isn't supposed to be used for creating model from scratch, use
+   * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.
+   */
+  @ApiStatus.Internal
   public abstract <P extends JpsElement> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties);
 
+  /**
+   * JpsModel API isn't supposed to be used for creating model from scratch, use
+   * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.
+   */
+  @ApiStatus.Internal
   public abstract <P extends JpsElement> JpsTypedLibrary<P> createLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties);
 
+  /**
+   * JpsModel API isn't supposed to be used for creating model from scratch, use
+   * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.
+   */
+  @ApiStatus.Internal
   public abstract <P extends JpsElement> JpsTypedLibrary<JpsSdk<P>> createSdk(@NotNull String name, @Nullable String homePath, @Nullable String versionString,
                                                                               @NotNull JpsSdkType<P> type, @NotNull P properties);
 
+  /**
+   * JpsModel API isn't supposed to be used for creating model from scratch, use
+   * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.
+   */
+  @ApiStatus.Internal
   @NotNull
   public abstract <P extends JpsElement> JpsModuleSourceRoot createModuleSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
 
@@ -50,13 +80,28 @@ public abstract class JpsElementFactory {
   public abstract JpsLibraryReference createLibraryReference(@NotNull String libraryName,
                                                              @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference);
 
+  /**
+   * JpsModel API isn't supposed to be used for creating model from scratch, use
+   * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.
+   */
+  @ApiStatus.Internal
   @NotNull
   public abstract <P extends JpsElement> JpsSdkReference<P> createSdkReference(@NotNull String sdkName,
                                                                                                 @NotNull JpsSdkType<P> sdkType);
 
+  /**
+   * JpsModel API isn't supposed to be used for creating model from scratch, use
+   * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.
+   */
+  @ApiStatus.Internal
   @NotNull
   public abstract JpsElementReference<JpsProject> createProjectReference();
 
+  /**
+   * JpsModel API isn't supposed to be used for creating model from scratch, use
+   * {@link org.jetbrains.jps.model.serialization.JpsSerializationManager} to load the model from .idea directory.
+   */
+  @ApiStatus.Internal
   @NotNull
   public abstract JpsElementReference<JpsGlobal> createGlobalReference();
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -63,7 +64,7 @@ class FramesOnlyLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThr
   override fun getOptionKey(): String = ThreadsViewConstants.FRAMES_ONLY_THREADS_VIEW_KEY
 }
 
-object XDebugThreadsFramesViewChangeCollector : CounterUsagesCollector() {
+internal object XDebugThreadsFramesViewChangeCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val GROUP = EventLogGroup("debugger.frames.view", 2)

@@ -26,6 +26,11 @@ public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBa
     myContainer = JpsExElementFactory.getInstance().createContainer(this);
   }
 
+  /**
+   * @deprecated creating copies isn't supported in for all elements in JPS anymore; if you need to create a copy for your element,
+   * write the corresponding code in your class directly.
+   */
+  @Deprecated
   protected JpsCompositeElementBase(JpsCompositeElementBase<Self> original) {
     myContainer = JpsExElementFactory.getInstance().createContainerCopy(original.myContainer, this);
   }

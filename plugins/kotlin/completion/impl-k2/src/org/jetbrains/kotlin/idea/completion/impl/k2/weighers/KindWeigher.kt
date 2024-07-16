@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler.isReturnAtHighlyLikelyPosition
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
@@ -39,10 +39,10 @@ internal object KindWeigher {
 
     private var LookupElement.isSymbolToSkip: Boolean by NotNullableUserDataProperty(Key("KOTLIN_KIND_WEIGHER_IS_SYMBOL_TO_SKIP"), false)
 
-    context(KtAnalysisSession)
-    fun addWeight(lookupElement: LookupElement, symbol: KtSymbol?, context: WeighingContext) {
+    context(KaSession)
+    fun addWeight(lookupElement: LookupElement, symbol: KaSymbol?, context: WeighingContext) {
         lookupElement.isSymbolToSkip = symbol in context.symbolsToSkip
-        lookupElement.isEnumEntry = symbol is KtEnumEntrySymbol
+        lookupElement.isEnumEntry = symbol is KaEnumEntrySymbol
 
         if (lookupElement.lookupString != KtTokens.NULL_KEYWORD.value || lookupElement.`object` !is KeywordLookupObject) return
         lookupElement.isNullAtHighlyLikelyPosition = context.isPositionSuitableForNull && context.expectedType == null

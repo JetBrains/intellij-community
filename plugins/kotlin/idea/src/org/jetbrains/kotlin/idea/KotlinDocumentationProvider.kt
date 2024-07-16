@@ -105,8 +105,6 @@ class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNameP
         val name =
             base.renderClassifier(classifier, renderer) + (type?.takeIf { it.isDefinitelyNotNullType }?.let { " & Any" } ?: "")
 
-        if (classifier.isBoringBuiltinClass())
-            return name
         return buildString {
             val ref = classifier.fqNameUnsafe.toString()
             DocumentationManagerUtil.createHyperlink(this, ref, name, true, false)

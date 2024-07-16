@@ -9,30 +9,34 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * This entity stores order of facets in iml file. This is needed to ensure that facet tags are saved in the same order to avoid
  * unnecessary modifications of iml file.
  */
-@ApiStatus.Internal
+@Internal
 interface FacetsOrderEntity : WorkspaceEntity {
   val orderOfFacets: List<@NlsSafe String>
   val moduleEntity: ModuleEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : FacetsOrderEntity, WorkspaceEntity.Builder<FacetsOrderEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<FacetsOrderEntity> {
     override var entitySource: EntitySource
-    override var orderOfFacets: MutableList<String>
-    override var moduleEntity: ModuleEntity
+    var orderOfFacets: MutableList<String>
+    var moduleEntity: ModuleEntity.Builder
   }
 
   companion object : EntityType<FacetsOrderEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetsOrderEntity {
+    operator fun invoke(
+      orderOfFacets: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.orderOfFacets = orderOfFacets.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -45,10 +49,16 @@ interface FacetsOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity, modification: FacetsOrderEntity.Builder.() -> Unit): FacetsOrderEntity = modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
+@Internal
+fun MutableEntityStorage.modifyFacetsOrderEntity(
+  entity: FacetsOrderEntity,
+  modification: FacetsOrderEntity.Builder.() -> Unit,
+): FacetsOrderEntity {
+  return modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.facetOrder: @Child FacetsOrderEntity?
     by WorkspaceEntity.extension()
 

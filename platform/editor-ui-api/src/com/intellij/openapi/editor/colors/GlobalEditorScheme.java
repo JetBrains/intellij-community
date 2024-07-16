@@ -29,4 +29,7 @@ public final class GlobalEditorScheme {
   public static Color getBackground(@NotNull TextAttributesKey key) {
     return getGlobalScheme().getAttributes(key).getBackgroundColor();
   }
+
+  private GlobalEditorScheme() {
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.find.findInProject.FindInProjectManager;
@@ -6,6 +6,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,7 +15,10 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class FindInPathAction extends AnAction implements DumbAware {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Find in Path");
+
+  public static final NotificationGroup NOTIFICATION_GROUP = Cancellation.forceNonCancellableSectionInClassInitializer(
+    () -> NotificationGroupManager.getInstance().getNotificationGroup("Find in Path")
+  );
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

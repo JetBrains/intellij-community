@@ -25,7 +25,7 @@ class GradleLocalPropertiesFileTest : LightPlatformTestCase() {
 
   @Test
   fun testNotPresentProjectGradleLocalPropertiesFile() {
-    GradleLocalPropertiesFile.getProperties(project, externalProjectPath).run {
+    GradleLocalPropertiesFile.getProperties(externalProjectPath).run {
       assertEquals(GradleLocalProperties.EMPTY, this)
     }
   }
@@ -33,7 +33,7 @@ class GradleLocalPropertiesFileTest : LightPlatformTestCase() {
   @Test
   fun testEmptyProjectGradleLocalPropertiesFile() = testGradleLocalProperties(
     assertion = {
-      GradleLocalPropertiesFile.getProperties(project, externalProjectPath).run {
+      GradleLocalPropertiesFile.getProperties(externalProjectPath).run {
         assertNull(javaHomeProperty)
       }
     }
@@ -46,7 +46,7 @@ class GradleLocalPropertiesFileTest : LightPlatformTestCase() {
       setProperty("another.property.2", "value2")
     },
     assertion = {
-      GradleLocalPropertiesFile.getProperties(project, externalProjectPath).run {
+      GradleLocalPropertiesFile.getProperties(externalProjectPath).run {
         assertNull(javaHomeProperty)
       }
     }
@@ -58,7 +58,7 @@ class GradleLocalPropertiesFileTest : LightPlatformTestCase() {
       setProperty(GRADLE_LOCAL_JAVA_HOME_PROPERTY, "javaHome")
     },
     assertion = {
-      GradleLocalPropertiesFile.getProperties(project, externalProjectPath).run {
+      GradleLocalPropertiesFile.getProperties(externalProjectPath).run {
         assertEquals("javaHome", javaHomeProperty?.value)
         assertEquals(gradleLocalPropertiesPath, javaHomeProperty?.location)
       }
@@ -73,7 +73,7 @@ class GradleLocalPropertiesFileTest : LightPlatformTestCase() {
       setProperty("another.property.2", "value3")
     },
     assertion = {
-      GradleLocalPropertiesFile.getProperties(project, externalProjectPath).run {
+      GradleLocalPropertiesFile.getProperties(externalProjectPath).run {
         assertEquals("value2", javaHomeProperty?.value)
         assertEquals(gradleLocalPropertiesPath, javaHomeProperty?.location)
       }

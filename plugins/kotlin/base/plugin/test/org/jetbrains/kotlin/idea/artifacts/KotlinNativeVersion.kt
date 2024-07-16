@@ -17,12 +17,20 @@ object KotlinNativeVersion {
     /** This field is automatically setup from project-module-updater.
      *  See [org.jetbrains.tools.model.updater.updateKGPVersionForKotlinNativeTests]
      */
-    private const val kotlinGradlePluginVersion: String = "2.0.0-dev-7674"
+    private const val kotlinGradlePluginVersion: String = "2.0.20-dev-2651"
 
     /** Return bootstrap version or version from properties file of specified Kotlin Gradle Plugin.
      *  Make sure localMaven has kotlin-gradle-plugin with required version for cooperative development environment.
      */
     val resolvedKotlinNativeVersion: String by lazy { getKotlinNativeVersionFromKotlinGradlePluginPropertiesFile() }
+
+    /**
+     * Returns a KGP version that corresponds to the [resolvedKotlinNativeVersion]
+     */
+    val resolvedKotlinGradlePluginVersion: String by lazy {
+        resolvedKotlinNativeVersion // force resolution to make sure the K/N version for this KGP version actually exists
+        kotlinGradlePluginVersion
+    }
 
     private fun getKotlinNativeVersionFromKotlinGradlePluginPropertiesFile(): String {
         val outputPath = Paths.get(PathManager.getCommunityHomePath()).resolve("out")

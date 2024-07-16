@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +36,17 @@ public final class Iterators {
     return false;
   }
 
+  public static int count(Iterable<?> iterable) {
+    if (iterable instanceof Collection) {
+      return ((Collection<?>)iterable).size();
+    }
+    int count = 0;
+    for (Iterator<?> it = iterable.iterator(); it.hasNext(); it.next()) {
+      count += 1;
+    }
+    return count;
+  }
+
   public static <T> T find(Iterable<? extends T> iterable, BooleanFunction<? super T> cond) {
     if (iterable != null) {
       for (T o : iterable) {
@@ -63,7 +74,11 @@ public final class Iterators {
   public interface Function<S, T> {
     T fun(S s);
   }
-  
+
+  public interface BiFunction<S1, S2, T> {
+    T fun(S1 s1, S2 s2);
+  }
+
   public interface BooleanFunction<T> {
     boolean fun(T t);
   }
@@ -191,6 +206,27 @@ public final class Iterators {
 
   public static <T> Iterable<T> asIterable(final T[] elem) {
     return elem == null? Collections.<T>emptyList() : Arrays.asList(elem);
+  }
+
+  public static <T> Iterable<T> reverse(final List<T> list) {
+    return new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        final ListIterator<T> li = list.listIterator(list.size());
+        return new BaseIterator<T>() {
+          @Override
+          public boolean hasNext() {
+            return li.hasPrevious();
+          }
+
+          @Override
+          public T next() {
+            return li.previous();
+          }
+        };
+      }
+    };
   }
 
   public static <T> Iterator<T> asIterator(final T elem) {
@@ -368,12 +404,21 @@ public final class Iterators {
   }
 
   public static <T> boolean equals(Iterable<? extends T> s1, Iterable<? extends T> s2) {
+    return equals(s1, s2, new BiFunction<T, T, Boolean>() {
+      @Override
+      public Boolean fun(T t1, T t2) {
+        return t1.equals(t2);
+      }
+    });
+  }
+
+  public static <T> boolean equals(Iterable<? extends T> s1, Iterable<? extends T> s2, BiFunction<? super T, ? super T, Boolean> comparator) {
     Iterator<? extends T> it2 = s2.iterator();
     for (T elem : s1) {
       if (!it2.hasNext()) {
         return false;
       }
-      if (!elem.equals(it2.next())) {
+      if (!comparator.fun(elem, it2.next())) {
         return false;
       }
     }

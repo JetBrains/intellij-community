@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.StorageAlreadyInUseException;
 import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -244,13 +245,19 @@ final class PersistentFSConnector {
       LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + errorMessage);
       try {
         vfsLoader.closeEverything();
+
+        List<StorageAlreadyInUseException> storageAlreadyInUseExceptions = findCauseAndSuppressed(e, StorageAlreadyInUseException.class);
+        if(!storageAlreadyInUseExceptions.isEmpty()){
+          //some of the storages are used by another process: don't clean VFS (it doesn't help), interrupt startup instead
+          throw new IOException("Some of VFS storages are already in use: is an IDE process already running?", e);
+        }
+
         if (e instanceof CachesWereRecoveredFromLogException) {
           // don't delete the caches, they will be substituted on the next attempt
           throw new VFSInitException(RECOVERED_FROM_LOG, errorMessage, e);
         }
-        else {
-          vfsLoader.deleteEverything();
-        }
+
+        vfsLoader.deleteEverything();
       }
       catch (VFSInitException recoveredFromLogException) {
         throw recoveredFromLogException;

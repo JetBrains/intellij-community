@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.util.NlsContexts.ColumnName;
@@ -18,7 +18,7 @@ public class ChildGenericValueColumnInfo<T extends DomElement> extends DomColumn
   private final DomFixedChildDescription myChildDescription;
 
   public ChildGenericValueColumnInfo(final @ColumnName String name,
-                                     @NotNull final DomFixedChildDescription description,
+                                     final @NotNull DomFixedChildDescription description,
                                      final TableCellRenderer renderer,
                                      final TableCellEditor editor) {
     super(name, renderer);

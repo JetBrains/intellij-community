@@ -51,7 +51,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     if (htmlPanel is MarkdownJCEFHtmlPanel) {
       htmlPanel.saveHtml(outputFile, service<MarkdownHtmlExportSettings>().getResourceSavingSettings(), project) { path, ok ->
         if (ok) {
-          val file = VfsUtil.findFileByIoFile(File(path), false)
+          val file = VfsUtil.findFileByIoFile(File(path), true)
           if (file != null) {
             notifyAndRefreshIfExportSuccess(file, project)
           }

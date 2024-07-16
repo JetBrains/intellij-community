@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.debugger;
 
 import com.intellij.lang.LangBundle;
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsFactory;
 import com.intellij.ui.tabs.TabInfo;
@@ -32,7 +31,7 @@ public class UiDebugger extends JPanel implements Disposable {
     Disposer.register(ApplicationManager.getApplication(), this);
 
     myTabs = JBTabsFactory.createTabs(null, this);
-    myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setActiveTabFillIn(JBColor.GRAY).setUiDecorator(new UiDecorator() {
+    myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setUiDecorator(new UiDecorator() {
       @Override
       public @NotNull UiDecoration getDecoration() {
         return new UiDecoration(null, JBUI.insets(4, 0));

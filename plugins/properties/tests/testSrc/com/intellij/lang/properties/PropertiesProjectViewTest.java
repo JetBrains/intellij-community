@@ -43,7 +43,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
           xxx_en.properties
           xxx_ru_RU.properties
          X.txt
-       External Libraries
+       +External Libraries
       """;
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
   }
@@ -61,7 +61,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
          xxx2.properties
          yyy.properties
          X.txt
-       External Libraries
+       +External Libraries
       """;
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
@@ -82,7 +82,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
           xxx.properties
           xxx_en.properties
          X.txt
-       External Libraries
+       +External Libraries
       """;
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
@@ -100,7 +100,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
           xxx_en.properties
          xxx2.properties
          yyy.properties
-       External Libraries
+       +External Libraries
       """;
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
@@ -124,7 +124,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
           some.dev.properties (custom RB: some)
          -PsiDirectory: prod
           some.prod.properties (custom RB: some)
-       External Libraries
+       +External Libraries
       """;
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
@@ -156,7 +156,7 @@ public class PropertiesProjectViewTest extends BasePlatformTestCase {
          -Resource Bundle 'b'
           b.properties
           b_fr.properties
-       External Libraries
+       +External Libraries
       """;
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);

@@ -6,13 +6,13 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.util.io.createDirectories
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.WEB_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -40,7 +40,7 @@ internal class ModuleAttachProcessorTest {
       existingProjectDir = existingProject.basePath!!
       withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
         runWriteAction {
-          ModuleManager.getInstance(existingProject).newModule("$existingProjectDir/test.iml", ModuleTypeId.WEB_MODULE)
+          ModuleManager.getInstance(existingProject).newModule("$existingProjectDir/test.iml", WEB_MODULE_ENTITY_TYPE_ID_NAME)
         }
         existingProject.stateStore.save()
       }

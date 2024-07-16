@@ -1,14 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.conversion.ConversionService
-import com.intellij.ide.GeneralSettings
-import com.intellij.ide.IdleTracker
-import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.ide.SaveAndSyncHandlerListener
+import com.intellij.ide.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManager
@@ -87,31 +83,33 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
     coroutineScope.launch(CoroutineName("save requests flow processing")) {
       // not collectLatest - wait for previous execution
-      saveRequests
-        .collect {
-          val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
-          if (!forceExecuteImmediately) {
-            delay(300.milliseconds)
-          }
+      saveRequests.collect {
+        val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
+        if (!forceExecuteImmediately) {
+          delay(300.milliseconds)
+        }
 
-          if (blockSaveOnFrameDeactivationCount.get() != 0) {
-            return@collect
-          }
+        if (blockSaveOnFrameDeactivationCount.get() != 0) {
+          return@collect
+        }
 
-          val job = currentJob.updateAndGet { oldJob ->
-            oldJob?.cancel()
-            launch(start = CoroutineStart.LAZY) { processTasks(forceExecuteImmediately = forceExecuteImmediately) }
-          }!!
-          try {
-            if (job.start()) {
-              job.join()
-            }
+        val job = currentJob.updateAndGet { oldJob ->
+          oldJob?.cancel()
+          launch(start = CoroutineStart.LAZY) {
+            processTasks(forceExecuteImmediately)
           }
-          catch (_: CancellationException) { }
-          finally {
-            currentJob.compareAndSet(job, null)
+        }!!
+        try {
+          if (job.start()) {
+            job.join()
           }
         }
+        catch (_: CancellationException) {
+        }
+        finally {
+          currentJob.compareAndSet(job, null)
+        }
+      }
     }
 
     coroutineScope.launch {
@@ -163,7 +161,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         blockingContext {
           eventPublisher.beforeSave(task, forceExecuteImmediately)
         }
-        saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
+        saveProjectsAndApp(task.forceSavingAllSettings, task.project)
       }.getOrLogException(LOG)
     }
   }
@@ -403,9 +401,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   @NlsContexts.ProgressTitle
-  private fun getProgressTitle(componentManager: ComponentManager): String {
-    return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
-  }
+  private fun getProgressTitle(componentManager: ComponentManager): String =
+    if (componentManager is Project) IdeBundle.message("progress.saving.project", componentManager.name) else IdeBundle.message("progress.saving.app")
 
   private fun <T> generalSettingFlow(
     settings: GeneralSettings,

@@ -3,7 +3,9 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ModifiableModuleModelBridge : ModifiableModuleModel {
   fun prepareForCommit()
   fun collectChanges(): MutableEntityStorage

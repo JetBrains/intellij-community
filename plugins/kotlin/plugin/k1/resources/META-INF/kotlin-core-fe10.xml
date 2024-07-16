@@ -2,10 +2,6 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
-            interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinIndicesHelperExtension"
             interface="org.jetbrains.kotlin.idea.core.extension.KotlinIndicesHelperExtension"
             area="IDEA_PROJECT"
@@ -26,7 +22,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
-
+    <importBlockRangeProvider implementation="org.jetbrains.kotlin.idea.imports.KotlinImportBlockRangeProvider"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10ShortenReferencesFacility"/>
@@ -50,9 +46,6 @@
             serviceInterface="org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10QuickFixProviderImpl"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider"
-            serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSessionProvider"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade"
             serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.IdeFe10AnalysisFacade"/>
     <projectService
@@ -63,6 +56,13 @@
             serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.K1ReferenceImporterFacility"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
+
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinShortClassNameFileIndex"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
+            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService"/>
+    <!--suppress LightServiceMigrationXML -->
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.ShortNamesCacheService"/>
 
     <lang.importOptimizer
             language="kotlin"
@@ -104,6 +104,17 @@
     <methodHierarchyProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.hierarchy.overrides.KotlinOverrideHierarchyProvider"/>
+
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
+    <typeHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProvider"/>
+    <typeHierarchyProvider
+            language="JAVA"
+            order="last"
+            implementationClass="org.jetbrains.kotlin.idea.hierarchy.KotlinTypeHierarchyProviderBySuperTypeCallEntry"/>
 
     <hierarchy.referenceProcessor implementation="org.jetbrains.kotlin.idea.hierarchy.calls.KotlinCallReferenceProcessor"/>
 
@@ -166,7 +177,7 @@
 <!--    <codeInsight.inlayProvider language="kotlin"-->
 <!--                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>-->
 
-    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinFqnDeclarativeInlayActionHandler"
+    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
                                     handlerId="kotlin.fqn.class"/>
 
     <codeInsight.declarativeInlayProvider
@@ -276,14 +287,6 @@
     <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.OldJ2kConverterExtension"/>
   </extensions>
 
-  <!-- Navigation -->
-  <extensions defaultExtensionNs="com.intellij">
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
-            serviceImplementation="org.jetbrains.kotlin.idea.references.KtIdeReferenceProviderService"/>
-  </extensions>
-
   <!-- Declaration search and Find Usages -->
   <extensions defaultExtensionNs="com.intellij">
     <targetElementEvaluator language="kotlin"
@@ -301,9 +304,6 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.ExpectActualSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinExpectActualSupportImpl"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
-                    serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
 
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProviderImpl"/>
 
@@ -331,6 +331,11 @@
     <lang.sliceProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.slicer.KotlinSliceProvider"/>
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
+  </extensions>
+
+  <!-- legacy JS decompiler for .kjsm files, not supported in K2 -->
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
   </extensions>
 
 </idea-plugin>

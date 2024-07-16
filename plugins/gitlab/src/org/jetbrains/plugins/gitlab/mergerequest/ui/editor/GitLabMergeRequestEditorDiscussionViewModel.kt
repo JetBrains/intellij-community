@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.ui.codereview.editor.EditorMapped
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.diff.util.Side
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +19,8 @@ class GitLabMergeRequestEditorDiscussionViewModel internal constructor(
   base: GitLabMergeRequestDiscussionViewModel,
   diffData: GitTextFilePatchWithHistory,
   discussionsViewOption: StateFlow<DiscussionsViewOption>
-) : GitLabMergeRequestDiscussionViewModel by base, EditorMapped {
-
+) : GitLabMergeRequestDiscussionViewModel by base, CodeReviewInlayModel {
+  override val key: Any = base.id
   override val line: StateFlow<Int?> = base.position.mapState {
     it?.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
   }
@@ -38,8 +38,8 @@ class GitLabMergeRequestEditorDraftNoteViewModel internal constructor(
   base: GitLabMergeRequestStandaloneDraftNoteViewModelBase,
   diffData: GitTextFilePatchWithHistory,
   discussionsViewOption: StateFlow<DiscussionsViewOption>
-) : GitLabNoteViewModel by base, EditorMapped {
-
+) : GitLabNoteViewModel by base, CodeReviewInlayModel {
+  override val key: Any = base.id
   override val line: StateFlow<Int?> = base.position.mapState {
     it?.mapToLocation(diffData, Side.RIGHT)?.takeIf { it.first == Side.RIGHT }?.second
   }
@@ -56,8 +56,8 @@ class GitLabMergeRequestEditorNewDiscussionViewModel internal constructor(
   base: NewGitLabNoteViewModel,
   val originalLine: Int,
   discussionsViewOption: StateFlow<DiscussionsViewOption>
-) : NewGitLabNoteViewModel by base, EditorMapped {
-
+) : NewGitLabNoteViewModel by base, CodeReviewInlayModel {
+  override val key: Any = "NEW_${originalLine}"
   override val line: StateFlow<Int?> = MutableStateFlow(originalLine)
   override val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
 }

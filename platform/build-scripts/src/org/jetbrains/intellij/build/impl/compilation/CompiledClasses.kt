@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.io.NioFiles
@@ -45,18 +45,27 @@ internal object CompiledClasses {
       messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
                      "so 'incremental compilation' option cannot be enabled")
     }
-    if (options.pathToCompiledClassesArchive != null && options.useCompiledClassesFromProjectOutput) {
-      messages.error("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
-                     "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used")
+
+    if (options.useCompiledClassesFromProjectOutput) {
+      if (options.pathToCompiledClassesArchive != null) {
+        messages.error(
+          "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
+          "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' cannot be used"
+        )
+      }
+      if (options.pathToCompiledClassesArchivesMetadata != null) {
+        messages.error(
+          "'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
+          "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output"
+        )
+      }
     }
+
     if (options.pathToCompiledClassesArchivesMetadata != null && options.incrementalCompilation) {
       messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' is specified, " +
                        "so 'incremental compilation' option cannot be used")
     }
-    if (options.pathToCompiledClassesArchivesMetadata != null && options.useCompiledClassesFromProjectOutput) {
-      messages.error("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, " +
-                     "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
-    }
+
     if (options.pathToCompiledClassesArchive != null && options.pathToCompiledClassesArchivesMetadata != null) {
       messages.error("'${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE}' is specified, " +
                      "so '${BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA}' cannot be used to fetch compile output")
@@ -135,6 +144,7 @@ internal object CompiledClasses {
           withScope = { name, operation -> context.messages.block(name, operation) },
           classOutput = context.classesOutputDirectory,
           metadataFile = Path.of(context.options.pathToCompiledClassesArchivesMetadata!!),
+          skipUnpack = !context.options.unpackCompiledClassesArchives,
           /**
            * [FetchAndUnpackItem.output].hash file shouldn't leak to installer distribution
            */
@@ -143,9 +153,7 @@ internal object CompiledClasses {
       }
       PortableCompilationCache.IS_ENABLED -> {
         span.addEvent("JPS remote cache will be used for compilation")
-        val jpsCache = context.portableCompilationCache
-        jpsCache.downloadCacheAndCompileProject()
-        jpsCache.upload()
+        context.portableCompilationCache.downloadCacheAndCompileProject()
       }
       else -> {
         compile(context, moduleNames, includingTestsInModules, isPortableCacheDownloaded = false)

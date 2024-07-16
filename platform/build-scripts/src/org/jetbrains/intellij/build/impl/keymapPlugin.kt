@@ -2,8 +2,9 @@
 
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipFileWriter
-import org.jetbrains.intellij.build.io.writeNewZip
+import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
@@ -23,8 +24,11 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
 
   val buffer = ByteBuffer.allocate(128 * 1024)
   ZipFileWriter(WritableByteChannelBackedByByteBuffer(buffer)).use { zipCreator ->
-    zipCreator.uncompressedData("META-INF/plugin.xml", ByteBuffer.wrap(pluginXmlData))
+    val packageIndexBuilder = PackageIndexBuilder()
+    zipCreator.uncompressedData("META-INF/plugin.xml", ByteBuffer.wrap(pluginXmlData), packageIndexBuilder.indexWriter)
+    packageIndexBuilder.addFile("META-INF/plugin.xml")
 
+    packageIndexBuilder.addFile("META-INF/pluginIcon.svg")
     @Suppress("SpellCheckingInspection")
     zipCreator.uncompressedData("META-INF/pluginIcon.svg",
                                       "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"40\" viewBox=\"0 0 40 40\">\n" +
@@ -33,7 +37,9 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
                                       "15 L28,15 L28,11 Z M22,11 L26,11 L26,15 L22,15 L22,11 Z M10,11 L14,11 L14,15 L10,15 L10,11 Z M4," +
                                       "11 L8,11 L8,15 L4,15 L4,11 Z M4,5 L8,5 L8,9 L4,9 L4,5 Z M10,5 L14,5 L14,9 L10,9 L10,5 Z M16,11 L20," +
                                       "11 L20,15 L16,15 L16,11 Z M25,21 L11,21 L11,17 L25,17 L25,21 Z\" transform=\"translate(2 7)\"/>\n" +
-                                      "</svg>\n")
+                                      "</svg>\n", packageIndexBuilder.indexWriter)
+
+    packageIndexBuilder.addFile("META-INF/pluginIcon_dark.svg")
     @Suppress("SpellCheckingInspection")
     zipCreator.uncompressedData("META-INF/pluginIcon_dark.svg",
                                       "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"40\" height=\"40\" viewBox=\"0 0 40 40\">\n" +
@@ -42,17 +48,21 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
                                       "15 L28,15 L28,11 Z M22,11 L26,11 L26,15 L22,15 L22,11 Z M10,11 L14,11 L14,15 L10,15 L10,11 Z M4," +
                                       "11 L8,11 L8,15 L4,15 L4,11 Z M4,5 L8,5 L8,9 L4,9 L4,5 Z M10,5 L14,5 L14,9 L10,9 L10,5 Z M16,11 L20," +
                                       "11 L20,15 L16,15 L16,11 Z M25,21 L11,21 L11,17 L25,17 L25,21 Z\" transform=\"translate(2 7)\"/>\n" +
-                                      "</svg>\n")
+                                      "</svg>\n", packageIndexBuilder.indexWriter)
     for (name in keymaps) {
-      zipCreator.file("keymaps/$name.xml", keymapDir.resolve("$name.xml"))
+      val keymapFile = "keymaps/$name.xml"
+      packageIndexBuilder.addFile(keymapFile)
+      zipCreator.file(keymapFile, keymapDir.resolve("$name.xml"), packageIndexBuilder.indexWriter)
     }
+
+    packageIndexBuilder.writePackageIndex(zipCreator)
   }
 
   buffer.flip()
 
   val resultFile = targetDir.resolve("${shortName}Keymap.zip")
-  writeNewZip(resultFile, compress = true) {
-    it.uncompressedData("${shortName}Keymap/lib/${shortName}Keymap.jar", buffer)
+  writeNewZipWithoutIndex(resultFile, compress = true) {
+    it.uncompressedData("${shortName}Keymap/lib/${shortName}Keymap.jar", buffer, null)
   }
   return Pair(resultFile, pluginXmlData)
 }

@@ -10,10 +10,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -65,14 +62,16 @@ internal class ModifiableContentEntryBridge(
                                                                    "Module source root type $type is not registered as JpsModelSerializerExtension")
 
     val contentRootEntity = currentContentEntry.value.entity
-    val sourceRootEntity = diff addEntity SourceRootEntity(url = sourceFolderUrl,
-                                                           rootType = serializer.typeId,
-                                                           entitySource = folderEntitySource
-    ) {
-      contentRoot = contentRootEntity
+    val sourceRootEntity = SourceRootEntity(url = sourceFolderUrl,
+                                            rootTypeId = SourceRootTypeId(serializer.typeId),
+                                            entitySource = folderEntitySource)
+
+    SourceRootPropertiesHelper.addPropertiesEntity(sourceRootEntity, properties, serializer)
+
+    diff.modifyContentRootEntity(contentRootEntity) {
+      this.sourceRoots += sourceRootEntity
     }
 
-    SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, properties, serializer)
 
     return currentContentEntry.value.sourceFolders.firstOrNull {
       it.url == sourceFolderUrl.url && it.rootType == type
@@ -136,10 +135,10 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.toVirtualFileUrl(virtualFileManager), false)
-  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.getOrCreateFromUri(url), false)
+  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.getOrCreateFromUrl(url), false)
 
   override fun addExcludeFolder(url: String, isAutomaticallyImported: Boolean): ExcludeFolder {
-    return addExcludeFolder(virtualFileManager.getOrCreateFromUri(url), isAutomaticallyImported)
+    return addExcludeFolder(virtualFileManager.getOrCreateFromUrl(url), isAutomaticallyImported)
   }
 
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) {
@@ -157,22 +156,19 @@ internal class ModifiableContentEntryBridge(
   }
 
   private fun updateContentEntry(updater: ContentRootEntity.Builder.() -> Unit) {
-    diff.modifyEntity(currentContentEntry.value.entity, updater)
+    diff.modifyContentRootEntity(currentContentEntry.value.entity, updater)
   }
 
   override fun removeExcludeFolder(url: String): Boolean {
     LOG.debugWithTrace { "Remove exclude folder for url: $url." }
 
-    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     val excludedUrls = currentContentEntry.value.entity.excludedUrls.map { it.url }
     if (!excludedUrls.contains(virtualFileUrl)) return false
 
     val contentRootEntity = currentContentEntry.value.entity
-    val (new, toRemove) = contentRootEntity.excludedUrls.partition { excludedUrl -> excludedUrl.url != virtualFileUrl }
-    updateContentEntry {
-      this.excludedUrls = new
-    }
+    val (_, toRemove) = contentRootEntity.excludedUrls.partition { excludedUrl -> excludedUrl.url != virtualFileUrl }
     toRemove.forEach { diff.removeEntity(it) }
 
     return true
@@ -245,7 +241,7 @@ internal class ModifiableContentEntryBridge(
                                                 isAutomaticallyImported: Boolean): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source = if (isAutomaticallyImported) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
-    return addSourceFolder(virtualFileManager.getOrCreateFromUri(url), type, type.createDefaultProperties(), source)
+    return addSourceFolder(virtualFileManager.getOrCreateFromUrl(url), type, type.createDefaultProperties(), source)
   }
 
   override fun <P : JpsElement> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
@@ -257,7 +253,7 @@ internal class ModifiableContentEntryBridge(
   override fun <P : JpsElement> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source: EntitySource = getInternalFileSource(contentRootSource) ?: contentRootSource
-    return addSourceFolder(virtualFileManager.getOrCreateFromUri(url), type, properties, source)
+    return addSourceFolder(virtualFileManager.getOrCreateFromUrl(url), type, properties, source)
   }
 
   override fun <P : JpsElement> addSourceFolder(url: String,
@@ -266,7 +262,7 @@ internal class ModifiableContentEntryBridge(
                                                 isAutomaticallyImported: Boolean): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source = if (isAutomaticallyImported) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
-    return addSourceFolder(virtualFileManager.getOrCreateFromUri(url), type, properties, source)
+    return addSourceFolder(virtualFileManager.getOrCreateFromUrl(url), type, properties, source)
   }
 
   override fun <P : JpsElement> addSourceFolder(url: String,
@@ -275,7 +271,7 @@ internal class ModifiableContentEntryBridge(
                                                 externalSource: ProjectModelExternalSource?): SourceFolder {
     val contentRootSource = currentContentEntry.value.entity.entitySource
     val source = if (externalSource != null) contentRootSource else getInternalFileSource(contentRootSource) ?: contentRootSource
-    return addSourceFolder(virtualFileManager.getOrCreateFromUri(url), type, properties, source)
+    return addSourceFolder(virtualFileManager.getOrCreateFromUrl(url), type, properties, source)
   }
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file

@@ -24,14 +24,12 @@ import org.jetbrains.annotations.NotNull;
 public final class SerializableInnerClassHasSerialVersionUIDFieldInspection extends SerializableInspectionBase {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "SerializableNonStaticInnerClassWithoutSerialVersionUID";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serializable.inner.class.has.serial.version.uid.field.problem.descriptor");
   }

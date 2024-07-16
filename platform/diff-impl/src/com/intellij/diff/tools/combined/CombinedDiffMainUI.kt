@@ -29,7 +29,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.Wrapper
@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
@@ -52,11 +53,12 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
+@ApiStatus.Internal
 class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToChangeAction: AnAction?) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val cs: CoroutineScope = GlobalScope.namedChildScope("CombinedDiffMainUI", Dispatchers.EDT)
+  private val cs: CoroutineScope = GlobalScope.childScope("CombinedDiffMainUI", Dispatchers.EDT)
 
   private val context: DiffContext = model.context
   private val settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE))
@@ -81,17 +83,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   )
 
   private val combinedViewer get() = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-
-  //
-  // Global, shortcuts only navigation actions
-  //
-
-  private val openInEditorAction = object : OpenInEditorAction() {
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isVisible = false
-    }
-  }
 
   private var searchController: CombinedDiffSearchController? = null
 
@@ -336,6 +327,7 @@ private class ShowActionGroupPopupAction(
 /**
  * Various ui states which shared between the main ui and the combined diff viewer
  */
+@ApiStatus.Experimental
 class CombinedDiffUIState {
   private val searchMode: MutableStateFlow<Boolean> = MutableStateFlow(false)
   private val stickyHeaderUnderBorder: MutableStateFlow<Boolean> = MutableStateFlow(false)

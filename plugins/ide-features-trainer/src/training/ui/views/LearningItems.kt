@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.views
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -11,7 +12,6 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import training.FeaturesTrainerIcons
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.course.IftModule
@@ -74,7 +74,7 @@ class LearningItems(private val project: Project) : JPanel() {
     result.layout = BoxLayout(result, BoxLayout.X_AXIS)
     result.alignmentX = LEFT_ALIGNMENT
     result.border = EmptyBorder(JBUI.scale(7), JBUI.scale(7), JBUI.scale(6), JBUI.scale(7))
-    val checkmarkIconLabel = createLabelIcon(if (lesson.passed) FeaturesTrainerIcons.GreenCheckmark else EmptyIcon.ICON_16)
+    val checkmarkIconLabel = createLabelIcon(if (lesson.passed) AllIcons.General.GreenCheckmark else EmptyIcon.ICON_16)
     result.add(createLabelIcon(EmptyIcon.ICON_16))
     result.add(scaledRigid(UISettings.getInstance().expandAndModuleGap, 0))
     result.add(checkmarkIconLabel)

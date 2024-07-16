@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ext
 
 import com.intellij.openapi.project.Project
@@ -16,5 +16,5 @@ interface PathsBrowserDialogProvider {
   fun showPathsBrowserDialog(project: Project?,
                              textField: JTextField,
                              dialogTitle: @NlsContexts.DialogTitle String,
-                             supplier: Supplier<out RemoteSdkAdditionalData<*>>)
+                             supplier: Supplier<out RemoteSdkAdditionalData>)
 }

@@ -7,13 +7,12 @@ import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.panels.Wrapper
@@ -24,6 +23,8 @@ import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.*
@@ -58,10 +59,10 @@ fun <T : Any> MutableCollectionComboBoxModel<T>.bindIn(scope: CoroutineScope,
   }
 }
 
-fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                           items: Flow<Collection<T>>,
-                                           selectionState: MutableStateFlow<T?>,
-                                           sortComparator: Comparator<T>) {
+internal fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                                    items: Flow<Collection<T>>,
+                                                    selectionState: MutableStateFlow<T?>,
+                                                    sortComparator: Comparator<T>) {
   scope.launchNow {
     items.collect {
       this@bindIn.items = it.sortedWith(sortComparator)
@@ -79,11 +80,11 @@ fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
   }
 }
 
-fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
-                                           items: Flow<Collection<T>>,
-                                           selectionState: MutableStateFlow<T?>,
-                                           actions: Flow<List<Action>>,
-                                           sortComparator: Comparator<T>) {
+internal fun <T> ComboBoxWithActionsModel<T>.bindIn(scope: CoroutineScope,
+                                                    items: Flow<Collection<T>>,
+                                                    selectionState: MutableStateFlow<T?>,
+                                                    actions: Flow<List<Action>>,
+                                                    sortComparator: Comparator<T>) {
   bindIn(scope, items, selectionState, sortComparator)
 
   scope.launchNow {
@@ -220,29 +221,30 @@ fun Action.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
 }
 
 fun Document.bindTextIn(cs: CoroutineScope, textFlow: MutableStateFlow<String>) {
-  cs.launchNow(CoroutineName("Downstream text binding for $this")) {
-    val listener = object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        textFlow.value = text
-      }
-    }
-    addDocumentListener(listener)
-    try {
-      awaitCancellation()
-    }
-    finally {
-      removeDocumentListener(listener)
+  bindTextIn(cs, textFlow) {
+    textFlow.value = it
+  }
+}
+
+fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter: (String) -> Unit) {
+  val listener = object : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      setter(text)
     }
   }
-
-  cs.launchNow(CoroutineName("Upstream text binding for $this")) {
-    textFlow.collect {
-      if (text != it) {
+  cs.launchNow(CoroutineName("Text binding for $this")) {
+    textFlow.collectScoped { newText ->
+      if (text != newText) {
         writeAction {
-          CommandProcessor.getInstance().runUndoTransparentAction {
-            setText(it)
-          }
+          setText(newText.filter { it != '\r' })
         }
+      }
+      addDocumentListener(listener)
+      try {
+        awaitCancellation()
+      }
+      finally {
+        removeDocumentListener(listener)
       }
     }
   }
@@ -364,6 +366,8 @@ fun <T> Cell<ComboBox<T>>.bindSelectedItemIn(scope: CoroutineScope, flow: Mutabl
 
 private typealias Block = CoroutineScope.() -> Unit
 
+@ApiStatus.Internal
+@Deprecated("It is much better to pass a proper scope where needed")
 class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { Dispatchers.Main })
   : Activatable {
 
@@ -385,7 +389,7 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
 
   @OptIn(DelicateCoroutinesApi::class)
   override fun showNotify() {
-    scope = GlobalScope.namedChildScope("ActivatableCoroutineScopeProvider", context(), true).apply {
+    scope = GlobalScope.childScope("ActivatableCoroutineScopeProvider", context(), true).apply {
       for (block in blocks) {
         launch { block() }
       }

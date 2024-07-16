@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,17 +23,45 @@ import java.util.EventObject;
  *   as the infrastructure algorithms are improved or bugs are fixed.</li>
  *   <li>To say nothing of the fact that the precise events already depend on file size and the unpredictable activity of garbage collector,
  *   so events in production might differ from the ones you've seen in test environment.</li>
+ *   <li>Psi events may be not fired for files that added/removed externally or without using PSI.</li>
  * </ul>
  *
  * @see PsiTreeChangeListener
  */
 public abstract class PsiTreeChangeEvent extends EventObject {
+
+  /**
+   * A property change event with this property is fired when a file's name is changed.
+   * The file is usually passed as {@link PsiTreeChangeEvent#getChild()} or {@link PsiTreeChangeEvent#getElement()}
+   */
   public static final @NonNls String PROP_FILE_NAME = "fileName";
+
+  /**
+   * A property change event with this property is fired when a directory's name is changed.
+   * The file is usually passed as {@link PsiTreeChangeEvent#getElement()}
+   */
   public static final @NonNls String PROP_DIRECTORY_NAME  = "directoryName";
+
+
+  /**
+   * A property change event with this property is fired when a file's write permission is changed.
+   * The file is usually passed as {@link PsiTreeChangeEvent#getChild()} or {@link PsiTreeChangeEvent#getElement()}
+   *
+   * @see VirtualFile#PROP_WRITABLE
+   */
   public static final @NonNls String PROP_WRITABLE = "writable";
 
+  /**
+   * A property change event with this property is fired when project roots are changed.
+   * It won't hurt to clear your psi caches at this moment.
+   */
   public static final @NonNls String PROP_ROOTS = "roots";
 
+  /**
+   * A property change event with this property is fired when file types are changes.
+   * At this moment, any PsiFile can become invalidated (in case the type of its file has changed).
+   * It won't hurt to clear your psi caches at this moment.
+   */
   public static final @NonNls String PROP_FILE_TYPES = "propFileTypes";
 
   /**

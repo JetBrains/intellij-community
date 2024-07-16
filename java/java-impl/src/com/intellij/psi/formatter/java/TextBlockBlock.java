@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -17,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.psi.formatter.java.JavaFormatterUtil.extractTextRangesFromLiteralText;
 
 public class TextBlockBlock extends AbstractJavaBlock {
 
@@ -48,35 +49,18 @@ public class TextBlockBlock extends AbstractJavaBlock {
     return children;
   }
 
-  @NotNull
-  private List<TextRange> extractLinesRanges() {
+  private @NotNull List<TextRange> extractLinesRanges() {
     PsiLiteralExpression literal = ObjectUtils.tryCast(myNode.getPsi(), PsiLiteralExpression.class);
     if (literal == null || !literal.isTextBlock()) return Collections.emptyList();
     int indent = PsiLiteralUtil.getTextBlockIndent(literal);
     if (indent == -1) return Collections.emptyList();
-    String text = myNode.getText();
+    String text = literal.getText();
 
-    List<TextRange> linesRanges = new ArrayList<>();
-    // open quotes
-    int start = StringUtil.indexOf(text, '\n', 3);
-    if (start == -1) return Collections.emptyList();
-    linesRanges.add(new TextRange(0, start));
-    start += 1;
-
-    while (start < text.length()) {
-      int end = StringUtil.indexOf(text, '\n', start);
-      if (end == -1) end = text.length();
-      if (start + indent < end) start += indent;
-      if (start != end) linesRanges.add(new TextRange(start, end));
-      start = end + 1;
-    }
-
-    return linesRanges;
+    return extractTextRangesFromLiteralText(text, indent);
   }
 
-  @Nullable
   @Override
-  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     return null;
   }
 

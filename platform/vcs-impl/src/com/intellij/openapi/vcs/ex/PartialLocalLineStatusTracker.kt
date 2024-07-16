@@ -15,6 +15,7 @@ import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.DefaultLineFlags
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
@@ -47,7 +48,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Graphics
 import java.awt.Point
@@ -93,6 +93,10 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun addListener(listener: Listener, disposable: Disposable)
 
   open class ListenerAdapter : Listener
+
+  /**
+   * The threading of the events is VERY delicate. Take no additional locks inside to avoid deadlocks.
+   */
   interface Listener : EventListener {
     fun onBecomingValid(tracker: PartialLocalLineStatusTracker) = Unit
 
@@ -124,11 +128,6 @@ class LocalRange internal constructor(line1: Int, line2: Int, vcsLine1: Int, vcs
       exclusionState.validate(vcsLine2 - vcsLine1, line2 - line1)
     }
   }
-
-  @Deprecated("Use [exclusionState] instead", ReplaceWith("exclusionState == RangeExclusionState.Excluded"))
-  @get:Deprecated("Use [exclusionState] instead", ReplaceWith("exclusionState == RangeExclusionState.Excluded"))
-  @get:ApiStatus.ScheduledForRemoval
-  val isExcludedFromCommit: Boolean get() = exclusionState == RangeExclusionState.Excluded
 }
 
 
@@ -556,20 +555,24 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
     return object : PartialCommitHelper(contentToCommit) {
       override fun applyChanges() {
-        if (isReleased) return
-
-        val success = updateDocument(side) { doc ->
-          documentTracker.doFrozen(side) {
-            documentTracker.partiallyApplyBlocks(side, toCommitCondition)
-
-            doc.setText(contentToCommit)
-          }
-        }
-
-        if (!success) {
-          LOG.warn("Can't update document state on partial commit: $virtualFile")
-        }
+        applyPartialCommitChanges(side, toCommitCondition, contentToCommit)
       }
+    }
+  }
+
+  private fun applyPartialCommitChanges(side: Side, toCommitCondition: ToCommitCondition, contentToCommit: String) {
+    if (isReleased) return
+
+    val success = updateDocument(side) { doc ->
+      documentTracker.doFrozen(side) {
+        documentTracker.partiallyApplyBlocks(side, toCommitCondition)
+
+        doc.setText(contentToCommit)
+      }
+    }
+
+    if (!success) {
+      LOG.warn("Can't update document state on partial commit: $virtualFile")
     }
   }
 
@@ -1050,6 +1053,8 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
   companion object {
+    private val LOG: Logger = Logger.getInstance(ChangelistsLocalLineStatusTracker::class.java)
+
     @JvmStatic
     internal fun createTracker(project: Project,
                                document: Document,

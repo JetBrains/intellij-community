@@ -755,7 +755,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
         }
       }""";
     doTest(schema, "<warning>{}</warning>");
-    doTest(schema, "{\"c\": <warning>5</warning>}");
+    doTest(schema, "{\"c\": <warning descr=\"Incompatible types.\n Required: boolean. Actual: integer.\">5</warning>}");
     doTest(schema, "{\"c\": true}");
     doTest(schema, "{<warning descr=\"Missing required property 'c'\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"a\": 5</warning>, \"b\": 5}");
     doTest(schema, "{\"a\": 5, \"c\": <warning>5</warning>}");
@@ -988,7 +988,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
       }""");
     doTest(schemaText, """
       {
-        "type": <warning descr="Value should be one of: \\"record\\", \\"enum\\", \\"array\\", \\"map\\", \\"fixed\\"">"array2"</warning>
+        "type": <warning descr="Value should be one of: \\"array\\", \\"enum\\", \\"fixed\\", \\"map\\", \\"record\\"">"array2"</warning>
       }""");
   }
 
@@ -1080,6 +1080,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testReferenceById() {
     doTest("""
              {
+               "$schema": "https://json-schema.org/draft-07/schema",
                "type": "object",
 
                "properties": {

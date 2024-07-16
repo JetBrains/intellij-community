@@ -705,12 +705,12 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       return new PtyOptions() {
         @Override
         public int getInitialColumns() {
-          return LocalPtyOptions.DEFAULT.getInitialColumns();
+          return LocalPtyOptions.defaults().getInitialColumns();
         }
 
         @Override
         public int getInitialRows() {
-          return LocalPtyOptions.DEFAULT.getInitialRows();
+          return LocalPtyOptions.defaults().getInitialRows();
         }
       };
     }

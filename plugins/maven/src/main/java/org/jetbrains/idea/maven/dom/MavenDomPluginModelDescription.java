@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
-public class MavenDomPluginModelDescription extends DomFileDescription<MavenDomPluginModel> {
+public final class MavenDomPluginModelDescription extends DomFileDescription<MavenDomPluginModel> {
   public MavenDomPluginModelDescription() {
     super(MavenDomPluginModel.class, "plugin");
   }

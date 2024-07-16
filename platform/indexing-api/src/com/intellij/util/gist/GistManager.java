@@ -6,12 +6,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A helper class for working with file gists: associating persistent data with current VFS or PSI file contents.
  */
+@NonExtendable
 public abstract class GistManager {
   @NotNull
   public static GistManager getInstance() {

@@ -1,6 +1,6 @@
-// "Safe delete 'property'" "true"
+// "Safe delete 'myOwnProperty96'" "true"
 class UnusedProperty() {
-    val <caret>property: String = ":)"
+    val <caret>myOwnProperty96: String = ":)"
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SafeDeleteFix

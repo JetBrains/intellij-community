@@ -2,12 +2,14 @@
 package com.intellij.util.indexing;
 
 import com.intellij.util.io.DataExternalizer;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-@ApiStatus.OverrideOnly
+@OverrideOnly
+@Internal
 public interface CustomInputsIndexFileBasedIndexExtension<K> {
   @NotNull
   DataExternalizer<Collection<K>> createExternalizer();

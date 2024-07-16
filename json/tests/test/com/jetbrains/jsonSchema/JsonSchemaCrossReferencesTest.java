@@ -573,8 +573,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
   public void testNavigateToRefInsideMainSchema() {
     final JsonSchemaService service = JsonSchemaService.Impl.get(getProject());
-    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(getProject());
-    Assert.assertEquals(JsonSchemaProjectSelfProviderFactory.TOTAL_PROVIDERS, providers.size());
+    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(getProject()).stream()
+      .filter(it -> it.getSchemaVersion() != JsonSchemaVersion.SCHEMA_2019_09 && it.getSchemaVersion() != JsonSchemaVersion.SCHEMA_2020_12)
+      .toList();
     for (JsonSchemaFileProvider provider: providers) {
       final VirtualFile mainSchema = provider.getSchemaFile();
       assertNotNull(mainSchema);
@@ -598,7 +599,8 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       final PsiReference reference = psi.findReferenceAt(literal.getTextRange().getEndOffset() - 1);
       Assert.assertNotNull(reference);
-      String positiveOrNonNegative = ((JsonSchemaProjectSelfProviderFactory.MyJsonSchemaFileProvider)provider).isSchemaV4()
+      String positiveOrNonNegative = ((JsonSchemaProjectSelfProviderFactory.MyJsonSchemaFileProvider)provider)
+                                       .getSchemaVersion().equals(JsonSchemaVersion.SCHEMA_4)
         ? "positiveInteger"
         : "nonNegativeInteger";
       Assert.assertEquals("#/definitions/" + positiveOrNonNegative, reference.getCanonicalText());

@@ -46,7 +46,7 @@ class MavenJDOMUtilTest : MavenTestCase() {
         throw RuntimeException(e)
       }
 
-      override fun onSyntaxError() {
+      override fun onSyntaxError(message: String, startOffset: Int, endOffset: Int) {
         fail("syntax error")
       }
     })

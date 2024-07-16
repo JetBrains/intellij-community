@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.model.artifact.elements;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 
 /**
@@ -26,4 +28,8 @@ import org.jetbrains.jps.model.JpsElement;
  * @see JpsDirectoryCopyPackagingElement
  */
 public interface JpsPackagingElement extends JpsElement {
+  @ApiStatus.Internal
+  default @NotNull JpsPackagingElement createElementCopy() {
+    return (JpsPackagingElement)getBulkModificationSupport().createCopy();
+  }
 }

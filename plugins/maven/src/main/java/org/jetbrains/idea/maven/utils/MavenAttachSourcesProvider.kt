@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.codeInsight.AttachSourcesProvider
@@ -39,19 +39,24 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
       override fun getBusyText() = MavenProjectBundle.message("maven.action.download.sources.busy.text")
 
       override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
-        // may have been changed by this time...
-        val mavenProjects = getMavenProjects(psiFile)
-        if (mavenProjects.isEmpty()) {
-          return ActionCallback.REJECTED
-        }
         val project = psiFile.getProject()
-        val manager = MavenProjectsManager.getInstance(project)
-        val artifacts = findArtifacts(mavenProjects, orderEntries)
-        if (artifacts.isEmpty()) return ActionCallback.REJECTED
-
-        val resultWrapper = ActionCallback()
         val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+        val resultWrapper = ActionCallback()
         cs.launch {
+          // may have been changed by this time...
+          val mavenProjects = getMavenProjects(psiFile)
+          if (mavenProjects.isEmpty()) {
+            resultWrapper.setRejected()
+            return@launch
+          }
+
+          val manager = MavenProjectsManager.getInstance(project)
+          val artifacts = findArtifacts(mavenProjects, orderEntries)
+          if (artifacts.isEmpty()) {
+            resultWrapper.setRejected()
+            return@launch
+          }
+
           val downloadResult = manager.downloadArtifacts(mavenProjects, artifacts, true, false)
 
           withContext(Dispatchers.EDT) {

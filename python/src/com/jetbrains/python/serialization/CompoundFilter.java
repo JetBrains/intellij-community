@@ -19,7 +19,7 @@ public final class CompoundFilter extends SerializationFilterBase {
   }
 
   @Override
-  protected boolean accepts(@NotNull final Accessor accessor, @NotNull final Object bean, @Nullable final Object beanValue) {
+  protected boolean accepts(final @NotNull Accessor accessor, final @NotNull Object bean, final @Nullable Object beanValue) {
     for (final SerializationFilter filter : myFilters) {
       if (!filter.accepts(accessor, bean)) {
         return false;

@@ -6,6 +6,7 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.EvaluationStep
+import com.intellij.cce.evaluation.step.SetupCloudStep
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.EditSimilarity
 import com.intellij.cce.metric.Metric
@@ -30,4 +31,6 @@ class RenameFeature : EvaluableFeatureBase<RenameStrategy>("rename") {
                                             listOf(SessionsCountMetric())
 
   override fun getEvaluationSteps(language: Language, strategy: RenameStrategy): List<EvaluationStep> = emptyList()
+
+  override fun getPreliminaryEvaluationSteps(): List<EvaluationStep> = listOf(SetupCloudStep())
 }

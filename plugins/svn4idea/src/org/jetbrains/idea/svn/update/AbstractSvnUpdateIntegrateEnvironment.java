@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -155,7 +155,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       public void run() {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_TREE_CONFLICT);
-        final Collection<String> conflictedFiles = conflictedGroup.getFiles();
+        final Collection<String> conflictedFiles = conflictedGroup == null ? null : conflictedGroup.getFiles();
         final Collection<VirtualFile> parents = new ArrayList<>();
 
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
@@ -255,7 +255,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
       protected void fillAndRefreshFiles() {
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(groupId);
-        final Collection<String> conflictedFiles = conflictedGroup.getFiles();
+        final Collection<String> conflictedFiles = conflictedGroup == null ? null : conflictedGroup.getFiles();
         final Collection<VirtualFile> parents = new ArrayList<>();
 
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {

@@ -27,7 +27,7 @@ class SimplePropertiesInStorageTest {
     val builder = createEmptyBuilder()
     val source = SampleEntitySource("test")
     val entity = builder addEntity SampleEntity(true, "hello", mutableListOf("one", "two"), HashMap(),
-                                                virtualFileManager.getOrCreateFromUri("file:///tmp"), source)
+                                                virtualFileManager.getOrCreateFromUrl("file:///tmp"), source)
     assertTrue(entity.booleanProperty)
     assertEquals("hello", entity.stringProperty)
     assertEquals(listOf("one", "two"), entity.stringListProperty)
@@ -38,7 +38,7 @@ class SimplePropertiesInStorageTest {
   @Test
   fun `remove entity`() {
     val builder = createEmptyBuilder()
-    val entity = builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
+    val entity = builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                                 SampleEntitySource("test"))
     builder.removeEntity(entity)
     assertTrue(builder.entities(SampleEntity::class.java).toList().isEmpty())
@@ -49,12 +49,12 @@ class SimplePropertiesInStorageTest {
   fun `modify entity`() {
     val builder = createEmptyBuilder()
     val original = builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
-                                                  VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
-    val modified = builder.modifyEntity(original) {
+                                                  VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
+    val modified = builder.modifySampleEntity(original) {
       stringProperty = "foo"
       stringListProperty.add("first")
       booleanProperty = true
-      fileProperty = virtualFileManager.getOrCreateFromUri("file:///xxx")
+      fileProperty = virtualFileManager.getOrCreateFromUrl("file:///xxx")
     }
     assertEquals("hello", original.stringProperty)
     assertEquals(emptyList<String>(), original.stringListProperty)
@@ -67,7 +67,7 @@ class SimplePropertiesInStorageTest {
   @Test
   fun `builder from storage`() {
     val storage = createEmptyBuilder().apply {
-      this addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
+      this addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
     }.toSnapshot()
 
@@ -76,7 +76,7 @@ class SimplePropertiesInStorageTest {
     val builder = createBuilderFrom(storage)
 
     assertEquals("hello", builder.singleSampleEntity().stringProperty)
-    builder.modifyEntity(builder.singleSampleEntity()) {
+    builder.modifySampleEntity(builder.singleSampleEntity()) {
       stringProperty = "good bye"
     }
 
@@ -87,7 +87,7 @@ class SimplePropertiesInStorageTest {
   @Test
   fun `snapshot from builder`() {
     val builder = createEmptyBuilder()
-    builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
+    builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                    SampleEntitySource("test"))
 
     val snapshot = builder.toSnapshot()
@@ -95,7 +95,7 @@ class SimplePropertiesInStorageTest {
     assertEquals("hello", builder.singleSampleEntity().stringProperty)
     assertEquals("hello", snapshot.singleSampleEntity().stringProperty)
 
-    builder.modifyEntity(builder.singleSampleEntity()) {
+    builder.modifySampleEntity(builder.singleSampleEntity()) {
       stringProperty = "good bye"
     }
 
@@ -137,9 +137,9 @@ class SimplePropertiesInStorageTest {
     val builder = createEmptyBuilder()
     val source1 = SampleEntitySource("1")
     val source2 = SampleEntitySource("2")
-    val foo = builder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
+    val foo = builder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                              source1)
-    val foo2 = builder.modifyEntity(foo) { this.entitySource = source2 }
+    val foo2 = builder.modifySampleEntity(foo) { this.entitySource = source2 }
     assertEquals(source1, foo.entitySource)
     assertEquals(source2, foo2.entitySource)
     assertEquals(source2, builder.singleSampleEntity().entitySource)
@@ -151,10 +151,10 @@ class SimplePropertiesInStorageTest {
   fun `test trying to modify non-existing entity`() {
     val builder = createEmptyBuilder()
     val sampleEntity = builder addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                      VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
+                                                      VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
     val anotherBuilder = createEmptyBuilder()
     assertThrows<IllegalStateException> {
-      anotherBuilder.modifyEntity(sampleEntity) {
+      anotherBuilder.modifySampleEntity(sampleEntity) {
         this.stringProperty = "Another prop"
       }
     }

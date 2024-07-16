@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class CoverageSuiteChooserDialog extends DialogWrapper {
   @NonNls private static final String LOCAL = "Local";
   private final Project myProject;
@@ -93,7 +95,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    ExternalReportImportManager.getInstance(myProject).openSuites(suites, true);
+    ExternalReportImportManager.getInstance(myProject).openSuites(suites, true, ExternalReportImportManager.Source.DIALOG);
     super.doOKAction();
   }
 
@@ -229,14 +231,14 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
       for (CoverageSuitesBundle suitesBundle : myCoverageManager.activeSuites()) {
         myCoverageManager.closeSuitesBundle(suitesBundle);
       }
-      CoverageSuiteChooserDialog.this.close(DialogWrapper.OK_EXIT_CODE);
+      CoverageSuiteChooserDialog.this.close(OK_EXIT_CODE);
     }
   }
 
   private class AddExternalSuiteAction extends AnAction {
     AddExternalSuiteAction() {
       super(CommonBundle.message("button.add"), CommonBundle.message("button.add"), IconUtil.getAddIcon());
-      registerCustomShortcutSet(CommonShortcuts.INSERT, mySuitesTree);
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), mySuitesTree);
     }
 
     @Override

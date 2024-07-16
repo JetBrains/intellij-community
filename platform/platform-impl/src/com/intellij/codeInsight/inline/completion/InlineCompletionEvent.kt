@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -17,6 +18,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.random.Random
 
 class InlineCompletionRequest(
   val event: InlineCompletionEvent,
@@ -27,7 +29,10 @@ class InlineCompletionRequest(
   val startOffset: Int,
   val endOffset: Int,
   val lookupElement: LookupElement? = null,
-) : UserDataHolderBase()
+) : UserDataHolderBase() {
+  @ApiStatus.Internal
+  val requestId: Long = Random.nextLong()
+}
 
 sealed interface TypingEvent {
 
@@ -126,6 +131,43 @@ interface InlineCompletionEvent {
       return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, event.item)
     }
   }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  sealed class PartialAccept @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
+    override fun toRequest(): InlineCompletionRequest? {
+      val caretModel = editor.caretModel
+      if (caretModel.caretCount != 1) return null
+      val session = InlineCompletionSession.getOrNull(editor) ?: return null
+      return InlineCompletionRequest(
+        this,
+        session.request.file,
+        editor,
+        editor.document,
+        caretModel.offset,
+        caretModel.offset, // It depends on specific insertion implementation, so no way to guess it here
+        lookupElement = null
+      )
+    }
+  }
+
+  /**
+   * **This event is not intended to be a start of the inline completion.**
+   *
+   * This event is to be called when some inline completion suggestion is already rendered.
+   * It inserts the first word from the suggestion to the editor.
+   */
+  @ApiStatus.Experimental
+  class InsertNextWord @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor)
+
+  /**
+   * **This event is not intended to be a start of the inline completion.**
+   *
+   * This event is to be called when some inline completion suggestion is already rendered.
+   * It inserts the first line from the suggestion to the editor.
+   */
+  @ApiStatus.Experimental
+  class InsertNextLine @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor)
 }
 
 @RequiresBlockingContext

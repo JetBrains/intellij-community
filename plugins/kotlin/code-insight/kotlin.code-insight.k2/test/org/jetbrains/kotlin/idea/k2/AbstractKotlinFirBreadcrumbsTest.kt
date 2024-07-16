@@ -3,8 +3,4 @@ package org.jetbrains.kotlin.idea.k2
 
 import org.jetbrains.kotlin.idea.codeInsight.AbstractBreadcrumbsTest
 
-abstract class AbstractKotlinFirBreadcrumbsTest: AbstractBreadcrumbsTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-}
+abstract class AbstractKotlinFirBreadcrumbsTest : AbstractBreadcrumbsTest()

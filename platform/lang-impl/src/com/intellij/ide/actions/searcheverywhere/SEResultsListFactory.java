@@ -62,6 +62,23 @@ abstract class SEResultsListFactory {
     }
   };
 
+  @ApiStatus.Experimental
+  protected static final ListCellRenderer<Object> resultsNotificationElementRenderer = new ColoredListCellRenderer<>() {
+    @Override
+    protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
+      clear();
+      mySelected = false;
+      if (!(value instanceof SearchListModel.ResultsNotificationElement)) {
+        throw new AssertionError(value);
+      }
+      setFont(StartupUiUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.NORMAL)));
+      append(((SearchListModel.ResultsNotificationElement)value).label(), new SimpleTextAttributes(
+        SimpleTextAttributes.STYLE_PLAIN, UIUtil.getLabelInfoForeground()));
+      setIpad(JBUI.insets(9, 17, 12, 0));
+      setMyBorder(null);
+    }
+  };
+
   @ApiStatus.Internal
   Component getMoreElementRenderer(@NotNull JList<?> list, int index, boolean selected, boolean hasFocus) {
     Component component = myMoreRenderer.getListCellRendererComponent(list, SearchListModel.MORE_ELEMENT, index, selected, hasFocus);

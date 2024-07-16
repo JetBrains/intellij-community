@@ -5,6 +5,7 @@ import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.isRunBlockingUnderReadAction
 import com.intellij.openapi.util.Conditions
 import com.intellij.util.ui.EDT
@@ -37,7 +38,7 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
     else {
       DispatchedRunnable(context.job, block)
     }
-    ApplicationManager.getApplication().invokeLater(runnable, state, Conditions.alwaysFalse<Nothing?>())
+    ApplicationManagerEx.getApplicationEx().dispatchCoroutineOnEDT(runnable, state)
   }
 
   companion object : EdtCoroutineDispatcher() {

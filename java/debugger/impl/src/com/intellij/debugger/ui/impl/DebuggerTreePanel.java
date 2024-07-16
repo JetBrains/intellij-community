@@ -12,7 +12,8 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider, Disposable {
+public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements UiDataProvider, Disposable {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
 
   private final SingleAlarm myRebuildAlarm = new SingleAlarm(() -> {
@@ -124,11 +125,8 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DATA_KEY, this);
   }
 
   @Override

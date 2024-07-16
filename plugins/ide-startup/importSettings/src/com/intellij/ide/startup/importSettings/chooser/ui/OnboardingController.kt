@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
-import com.intellij.ide.startup.importSettings.data.WizardProvider
+import com.intellij.ide.startup.importSettings.data.StartupWizardService
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
@@ -42,8 +42,7 @@ class OnboardingController private constructor(){
 
     val dl = getDialog(titleGetter)
 
-    val skipAction: () -> Unit = skipImportAction ?:
-      WizardProvider.getInstance().getWizardService()?.let {
+    val skipAction: () -> Unit = skipImportAction ?: StartupWizardService.getInstance()?.let {
       {
         ImportSettingsEventsCollector.productPageSkipButton()
         startWizard(cancelCallback, titleGetter, isModal)
@@ -61,7 +60,7 @@ class OnboardingController private constructor(){
     controller.goToProductChooserPage()
     dl.isModal = isModal
 
-    if(!dl.isShowing) {
+    if (!dl.isShowing) {
       dl.initialize()
       dl.show()
       ImportSettingsEventsCollector.importFinished()
@@ -92,16 +91,23 @@ class OnboardingController private constructor(){
   fun startWizard(cancelCallback: (() -> Unit)? = null,
                   titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String? = { null },
                   isModal: Boolean = true,
-                  goBackAction: (() -> Unit)? = {startImport (cancelCallback, titleGetter, isModal)}) {
+                  goBackAction: (() -> Unit)? = {
+                    StartupWizardService.getInstance()?.onExit()
+                    startImport (cancelCallback, titleGetter, isModal)
+                  }) {
 
     val dl = getDialog(titleGetter)
 
-    val service = WizardProvider.getInstance().getWizardService() ?: return
+    val service = StartupWizardService.getInstance() ?: return
 
     val wizardController = WizardController.createController(dl, service, goBackAction)
-    cancelImportCallback = cancelCallback
+    cancelImportCallback = {
+      wizardController.cancelPluginInstallation()
+      cancelCallback?.invoke()
+    }
 
-    wizardController.goToThemePage()
+    service.onEnter()
+    wizardController.goToThemePage(true)
 
     if(!dl.isShowing) {
       dl.initialize()

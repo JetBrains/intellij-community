@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.ImmutableList;
@@ -228,8 +228,7 @@ public class PythonPathEditor extends SdkPathEditor {
       myExcluded = Sets.newHashSet(excluded);
     }
 
-    @Nls
-    public @NotNull String getPresentationSuffix(VirtualFile file) {
+    public @Nls @NotNull String getPresentationSuffix(VirtualFile file) {
       if (myAdded.contains(file)) {
         return PyBundle.message("sdk.paths.dialog.added.by.user.suffix");
       }
@@ -306,8 +305,7 @@ public class PythonPathEditor extends SdkPathEditor {
     }
   }
 
-  @NlsSafe
-  protected String getPresentablePath(VirtualFile value) {
+  protected @NlsSafe String getPresentablePath(VirtualFile value) {
     return value.getPresentableUrl();
   }
 }

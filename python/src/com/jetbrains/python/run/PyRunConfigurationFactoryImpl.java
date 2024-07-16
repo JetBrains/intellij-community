@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.RunManager;
@@ -29,7 +29,7 @@ public final class PyRunConfigurationFactoryImpl extends PyRunConfigurationFacto
     return settings;
   }
 
-  private static RunnerAndConfigurationSettings createConfigurationSettings(ConfigurationFactory factory, @NotNull final Module module) {
+  private static RunnerAndConfigurationSettings createConfigurationSettings(ConfigurationFactory factory, final @NotNull Module module) {
     final RunnerAndConfigurationSettings settings = RunManager.getInstance(module.getProject()).createConfiguration(module.getName(), factory);
     ModuleBasedConfiguration configuration = (ModuleBasedConfiguration) settings.getConfiguration();
     configuration.setModule(module);

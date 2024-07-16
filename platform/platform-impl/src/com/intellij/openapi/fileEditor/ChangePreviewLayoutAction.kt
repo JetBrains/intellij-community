@@ -13,15 +13,16 @@ internal abstract class ChangePreviewLayoutAction(
 ): ToggleAction(layout.getName(), layout.getName(), layout.getIcon(null)), DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   override fun isSelected(event: AnActionEvent): Boolean {
     val editor = event.getEditorWithPreview()
-    return editor?.layout == layout
+    return editor?.getLayout() == layout
   }
 
   override fun setSelected(event: AnActionEvent, state: Boolean) {
     val editor = event.getEditorWithPreview() ?: return
     if (state) {
-      editor.layout = layout
-    } else if (layout == TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW) {
-      editor.isVerticalSplit = !editor.isVerticalSplit
+      editor.setLayout(layout)
+    }
+    else if (layout == TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW) {
+      editor.setVerticalSplit(!editor.isVerticalSplit())
     }
   }
 

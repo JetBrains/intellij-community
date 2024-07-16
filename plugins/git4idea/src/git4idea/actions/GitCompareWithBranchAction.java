@@ -44,8 +44,9 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     List<GitBranch> remoteBranches = new ArrayList<>(repository.getBranches().getRemoteBranches());
     Collections.sort(remoteBranches);
 
-    if (repository.isOnBranch()) {
-      localBranches.remove(repository.getCurrentBranch());
+    var repositoryInfo = repository.getInfo();
+    if (repositoryInfo.isOnBranch()) {
+      localBranches.remove(repositoryInfo.getCurrentBranch());
     }
 
     List<String> branchNames = new ArrayList<>();

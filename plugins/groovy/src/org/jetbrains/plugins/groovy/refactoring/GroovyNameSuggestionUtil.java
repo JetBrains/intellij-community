@@ -74,7 +74,7 @@ public final class GroovyNameSuggestionUtil {
   }
 
   private static void generateNameByExpr(GrExpression expr, Set<String> possibleNames, NameValidator validator, boolean forStaticVariable) {
-    if (expr instanceof GrReferenceExpression refExpr && ((GrReferenceExpression) expr).getReferenceName() != null) {
+    if (expr instanceof GrReferenceExpression refExpr && refExpr.getReferenceName() != null) {
       if (PsiUtil.isThisReference(expr)) {
         possibleNames.add(validator.validateName("thisInstance", true));
       }

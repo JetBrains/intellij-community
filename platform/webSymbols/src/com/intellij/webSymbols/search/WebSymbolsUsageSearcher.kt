@@ -16,8 +16,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.startOffset
 import com.intellij.psi.util.walkUp
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.Query
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol

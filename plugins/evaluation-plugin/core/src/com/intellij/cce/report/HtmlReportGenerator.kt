@@ -28,6 +28,7 @@ class HtmlReportGenerator(
 
     private val resources = listOf(
       "/script.js",
+      "/diff.js",
       "/style.css",
       "/pako.min.js",
       "/tabulator.min.js",

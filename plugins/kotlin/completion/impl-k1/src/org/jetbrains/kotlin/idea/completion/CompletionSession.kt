@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
+import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -328,7 +329,12 @@ abstract class CompletionSession(
         // we insert one more RealPrefixMatchingWeigher because one inserted in default sorter is placed in a bad position (after "stats")
         sorter = sorter.weighAfter("lift.shorter", RealPrefixMatchingWeigher())
 
-        sorter = sorter.weighAfter("kotlin.proximity", ByNameAlphabeticalWeigher, PreferLessParametersWeigher)
+        sorter = sorter.weighAfter(
+            "kotlin.proximity",
+            ByNameAlphabeticalWeigher,
+            PreferKotlinClassesWeigher.Weigher,
+            PreferLessParametersWeigher
+        )
 
         sorter = sorter.weighBefore("prefix", K1SoftDeprecationWeigher)
 

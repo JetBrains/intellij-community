@@ -3,6 +3,7 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
 
 public final class ToggleExceptCommentsAndLiteralsAction extends EditorHeaderSetSearchContextAction {
   public ToggleExceptCommentsAndLiteralsAction() {
@@ -10,5 +11,7 @@ public final class ToggleExceptCommentsAndLiteralsAction extends EditorHeaderSet
       FindBundle.message("search.context.title.except.comments.string.literals"),
       FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS
     );
+
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
   }
 }

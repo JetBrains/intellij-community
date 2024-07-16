@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AggregatedExternalLibrariesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
@@ -195,6 +196,17 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         doTest {
             onlyCheckers(OrderEntriesChecker)
             onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
+        }
+    }
+
+    // This test ensures that a single library,
+    // on which both the MPP module and the Java-only module depend,
+    // imports with the same name,
+    // and it is not duplicated with different names in "External libraries tree"
+    @Test
+    fun testNoLibraryDuplicationTest() {
+        doTest {
+            onlyCheckers(AggregatedExternalLibrariesChecker)
         }
     }
 }

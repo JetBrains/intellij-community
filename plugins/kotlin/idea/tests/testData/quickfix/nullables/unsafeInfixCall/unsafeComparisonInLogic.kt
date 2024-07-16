@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (w?.x!!) call
 // ACTION: Enable option 'Local variable types' for 'Types' inlay hints
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Flip '>'

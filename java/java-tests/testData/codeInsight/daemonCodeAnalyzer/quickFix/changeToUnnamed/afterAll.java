@@ -1,4 +1,4 @@
-// "Apply all 'Replace with unnamed pattern' fixes in file" "true"
+// "Fix all 'Unused declaration' problems in file" "true"
 public class Test {
   record R(int x, int y) {}
   void test(Object obj) {

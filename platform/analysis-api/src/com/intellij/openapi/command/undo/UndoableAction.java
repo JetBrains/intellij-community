@@ -11,7 +11,7 @@ public interface UndoableAction {
   void redo() throws UnexpectedUndoException;
 
   default long getPerformedNanoTime() {
-    return 0l;
+    return 0L;
   }
 
   default void setPerformedNanoTime(long l) {

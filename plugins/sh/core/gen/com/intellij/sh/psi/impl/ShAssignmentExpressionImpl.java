@@ -16,6 +16,7 @@ public class ShAssignmentExpressionImpl extends ShAssignmentExpressionMixin impl
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitAssignmentExpression(this);
   }

@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 
-public class GroovyNestedSwitchInspection extends BaseInspection {
+public final class GroovyNestedSwitchInspection extends BaseInspection {
 
   @Override
   @Nullable

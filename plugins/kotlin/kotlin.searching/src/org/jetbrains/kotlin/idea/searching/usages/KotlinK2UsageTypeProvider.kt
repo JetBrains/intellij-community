@@ -19,10 +19,10 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
         val reference = refExpr.mainReference
         check(reference is KtSimpleReference<*>) { "Reference should be KtSimpleReference but not ${reference::class}" }
 
-        fun getFunctionUsageType(functionSymbol: KtFunctionLikeSymbol): UsageTypeEnum? {
+        fun getFunctionUsageType(functionSymbol: KaFunctionSymbol): UsageTypeEnum? {
             when (reference) {
                 is KtArrayAccessReference ->
-                    return when ((functionSymbol as KtFunctionSymbol).name) {
+                    return when ((functionSymbol as KaNamedFunctionSymbol).name) {
                         OperatorNameConventions.GET -> IMPLICIT_GET
                         OperatorNameConventions.SET -> IMPLICIT_SET
                         else -> error("Expected get or set operator but resolved to unexpected symbol {functionSymbol.render()}")
@@ -34,11 +34,11 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
             return when {
                 refExpr.getParentOfTypeAndBranch<KtSuperTypeListEntry> { typeReference } != null -> SUPER_TYPE
 
-                functionSymbol is KtConstructorSymbol && refExpr.getParentOfTypeAndBranch<KtAnnotationEntry> { typeReference } != null -> ANNOTATION
+                functionSymbol is KaConstructorSymbol && refExpr.getParentOfTypeAndBranch<KtAnnotationEntry> { typeReference } != null -> ANNOTATION
 
                 with(refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }) {
                     this?.calleeExpression is KtSimpleNameExpression
-                } -> if (functionSymbol is KtConstructorSymbol) CLASS_NEW_OPERATOR else FUNCTION_CALL
+                } -> if (functionSymbol is KaConstructorSymbol) CLASS_NEW_OPERATOR else FUNCTION_CALL
 
                 refExpr.getParentOfTypeAndBranch<KtBinaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtUnaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtWhenConditionInRange> { operationReference } != null -> FUNCTION_CALL
 
@@ -48,20 +48,20 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
 
         return analyze(refExpr) {
             when (val targetElement = reference.resolveToSymbol()) {
-                is KtClassifierSymbol ->
+                is KaClassifierSymbol ->
                     when (targetElement) {
-                        is KtClassOrObjectSymbol -> when (targetElement.classKind) {
-                          KtClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
-                          KtClassKind.OBJECT -> getVariableUsageType(refExpr)
+                        is KaClassSymbol -> when (targetElement.classKind) {
+                          KaClassKind.COMPANION_OBJECT -> COMPANION_OBJECT_ACCESS
+                          KaClassKind.OBJECT -> getVariableUsageType(refExpr)
                           else -> getClassUsageType(refExpr)
                         }
                         else -> getClassUsageType(refExpr)
                     }
-                is KtPackageSymbol ->
+                is KaPackageSymbol ->
                     if (targetElement.psi is PsiPackage) getPackageUsageType(refExpr) else getClassUsageType(refExpr)
 
-                is KtVariableLikeSymbol -> getVariableUsageType(refExpr)
-                is KtFunctionLikeSymbol -> getFunctionUsageType(targetElement)
+                is KaVariableSymbol -> getVariableUsageType(refExpr)
+                is KaFunctionSymbol -> getFunctionUsageType(targetElement)
                 else -> null
             }
         }

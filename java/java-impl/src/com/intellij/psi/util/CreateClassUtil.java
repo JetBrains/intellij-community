@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -27,17 +27,16 @@ import java.util.Properties;
 public final class CreateClassUtil {
   private static final Logger LOG = Logger.getInstance(CreateClassUtil.class);
 
-  @NonNls public static final String DEFAULT_CLASS_TEMPLATE = "#DEFAULT_CLASS_TEMPLATE";
-  @NonNls private static final String DO_NOT_CREATE_CLASS_TEMPLATE = "#DO_NOT_CREATE_CLASS_TEMPLATE";
-  @NonNls private static final String CLASS_NAME_PROPERTY = "Class_Name";
-  @NonNls private static final String INTERFACE_NAME_PROPERTY = "Interface_Name";
+  public static final @NonNls String DEFAULT_CLASS_TEMPLATE = "#DEFAULT_CLASS_TEMPLATE";
+  private static final @NonNls String DO_NOT_CREATE_CLASS_TEMPLATE = "#DO_NOT_CREATE_CLASS_TEMPLATE";
+  private static final @NonNls String CLASS_NAME_PROPERTY = "Class_Name";
+  private static final @NonNls String INTERFACE_NAME_PROPERTY = "Interface_Name";
 
   private CreateClassUtil() {}
 
-  @Nullable
-  private static PsiClass createClassFromTemplate(@NotNull final Properties attributes, @Nullable final String templateName,
-                                                  @NotNull final PsiDirectory directoryRoot,
-                                                  @NotNull final String className) throws IncorrectOperationException {
+  private static @Nullable PsiClass createClassFromTemplate(final @NotNull Properties attributes, final @Nullable String templateName,
+                                                            final @NotNull PsiDirectory directoryRoot,
+                                                            final @NotNull String className) throws IncorrectOperationException {
     if (templateName == null) return null;
     if (templateName.equals(DO_NOT_CREATE_CLASS_TEMPLATE)) return null;
 
@@ -76,8 +75,7 @@ public final class CreateClassUtil {
     }
   }
 
-  @NotNull
-  private static PsiDirectory createParentDirectories(@NotNull PsiDirectory directoryRoot, @NotNull String className) throws IncorrectOperationException {
+  private static @NotNull PsiDirectory createParentDirectories(@NotNull PsiDirectory directoryRoot, @NotNull String className) throws IncorrectOperationException {
     final PsiPackage currentPackage = JavaDirectoryService.getInstance().getPackage(directoryRoot);
     final String packagePrefix = currentPackage == null? null : currentPackage.getQualifiedName() + ".";
     final String packageName = extractPackage(packagePrefix != null && className.startsWith(packagePrefix)?
@@ -113,14 +111,12 @@ public final class CreateClassUtil {
     return fq;
   }
 
-  @Nullable
-  public static PsiClass createClassNamed(String newClassName, String templateName, @NotNull PsiDirectory directory) throws IncorrectOperationException {
+  public static @Nullable PsiClass createClassNamed(String newClassName, String templateName, @NotNull PsiDirectory directory) throws IncorrectOperationException {
     return createClassNamed(newClassName, FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties(), templateName, directory);
   }
 
-  @Nullable
-  public static PsiClass createClassWithDefaultProperties(String newClassName, Properties classProperties, String templateName,
-                                                          @NotNull PsiDirectory directory)
+  public static @Nullable PsiClass createClassWithDefaultProperties(String newClassName, Properties classProperties, String templateName,
+                                                                    @NotNull PsiDirectory directory)
     throws IncorrectOperationException {
     Properties defaultProperties = FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties();
     Properties properties = new Properties(defaultProperties);
@@ -129,11 +125,10 @@ public final class CreateClassUtil {
     return createClassNamed(newClassName, properties, templateName, directory);
   }
 
-  @Nullable
-  private static PsiClass createClassNamed(@Nullable String newClassName,
-                                           @NotNull Properties properties,
-                                           String templateName,
-                                           @NotNull PsiDirectory directory) throws IncorrectOperationException {
+  private static @Nullable PsiClass createClassNamed(@Nullable String newClassName,
+                                                     @NotNull Properties properties,
+                                                     String templateName,
+                                                     @NotNull PsiDirectory directory) throws IncorrectOperationException {
     if (newClassName == null) {
       return null;
     }
@@ -144,11 +139,10 @@ public final class CreateClassUtil {
     return createClassFromTemplate(properties, templateName, directory, newClassName);
   }
 
-  @Nullable
-  public static PsiClass createClassFromCustomTemplate(@Nullable PsiDirectory classDirectory,
-                                                       @Nullable final Module module,
-                                                       final String className,
-                                                       final String templateName) {
+  public static @Nullable PsiClass createClassFromCustomTemplate(@Nullable PsiDirectory classDirectory,
+                                                                 final @Nullable Module module,
+                                                                 final String className,
+                                                                 final String templateName) {
     if (classDirectory == null && module != null) {
       try {
         classDirectory = PackageUtil.findOrCreateDirectoryForPackage(module, "", null, false);

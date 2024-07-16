@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
-import com.google.gson.Gson
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
@@ -22,8 +21,6 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     private val isInstalledInDebugMethod by MethodDelegate<BooleanValue>("isInstalled\$kotlinx_coroutines_core", "()Z")
 
     private val dumpMethod by MethodMirrorDelegate("dumpCoroutinesInfo", javaLangListMirror, "()Ljava/util/List;")
-
-    private val currentThreadCoroutineIdMethod by MethodDelegate<LongValue>("getCurrentThreadCoroutineId", "()J")
 
     private val dumpCoroutinesInfoAsJsonAndReferences by MethodDelegate<ArrayReference>("dumpCoroutinesInfoAsJsonAndReferences", "()[Ljava/lang/Object;")
 
@@ -46,8 +43,7 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
     fun getCoroutinesRunningOnCurrentThread(context: DefaultExecutionContext): Set<Long> {
         val coroutines = dumpCoroutinesInfo(context)
         return coroutines.mapNotNull { 
-            val currentThread = context.suspendContext.anotherThreadToFocus ?: context.suspendContext.thread
-            if (it.lastObservedThread == currentThread?.threadReference) it.sequenceNumber else null 
+            if (it.lastObservedThread == context.suspendContext.thread?.threadReference) it.sequenceNumber else null
         }.toSet()
     }
     

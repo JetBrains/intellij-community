@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui
 
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.ui.components.JBPanel
@@ -53,6 +54,11 @@ class VcsLogPanel(private val manager: VcsLogManager, override val vcsLogUi: Vcs
       val hashes = vcsLogUi.getTable().selection.commits
       if (hashes.isEmpty()) return null
       return VcsLogUtil.convertToRevisionNumber(hashes.first().hash)
+    }
+    else if (PlatformDataKeys.SELECTED_ITEMS.`is`(dataId)) {
+      val hashes = vcsLogUi.getTable().selection.commits
+      if (hashes.size > VcsLogUtil.MAX_SELECTED_COMMITS) return null
+      return hashes.toTypedArray()
     }
     else if (VcsDataKeys.VCS_REVISION_NUMBERS.`is`(dataId)) {
       val hashes = vcsLogUi.getTable().selection.commits

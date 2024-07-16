@@ -6,11 +6,13 @@ import com.intellij.util.containers.Interner;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author erokhins
  */
+@ApiStatus.Internal
 public final class VcsRefImpl implements VcsRef {
   private static final Interner<String> ourNames = Interner.createWeakInterner();
   private final @NotNull Hash myCommitHash;

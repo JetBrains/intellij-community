@@ -24,6 +24,8 @@ abstract class Java11Shim {
 
   abstract fun <E> copyOf(collection: Collection<E>): Set<E>
 
+  abstract fun <E> copyOfList(collection: Collection<E>): List<E>
+
   abstract fun <E> listOf(): List<E>
 
   abstract fun <E> listOf(element: E): List<E>

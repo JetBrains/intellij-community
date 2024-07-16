@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -8,16 +8,17 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.*
+import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import org.jetbrains.uast.util.ClassSet
@@ -30,6 +31,9 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
     override val language: Language
         get() = KotlinLanguage.INSTANCE
+
+    override val analysisPlugin: UastAnalysisPlugin?
+        get() = UastAnalysisPlugin.byLanguage(KotlinLanguage.INSTANCE)
 
     override fun isFileSupported(fileName: String): Boolean = when {
         fileName.endsWith(".kt", false) -> true
@@ -97,15 +101,15 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     private fun KtNamedFunction.isJvmStatic() = annotationEntries.any { annotation ->
         annotation.shortName?.asString() == JVM_STATIC_FQN.shortName().asString() && allowAnalysisOnEdt {
             analyze(annotation) {
-                annotation.resolveCall()
+                annotation.resolveToCall()
                     ?.singleConstructorCallOrNull()
                     ?.partiallyAppliedSymbol
                     ?.symbol
-                    ?.containingClassIdIfNonLocal
+                    ?.containingClassId
                     ?.asSingleFqName() == JVM_STATIC_FQN
             }
         }

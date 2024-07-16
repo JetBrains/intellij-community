@@ -59,6 +59,7 @@ private inline fun executeRegisterTask(modules: List<IdeaPluginDescriptorImpl>, 
   }
 }
 
+@ApiStatus.Internal
 inline fun executeRegisterTaskForOldContent(mainPluginDescriptor: IdeaPluginDescriptorImpl,
                                             crossinline task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (dep in mainPluginDescriptor.pluginDependencies) {

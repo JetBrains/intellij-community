@@ -30,4 +30,6 @@ public interface DifferentiateContext {
   void affectNodeSource(@NotNull NodeSource source);
 
   boolean isCompiled(NodeSource src);
+
+  boolean isDeleted(ReferenceID id);
 }

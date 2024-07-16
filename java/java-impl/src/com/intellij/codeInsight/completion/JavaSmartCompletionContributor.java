@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -63,8 +63,7 @@ public final class JavaSmartCompletionContributor {
   static final ElementPattern<PsiElement> INSIDE_TYPECAST_EXPRESSION = psiElement().withParent(
     psiElement(PsiReferenceExpression.class).afterLeaf(psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
 
-  @Nullable
-  private static ElementFilter getClassReferenceFilter(final PsiElement element, final boolean inRefList) {
+  private static @Nullable ElementFilter getClassReferenceFilter(final PsiElement element, final boolean inRefList) {
     //throw new foo
     if (AFTER_THROW_NEW.accepts(element)) {
       return THROWABLES_FILTER;

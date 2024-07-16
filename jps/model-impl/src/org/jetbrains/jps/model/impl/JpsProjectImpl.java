@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
-import org.jetbrains.jps.model.impl.runConfiguration.JpsRunConfigurationImpl;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -18,32 +17,23 @@ import org.jetbrains.jps.model.module.JpsTypedModule;
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleRole;
 import org.jetbrains.jps.model.module.impl.JpsSdkReferencesTableImpl;
-import org.jetbrains.jps.model.runConfiguration.JpsRunConfiguration;
-import org.jetbrains.jps.model.runConfiguration.JpsRunConfigurationType;
-import org.jetbrains.jps.model.runConfiguration.JpsTypedRunConfiguration;
 
 import java.util.List;
 import java.util.Objects;
 
-public final class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implements JpsProject {
+final class JpsProjectImpl extends JpsProjectBase {
   private static final JpsElementCollectionRole<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_ROLE =
     JpsElementCollectionRole.create(JpsElementChildRoleBase.create("external reference"));
-  private static final JpsElementCollectionRole<JpsRunConfiguration> RUN_CONFIGURATIONS_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("run configuration"));
   private final JpsLibraryCollection myLibraryCollection;
   private String myName = "";
 
-  public JpsProjectImpl(@NotNull JpsModel model) {
+  JpsProjectImpl(@NotNull JpsModel model) {
     super(model);
     myContainer.setChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
     myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_ROLE);
     myContainer.setChild(JpsSdkReferencesTableImpl.ROLE);
     myContainer.setChild(RUN_CONFIGURATIONS_ROLE);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
-  }
-
-  public JpsProjectImpl(JpsProjectImpl original, JpsModel model) {
-    super(original, model);
-    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 
   @NotNull
@@ -111,35 +101,5 @@ public final class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> imp
   @NotNull
   public JpsSdkReferencesTable getSdkReferencesTable() {
     return myContainer.getChild(JpsSdkReferencesTableImpl.ROLE);
-  }
-
-  @NotNull
-  @Override
-  public <P extends JpsElement> Iterable<JpsTypedRunConfiguration<P>> getRunConfigurations(JpsRunConfigurationType<P> type) {
-    return getRunConfigurationsCollection().getElementsOfType(type);
-  }
-
-  @NotNull
-  @Override
-  public List<JpsRunConfiguration> getRunConfigurations() {
-    return getRunConfigurationsCollection().getElements();
-  }
-
-  @NotNull
-  @Override
-  public <P extends JpsElement> JpsTypedRunConfiguration<P> addRunConfiguration(@NotNull String name,
-                                                                                @NotNull JpsRunConfigurationType<P> type,
-                                                                                @NotNull P properties) {
-    return getRunConfigurationsCollection().addChild(new JpsRunConfigurationImpl<>(name, type, properties));
-  }
-
-  private JpsElementCollection<JpsRunConfiguration> getRunConfigurationsCollection() {
-    return myContainer.getChild(RUN_CONFIGURATIONS_ROLE);
-  }
-
-  @NotNull
-  @Override
-  public JpsElementReference<JpsProject> createReference() {
-    return new JpsProjectElementReference();
   }
 }

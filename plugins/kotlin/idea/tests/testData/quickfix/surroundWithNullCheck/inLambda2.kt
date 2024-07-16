@@ -1,6 +1,6 @@
 // "Surround with null check" "false"
 // ACTION: Add 'return@bar'
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (it!!) call
 // ACTION: Enable option 'Implicit receivers and parameters' for 'Lambdas' inlay hints
 // ACTION: Introduce local variable
 // ACTION: Replace 'it' with explicit parameter

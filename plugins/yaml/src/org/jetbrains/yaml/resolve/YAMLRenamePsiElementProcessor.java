@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.resolve;
 
 import com.intellij.psi.PsiElement;
@@ -17,7 +17,7 @@ import java.util.function.Predicate;
 
 public class YAMLRenamePsiElementProcessor extends RenamePsiElementProcessor {
   @Override
-  public void findExistingNameConflicts(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final MultiMap<PsiElement, String> conflicts) {
+  public void findExistingNameConflicts(final @NotNull PsiElement element, final @NotNull String newName, final @NotNull MultiMap<PsiElement, String> conflicts) {
     assert element instanceof YAMLAnchor;
     PsiFile file = element.getContainingFile();
     YAMLAnchor anchor = (YAMLAnchor)element;

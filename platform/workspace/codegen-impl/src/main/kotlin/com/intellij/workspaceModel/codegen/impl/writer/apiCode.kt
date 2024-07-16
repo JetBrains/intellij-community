@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer
 
 import com.intellij.workspaceModel.codegen.impl.writer.classes.*
@@ -9,28 +9,25 @@ import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.ProblemLocation
 import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
-import com.intellij.workspaceModel.codegen.impl.writer.fields.javaMutableType
-import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
-import com.intellij.workspaceModel.codegen.impl.writer.fields.wsCode
 import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
 import com.intellij.workspaceModel.codegen.impl.engine.ProblemReporter
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.fields.*
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)
   checkSymbolicId(this@generateBuilderCode, reporter)
   line("@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})")
-  val (typeParameter, typeDeclaration) = 
-    if (builderWithTypeParameter) "T" to "<T: $javaFullName>" else javaFullName to ""
-  val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString { 
+  val (typeParameter, typeDeclaration) = if (builderWithTypeParameter) "T" to "<T: $javaFullName>" else javaFullName to ""
+  val superBuilders = superTypes.filterIsInstance<ObjClass<*>>().filter { !it.isStandardInterface }.joinToString {
     ", ${it.name}.Builder<$typeParameter>"
   }
-  val header = "$generatedCodeVisibilityModifier interface Builder$typeDeclaration: $javaFullName$superBuilders, ${WorkspaceEntity.Builder}<$typeParameter>"
+  val header = "$generatedCodeVisibilityModifier interface Builder$typeDeclaration: ${WorkspaceEntity.Builder}<$typeParameter>$superBuilders"
 
   section(header) {
     list(allFields.noSymbolicId()) {
       checkProperty(this, reporter)
-      wsBuilderApi
+      getWsBuilderApi(this@generateBuilderCode)
     }
   }
 }
@@ -124,12 +121,16 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
   }
   val mandatoryFields = allFields.mandatoryFields()
   if (mandatoryFields.isNotEmpty()) {
-    val fields = mandatoryFields.joinToString { "${it.name}: ${it.valueType.javaType}" }
     section(companionObjectHeader) {
       line("@${JvmOverloads::class.fqn}")
       line("@${JvmStatic::class.fqn}")
       line("@${JvmName::class.fqn}(\"create\")")
-      section("$generatedCodeVisibilityModifier operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
+      line("$generatedCodeVisibilityModifier operator fun invoke(")
+      mandatoryFields.forEach { field ->
+        line(" ".repeat(this.indentSize) + "${field.name}: ${field.valueType.javaType},")
+      }
+      line(" ".repeat(this.indentSize) + "init: (Builder$builderGeneric.() -> Unit)? = null,")
+      section("): Builder$builderGeneric") {
         line("val builder = builder()")
         list(mandatoryFields) {
           if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
@@ -150,7 +151,7 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
       line("@${JvmOverloads::class.fqn}")
       line("@${JvmStatic::class.fqn}")
       line("@${JvmName::class.fqn}(\"create\")")
-      section("$generatedCodeVisibilityModifier operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
+      section("$generatedCodeVisibilityModifier operator fun invoke(init: (Builder$builderGeneric.() -> Unit)? = null): Builder$builderGeneric") {
         line("val builder = builder()")
         line("init?.invoke(builder)")
         line("return builder")
@@ -173,15 +174,26 @@ fun ObjClass<*>.generateExtensionCode(): String? {
 
   return lines {
     if (!openness.extendable) {
-      line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit): $name = modifyEntity($name.Builder::class.java, entity, modification)")
+      if (additionalAnnotations.isNotEmpty()) {
+        line(additionalAnnotations)
+      }
+      line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modify$name(")
+      line("  entity: $name,")
+      line("  modification: $name.Builder.() -> Unit,")
+      line("): $name {")
+      line("  return modifyEntity($name.Builder::class.java, entity, modification)")
+      line("}")
     }
     fields.sortedWith(compareBy({ it.receiver.name }, { it.name })).forEach { line(it.wsCode) }
   }
 }
 
-val ObjProperty<*, *>.wsBuilderApi: String
-  get() {
-    val returnType = if (valueType is ValueType.Collection<*, *> && !valueType.isRefType()) valueType.javaMutableType else valueType.javaType
-    return "override var $javaName: $returnType"
+fun ObjProperty<*, *>.getWsBuilderApi(objClass: ObjClass<*>): String {
+  val override = if (this.receiver != objClass) "override " else ""
+  val returnType = when {
+    valueType is ValueType.Collection<*, *> && !valueType.isRefType() -> valueType.javaMutableType
+    else -> valueType.javaBuilderTypeWithGeneric
   }
+  return "$override var $javaName: $returnType"
+}
 

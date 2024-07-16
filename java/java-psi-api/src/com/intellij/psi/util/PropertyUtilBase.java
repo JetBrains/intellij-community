@@ -456,6 +456,14 @@ public class PropertyUtilBase {
     return checkPrefix(methodName, SET_PREFIX);
   }
 
+  public static boolean isGetterName(@NotNull String methodName) {
+    return checkPrefix(methodName, GET_PREFIX);
+  }
+
+  public static boolean isIsGetterName(@NotNull String methodName) {
+    return checkPrefix(methodName, IS_PREFIX);
+  }
+
   @Nullable
   public static String getPropertyName(@NotNull PsiMethod method) {
     return getPropertyName(method, false);

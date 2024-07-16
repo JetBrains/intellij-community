@@ -62,12 +62,10 @@ internal class CacheRecoveryActionGroup: ActionGroup(), DumbAware {
 
   private fun RecoveryAction.toAnAction(): AnAction {
     val recoveryAction = this
-    return object: DumbAwareAction(recoveryAction.presentableName), ActionRemoteBehaviorSpecification {
+    return object: DumbAwareAction(recoveryAction.presentableName), ActionRemoteBehaviorSpecification.BackendOnly {
       init {
         templatePresentation.isApplicationScope = true
       }
-
-      override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
 
       override fun actionPerformed(e: AnActionEvent) {
         val scope = RecoveryScope.createInstance(e)

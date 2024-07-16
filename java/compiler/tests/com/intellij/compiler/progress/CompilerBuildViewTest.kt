@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress
 
 import com.intellij.build.BuildWorkspaceConfiguration
@@ -83,10 +83,10 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Copying resources… [a]\n" +
                                     "Parsing java… [a]\n" +
                                     "Writing classes… [a]\n" +
-                                    "Updating dependency information… [a]\n" +
                                     "Adding nullability assertions… [a]\n" +
                                     "Adding threading assertions… [a]\n" +
                                     "Adding pattern assertions… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks…\n" +
@@ -103,10 +103,10 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Copying resources… [a]\n" +
                                     "Parsing java… [a]\n" +
                                     "Writing classes… [a]\n" +
-                                    "Updating dependency information… [a]\n" +
                                     "Adding nullability assertions… [a]\n" +
                                     "Adding threading assertions… [a]\n" +
                                     "Adding pattern assertions… [a]\n" +
+                                    "Updating dependency information… [a]\n" +
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks…\n" +

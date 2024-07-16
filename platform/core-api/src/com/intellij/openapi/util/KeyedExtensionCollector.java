@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 import static com.intellij.util.containers.UtilKt.with;
 import static com.intellij.util.containers.UtilKt.without;
 import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
+import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
 
 public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(KeyedExtensionCollector.class);
@@ -210,10 +211,10 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     }
   }
 
-  protected final @NotNull PersistentList<T> buildExtensions(@NotNull Set<String> keys) {
+  protected final @NotNull List<T> buildExtensions(@NotNull Set<String> keys) {
     List<KeyedLazyInstance<T>> extensions = getExtensions();
     synchronized (lock) {
-      PersistentList<T> explicit = buildExtensionsFromExplicitRegistration(keys::contains);
+      List<T> explicit = buildExtensionsFromExplicitRegistration(keys::contains);
       List<T> result = buildExtensionsFromExtensionPoint(bean -> {
         String key;
         try {
@@ -226,11 +227,11 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
         return keys.contains(key);
       }, extensions);
-      return explicit.addAll(result);
+      return toPersistentList(explicit).addAll(result);
     }
   }
 
-  protected final @NotNull PersistentList<T> buildExtensionsFromExplicitRegistration(@NotNull Predicate<? super String> isMyBean) {
+  protected final @NotNull List<T> buildExtensionsFromExplicitRegistration(@NotNull Predicate<? super String> isMyBean) {
     PersistentList<T> result = persistentListOf();
     for (Map.Entry<String, PersistentList<T>> entry : explicitExtensions.entrySet()) {
       String key = entry.getKey();

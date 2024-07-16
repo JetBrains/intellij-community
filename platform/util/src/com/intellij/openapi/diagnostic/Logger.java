@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
@@ -269,8 +269,8 @@ public abstract class Logger {
    * to avoid overwhelming the log if 'debug' level is enabled.
    * <p>
    * In production mode, trace messages are disabled by default.
-   * They can be enabled in
-   * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
+   * They can be enabled by appending a <code>:trace</code> suffix in
+   * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>
    * <p>
    * In UsefulTestCase mode, trace messages are disabled by default,
    * use {@code TestLoggerFactory.enableTraceLogging} to enable them.
@@ -287,7 +287,7 @@ public abstract class Logger {
    * Log a stack trace at trace level, which is finer-grained than debug level.
    * <p>
    * In production mode, trace messages are disabled by default.
-   * They can be enabled in
+   * They can be enabled by appending a <code>:trace</code> suffix in
    * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
    * <p>
    * In UsefulTestCase mode, trace messages are disabled by default,
@@ -480,32 +480,12 @@ public abstract class Logger {
 
   /** @deprecated IntelliJ Platform no longer uses Log4j as the logging framework; please use {@link #setLevel(LogLevel)} instead */
   @Deprecated
-  public abstract void setLevel(@NotNull Level level);
+  public void setLevel(@SuppressWarnings("unused") @NotNull Level level) {
+    error("Do not use, call '#setLevel(LogLevel)' instead");
+  }
 
   public void setLevel(@NotNull LogLevel level) {
-    switch (level) {
-      case OFF:
-        setLevel(Level.OFF);
-        break;
-      case ERROR:
-        setLevel(Level.ERROR);
-        break;
-      case WARNING:
-        setLevel(Level.WARN);
-        break;
-      case INFO:
-        setLevel(Level.INFO);
-        break;
-      case DEBUG:
-        setLevel(Level.DEBUG);
-        break;
-      case TRACE:
-        setLevel(Level.TRACE);
-        break;
-      case ALL:
-        setLevel(Level.ALL);
-        break;
-    }
+    error(getClass() + " should override '#setLevel(LogLevel)'");
   }
 
   protected static @Nullable Throwable ensureNotControlFlow(@Nullable Throwable t) {

@@ -251,7 +251,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   public void setNavigatable(Navigatable navigatable) {
     myNavigatable = navigatable;
   }
-
+  
   @Override
   public @Nullable ProblemGroup getProblemGroup() {
     return myProblemGroup;

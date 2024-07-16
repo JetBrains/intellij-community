@@ -4,49 +4,63 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
-import com.intellij.driver.sdk.ui.remote.RobotService
+import com.intellij.driver.sdk.ui.remote.Robot
+import com.intellij.driver.sdk.ui.remote.RobotProvider
+import com.intellij.driver.sdk.ui.remote.SearchService
+import com.intellij.driver.sdk.ui.remote.SwingHierarchyService
 import java.awt.Point
 
 /**
  * Provides access to UI actions with the IDE under test such as keyboard and mouse input.
  */
 val Driver.ui
-  get(): UiRobot = UiRobot(this, service(RobotService::class))
+  get(): UiRobot {
+    val searchService = SearchService(service(SwingHierarchyService::class), this)
+    return UiRobot(this, searchService, DefaultSearchContext(searchService), RobotProvider(this))
+  }
 
-class UiRobot(override val driver: Driver, override val robotService: RobotService) : WithKeyboard, Finder {
+open class UiRobot(
+  override val driver: Driver,
+  override val searchService: SearchService,
+  override val searchContext: SearchContext,
+  override val robotProvider: RobotProvider
+) : WithKeyboard, Finder {
+
+  val robot: Robot
+    get() = robotProvider.defaultRobot
 
   fun moveMouse(point: Point) {
-    robotService.robot.moveMouse(point)
+    robot.moveMouse(point)
   }
 
   fun clickMouse() {
-    robotService.robot.pressMouse(RemoteMouseButton.LEFT)
-    robotService.robot.releaseMouse(RemoteMouseButton.LEFT)
+    robot.pressMouse(RemoteMouseButton.LEFT)
+    robot.releaseMouse(RemoteMouseButton.LEFT)
   }
 
   fun clickMouse(point: Point) {
-    robotService.robot.click(point, RemoteMouseButton.LEFT, 1)
+    robot.click(point, RemoteMouseButton.LEFT, 1)
   }
 
   fun doubleClickMouse(point: Point) {
-    robotService.robot.click(point, RemoteMouseButton.LEFT, 2)
+    robot.click(point, RemoteMouseButton.LEFT, 2)
   }
 
   fun rightClickMouse() {
-    robotService.robot.pressMouse(RemoteMouseButton.RIGHT)
-    robotService.robot.releaseMouse(RemoteMouseButton.RIGHT)
+    robot.pressMouse(RemoteMouseButton.RIGHT)
+    robot.releaseMouse(RemoteMouseButton.RIGHT)
   }
 
   fun rightClickMouse(point: Point) {
-    robotService.robot.click(point, RemoteMouseButton.RIGHT, 1)
+    robot.click(point, RemoteMouseButton.RIGHT, 1)
   }
 
-  override val searchContext: SearchContext = object : SearchContext {
-    override val context = ""
-
-    override fun findAll(xpath: String): List<Component> {
-      return robotService.findAll(xpath)
-    }
-  }
 }
 
+class DefaultSearchContext(val searchService: SearchService) : SearchContext {
+  override val context = ""
+
+  override fun findAll(xpath: String): List<Component> {
+    return searchService.findAll(xpath)
+  }
+}

@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.impl.AbstractToolbarCombo
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.ClickListener
 import com.intellij.ui.hover.HoverListener
+import com.intellij.ui.paint.PaintUtil
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -117,7 +118,7 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
       }
       val metrics = c.getFontMetrics(c.getFont())
       val text = getText(combo)
-      result.width += metrics.stringWidth(text)
+      result.width += PaintUtil.getStringWidth(text, c.graphics, metrics)
       result.height = max(result.height, metrics.height)
     }
 

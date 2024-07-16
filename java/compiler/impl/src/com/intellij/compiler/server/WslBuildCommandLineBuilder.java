@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
@@ -20,9 +20,9 @@ import org.jetbrains.jps.api.GlobalOptions;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
@@ -42,8 +42,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private static boolean CURRENT_SNAPSHOT_COPIED = false;
   private boolean myReportedProgress;
 
-  WslBuildCommandLineBuilder(@NotNull Project project, @NotNull WSLDistribution distribution, @NotNull String sdkPath,
-                             @Nullable ProgressIndicator progressIndicator) {
+  WslBuildCommandLineBuilder(@NotNull Project project, @NotNull WSLDistribution distribution, @NotNull String sdkPath, @Nullable ProgressIndicator progressIndicator) {
     myProject = project;
     myDistribution = distribution;
     myProgressIndicator = progressIndicator;
@@ -95,7 +94,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     StringBuilder builder = new StringBuilder();
     myReportedProgress = false;
     for (String pathName : classpathInHost) {
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append(":");
       }
       Path path = Paths.get(pathName);
@@ -109,7 +108,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       }
     }
     for (String s : classpathInTarget) {
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append(":");
       }
       builder.append(myWorkingDirectory).append("/").append(s);
@@ -132,7 +131,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       try {
         targetFileTimestamp = Files.getLastModifiedTime(targetFile);
       }
-      catch (FileNotFoundException ignored) {
+      catch (FileNotFoundException | NoSuchFileException ignored) {
         targetFileTimestamp = null;
       }
       if (targetFileTimestamp == null || targetFileTimestamp.compareTo(originalFileTimestamp) < 0) {
@@ -153,21 +152,6 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @Override
   public @NotNull String getWorkingDirectory() {
     return myWorkingDirectory;
-  }
-
-  @Override
-  public InetAddress getListenAddress() {
-    try {
-      return myDistribution.getHostIpAddress();
-    }
-    catch (ExecutionException ignored) {
-      return null;
-    }
-  }
-
-  @Override
-  public @NotNull String getHostIp() throws ExecutionException {
-    return myDistribution.getHostIpAddress().getHostAddress();
   }
 
   @Override

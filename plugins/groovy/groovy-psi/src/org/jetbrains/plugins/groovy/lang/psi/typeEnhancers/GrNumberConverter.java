@@ -16,7 +16,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER;
 
-public class GrNumberConverter extends GrTypeConverter {
+public final class GrNumberConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {

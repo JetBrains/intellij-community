@@ -7,7 +7,7 @@ var mutableNonLocal = Any()
 fun test() {
     if (mutableNonLocal is B) {
         with(mutableNonLocal) {
-            10.exten<caret>
+            10.extensi<caret>
         }
     }
 }

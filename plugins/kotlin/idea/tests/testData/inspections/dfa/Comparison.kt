@@ -1,4 +1,15 @@
 // WITH_STDLIB
+fun testConstant() {
+    if (<warning descr="Condition '2 + 2 > 5' is always false">2 + 2 > 5</warning>) {
+    }
+}
+fun testSimple(x : Int) {
+    if (x > 5) {
+        if (<warning descr="Condition 'x < 0' is always false">x < 0</warning>) {
+            
+        }
+    }
+}
 fun testParameter(x : Int) {
     if (x > 5) {
         if (<warning descr="Condition 'x < 3' is always false">x < 3</warning>) {

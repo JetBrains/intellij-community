@@ -45,7 +45,7 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-public class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdateIntention {
+public final class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdateIntention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {

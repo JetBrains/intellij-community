@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.traceBackParsers;
 
 import org.jetbrains.annotations.NotNull;
@@ -31,20 +17,18 @@ public abstract class TraceBackParserAdapter implements TraceBackParser {
    * We do not search anything in line longer than this, because it makes no sense to search something in so long lines
    */
   private static final int MAX_LINE_TO_PARSE = 5000;
-  @NotNull
-  private final Pattern myPattern;
+  private final @NotNull Pattern myPattern;
 
   /**
    * @param pattern pattern to be used to match line.
    */
-  protected TraceBackParserAdapter(@NotNull final Pattern pattern) {
+  protected TraceBackParserAdapter(final @NotNull Pattern pattern) {
     myPattern = pattern;
   }
 
 
-  @Nullable
   @Override
-  public final LinkInTrace findLinkInTrace(@NotNull String line) {
+  public final @Nullable LinkInTrace findLinkInTrace(@NotNull String line) {
     if (line.length() > MAX_LINE_TO_PARSE) {
       // Cut down line is too long to parse (to prevent freeze)
       //noinspection AssignmentToMethodParameter
@@ -65,6 +49,5 @@ public abstract class TraceBackParserAdapter implements TraceBackParser {
    * @param matchedMatcher regex matcher that found link
    * @return line info
    */
-  @NotNull
-  protected abstract LinkInTrace findLinkInTrace(@NotNull String line, @NotNull Matcher matchedMatcher);
+  protected abstract @NotNull LinkInTrace findLinkInTrace(@NotNull String line, @NotNull Matcher matchedMatcher);
 }

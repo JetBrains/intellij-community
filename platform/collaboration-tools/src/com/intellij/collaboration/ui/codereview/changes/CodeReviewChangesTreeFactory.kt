@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.changes
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
@@ -13,10 +14,12 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.ui.SelectionSaver
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
 
+@Obsolete
 class CodeReviewChangesTreeFactory(private val project: Project,
                                    private val changesModel: SingleValueModel<out Collection<Change>>) {
 
@@ -34,7 +37,10 @@ class CodeReviewChangesTreeFactory(private val project: Project,
         }
       }
 
-      override fun getData(dataId: String) = VcsTreeModelData.getDataOrSuper(project, this, dataId, super.getData(dataId))
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        VcsTreeModelData.uiDataSnapshot(sink, project, this)
+      }
 
     }.apply {
       emptyText.text = emptyTextText

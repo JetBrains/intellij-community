@@ -15,9 +15,12 @@
  */
 package org.jetbrains.jps.model.java.compiler;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public class JikesCompilerOptions extends JpsJavaCompilerOptions{
   public String JIKES_PATH = "";
   public boolean IS_EMACS_ERRORS_MODE = true;

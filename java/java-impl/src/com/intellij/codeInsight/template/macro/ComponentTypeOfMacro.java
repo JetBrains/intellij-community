@@ -35,13 +35,13 @@ public final class ComponentTypeOfMacro extends Macro {
       PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
       if (lookupItem != null) {
         PsiType psiType = lookupItem.getType();
-        if (psiType instanceof PsiArrayType) {
-          result.add(PsiTypeLookupItem.createLookupItem(((PsiArrayType)psiType).getComponentType(), null));
+        if (psiType instanceof PsiArrayType arrayType) {
+          result.add(PsiTypeLookupItem.createLookupItem(arrayType.getComponentType(), null));
         }
       }
     }
 
-    return lookupItems;
+    return result.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
@@ -52,6 +53,29 @@ public final class VfsRootAccess {
   // we don't want test subclasses to accidentally remove allowed files added by base classes
   private static final Set<String> ourAdditionalRoots = CollectionFactory.createFilePathSet(); // guarded by `ourAdditionalRoots`
   private static boolean insideGettingRoots;
+
+  //FIXME RC: this check is a real trouble-maker, because it is unreliable -- the test could run for years
+  //          and then suddenly start failing with VfsRootAccessNotAllowedError.
+  //          This is because it is called from .findInPersistence() -- which is called for not-yet-resolved
+  //          subtrees in VFS. So if the 'prohibited' subtree is not yet resolved -> the check will fail, but
+  //          if the 'prohibited' subtree IS already resolved -> the same check will be skipped.
+  //          But we run many tests sharing the same VFS -- hence the tests executed before the current one
+  //          define that VFS subtrees are resolved and that are not.
+  //          E.g. consider the following scenario:
+  //          Precondition: '/usr' is prohibited (not in VfsRootAccess.allowedRoots)
+  //          test_1 {
+  //            allowRootAccess(/usr, thisDisposable),
+  //            ... (resolves some file under /usr) ...
+  //            ['/usr' is removed from allowed roots as thisDisposable is disposed]
+  //          }
+  //          test_2 {
+  //            iterates recursively through all _resolved_ roots
+  //            (e.g. see IdeaGateway.createTransientRootEntry())
+  //          }
+  //          If test_2 runs after test_1 -- it fails, since '/usr' is already resolved => recursion dives deeper into
+  //          this subtree => at some point VfsRootAccess check is triggered, and it fails.
+  //          But if test_2 runs before test_1 '/usr' is not resolved yet, hence recursion does NOT go deeper, and
+  //          VfsRootAccess check doesn't triggered at all
 
   @TestOnly
   static void assertAccessInTests(@NotNull VirtualFile child, @NotNull NewVirtualFileSystem delegate) {
@@ -127,6 +151,10 @@ public final class VfsRootAccess {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
       allowed.add(FileUtil.toSystemIndependentName(FileUtil.getTempDirectory()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
+      Arrays.stream(System.getProperty("vfs.additional-allowed-roots", "").split(":"))
+        .filter(Predicate.not(String::isBlank))
+        .map(FileUtil::toSystemIndependentName)
+        .forEach(allowed::add);
 
       String userHome = FileUtil.toSystemIndependentName(SystemProperties.getUserHome());
       allowed.add(userHome);
@@ -159,6 +187,7 @@ public final class VfsRootAccess {
         // see IDEA-167037 (The assertion "File accessed outside allowed root" is triggered by files symlinked from a JDK directory)
         allowed.add("/etc");
         allowed.add("/private/etc");
+        allowed.add("/usr/lib/jvm");
       }
 
       for (final Project project : openProjects) {

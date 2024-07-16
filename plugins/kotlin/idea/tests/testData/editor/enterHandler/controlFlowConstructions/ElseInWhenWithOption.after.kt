@@ -2,7 +2,7 @@ fun some() {
     when {
         true && true ->
         else
-        <caret>-> Unit
+            <caret>-> Unit
     }
 }
 

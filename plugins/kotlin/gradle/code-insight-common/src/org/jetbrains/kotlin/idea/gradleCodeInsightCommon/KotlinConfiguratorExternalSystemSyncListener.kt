@@ -2,15 +2,15 @@
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 
-class KotlinConfiguratorExternalSystemSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
+class KotlinConfiguratorExternalSystemSyncListener : ExternalSystemTaskNotificationListener {
     override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         val project = id.findProject() ?: return
-        KotlinProjectConfigurationService.getInstance(project).onGradleSyncStarted()
+        KotlinProjectConfigurationService.getInstance(project).onSyncStarted()
 
         // Removes the Kotlin not configured notification immediately when a project sync was started
         KotlinProjectConfigurationService.getInstance(project).refreshEditorNotifications()
@@ -20,6 +20,6 @@ class KotlinConfiguratorExternalSystemSyncListener : ExternalSystemTaskNotificat
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         val project = id.findProject() ?: return
         val configurationService = KotlinProjectConfigurationService.getInstance(project)
-        configurationService.onGradleSyncFinished()
+        configurationService.onSyncFinished()
     }
 }

@@ -2,26 +2,10 @@
 package org.intellij.images.fileTypes.impl
 
 import com.intellij.lang.xml.XMLLanguage
-import com.intellij.lang.xml.XMLParserDefinition
-import com.intellij.psi.FileViewProvider
-import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.source.xml.XmlFileImpl
-import com.intellij.psi.tree.IFileElementType
-import org.jetbrains.annotations.NotNull
 
-class SvgLanguage : XMLLanguage(XMLLanguage.INSTANCE, "SVG", "image/svg+xml") {
+class SvgLanguage private constructor(): XMLLanguage(XMLLanguage.INSTANCE, "SVG", "image/svg+xml") {
   companion object {
     @JvmField
     val INSTANCE = SvgLanguage()
   }
-}
-
-internal class SvgParserDefinition : XMLParserDefinition() {
-
-  override fun getFileNodeType(): IFileElementType = SVG_FILE
-
-  override fun createFile(viewProvider: @NotNull FileViewProvider): @NotNull PsiFile = XmlFileImpl(viewProvider, SVG_FILE)
-
-  private val SVG_FILE = IFileElementType(SvgLanguage.INSTANCE)
-
 }

@@ -612,6 +612,19 @@ public class StringUtilTest {
     assertFileSizeFormat("1 TB", 999_995_000_000L);
   }
 
+  @Test
+  public void testFormatFileSizeFixedPrecision() {
+    assertEquals("10.00 B", StringUtil.formatFileSize(10, " ", -1, true));
+    assertEquals("100.00 B", StringUtil.formatFileSize(100, " ", -1, true));
+    assertEquals("1.00 kB", StringUtil.formatFileSize(1_000, " ", -1, true));
+    assertEquals("10.00 kB", StringUtil.formatFileSize(10_000, " ", -1, true));
+    assertEquals("100.00 kB", StringUtil.formatFileSize(100_000, " ", -1, true));
+    assertEquals("1.00 MB", StringUtil.formatFileSize(1_000_000, " ", -1, true));
+    assertEquals("10.00 MB", StringUtil.formatFileSize(10_000_000, " ", -1, true));
+    assertEquals("100.00 MB", StringUtil.formatFileSize(100_000_000, " ", -1, true));
+    assertEquals("1.00 GB", StringUtil.formatFileSize(1_000_000_000, " ", -1, true));
+  }
+
   private void assertFileSizeFormat(String expectedFormatted, long sizeBytes) {
     assertEquals(expectedFormatted.replace('.', myDecimalSeparator), StringUtil.formatFileSize(sizeBytes));
   }
@@ -941,6 +954,23 @@ public class StringUtilTest {
     assertTrue(StringUtil.isJavaIdentifier("A\uD835\uDEFC"));
     //noinspection UnnecessaryUnicodeEscape
     assertTrue(StringUtil.isJavaIdentifier("\u03B1A"));
+  }
+
+  @SuppressWarnings("UnnecessaryUnicodeEscape")
+  @Test
+  public void testCharSequenceSliceIsJavaIdentifier() {
+    assertFalse(StringUtil.isJavaIdentifier("", 0, 0));
+    assertTrue(StringUtil.isJavaIdentifier("x", 0, 1));
+    assertFalse(StringUtil.isJavaIdentifier("0", 0, 1));
+    assertFalse(StringUtil.isJavaIdentifier("0x", 0, 2));
+    assertTrue(StringUtil.isJavaIdentifier("foo$bar", 0, 7));
+    assertTrue(StringUtil.isJavaIdentifier("x0", 0, 2));
+    assertTrue(StringUtil.isJavaIdentifier("\uD835\uDEFCA", 0, 3));
+    assertTrue(StringUtil.isJavaIdentifier("A\uD835\uDEFC", 0, 3));
+    assertTrue(StringUtil.isJavaIdentifier("\u03B1A", 0, 2));
+    assertTrue(StringUtil.isJavaIdentifier("###\u03B1A", 3, 5));
+    assertTrue(StringUtil.isJavaIdentifier("\u03B1A###", 0, 2));
+    assertTrue(StringUtil.isJavaIdentifier("###\u03B1A###", 3, 5));
   }
 
   @Test

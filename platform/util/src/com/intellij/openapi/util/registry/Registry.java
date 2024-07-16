@@ -15,6 +15,8 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -38,6 +40,7 @@ public final class Registry {
 
   private static final Registry ourInstance = new Registry();
   private volatile boolean isLoaded;
+  private volatile CompletableFuture<Void> myLoadFuture = new CompletableFuture<>();
 
   private volatile @NotNull RegistryValueListener valueChangeListener = EMPTY_VALUE_LISTENER;
 
@@ -94,6 +97,8 @@ public final class Registry {
     myUserProperties.clear();
     myValues.clear();
     isLoaded = false;
+    myLoadFuture.cancel(false);
+    myLoadFuture = new CompletableFuture<>();
   }
 
   public static double doubleValue(@NonNls @NotNull String key, double defaultValue) {
@@ -269,10 +274,15 @@ public final class Registry {
   @ApiStatus.Internal
   public static void markAsLoaded() {
     ourInstance.isLoaded = true;
+    ourInstance.myLoadFuture.complete(null);
   }
 
   public boolean isLoaded() {
     return isLoaded;
+  }
+
+  static CompletionStage<Void> awaitLoad() {
+    return ourInstance.myLoadFuture;
   }
 
   @NotNull Map<String, String> getUserProperties() {
@@ -386,6 +396,7 @@ public final class Registry {
       userProperties.putAll(earlyAccess);
     }
     registry.isLoaded = true;
+    registry.myLoadFuture.complete(null);
     return userProperties;
   }
 }

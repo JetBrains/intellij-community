@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -139,14 +140,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     myManagerListeners.clear();
   }
 
-  public static void setupCreatedMavenProject(@NotNull Project project) {
-    setupCreatedMavenProject(getInstance(project).getImportingSettings());
-  }
-
-  public static void setupCreatedMavenProject(@NotNull MavenImportingSettings settings) {
-    settings.setWorkspaceImportEnabled(true);
-  }
-
   public ModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
@@ -181,8 +174,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void doInit() {
-    forceWorkspaceImportIfNeeded();
-
     initLock.lock();
     try {
       if (isInitialized.getAndSet(true)) {
@@ -190,23 +181,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       }
       initPreloadMavenServices();
       initWorkers();
-      listenForSettingsChanges();
       updateTabTitles();
     }
     finally {
       initLock.unlock();
-    }
-  }
-
-  private void forceWorkspaceImportIfNeeded() {
-    var importingSettings = getImportingSettings();
-    if (!importingSettings.isWorkspaceImportForciblyTurnedOn()) {
-      if (!importingSettings.isWorkspaceImportEnabled()) {
-        importingSettings.setWorkspaceImportEnabled(true);
-        myProject.putUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY(), true);
-      }
-      // turn workspace import on if it is turned off once for each existing project
-      importingSettings.setWorkspaceImportForciblyTurnedOn(true);
     }
   }
 
@@ -281,20 +259,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     try {
       if (projectsTreeInitialized.getAndSet(true)) return;
 
-      try {
-        Path file = getProjectsTreeFile();
-        if (Files.exists(file)) {
-          var readTree = MavenProjectsTree.read(myProject, file);
-          if (null != readTree) {
-            myProjectsTree = readTree;
-          }
-          else {
-            MavenLog.LOG.warn("Could not load existing tree, read null");
-          }
-        }
-      }
-      catch (IOException e) {
-        MavenLog.LOG.info(e);
+      if (!PlatformProjectOpenProcessor.Companion.isNewProject(myProject)) {
+        loadTree();
       }
 
       if (myProjectsTree == null) {
@@ -306,6 +272,24 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     }
     finally {
       initLock.unlock();
+    }
+  }
+
+  private void loadTree() {
+    try {
+      Path file = getProjectsTreeFile();
+      if (Files.exists(file)) {
+        var readTree = MavenProjectsTree.read(myProject, file);
+        if (null != readTree) {
+          myProjectsTree = readTree;
+        }
+        else {
+          MavenLog.LOG.warn("Could not load existing tree, read null");
+        }
+      }
+    }
+    catch (IOException e) {
+      MavenLog.LOG.info(e);
     }
   }
 
@@ -345,7 +329,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public Path getProjectsTreeFile() {
-    return getProjectsTreesDir().resolve(myProject.getLocationHash()).resolve("tree.dat");
+    return getProjectCacheDir().resolve("tree.dat");
+  }
+
+  @ApiStatus.Internal
+  public Path getProjectCacheDir() {
+    return getProjectsTreesDir().resolve(myProject.getLocationHash());
   }
 
   @NotNull
@@ -357,8 +346,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private void initWorkers() {
     myWatcher = new MavenProjectManagerWatcher(myProject, myProjectsTree);
   }
-
-  protected abstract void listenForSettingsChanges();
 
   public void listenForExternalChanges() {
     myWatcher.start();
@@ -657,7 +644,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   /**
    * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenSyncSpec)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
@@ -683,6 +670,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return doForceUpdateProjects(projects);
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   protected abstract AsyncPromise<Void> doForceUpdateProjects(@NotNull Collection<@NotNull MavenProject> projects);
 

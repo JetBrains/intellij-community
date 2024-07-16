@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -77,8 +77,7 @@ public final class InvertIfConditionAction extends PsiUpdateModCommandAction<Psi
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.invert.if.condition");
   }
 
@@ -170,8 +169,7 @@ public final class InvertIfConditionAction extends PsiUpdateModCommandAction<Psi
     return null;
   }
 
-  @NotNull
-  private static ControlFlow buildControlFlow(@Nullable PsiElement element) {
+  private static @NotNull ControlFlow buildControlFlow(@Nullable PsiElement element) {
     if (element == null) {
       return ControlFlow.EMPTY;
     }
@@ -413,15 +411,13 @@ public final class InvertIfConditionAction extends PsiUpdateModCommandAction<Psi
       Instruction instruction = instructions.get(i);
       if (controlFlow.getElement(i) != ifStatement) continue;
 
-      if (instruction instanceof GoToInstruction) {
-        GoToInstruction goToInstruction = (GoToInstruction)instruction;
+      if (instruction instanceof GoToInstruction goToInstruction) {
         if (goToInstruction.role != BranchingInstruction.Role.END) continue;
 
         endOffset = goToInstruction.offset;
         break;
       }
-      else if (instruction instanceof ConditionalGoToInstruction) {
-        ConditionalGoToInstruction goToInstruction = (ConditionalGoToInstruction)instruction;
+      else if (instruction instanceof ConditionalGoToInstruction goToInstruction) {
         if (goToInstruction.role != BranchingInstruction.Role.END) continue;
 
         endOffset = goToInstruction.offset;

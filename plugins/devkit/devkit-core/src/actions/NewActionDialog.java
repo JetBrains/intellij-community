@@ -45,7 +45,7 @@ import java.util.List;
 
 public class NewActionDialog extends DialogWrapper implements ActionData {
   private JPanel myRootPanel;
-  private JList<ActionGroup> myGroupList;
+  private JList<DefaultActionGroup> myGroupList;
   private JList<AnAction> myActionList;
   private JTextField myActionClassNameEdit;
   private JTextField myActionIdEdit;
@@ -88,30 +88,31 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
 
     List<String> actionIds = actionManager.getActionIdList("");
     actionIds.sort(null);
-    List<ActionGroup> actionGroups = new ArrayList<>();
+    List<DefaultActionGroup> actionGroups = new ArrayList<>();
     for (String actionId : actionIds) {
       if (actionManager.isGroup(actionId)) {
         AnAction anAction = actionManager.getAction(actionId);
-        if (anAction instanceof DefaultActionGroup) {
-          boolean hasDefinedId = !IdeaPluginRegistrationIndex.processGroup(project, actionId, GlobalSearchScope.allScope(project),
-                                                                           group -> false);
+        if (anAction instanceof DefaultActionGroup group) {
+          boolean hasDefinedId = !IdeaPluginRegistrationIndex.processGroup(
+            project, actionId, GlobalSearchScope.allScope(project),
+            o -> false);
           if (hasDefinedId) {
-            actionGroups.add((ActionGroup)anAction);
+            actionGroups.add(group);
           }
         }
       }
     }
-    myGroupList.setListData(actionGroups.toArray(new ActionGroup[0]));
+    myGroupList.setListData(actionGroups.toArray(new DefaultActionGroup[0]));
     myGroupList.setCellRenderer(new MyActionRenderer());
     myGroupList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        ActionGroup group = myGroupList.getSelectedValue();
+        DefaultActionGroup group = myGroupList.getSelectedValue();
         if (group == null) {
           myActionList.setListData(AnAction.EMPTY_ARRAY);
         }
         else {
-          AnAction[] actions = group.getChildren(null);
+          AnAction[] actions = group.getChildren(actionManager);
           // filter out actions that don't have IDs - they can't be used for anchoring in plugin.xml
           List<AnAction> realActions = new ArrayList<>();
           for(AnAction action: actions) {

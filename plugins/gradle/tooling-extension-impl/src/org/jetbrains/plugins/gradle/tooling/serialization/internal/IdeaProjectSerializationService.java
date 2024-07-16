@@ -569,7 +569,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     contentRoot.setTestDirectories(readSourceDirectories(reader, "testDirectories"));
     contentRoot.setResourceDirectories(readSourceDirectories(reader, "resourceDirectories"));
     contentRoot.setTestResourceDirectories(readSourceDirectories(reader, "testResourceDirectories"));
-    contentRoot.setExcludeDirectories(readFilesSet(reader, "excludeDirectories"));
+    contentRoot.setExcludeDirectories(readFileSet(reader, "excludeDirectories"));
     reader.stepOut();
     return contentRoot;
   }
@@ -874,7 +874,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
           @Override
           public boolean equals(IdeaCompilerOutput o1, IdeaCompilerOutput o2) {
             return o1 == o2 || o1 != null && o2 != null &&
-                               o1.getInheritOutputDirs() == o1.getInheritOutputDirs() &&
+                               o1.getInheritOutputDirs() == o2.getInheritOutputDirs() &&
                                compare(o1.getOutputDir(), o2.getOutputDir(), new FilePathComparator()) == 0 &&
                                compare(o1.getTestOutputDir(), o2.getTestOutputDir()) == 0;
           }

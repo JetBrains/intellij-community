@@ -18,15 +18,15 @@ package org.jetbrains.jps.model.artifact.impl.elements;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsDirectoryCopyPackagingElement;
 
-public class JpsDirectoryCopyPackagingElementImpl extends JpsFileCopyPackagingElementBase<JpsDirectoryCopyPackagingElementImpl>
+class JpsDirectoryCopyPackagingElementImpl extends JpsFileCopyPackagingElementBase<JpsDirectoryCopyPackagingElementImpl>
   implements JpsDirectoryCopyPackagingElement {
-  public JpsDirectoryCopyPackagingElementImpl(String directoryPath) {
+  JpsDirectoryCopyPackagingElementImpl(String directoryPath) {
     super(directoryPath);
   }
 
   @NotNull
   @Override
-  public JpsDirectoryCopyPackagingElementImpl createCopy() {
+  public JpsDirectoryCopyPackagingElementImpl createElementCopy() {
     return new JpsDirectoryCopyPackagingElementImpl(myFilePath);
   }
 

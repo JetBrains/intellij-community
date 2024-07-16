@@ -12,4 +12,11 @@ public interface CreateMethodRequest extends CreateExecutableRequest {
 
   @NotNull
   List<ExpectedType> getReturnType();
+
+  /**
+   * @return should start live template after a new method was created.
+   */
+  default boolean isStartTemplate() {
+    return true;
+  }
 }

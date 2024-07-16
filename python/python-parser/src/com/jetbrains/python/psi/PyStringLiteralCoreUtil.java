@@ -37,8 +37,7 @@ public class PyStringLiteralCoreUtil {
    *   '''quux' -> null
    * </pre>
    */
-  @Nullable
-  public static Pair<String, String> getQuotes(@NotNull String text) {
+  public static @Nullable Pair<String, String> getQuotes(@NotNull String text) {
     final String prefix = getPrefix(text);
     final String mainText = text.substring(prefix.length());
     for (String quote : QUOTES) {
@@ -67,8 +66,7 @@ public class PyStringLiteralCoreUtil {
     return offset;
   }
 
-  @NotNull
-  public static String getPrefix(@NotNull CharSequence text) {
+  public static @NotNull String getPrefix(@NotNull CharSequence text) {
     return getPrefix(text, 0);
   }
 
@@ -78,13 +76,11 @@ public class PyStringLiteralCoreUtil {
    * @return extracted string prefix
    * @see #getPrefixEndOffset(CharSequence, int)
    */
-  @NotNull
-  public static String getPrefix(@NotNull CharSequence text, int startOffset) {
+  public static @NotNull String getPrefix(@NotNull CharSequence text, int startOffset) {
     return text.subSequence(startOffset, getPrefixEndOffset(text, startOffset)).toString();
   }
 
-  @Nullable
-  private static Pair<String, String> getQuotes(@NotNull String text, @NotNull String prefix, @NotNull String quote) {
+  private static @Nullable Pair<String, String> getQuotes(@NotNull String text, @NotNull String prefix, @NotNull String quote) {
     final int length = text.length();
     final int n = quote.length();
     if (length >= 2 * n && text.startsWith(quote) && text.endsWith(quote)) {

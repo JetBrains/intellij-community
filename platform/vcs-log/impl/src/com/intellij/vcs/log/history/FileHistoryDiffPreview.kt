@@ -12,7 +12,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider
 
-class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPanel: FileHistoryPanel)
+internal class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPanel: FileHistoryPanel)
   : EditorTabDiffPreview(project) {
 
   override fun getEditorTabName(processor: DiffEditorViewer?): String {

@@ -3,11 +3,13 @@ public class Test extends Super {
         args = <warning descr="Variable 'args' is assigned to itself">args</warning>;
         int j = ((<warning descr="Variable 'j' is initialized with self assignment">j</warning>) = 1);
         args = (<warning descr="Variable 'args' is assigned to itself">args</warning>) = null;
+        String s = <error descr="Variable 's' might not have been initialized">s</error> += 10;
     }
 
     private final int z = <warning descr="Variable 'z' is initialized with self assignment">this.z</warning>;
     public static int y = <error descr="Cannot resolve symbol 'ABCV'">ABCV</error>.y;
     public static final int x = <error descr="Cannot resolve symbol 'ABCV'">ABCV</error>.x;
+    private static String s = Test.s += 10;
 
     static void foo() {
         y = <warning descr="Variable 'y' is assigned to itself">Test.y</warning>;

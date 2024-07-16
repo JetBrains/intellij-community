@@ -24,6 +24,7 @@ import org.languagetool.Languages
 import org.languagetool.markup.AnnotatedTextBuilder
 import org.languagetool.rules.GenericUnpairedBracketsRule
 import org.languagetool.rules.RuleMatch
+import org.languagetool.rules.en.EnglishUnpairedQuotesRule
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.function.Predicate
@@ -119,7 +120,10 @@ open class LanguageToolChecker : TextChecker() {
     }
   }
 
-  private fun possiblyMarkupDependent(match: RuleMatch) = match.message.lowercase().contains("capitalize")
+  private fun possiblyMarkupDependent(match: RuleMatch): Boolean {
+    return match.message.lowercase().contains("capitalize") ||
+           match.rule.id == "POSSESSIVE_APOSTROPHE"
+  }
 
   private fun runLT(tool: JLanguageTool, str: String): List<RuleMatch> =
     tool.check(AnnotatedTextBuilder().addText(str).build(), true, JLanguageTool.ParagraphHandling.NORMAL,
@@ -179,7 +183,7 @@ private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
 private val cacheKey = Key.create<List<LanguageToolChecker.Problem>>("grazie.LT.problem.cache")
 private val interner = Interner.createWeakInterner<String>()
 private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
-private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,).+[])]")
+private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
 private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
 
 internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
@@ -196,13 +200,13 @@ internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRul
  * So we ignore this pattern in commit messages and literals (which might be used for parsing git output)
  */
 private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
-  return match.rule.id == "EN_COMPOUNDS" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
+  return match.rule.id == "EN_COMPOUNDS_CHERRY_PICKED" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
          (text.domain == TextContent.TextDomain.LITERALS ||
           text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessage.isCommitMessage(text.containingFile) })
 }
 
 private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
-  if (match.rule is GenericUnpairedBracketsRule) {
+  if (match.rule is EnglishUnpairedQuotesRule) {
     if (match.fromPos > 0 &&
         (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
       return true //https://github.com/languagetool-org/languagetool/issues/5269
@@ -213,6 +217,9 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     if (text.substring(match.fromPos, match.toPos) == "\"" && text.subSequence(0, match.fromPos).contains("\"")) {
       return true // e.g. commented raise ValueError(f"a very long text so that the vicinity of the error doesn't seem like code")
     }
+  }
+
+  if (match.rule is GenericUnpairedBracketsRule) {
     if (couldBeOpenClosedRange(text, match.fromPos)) {
       return true
     }
@@ -225,6 +232,16 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
   if (match.rule.id.endsWith("DOUBLE_PUNCTUATION") &&
       (isNumberRange(match.fromPos, match.toPos, text) || isPathPart(match.fromPos, match.toPos, text))) {
     return true
+  }
+
+  if (match.rule.id == "A_RB_NN" &&
+      text.substring(match.fromPos, match.toPos).equals("finally block", ignoreCase = true)  &&
+      (text.domain == TextContent.TextDomain.DOCUMENTATION || text.domain == TextContent.TextDomain.COMMENTS)) {
+    return true // https://github.com/languagetool-org/languagetool/issues/9511
+  }
+
+  if (match.rule.fullId == "UP_TO_DATE_HYPHEN[1]") {
+    return true // https://github.com/languagetool-org/languagetool/issues/8285
   }
 
   return false

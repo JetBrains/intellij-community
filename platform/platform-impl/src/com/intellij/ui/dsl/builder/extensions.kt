@@ -7,8 +7,12 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.ui.components.JBTabbedPane
+import com.intellij.ui.dsl.builder.components.TabbedPaneHeader
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
+import javax.swing.JPanel
 
 // This file contains extension functions that relates to platform-impl package only.
 // Common platform related functionality should be put in correspondent module
@@ -28,6 +32,21 @@ fun Row.actionsButton(vararg actions: AnAction,
   val actionGroup = PopupActionGroup(arrayOf(*actions))
   actionGroup.templatePresentation.icon = icon
   return cell(ActionButton(actionGroup, actionGroup.templatePresentation.clone(), actionPlace, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE))
+}
+
+/**
+ * Creates JBTabbedPane which shows only tabs without tab content. To add a new tab call something like
+ * ```
+ * JBTabbedPane.addTab(tab.name, JPanel())
+ * ```
+ */
+@ApiStatus.Experimental
+fun Row.tabbedPaneHeader(items: Collection<String> = emptyList()): Cell<JBTabbedPane> {
+  val tabbedPaneHeader = TabbedPaneHeader()
+  for (item in items) {
+    tabbedPaneHeader.add(item, JPanel())
+  }
+  return cell(tabbedPaneHeader)
 }
 
 private class PopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {

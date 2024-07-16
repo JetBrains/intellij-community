@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -67,6 +68,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * tests {@link LocalInspectionTool} behaviour during highlighting
+ */
 @SkipSlowTestLocally
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCase {
@@ -80,6 +84,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
     DaemonProgressIndicator.setDebug(true);
+    PlatformTestUtil.assumeEnoughParallelism();
   }
 
   @Override
@@ -105,6 +110,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
 
   @Override
   protected Sdk getTestProjectJdk() {
+    //noinspection removal
     return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
   }
 
@@ -128,7 +134,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   }
 
   private void setActiveEditors(Editor @NotNull ... editors) {
-    ((EditorTrackerImpl)EditorTracker.getInstance(myProject)).setActiveEditors(Arrays.asList(editors));
+    EditorTracker.Companion.getInstance(myProject).setActiveEditors(Arrays.asList(editors));
   }
 
   @Override
@@ -386,8 +392,8 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         @Override
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
           if (statement.getElseBranch() != null) {
-            PsiKeyword keyw = (PsiKeyword)statement.getChildren()[0];
-            holder.registerProblem(keyw, "Dododo", new StupidQuickFixWhichDoesntCheckItsOwnApplicability());
+            PsiKeyword keyword = (PsiKeyword)statement.getChildren()[0];
+            holder.registerProblem(keyword, "Dododo", new StupidQuickFixWhichDoesntCheckItsOwnApplicability());
           }
         }
       };
@@ -469,7 +475,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
   }
 
   public void testAddInspectionProblemToProblemHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
-    PlatformTestUtil.assumeEnoughParallelism();
     registerInspection(new MySwearingInspection());
     checkSwearingHighlightIsVisibleImmediately();
   }
@@ -635,7 +640,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     assertNull(expectedVisibleRange); // check the inspection was run
   }
 
-  // add file-level "blah" if there are identifiers containing "XXX"
+  // add file-level "blah" for each identifier containing "XXX"
   private static class MyFileLevelInspection extends MyInspectionBase {
     @NotNull
     @Override
@@ -667,6 +672,40 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     type('2');
     assertEmpty(highlightErrors());
     assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+  }
+
+  public void testFileLevelHighlightingDoesNotDuplicateOnTypingOrOnFileCloseReopen() {
+    registerInspection(new MyFileLevelInspection());
+    @Language("JAVA")
+    String text = """
+      class X {
+        int XXX<caret>;
+      }""";
+    PsiFile psiFile = configureByText(JavaFileType.INSTANCE, text);
+
+    assertEmpty(highlightErrors());
+    assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+    FileEditorManager.getInstance(myProject).closeFile(psiFile.getVirtualFile());
+
+    for (int i=0; i<100; i++) {
+      configureByExistingFile(psiFile.getVirtualFile());
+      getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("XXX") + "XXX".length());
+
+      UIUtil.dispatchAllInvocationEvents();
+      type('2');
+      assertEmpty(highlightErrors());
+      UIUtil.dispatchAllInvocationEvents();
+      assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+      UIUtil.dispatchAllInvocationEvents();
+      backspace();
+      assertEmpty(highlightErrors());
+      UIUtil.dispatchAllInvocationEvents();
+      assertOneElement(myDaemonCodeAnalyzer.getFileLevelHighlights(getProject(), getFile()));
+      
+      LOG.debug("i = " + i);
+
+      FileEditorManager.getInstance(myProject).closeFile(psiFile.getVirtualFile());
+    }
   }
 
   public void testFileLevelWithEverChangingDescriptionMustUpdateOnTyping() {
@@ -761,9 +800,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
         // invoke later because we are checking this flag in EDT below, and
         // we do not want a race between contextFinishedCallback.accept(context); in inspection thread
         // and querying markup model in EDT
-        ApplicationManager.getApplication().invokeLater(() -> {
-          fastToolFinished.set(true);
-        });
+        ApplicationManager.getApplication().invokeLater(() -> fastToolFinished.set(true));
       }
       @NotNull
       @Override

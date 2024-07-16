@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.google.common.net.HostAndPort;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.remote.BaseRemoteProcessHandler;
 import com.intellij.remote.RemoteProcess;
-import com.intellij.remote.RemoteSdkCredentials;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
@@ -33,9 +32,9 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
 
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
   public static final String LOG_PY_CHARM_FILE_MAPPING = "LOG: PyCharm: File mapping:";
-  @NotNull private final PyRemotePathMapper myPathMapper;
+  private final @NotNull PyRemotePathMapper myPathMapper;
   private final List<PathMappingSettings.PathMapping> myFileMappings = new ArrayList<>();
-  @NotNull private final PyRemoteSocketToLocalHostProvider myRemoteSocketProvider;
+  private final @NotNull PyRemoteSocketToLocalHostProvider myRemoteSocketProvider;
   /**
    * Indicates if [myProcess] is launched with PTY.
    * It changes the logic of readerOptions, so it can break the output if the [myProcess] has been launched without PTY and that value is
@@ -57,9 +56,8 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
     myIsRunWithPty = isRunWithPty;
   }
 
-  @NotNull
   @Override
-  public PathMapper getMappingSettings() {
+  public @NotNull PathMapper getMappingSettings() {
     return myPathMapper;
   }
 
@@ -73,9 +71,8 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
     }
   }
 
-  @Nullable
   @Override
-  public HostAndPort getLocalTunnel(int remotePort) {
+  public @Nullable HostAndPort getLocalTunnel(int remotePort) {
     return myProcess.getLocalTunnel(remotePort);
   }
 
@@ -91,45 +88,31 @@ public final class PyRemoteProcessHandler extends BaseRemoteProcessHandler<Remot
   }
 
 
-  @NotNull
-  public static PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
-                                                            @NotNull RemoteSdkCredentials data,
-                                                            @NotNull GeneralCommandLine commandLine,
-                                                            @Nullable PyRemotePathMapper pathMapper,
-                                                            @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider)
-    throws RemoteSdkException {
-    return createProcessHandler(remoteProcess, data.getFullInterpreterPath(), commandLine, pathMapper,
-                                remoteSocketProvider);
-  }
-
-  @NotNull
-  public static PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
-                                                            @Nullable String fullInterpreterPath,
-                                                            @NotNull GeneralCommandLine commandLine,
-                                                            @Nullable PyRemotePathMapper pathMapper,
-                                                            @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider)
+  public static @NotNull PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
+                                                                     @Nullable String fullInterpreterPath,
+                                                                     @NotNull GeneralCommandLine commandLine,
+                                                                     @Nullable PyRemotePathMapper pathMapper,
+                                                                     @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider)
     throws RemoteSdkException {
     return new PyRemoteProcessHandler(remoteProcess,
                                       commandLine.getCommandLineString(fullInterpreterPath), commandLine.getCharset(),
                                       pathMapper, remoteSocketProvider, false);
   }
 
-  @NotNull
-  public static PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
-                                                            @NotNull String commandLine,
-                                                            @NotNull Charset charset,
-                                                            @Nullable PyRemotePathMapper pathMapper,
-                                                            @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
-                                                            boolean isRunWithPty) {
+  public static @NotNull PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
+                                                                     @NotNull String commandLine,
+                                                                     @NotNull Charset charset,
+                                                                     @Nullable PyRemotePathMapper pathMapper,
+                                                                     @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
+                                                                     boolean isRunWithPty) {
     return new PyRemoteProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider, isRunWithPty);
   }
 
-  @NotNull
-  public static PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
-                                                            @NotNull String commandLine,
-                                                            @NotNull Charset charset,
-                                                            @Nullable PyRemotePathMapper pathMapper,
-                                                            @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider) {
+  public static @NotNull PyRemoteProcessHandler createProcessHandler(@NotNull RemoteProcess remoteProcess,
+                                                                     @NotNull String commandLine,
+                                                                     @NotNull Charset charset,
+                                                                     @Nullable PyRemotePathMapper pathMapper,
+                                                                     @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider) {
     return createProcessHandler(remoteProcess, commandLine, charset, pathMapper, remoteSocketProvider, false);
   }
 

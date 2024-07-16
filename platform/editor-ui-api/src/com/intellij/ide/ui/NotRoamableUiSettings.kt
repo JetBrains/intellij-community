@@ -7,18 +7,19 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Font
 
 @State(name = NotRoamableUiSettings.COMPONENT_NAME,
        category = SettingsCategory.UI,
        exportable = true,
        storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED))])
-class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
+class NotRoamableUiSettings @Internal constructor(): SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
   private var initialConfigurationLoaded = false
 
   companion object {
     fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
-    const val COMPONENT_NAME: String = "NotRoamableUiSettings"
+    internal const val COMPONENT_NAME: String = "NotRoamableUiSettings"
   }
 
   var ideScale: Float
@@ -130,7 +131,7 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
   }
 }
 
-data class NotRoamableUiOptions(
+data class NotRoamableUiOptions internal constructor(
   @JvmField @OptionTag val ideAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForIDE()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,
   @JvmField @OptionTag val editorAAType: AntialiasingType = if (AntialiasingType.canUseSubpixelAAForEditor()) AntialiasingType.SUBPIXEL else AntialiasingType.GREYSCALE,
 

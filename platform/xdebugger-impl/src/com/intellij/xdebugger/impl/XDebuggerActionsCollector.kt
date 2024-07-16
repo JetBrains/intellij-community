@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
@@ -13,9 +13,11 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.xdebugger.frame.XStackFrame
+import org.jetbrains.annotations.ApiStatus
 
 private const val UNKNOWN_TYPE = "Unknown"
 
+@ApiStatus.Internal
 object XDebuggerActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -53,16 +55,16 @@ object XDebuggerActionsCollector : CounterUsagesCollector() {
 
   @JvmStatic
   fun logFramesUpdated(durationMs: Long, frames: List<XStackFrame>) {
-    val framesByType = frames.groupingBy { it.getFrameType() }.eachCount().entries
-    val fileTypes = framesByType.map { it.key }
-    val counts = framesByType.map { it.value }
+    framesUpdated.log(null) {
+      val framesByType = frames.groupingBy { it.getFrameType() }.eachCount().entries
+      val fileTypes = framesByType.map { it.key }
+      val counts = framesByType.map { it.value }
 
-    framesUpdated.log(
-      durationField.with(durationMs),
-      totalFramesField.with(frames.size),
-      frameTypesField.with(fileTypes),
-      framesPerTypesField.with(counts)
-    )
+      add(durationField.with(durationMs))
+      add(totalFramesField.with(frames.size))
+      add(frameTypesField.with(fileTypes))
+      add(framesPerTypesField.with(counts))
+    }
   }
 }
 

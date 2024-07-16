@@ -51,7 +51,7 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 3_500)
 
     @Suppress("KotlinConstantConditions")
-    assertTrue("version7" == EntityStorageSerializerImpl.STORAGE_SERIALIZATION_VERSION,
+    assertTrue("version8" == EntityStorageSerializerImpl.STORAGE_SERIALIZATION_VERSION,
                "This assertion is a reminder. Have you updated the serializer? Update the serialization version!")
   }
 
@@ -64,8 +64,7 @@ class ImlSerializationTest {
   @Test
   fun externalIndexIsNotSerialized() {
     val builder = MutableEntityStorage.create()
-    val entity = SampleEntity2("Test", true, Source)
-    builder.addEntity(entity)
+    val entity = builder addEntity SampleEntity2("Test", true, Source)
     val index = builder.getMutableExternalMapping(externalMappingKey)
     index.addMapping(entity, "Hello")
 

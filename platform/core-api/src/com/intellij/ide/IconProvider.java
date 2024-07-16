@@ -21,7 +21,7 @@ public abstract class IconProvider implements PossiblyDumbAware {
   /**
    * @param element for which icon is shown
    * @param flags   used for customizing the icon appearance. Flags are listed in {@link Iconable}
-   * @return {@code null} if this provider cannot provide icon for given element.
+   * @return {@code null} if this provider cannot provide icon for a given element.
    * @see Iconable
    */
   public abstract @Nullable Icon getIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags);

@@ -5,8 +5,6 @@ package com.jetbrains.jsonSchema.impl;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.json.JsonBundle;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
@@ -40,12 +38,15 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
 
+/**
+ * @deprecated This class will be removed in the future. The main purpose of it is to read json schema file, that can currently be achieved
+ * via `com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage#getOrComputeSchemaRootObject` call. Other utility methods will stay as is,
+ * because they have different semantics.
+ */
 @Deprecated
 public final class JsonSchemaReader {
   private static final int MAX_SCHEMA_LENGTH = FileUtilRt.LARGE_FOR_CONTENT_LOADING;
   private static final ObjectMapper jsonObjectMapper = new ObjectMapper(new JsonFactory());
-  public static final Logger LOG = Logger.getInstance(JsonSchemaReader.class);
-  public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroupManager.getInstance().getNotificationGroup("JSON Schema");
 
   private final Map<String, JsonSchemaObjectImpl> myIds = new HashMap<>();
   private final ArrayDeque<Pair<JsonSchemaObjectImpl, JsonValueAdapter>> myQueue;
@@ -90,7 +91,7 @@ public final class JsonSchemaReader {
     }
     catch (Exception e) {
       final String message = JsonBundle.message("schema.reader.file.not.found.or.error", fileName, e.getMessage());
-      LOG.info(message);
+      Logger.getInstance(JsonSchemaReader.class).info(message);
       return message;
     }
     return null;

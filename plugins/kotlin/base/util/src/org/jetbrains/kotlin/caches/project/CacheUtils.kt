@@ -47,6 +47,7 @@ fun <T> Project.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*
  * It is encouraged to use explicit class, just for the sake of readability.
  */
 @Suppress("DEPRECATION")
+@ApiStatus.ScheduledForRemoval
 @Deprecated("consider to use WorkspaceModelChangeListener")
 fun <T> Project.cacheInvalidatingOnRootModifications(provider: () -> T): T {
     return cacheByClassInvalidatingOnRootModifications(provider::class.java, provider)

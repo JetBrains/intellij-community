@@ -1,7 +1,7 @@
 fragment commitShort on Commit {
     ...commitHash
     url
-    messageHeadlineHTML
+    messageHeadline
     author {
         ...gitActorInfo
     }

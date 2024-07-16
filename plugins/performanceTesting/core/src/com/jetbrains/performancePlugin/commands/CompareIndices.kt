@@ -32,7 +32,7 @@ import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePaths
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 import com.intellij.util.indexing.diagnostic.dump.paths.hasPresentablePathMatching
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
+import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex.IndexerIdHolder
 import com.intellij.util.progress.ConcurrentTasksProgressManager
@@ -495,7 +495,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     val propertyName = "index_root_path"
     val oldValue = System.setProperty(propertyName, storedIndexDir.toAbsolutePath().toString())
     try {
-      return VfsAwareMapReduceIndex<K, V, IndexerIdHolder>(extension, DefaultIndexStorageLayout.getLayout(extension))
+      return VfsAwareMapReduceIndex<K, V, IndexerIdHolder>(extension, IndexStorageLayoutLocator.getLayout(extension))
     }
     finally {
       SystemProperties.setProperty(propertyName, oldValue)

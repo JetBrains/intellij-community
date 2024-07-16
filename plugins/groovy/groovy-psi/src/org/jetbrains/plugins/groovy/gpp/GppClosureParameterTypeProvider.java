@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
+public final class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
   @Override
   protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {
     final PsiElement parent = expression.getParent();

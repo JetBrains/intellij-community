@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 
 import java.util.List;
 
-public class GroovyExpressionTypeProvider extends ExpressionTypeProvider<GrExpression> {
+public final class GroovyExpressionTypeProvider extends ExpressionTypeProvider<GrExpression> {
 
   @NotNull
   @Override

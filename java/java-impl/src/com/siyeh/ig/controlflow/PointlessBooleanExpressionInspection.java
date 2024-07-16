@@ -17,10 +17,10 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -68,8 +68,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final String replacement = (String)infos[1];
     final PsiExpression expression = (PsiExpression)infos[0];
     if (replacement.isEmpty() && expression instanceof PsiAssignmentExpression) {
@@ -306,10 +305,8 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
 
   private static class RemovePointlessBooleanExpressionFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("boolean.expression.remove.compound.assignment.quickfix");
     }
 
@@ -340,18 +337,15 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
       myHasSideEffect = hasSideEffect;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myHasSideEffect
              ? InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")
              : InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
@@ -451,8 +445,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
     }
   }
 
-  @NotNull
-  public BooleanExpressionKind getExpressionKind(PsiExpression expression) {
+  public @NotNull BooleanExpressionKind getExpressionKind(PsiExpression expression) {
     if ((expression instanceof PsiPrefixExpression || expression instanceof PsiPolyadicExpression) 
         && containsEscapingPatternVariable(expression)) {
       return BooleanExpressionKind.UNKNOWN;
@@ -466,8 +459,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
     return BooleanExpressionKind.UNKNOWN;
   }
 
-  @NotNull
-  private BooleanExpressionKind getPolyadicKind(PsiPolyadicExpression expression) {
+  private @NotNull BooleanExpressionKind getPolyadicKind(PsiPolyadicExpression expression) {
     final IElementType sign = expression.getOperationTokenType();
     if (!booleanTokens.contains(sign)) {
       return BooleanExpressionKind.UNKNOWN;
@@ -512,8 +504,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
     return BooleanExpressionKind.UNKNOWN;
   }
 
-  @Nullable
-  private Boolean evaluate(@Nullable PsiExpression expression) {
+  private @Nullable Boolean evaluate(@Nullable PsiExpression expression) {
     if (expression == null || m_ignoreExpressionsContainingConstants && containsReference(expression)) {
       return null;
     }

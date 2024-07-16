@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -10,8 +11,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -33,12 +32,10 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   implements PersistentStateComponent<GradleSettings.MyState> {
 
   private boolean isOfflineMode = false;
-  private boolean isDownloadSources = AdvancedSettings.getBoolean("gradle.download.sources");
-  private boolean isParallelModelFetch = false;
+  private boolean isParallelModelFetch = Experiments.getInstance().isFeatureEnabled("gradle.parallel.model.fetch");
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
-    subscribeOnAdvancedSettings();
   }
 
   @NotNull
@@ -145,14 +142,6 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(value);
   }
 
-  public boolean isDownloadSources() {
-    return isDownloadSources;
-  }
-
-  public void setDownloadSources(boolean downloadSources) {
-    isDownloadSources = downloadSources;
-  }
-
   public boolean isParallelModelFetch() {
     return isParallelModelFetch;
   }
@@ -185,24 +174,11 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     }
   }
 
-  private void subscribeOnAdvancedSettings() {
-    ApplicationManager.getApplication().getMessageBus()
-      .connect(this)
-      .subscribe(AdvancedSettingsChangeListener.TOPIC, new AdvancedSettingsChangeListener() {
-        @Override
-        public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
-          if ("gradle.download.sources".equals(id) && newValue instanceof Boolean) {
-            isDownloadSources = (boolean)newValue;
-          }
-        }
-      });
-  }
-
   public static class MyState implements State<GradleProjectSettings> {
 
     private final Set<GradleProjectSettings> myProjectSettings = new TreeSet<>();
     private boolean isOfflineMode = false;
-    private boolean isParallelModelFetch = false;
+    private boolean isParallelModelFetch = Experiments.getInstance().isFeatureEnabled("gradle.parallel.model.fetch");
 
     @Override
     @XCollection(elementTypes = GradleProjectSettings.class)

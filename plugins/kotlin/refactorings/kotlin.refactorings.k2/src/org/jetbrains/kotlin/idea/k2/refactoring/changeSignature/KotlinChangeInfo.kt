@@ -17,14 +17,15 @@ class KotlinChangeInfo(
     override var aNewVisibility: Visibility = methodDescriptor.visibility,
     receiver: KotlinParameterInfo? = methodDescriptor.receiver,
     private var name: String = methodDescriptor.name,
-    var newReturnTypeInfo: KotlinTypeInfo = KotlinTypeInfo(methodDescriptor.oldReturnType, methodDescriptor.method)
+    var newReturnTypeInfo: KotlinTypeInfo = KotlinTypeInfo(methodDescriptor.oldReturnType, methodDescriptor.method),
+    var checkUsedParameters: Boolean = true
 ) : KotlinChangeInfoBase, KotlinModifiableChangeInfo<KotlinParameterInfo>, UserDataHolderBase() {
 
     private val oldName = methodDescriptor.name
 
     private val oldNameToParameterIndex: Map<String, Int> = HashMap<String, Int>().apply {
         val parameters = (methodDescriptor.method as? KtCallableDeclaration)?.valueParameters
-        parameters?.indices?.forEach { i -> this[parameters[i].name!!] = i }
+        parameters?.indices?.forEach { i -> this[parameters[i].name ?: ""] = i }
     }
 
     override fun getOldParameterIndex(oldParameterName: String): Int? {

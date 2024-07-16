@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -160,7 +160,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
     return false;
   }
 
-  private static void implementMethodsWhenTemplateIsFinished(InsertionContext context, @Nullable final OffsetKey insideBraces) {
+  private static void implementMethodsWhenTemplateIsFinished(InsertionContext context, final @Nullable OffsetKey insideBraces) {
     TemplateState state = TemplateManagerImpl.getTemplateState(context.getEditor());
     if (state != null && insideBraces != null) {
       state.addTemplateStateListener(new TemplateEditingAdapter() {
@@ -197,8 +197,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
     }
   }
 
-  @Nullable
-  private static PsiExpressionList getEnclosingExpressionList(@NotNull PsiElement element) {
+  private static @Nullable PsiExpressionList getEnclosingExpressionList(@NotNull PsiElement element) {
     if (!(element instanceof PsiAnonymousClass)) {
       return null;
     }
@@ -262,8 +261,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
                                                                        c -> resolveHelper.isAccessible(c, place, null)));
   }
 
-  @Nullable
-  private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
+  private static @Nullable Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeInsight.folding.CodeFoldingManager
@@ -15,18 +15,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 private class FoldingTextEditorInitializer : TextEditorInitializer {
-  override suspend fun initializeEditor(project: Project,
-                                        file: VirtualFile,
-                                        document: Document,
-                                        editorSupplier: suspend () -> EditorEx,
-                                        highlighterReady: suspend () -> Unit) {
+  override suspend fun initializeEditor(
+    project: Project,
+    file: VirtualFile,
+    document: Document,
+    editorSupplier: suspend () -> EditorEx,
+    highlighterReady: suspend () -> Unit,
+  ) {
     if (project.isDefault) {
       return
     }
 
     val codeFoldingManager = project.serviceAsync<CodeFoldingManager>()
+    val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
     val foldingState = readAction {
-      if (PsiDocumentManager.getInstance(project).isCommitted(document)) {
+      if (psiDocumentManager.isCommitted(document)) {
         catchingExceptions {
           blockingContextToIndicator {
             codeFoldingManager.buildInitialFoldings(document)

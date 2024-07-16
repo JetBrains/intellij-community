@@ -1036,7 +1036,7 @@ public class Messages {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable String initialValue,
+                       @Nullable @NonNls String initialValue,
                        @Nullable InputValidator validator) {
       super(null, parent, message, title, new String[]{getOkButton(), getCancelButton()}, -1, 0, icon, null, true);
       myValidator = validator;
@@ -1048,7 +1048,7 @@ public class Messages {
     public InputDialog(@DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable String initialValue,
+                       @Nullable @NonNls String initialValue,
                        @Nullable InputValidator validator) {
       super(null, null, message, title, new String[]{getOkButton(), getCancelButton()}, 0, -1, icon, null, true);
       myValidator = validator;

@@ -1,8 +1,7 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.tools.ide.performanceTesting.commands.dto.MavenGoalConfigurationDto
-import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
+import com.intellij.tools.ide.performanceTesting.commands.dto.*
 import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.file.Path
@@ -74,7 +73,7 @@ fun <T : CommandChain> T.openFile(relativePath: String,
                                   suppressErrors: Boolean = false,
                                   warmup: Boolean = false,
                                   disableCodeAnalysis: Boolean = false): T = apply {
-  val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
+  val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
   }
@@ -101,6 +100,10 @@ fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean
 
 fun <T : CommandChain> T.reopenProject(): T = apply {
   addCommand("${CMD_PREFIX}openProject")
+}
+
+fun <T : CommandChain> T.closeProject(): T = apply {
+  addCommand("${CMD_PREFIX}closeProject")
 }
 
 fun <T : CommandChain> T.storeIndices(): T = apply {
@@ -354,16 +357,24 @@ fun <T : CommandChain> T.getLibraryPathByName(name: String, path: Path): T = app
   addCommand("${CMD_PREFIX}getLibraryPathByName $name,$path")
 }
 
+fun <T : CommandChain> T.convertJavaToKotlin(moduleName: String, filePath: String): T = apply {
+  addCommand("${CMD_PREFIX}convertJavaToKotlin $moduleName $filePath")
+}
+
 fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
   addCommand("${CMD_PREFIX}pressKey", key.name)
 }
 
-fun <T : CommandChain> T.delayType(delayMs: Int, text: String, calculateAnalyzesTime: Boolean = false): T = apply {
-  addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime")
+fun <T : CommandChain> T.delayType(delayMs: Int,
+                                   text: String,
+                                   calculateAnalyzesTime: Boolean = false,
+                                   disableWriteProtection: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime|$disableWriteProtection")
 }
 
-fun <T : CommandChain> T.doLocalInspection(): T = apply {
-  addCommand("${CMD_PREFIX}doLocalInspection")
+fun <T : CommandChain> T.doLocalInspection(spanTag: String? = null): T = apply {
+  val spanTagLine = spanTag?.let {  " spanTag $spanTag" } ?: ""
+  addCommand("${CMD_PREFIX}doLocalInspection" + spanTagLine)
 }
 
 fun <T : CommandChain> T.runSingleInspection(inspectionName: String, scope: String): T = apply {
@@ -420,7 +431,8 @@ fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
                                           textToInsert: String = "",
                                           textToType: String = "",
                                           close: Boolean = false,
-                                          selectFirst: Boolean = false): T = apply {
+                                          selectFirst: Boolean = false,
+                                          warmup: Boolean = false): T = apply {
   val closeOnOpenArgument = when {
     close -> "-close"
     else -> ""
@@ -433,10 +445,11 @@ fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
     textToType.isNotEmpty() -> "-type $textToType"
     else -> ""
   }
+  val warmupText = if(warmup) "|WARMUP" else ""
   if (selectFirstArgument.isNotEmpty() && closeOnOpenArgument.isNotEmpty()) {
     throw Exception("selectFirst=true argument will be ignored since close=true and SE will be closed first")
   }
-  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert")
+  addCommand("${CMD_PREFIX}searchEverywhere", "-tab $tab $closeOnOpenArgument $selectFirstArgument $argumentForTyping|$textToInsert$warmupText")
 }
 
 fun <T : CommandChain> T.selectFileInProjectView(relativePath: String): T = apply {
@@ -492,6 +505,10 @@ fun <T : CommandChain> T.renameFile(path: String, oldFileName: String, newFileNa
   addCommand("${CMD_PREFIX}renameFile ${path}, ${oldFileName}, ${newFileName}")
 }
 
+fun <T : CommandChain> T.requestHeavyScanningOnNextStart(): T = apply {
+  addCommand("${CMD_PREFIX}requestHeavyScanningOnNextStart")
+}
+
 fun <T : CommandChain> T.call(method: KFunction<String?>, vararg args: String): T = apply {
   val javaMethod = method.javaMethod ?: error("Failed to resolve Java Method from the declaration")
   require(Modifier.isStatic(javaMethod.modifiers)) { "Method $method must be static" }
@@ -505,6 +522,10 @@ fun <T : CommandChain> T.deleteFile(path: String, fileName: String): T = apply {
 
 fun <T : CommandChain> T.delay(delayMs: Int): T = apply {
   addCommand("${CMD_PREFIX}delay ${delayMs}")
+}
+
+fun <T : CommandChain> T.delay(delay: Duration): T = apply {
+  addCommand("${CMD_PREFIX}delay ${delay.inWholeMilliseconds}")
 }
 
 fun <T : CommandChain> T.withSystemMetrics(chain: CommandChain): T = apply {
@@ -524,6 +545,19 @@ fun <T : CommandChain> T.showFileStructureDialog(): T = apply {
 
 fun <T : CommandChain> T.importMavenProject(): T = apply {
   addCommand("${CMD_PREFIX}importMavenProject")
+}
+
+fun <T : CommandChain> T.updateMavenFolders(isErrorExpected: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}updateMavenFolders $isErrorExpected")
+}
+
+fun <T : CommandChain> T.mavenIndexUpdate(repoUrl: String = ""): T = apply {
+  addCommand("${CMD_PREFIX}mavenIndexUpdate $repoUrl")
+}
+
+fun <T : CommandChain> T.checkIfMavenIndexesHaveArtefact(info: MavenArchetypeInfo): T = apply {
+  val options = objectMapper.writeValueAsString(info)
+  addCommand("${CMD_PREFIX}checkIfMavenIndexesHaveArtefact $options")
 }
 
 enum class AssertModuleJdkVersionMode {
@@ -552,6 +586,10 @@ fun <T : CommandChain> T.setModuleJdk(moduleName: String, jdk: SdkObject): T {
   return this
 }
 
+fun <T : CommandChain> T.addModuleContentRoot(moduleName: String, contentRootPath: String): T = apply {
+  addCommand("${CMD_PREFIX}addContentRootToModule $moduleName,$contentRootPath")
+}
+
 fun <T : CommandChain> T.toggleMavenProfiles(profileIds: Set<String>, enable: Boolean = true): T = apply {
   addCommand("${CMD_PREFIX}toggleMavenProfiles ${profileIds.joinToString(",")} $enable")
 }
@@ -562,6 +600,27 @@ fun <T : CommandChain> T.linkMavenProject(projectPath: Path): T = apply {
 
 fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.analyzeDependencies(moduleName: String, providerId: BuildType): T = apply {
+  addCommand("${CMD_PREFIX}analyzeDependencies $moduleName $providerId")
+}
+
+fun <T : CommandChain> T.refreshMavenProject(failureExpectedPattern: String = ""): T = apply {
+  addCommand("${CMD_PREFIX}refreshMavenProject $failureExpectedPattern")
+}
+
+fun <T : CommandChain> T.refreshGradleProject(): T = apply {
+  addCommand("${CMD_PREFIX}refreshGradleProject")
+}
+
+fun <T : CommandChain> T.setGradleDelegatedBuildCommand(delegatedBuild: Boolean = true,
+                                                        gradleTestRunner: GradleTestRunner = GradleTestRunner.GRADLE): T = apply {
+  addCommand("${CMD_PREFIX}setGradleDelegatedBuildCommand $delegatedBuild $gradleTestRunner")
+}
+
+fun <T : CommandChain> T.setMavenDelegatedBuild(delegatedBuild: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}setMavenDelegatedBuild $delegatedBuild")
 }
 
 fun <T : CommandChain> T.unlinkGradleProject(projectPath: Path): T = apply {
@@ -583,6 +642,20 @@ fun <T : CommandChain> T.downloadMavenArtifacts(sources: Boolean = true, docs: B
 fun <T : CommandChain> T.createMavenProject(newMavenProjectDto: NewMavenProjectDto): T = apply {
   val options = objectMapper.writeValueAsString(newMavenProjectDto)
   addCommand("${CMD_PREFIX}createMavenProject $options")
+}
+
+fun <T : CommandChain> T.renameModule(oldName: String, newName: String): T = apply {
+  addCommand("${CMD_PREFIX}renameModule $oldName $newName")
+}
+
+fun <T : CommandChain> T.createGradleProject(newGradleProjectDto: NewGradleProjectDto): T = apply {
+  val options = objectMapper.writeValueAsString(newGradleProjectDto)
+  addCommand("${CMD_PREFIX}createGradleProject $options")
+}
+
+fun <T : CommandChain> T.createSpringProject(newMavenProjectDto: NewSpringProjectDto): T = apply {
+  val options = objectMapper.writeValueAsString(newMavenProjectDto)
+  addCommand("${CMD_PREFIX}createSpringProject $options")
 }
 
 fun <T : CommandChain> T.updateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
@@ -623,6 +696,10 @@ fun <T : CommandChain> T.setRegistry(registry: String, value: String): T = apply
   addCommand("${CMD_PREFIX}set $registry=$value")
 }
 
+fun <T : CommandChain> T.validateGradleMatrixCompatibility(): T = apply {
+  addCommand("${CMD_PREFIX}validateGradleMatrixCompatibility")
+}
+
 fun <T : CommandChain> T.collectNameSuggestionContext(file: String, offset: Int): T = apply {
   addCommand("${CMD_PREFIX}collectNameSuggestionContext $file $offset")
 }
@@ -638,6 +715,24 @@ fun <T : CommandChain> T.assertOpenedFileInRoot(path: String): T = apply {
 
 fun <T : CommandChain> T.importGradleProject(): T = apply {
   addCommand("${CMD_PREFIX}importGradleProject")
+}
+
+fun <T : CommandChain> T.awaitCompleteProjectConfiguration(): T = apply {
+  addCommand("${CMD_PREFIX}awaitCompleteProjectConfiguration")
+}
+
+fun <T : CommandChain> T.executeGradleTask(taskInfo: GradleTaskInfoDto): T {
+  val options = objectMapper.writeValueAsString(taskInfo)
+  addCommand("${CMD_PREFIX}executeGradleTask $options")
+  return this
+}
+
+fun <T : CommandChain> T.setBuildToolsAutoReloadType(type: BuildToolsAutoReloadType): T = apply {
+  addCommand("${CMD_PREFIX}setBuildToolsAutoReloadType $type")
+}
+
+fun <T : CommandChain> T.projectNotificationAwareShouldBeVisible(shouldBeVisible: Boolean): T = apply {
+  addCommand("${CMD_PREFIX}projectNotificationAwareShouldBeVisible $shouldBeVisible")
 }
 
 fun <T : CommandChain> T.setGradleJdk(jdk: SdkObject): T = apply {
@@ -673,6 +768,11 @@ fun <T : CommandChain> T.past(): T = apply {
 @Suppress("unused")
 fun <T : CommandChain> T.cut(): T = apply {
   executeEditorAction("\$Cut")
+}
+
+@Suppress("unused")
+fun <T : CommandChain> T.undo(): T = apply {
+  executeEditorAction("\$Undo")
 }
 
 fun <T : CommandChain> T.selectAll(): T = apply {
@@ -718,17 +818,19 @@ fun <T : CommandChain> T.assertCompletionCommandCount(count: Int): T = apply {
   addCommand("${CMD_PREFIX}assertCompletionCommand COUNT ${count}")
 }
 
-@Suppress("unused")
-fun <T : CommandChain> T.goToDeclaration(): T = apply {
-  executeEditorAction("GotoDeclaration")
-}
-
-fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String): T = apply {
-  executeEditorAction("GotoDeclaration expectedOpenedFile $expectedOpenedFile")
+fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String? = null, spanTag: String? = null): T = apply {
+  val action = StringBuilder("GotoDeclaration")
+  if (expectedOpenedFile != null) action.append(" expectedOpenedFile $expectedOpenedFile")
+  if (spanTag != null) action.append(" spanTag $spanTag")
+  executeEditorAction(action.toString())
 }
 
 fun <T : CommandChain> T.collectAllFiles(extension: String, fromSources: Boolean = true): T = apply {
   addCommand("${CMD_PREFIX}collectAllFiles $extension $fromSources")
+}
+
+fun <T : CommandChain> T.storeHighlightingResults(fileName: String): T = apply {
+  addCommand("${CMD_PREFIX}storeHighlightingResults $fileName")
 }
 
 fun <T : CommandChain> T.recompileFiles(relativeFilePaths: List<String>): T = apply {
@@ -766,6 +868,14 @@ fun <T : CommandChain> T.convertJavaToKotlinByDefault(value: Boolean): T = apply
 
 fun <T : CommandChain> T.assertOpenedKotlinFileInRoot(path: String): T = apply {
   addCommand("${CMD_PREFIX}assertOpenedKotlinFileInRoot ${path}")
+}
+
+fun <T : CommandChain> T.enableKotlinDaemonLog(): T = apply {
+  addCommand("${CMD_PREFIX}enableKotlinDaemonLog")
+}
+
+fun <T : CommandChain> T.addKotlinCompilerOptions(vararg options: String): T = apply {
+  addCommand("${CMD_PREFIX}addKotlinCompilerOptions ${options.joinToString(" ")}")
 }
 
 fun <T : CommandChain> T.assertFindUsagesCount(count: Int): T = apply {
@@ -961,7 +1071,16 @@ fun <T : CommandChain> T.repeatCommand(times: Int, commandChain: (CommandChain) 
 }
 
 fun <T : CommandChain> T.createScratchFile(filename: String, content: String): T = apply {
-  addCommand("${CMD_PREFIX}createScratchFile $filename $content")
+  val modifiedContent = content.replace("\n", "\\n").replace(" ", "_")
+  addCommand("${CMD_PREFIX}createScratchFile $filename $modifiedContent")
+}
+
+fun <T : CommandChain> T.disableKotlinNotification(): T = apply {
+  addCommand("${CMD_PREFIX}disableKotlinNotification")
+}
+
+fun <T : CommandChain> T.scrollEditor(): T = apply {
+  addCommand("${CMD_PREFIX}scrollEditor")
 }
 
 
@@ -978,4 +1097,19 @@ fun <T : CommandChain> T.assertCaretPosition(line: Int, column: Int): T = apply 
  */
 fun <T : CommandChain> T.assertCurrentFile(name: String): T = apply {
   addCommand("${CMD_PREFIX}assertCurrentFile $name")
+}
+
+/**
+ * Wait till project view is ready.
+ * Should be used with `context.executeRightAfterIdeOpened()`.
+ */
+fun <T : CommandChain> T.waitForProjectView(): T = apply {
+  addCommand("${CMD_PREFIX}waitForProjectView")
+}
+
+/**
+ * Expand relative path in project view
+ */
+fun <T : CommandChain> T.expandProjectView(relativePath: String): T = apply {
+  addCommand("${CMD_PREFIX}expandProjectView $relativePath")
 }

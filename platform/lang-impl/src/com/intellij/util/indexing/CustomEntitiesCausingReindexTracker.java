@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -89,6 +89,13 @@ final class CustomEntitiesCausingReindexTracker {
     if (newEntity instanceof ModuleEntity newModuleEntity && oldEntity instanceof ModuleEntity oldModuleEntity) {
       boolean haveSameDependencies = newModuleEntity.getDependencies().equals(oldModuleEntity.getDependencies());
       return !haveSameDependencies;
+    }
+
+    // Only url and exclude patterns affect indexing of `ContentRootEntity`. Changes of parent or children
+    //   should not be considered as a reason for the rootsChanged event.
+    if (newEntity instanceof ContentRootEntity newContentRootEntity && oldEntity instanceof ContentRootEntity oldContentRootEntity) {
+      return !newContentRootEntity.getUrl().equals(oldContentRootEntity.getUrl()) ||
+             !newContentRootEntity.getExcludedPatterns().equals(oldContentRootEntity.getExcludedPatterns());
     }
 
     WorkspaceEntity entity = newEntity != null ? newEntity : oldEntity;

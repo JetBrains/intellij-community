@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class FormSpellCheckingInspection extends StringDescriptorInspection {
+public final class FormSpellCheckingInspection extends StringDescriptorInspection {
   public FormSpellCheckingInspection() {
     super("FormSpellChecking");
   }

@@ -15,7 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -25,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class InstanceOfUtils {
 
@@ -38,7 +35,7 @@ public final class InstanceOfUtils {
     if (!(castType instanceof PsiClassType classType)) {
       return null;
     }
-    if (((PsiClassType)castType).resolve() instanceof PsiTypeParameter) {
+    if (classType.resolve() instanceof PsiTypeParameter) {
       return null;
     }
     final PsiClassType rawType = classType.rawType();
@@ -254,6 +251,7 @@ public final class InstanceOfUtils {
       if (!(context instanceof PsiStatement)) return null;
     }
     if (context == null) return null;
+    PsiVariable operandVariable = ExpressionUtils.resolveVariable(cast.getOperand());
     PsiElement parent = context.getContext();
     if (parent instanceof PsiCodeBlock) {
       for (PsiElement stmt = context.getPrevSibling(); stmt != null; stmt = stmt.getPrevSibling()) {
@@ -280,6 +278,9 @@ public final class InstanceOfUtils {
           }
         }
         if (stmt instanceof PsiSwitchLabelStatementBase) break;
+        if (operandVariable != null && VariableAccessUtils.variableIsAssigned(operandVariable, stmt)) {
+          return null;
+        }
       }
       if (parent.getContext() instanceof PsiBlockStatement) {
         context = parent.getContext();
@@ -466,63 +467,9 @@ public final class InstanceOfUtils {
     PsiType variableType = varTypeElement.getType();
     if (!(variableType instanceof PsiClassType classType) || classType.isRaw()) return false;
     if (variableType.equals(castType) || !variableType.isAssignableFrom(castType)) return false;
-    PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
-    if (block == null) return false;
-    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, block)) {
-      if (!isVariableTypeChangeSafeForReference(cast, castType, reference)) return false;
-    }
-    return true;
-  }
-
-  private static boolean isVariableTypeChangeSafeForReference(@NotNull PsiTypeCastExpression cast,
-                                                              @NotNull PsiType targetType,
-                                                              @NotNull PsiReferenceExpression reference) {
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(reference.getParent());
-    if (PsiUtil.isAccessedForWriting(reference)) {
-      PsiAssignmentExpression assignmentExpression = tryCast(parent, PsiAssignmentExpression.class);
-      if (assignmentExpression == null) return false;
-      PsiExpression rValue = assignmentExpression.getRExpression();
-      if (rValue == null) return false;
-      PsiType rValueType = rValue.getType();
-      return rValueType != null && targetType.isAssignableFrom(rValueType);
-    }
-    while (parent instanceof PsiConditionalExpression) {
-      parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-    }
-    if (parent instanceof PsiInstanceOfExpression instanceOf) {
-      PsiTypeElement checkTypeElement = instanceOf.getCheckType();
-      if (checkTypeElement == null) return false;
-      PsiType checkType = checkTypeElement.getType();
-      // Could be always false instanceof which will become compilation error after fix
-      return TypeConversionUtil.areTypesConvertible(targetType, checkType);
-    }
-    if (parent instanceof PsiTypeCastExpression parentCast && parent != cast) {
-      PsiTypeElement castTypeElement = parentCast.getCastType();
-      if (castTypeElement == null) return false;
-      PsiType castType = castTypeElement.getType();
-      // Another cast could become invalid due to this change
-      return TypeConversionUtil.areTypesConvertible(targetType, castType);
-    }
-    // Some method call can be mis-resolved after update, check this
-    if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression call) {
-      PsiMethod method = call.resolveMethod();
-      if (method == null) return false;
-      Object mark = new Object();
-      PsiTreeUtil.mark(reference, mark);
-      PsiCallExpression callCopy = (PsiCallExpression)call.copy();
-      PsiTreeUtil.releaseMark(reference, mark);
-      PsiElement refCopy = PsiTreeUtil.releaseMark(callCopy, mark);
-      if (refCopy == null) return false;
-      PsiTypeCastExpression insertedCast = (PsiTypeCastExpression)refCopy.replace(cast);
-      Objects.requireNonNull(insertedCast.getCastType())
-        .replace(JavaPsiFacade.getElementFactory(call.getProject()).createTypeElement(targetType));
-      return callCopy.resolveMethod() == method;
-    }
-    if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression call) {
-      PsiMethod method = call.resolveMethod();
-      if (method == null) return false;
-      // private method cannot be called on a subtype qualifier
-      return !method.hasModifierProperty(PsiModifier.PRIVATE);
+    for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable)) {
+      if (PsiTreeUtil.isAncestor(cast, reference, true)) continue;
+      if (!VariableAccessUtils.isVariableTypeChangeSafeForReference(castType, reference)) return false;
     }
     return true;
   }

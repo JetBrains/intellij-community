@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.BootstrapBundle
@@ -9,18 +9,16 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
-import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-private const val MARKETPLACE_PLUGIN_DIR: @NonNls String = "marketplace"
-private const val MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar"
+private const val MARKETPLACE_PLUGIN_DIR: String = "marketplace"
+private const val MARKETPLACE_BOOTSTRAP_JAR: String = "marketplace-bootstrap.jar"
 
-private fun findMarketplaceBootDir(pluginDir: Path): Path {
-  return pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot")
-}
+private fun findMarketplaceBootDir(pluginDir: Path): Path =
+  pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot")
 
 private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoot: Path): Boolean {
   if (Files.notExists(mpBoot)) {
@@ -34,8 +32,7 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
         ideVersion = parseVersion(reader.readLine())
       }
     }
-    catch (ignored: IOException) {
-    }
+    catch (_: IOException) { }
     if (ideVersion == null && SystemInfoRt.isMac) {
       Files.newBufferedReader(homePath.resolve("Resources/build.txt")).use { reader ->
         ideVersion = parseVersion(reader.readLine())
@@ -50,31 +47,29 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
           untilVersion = parseVersion(reader.readLine())
         }
       }
-      catch (ignored: IOException) {
-      }
+      catch (_: IOException) { }
+      @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
       return ideVersion!!.isCompatible(sinceVersion, untilVersion)
     }
   }
-  catch (ignored: Throwable) {
-  }
+  catch (_: Throwable) { }
   return true
 }
+
 /**
  * Initializes the marketplace by adding necessary classloaders and resolving required files.
  * If the marketplace is not compatible, or the required files are not found, the method returns without performing any further action.
  *
  * Currently used in Rider.
  */
-fun initMarketplace() {
+internal fun initMarketplace() {
   val distDir = Path.of(PathManager.getHomePath())
-  val classLoader = AppMode::class.java.classLoader as? PathClassLoader
-                    ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
   val preinstalledPluginDir = distDir.resolve("plugins")
 
   var pluginDir = preinstalledPluginDir
   var marketPlaceBootDir = findMarketplaceBootDir(pluginDir)
   var mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
-  // enough to check for existence as preinstalled plugin is always compatible
+  // enough to check for existence, as a preinstalled plugin is always compatible
   var installMarketplace = Files.exists(mpBoot)
 
   if (!installMarketplace) {
@@ -89,6 +84,8 @@ fun initMarketplace() {
   }
 
   val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
+  val classLoader = AppMode::class.java.classLoader as? PathClassLoader
+                    ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
   if (Files.exists(marketplaceImpl)) {
     classLoader.classPath.addFiles(listOf(marketplaceImpl))
   }
@@ -106,28 +103,23 @@ fun initMarketplace() {
   catch (e: Throwable) {
     // at this point, logging is not initialized yet, so reporting the error directly
     val path = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).toString()
-    val message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at $path"
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"),
-                                     Exception(message, e))
+    val message = BootstrapBundle.message("bootstrap.error.message.marketplace", path)
+    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.marketplace"), Exception(message, e))
   }
 }
 
 private class SimpleVersion(private val major: Int, private val minor: Int) : Comparable<SimpleVersion> {
   private fun isAtLeast(ver: Comparable<SimpleVersion>) = ver <= this
 
-  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean {
-    return when {
-      since != null && until != null -> compareTo(since) >= 0 && compareTo(until) <= 0
-      since != null -> isAtLeast(since)
-      until != null -> until.isAtLeast(this)
-      // assume compatible of nothing is specified
-      else -> true
-    }
+  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean = when {
+    since != null && until != null -> compareTo(since) >= 0 && compareTo(until) <= 0
+    since != null -> isAtLeast(since)
+    until != null -> until.isAtLeast(this)
+    else -> true  // assume compatible of nothing is specified
   }
 
-  override fun compareTo(other: SimpleVersion): Int {
-    return if (major != other.major) major.compareTo(other.major) else minor.compareTo(other.minor)
-  }
+  override fun compareTo(other: SimpleVersion): Int =
+    if (major != other.major) major.compareTo(other.major) else minor.compareTo(other.minor)
 }
 
 private fun parseVersion(rawText: String?): SimpleVersion? {
@@ -150,8 +142,7 @@ private fun parseVersion(rawText: String?): SimpleVersion? {
     }
     return SimpleVersion(major = text.toInt(), minor = 0)
   }
-  catch (ignored: NumberFormatException) {
-  }
+  catch (_: NumberFormatException) { }
   return null
 }
 
@@ -164,17 +155,14 @@ private fun parseMinor(text: String): Int {
     val dot = text.indexOf('.')
     return (if (dot >= 0) text.substring(0, dot) else text).toInt()
   }
-  catch (ignored: NumberFormatException) {
-  }
+  catch (_: NumberFormatException) { }
   return 0
 }
 
 private class BytecodeTransformerAdapter(private val impl: BytecodeTransformer) : PathClassLoader.BytecodeTransformer {
-  override fun isApplicable(className: String, loader: ClassLoader): Boolean {
-    return impl.isApplicable(className, loader, null)
-  }
+  override fun isApplicable(className: String, loader: ClassLoader): Boolean =
+    impl.isApplicable(className, loader, null)
 
-  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? {
-    return impl.transform(loader, className, null, classBytes)
-  }
+  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? =
+    impl.transform(loader, className, null, classBytes)
 }

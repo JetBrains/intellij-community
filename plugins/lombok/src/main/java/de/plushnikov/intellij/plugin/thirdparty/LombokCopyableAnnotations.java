@@ -76,7 +76,7 @@ public enum LombokCopyableAnnotations {
 
     List<PsiAnnotation> result = new ArrayList<>();
     for (PsiAnnotation annotation : fieldAnnotations) {
-      if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName)) {
+      if (PsiAnnotationSearchUtil.checkAnnotationHasOneOfFQNs(annotation, annotationNames)) {
         result.add(annotation);
       }
     }

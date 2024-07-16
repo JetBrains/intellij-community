@@ -11,8 +11,16 @@ import java.awt.*;
 import java.util.Comparator;
 
 public abstract class NodeDescriptor<E> {
-  public static final NodeDescriptor<?>[] EMPTY_ARRAY = new NodeDescriptor[0];
-  public static final int DEFAULT_WEIGHT = 30;
+  private static final NodeDescriptor<?>[] EMPTY_ARRAY = new NodeDescriptor[0];
+  private static final int DEFAULT_WEIGHT = 30;
+
+  public static NodeDescriptor<?>[] getEmptyArray() {
+    return EMPTY_ARRAY;
+  }
+
+  public static int getDefaultWeight() {
+    return DEFAULT_WEIGHT;
+  }
 
   protected final Project myProject;
   private final NodeDescriptor<?> myParentDescriptor;
@@ -84,7 +92,7 @@ public abstract class NodeDescriptor<E> {
     if (element instanceof WeighedItem) {
       return ((WeighedItem) element).getWeight();
     }
-    return DEFAULT_WEIGHT;
+    return getDefaultWeight();
   }
 
   public final long getChildrenSortingStamp() {

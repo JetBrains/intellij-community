@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -18,15 +19,18 @@ import java.util.List;
  * @see PsiManagerEx#getFileManager()
  */
 public interface FileManager {
-  @Nullable
   @RequiresReadLock
+  @Nullable
   PsiFile findFile(@NotNull VirtualFile vFile);
 
+  @RequiresReadLock
   @Nullable
   PsiDirectory findDirectory(@NotNull VirtualFile vFile);
 
+  @RequiresWriteLock
   void reloadFromDisk(@NotNull PsiFile psiFile); //Q: move to PsiFile(Impl)?
 
+  @RequiresReadLock
   @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
 

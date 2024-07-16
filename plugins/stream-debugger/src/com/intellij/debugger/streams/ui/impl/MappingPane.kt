@@ -27,10 +27,10 @@ class MappingPane(@Nls name: String,
   private companion object {
     val DARCULA_LINE_COLOR = LineColor(regular = JBColor.GRAY,
                                        selected = JBColor.BLUE,
-                                       inactive = JBColor.lazy({ Color(92, 92, 92) }))
-    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor.lazy({ Color(168, 168, 168) }),
-                                        selected = JBColor.lazy({ Color(0, 96, 229) }),
-                                        inactive = JBColor.lazy({ Color(204, 204, 204) }))
+                                       inactive = JBColor.lazy { Color(92, 92, 92) })
+    val INTELLIJ_LINE_COLOR = LineColor(regular = JBColor.lazy { Color(168, 168, 168) },
+                                        selected = JBColor.lazy { Color(0, 96, 229) },
+                                        inactive = JBColor.lazy { Color(204, 204, 204) })
 
     val STROKE = BasicStroke(JBUIScale.scale(1.toFloat()))
   }

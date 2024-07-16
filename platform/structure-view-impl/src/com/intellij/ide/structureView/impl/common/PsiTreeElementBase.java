@@ -13,6 +13,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,6 +125,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   }
 
   /** @return element base children merged with children provided by extensions */
+  @ApiStatus.Internal
   public static @NotNull List<StructureViewTreeElement> mergeWithExtensions(@NotNull PsiElement element,
                                                                             @NotNull Collection<StructureViewTreeElement> baseChildren,
                                                                             boolean withCustomRegions) {

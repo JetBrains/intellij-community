@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +33,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private final PsiElement myArgumentsList;
   private final PsiType[] myActualParameterTypes;
   protected LanguageLevel myLanguageLevel;
-  @NotNull private final PsiFile myContainingFile;
+  private final @NotNull PsiFile myContainingFile;
 
   public JavaMethodsConflictResolver(@NotNull PsiElement argumentsList,
                                      PsiType[] actualParameterTypes,
@@ -46,7 +46,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @Override
-  public final CandidateInfo resolveConflict(@NotNull final List<CandidateInfo> conflicts){
+  public final CandidateInfo resolveConflict(final @NotNull List<CandidateInfo> conflicts){
     if (myArgumentsList instanceof PsiExpressionList && MethodCandidateInfo.isOverloadCheck(myArgumentsList)) {
       LOG.error("Recursive conflict resolution for:" + myArgumentsList.getParent() + "; " +
                 "file=" + myArgumentsList.getContainingFile());
@@ -54,8 +54,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return guardedOverloadResolution(conflicts);
   }
 
-  @Nullable
-  protected CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
+  protected @Nullable CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
@@ -264,8 +263,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  @NotNull
-  private static PsiSubstitutor getSubstitutor(MethodCandidateInfo existing, Map<MethodCandidateInfo, PsiSubstitutor> map) {
+  private static @NotNull PsiSubstitutor getSubstitutor(MethodCandidateInfo existing, Map<MethodCandidateInfo, PsiSubstitutor> map) {
     return map != null ? map.get(existing) : existing.getSubstitutor(false);
   }
 
@@ -673,13 +671,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return types;
   }
 
-  @NotNull
-  private static PsiSubstitutor calculateMethodSubstitutor(PsiTypeParameter @NotNull [] typeParameters,
-                                                           @NotNull PsiMethod method,
-                                                           @NotNull PsiSubstitutor siteSubstitutor,
-                                                           PsiType @NotNull [] types1,
-                                                           PsiType @NotNull [] types2,
-                                                           @NotNull LanguageLevel languageLevel) {
+  private static @NotNull PsiSubstitutor calculateMethodSubstitutor(PsiTypeParameter @NotNull [] typeParameters,
+                                                                    @NotNull PsiMethod method,
+                                                                    @NotNull PsiSubstitutor siteSubstitutor,
+                                                                    PsiType @NotNull [] types1,
+                                                                    PsiType @NotNull [] types2,
+                                                                    @NotNull LanguageLevel languageLevel) {
     PsiSubstitutor substitutor = PsiResolveHelper.getInstance(method.getProject())
       .inferTypeArguments(typeParameters, types1, types2, languageLevel);
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method)) {

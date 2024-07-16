@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.ide.ui.UISettings;
@@ -32,9 +32,8 @@ public final class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return e instanceof PsiMember || e instanceof PsiLambdaExpression;
   }
 
-  @NotNull
   @Override
-  public String getElementInfo(@NotNull PsiElement e) {
+  public @NotNull String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) {
       return PsiExpressionTrimRenderer.render((PsiExpression)e);
     }
@@ -47,16 +46,14 @@ public final class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return suffix != null ? description + suffix : description;
   }
 
-  @Nullable
   @Override
-  public String getElementTooltip(@NotNull PsiElement e) {
+  public @Nullable String getElementTooltip(@NotNull PsiElement e) {
     if (e instanceof PsiLambdaExpression) return getLambdaDescription((PsiLambdaExpression)e);
     if (e instanceof PsiMethod) return getMethodPresentableText((PsiMethod)e);
     return ElementDescriptionUtil.getElementDescription(e, RefactoringDescriptionLocation.WITH_PARENT);
   }
 
-  @NotNull
-  private static String getMethodPresentableText(PsiMethod e) {
+  private static @NotNull String getMethodPresentableText(PsiMethod e) {
     boolean isDumb = DumbService.isDumb(e.getProject());
     StringBuilder sb = new StringBuilder(e.isConstructor() ? "constructor" : "method");
     PsiType type = e.getReturnType();
@@ -68,8 +65,7 @@ public final class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return sb.toString();
   }
 
-  @NotNull
-  private static String getLambdaDescription(@NotNull PsiLambdaExpression e) {
+  private static @NotNull String getLambdaDescription(@NotNull PsiLambdaExpression e) {
     boolean isDumb = DumbService.isDumb(e.getProject());
     StringBuilder sb = new StringBuilder("lambda");
     PsiType functionalInterfaceType = isDumb ? null : e.getFunctionalInterfaceType();

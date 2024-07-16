@@ -81,6 +81,7 @@
     },
 
     "ComboBox": {
+      "border": "com.intellij.laf.win10.WinIntelliJComboBoxBorder",
       "disabledBackground": "#f2f2f2",
       "padding": "1,6,1,6",
       "UI": "com.intellij.laf.win10.WinIntelliJComboBoxUI"

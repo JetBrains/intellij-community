@@ -26,7 +26,7 @@ import static org.jetbrains.plugins.groovy.codeInspection.BaseInspection.getProb
 /**
  * @author Vladislav.Soroka
  */
-public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
+public final class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
 
   @NotNull
   @Override

@@ -1,14 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.util.CodeReviewFilesUtil
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.addIfNotNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHNewPRDiffVirtualFile
@@ -42,14 +47,21 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }
   }
 
-  override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier, requestFocus: Boolean) {
-    diffFiles.getOrPut(pullRequest) {
-      GHPRDiffVirtualFile(id, project, repository, pullRequest)
+  override fun createAndOpenDiffFile(pullRequest: GHPRIdentifier?, requestFocus: Boolean) {
+    if (pullRequest == null) {
+      createOrGetNewPRDiffFile()
+    }
+    else {
+      diffFiles.getOrPut(pullRequest) {
+        GHPRDiffVirtualFile(id, project, repository, pullRequest)
+      }.also {
+        GHPRStatisticsCollector.logDiffOpened(project)
+      }
     }.let {
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(it, requestFocus)
-      GHPRStatisticsCollector.logDiffOpened(project)
     }
   }
+
 
   override fun findTimelineFile(pullRequest: GHPRIdentifier): GHPRTimelineVirtualFile? = files[pullRequest]
 
@@ -61,17 +73,24 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     }
   }
 
+  override suspend fun closeNewPrFile() {
+    val file = newPRDiffFile.get() ?: return
+    withContext(Dispatchers.EDT) {
+      val fileManager = serviceAsync<FileEditorManager>()
+      writeAction {
+        CodeReviewFilesUtil.closeFilesSafely(fileManager, listOf(file))
+      }
+    }
+  }
+
   override fun dispose() {
     if (project.isDisposed) return
     val fileManager = FileEditorManager.getInstance(project)
-    // otherwise the exception is thrown when removing an editor tab
-    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-      for (file in (files.values + diffFiles.values)) {
-        fileManager.closeFile(file)
-      }
-      newPRDiffFile.get()?.also {
-        fileManager.closeFile(it)
-      }
-      }
+    val files = buildList {
+      addAll(files.values)
+      addAll(diffFiles.values)
+      addIfNotNull(newPRDiffFile.get())
+    }
+    CodeReviewFilesUtil.closeFilesSafely(fileManager, files)
   }
 }

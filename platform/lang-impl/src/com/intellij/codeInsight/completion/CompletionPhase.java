@@ -98,13 +98,16 @@ public abstract class CompletionPhase implements Disposable {
 
     void incrementRequestCount() {
       myRequestCount++;
+      LOG.trace("Increment request count :: new myRequestCount=" + myRequestCount);
     }
 
     private void decrementRequestCount() {
       myRequestCount--;
+      LOG.trace("Decrement request count :: new myRequestCount=" + myRequestCount);
     }
 
     private void requestCompleted() {
+      LOG.trace("Request completed");
       myRequestCount = 0;
     }
 
@@ -115,6 +118,7 @@ public abstract class CompletionPhase implements Disposable {
 
     @Override
     public void dispose() {
+      LOG.trace("Dispose completion phase: " + this);
       myRequestCount = 0;
       if (!replaced && indicator != null) {
         indicator.closeAndFinish(true);
@@ -132,6 +136,7 @@ public abstract class CompletionPhase implements Disposable {
                                                @Nullable Condition<? super PsiFile> condition,
                                                @NotNull Project project,
                                                @Nullable CompletionProgressIndicator prevIndicator) {
+      LOG.trace("Schedule async completion");
       Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
       int offset = topLevelEditor.getCaretModel().getOffset();
 
@@ -141,8 +146,12 @@ public abstract class CompletionPhase implements Disposable {
 
       ReadAction
         .nonBlocking(() -> {
-          if (phase.isExpired()) return null;
+          if (phase.isExpired()) {
+            LOG.trace("Phase is expired");
+            return null;
+          }
 
+          LOG.trace("Start non-blocking read action :: phase=" + phase.replaced);
           // retrieve the injected file from scratch since our typing might have destroyed the old one completely
           PsiFile topLevelFile = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
           Editor completionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile, offset);
@@ -150,6 +159,7 @@ public abstract class CompletionPhase implements Disposable {
           if (file == null ||
               autopopup && shouldSkipAutoPopup(completionEditor, file) ||
               condition != null && !condition.value(file)) {
+            LOG.trace("File is null or should skip auto popup or condition is not met :: file=" + file + ", condition=" + condition);
             return null;
           }
 
@@ -160,13 +170,16 @@ public abstract class CompletionPhase implements Disposable {
         .withDocumentsCommitted(project)
         .expireWith(phase)
         .finishOnUiThread(ModalityState.current(), completionEditor -> {
+          LOG.trace("Finish on UI thread :: completionEditor=" + completionEditor);
           if (completionEditor != null && !phase.isExpired()) {
+            LOG.trace("Starting completion phase :: completionEditor=" + completionEditor);
             phase.requestCompleted();
             int time = prevIndicator == null ? 0 : prevIndicator.getInvocationCount();
             CodeCompletionHandlerBase handler = CodeCompletionHandlerBase.createHandler(completionType, false, autopopup, false);
             handler.invokeCompletion(project, completionEditor, time, false);
           }
           else if (phase == CompletionServiceImpl.getCompletionPhase()) {
+            LOG.trace("Setting NoCompletion phase :: completionEditor=" + completionEditor + ", isExpired=" + phase.isExpired());
             phase.decrementRequestCount();
             if (phase.isExpired()) {
               CompletionServiceImpl.setCompletionPhase(NoCompletion);
@@ -225,7 +238,6 @@ public abstract class CompletionPhase implements Disposable {
       }
       return false;
     }
-
   }
 
   public static final class Synchronous extends CompletionPhase {
@@ -281,6 +293,7 @@ public abstract class CompletionPhase implements Disposable {
       return indicator.nextInvocationCount(time, repeated);
     }
   }
+
   public static final class ItemsCalculated extends CompletionPhase {
 
     public ItemsCalculated(CompletionProgressIndicator indicator) {
@@ -339,8 +352,8 @@ public abstract class CompletionPhase implements Disposable {
       }
       return indicator.nextInvocationCount(time, repeated);
     }
-
   }
+
   public static final class NoSuggestionsHint extends ZombiePhase {
     NoSuggestionsHint(@Nullable LightweightHint hint, CompletionProgressIndicator indicator) {
       super(indicator);
@@ -357,7 +370,6 @@ public abstract class CompletionPhase implements Disposable {
       CompletionServiceImpl.setCompletionPhase(NoCompletion);
       return indicator.nextInvocationCount(time, repeated);
     }
-
   }
 
   public static final class EmptyAutoPopup extends ZombiePhase {
@@ -388,5 +400,4 @@ public abstract class CompletionPhase implements Disposable {
       return time;
     }
   }
-
 }

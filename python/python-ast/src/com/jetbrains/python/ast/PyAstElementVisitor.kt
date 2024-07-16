@@ -381,4 +381,8 @@ open class PyAstElementVisitor : PsiElementVisitor() {
   open fun visitPyTypeParameterList(node: PyAstTypeParameterList) {
     visitPyElement(node)
   }
+
+  open fun visitPyKeyValueExpression(node: PyAstKeyValueExpression) {
+    visitPyExpression(node)
+  }
 }

@@ -203,11 +203,10 @@ public abstract class ResourceInspection extends BaseInspection {
       }
       nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
     }
-    if (!(nextStatement instanceof PsiTryStatement)) {
+    if (!(nextStatement instanceof PsiTryStatement tryStatement)) {
       // exception in next statement can prevent closing of the resource
       return isResourceClose(nextStatement, variable);
     }
-    final PsiTryStatement tryStatement = (PsiTryStatement)nextStatement;
     if (isResourceClosedInFinally(tryStatement, variable)) {
       return true;
     }

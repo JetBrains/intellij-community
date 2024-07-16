@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.google.common.util.concurrent.Futures
@@ -44,10 +44,10 @@ object VcsLogNavigationUtil {
   private val LOG = logger<VcsLogNavigationUtil>()
 
   @JvmStatic
-  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): CompletableFuture<Boolean> {
+  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> {
     val resultFuture = CompletableFuture<Boolean>()
 
-    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.asString())
+    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
     runBackgroundableTask(progressTitle, project, true) { indicator ->
       runBlockingCancellable {
         resultFuture.computeResult {
@@ -61,18 +61,17 @@ object VcsLogNavigationUtil {
     return resultFuture
   }
 
-  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): Boolean {
+  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): Boolean {
     val logUi = showCommitInLogTab(project, hash, root, false) { logUi ->
-      if (logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-          logUi.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] &&
-          !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()) {
-        // Structure filter might prevent us from navigating to FilePath
-        return@showCommitInLogTab false
-      }
-      return@showCommitInLogTab true
+      if (filePath == null) return@showCommitInLogTab true
+      // Structure filter might prevent us from navigating to FilePath
+      val hasFilteredChanges = logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
+                               logUi.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] &&
+                               !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()
+      return@showCommitInLogTab !hasFilteredChanges
     } ?: return false
 
-    logUi.selectFilePath(filePath, true)
+    if (filePath != null) logUi.selectFilePath(filePath, true)
     return true
   }
 

@@ -45,14 +45,12 @@ public final class ClassInitializerInspection extends BaseInspection {
   public boolean onlyWarnWhenConstructor = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "NonStaticInitializer";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("class.initializer.problem.descriptor");
   }
 
@@ -80,9 +78,8 @@ public final class ClassInitializerInspection extends BaseInspection {
 
   private static class MoveToConstructorFix extends PsiUpdateModCommandQuickFix {
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("class.initializer.move.code.to.constructor.quickfix");
     }
 
@@ -123,8 +120,7 @@ public final class ClassInitializerInspection extends BaseInspection {
       }
     }
 
-    @NotNull
-    private static Collection<PsiMethod> getOrCreateConstructors(@NotNull PsiClass aClass) {
+    private static @NotNull Collection<PsiMethod> getOrCreateConstructors(@NotNull PsiClass aClass) {
       PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {
         AddDefaultConstructorFix.addDefaultConstructor(aClass);

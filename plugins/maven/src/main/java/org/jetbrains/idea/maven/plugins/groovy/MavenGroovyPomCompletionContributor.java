@@ -44,7 +44,7 @@ import java.util.Set;
 /**
  * @author Vladislav.Soroka
  */
-public class MavenGroovyPomCompletionContributor extends CompletionContributor {
+public final class MavenGroovyPomCompletionContributor extends CompletionContributor {
   public static final Key<VirtualFile> ORIGINAL_POM_FILE = Key.create("ORIGINAL_POM_FILE");
 
   @Override

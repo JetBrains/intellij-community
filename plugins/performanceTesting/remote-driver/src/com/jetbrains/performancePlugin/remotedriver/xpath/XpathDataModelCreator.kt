@@ -20,10 +20,8 @@ import javax.swing.JComponent
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.math.absoluteValue
 
-internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
-                                     private val bindComponentToElement: (Component, Element) -> Unit = { c, e ->
-                                       e.setUserData("component", c, null)
-                                     }) {
+class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
+  val elementProcessors = XpathDataModelExtension.EP_NAME.extensionList.toMutableList()
 
   private fun addComponent(
     doc: Document,
@@ -32,14 +30,6 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
     component: Component,
     targetComponent: Component? = null
   ) {
-    val subtreeOverrider = XpathDataModelSubTreeProvider.EP_NAME.extensionList.find { provider ->
-      provider.shouldOverrideSubtree(component)
-    }
-    if (subtreeOverrider != null) {
-      subtreeOverrider.overrideSubtree(doc, parentElement, component)
-      return
-    }
-
     val element = createElement(doc, component, targetComponent)
     parentElement.appendChild(element)
 
@@ -60,18 +50,18 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
     }.sortedWith(ComponentOrderComparator).forEach {
       addComponent(doc, element, hierarchy, it, targetComponent)
     }
+    elementProcessors.forEach { it.postProcessElement(doc, component, element, parentElement) }
   }
 
-  private fun createElement(doc: Document, component: Component, targetComponent: Component? = null): Element {
+  fun createElement(doc: Document, component: Component, targetComponent: Component? = null): Element {
 
     val element = doc.createElement("div")
 
     component.fillElement(doc, element, targetComponent)
 
-    bindComponentToElement(component, element)
+    element.setUserData("component", component, null)
     return element
   }
-
 
   private fun <C : Component> C.fillElement(doc: Document, element: Element, targetComponent: Component? = null) {
     val jClass = if (javaClass.isAnonymousClass) {
@@ -106,7 +96,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
       .forEach { field ->
         try {
           field.isAccessible = true
-          val attributeName = field.name.replace("$", "_").toLowerCase()
+          val attributeName = field.name.replace("$", "_").lowercase()
           val value = field.get(this)?.toString()?.let {
             if (it.contains(".svg")) {
               return@let it
@@ -123,7 +113,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
           value?.removeInvalidXmlCharacters()?.apply {
             if (textFieldsFilter(attributeName, value)) {
               elementText.append("$attributeName: '$this'. ")
-              textToKeyCache.findKey(value)?.apply {
+              TextToKeyCache.findKey(value)?.apply {
                 elementText.append("${attributeName}.key: '$this'. ")
                 element.setAttribute(attributeName + ".key", this)
               }
@@ -146,13 +136,13 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
     }
     if (accessibleName != null) {
       element.setAttribute("accessiblename", accessibleName)
-      textToKeyCache.findKey(accessibleName)?.apply { element.setAttribute("accessiblename.key", this) }
+      TextToKeyCache.findKey(accessibleName)?.apply { element.setAttribute("accessiblename.key", this) }
     }
 
     val tooltipText = getTooltipText(this)
     if (tooltipText != null) {
       element.setAttribute("tooltiptext", tooltipText)
-      textToKeyCache.findKey(tooltipText)?.apply { element.setAttribute("tooltiptext.key", this) }
+      TextToKeyCache.findKey(tooltipText)?.apply { element.setAttribute("tooltiptext.key", this) }
     }
 
     if (isShowing) {
@@ -166,7 +156,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
           && bounds.width > 0 && bounds.height > 0
       ) {
         try {
-          val foundText = TextParser.parseComponent(this, textToKeyCache)
+          val foundText = TextParser.parseComponent(this)
           val text = foundText.joinToString(" || ") { it.text }
           element.setAttribute("visible_text", text)
           if (text.trim().isNotEmpty()) {
@@ -233,10 +223,11 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
   }
 
   private val componentFilter: (Component) -> Boolean = {
-    it.isVisible && it.isShowing
+    (it.isVisible && it.isShowing || !onlyVisibleComponents)
     && it::class.java.simpleName != "Corner"
-    && ((it.bounds.width > 0
-         && it.bounds.height > 0) || it::class.java.simpleName in listOf("IdeMenuBar", "ActionMenu"))
+    && ((it.bounds.width > 0 && it.bounds.height > 0)
+        || !onlyVisibleComponents
+        || it::class.java.simpleName in listOf("IdeMenuBar", "ActionMenu"))
   }
 
   private val componentsWithBlockingModalTextSupplier = listOf(
@@ -282,6 +273,8 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
 
   private object ComponentOrderComparator : Comparator<Component> {
     override fun compare(c1: Component, c2: Component): Int {
+      if (!c1.isShowing) return -1
+      if (!c2.isShowing) return 1
       val yDiff = c1.locationOnScreen.y - c2.locationOnScreen.y
       if (yDiff.absoluteValue > 10) {
         return yDiff
@@ -292,7 +285,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
   }
 
 
-  fun create(rootComponent: Component?, targetComponent: Component? = null): Document {
+  fun create(rootComponent: Component?, includeRoot: Boolean = false, targetComponent: Component? = null): Document {
 
     val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument()
 
@@ -302,12 +295,13 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
         val rootElement = doc.createElement("div")
         doc.appendChild(rootElement)
         val containers = if (rootComponent != null) {
-          hierarchy.childrenOf(rootComponent)
+          if (includeRoot) listOf(rootComponent)
+          else hierarchy.childrenOf(rootComponent).takeIf { it.isNotEmpty() } ?: listOf(rootComponent)
         }
         else {
           hierarchy.roots()
         }
-        containers.filter { it.isShowing || it.javaClass.name.endsWith("SharedOwnerFrame") }.forEach {
+        containers.filter { it.isShowing || !onlyVisibleComponents || it.javaClass.name.endsWith("SharedOwnerFrame") }.forEach {
           addComponent(doc, rootElement, hierarchy, it, targetComponent)
         }
       }
@@ -319,7 +313,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
 fun Element.addIcon(iconName: String, size: Int, onClickFunction: String) {
   val doc = this.ownerDocument
   val icon = doc.createElement("img")
-  icon.setAttribute("src", "img/$iconName.png")
+  icon.setAttribute("src", "static/img/$iconName.png")
   icon.setAttribute("width", size.toString())
   icon.setAttribute("height", size.toString())
 

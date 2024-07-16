@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.application.options.CodeStyle;
@@ -26,10 +26,8 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public abstract class YamlMetaType {
-  @NotNull
-  private final String myTypeName;
-  @Nullable
-  private String myDisplayName;
+  private final @NotNull String myTypeName;
+  private @Nullable String myDisplayName;
 
   protected YamlMetaType(@NonNls @NotNull String typeName, @NonNls @NotNull String displayName) {
     myTypeName = typeName;
@@ -41,21 +39,18 @@ public abstract class YamlMetaType {
     myDisplayName = null;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public final String getTypeName() {
+  public final @NotNull String getTypeName() {
     return myTypeName;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return myDisplayName == null ? myTypeName : myDisplayName;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Json.Object;
   }
 
@@ -73,16 +68,14 @@ public abstract class YamlMetaType {
     myDisplayName = displayName;
   }
 
-  @Nullable
-  public abstract Field findFeatureByName(@NotNull String name);
+  public abstract @Nullable Field findFeatureByName(@NotNull String name);
 
   /**
    * Computes the set of {@link Field#getName()}s which are missing in the given set of the existing keys.
    *
    * @see org.jetbrains.yaml.meta.impl.YamlMissingKeysInspectionBase
    */
-  @NotNull
-  public abstract List<String> computeMissingFields(@NotNull Set<String> existingFields);
+  public abstract @NotNull List<String> computeMissingFields(@NotNull Set<String> existingFields);
 
   /**
    * Computes the list of fields that should be included into the completion list for the key completion inside the given mapping,
@@ -94,8 +87,7 @@ public abstract class YamlMetaType {
    *
    * @see org.jetbrains.yaml.meta.impl.YamlMetaTypeCompletionProviderBase
    */
-  @NotNull
-  public abstract List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping);
+  public abstract @NotNull List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping);
 
   public void validateKey(@NotNull YAMLKeyValue keyValue, @NotNull ProblemsHolder problemsHolder) {
     //
@@ -191,8 +183,7 @@ public abstract class YamlMetaType {
   }
 
 
-  @NotNull
-  public List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
+  public @NotNull List<? extends LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
     return Collections.emptyList();
   }
 
@@ -264,8 +255,7 @@ public abstract class YamlMetaType {
       }
     }
 
-    @NotNull
-    private String sequenceItemPrefix() {
+    private @NotNull String sequenceItemPrefix() {
       String result = SEQUENCE_ITEM_MARKUP;
       if (myTabSymbol.length() > result.length()) {
         result += myTabSymbol.substring(result.length());
@@ -303,7 +293,7 @@ public abstract class YamlMetaType {
       myLevel += indent;
     }
 
-    public void doTabbedBlock(final int indent, @NotNull final Runnable doWhenTabbed) {
+    public void doTabbedBlock(final int indent, final @NotNull Runnable doWhenTabbed) {
       increaseTabs(indent);
       try {
         doWhenTabbed.run();
@@ -313,8 +303,7 @@ public abstract class YamlMetaType {
       }
     }
 
-    @NotNull
-    public String getTabSymbol() {
+    public @NotNull String getTabSymbol() {
       return myTabSymbol;
     }
 
@@ -327,8 +316,7 @@ public abstract class YamlMetaType {
       return StringUtil.repeat(myTabSymbol, level);
     }
 
-    @NotNull
-    private static String getTabSymbol(@NotNull InsertionContext context) {
+    private static @NotNull String getTabSymbol(@NotNull InsertionContext context) {
       return StringUtil.repeatSymbol(' ', CodeStyle.getIndentSize(context.getFile()));
     }
 
@@ -348,25 +336,21 @@ public abstract class YamlMetaType {
     private static final Iteration NULL_ITERATION = new NullIteration();
     private static final ForcedCompletionPath NULL_PATH = new ForcedCompletionPath(null);
 
-    @Nullable
-    private final List<Field> myCompletionPath;
+    private final @Nullable List<Field> myCompletionPath;
 
-    @NotNull
-    public static ForcedCompletionPath forDeepCompletion(@NotNull final List<Field> completionPath) {
+    public static @NotNull ForcedCompletionPath forDeepCompletion(final @NotNull List<Field> completionPath) {
       return new ForcedCompletionPath(completionPath);
     }
 
-    @NotNull
-    public static ForcedCompletionPath nullPath() {
+    public static @NotNull ForcedCompletionPath nullPath() {
       return NULL_PATH;
     }
 
-    private ForcedCompletionPath(@Nullable final List<Field> completionPath) {
+    private ForcedCompletionPath(final @Nullable List<Field> completionPath) {
       myCompletionPath = completionPath;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       if (myCompletionPath == null) {
         return "<null>";
       }
@@ -374,8 +358,7 @@ public abstract class YamlMetaType {
       return myCompletionPath.stream().map(Field::getName).collect(Collectors.joining("."));
     }
 
-    @Nullable
-    public YamlMetaType getFinalizingType() {
+    public @Nullable YamlMetaType getFinalizingType() {
       if (myCompletionPath == null || myCompletionPath.size() < 2) {
         return null;
       }
@@ -383,8 +366,7 @@ public abstract class YamlMetaType {
       return myCompletionPath.get(myCompletionPath.size() - 2).getDefaultType();
     }
 
-    @Nullable
-    public Field getFinalizingField() {
+    public @Nullable Field getFinalizingField() {
       if (myCompletionPath == null || myCompletionPath.isEmpty()) {
         return null;
       }
@@ -421,9 +403,8 @@ public abstract class YamlMetaType {
         return false;
       }
 
-      @NotNull
       @Override
-      public Iteration nextIterationFor(@NotNull Field field) {
+      public @NotNull Iteration nextIterationFor(@NotNull Field field) {
         return this;
       }
     }
@@ -439,9 +420,8 @@ public abstract class YamlMetaType {
         return true;
       }
 
-      @NotNull
       @Override
-      public Iteration nextIterationFor(@NotNull Field field) {
+      public @NotNull Iteration nextIterationFor(@NotNull Field field) {
         return this;
       }
     }
@@ -465,9 +445,8 @@ public abstract class YamlMetaType {
         return myPosition >= myCompletionPath.size();
       }
 
-      @NotNull
       @Override
-      public Iteration nextIterationFor(@NotNull Field field) {
+      public @NotNull Iteration nextIterationFor(@NotNull Field field) {
         assert myCompletionPath != null;
         return isEndOfPathReached() || field.equals(myCompletionPath.get(myPosition)) ?
                new OnPathIteration(myPosition + 1) :

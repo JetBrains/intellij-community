@@ -11,6 +11,8 @@ fun main(args: Array<String>) {
 
 // EXIST_JAVA_ONLY: { lookupString:"ArrayList", tailText:"<E> (kotlin.collections)", icon: "org/jetbrains/kotlin/idea/icons/typeAlias.svg"}
 // EXIST_JS_ONLY: { lookupString:"ArrayList", tailText:"<E> (kotlin.collections)", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg"}
+// EXIST_NATIVE_ONLY: { lookupString:"ArrayList", tailText:"<E> (kotlin.collections)", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg"}
+// EXIST_COMMON_ONLY: { lookupString:"ArrayList", tailText:"<E> (kotlin.collections)", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg"}
 // EXIST_JAVA_ONLY: { lookupString:"ArrayList", tailText:"<E> (java.util)"}
 
 

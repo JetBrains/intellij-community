@@ -12,12 +12,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.copy.CopyHandler
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination
+import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
-import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
-import org.jetbrains.kotlin.idea.refactoring.copy.CopyKotlinDeclarationsHandler.Companion.newName
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.utils.ifEmpty
@@ -54,7 +53,7 @@ private enum class CopyAction : AbstractMultifileRefactoringTest.RefactoringActi
                     runWriteAction { MultipleRootsMoveDestination(packageWrapper).getTargetDirectory(mainFile) }
                 }
 
-            project.newName = config.getNullableString("newName")
+            project.copyNewName = config.getNullableString("newName")
 
             CopyHandler.doCopy(elementsToCopy, targetDirectory)
         }
@@ -68,6 +67,8 @@ abstract class AbstractCopyTest : AbstractMultifileRefactoringTest() {
             runRefactoringTest(path, config, rootDir, project, action)
         }
     }
+
+    override fun isEnabled(config: JsonObject): Boolean = config.get("enabledInK1")?.asBoolean != false
 
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
         runCopyRefactoring(path, config, rootDir, project)

@@ -15,9 +15,14 @@ import java.util.Map;
 public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   @Override
   public @NotNull JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath, boolean loadUnloadedModules) throws IOException {
+    JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
+    if (serializationViaWorkspaceModel != null) {
+      return serializationViaWorkspaceModel.loadModel(projectPath, optionsPath, loadUnloadedModules);
+    }
+
     JpsModel model = JpsElementFactory.getInstance().createModel();
     if (optionsPath != null) {
-      JpsGlobalLoader.loadGlobalSettings(model.getGlobal(), optionsPath);
+      JpsGlobalSettingsLoading.loadGlobalSettings(model.getGlobal(), optionsPath);
     }
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
     JpsProjectLoader.loadProject(model.getProject(), pathVariables, model.getGlobal().getPathMapper(), Paths.get(projectPath), loadUnloadedModules);
@@ -31,6 +36,11 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
 
   @Override
   public @NotNull JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables, boolean loadUnloadedModules) throws IOException {
+    JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
+    if (serializationViaWorkspaceModel != null) {
+      return serializationViaWorkspaceModel.loadProject(projectPath, pathVariables, loadUnloadedModules);
+    }
+    
     JpsModel model = JpsElementFactory.getInstance().createModel();
     JpsProjectLoader.loadProject(model.getProject(), pathVariables, JpsPathMapper.IDENTITY, Paths.get(projectPath), loadUnloadedModules);
     return model.getProject();

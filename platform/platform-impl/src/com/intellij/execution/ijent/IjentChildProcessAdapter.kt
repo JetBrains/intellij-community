@@ -17,12 +17,18 @@ import java.util.concurrent.TimeUnit
  *
  * See also [IjentChildPtyProcessAdapter].
  */
-@ApiStatus.Experimental
-class IjentChildProcessAdapter(coroutineScope: CoroutineScope, ijentId: IjentId, private val ijentChildProcess: IjentChildProcess) : Process(), SelfKiller {
+@ApiStatus.Internal
+class IjentChildProcessAdapter(
+  coroutineScope: CoroutineScope,
+  ijentId: IjentId,
+  private val ijentChildProcess: IjentChildProcess,
+  redirectStderr: Boolean,
+) : Process(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
     ijentId,
     coroutineScope,
     ijentChildProcess,
+    redirectStderr = redirectStderr,
   )
 
   override fun toString(): String = "${javaClass.simpleName}($ijentChildProcess)"

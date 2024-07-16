@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -13,14 +13,21 @@ import java.util.Set;
 import static java.util.stream.Collectors.toSet;
 
 /**
- * Declares a base visitor class for language in order to speedup inspection runs. When a {@link com.intellij.codeInspection.LocalInspectionTool}
- * returns inheritors of the declared visitor then the inspection engine will be able to infer PSI element classes that it would like to visit.
- * It makes it possible to skip irrelevant elements in a tree when inspections run.
+ * Declares a base visitor class for language to speed up inspection runs.
+ * <p>
+ * When a {@link com.intellij.codeInspection.LocalInspectionTool}
+ * returns inheritors of the declared visitor, then the inspection engine will be able
+ * to infer PSI element classes that it would like to visit.
+ * This makes it possible to skip irrelevant elements in a tree when inspections run.
  *
  * @see com.intellij.codeInspection.InspectionVisitorsOptimizer
  */
 @ApiStatus.Experimental
 public final class BasicInspectionVisitorBean {
+
+  /**
+   * {@link PsiElementVisitor} inheritor visitor class.
+   */
   @Attribute("class")
   @RequiredElement
   public String clazz;

@@ -17,6 +17,7 @@ import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -30,6 +31,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntConsumer;
 
+@Internal
 public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator,
                                                        MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImplBase.class);

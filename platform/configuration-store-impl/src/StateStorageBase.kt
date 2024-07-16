@@ -5,8 +5,8 @@
 
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
+import com.intellij.codeWithMe.ClientId
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
@@ -25,6 +25,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 
+@Internal
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
@@ -113,13 +114,16 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 }
 
+@Internal
 abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
   abstract val controller: SettingsController?
   abstract val roamingType: RoamingType?
 
   final override fun setState(component: Any?, componentName: String, pluginId: PluginId, state: Any?) {
     if (state == null) {
-      setSerializedState(componentName = componentName, element = null)
+      if (ClientId.isCurrentlyUnderLocalId) {
+        setSerializedState(componentName = componentName, element = null)
+      }
       return
     }
 
@@ -136,7 +140,9 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
       return
     }
 
-    setSerializedState(componentName = componentName, element = element)
+    if (ClientId.isCurrentlyUnderLocalId) {
+      setSerializedState(componentName = componentName, element = element)
+    }
   }
 
   abstract fun setSerializedState(componentName: String, element: Element?)

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.rt.execution.junit.FileComparisonData
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtilRt
 import io.opentelemetry.api.trace.Span
@@ -26,14 +26,10 @@ import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 
-fun createBuildOptionsForTest(productProperties: ProductProperties, skipDependencySetup: Boolean = false): BuildOptions {
+fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, skipDependencySetup: Boolean = false): BuildOptions {
   val outDir = createTestBuildOutDir(productProperties)
-  val options = BuildOptions(
-    cleanOutDir = false,
-    useCompiledClassesFromProjectOutput = true
-  )
+  val options = BuildOptions(cleanOutDir = false, useCompiledClassesFromProjectOutput = true, jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"))
   customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup)
   return options
 }
@@ -42,8 +38,8 @@ fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
 }
 
-private inline fun createBuildOptionsForTest(productProperties: ProductProperties, customizer: (BuildOptions) -> Unit): BuildOptions {
-  val options = createBuildOptionsForTest(productProperties = productProperties)
+private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, customizer: (BuildOptions) -> Unit): BuildOptions {
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir)
   customizer(options)
   return options
 }
@@ -67,19 +63,14 @@ fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDepend
 }
 
 suspend inline fun createBuildContext(
-  homePath: Path,
+  homeDir: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
-  val options = createBuildOptionsForTest(productProperties)
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(
-    projectHome = homePath,
-    productProperties = productProperties,
-    proprietaryBuildTools = buildTools,
-    options = options,
-  )
+  return BuildContextImpl.createContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
 }
 
 // don't expose BuildDependenciesCommunityRoot
@@ -91,7 +82,7 @@ fun runTestBuild(
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ) {
   runTestBuild(
-    homePath = homePath,
+    homeDir = homePath,
     productProperties = productProperties,
     buildTools = buildTools,
     traceSpanName = traceSpanName,
@@ -101,7 +92,7 @@ fun runTestBuild(
 }
 
 fun runTestBuild(
-  homePath: Path,
+  homeDir: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   traceSpanName: String,
@@ -115,11 +106,11 @@ fun runTestBuild(
     repeat(reproducibilityTest.iterations) { iterationNumber ->
       launch {
         val buildContext = BuildContextImpl.createContext(
-          projectHome = homePath,
+          projectHome = homeDir,
           productProperties = productProperties,
           proprietaryBuildTools = buildTools,
           setupTracer = false,
-          options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
+          options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, customizer = buildOptionsCustomizer).also {
             reproducibilityTest.configure(it)
           },
         )
@@ -139,11 +130,11 @@ fun runTestBuild(
   else {
     doRunTestBuild(
       context = BuildContextImpl.createContext(
-        projectHome = homePath,
+        projectHome = homeDir,
         productProperties = productProperties,
         proprietaryBuildTools = buildTools,
         setupTracer = false,
-        options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer),
+        options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, customizer = buildOptionsCustomizer),
       ),
       writeTelemetry = true,
       traceSpanName = traceSpanName,
@@ -166,10 +157,9 @@ suspend fun runTestBuild(
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(context: BuildContext,
-                                   traceSpanName: String?,
-                                   writeTelemetry: Boolean,
-                                   build: suspend (context: BuildContext) -> Unit) {
+private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?, writeTelemetry: Boolean, build: suspend (context: BuildContext) -> Unit) {
+  context.cleanupJarCache()
+
   val traceFile = if (writeTelemetry) {
     val traceFile = TestLoggerFactory.getTestLogDir().resolve("${context.productProperties.baseFileName}-$traceSpanName-trace.json")
     JaegerJsonSpanExporterManager.setOutput(traceFile, addShutDownHook = false)
@@ -198,7 +188,7 @@ private suspend fun doRunTestBuild(context: BuildContext,
           throw e
         }
         catch (e: Throwable) {
-          if (e !is FileComparisonData) {
+          if (e !is FileComparisonFailedError) {
             span.recordException(e)
           }
           span.setStatus(StatusCode.ERROR)
@@ -247,11 +237,11 @@ private suspend fun doRunTestBuild(context: BuildContext,
 
 private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMessages) {
   try {
-    val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
-    Files.createDirectories(targetFile.parent)
-    val debugLogFile = messages.debugLogFile
-    if (debugLogFile != null && Files.exists(debugLogFile)) {
-      Files.copy(debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
+    val debugLogFile = messages.getDebugLog()
+    if (!debugLogFile.isNullOrEmpty()) {
+      val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
+      Files.createDirectories(targetFile.parent)
+      Files.writeString(targetFile, debugLogFile)
       Span.current().addEvent("debug log copied to $targetFile")
     }
   }

@@ -1,23 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.NestingKind;
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.URI;
 import java.util.Collection;
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class TransformableJavaFileObject implements JavaFileObject {
+final class TransformableJavaFileObject implements JavaFileObject {
   private final JavaFileObject myOriginal;
   private final Collection<? extends JavaSourceTransformer> myTransformers;
 
-  public TransformableJavaFileObject(JavaFileObject original, Collection<? extends JavaSourceTransformer> transformers) {
+  TransformableJavaFileObject(JavaFileObject original, Collection<? extends JavaSourceTransformer> transformers) {
     myOriginal = original;
     myTransformers = transformers;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -27,6 +27,7 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.CollectionFactory;
@@ -83,12 +84,16 @@ public final class FileManagerImpl implements FileManager {
 
   private static final VirtualFile NULL = new LightVirtualFile();
 
+  /**
+   * Removes garbage from myVFileToViewProviderMap
+   */
   public void processQueue() {
-    // just to call processQueue()
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
-    if (map != null) {
-      map.remove(NULL);
-    }
+    if (map == null) return;
+
+    // myVFileToViewProviderMap is in fact ConcurrentWeakValueHashMap.
+    // calling map.remove(unrelated-object) calls ConcurrentWeakValueHashMap#processQueue under the hood
+    map.remove(NULL);
   }
 
   @NotNull
@@ -138,7 +143,8 @@ public final class FileManagerImpl implements FileManager {
       return;
     }
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    // write access is necessary only when the event system is enabled for the file.
+    ThreadingAssertions.assertWriteAccess();
 
     VirtualFile dir = vFile.getParent();
     PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
@@ -310,8 +316,8 @@ public final class FileManagerImpl implements FileManager {
     });
   }
 
+  @RequiresWriteLock
   void possiblyInvalidatePhysicalPsi() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     removeInvalidDirs();
     for (FileViewProvider viewProvider : getVFileToViewProviderMap().values()) {
       markPossiblyInvalidated(viewProvider);
@@ -366,9 +372,8 @@ public final class FileManagerImpl implements FileManager {
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
     if (vFile.isDirectory()) return null;
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
-      LOG.error("Invalid file: " + vFile);
+      LOG.error(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 
@@ -377,9 +382,9 @@ public final class FileManagerImpl implements FileManager {
     return viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
+  @RequiresReadLock
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       throw new InvalidVirtualFileAccessException(vFile);
     }
@@ -394,6 +399,7 @@ public final class FileManagerImpl implements FileManager {
     return getCachedPsiFileInner(vFile);
   }
 
+  @RequiresReadLock
   @Override
   public @Nullable PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     Project project = myManager.getProject();
@@ -401,9 +407,8 @@ public final class FileManagerImpl implements FileManager {
       LOG.error("Access to psi files should not be performed after project disposal: " + project);
     }
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
-      LOG.error("File is not valid:" + vFile);
+      LOG.error(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 
@@ -491,10 +496,12 @@ public final class FileManagerImpl implements FileManager {
     return files;
   }
 
+  @RequiresWriteLock
   private void removeInvalidDirs() {
     myVFileToPsiDirMap.set(null);
   }
 
+  @RequiresWriteLock
   void removeInvalidFilesAndDirs(boolean useFind) {
     removeInvalidDirs();
 
@@ -567,9 +574,9 @@ public final class FileManagerImpl implements FileManager {
     }
   }
 
+  @RequiresWriteLock
   @Override
   public void reloadFromDisk(@NotNull PsiFile psiFile) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     VirtualFile vFile = psiFile.getVirtualFile();
     assert vFile != null;
 
@@ -597,14 +604,14 @@ public final class FileManagerImpl implements FileManager {
    * Synchronized by read-write action. Calls from several threads in read action for the same virtual file are allowed.
    * @return if the file is still valid
    */
+  @RequiresReadLock(generateAssertion = false)
   public boolean evaluateValidity(@NotNull PsiFile file) {
     AbstractFileViewProvider viewProvider = (AbstractFileViewProvider)file.getViewProvider();
     return evaluateValidity(viewProvider) && viewProvider.getCachedPsiFiles().contains(file);
   }
 
+  @RequiresReadLock
   private boolean evaluateValidity(@NotNull AbstractFileViewProvider viewProvider) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
     VirtualFile file = viewProvider.getVirtualFile();
     if (getRawCachedViewProvider(file) != viewProvider) {
       return false;
@@ -616,7 +623,11 @@ public final class FileManagerImpl implements FileManager {
 
     if (shouldResurrect(viewProvider, file)) {
       viewProvider.putUserData(IN_COMA, null);
-      LOG.assertTrue(getRawCachedViewProvider(file) == viewProvider);
+      FileViewProvider cachedProvider = getRawCachedViewProvider(file);
+      LOG.assertTrue(
+        cachedProvider == viewProvider,
+        "Cached: " + cachedProvider + ", expected: " + viewProvider
+      );
 
       for (PsiFile psiFile : viewProvider.getCachedPsiFiles()) {
         // update "myPossiblyInvalidated" fields in files by calling "isValid"

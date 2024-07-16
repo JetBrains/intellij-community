@@ -8,6 +8,7 @@ import com.intellij.execution.ijent.IjentChildProcessAdapter
 import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -80,7 +81,12 @@ fun runProcessBlocking(
   if (options.isExecuteCommandInShell && !options.isPassEnvVarsUsingInterop) {
     explicitEnvironmentVariables = mapOf()
     for ((name, value) in processBuilder.environment().entries.sortedBy { (key, _) -> key }) {
-      shellInitCommands += "export ${posixQuote(name)}=${posixQuote(value)}"
+      if (WSLDistribution.ENV_VARIABLE_NAME_PATTERN.matcher(name).matches()) {
+        shellInitCommands += "export ${posixQuote(name)}=${posixQuote(value)}"
+      }
+      else {
+        LOG.debug { "Can not pass environment variable (bad name): '$name'" }
+      }
     }
   }
   else {
@@ -118,7 +124,7 @@ fun runProcessBlocking(
   val workingDirectory = processBuilder.directory()?.toPath()?.let { windowsWorkingDirectory ->
     wslDistribution.getWslPath(windowsWorkingDirectory)
     ?: run {
-      LOG.warn("Working directory $windowsWorkingDirectory can't be mapped to WSL distribution ${wslDistribution.id}")
+      LOG.warn("Working directory $windowsWorkingDirectory can't be mapped to WSL distribution ${wslDistribution.id}", Throwable())
       null
     }
   }
@@ -131,15 +137,26 @@ fun runProcessBlocking(
     .workingDirectory(workingDirectory)
     .execute()
   ) {
-    is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, ijentApi.id, pty != null)
+    is IjentExecApi.ExecuteProcessResult.Success ->
+      processResult.process.toProcess(
+        coroutineScope = scope,
+        ijentId = ijentApi.id,
+        isPty = pty != null,
+        redirectStderr = processBuilder.redirectErrorStream(),
+      )
     is IjentExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
   }
 }
 
-private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, ijentId: IjentId, isPty: Boolean): Process =
+private fun IjentChildProcess.toProcess(
+  coroutineScope: CoroutineScope,
+  ijentId: IjentId,
+  isPty: Boolean,
+  redirectStderr: Boolean,
+): Process =
   if (isPty)
     IjentChildPtyProcessAdapter(coroutineScope, ijentId, this)
   else
-    IjentChildProcessAdapter(coroutineScope,ijentId, this)
+    IjentChildProcessAdapter(coroutineScope,ijentId, this, redirectStderr)
 
 private val LOG by lazy { Logger.getInstance("com.intellij.execution.wsl.WslIjentUtil") }

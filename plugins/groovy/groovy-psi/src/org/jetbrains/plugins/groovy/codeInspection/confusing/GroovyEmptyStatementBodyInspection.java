@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyEmptyStatementBodyInspection extends BaseInspection {
+public final class GroovyEmptyStatementBodyInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {

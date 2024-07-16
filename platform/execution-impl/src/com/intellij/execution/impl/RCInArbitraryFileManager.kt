@@ -5,6 +5,7 @@ package com.intellij.execution.impl
 
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.Logger
@@ -99,8 +100,11 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   }
 
   private fun deleteFile(file: VirtualFile) {
-    ModalityUiUtil.invokeLaterIfNeeded(
-      ModalityState.nonModal()) { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }
+    invokeLater(ModalityState.nonModal()) {
+      runWriteAction {
+        file.delete(this@RCInArbitraryFileManager)
+      }
+    }
   }
 
   /**

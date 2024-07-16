@@ -62,6 +62,7 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.SlowOperations
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.with
@@ -260,7 +261,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       timer = MyTimer(coroutineScope.childScope())
     }
 
-    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) {
+    val wrappedListener = if (AppExecutorUtil.propagateContext() && listener !is CapturingListener) {
       CapturingListener(listener)
     }
     else {
@@ -417,7 +418,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   final override fun getAction(id: String): AnAction? {
-    return getAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+    val action = getAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+    if (action == null && SystemProperties.getBooleanProperty("action.manager.log.available.actions.if.not.found", false)) {
+      val availableActionIds = actionPostInitRegistrar.getActionIdList("")
+      LOG.info("Action $id is not found. Available actions: $availableActionIds")
+    }
+    return action
   }
 
   override fun getId(action: AnAction): String? = actionPostInitRegistrar.getId(action)
@@ -1399,10 +1405,12 @@ private class CapturingListener(@JvmField val timerListener: TimerListener) : Ti
   val childContext: ChildContext = createChildContext()
 
   override fun run() {
-    installThreadContext(childContext.context).use {
-      // this is periodic runnable that is invoked on timer; it should not complete a parent job
-      childContext.runAsCoroutine(completeOnFinish = false, timerListener::run)
-    }
+    // this is periodic runnable that is invoked on timer; it should not complete a parent job
+    childContext.runAsCoroutine(completeOnFinish = false, {
+      installThreadContext(childContext.context, true).use {
+        timerListener.run()
+      }
+    })
   }
 }
 
@@ -1869,7 +1877,7 @@ private class PostInitActionRegistrar(
   override fun actionRegistered(actionId: String, action: AnAction) {
     val schema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>() ?: return
     for (url in schema.getActions()) {
-      if (url.component == actionId) {
+      if (url.componentId == actionId) {
         schema.incrementModificationStamp()
         break
       }

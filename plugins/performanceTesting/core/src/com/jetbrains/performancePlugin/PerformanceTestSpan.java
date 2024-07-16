@@ -24,6 +24,11 @@ public final class PerformanceTestSpan {
     if (performanceTestSpan != null) performanceTestSpan.end();
   }
 
+  @SuppressWarnings("resource")
+  public static void makeTestSpanCurrent(){
+    if(performanceTestSpan != null)  performanceTestSpan.makeCurrent();
+  }
+
   public static Context getContext() {
     if (performanceTestSpan != null) return Context.current().with(performanceTestSpan);
     return Context.current();

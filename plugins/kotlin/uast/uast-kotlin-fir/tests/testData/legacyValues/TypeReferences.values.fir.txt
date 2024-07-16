@@ -42,7 +42,6 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                     ULocalVariable (name = tl) [var tl: java.util.List<? extends T> = listOf(at)]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [listOf(at)] = external listOf(at)((var at = Undetermined))
                             UIdentifier (Identifier (listOf)) [UIdentifier (Identifier (listOf))]
-                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null) [listOf] = external listOf(at)((var at = Undetermined))
                             USimpleNameReferenceExpression (identifier = at) [at] = (var at = Undetermined)
                 UDeclarationsExpression [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: T ->...})] = Undetermined
                     ULocalVariable (name = tsl) [var tsl: java.util.List<? extends java.lang.String> = tl.map({ var it: T ->...})]
@@ -56,10 +55,6 @@ UFile (package = ) [public final class TypeReferencesKt {...]
     return it.toString()
 })(Undetermined)
                                 UIdentifier (Identifier (map)) [UIdentifier (Identifier (map))]
-                                USimpleNameReferenceExpression (identifier = map, resolvesTo = null) [map] = external map({ var it: T ->
-
-    return it.toString()
-})(Undetermined)
                                 ULambdaExpression [{ var it: T ->...}] = Undetermined
                                     UParameter (name = it) [var it: T]
                                     UBlockExpression [{...}] = Nothing
@@ -68,7 +63,6 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                                                 USimpleNameReferenceExpression (identifier = it) [it] = external it()
                                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
                                                     UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                                                    USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
                 UDeclarationsExpression [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>] = Undetermined
                     ULocalVariable (name = lls) [var lls: java.util.List<? extends java.util.List<? extends java.lang.String>>]
                 UDeclarationsExpression [var llsAliased: java.util.List<? extends java.util.List<? extends java.lang.String>>] = Undetermined
@@ -77,7 +71,5 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                     ULocalVariable (name = llt) [var llt: java.util.List<? extends java.util.List<? extends T>>]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parameterizedFoo(emptyList())] = external parameterizedFoo(emptyList())(external emptyList()())
                     UIdentifier (Identifier (parameterizedFoo)) [UIdentifier (Identifier (parameterizedFoo))]
-                    USimpleNameReferenceExpression (identifier = parameterizedFoo, resolvesTo = null) [parameterizedFoo] = external parameterizedFoo(emptyList())(external emptyList()())
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [emptyList()] = external emptyList()()
                         UIdentifier (Identifier (emptyList)) [UIdentifier (Identifier (emptyList))]
-                        USimpleNameReferenceExpression (identifier = emptyList, resolvesTo = null) [emptyList] = external emptyList()()

@@ -3,9 +3,12 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
 
 public final class ToggleInCommentsAction extends EditorHeaderSetSearchContextAction {
   public ToggleInCommentsAction() {
     super(FindBundle.message("search.context.title.in.comments"), FindModel.SearchContext.IN_COMMENTS);
+
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
   }
 }

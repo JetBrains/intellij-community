@@ -13,11 +13,12 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-// overridden in Rider
+@ApiStatus.Internal
 public final class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifier {
   private final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> myErrors = new MultiMap<>();
   private final Object myLock = new Object();

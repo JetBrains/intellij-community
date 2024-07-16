@@ -38,8 +38,8 @@ abstract class AbstractIndentingBackspaceHandler extends BackspaceHandlerDelegat
     if (editor.isColumnMode() || !StringUtil.isWhiteSpace(c)) {
       return;
     }
-    Language language = getLanguageAtCursorPosition(file, editor);
-    SmartBackspaceMode mode = getBackspaceMode(language);
+    Language languageAtCursorPosition = getLanguageAtCursorPosition(file, editor);
+    SmartBackspaceMode mode = getBackspaceMode(file, languageAtCursorPosition);
     if (mode != myMode) {
       return;
     }
@@ -60,11 +60,11 @@ abstract class AbstractIndentingBackspaceHandler extends BackspaceHandlerDelegat
   protected abstract boolean doCharDeleted(char c, PsiFile file, Editor editor);
 
   @NotNull
-  private static SmartBackspaceMode getBackspaceMode(@NotNull Language language) {
+  private static SmartBackspaceMode getBackspaceMode(@NotNull PsiFile file, @NotNull Language language) {
     SmartBackspaceMode mode = CodeInsightSettings.getInstance().getBackspaceMode();
     BackspaceModeOverride override = LanguageBackspaceModeOverride.INSTANCE.forLanguage(language);
     if (override != null) {
-      mode = override.getBackspaceMode(mode);
+      mode = override.getBackspaceMode(file, mode);
     }
     return mode;
   }

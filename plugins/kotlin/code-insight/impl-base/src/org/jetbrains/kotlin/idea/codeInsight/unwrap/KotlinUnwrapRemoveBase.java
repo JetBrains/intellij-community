@@ -20,7 +20,7 @@ public abstract class KotlinUnwrapRemoveBase extends AbstractUnwrapper<KotlinUnw
 
     protected KotlinUnwrapRemoveBase(@NotNull String key) {
         /*
-        Pass empty description to superclass since actual description
+        Pass empty description to superclass since the actual description
         is computed based on the Psi element at hand
         */
         super("");
@@ -30,7 +30,7 @@ public abstract class KotlinUnwrapRemoveBase extends AbstractUnwrapper<KotlinUnw
     @Override
     public @NotNull String getDescription(@NotNull PsiElement e) {
         assert e instanceof KtElement;
-        return KotlinBundle.message(key, ElementRenderingUtilsKt.getExpressionShortText((KtElement) e));
+        return KotlinBundle.message(key, ElementRenderingUtilsKt.getExpressionShortText(e));
     }
 
     protected boolean canExtractExpression(@NotNull KtExpression expression, @NotNull KtElement parent) {

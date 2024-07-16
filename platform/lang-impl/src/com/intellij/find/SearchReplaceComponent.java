@@ -3,7 +3,6 @@ package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
@@ -12,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -134,6 +134,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myReplaceFieldActions = replaceFieldActions;
     myReplaceRunnable = replaceRunnable;
     myCloseRunnable = closeRunnable;
+    myDataProviderDelegate = dataProvider;
     myMultilineEnabled = multilineEnabled;
     myShowNewLineButton = showNewLineButton;
     myAddSearchResultsToGlobalSearch = addSearchResultsToGlobalSearch;
@@ -145,7 +146,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     findActionShortcutSet = actionManager.getAction(IdeActions.ACTION_FIND).getShortcutSet();
     replaceActionShortcutSet = actionManager.getAction(IdeActions.ACTION_REPLACE).getShortcutSet();
 
-    for (AnAction child : searchToolbar2Actions.getChildren(null)) {
+    for (AnAction child : searchToolbar2Actions.getChildren(actionManager)) {
       if (child instanceof Embeddable) {
         myEmbeddedSearchActions.add(child);
         ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(child);
@@ -155,7 +156,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     for (AnAction action : myEmbeddedSearchActions) {
       searchToolbar2Actions.remove(action);
     }
-    for (AnAction child : replaceToolbar2Actions.getChildren(null)) {
+    for (AnAction child : replaceToolbar2Actions.getChildren(actionManager)) {
       if (child instanceof Embeddable) {
         myEmbeddedReplaceActions.add(child);
         ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(child);
@@ -198,8 +199,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       leftPanel.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1));
     }
 
-    searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(null));
-    replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(null));
+    searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(actionManager));
+    replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(actionManager));
 
     mySearchToolbarWrapper = new NonOpaquePanel(new BorderLayout());
 
@@ -301,10 +302,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
     }
 
-    update("", "", false, false);
-
-    // it's assigned after all action updates so that actions don't get access to uninitialized components
-    myDataProviderDelegate = dataProvider;
     // A workaround to suppress editor-specific TabAction
     new TransferFocusAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this);
     new TransferFocusBackwardAction()
@@ -321,6 +318,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       setBackground(JBColor.namedColor("Editor.SearchField.background", JBColor.background()));
     }
 
+    updateInner("", "", false, false);
     updateUI();
   }
 
@@ -458,7 +456,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                                        addTextToRecent(mySearchTextComponent);
                                                      }
                                                    }
-                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
+                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ClientSystemInfo.isMac()
                                                                                               ? META_DOWN_MASK : CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
     // make sure Enter is consumed by search text field, even if 'next occurrence' action is disabled
@@ -504,18 +502,23 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public void update(@NotNull String findText, @NotNull String replaceText, boolean replaceMode, boolean multiline) {
-    setMultilineInternal(multiline);
+    updateInner(findText, replaceText, replaceMode, multiline);
     boolean needToResetSearchFocus = mySearchTextComponent != null && mySearchTextComponent.hasFocus();
     boolean needToResetReplaceFocus = myReplaceTextComponent != null && myReplaceTextComponent.hasFocus();
-    updateSearchComponent(findText);
-    updateReplaceComponent(replaceText);
-    myReplaceFieldWrapper.setVisible(replaceMode);
-    myReplaceToolbarWrapper.setVisible(replaceMode);
-
     if (needToResetReplaceFocus) myReplaceTextComponent.requestFocusInWindow();
     if (needToResetSearchFocus) mySearchTextComponent.requestFocusInWindow();
     updateBindings();
     updateActions();
+    revalidate();
+    repaint();
+  }
+
+  private void updateInner(@NotNull String findText, @NotNull String replaceText, boolean replaceMode, boolean multiline) {
+    setMultilineInternal(multiline);
+    updateSearchComponent(findText);
+    updateReplaceComponent(replaceText);
+    myReplaceFieldWrapper.setVisible(replaceMode);
+    myReplaceToolbarWrapper.setVisible(replaceMode);
     List<Component> focusOrder = new ArrayList<>();
     focusOrder.add(mySearchTextComponent);
     focusOrder.add(myReplaceTextComponent);
@@ -523,8 +526,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     focusOrder.addAll(myExtraReplaceButtons);
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new ListFocusTraversalPolicy(focusOrder));
-    revalidate();
-    repaint();
   }
 
   public void updateActions() {
@@ -641,6 +642,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
     });
 
+    if (ExperimentalUI.isNewUI()) {
+      SwingUtilities.invokeLater(() -> {
+        JBColor bg = JBColor.namedColor("Editor.SearchField.background", JBColor.background());
+        innerTextComponent.setBackground(bg);
+        outerComponent.setBackground(bg);
+        setBackground(bg);
+      });
+    }
+
     myCloseAction.registerOn(outerComponent);
     return true;
   }
@@ -649,7 +659,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     private final ShortcutSet shortcut = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
     private CloseAction() {
       getTemplatePresentation().setText(FindBundle.message("find.close.button.name"));
-      getTemplatePresentation().setIcon(ExperimentalUI.isNewUI() ? ExpUiIcons.General.Close : AllIcons.Actions.Close);
+      getTemplatePresentation().setIcon(ExperimentalUI.isNewUI() ? AllIcons.General.Close : AllIcons.Actions.Close);
     }
 
     @Override
@@ -674,19 +684,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   private void updateBindings() {
     updateBindings(mySearchFieldActions, mySearchFieldWrapper);
-    updateBindings(mySearchActionsToolbar, mySearchFieldWrapper);
+    updateBindings((DefaultActionGroup)mySearchActionsToolbar.getActionGroup(), mySearchFieldWrapper);
     updateBindings(Collections.singletonList(modeAction), mySearchFieldWrapper);
 
     updateBindings(myReplaceFieldActions, myReplaceFieldWrapper);
-    updateBindings(myReplaceActionsToolbar, myReplaceToolbarWrapper);
+    updateBindings((DefaultActionGroup)myReplaceActionsToolbar.getActionGroup(), myReplaceToolbarWrapper);
   }
 
   private void updateBindings(@NotNull DefaultActionGroup group, @NotNull JComponent shortcutHolder) {
     updateBindings(List.of(group.getChildActionsOrStubs()), shortcutHolder);
-  }
-
-  private void updateBindings(@NotNull ActionToolbarImpl toolbar, @NotNull JComponent shortcutHolder) {
-    updateBindings(toolbar.getActions(), shortcutHolder);
   }
 
   private void updateBindings(@NotNull List<? extends AnAction> actions, @NotNull JComponent shortcutHolder) {

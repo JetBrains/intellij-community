@@ -21,6 +21,7 @@
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>
+    <module name="intellij.java.unscramble"/>
   </dependencies>
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
@@ -308,6 +309,7 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrWildcardTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrStringConverter"/>
 
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrNamedParamsConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrEnumConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerTypeConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.sam.ClosureToSamConverter"/>
@@ -447,6 +449,16 @@
       bundle="messages.GroovyBundle"
       nameKey="settings.inlay.groovy.implicit.null.argument.provider.name"
       descriptionKey="settings.inlay.groovy.implicit.null.argument.provider.description"/>
+    <codeInsight.declarativeInlayProvider
+    language="Groovy"
+    implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLambdaParameterTypeHintsInlayProvider"
+    isEnabledByDefault="true"
+    group="LAMBDAS_GROUP"
+    providerId="groovy.lambda.parameter.inlay.provider"
+    bundle="messages.GroovyBundle"
+    nameKey="settings.inlay.groovy.lambda.parameter.provider.name"
+    descriptionKey="settings.inlay.groovy.lambda.parameter.provider.description"
+    />
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
@@ -528,7 +540,6 @@
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="Groovy"
                                        implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyWhiteSpaceFormattingStrategy"/>
-    <inspection.basicVisitor class="org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor"/>
 
     <focusModeProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GrFocusModeProvider" />
     <postFormatProcessor implementation="org.jetbrains.plugins.groovy.formatter.GroovyBracePostFormatProcessor"/>
@@ -720,6 +731,7 @@
                          key="configurable.GroovyCompilerConfigurable.display.name"
                          parentId="project.propCompiler"/>
     <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
+    <!--suppress LightServiceMigrationXML -->
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.groovy.compiler.GrBuildProcessParametersProvider"/>
 
@@ -1350,7 +1362,7 @@
 
     <internal.statistic.libraryUsageImportProcessor language="Groovy"
                                                     implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
-    <iconMapper mappingFile="GroovyIconMappings.json"/>
+    <lang.dumb.mode.supported language="Groovy" implementationClass="org.jetbrains.plugins.groovy.GroovyLanguageDumbAware"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

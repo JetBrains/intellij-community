@@ -6,7 +6,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
+import com.intellij.openapi.fileEditor.impl.waitForFullyCompleted
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -42,19 +42,22 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
         else -> project.getBaseDirectories().firstNotNullOfOrNull { it.findFileByRelativePath(filePath) }
       }
     }
-  }
-  
-  override fun getName(): String {
-    return NAME
+
+    fun getOptions(arguments: String): OpenFileCommandOptions? {
+      return runCatching {
+        OpenFileCommandOptions().apply { Args.parse(this, arguments.split(" ").toTypedArray()) }
+      }.getOrNull()
+    }
   }
 
+  override fun getName(): String = NAME
+
   override suspend fun doExecute(context: PlaybackContext) {
-    val myOptions = runCatching {
-      OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
-    }.getOrNull()
-    val filePath = myOptions?.file ?: text.split(' ', limit = 4)[1]
-    val timeout = myOptions?.timeout ?: 0
-    val suppressErrors = myOptions?.suppressErrors ?: false
+    val arguments = extractCommandArgument(PREFIX)
+    val options = getOptions(arguments)
+    val filePath = (options?.file ?: text.split(' ', limit = 4)[1]).replace("SPACE_SYMBOL", " ")
+    val timeout = options?.timeout ?: 0
+    val suppressErrors = options?.suppressErrors ?: false
 
     val project = context.project
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
@@ -75,8 +78,8 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
 
     val fileEditor = (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       .openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
-    if (myOptions != null && !myOptions.disableCodeAnalysis) {
-      fileEditor.waitForFullyLoaded()
+    if (options != null && !options.disableCodeAnalysis) {
+      waitForFullyCompleted(fileEditor)
     }
 
     job.onError {
@@ -84,7 +87,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     }
     job.withErrorMessage("Timeout on open file ${file.path} more than $timeout seconds")
 
-    if (myOptions != null && !myOptions.disableCodeAnalysis) {
+    if (options != null && !options.disableCodeAnalysis) {
       job.waitForComplete()
     }
   }

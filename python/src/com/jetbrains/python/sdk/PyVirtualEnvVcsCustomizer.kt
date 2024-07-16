@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.application.runReadAction
@@ -63,7 +63,7 @@ class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
 
   private val Sdk.isWsl: Boolean
     // WSLCredentialsType#WZSL_CREDENTIALS_PREFIX is inaccessible, let's use WslConstants.UNC_PREFIX
-    get() = (sdkAdditionalData as? RemoteSdkAdditionalData<*>)?.remoteConnectionType?.hasPrefix(WslConstants.UNC_PREFIX) == true
+    get() = (sdkAdditionalData as? RemoteSdkAdditionalData)?.remoteConnectionType?.hasPrefix(WslConstants.UNC_PREFIX) == true
 }
 
 @Service(Service.Level.PROJECT)

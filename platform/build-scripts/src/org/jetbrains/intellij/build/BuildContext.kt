@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
+import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
@@ -34,9 +35,16 @@ interface BuildContext : CompilationContext {
   fun getExtraExecutablePattern(os: OsFamily): List<String>
 
   /**
-   * Build number without product code (e.g. '162.500.10')
+   * IDE build number without product code (e.g. '162.500.10').
+   * [org.jetbrains.intellij.build.impl.SnapshotBuildNumber.VALUE] by default.
    */
   val buildNumber: String
+
+  /**
+   * Build number used for all plugins being built.
+   * [buildNumber] by default.
+   */
+  val pluginBuildNumber: String get() = buildNumber
 
   /**
    * Build number with product code (e.g. 'IC-162.500.10')
@@ -69,12 +77,18 @@ interface BuildContext : CompilationContext {
    * [BuildOptions.useModularLoader].
    */
   val useModularLoader: Boolean
-  
+
   /**
    * Specifies whether the runtime module repository should be added to the distributions, see [BuildOptions.generateRuntimeModuleRepository].
    */
   val generateRuntimeModuleRepository: Boolean
-  
+
+  /**
+   * Returns main modules' names of plugins bundled with the product.
+   * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
+   */
+  val bundledPluginModules: List<String>
+
   /**
    * see BuildTasksImpl.buildProvidedModuleList
    */
@@ -107,18 +121,14 @@ interface BuildContext : CompilationContext {
 
   fun findApplicationInfoModule(): JpsModule
 
-  fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
-
-  fun findFileInModuleSources(module: JpsModule, relativePath: String): Path?
-
   suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
   val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter
-  
+
   val isEmbeddedJetBrainsClientEnabled: Boolean
-  
+
   fun shouldBuildDistributions(): Boolean
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
@@ -128,37 +138,57 @@ interface BuildContext : CompilationContext {
                            prepareForBuild: Boolean = true): BuildContext
 
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
+
+  fun checkDistributionBuildNumber()
+
+  suspend fun cleanupJarCache()
+
+  suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
-                                            stepId: String,
-                                            crossinline step: suspend CoroutineScope.(Span) -> Unit) {
+suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
+                                                stepId: String,
+                                                crossinline step: suspend CoroutineScope.(Span) -> T): T? {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
+    return null
   }
   else {
-    spanBuilder.useWithScope(Dispatchers.IO, step)
+    return spanBuilder.useWithScope(Dispatchers.IO, step)
   }
 }
 
 @Serializable
 class BuiltinModulesFileData(
   @JvmField val plugins: MutableList<String> = mutableListOf(),
-  @JvmField val modules: MutableList<String> = mutableListOf(),
+  @JvmField var layout: List<ProductInfoLayoutItem> = emptyList(),
   @JvmField val fileExtensions: MutableList<String> = mutableListOf(),
 )
+
+@Serializable
+data class ProductInfoLayoutItem(
+  @JvmField val name: String,
+  @JvmField val kind: ProductInfoLayoutItemKind,
+  @JvmField val classPath: List<String> = emptyList(),
+)
+
+@Suppress("EnumEntryName")
+@Serializable
+enum class ProductInfoLayoutItemKind {
+  plugin, pluginAlias, productModuleV2, moduleV2
+}
 
 sealed interface DistFileContent {
   fun readAsStringForDebug(): String
 }
 
-internal data class LocalDistFileContent(@JvmField val file: Path) : DistFileContent {
+data class LocalDistFileContent(@JvmField val file: Path) : DistFileContent {
   override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).toString(Charsets.UTF_8)
 
   override fun toString(): String = "LocalDistFileContent(file=$file)"
 }
 
-internal data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
+data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
   override fun readAsStringForDebug(): String = String(data, 0, data.size.coerceAtMost(1024), Charsets.UTF_8)
 
   override fun equals(other: Any?): Boolean {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.java.impl.compiler;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
@@ -25,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.util.*;
 
+@ApiStatus.Internal
 public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<JpsJavaCompilerConfigurationImpl> implements JpsJavaCompilerConfiguration {
   public static final JpsFactoryElementChildRoleBase<JpsJavaCompilerConfiguration> ROLE = JpsFactoryElementChildRoleBase.create("compiler configuration", () -> new JpsJavaCompilerConfigurationImpl());
   private boolean myAddNotNullAssertions = true;

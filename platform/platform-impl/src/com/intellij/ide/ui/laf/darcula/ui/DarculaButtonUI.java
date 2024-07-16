@@ -18,6 +18,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,15 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
+
+  /**
+   * For overriding background of an element Graphics object might be wrapped into a customizing Graphics.
+   * (see {@link com.intellij.openapi.wm.impl.IdeBackgroundUtil})
+   * For some buttons we need to override background painting, but keep the original border.
+   * In such cases, this key is used.
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> AVOID_EXTENDING_BORDER_GRAPHICS = Key.create("JButton.avoidExtendingBorderGraphics");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {

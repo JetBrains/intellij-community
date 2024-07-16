@@ -23,6 +23,7 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.remoteDev.util.ProductInfo
+import com.intellij.util.EnvironmentUtil
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
@@ -65,6 +66,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     @VisibleForTesting
     fun getRootFrontendModuleForIde(platformPrefix: String): RuntimeModuleId = when (platformPrefix) {
       PlatformUtils.IDEA_PREFIX, PlatformUtils.IDEA_CE_PREFIX -> RuntimeModuleId.module("intellij.idea.frontend")
+      PlatformUtils.IDEA_EDU_PREFIX -> RuntimeModuleId.module("intellij.edu.remote.frontend")
       PlatformUtils.PYCHARM_PREFIX, PlatformUtils.PYCHARM_CE_PREFIX -> RuntimeModuleId.module("intellij.pycharm.frontend")
       PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.module("intellij.rider.frontend")
       PlatformUtils.GOIDE_PREFIX -> RuntimeModuleId.module("intellij.goland.frontend")
@@ -73,11 +75,15 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       PlatformUtils.WEB_PREFIX -> RuntimeModuleId.module("intellij.webstorm.frontend")
       PlatformUtils.RUBY_PREFIX -> RuntimeModuleId.module("intellij.rubymine.frontend")
       PlatformUtils.RUSTROVER_PREFIX -> RuntimeModuleId.module("intellij.rustrover.frontend")
-      else -> RuntimeModuleId.module("intellij.cwm.guest")
+      else -> RuntimeModuleId.module("intellij.platform.frontend.split")
     }
   }
 
   fun launch(urlToOpen: String, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
+    return launch(urlToOpen, emptyList(), lifetime, errorReporter)
+  }
+
+  fun launch(url: String, extraArguments: List<String>, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
     val launcherData = findJetBrainsClientLauncher()
     if (launcherData != null) {
       LOG.debug("Start embedded client using launcher")
@@ -86,14 +92,16 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
         launcherData, 
         workingDirectory,
         clientVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode(),
-        urlToOpen, 
+        url,
+        extraArguments,
         lifetime
       )
     }
 
     val processLifetimeDef = lifetime.createNested()
-    
-    val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
+
+    val arguments = listOf("thinClient", url) + extraArguments
+    val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, arguments)
     val commandLine = javaParameters.toCommandLine()
     LOG.debug { "Starting embedded client: $commandLine" }
     val handler = OSProcessHandler.Silent(commandLine)
@@ -138,17 +146,12 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
           return null
         }
         
-        val helpers = homePath.resolve("Helpers")
-        //todo locate proper directory if there are several entries
-        val separateClientBundle = if (helpers.isDirectory()) helpers.listDirectoryEntries("*.app").singleOrNull() else null
-        val appPath = 
-          separateClientBundle?.takeIf { Registry.`is`("rdct.launch.embedded.client.from.separate.bundle.on.macos") } ?:
-          homePath.parent.takeIf { it.fileName.toString().endsWith(".app") }
-        
-        if (appPath != null) {
+        val appPath = homePath.parent 
+        if (appPath != null && appPath.name.endsWith(".app")) {
           CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
         }
         else {
+          LOG.info("Cannot use launcher because $homePath doesn't look like a path with installation")
           null
         }
       }
@@ -161,11 +164,15 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     }
   }
 
-  private fun createProcessParameters(moduleRepository: RuntimeModuleRepository, moduleRepositoryPath: Path, urlToOpen: String): SimpleJavaParameters {
+  private fun createProcessParameters(moduleRepository: RuntimeModuleRepository, moduleRepositoryPath: Path, arguments: List<String>): SimpleJavaParameters {
     val javaParameters = SimpleJavaParameters()
     javaParameters.jdk = SimpleJavaSdkType.getInstance().createJdk("", SystemProperties.getJavaHome())
     javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE)
-    if (ApplicationManager.getApplication().isUnitTestMode || SystemProperties.getBooleanProperty(USE_CUSTOM_PATHS_PROPERTY, false)) {
+    val customIdeaPropertiesPath = EnvironmentUtil.getValue("JETBRAINS_CLIENT_PROPERTIES")
+    if (customIdeaPropertiesPath != null) {
+      javaParameters.vmParametersList.addProperty(PathManager.PROPERTIES_FILE, customIdeaPropertiesPath)
+    }
+    else if (ApplicationManager.getApplication().isUnitTestMode || SystemProperties.getBooleanProperty(USE_CUSTOM_PATHS_PROPERTY, false)) {
       val tempDir = Path(PathManager.getTempPath()) / "embedded-client"
       val configDir = tempDir / "config"
       if (!configDir.exists()) {
@@ -182,8 +189,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val runtimeLoaderModule = RuntimeModuleId.module("intellij.platform.runtime.loader")
     javaParameters.classPath.addAllFiles(moduleRepository.getModule(runtimeLoaderModule).moduleClasspath.map { it.toFile() })
     addVmOptions(javaParameters.vmParametersList, moduleRepositoryPath)
-    javaParameters.programParametersList.add("thinClient")
-    javaParameters.programParametersList.add(urlToOpen)
+    javaParameters.programParametersList.addAll(arguments)
     return javaParameters
   }
 
@@ -218,11 +224,11 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val jetBrainsClientOptions = listOf(
       "-Djb.vmOptionsFile=${vmOptionsFile.pathString}",
       "-Didea.vendor.name=JetBrains",
-      "-Didea.paths.selector=JetBrainsClient${build.withoutProductCode().asString()}",
+      "-Didea.paths.selector=${PathManager.getPathsSelector()}",
       "-Didea.platform.prefix=JetBrainsClient",
       "-Dide.no.platform.update=true",
       "-Didea.initially.ask.config=never",
-      "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
+      "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.FrontendProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
       "-Dintellij.platform.root.module=${getRootFrontendModule().stringId}",
       "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",

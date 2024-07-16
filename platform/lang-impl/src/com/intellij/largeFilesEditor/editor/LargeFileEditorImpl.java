@@ -62,6 +62,7 @@ public final class LargeFileEditorImpl extends UserDataHolderBase implements Lar
     editorModel = new EditorModel(document, project, implementDataProviderForEditorModel());
     editorModel.putUserDataToEditor(LARGE_FILE_EDITOR_MARK_KEY, new Object());
     editorModel.putUserDataToEditor(LARGE_FILE_EDITOR_KEY, this);
+    editorModel.putUserDataToEditor(LARGE_FILE_EDITOR_SOFT_WRAP_KEY, true);
 
     try {
       fileManager = new LargeFileManagerImpl(vFile, customPageSize, customBorderShift);

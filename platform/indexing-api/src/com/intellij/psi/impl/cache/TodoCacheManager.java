@@ -7,8 +7,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public interface TodoCacheManager {
 
   static TodoCacheManager getInstance(Project project) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index
 
 import com.intellij.ide.IdleTracker
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
@@ -48,7 +47,7 @@ internal class IdleVcsLogIndexer(private val project: Project,
 
   fun start() {
     initJob?.cancel()
-    initJob = cs.childScope().launch(CoroutineName("IdleVcsLogIndexer start/stop")) {
+    initJob = cs.launch(CoroutineName("IdleVcsLogIndexer start/stop")) {
       if (idleDelayValue.asInteger() < 0) {
         stop()
       }
@@ -96,7 +95,7 @@ internal class IdleVcsLogIndexer(private val project: Project,
 
   private fun launch(name: String, timeout: Duration, runnable: () -> Unit): Job {
     @OptIn(FlowPreview::class)
-    return cs.childScope().launch(CoroutineName(name)) {
+    return cs.launch(CoroutineName(name)) {
       IdleTracker.getInstance().events
         .debounce(timeout)
         .collect {

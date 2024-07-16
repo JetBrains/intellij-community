@@ -12,6 +12,7 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_ASSUME = "org.junit.Assume";
   public static final String JUNIT_FRAMEWORK_ASSERT = "junit.framework.Assert";
   public static final String ORG_JUNIT_JUPITER_API_ASSERTIONS = "org.junit.jupiter.api.Assertions";
+  public static final String ORG_JUNIT_JUPITER_API_ASSERTIONS_KT = "org.junit.jupiter.api.AssertionsKt";
   public static final String ORG_JUNIT_JUPITER_API_ASSUMPTIONS = "org.junit.jupiter.api.Assumptions";
   public static final String JUNIT_FRAMEWORK_TEST = "junit.framework.Test";
   public static final String JUNIT_FRAMEWORK_TEST_CASE = "junit.framework.TestCase";
@@ -78,4 +79,5 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINT = "org.junit.experimental.theories.DataPoint";
   public static final String ORG_JUNIT_EXPERIMENTAL_THEORIES_DATAPOINTS = "org.junit.experimental.theories.DataPoints";
   public static final String ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED = "org.junit.experimental.runners.Enclosed";
+  public static final String ORG_JUNIT_JUPITER_API_IO_TEMPDIR = "org.junit.jupiter.api.io.TempDir";
 }

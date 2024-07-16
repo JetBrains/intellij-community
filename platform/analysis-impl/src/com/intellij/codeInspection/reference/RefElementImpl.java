@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -61,9 +61,9 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return ReadAction.compute(() -> {
       if (getRefManager().getProject().isDisposed()) return false;
 
-      final PsiFile file = myID.getContainingFile();
       //no need to check resolve in offline mode
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        final PsiFile file = getContainingFile();
         return file != null && file.isPhysical();
       }
 
@@ -277,6 +277,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     mySuppressions = text.split("[, ]");
   }
 
+  @Override
   public boolean isSuppressed(String @NotNull ... toolIds) {
     if (mySuppressions != null) {
       for (@NonNls String suppression : mySuppressions) {

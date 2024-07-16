@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
@@ -66,9 +67,9 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   open fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
     assertNotificationIsVisible(project, false)
     assertProjectStructure(project, *projectsInfo)
+    assertDefaultProjectLocalSettings(project)
     for (projectInfo in projectsInfo) {
       assertDefaultProjectSettings(project, projectInfo)
-      assertBuildFiles(projectInfo)
     }
   }
 
@@ -81,6 +82,13 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       *modulesInfo.map { it.ideName }.toTypedArray(),
       *modulesInfo.flatMap { it.modulesPerSourceSet }.toTypedArray()
     )
+  }
+
+  fun assertDefaultProjectLocalSettings(project: Project) {
+    val localSettings = GradleLocalSettings.getInstance(project)
+    Assertions.assertFalse(localSettings.projectBuildClasspath.isEmpty()) {
+      "Assert classpath entity is saved to the workspace model"
+    }
   }
 
   private fun getModuleInfos(projectInfo: ProjectInfo): List<ModuleInfo> {
@@ -103,16 +111,6 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     Assertions.assertTrue(projectSettings.delegatedBuild)
     Assertions.assertEquals(TestRunner.GRADLE, projectSettings.testRunner)
     Assertions.assertTrue(projectSettings.isUseQualifiedModuleNames)
-  }
-
-  fun assertBuildFiles(projectInfo: ProjectInfo) {
-    for (compositeInfo in projectInfo.composites) {
-      assertBuildFiles(compositeInfo)
-    }
-    for (moduleInfo in projectInfo.modules) {
-      val moduleRoot = testRoot.getDirectory(moduleInfo.relativePath)
-      moduleInfo.filesConfiguration.assertContentsAreEqual(moduleRoot)
-    }
   }
 
   fun projectInfo(
@@ -175,7 +173,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     filesConfiguration.withSettingsFile(useKotlinDsl = useKotlinDsl, configure = configure)
   }
 
-  fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
+  open fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     filesConfiguration.withBuildFile(gradleVersion, useKotlinDsl = useKotlinDsl, configure = configure)
   }
 }

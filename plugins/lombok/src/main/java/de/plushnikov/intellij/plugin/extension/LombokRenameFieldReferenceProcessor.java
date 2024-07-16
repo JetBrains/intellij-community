@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProcessor {
+public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {

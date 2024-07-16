@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjec
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.LanguageLevelUtil.getNextLanguageLevel
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -68,8 +69,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     val service = service<EnvironmentService>()
     val projectSelectionKey = service.getEnvironmentValue(ProjectOpenKeyProvider.Keys.PROJECT_OPEN_PROCESSOR, "Maven")
 
-    if (projectSelectionKey != "Maven") {
-      // something else was selected to open the project
+    if (projectSelectionKey != "Maven") { // something else was selected to open the project
       return
     }
 
@@ -110,8 +110,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
       val hasUnresolvedArtifacts = mavenProject.hasUnresolvedArtifacts()
       if (hasUnresolvedArtifacts) {
-        val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.isResolved } +
-                                  mavenProject.externalAnnotationProcessors.filterNot { it.isResolved }
+        val unresolvedArtifacts = mavenProject.dependencies.filterNot { it.isResolved } + mavenProject.externalAnnotationProcessors.filterNot { it.isResolved }
         throw IllegalStateException("Maven project ${mavenProject} has unresolved artifacts: $unresolvedArtifacts")
       }
 
@@ -139,42 +138,45 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
 
     if (ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()).isNotEmpty()) return
 
+    val sdk = setupJdkWithSuitableVersion(projects, context.progressIndicator).get()
+
+    if (sdk != null) {
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          ProjectRootManager.getInstance(project).projectSdk = sdk
+        }
+      }
+    }
+  }
+
+  fun setupJdkWithSuitableVersion(projects: List<MavenProject>, indicator: ProgressIndicator): CompletableFuture<Sdk?> {
     val maxLevel = projects.flatMap {
       val javaVersions = MavenImportUtil.getMavenJavaVersions(it)
       listOf(javaVersions.sourceLevel, javaVersions.testSourceLevel, javaVersions.targetLevel, javaVersions.testTargetLevel)
     }.filterNotNull().maxWithOrNull(Comparator.naturalOrder()) ?: HIGHEST
 
-    setupJdkWithVersionAboveOrEqual(maxLevel, project, context)
+    return iterateVersions(maxLevel, indicator)
   }
 
-  private fun setupJdkWithVersionAboveOrEqual(maxLevel: LanguageLevel,
-                                              project: Project,
-                                              context: ConfiguratorContext) {
-    var currentLevel: LanguageLevel? = maxLevel
-    while (currentLevel != null) {
-      val level = currentLevel
-      val future = CompletableFuture<Sdk?>()
-      SdkLookup
-        .newLookupBuilder()
-        .withProgressIndicator(context.progressIndicator)
-        .withVersionFilter { JavaVersion.tryParse(it)?.feature == level.feature() }
-        .withSdkType(JavaSdk.getInstance())
-        .onSdkResolved { sdk ->
-          future.complete(sdk)
-        }
-        .executeLookup()
-
-      val sdk = future.get()
+  private fun iterateVersions(level: LanguageLevel?, progressIndicator: ProgressIndicator): CompletableFuture<Sdk?> {
+    if (level == null) {
+      return CompletableFuture.completedFuture(null)
+    }
+    val future = CompletableFuture<Sdk?>()
+    SdkLookup
+      .newLookupBuilder()
+      .withProgressIndicator(progressIndicator)
+      .withVersionFilter { JavaVersion.tryParse(it)?.feature == level.feature() }
+      .withSdkType(JavaSdk.getInstance())
+      .onSdkResolved { sdk ->
+        future.complete(sdk)
+      }.executeLookup()
+    return future.thenCompose { sdk ->
       if (sdk != null) {
-        invokeAndWaitIfNeeded {
-          runWriteAction {
-            ProjectRootManager.getInstance(project).projectSdk = sdk
-          }
-        }
-        return
+        CompletableFuture.completedFuture(sdk)
       }
       else {
-        currentLevel = getNextLanguageLevel(currentLevel)
+        iterateVersions(getNextLanguageLevel(level), progressIndicator)
       }
     }
   }

@@ -2,10 +2,11 @@
 package org.intellij.plugins.markdown.lang.psi.impl
 
 import com.intellij.lang.ASTNode
+import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.psi.PsiElementVisitor
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 
-class MarkdownParagraph(node: ASTNode): MarkdownParagraphImpl(node) {
+class MarkdownParagraph(node: ASTNode): MarkdownCompositePsiElementBase(node), PsiExternalReferenceHost {
   override fun accept(visitor: PsiElementVisitor) {
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitParagraph(this)

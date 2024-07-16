@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public final class ModifiableModelCommitter {
+  private ModifiableModelCommitter() { }
+
   public static void multiCommit(ModifiableRootModel @NotNull [] rootModels, @NotNull ModifiableModuleModel moduleModel) {
     multiCommit(Arrays.asList(rootModels), moduleModel);
   }

@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings
+import com.intellij.testFramework.IndexingTestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -16,7 +17,6 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
@@ -369,6 +369,8 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                           """.trimIndent())
 
     importProjectsWithErrors(projectPom, m1, m2)
+
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "m1", "m2")
     assertCompletionVariantsInclude(projectPom, LOOKUP_STRING, "project-group:m1:1", "project-group:m2:1")
@@ -1234,7 +1236,6 @@ $libPath<caret></systemPath>
 
   @Test
   fun testImportDependencyChainedProperty() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

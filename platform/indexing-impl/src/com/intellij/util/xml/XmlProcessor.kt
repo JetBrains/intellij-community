@@ -7,12 +7,9 @@ import com.fasterxml.aalto.WFCException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
-import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
-import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.InputStream
 import java.io.Reader
@@ -20,7 +17,7 @@ import java.util.concurrent.CancellationException
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 
-@Experimental
+@Internal
 interface XmlProcessor {
   /**
    * Handles the start of an XML element.
@@ -57,32 +54,25 @@ interface XmlProcessor {
 private val LOG: Logger
   get() = logger<NanoXmlUtil>()
 
+@Internal
 fun parseXml(reader: Reader, processor: XmlProcessor) {
   processXml(processor, reader) {
     createXmlStreamReader(reader)
   }
 }
 
+@Internal
 fun parseXml(inputStream: InputStream, processor: XmlProcessor) {
   processXml(processor, inputStream) {
     createXmlStreamReader(inputStream)
   }
 }
 
-fun parseXmlHeader(file: VirtualFile): XmlFileHeader {
-  file.getInputStream().use {
-    return parseXmlHeader(createXmlStreamReader(it))
-  }
-}
-
+@Internal
 fun parseXmlHeader(reader: Reader): XmlFileHeader {
   reader.use {
     return parseXmlHeader(createXmlStreamReader(reader))
   }
-}
-
-fun parseXmlHeader(file: PsiFile): XmlFileHeader {
-  return parseXmlHeader(CharSequenceReader(file.getViewProvider().getContents()))
 }
 
 private fun parseXmlHeader(reader: XMLStreamReader2): XmlFileHeader {
@@ -115,7 +105,7 @@ private fun logOrRethrow(e: XMLStreamException) {
   }
 }
 
-@Experimental
+@Internal
 interface AttributeIterator {
   fun next(): Boolean
 

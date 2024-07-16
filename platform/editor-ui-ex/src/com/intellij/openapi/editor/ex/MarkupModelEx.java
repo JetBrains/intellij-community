@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -62,6 +63,9 @@ public interface MarkupModelEx extends MarkupModel {
                                                             @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction);
 
   /**
+   * @param isPersistent use different logic to update range boundaries on document changes.
+   *                     See {@link RangeMarkerImpl#persistentHighlighterUpdate}.
+   *
    * @deprecated use {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
    * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
    * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.

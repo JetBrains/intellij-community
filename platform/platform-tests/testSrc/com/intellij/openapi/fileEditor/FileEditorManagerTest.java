@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() {
@@ -37,7 +38,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.closeAllFiles();
     openFiles(STRING);
-    assertOpenFiles("foo.xml", "1.txt", "2.txt", "3.txt");
+    // regardless of pin, we open files in the same order as it was closed
+    assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
   }
 
   @Override
@@ -96,7 +98,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     openFiles(STRING);
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
-    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), null, new FileEditorOpenOptions().withRequestFocus());
     // the limit is still 1, but a pinned flag prevents closing the tab, and the actual tab number may exceed the limit
     assertOpenFiles("foo.xml", "3.txt");
 
@@ -197,10 +199,13 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     VirtualFile file2 = getFile("/src/2.txt");
     assertNotNull(file2);
     manager.openFile(file2, true);
-    EditorWindow primaryWindow = manager.getCurrentWindow();//1.txt and selected 2.txt
+    // 1.txt and selected 2.txt
+    EditorWindow primaryWindow = manager.getCurrentWindow();
     assertNotNull(primaryWindow);
-    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);//2.txt only, selected and focused
+    primaryWindow.split(SwingConstants.VERTICAL, true, null, true);
+
+    // 2.txt only, selected and focused
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
     assertNotNull(secondaryWindow);
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     // here we have to ignore 'searchForSplitter'
@@ -257,7 +262,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.waitForAsyncUpdateOnDumbModeFinished();
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
-    assertEquals(2, manager.getAllEditors(createdFile).length);
+    assertThat(manager.getAllEditorList(createdFile)).hasSize(2);
   }
 
   public void testOpenSpecificTextEditor() {
@@ -302,7 +307,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_def_1", "hide_def_2", "passive");
-    assertEquals(3, manager.getAllEditors(file).length);
+    assertEquals(3, manager.getAllEditorList(file).size());
   }
 
   public void testHideOtherEditors() {

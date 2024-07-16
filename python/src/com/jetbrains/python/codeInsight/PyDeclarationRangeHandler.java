@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.hint.DeclarationRangeHandler;
@@ -13,9 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 
 public final class PyDeclarationRangeHandler implements DeclarationRangeHandler {
-  @NotNull
   @Override
-  public TextRange getDeclarationRange(@NotNull PsiElement container) {
+  public @NotNull TextRange getDeclarationRange(@NotNull PsiElement container) {
     int start = container.getTextRange().getStartOffset();
     if (container instanceof PyFunction) {
       PyParameterList parameterList = ((PyFunction)container).getParameterList();

@@ -8,6 +8,8 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
+import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -24,7 +26,9 @@ inline fun <T> PsiElement.actionUnderSafeAnalyzeBlock(
 } catch (e: Exception) {
     e.returnIfNoDescriptorForDeclarationException(condition = {
         val file = containingFile
-        it && (!file.isPhysical || !file.isUnderKotlinSourceRootTypes())
+        val condition = it && (!file.isPhysical || !file.isUnderKotlinSourceRootTypes())
+        if (!condition) (file as? KtFile)?.let { KotlinFailureCollector.recordGeneralFrontEndFailureEvent(it) }
+        condition
     }) { fallback() }
 }
 

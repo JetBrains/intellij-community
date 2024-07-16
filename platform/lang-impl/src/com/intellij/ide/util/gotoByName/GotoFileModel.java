@@ -35,15 +35,19 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Model for "Go to | File" action
  */
 public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements DumbAware, Comparator<Object> {
   private final int myMaxSize;
+  private final Predicate<PsiFileSystemItem> myCustomFilter;
 
   public GotoFileModel(@NotNull Project project) {
     super(project, ChooseByNameContributor.FILE_EP_NAME.getExtensionList());
+    myCustomFilter = createCustomFilter(project, GotoFileCustomizer.EP_NAME.getExtensionList());
     Application application = ApplicationManager.getApplication();
     myMaxSize = (application.isUnitTestMode() || application.isHeadlessEnvironment()) ? Integer.MAX_VALUE : WindowManagerEx.getInstanceEx().getFrame(project).getSize().width;
   }
@@ -64,6 +68,9 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
   @Override
   protected boolean acceptItem(final NavigationItem item) {
+    if (item instanceof PsiFileSystemItem fsi && !myCustomFilter.test(fsi)) {
+      return false;
+    }
     if (item instanceof PsiFile file) {
       final Collection<FileTypeRef> types = getFilterItems();
       // if language substitutors are used, PsiFile.getFileType() can be different from
@@ -244,4 +251,13 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
       return false;
     }
   });
+
+  private static @NotNull Predicate<PsiFileSystemItem> createCustomFilter(@NotNull Project project, @NotNull List<GotoFileCustomizer> customizers) {
+    return fsi -> {
+      for (GotoFileCustomizer customizer : customizers) {
+        if (!customizer.isAccepted(project, fsi)) return false;
+      }
+      return true;
+    };
+  }
 }

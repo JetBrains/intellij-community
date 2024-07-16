@@ -5,7 +5,6 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
-import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -22,16 +21,19 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
+import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter.Companion.OPEN_PR_LINK_PREFIX
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createDescriptionComponent
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 
 class GHPRTimelineEventComponentFactoryImpl(
-  private val htmlImageLoader: AsyncHtmlImageLoader,
-  private val avatarIconsProvider: GHAvatarIconsProvider,
-  private val ghostUser: GHUser
+  private val timelineVm: GHPRTimelineViewModel
 ) : GHPRTimelineEventComponentFactory<GHPRTimelineEvent> {
+
+  private val avatarIconsProvider: GHAvatarIconsProvider = timelineVm.avatarIconsProvider
+  private val htmlImageLoader = timelineVm.htmlImageLoader
+  private val ghostUser: GHUser = timelineVm.ghostUser
 
   private val simpleEventDelegate = SimpleEventComponentFactory()
   private val stateEventDelegate = StateEventComponentFactory()
@@ -54,12 +56,12 @@ class GHPRTimelineEventComponentFactoryImpl(
 
   private abstract inner class EventComponentFactory<T : GHPRTimelineEvent> : GHPRTimelineEventComponentFactory<T> {
     protected fun eventItem(event: GHPRTimelineEvent, detailsText: @Nls String): JComponent {
-      val content = createDescriptionComponent(detailsText)
+      val content = createDescriptionComponent(detailsText, prLinkHandler = timelineVm::openPullRequestInfoAndTimeline)
       return createTimelineItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
     }
 
     protected fun eventItem(event: GHPRTimelineEvent, type: StatusMessageType, detailsText: @Nls String): JComponent {
-      val content = createDescriptionComponent(detailsText, type)
+      val content = createDescriptionComponent(detailsText, type, prLinkHandler = timelineVm::openPullRequestInfoAndTimeline)
       return createTimelineItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
     }
 
@@ -73,7 +75,7 @@ class GHPRTimelineEventComponentFactoryImpl(
       else {
         VerticalListPanel(4).apply {
           add(titlePane)
-          add(createDescriptionComponent(detailsText))
+          add(createDescriptionComponent(detailsText, prLinkHandler = timelineVm::openPullRequestInfoAndTimeline))
         }
       }
       return createTimelineItem(avatarIconsProvider, event.actor ?: ghostUser, event.createdAt, content)
@@ -285,7 +287,16 @@ class GHPRTimelineEventComponentFactoryImpl(
     }
 
     private fun GHPRReferencedSubject.asReferenceLink(): @NlsSafe String {
-      return """${title}&nbsp<a href='${url}'>#${number}</a>"""
+      val linkTarget = when (this) {
+        is GHPRReferencedSubject.PullRequest -> "$OPEN_PR_LINK_PREFIX${number}"
+        else -> url
+      }
+
+      return HtmlChunk.div().children(
+        HtmlChunk.text(title),
+        HtmlChunk.nbsp(),
+        HtmlChunk.link(linkTarget, "#$number")
+      ).toString()
     }
   }
 }

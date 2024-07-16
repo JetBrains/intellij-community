@@ -85,9 +85,8 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiPolyadicExpression) return;
-        PsiLiteralExpression literal = getLiteralExpression(expression);
-        if (literal == null) return;
-        String text = literal.getText();
+        if (!ExpressionUtils.hasStringType(expression)) return;
+        String text = expression.getText();
         int newLineIdx = getNewLineIndex(text, 0);
         if (mySuggestLiteralReplacement && newLineIdx != -1 && getNewLineIndex(text, newLineIdx + 1) != -1) {
           boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
@@ -189,10 +188,6 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
     return getEscapedCharIndex(text, start, 'n');
   }
   
-  private static int getQuoteIndex(@NotNull String text) {
-    return getEscapedCharIndex(text, 0, '"');
-  }
-
   private static int getEscapedCharIndex(@NotNull String text, int start, char escapedChar) {
     int i = start;
     while (i < text.length()) {

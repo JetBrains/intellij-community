@@ -50,8 +50,7 @@ public class GroovyReadWriteAccessDetector extends ReadWriteAccessDetector{
   @NotNull
   @Override
   public Access getExpressionAccess(@NotNull PsiElement expression) {
-    if (expression instanceof GrExpression) {
-      GrExpression expr = (GrExpression)expression;
+    if (expression instanceof GrExpression expr) {
       boolean readAccess = PsiUtil.isAccessedForReading(expr);
       boolean writeAccess = PsiUtil.isAccessedForWriting(expr);
       if (!writeAccess && expr instanceof GrReferenceExpression) {
@@ -65,8 +64,7 @@ public class GroovyReadWriteAccessDetector extends ReadWriteAccessDetector{
       if (writeAccess && readAccess) return Access.ReadWrite;
       return writeAccess ? Access.Write : Access.Read;
     }
-    else if (expression instanceof PsiExpression) {
-      PsiExpression expr = (PsiExpression)expression;
+    else if (expression instanceof PsiExpression expr) {
       boolean readAccess = com.intellij.psi.util.PsiUtil.isAccessedForReading(expr);
       boolean writeAccess = com.intellij.psi.util.PsiUtil.isAccessedForWriting(expr);
       if (!writeAccess && expr instanceof PsiReferenceExpression) {

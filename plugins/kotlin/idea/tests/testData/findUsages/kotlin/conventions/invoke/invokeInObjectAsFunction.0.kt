@@ -13,4 +13,4 @@ fun test() {
     Foo()
 }
 
-// IGNORE_K2_LOG
+

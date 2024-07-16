@@ -41,6 +41,7 @@ class HuggingFaceIdentifierPsiElement(
         HuggingFaceCardsUsageCollector.NAVIGATION_LINK_IN_EDITOR_CLICKED.log(HuggingFaceConstants.DATASET_FAKE_PIPELINE_TAG)
         BrowserUtil.browse(HuggingFaceURLProvider.getDatasetCardLink(entityName))
       }
+      HuggingFaceEntityKind.SPACE -> { }
     }
   }
 

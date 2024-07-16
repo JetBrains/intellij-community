@@ -3,7 +3,9 @@ package com.intellij.util.indexing.hints
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 object AcceptAllFilesAndDirectoriesIndexingHint : FileBasedIndex.InputFilter {
   override fun acceptInput(file: VirtualFile): Boolean = true
 }

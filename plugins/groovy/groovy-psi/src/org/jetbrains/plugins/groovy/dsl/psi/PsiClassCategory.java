@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class PsiClassCategory implements PsiEnhancerCategory {
+public final class PsiClassCategory implements PsiEnhancerCategory {
 
   /**
    * Adds property `methods' into PsiClass

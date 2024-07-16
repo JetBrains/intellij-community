@@ -29,10 +29,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1186,7 +1186,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   private static void refreshFileSystem() {
-    VirtualFileManager.getInstance().syncRefresh();
+    VfsTestUtil.syncRefresh();
   }
 
   private void deleteInCommand(final VirtualFile f) {

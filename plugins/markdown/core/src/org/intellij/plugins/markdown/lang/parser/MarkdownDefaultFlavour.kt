@@ -69,6 +69,7 @@ open class MarkdownDefaultFlavour: MarkdownFlavourDescriptor {
       return listOf(
         AutolinkParser(listOf(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),
         BacktickParser(),
+        MathParser(),
         ImageParser(),
         InlineLinkParser(),
         ReferenceLinkParser(),

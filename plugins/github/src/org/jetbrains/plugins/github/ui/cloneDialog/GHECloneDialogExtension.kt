@@ -25,18 +25,20 @@ import javax.swing.JComponent
 
 private val GithubAccount.isGHEAccount: Boolean get() = !isGHAccount
 
-class GHECloneDialogExtension : BaseCloneDialogExtension() {
+internal class GHECloneDialogExtension : GHCloneDialogExtensionBase() {
   override fun getName(): String = GithubUtil.ENTERPRISE_SERVICE_DISPLAY_NAME
 
   override fun getAccounts(): Collection<GithubAccount> = GHAccountsUtil.accounts.filter { it.isGHEAccount }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent =
-    GHECloneDialogExtensionComponent(project, modalityState)
+    project.service<GHCloneDialogExtensionComponentFactory>().createInScope(modalityState) {
+      GHECloneDialogExtensionComponent(project, this)
+    }
 }
 
-private class GHECloneDialogExtensionComponent(project: Project, modalityState: ModalityState) : GHCloneDialogExtensionComponentBase(
+private class GHECloneDialogExtensionComponent(project: Project, parentCs: CoroutineScope) : GHCloneDialogExtensionComponentBase(
   project,
-  modalityState,
+  parentCs,
   accountManager = service()
 ) {
 
@@ -76,7 +78,7 @@ private class GHECloneDialogLoginPanel(
     Disposer.register(this@GHECloneDialogLoginPanel, this)
 
     if (account == null) setServer("", true)
-    setTokenUi()
+    setTokenUi(needsWarning = true)
   }
 
   init {

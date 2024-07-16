@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.util.Conditions
 import kotlinx.coroutines.CompletionHandler
 import kotlinx.coroutines.DisposableHandle
@@ -60,8 +61,8 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRu
     else {
       // Reschedule the original runnable ignoring the modality state
       // to give the cancelled coroutine a chance to clean its resources and complete.
-      ApplicationManager.getApplication().invokeLater(
-        ContextAwareRunnable(runnable::run), ModalityState.any(), Conditions.alwaysFalse<Nothing?>()
+      ApplicationManagerEx.getApplicationEx().dispatchCoroutineOnEDT(
+        ContextAwareRunnable(runnable::run), ModalityState.any()
       )
     }
   }

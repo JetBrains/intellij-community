@@ -54,7 +54,7 @@ class PyReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
 
     val scope = GlobalSearchScope.projectScope(element.project)
     val costSearchOutsideCurrentFile =
-      PsiSearchHelper.getInstance(element.project).isCheapEnoughToSearch(elementName, scope, file, null)
+      PsiSearchHelper.getInstance(element.project).isCheapEnoughToSearch(elementName, scope, file)
     if (costSearchOutsideCurrentFile == SearchCostResult.TOO_MANY_OCCURRENCES) return null
 
     val usagesCount = AtomicInteger()

@@ -16,11 +16,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration
@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.junit.Assert
 import java.io.File
+import kotlin.io.path.Path
 
 abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase() {
 
@@ -40,7 +41,15 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    protected open fun doTest(path: String) = doTest(path) {}
+    protected open fun doTest(path: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_K1) {
+            doTestInternal(path)
+        }
+    }
+
+    protected fun doTestInternal(path: String) {
+        doTest(path) {}
+    }
 
     protected fun doAndCheckHighlighting(
         psiFile: PsiFile,
@@ -225,14 +234,13 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                     throw AssertionError("Some line markers are expected, but nothing is present at all")
                 }
             } catch (error: AssertionError) {
-                if (error is FileComparisonData) {
+                if (error is FileComparisonFailedError) {
                     throw error
                 }
                 try {
                     val actualTextWithTestData = TagsTestDataUtil.insertInfoTags(markers, true, documentToAnalyze.text)
                     KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithTestData)
-                } catch (failure: AssertionError) {
-                    if (failure !is FileComparisonData) throw failure
+                } catch (failure: FileComparisonFailedError) {
                     throw FileComparisonFailedError(
                         error.message + "\n" + failure.message,
                         failure.expectedStringPresentation,

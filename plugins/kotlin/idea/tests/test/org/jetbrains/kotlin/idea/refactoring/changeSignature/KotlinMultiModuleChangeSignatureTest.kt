@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
@@ -16,6 +17,7 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
+
     companion object {
         internal val BUILT_INS = DefaultBuiltIns.Instance
     }
@@ -27,6 +29,9 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
     override fun getTestRoot(): String = "/refactoring/changeSignatureMultiModule/"
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     private fun doTest(filePath: String, configure: KotlinChangeInfo.() -> Unit) {
         doTestCommittingDocuments { rootDir, _ ->

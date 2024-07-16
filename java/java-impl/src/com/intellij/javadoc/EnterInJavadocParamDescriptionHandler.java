@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.application.options.CodeStyle;
@@ -25,7 +26,7 @@ public final class EnterInJavadocParamDescriptionHandler extends EnterHandlerDel
   private final JavadocHelper myHelper = JavadocHelper.getInstance();
 
   @Override
-  public Result postProcessEnter(@NotNull final PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
+  public Result postProcessEnter(final @NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
     if (!(file instanceof PsiJavaFile)
         || !CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER
         || !CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class).JD_ALIGN_PARAM_COMMENTS) {

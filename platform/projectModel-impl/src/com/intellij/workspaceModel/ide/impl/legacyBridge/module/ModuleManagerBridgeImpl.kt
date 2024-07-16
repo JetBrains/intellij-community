@@ -27,7 +27,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.platform.backend.workspace.*
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
@@ -35,6 +35,7 @@ import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -68,7 +69,7 @@ private val getModulesTimeMs = MillisecondsMeasurer()
 private val LOG = logger<ModuleManagerBridgeImpl>()
 private val MODULE_BRIDGE_MAPPING_ID = ExternalMappingKey.create<ModuleBridge>("intellij.modules.bridge")
 
-class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
+internal class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -116,20 +117,21 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
         // - `setUnloadedModules` logic has some additional logic between `setLoadedModules` and updating the workspace model. This might
         //   be a problem.
         coroutineScope.launch {
-          project.workspaceModel.internal.flowOfQuery(moduleNamesQuery).collect {
+          (project.workspaceModel as WorkspaceModelInternal).flowOfQuery(moduleNamesQuery).collect {
             delay(1000) // TODO: Get rid of it, but don't forget to test with it
             if (moduleNameToUnloadedModuleDescription.isNotEmpty()) {
               AutomaticModuleUnloader.getInstance(project).setLoadedModules(it)
             }
           }
         }
-      } else {
+      }
+      else {
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, LoadedModulesListUpdater())
       }
 
       busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelUnloadedStorageChangeListener {
         override fun changed(event: VersionedStorageChange) {
-          for (change in event.getChanges(ModuleEntity::class.java).orderToRemoveReplaceAdd()) {
+          for (change in event.getChanges(ModuleEntity::class.java)) {
             change.oldEntity?.name?.let { moduleNameToUnloadedModuleDescription.remove(it) }
             change.newEntity?.let {
               moduleNameToUnloadedModuleDescription[it.name] = UnloadedModuleDescriptionBridge.createDescription(it)
@@ -177,7 +179,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
-  val entityStore: VersionedEntityStorage = WorkspaceModel.getInstance(project).internal.entityStorage
+  val entityStore: VersionedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
 
   suspend fun loadModules(loadedEntities: List<ModuleEntity>,
                           unloadedEntities: List<ModuleEntity>,
@@ -185,6 +187,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
                           initializeFacets: Boolean) = loadAllModulesTimeMs.addMeasuredTime {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
+
     @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
       LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
@@ -354,7 +357,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     val moduleEntitiesToUnload = mainStorage.entities(ModuleEntity::class.java)
       .filter { unloadedModulesNameHolder.isUnloaded(it.name) }
       .toList()
-    val unloadedEntityStorage = WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities
+    val unloadedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
     val moduleEntitiesToLoad = unloadedEntityStorage.entities(ModuleEntity::class.java)
       .filter { !unloadedModulesNameHolder.isUnloaded(it.name) }
       .toList()
@@ -389,7 +392,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
           WorkspaceModel.getInstance(project).updateProjectModel("Update unloaded modules") { builder ->
             addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)
           }
-          WorkspaceModel.getInstance(project).internal.updateUnloadedEntities("Update unloaded modules") { builder ->
+          (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).updateUnloadedEntities("Update unloaded modules") { builder ->
             addAndRemoveModules(builder, moduleEntitiesToUnload, moduleEntitiesToLoad, mainStorage)
           }
         }
@@ -397,6 +400,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     }
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun addAndRemoveModules(builder: MutableEntityStorage,
                                   entitiesToAdd: List<ModuleEntity>,
                                   entitiesToRemove: List<ModuleEntity>,
@@ -405,9 +409,9 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       builder.removeEntity(entity)
     }
     for (entity in entitiesToAdd) {
-      builder.addEntity(entity)
+      builder.addEntity(entity.createEntityTreeCopy(true))
       entity.getModuleLevelLibraries(storageContainingEntitiesToAdd).forEach { libraryEntity ->
-        builder.addEntity(libraryEntity)
+        builder.addEntity(libraryEntity.createEntityTreeCopy(true))
       }
     }
   }
@@ -435,7 +439,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     unloadedModules.forEach { this.moduleNameToUnloadedModuleDescription.remove(it.name) }
 
     UnloadedModulesListStorage.getInstance(project).setUnloadedModuleNames(this.moduleNameToUnloadedModuleDescription.keys)
-    WorkspaceModel.getInstance(project).internal.updateUnloadedEntities("Remove unloaded modules") { builder ->
+    (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).updateUnloadedEntities("Remove unloaded modules") { builder ->
       val namesToRemove = unloadedModules.mapTo(HashSet()) { it.name }
       val entitiesToRemove = builder.entities(ModuleEntity::class.java).filter { it.name in namesToRemove }.toList()
       for (moduleEntity in entitiesToRemove) {
@@ -444,7 +448,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     }
   }
 
-  private fun createModuleInstanceWithoutCreatingComponents(
+  protected fun createModuleInstanceWithoutCreatingComponents(
     moduleEntity: ModuleEntity,
     versionedStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
@@ -563,8 +567,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
     private fun EntityChange<LibraryEntity>.isModuleLibrary(): Boolean {
       return when (this) {
-        is EntityChange.Added -> entity.tableId is LibraryTableId.ModuleLibraryTableId
-        is EntityChange.Removed -> entity.tableId is LibraryTableId.ModuleLibraryTableId
+        is EntityChange.Added -> newEntity.tableId is LibraryTableId.ModuleLibraryTableId
+        is EntityChange.Removed -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
         is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
       }
     }
@@ -672,4 +676,12 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
     loadAllModulesTimeCounter, newModuleTimeCounter, newNonPersistentModuleTimeCounter, loadModuleTimeCounter,
     setUnloadedModulesTimeCounter, createModuleInstanceTimeCounter, buildModuleGraphTimeCounter, getModulesTimeCounter
   )
+}
+
+private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
+  return when (this) {
+    is ImmutableEntityStorage -> this
+    is MutableEntityStorage -> this.toSnapshot()
+    else -> error("Unexpected storage: $this")
+  }
 }

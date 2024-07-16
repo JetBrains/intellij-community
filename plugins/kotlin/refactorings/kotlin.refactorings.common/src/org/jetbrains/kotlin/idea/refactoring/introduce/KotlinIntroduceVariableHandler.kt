@@ -94,7 +94,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         if (file !is KtFile) return
 
         try {
-            selectElement(editor, file, ElementKind.EXPRESSION) {
+            selectElement(editor, file, failOnEmptySuggestion = false, listOf(ElementKind.EXPRESSION)) {
                 collectCandidateTargetContainersAndDoRefactoring(project, editor, it as KtExpression?, isVar = false)
             }
         } catch (e: IntroduceRefactoringException) {
@@ -194,7 +194,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         } else {
             chooseContainerElementIfNecessary(
                 candidateContainers, editor,
-                KotlinBundle.message("text.select.target.code.block"), true, { it.targetContainer },
+                KotlinBundle.message("text.select.target.code.block"), true, null, { it.targetContainer },
                 doRefactoring
             )
         }

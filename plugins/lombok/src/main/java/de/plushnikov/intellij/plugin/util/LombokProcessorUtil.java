@@ -84,18 +84,24 @@ public final class LombokProcessorUtil {
   }
 
   public static Collection<String> getOldOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    PsiAnnotationMemberValue onXValue = psiAnnotation.hasAttribute(parameterName) ? psiAnnotation.findAttributeValue(parameterName) : null;
+    PsiAnnotationMemberValue onXValue;
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation)) {
+      onXValue = psiAnnotation.findDeclaredAttributeValue(parameterName);
+    }
+    else {
+      onXValue = psiAnnotation.hasAttribute(parameterName) ? psiAnnotation.findAttributeValue(parameterName) : null;
+    }
     if (!(onXValue instanceof PsiAnnotation)) {
       return Collections.emptyList();
     }
-    Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation)onXValue, "value", PsiAnnotation.class);
+    Collection<PsiAnnotation> annotations = PsiAnnotationUtil.getAnnotationValues((PsiAnnotation)onXValue, "value", PsiAnnotation.class, List.of());
     return collectAnnotationStrings(annotations);
   }
 
   public static Collection<String> getNewOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
-    if (psiAnnotation.hasAttribute(parameterName)) {
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation) || psiAnnotation.hasAttribute(parameterName)) {
       final Collection<PsiAnnotation> annotations =
-        PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class);
+        PsiAnnotationUtil.getAnnotationValues(psiAnnotation, parameterName, PsiAnnotation.class, List.of());
       return collectAnnotationStrings(annotations);
     }
     return Collections.emptyList();

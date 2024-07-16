@@ -337,11 +337,11 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
                     }
                 }""${'"'};
         }
+        
+        interface MyProcessor extends StringTemplate.Processor<String, RuntimeException> {} 
             
         @Language("JAVA")
-        private static StringTemplate.Processor<String, RuntimeException> javaProcessor() {
-          return STR;
-        }
+        private static native MyProcessor javaProcessor();
     }""".trimIndent())
     myFixture.checkHighlighting()
     injectionTestFixture.assertInjectedContent("""

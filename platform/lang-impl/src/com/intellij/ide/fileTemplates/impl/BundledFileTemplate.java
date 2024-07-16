@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.ide.fileTemplates.PluginBundledTemplate;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class BundledFileTemplate extends FileTemplateBase {
+public final class BundledFileTemplate extends FileTemplateBase implements PluginBundledTemplate {
   private final DefaultTemplate myDefaultTemplate;
   private final boolean myInternal;
   private boolean myEnabled = true; // when user 'deletes' bundled plugin, it simply becomes disabled
@@ -14,6 +16,11 @@ public final class BundledFileTemplate extends FileTemplateBase {
   public BundledFileTemplate(@NotNull DefaultTemplate defaultTemplate, boolean internal) {
     myDefaultTemplate = defaultTemplate;
     myInternal = internal;
+  }
+
+  @Override
+  public @NotNull PluginDescriptor getPluginDescriptor() {
+    return myDefaultTemplate.pluginDescriptor;
   }
 
   // these complications are to avoid eager initialization/load of huge files

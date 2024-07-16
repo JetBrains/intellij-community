@@ -1,9 +1,9 @@
 // "Propagate 'B' opt-in requirement to 'SomeImplementation'" "true"
-// ACTION: Add '-opt-in=PropagateOptIn.B' to module light_idea_test_case compiler arguments
 // ACTION: Add full qualifier
 // ACTION: Implement interface
 // ACTION: Introduce import alias
 // ACTION: Opt in for 'B' in containing file 'propagateOptIn.kts'
+// ACTION: Opt in for 'B' in module 'light_idea_test_case'
 // ACTION: Opt in for 'B' on 'SomeImplementation'
 // ACTION: Propagate 'B' opt-in requirement to 'SomeImplementation'
 // RUNTIME_WITH_SCRIPT_RUNTIME

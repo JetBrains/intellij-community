@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -722,6 +723,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         return new LineRange(change.getStartLine(getCurrentSide()), change.getEndLine(getCurrentSide()));
       }
     }
+    else if (DiffDataKeys.EDITOR_CHANGED_RANGE_PROVIDER.is(dataId)) {
+      return new MyChangedRangeProvider();
+    }
     return super.getData(dataId);
   }
 
@@ -850,6 +854,18 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     protected boolean doScrollToContext() {
       if (myNavigationContext == null) return false;
       return SimpleDiffViewer.this.doScrollToContext(myNavigationContext);
+    }
+  }
+
+  private class MyChangedRangeProvider implements DiffChangedRangeProvider {
+    @Override
+    public @Nullable List<TextRange> getChangedRanges(@NotNull Editor editor) {
+      Side side = Side.fromValue(getEditors(), editor);
+      if (side == null) return null;
+
+      return ContainerUtil.map(getNonSkippedDiffChanges(), change -> {
+        return DiffUtil.getLinesRange(editor.getDocument(), change.getStartLine(side), change.getEndLine(side));
+      });
     }
   }
 }

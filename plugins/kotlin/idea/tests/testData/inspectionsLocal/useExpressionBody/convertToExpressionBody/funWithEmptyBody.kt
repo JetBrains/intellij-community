@@ -1,2 +1,2 @@
-fun <caret>foo() {
+fun foo() {<caret>
 }

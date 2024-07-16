@@ -3,8 +3,8 @@ package com.intellij.formatting;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -23,7 +23,6 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -363,12 +362,6 @@ public final class LineWrappingUtil {
     Project editorProject = editor.getProject();
     DataContext context = EditorUtil.getEditorDataContext(editor);
     if (editorProject != null) return context;
-    return new DataContextWrapper(context) {
-      @Override
-      public @Nullable Object getRawCustomData(@NotNull String dataId) {
-        if (PROJECT.is(dataId)) return project;
-        return null;
-      }
-    };
+    return SimpleDataContext.getSimpleContext(PROJECT, project, context);
   }
 }

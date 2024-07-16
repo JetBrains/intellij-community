@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.inspections;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions")
     public static class Intentions extends AbstractInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -59,6 +66,12 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspections")
     public static class Inspections extends AbstractInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -86,11 +99,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("arrayInDataClass/inspectionData/inspections.test")
         public void testArrayInDataClass_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/arrayInDataClass/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("canBeParameter/inspectionData/inspections.test")
-        public void testCanBeParameter_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/canBeParameter/inspectionData/inspections.test");
         }
 
         @TestMetadata("canBePrimaryConstructorProperty/inspectionData/inspections.test")
@@ -273,16 +281,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
         }
 
-        @TestMetadata("redundantSuspendModifier/inspectionData/inspections.test")
-        public void testRedundantSuspendModifier_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantSuspendModifier/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("redundantUnitReturnType/inspectionData/inspections.test")
-        public void testRedundantUnitReturnType_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantUnitReturnType/inspectionData/inspections.test");
-        }
-
         @TestMetadata("redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test")
         public void testRedundantVisibilityModifierWithExplicitApi_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test");
@@ -417,6 +415,12 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public static class InspectionsLocal extends AbstractInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -424,11 +428,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("branched/ifThenToElvis/inspectionData/inspections.test")
         public void testBranched_ifThenToElvis_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspectionsLocal/branched/ifThenToElvis/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("branched/ifThenToSafeAccess/inspectionData/inspections.test")
-        public void testBranched_ifThenToSafeAccess_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/inspectionData/inspections.test");
         }
 
         @TestMetadata("conventionNameCalls/replaceGetOrSet/inspectionData/inspections.test")

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -13,19 +13,21 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
   val someData: com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetSealedClass
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SubsetSealedClassEntity, WorkspaceEntity.Builder<SubsetSealedClassEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SubsetSealedClassEntity> {
     override var entitySource: EntitySource
-    override var someData: SubsetSealedClass
+    var someData: SubsetSealedClass
   }
 
   companion object : EntityType<SubsetSealedClassEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(someData: SubsetSealedClass,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SubsetSealedClassEntity {
+    operator fun invoke(
+      someData: SubsetSealedClass,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.someData = someData
       builder.entitySource = entitySource
@@ -37,9 +39,12 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SubsetSealedClassEntity,
-                                      modification: SubsetSealedClassEntity.Builder.() -> Unit): SubsetSealedClassEntity = modifyEntity(
-  SubsetSealedClassEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifySubsetSealedClassEntity(
+  entity: SubsetSealedClassEntity,
+  modification: SubsetSealedClassEntity.Builder.() -> Unit,
+): SubsetSealedClassEntity {
+  return modifyEntity(SubsetSealedClassEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Open

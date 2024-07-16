@@ -1,17 +1,17 @@
 package org.jetbrains.idea.maven.intentions
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFix
 import org.junit.Test
 import java.io.IOException
 
 class MavenAddDependencyIntentionTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
-  override fun setUp() = runBlocking {
+  override fun setUp() = runBlocking(Dispatchers.EDT) {
     super.setUp()
     importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -91,7 +91,7 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   }
 
   @Throws(IOException::class)
-  private fun doTest(classText: String, referenceText: String?) {
+  private fun doTest(classText: String, referenceText: String?) = runBlocking(Dispatchers.EDT) {
     val file = createProjectSubFile("src/main/java/A.java", classText)
 
     fixture.configureFromExistingVirtualFile(file)

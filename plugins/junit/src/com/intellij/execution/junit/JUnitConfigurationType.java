@@ -17,7 +17,7 @@ import javax.swing.*;
 /**
  * DO NOT extend this class directly.
  */
-public class JUnitConfigurationType implements ConfigurationType {
+public final class JUnitConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
 
   /**reflection*/

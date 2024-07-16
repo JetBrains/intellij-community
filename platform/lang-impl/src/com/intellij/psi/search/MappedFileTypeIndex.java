@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.diagnostic.LoadingState;
@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kotlin.ranges.IntRange;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.function.IntConsumer;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 
+@Internal
 public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static final Logger LOG = Logger.getInstance(MappedFileTypeIndex.class);
 
@@ -105,12 +107,12 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
     try {
       int fileTypeId = getFileTypeId(content == null ? null : content.getFileType());
-      if (LOG.isDebugEnabled()) {
+      if (LOG.isTraceEnabled()) {
         if (content == null) {
-          LOG.debug("Map input: inputId(" + inputId + ") -> null, because content is null");
+          LOG.trace("Map input: inputId(" + inputId + ") -> null, because content is null");
         }
         else {
-          LOG.debug("Map input: inputId(" + inputId + ") -> fileType(" + content.getFileType() + ", fileTypeId=" + fileTypeId + ")");
+          LOG.trace("Map input: inputId(" + inputId + ") -> fileType(" + content.getFileType() + ", fileTypeId=" + fileTypeId + ")");
         }
       }
       return () -> updateIndex(inputId, checkFileTypeIdIsShort(fileTypeId));
@@ -287,6 +289,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       if (data != 0) {
         myInvertedIndex.computeIfAbsent(data, __ -> createContainerForInvertedIndex()).add(inputId);
       }
+      //TODO RC: should we do the notification under the lock?
       triggerOnInvertedIndexChangeCallback(data, indexedData);
     }
 

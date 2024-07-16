@@ -2,6 +2,7 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -22,18 +23,28 @@ import java.util.*;
 public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   protected final CoverageAnnotator myAnnotator;
 
+  /**
+   * @deprecated Use {@link DirectoryCoverageViewExtension#DirectoryCoverageViewExtension(Project, CoverageAnnotator, CoverageSuitesBundle)}
+   */
+  @Deprecated
   public DirectoryCoverageViewExtension(Project project,
                                         CoverageAnnotator annotator,
                                         CoverageSuitesBundle suitesBundle,
-                                        CoverageViewManager.StateBean stateBean) {
-    super(project, suitesBundle, stateBean);
+                                        @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    this(project, annotator, suitesBundle);
+  }
+
+  public DirectoryCoverageViewExtension(Project project,
+                                        CoverageAnnotator annotator,
+                                        CoverageSuitesBundle suitesBundle) {
+    super(project, suitesBundle);
     myAnnotator = annotator;
   }
 
   @Override
   public ColumnInfo[] createColumnInfos() {
     return new ColumnInfo[]{new ElementColumnInfo(),
-      new PercentageCoverageColumnInfo(1, CoverageBundle.message("table.column.name.statistics"), mySuitesBundle, myStateBean)};
+      new PercentageCoverageColumnInfo(1, CoverageBundle.message("table.column.name.statistics"), mySuitesBundle)};
   }
 
   @Override
@@ -75,7 +86,15 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       baseDir = VfsUtil.getCommonAncestor(Arrays.asList(roots));
     }
     PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(Objects.requireNonNull(baseDir));
-    return new CoverageListRootNode(myProject, Objects.requireNonNull(directory), mySuitesBundle, myStateBean);
+    return new CoverageListRootNode(myProject, Objects.requireNonNull(directory), mySuitesBundle);
+  }
+
+  @Override
+  void onRootReset() {
+    ModifiedFilesFilter filter = myAnnotator.getModifiedFilesFilter();
+    if (filter != null) {
+      filter.resetFilteredFiles();
+    }
   }
 
   @Override
@@ -88,7 +107,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       final PsiDirectory[] subdirectories = ReadAction.compute(() -> psiDirectory.getSubdirectories());
       for (PsiDirectory subdirectory : subdirectories) {
         if (myAnnotator.getDirCoverageInformationString(subdirectory, mySuitesBundle, myCoverageDataManager) == null) continue;
-        CoverageListNode e = new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean);
+        CoverageListNode e = new CoverageListNode(myProject, subdirectory, mySuitesBundle);
         if (!e.getChildren().isEmpty()) {
           children.add(e);
         }
@@ -96,25 +115,15 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       final PsiFile[] psiFiles = ReadAction.compute(() -> psiDirectory.getFiles());
       for (PsiFile psiFile : psiFiles) {
         if (myAnnotator.getFileCoverageInformationString(psiFile, mySuitesBundle, myCoverageDataManager) == null) continue;
-        CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean);
-        if (!myStateBean.isShowOnlyModified() || isModified(e.getFileStatus())) {
+        CoverageListNode e = new CoverageListNode(myProject, psiFile, mySuitesBundle);
+        VirtualFile file = e.getFile();
+        CoverageViewManager.StateBean stateBean = CoverageViewManager.getInstance(myProject).getStateBean();
+        ModifiedFilesFilter filter = myAnnotator.getModifiedFilesFilter();
+        if (!stateBean.isShowOnlyModified() || file == null || filter == null || filter.isFileModified(file)) {
           children.add(e);
-        }
-        else {
-          if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {
-            baseCoverageAnnotator.setVcsFilteredChildren(true);
-          }
         }
       }
     }
     return children;
-  }
-
-  @Override
-  public boolean hasVCSFilteredNodes() {
-    if (myAnnotator instanceof BaseCoverageAnnotator baseCoverageAnnotator) {
-      return baseCoverageAnnotator.hasVcsFilteredChildren();
-    }
-    return super.hasVCSFilteredNodes();
   }
 }

@@ -597,8 +597,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     }
   }
 
-  private var myScrollValue = 0
-
   private val myEventHandler = ComponentEventHandler()
 
   private val myTimeComponents = ArrayList<JLabel>()
@@ -612,20 +610,20 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     val mainPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
     mainPanel.isOpaque = false
-    mainPanel.border = JBUI.Borders.empty(8, 8, 0, 0)
+    mainPanel.border = JBUI.Borders.emptyTop(8)
     add(mainPanel)
 
     myTitle.mediumFontFunction()
     myTitle.foreground = NotificationComponent.INFO_COLOR
 
     if (mySuggestionType) {
-      myTitle.border = JBUI.Borders.emptyLeft(10)
+      myTitle.border = JBUI.Borders.emptyLeft(18)
       mainPanel.add(myTitle, BorderLayout.NORTH)
     }
     else {
       val panel = JPanel(BorderLayout())
       panel.isOpaque = false
-      panel.border = JBUI.Borders.emptyLeft(10)
+      panel.border = JBUI.Borders.emptyLeft(18)
 
       panel.add(myTitle, BorderLayout.WEST)
 
@@ -641,21 +639,10 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     myList.isOpaque = true
     myList.background = NotificationComponent.BG_COLOR
-    myList.border = JBUI.Borders.emptyRight(10)
+    myList.border = JBUI.Borders.empty(0, 8, 0, 10)
 
-    myScrollPane.border = null
+    ScrollableContentBorder.setup(myScrollPane, Side.TOP)
     mainPanel.add(myScrollPane)
-
-    myScrollPane.verticalScrollBar.addAdjustmentListener {
-      val value = it.value
-      if (myScrollValue == 0 && value > 0 || myScrollValue > 0 && value == 0) {
-        myScrollValue = value
-        repaint()
-      }
-      else {
-        myScrollValue = value
-      }
-    }
 
     myEventHandler.add(this)
   }
@@ -663,15 +650,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   fun updateLaf() {
     updateComponents()
     iterateComponents { it.updateLaf() }
-  }
-
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    if (myScrollValue > 0) {
-      g.color = JBColor.border()
-      val y = myScrollPane.y - 1
-      g.drawLine(0, y, width, y)
-    }
   }
 
   fun add(notification: Notification, singleSelectionHandler: SingleTextSelectionHandler) {

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.concurrent.CompletableFuture;
 
-public class GroovyRefRenderer extends NodeRendererImpl {
+public final class GroovyRefRenderer extends NodeRendererImpl {
   private static final Key<NodeRenderer> GROOVY_REF_DELEGATE_RENDERER = new Key<>("GROOVY_REF_DELEGATE_RENDERER");
 
   public GroovyRefRenderer() {

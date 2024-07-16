@@ -14,7 +14,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.util.ObjectUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
@@ -24,6 +23,7 @@ import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
+import git4idea.config.GitExecutableManager
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -174,16 +174,24 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   private fun resolveCommitTemplatePath(repository: GitRepository): String? {
     val gitCommitTemplatePath = Git.getInstance().config(repository, COMMIT_TEMPLATE).outputAsJoinedString
     if (gitCommitTemplatePath.isBlank()) return null
+    if (gitCommitTemplatePath.endsWith('/')) return null
 
-    return if (FileUtil.exists(gitCommitTemplatePath)) {
-      gitCommitTemplatePath
-    }
-    else
-      ObjectUtils.chooseNotNull(getPathRelativeToUserHome(gitCommitTemplatePath),
-                                repository.findPathRelativeToRootDirs(gitCommitTemplatePath))
+    return resolvePathAsAbsolute(repository, gitCommitTemplatePath)
+           ?: resolvePathRelativeToUserHome(gitCommitTemplatePath)
+           ?: resolvePathRelativeToRootDirs(repository, gitCommitTemplatePath)
   }
 
-  private fun getPathRelativeToUserHome(fileNameOrPath: String): String? {
+  private fun resolvePathAsAbsolute(repository: GitRepository, gitCommitTemplatePath: String): String? {
+    val executable = GitExecutableManager.getInstance().getExecutable(repository.project)
+    val localPath = executable.convertFilePathBack(gitCommitTemplatePath, File(repository.root.path))
+    if (localPath.exists()) {
+      return localPath.path
+    }
+
+    return null
+  }
+
+  private fun resolvePathRelativeToUserHome(fileNameOrPath: String): String? {
     if (fileNameOrPath.startsWith('~')) {
       val fileAtUserHome = File(SystemProperties.getUserHome(), fileNameOrPath.substring(1))
       if (fileAtUserHome.exists()) {
@@ -194,10 +202,10 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
     return null
   }
 
-  private fun GitRepository.findPathRelativeToRootDirs(relativeFilePath: String): String? {
-    if (relativeFilePath.startsWith('/') || relativeFilePath.endsWith('/')) return null
+  private fun resolvePathRelativeToRootDirs(repository: GitRepository, relativeFilePath: String): String? {
+    if (relativeFilePath.startsWith('/')) return null
 
-    for (rootDir in repositoryFiles.rootDirs) {
+    for (rootDir in repository.repositoryFiles.rootDirs) {
       val rootDirParent = rootDir.parent?.path ?: continue
       val templateFile = File(rootDirParent, relativeFilePath)
       if (templateFile.exists()) return templateFile.path

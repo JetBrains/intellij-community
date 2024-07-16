@@ -582,6 +582,18 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
     return xml
 
 
+def tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def sparse_tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        import tensorflow as tf
+        return tensor_to_xml(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    except ImportError:
+        pass
+
+
 class ExceedingArrayDimensionsException(Exception):
     pass
 
@@ -681,6 +693,13 @@ def get_label(label):
 
 DATAFRAME_HEADER_LOAD_MAX_SIZE = 100
 
+class IAtPolarsAccessor:
+    def __init__(self, ps):
+        self.ps = ps
+
+    def __getitem__(self, row):
+        return self.ps[row]
+
 
 def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     """
@@ -695,7 +714,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
     """
     original_df = df
-    dim = len(df.axes)
+    dim = len(df.axes) if hasattr(df, 'axes') else -1
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
     format = format.replace('%', '')
@@ -707,7 +726,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
             except AttributeError:
                 try:
                     kind = df.dtypes[0].kind
-                except (IndexError, KeyError):
+                except (IndexError, KeyError, AttributeError):
                     kind = 'O'
             format = array_default_format(kind)
         else:
@@ -740,19 +759,34 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
             else:
                 bounds = (0, 0)
             col_bounds[col] = bounds
+    elif dim == -1:
+        dtype = '0'
+        dtypes[0] = dtype
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
         col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
 
-    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
+    if dim > 1:
+        df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
+    elif dim == -1:
+        df = df[roffset: roffset + rows]
+    else:
+        df.iloc[roffset: roffset + rows]
+
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
 
     def col_to_format(column_type):
         return get_column_formatter_by_type(format, column_type)
 
-    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+    if dim == -1:
+        iat = IAtPolarsAccessor(df)
+    elif dim == 1 or len(df.columns.unique()) == len(df.columns):
+        iat = df.iat
+    else:
+        iat = df.iloc
 
     def formatted_row_elements(row):
         return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
@@ -761,6 +795,9 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
     xml += array_data_to_xml(rows, cols, formatted_row_elements, format)
     return xml
+
+def dataset_to_xml(dataset, name, roffset, coffset, rows, cols, format):
+    return dataframe_to_xml(dataset.to_pandas(), name, roffset, coffset, rows, cols, format)
 
 
 def array_data_to_xml(rows, cols, get_row, format):
@@ -786,7 +823,7 @@ def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
                (str(col), col_label, dtypes[col], col_to_format(dtypes[col]), quote(str(col_format % bounds[1])), quote(str(col_format % bounds[0])))
     for row in range(rows):
-        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), quote(get_label(df.axes[0][row])))
+        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), quote(get_label(df.axes[0][row] if dim != -1 else str(row))))
     xml += "</headerdata>\n"
     return xml
 
@@ -804,7 +841,12 @@ TYPE_TO_XML_CONVERTERS = {
     "DataFrame": dataframe_to_xml,
     "Series": dataframe_to_xml,
     "GeoDataFrame": dataframe_to_xml,
-    "GeoSeries": dataframe_to_xml
+    "GeoSeries": dataframe_to_xml,
+    "EagerTensor": tensor_to_xml,
+    "ResourceVariable": tensor_to_xml,
+    "SparseTensor": sparse_tensor_to_xml,
+    "Tensor": tensor_to_xml,
+    "Dataset": dataset_to_xml
 }
 
 

@@ -10,9 +10,7 @@ import org.gradle.tooling.*
 import org.gradle.tooling.internal.consumer.BlockingResultHandler
 import org.gradle.tooling.internal.provider.action.BuildActionSerializer
 import org.gradle.tooling.model.build.BuildEnvironment
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -67,16 +65,8 @@ object Main {
     try {
       val result = connector.connect().use { runBuildAndGetResult(targetBuildParameters, it, workingDirectory) }
       LOG.debug("operation result: $result")
-      val adapted = maybeConvert(result)
-      val bos = ByteArrayOutputStream()
-      var bytes = ByteArray(1)
-      ObjectOutputStream(bos).use {
-        it.writeObject(adapted)
-        it.flush()
-        bytes = bos.toByteArray()
-      }
-
-      incomingConnectionHandler.dispatch(Success(bytes))
+      val convertedResult = convertAndSerializeData(result)
+      incomingConnectionHandler.dispatch(Success(convertedResult))
     }
     catch (t: Throwable) {
       LOG.debug("GradleConnectionException: $t")
@@ -92,25 +82,39 @@ object Main {
                                    workingDirectory: File): Any? {
     val resultHandler = BlockingResultHandler(Any::class.java)
     val operation = when (targetBuildParameters) {
-      is BuildLauncherParameters -> connection.newBuild().apply {
-        targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
-      }
+      is BuildLauncherParameters -> connection.newBuild()
+        .apply { targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) } }
       is TestLauncherParameters -> connection.newTestLauncher()
-      is ModelBuilderParameters<*> -> connection.model(targetBuildParameters.modelType).apply {
-        targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
-      }
-      is BuildActionParameters<*> -> connection.action(targetBuildParameters.buildAction).apply {
-        targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
-      }
-      is PhasedBuildActionParameters<*> -> connection.action()
-        .projectsLoaded(targetBuildParameters.projectsLoadedAction, IntermediateResultHandler {
-          //resultHandler.onComplete(it)
+      is ModelBuilderParameters<*> -> connection.model(targetBuildParameters.modelType)
+        .apply { targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) } }
+      is BuildActionParameters<*> -> connection.action(targetBuildParameters.buildAction)
+        .apply { targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) } }
+        .apply {
+          setStreamedValueListener { result ->
+            LOG.debug("Streamed value received for the build action: $result")
+            val convertedResult = convertAndSerializeData(result)
+            incomingConnectionHandler.dispatch(IntermediateResult(IntermediateResultType.STREAMED_VALUE, convertedResult))
+          }
+        }
+      is PhasedBuildActionParameters -> connection.action()
+        .projectsLoaded(targetBuildParameters.projectsLoadedAction, IntermediateResultHandler { result ->
+          LOG.debug("Project loading intermediate result: $result")
+          val convertedResult = convertAndSerializeData(result)
+          incomingConnectionHandler.dispatch(IntermediateResult(IntermediateResultType.PROJECT_LOADED, convertedResult))
         })
-        .buildFinished(targetBuildParameters.buildFinishedAction, IntermediateResultHandler {
-          resultHandler.onComplete(it)
+        .buildFinished(targetBuildParameters.buildFinishedAction, IntermediateResultHandler { result ->
+          LOG.debug("Build finished intermediate result: $result")
+          val convertedResult = convertAndSerializeData(result)
+          incomingConnectionHandler.dispatch(IntermediateResult(IntermediateResultType.BUILD_FINISHED, convertedResult))
         })
-        .build().apply {
-          targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) }
+        .build()
+        .apply { targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) } }
+        .apply {
+          setStreamedValueListener { result ->
+            LOG.debug("Streamed value received for the phased build action: $result")
+            val convertedResult = convertAndSerializeData(result)
+            incomingConnectionHandler.dispatch(IntermediateResult(IntermediateResultType.STREAMED_VALUE, convertedResult))
+          }
         }
     }
     val progressEventConverter = ProgressEventConverter()
@@ -173,16 +177,25 @@ object Main {
     return arguments
   }
 
-  private fun maybeConvert(result: Any?): Any? {
-    if (result is BuildEnvironment) {
-      return InternalBuildEnvironment(
-        { InternalBuildIdentifier(result.buildIdentifier.rootDir) },
-        { result.gradle.gradleUserHome },
-        { result.gradle.gradleVersion },
-        { result.java.run { InternalJavaEnvironment(javaHome, jvmArguments) } }
-      )
+  private fun convertAndSerializeData(data: Any?): ByteArray {
+    val convertedData = convertData(data)
+    return serializeData(convertedData)
+  }
+
+  private fun convertData(data: Any?): Any? {
+    if (data is BuildEnvironment) {
+      return InternalBuildEnvironment.convertBuildEnvironment(data)
     }
-    return result
+    return data
+  }
+
+  private fun serializeData(data: Any?): ByteArray {
+    val bos = ByteArrayOutputStream()
+    return ObjectOutputStream(bos).use {
+      it.writeObject(data)
+      it.flush()
+      bos.toByteArray()
+    }
   }
 
   private fun waitForIncomingConnection() {

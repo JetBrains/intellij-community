@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalProcessAuthHelper
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -11,17 +11,16 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ssh.SSHUtil
 import externalApp.nativessh.NativeSshAskPassAppHandler
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 
-class NativeSshGuiAuthenticator(private val project: Project,
-                                private val authenticationGate: AuthenticationGate,
-                                private val authenticationMode: AuthenticationMode,
-                                private val doNotRememberPasswords: Boolean) : NativeSshAskPassAppHandler {
-  companion object {
+class NativeSshGuiAuthenticator(
+  private val project: Project?,
+  private val authenticationGate: AuthenticationGate,
+  private val authenticationMode: AuthenticationMode,
+  private val doNotRememberPasswords: Boolean
+) : NativeSshAskPassAppHandler {
+  private companion object {
     private val LOG = logger<NativeSshGuiAuthenticator>()
   }
 
@@ -59,10 +58,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
     override val title: String = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.title")
     override val serviceName: String = ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.passphrase")
     override fun parseDescription(description: String): Prompt? {
-      val matcher = SSHUtil.PASSPHRASE_PROMPT.matcher(description)
+      val matcher = SshPrompts.PASSPHRASE_PROMPT.matcher(description)
       if (!matcher.matches()) return null
 
-      val keyPath = SSHUtil.extractKeyPath(matcher)
+      val keyPath = SshPrompts.extractKeyPath(matcher)
       val promptMessage = ExternalProcessAuthHelperBundle.message("ssh.ask.passphrase.message", keyPath)
       return Prompt(keyPath, promptMessage)
     }
@@ -72,10 +71,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
     override val title: String = ExternalProcessAuthHelperBundle.message("ssh.password.title")
     override val serviceName: String = ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.password")
     override fun parseDescription(description: String): Prompt? {
-      val matcher = SSHUtil.PASSWORD_PROMPT.matcher(description)
+      val matcher = SshPrompts.PASSWORD_PROMPT.matcher(description)
       if (!matcher.matches()) return null
 
-      val username = SSHUtil.extractUsername(matcher)
+      val username = SshPrompts.extractUsername(matcher)
       val promptMessage = ExternalProcessAuthHelperBundle.message("ssh.password.message", username)
       return Prompt(username, promptMessage)
     }
@@ -85,10 +84,10 @@ class NativeSshGuiAuthenticator(private val project: Project,
     override val title: String = ExternalProcessAuthHelperBundle.message("ssh.ask.pin.title")
     override val serviceName: String = ExternalProcessAuthHelperBundle.message("label.credential.store.key.ssh.pin")
     override fun parseDescription(description: String): Prompt? {
-      val matcher = SSHUtil.PKCS_PIN_TOKEN_PROMPT.matcher(description)
+      val matcher = SshPrompts.PKCS_PIN_TOKEN_PROMPT.matcher(description)
       if (!matcher.matches()) return null
 
-      val username = SSHUtil.extractPkcsTokenLabel(matcher)
+      val username = SshPrompts.extractPkcsTokenLabel(matcher)
       val promptMessage = ExternalProcessAuthHelperBundle.message("ssh.ask.pin.message", username)
       return Prompt(username, promptMessage)
     }
@@ -97,9 +96,9 @@ class NativeSshGuiAuthenticator(private val project: Project,
   private abstract inner class PasswordPromptHandler : PromptHandler {
     private var lastAskedKey: String? = null
 
-    protected abstract val title: String
-    protected abstract val serviceName: String
-    protected abstract fun parseDescription(description: String): Prompt?
+    abstract val title: String
+    abstract val serviceName: String
+    abstract fun parseDescription(description: String): Prompt?
 
     override fun handleInput(description: String): PromptAnswer {
       val prompt = parseDescription(description)
@@ -112,7 +111,7 @@ class NativeSshGuiAuthenticator(private val project: Project,
       return PromptAnswer.Answer(answer)
     }
 
-    private fun askPassword(project: Project?, prompt: Prompt, resetPassword: Boolean): @NonNls String? {
+    private fun askPassword(project: Project?, prompt: Prompt, resetPassword: Boolean): String? {
       if (authenticationMode == AuthenticationMode.NONE) return null
 
       if (doNotRememberPasswords) {
@@ -142,7 +141,7 @@ class NativeSshGuiAuthenticator(private val project: Project,
     private var lastAskedConfirmationInput: String? = null
 
     override fun handleInput(description: String): PromptAnswer {
-      if (!description.contains(SSHUtil.CONFIRM_CONNECTION_PROMPT)) {
+      if (!description.contains(SshPrompts.CONFIRM_CONNECTION_PROMPT)) {
         return PromptAnswer.NotHandled
       }
 
@@ -168,26 +167,16 @@ class NativeSshGuiAuthenticator(private val project: Project,
       return PromptAnswer.Answer(answer)
     }
 
-    private fun stripYesNoSuffix(description: String): @NlsSafe String {
-      return StringUtil.replace(description,
-                                SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
-                                SSHUtil.CONFIRM_CONNECTION_PROMPT + "?")
-    }
+    private fun stripYesNoSuffix(description: String): @NlsSafe String =
+      description.replace(SshPrompts.CONFIRM_CONNECTION_PROMPT + " (yes/no)?", SshPrompts.CONFIRM_CONNECTION_PROMPT + "?")
   }
 
-  private fun askGenericInput(description: @Nls String): String? {
-    return askUserOnEdt {
-      Messages.showPasswordDialog(project, description,
-                                  ExternalProcessAuthHelperBundle.message("ssh.keyboard.interactive.title"),
-                                  null)
-    }
+  private fun askGenericInput(description: @Nls String): String? = askUserOnEdt {
+    Messages.showPasswordDialog(project, description, ExternalProcessAuthHelperBundle.message("ssh.keyboard.interactive.title"), null)
   }
 
-  private fun askUserOnEdt(query: () -> String?): String? {
-    if (authenticationMode != AuthenticationMode.FULL) return null
-
-    return invokeAndWaitIfNeeded(ModalityState.any(), query)
-  }
+  private fun askUserOnEdt(query: () -> String?): String? =
+    if (authenticationMode != AuthenticationMode.FULL) null else invokeAndWaitIfNeeded(ModalityState.any(), query)
 
   private interface PromptHandler {
     fun handleInput(description: String): PromptAnswer
@@ -198,6 +187,5 @@ class NativeSshGuiAuthenticator(private val project: Project,
     data class Answer(val value: String?) : PromptAnswer
   }
 
-  private data class Prompt(val askedKey: @NonNls String,
-                            val promptMessage: @Nls String)
+  private data class Prompt(val askedKey: String, val promptMessage: @Nls String)
 }

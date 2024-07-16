@@ -671,7 +671,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @NotNull
     @Override
     public String getAccessibleName() {
-      // FIXME[inline-bp]: implement me? How to debug it?
       return super.getAccessibleName();
     }
 
@@ -696,11 +695,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
 
     private void removeBreakpoints() {
-      for (var b : breakpoints) {
-        // FIXME[inline-bp]: check it. Maybe we should have single confirmation for all breakpoints.
-        //                   Also it would help to restore them. See XBreakpointManagerImpl.restoreLastRemovedBreakpoint.
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(b);
-      }
+      XDebuggerUtilImpl.removeBreakpointsWithConfirmation(breakpoints);
     }
 
     @Override
@@ -783,7 +778,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   }
 
-  static class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
+  static final class BreakpointGutterIconMerge implements GutterMarkPreprocessor {
     @Override
     public @NotNull List<GutterMark> processMarkers(@NotNull List<GutterMark> marks) {
       // In general, it seems ok to merge breakpoints because they are drawn one over another in the new UI.
@@ -808,7 +803,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
         newMarks.add(mark);
       }
-      // FIXME[inline-bp]: do we need to cache this instance?
       newMarks.add(breakpointMarkPosition, new MultipleBreakpointGutterIconRenderer(breakpoints));
 
       return newMarks;

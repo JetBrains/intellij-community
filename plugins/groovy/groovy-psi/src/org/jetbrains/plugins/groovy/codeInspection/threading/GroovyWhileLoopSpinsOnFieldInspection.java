@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
+public final class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField", "WeakerAccess"})
   public boolean ignoreNonEmtpyLoops = false;
@@ -86,7 +86,7 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
         return true;
       }
 
-      if (condition instanceof GrUnaryExpression postfixExpression && ((GrUnaryExpression)condition).isPostfix()) {
+      if (condition instanceof GrUnaryExpression postfixExpression && postfixExpression.isPostfix()) {
         final GrExpression operand =
             postfixExpression.getOperand();
         return isSimpleFieldComparison(operand);

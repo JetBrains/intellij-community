@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 
-public class MissingMnemonicInspection extends BaseFormInspection {
+public final class MissingMnemonicInspection extends BaseFormInspection {
   public MissingMnemonicInspection() {
     super("MissingMnemonic");
   }

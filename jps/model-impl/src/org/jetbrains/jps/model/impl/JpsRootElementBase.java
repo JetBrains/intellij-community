@@ -19,16 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.ex.JpsCompositeElementBase;
 
-public abstract class JpsRootElementBase<E extends JpsRootElementBase<E>> extends JpsCompositeElementBase<E> {
+abstract class JpsRootElementBase<E extends JpsRootElementBase<E>> extends JpsCompositeElementBase<E> {
   private final JpsModel myModel;
 
   protected JpsRootElementBase(@NotNull JpsModel model) {
     super();
-    myModel = model;
-  }
-
-  protected JpsRootElementBase(JpsCompositeElementBase<E> original, JpsModel model) {
-    super(original);
     myModel = model;
   }
 

@@ -10,8 +10,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.properties.base.BaseProperties
-import org.jetbrains.plugins.gradle.properties.base.BasePropertiesFile
+import org.jetbrains.plugins.gradle.properties.GradleLocalPropertiesFile
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.resolvers.GradleJvmResolver
 import java.nio.file.Paths
 
@@ -36,11 +36,14 @@ fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(project: Project, projectS
   return nonblockingResolveJdkInfo(projectSdk, gradleJvm)
 }
 
-fun getJavaHome(project: Project, externalProjectPath: String?, propertiesFile: BasePropertiesFile<out BaseProperties>): String? {
-  if (externalProjectPath == null) {
-    return null
-  }
-  val properties = propertiesFile.getProperties(project, Paths.get(externalProjectPath))
-  val javaHomeProperty = properties.javaHomeProperty ?: return null
-  return javaHomeProperty.value
+fun GradlePropertiesFile.getJavaHome(project: Project, externalProjectPath: String?): String? {
+  if (externalProjectPath == null) return null
+  val properties = getProperties(project, Paths.get(externalProjectPath))
+  return properties.javaHomeProperty?.value
+}
+
+fun GradleLocalPropertiesFile.getJavaHome(externalProjectPath: String?): String? {
+  if (externalProjectPath == null) return null
+  val properties = getProperties(Paths.get(externalProjectPath))
+  return properties.javaHomeProperty?.value
 }

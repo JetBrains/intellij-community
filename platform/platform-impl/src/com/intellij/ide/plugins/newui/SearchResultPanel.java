@@ -227,7 +227,7 @@ public abstract class SearchResultPanel {
   }
 
   private void announceSearchResultsWithDelay() {
-    if (AccessibleAnnouncerUtil.isSafeAnnouncingAvailable()) {
+    if (AccessibleAnnouncerUtil.isAnnouncingAvailable()) {
       if (myAnnounceSearchResultsAlarm == null) {
         myAnnounceSearchResultsAlarm =
           new SingleAlarm(this::announceSearchResults, 250, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.stateForComponent(myPanel));

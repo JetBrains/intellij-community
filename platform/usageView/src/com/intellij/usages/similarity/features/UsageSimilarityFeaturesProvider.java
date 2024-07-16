@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public interface UsageSimilarityFeaturesProvider {
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   ExtensionPointName<UsageSimilarityFeaturesProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageFeaturesProvider");
 
   /**

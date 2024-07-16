@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
@@ -9,8 +10,7 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.jps.entities.modifySdkEntity
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
@@ -61,12 +61,12 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
     val sdkEntitySource = SdkBridgeImpl.createEntitySourceForSdk()
     val virtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
-    val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.getOrCreateFromUri(it) }
+    val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.getOrCreateFromUrl(it) }
 
     val roots = mutableListOf<SdkRoot>()
     for (type in OrderRootType.getAllPersistentTypes()) {
       sdk.rootProvider.getUrls(type).forEach { url ->
-        roots.add(SdkRoot(virtualFileUrlManager.getOrCreateFromUri(url), rootTypes[type.customName]!!))
+        roots.add(SdkRoot(virtualFileUrlManager.getOrCreateFromUrl(url), rootTypes[type.customName]!!))
       }
     }
 
@@ -76,8 +76,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
       this.version = sdk.versionString
     }
     globalWorkspaceModel.updateModel("Adding SDK: ${sdk.name} ${sdk.sdkType}") {
-      it.addEntity(sdkEntity)
-      it.mutableSdkMap.addIfAbsent(sdkEntity, sdk)
+      val addedEntity = it.addEntity(sdkEntity)
+      it.mutableSdkMap.addIfAbsent(addedEntity, sdk)
     }
   }
 
@@ -104,8 +104,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     val modifiedSdkBridge = modifiedSdk.delegate as SdkBridgeImpl
     val originalSdkBridge = originalSdk.delegate as SdkBridgeImpl
     globalWorkspaceModel.updateModel("Updating SDK ${originalSdk.name} ${originalSdk.sdkType.name}") {
-      it.modifyEntity(sdkEntity) {
-        this.applyChangesFrom(modifiedSdkBridge.getEntity())
+      it.modifySdkEntity(sdkEntity) {
+        this.applyChangesFrom(modifiedSdkBridge.getEntityBuilder())
       }
       originalSdkBridge.applyChangesFrom(modifiedSdkBridge)
     }
@@ -116,7 +116,9 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   @Suppress("RAW_RUN_BLOCKING")
   override fun saveOnDisk() {
     runBlocking {
-      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
+      resetThreadContext().use {
+        (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
+      }
     }
   }
 }

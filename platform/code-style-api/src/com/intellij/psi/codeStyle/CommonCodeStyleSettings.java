@@ -21,6 +21,7 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,6 +169,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
     LOG.info("Loaded " + getLanguage().getDisplayName() + " common code style settings");
   }
 
+  @ApiStatus.Internal
   public void writeExternal(Element element) {
     LanguageCodeStyleProvider provider = LanguageCodeStyleProvider.forLanguage(getLanguage());
     if (provider != null) {
@@ -175,6 +177,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
     }
   }
 
+  @ApiStatus.Internal
   public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
     CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
     Set<String> supportedFields = provider.getSupportedFields();

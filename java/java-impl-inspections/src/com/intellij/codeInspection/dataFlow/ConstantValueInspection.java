@@ -20,6 +20,8 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.source.PsiFieldImpl;
@@ -58,7 +60,7 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
     return pane(
       checkbox("DONT_REPORT_TRUE_ASSERT_STATEMENTS", message("inspection.data.flow.true.asserts.option")),
       checkbox("IGNORE_ASSERT_STATEMENTS", message("inspection.data.flow.ignore.assert.statements")),
-      checkbox("REPORT_CONSTANT_REFERENCE_VALUES", message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant")));
+      checkbox("REPORT_CONSTANT_REFERENCE_VALUES", JavaAnalysisBundle.message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant")));
   }
 
   @Override
@@ -319,11 +321,18 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
     }
     if (expression instanceof PsiInstanceOfExpression instanceOf) {
       PsiType type = instanceOf.getOperand().getType();
-      if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(instanceOf);
+      if (type == null ||
+          (!TypeConstraints.instanceOf(type).isResolved() &&
+           (!JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel) ||
+            !(type instanceof PsiPrimitiveType)))) {
+        return true;
+      }
       PsiPattern pattern = instanceOf.getPattern();
       if (pattern instanceof PsiTypeTestPattern typeTestPattern && typeTestPattern.getPatternVariable() != null) {
         PsiTypeElement checkType = typeTestPattern.getCheckType();
-        if (checkType != null && checkType.getType().isAssignableFrom(type)) {
+        if (checkType != null && checkType.getType().isAssignableFrom(type) &&
+            !JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isSufficient(languageLevel)) {
           // Reported as compilation error
           return true;
         }
@@ -520,7 +529,7 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
     PsiElement[] defs = DefUseUtil.getDefs(block, local, expression.getParent());
     // boolean x = false; x|=something;
     return defs.length == 1 && defs[0] == local && 
-           VariableAccessUtils.getVariableReferences(local, block).stream().filter(PsiUtil::isAccessedForWriting).limit(2).count() > 1;
+           VariableAccessUtils.getVariableReferences(local).stream().filter(PsiUtil::isAccessedForWriting).limit(2).count() > 1;
   }
 
   private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
@@ -563,7 +572,7 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
     final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, value);
     // simplify intention already active
     if (!fix.isAvailable(expression) ||
-        (SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element) && expression instanceof PsiLiteralExpression)) {
+        (SimplifyBooleanExpressionFix.canBeSimplified(expression) && expression instanceof PsiLiteralExpression)) {
       return null;
     }
     return fix;

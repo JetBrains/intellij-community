@@ -4,8 +4,17 @@
 
 package com.intellij.platform.backend.observation
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Starts tracking of all suspending activities that are invoked in [action].
@@ -29,7 +38,7 @@ suspend fun <R> Project.trackActivity(marker: ActivityKey, action: suspend () ->
  * @see ActivityKey for high-level explanations
  */
 @RequiresBlockingContext
-fun Project.trackActivityBlocking(marker: ActivityKey, action: () -> Unit): Unit {
+fun <R> Project.trackActivityBlocking(marker: ActivityKey, action: () -> R): R {
   return PlatformActivityTrackerService.getInstance(this).trackConfigurationActivityBlocking(marker, action)
 }
 
@@ -43,3 +52,23 @@ fun Project.trackActivityBlocking(marker: ActivityKey, action: () -> Unit): Unit
 fun Project.trackActivity(key: ActivityKey, action: Runnable): Unit {
   return PlatformActivityTrackerService.getInstance(this).trackConfigurationActivityBlocking(key, action::run)
 }
+
+/**
+ * Allows launching a computation on a separate coroutine scope that is still covered by the activity key.
+ */
+@RequiresBlockingContext
+fun CoroutineScope.launchTracked(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit) {
+  val blockingJob = currentThreadContext()[BlockingJob] ?: EmptyCoroutineContext
+  // since the `launch` is executed with the Job of `this`, we need to mimic the awaiting for the execution of `block` for `BlockingJob`
+  val childJob = Job(currentThreadContext()[BlockingJob]?.blockingJob)
+  launch(context + blockingJob, CoroutineStart.DEFAULT) {
+    try {
+      block()
+    }
+    finally {
+      childJob.complete()
+    }
+  }
+}
+
+internal val EP_NAME: ExtensionPointName<ActivityTracker> = ExtensionPointName("com.intellij.activityTracker")

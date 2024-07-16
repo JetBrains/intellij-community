@@ -36,7 +36,7 @@ class KotlinUClass(
 
     override val uastAnchor: UIdentifier?
         get() = uastAnchorPart.getOrBuild {
-            getIdentifierSourcePsi()?.let { KotlinUIdentifier(nameIdentifier, it, this) }
+            getIdentifierSourcePsi()?.let { KotlinUIdentifier({ nameIdentifier }, it, this) }
         }
 
     private fun getIdentifierSourcePsi(): PsiElement? {

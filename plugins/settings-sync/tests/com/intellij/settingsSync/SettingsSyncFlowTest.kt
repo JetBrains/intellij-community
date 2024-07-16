@@ -12,11 +12,9 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
-import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
@@ -24,12 +22,11 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.*
 
-@RunWith(JUnit4::class)
 internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
   private lateinit var ideMediator: MockSettingsSyncIdeMediator
 
-  @Before
+  @BeforeEach
   internal fun initFields() {
     ideMediator = MockSettingsSyncIdeMediator()
   }
@@ -41,7 +38,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     bridge.initialize(initMode)
   }
 
-  @Test fun `existing settings should be copied on initialization`() {
+  @Test
+  fun `existing settings should be copied on initialization`() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
@@ -53,7 +51,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  @Test fun `settings modified between IDE sessions should be logged`() {
+  @Test
+  fun `settings modified between IDE sessions should be logged`() {
     // emulate first session with initialization
     val fileName = "options/laf.xml"
     val file = configDir.resolve(fileName).write("LaF Initial")
@@ -73,7 +72,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  @Test fun `delete server data`() {
+  @Test
+  fun `delete server data`() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
@@ -87,14 +87,14 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     deleteServerDataAndWait()
 
     assertVersionOnServerIsDeleted()
-    assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled")
   }
 
   private fun assertVersionOnServerIsDeleted() {
     val versionOnServer = remoteCommunicator.getVersionOnServer()
-    assertNotNull("There is no version on the server", versionOnServer)
-    assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer!!.isDeleted())
-    assertTrue("There should be no settings data after deletion: $versionOnServer", versionOnServer.isEmpty())
+    Assertions.assertNotNull(versionOnServer, "There is no version on the server")
+    Assertions.assertTrue(versionOnServer!!.isDeleted(), "The server snapshot is incorrect: $versionOnServer")
+    Assertions.assertTrue(versionOnServer.isEmpty(), "There should be no settings data after deletion: $versionOnServer")
   }
 
   private fun deleteServerDataAndWait() {
@@ -105,7 +105,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     cdl.wait()
   }
 
-  @Test fun `disable settings sync if data on server was deleted`() {
+  @Test
+  fun `disable settings sync if data on server was deleted`() {
     val fileName = "options/laf.xml"
     val initialContent = "LaF Initial"
     configDir.resolve(fileName).write(initialContent)
@@ -117,10 +118,11 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(metaInfo, emptySet(), null, emptyMap(), emptySet()))
     syncSettingsAndWait()
 
-    assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled")
   }
 
-  @Test fun `first push after IDE start should update from server if needed`() {
+  @Test
+  fun `first push after IDE start should update from server if needed`() {
     // prepare settings on server
     val editorXml = "options/editor.xml"
     val editorContent = "Editor from Server"
@@ -136,14 +138,15 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initSettingsSync()
 
     val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
+    Assertions.assertNotNull(pushedSnapshot, "Nothing has been pushed")
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState(lafXml, lafContent)
       fileState(editorXml, editorContent)
     }
   }
 
-  @Test fun `enable settings sync with Push to Server should overwrite server snapshot instead of merging with it`() {
+  @Test
+  fun `enable settings sync with Push to Server should overwrite server snapshot instead of merging with it`() {
     // prepare settings on server
     val editorXml = "options/editor.xml"
     val editorContent = "Editor from Server"
@@ -163,7 +166,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  @Test fun `enable settings via Take from Server should log existing settings`() {
+  @Test
+  fun `enable settings via Take from Server should log existing settings`() {
     val fileName = "options/laf.xml"
     val initialContent = "LaF Initial"
     configDir.resolve(fileName).write(initialContent)
@@ -175,7 +179,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot, null)))
 
-    assertEquals("Incorrect content", cloudContent, (settingsSyncStorage / "options" / "laf.xml").readText())
+    Assertions.assertEquals(cloudContent, (settingsSyncStorage / "options" / "laf.xml").readText(), "Incorrect content")
 
     assertAppliedToIde("options/laf.xml", cloudContent)
 
@@ -187,23 +191,25 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
         .add(repository.findRef("ide").objectId)
         .add(repository.findRef("cloud").objectId)
         .call().toList()
-      assertEquals("Unexpected number of commits. Commits: ${commits.joinToString { "'${it.shortMessage}'" }}", 3, commits.size)
+      Assertions.assertEquals(3, commits.size, "Unexpected number of commits. Commits: ${commits.joinToString { "'${it.shortMessage}'" }}")
       val (applyCloud, copyExistingSettings, initial) = commits
 
-      assertEquals("Unexpected content in the 'copy existing settings' commit", initialContent, getContent(repository, copyExistingSettings, fileName))
-      assertEquals("Unexpected content in the 'apply from cloud' commit", cloudContent, getContent(repository, applyCloud, fileName))
+      Assertions.assertEquals(initialContent, getContent(repository, copyExistingSettings, fileName), "Unexpected content in the 'copy existing settings' commit")
+      Assertions.assertEquals(cloudContent, getContent(repository, applyCloud, fileName), "Unexpected content in the 'apply from cloud' commit")
     }
   }
 
-  @Test fun `enable settings with migration`() {
+  @Test
+  fun `enable settings with migration`() {
     val migration = migrationFromLafXml()
 
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
-    assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
+    Assertions.assertEquals("Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText(), "Incorrect content")
   }
 
-  @Test fun `enable settings with migration and data on server should merge but prefer server data in case of conflicts`() {
+  @Test
+  fun `enable settings with migration and data on server should merge but prefer server data in case of conflicts`() {
     val migration = migration(settingsSnapshot {
       fileState("options/laf.xml", "Migration Data")
       fileState("options/editor.xml", "Migration Data")
@@ -262,10 +268,10 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       bridge.waitForAllExecuted()
     }
 
-    assertFalse("Partial apply was not rolled back", (settingsSyncStorage / "options" / "editor.xml").exists())
-    assertFalse("Settings sync was not disabled on error", SettingsSyncSettings.getInstance().syncEnabled)
-    assertFalse("Sync is not marked as failed", SettingsSyncStatusTracker.getInstance().isSyncSuccessful())
-    assertEquals("Incorrect error message", errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage())
+    Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled on error")
+    Assertions.assertFalse(SettingsSyncStatusTracker.getInstance().isSyncSuccessful(), "Sync is not marked as failed")
+    Assertions.assertEquals(errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage(), "Incorrect error message")
   }
 
   @Test
@@ -286,13 +292,14 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot, null)))
     }
 
-    assertFalse("Partial apply was not rolled back", (settingsSyncStorage / "options" / "editor.xml").exists())
-    assertFalse("Settings sync was not disabled on error", SettingsSyncSettings.getInstance().syncEnabled)
-    assertFalse("Sync is not marked as failed", SettingsSyncStatusTracker.getInstance().isSyncSuccessful())
-    assertEquals("Incorrect error message", errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage())
+    Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled on error")
+    Assertions.assertFalse(SettingsSyncStatusTracker.getInstance().isSyncSuccessful(), "Sync is not marked as failed")
+    Assertions.assertEquals(errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage(), "Incorrect error message")
   }
 
-  @Test fun `sync settings`() {
+  @Test
+  fun `sync settings`() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
@@ -312,7 +319,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertAppliedToIde("options/editor.xml", "Editor from Server")
   }
 
-  @Test fun `concurrent sync does not disable sync during initialization`() {
+  @Test
+  fun `concurrent sync does not disable sync during initialization`() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
@@ -332,14 +340,15 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       ConcurrencyUtil.invokeAll(setOf(task1, task2), createBoundedScheduledExecutorService("SettingsSyncFlowTest", 2))
     }
 
-    assertTrue("Settings Sync has been disabled", SettingsSyncSettings.getInstance().syncEnabled)
+    Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled, "Settings Sync has been disabled")
 
     assertServerSnapshot {
       fileState("options/laf.xml", "LaF Initial")
     }
   }
 
-  @Test fun `migration should respect deletion on server`() {
+  @Test
+  fun `migration should respect deletion on server`() {
     val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
                                             emptySet(), null, emptyMap(), emptySet())
     remoteCommunicator.prepareFileOnServer(deletionSnapshot)
@@ -347,11 +356,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     val migration = migrationFromLafXml()
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
-    assertFalse("Settings Sync should be disabled", SettingsSyncSettings.getInstance().syncEnabled)
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings Sync should be disabled")
     assertVersionOnServerIsDeleted()
   }
 
-  @Test fun `regular sync should push if there is nothing on server`() {
+  @Test
+  fun `regular sync should push if there is nothing on server`() {
     writeToConfig {
       fileState("options/editor.xml", "Editor Initial")
     }
@@ -365,7 +375,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  @Test fun `unknown additional files should be stored to the history`() {
+  @Test
+  fun `unknown additional files should be stored to the history`() {
     initSettingsSync()
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       additionalFile("newformat.json", "File with new unknown format")
@@ -377,13 +388,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     FileRepositoryBuilder.create(settingsSyncStorage.resolve(".git").toFile()).use { repository ->
       val git = Git(repository)
       val latestCommit = git.log().add(repository.findRef("HEAD").objectId).call().toList().first()
-      assertEquals("Unexpected content in commit",
-                   "File with new unknown format",
-                   getContent(repository, latestCommit, ".metainfo/newformat.json"))
+      Assertions.assertEquals("File with new unknown format", getContent(repository, latestCommit, ".metainfo/newformat.json"), "Unexpected content in commit")
     }
   }
 
-  @Test fun `unknown additional files should be sent to the server`() {
+  @Test
+  fun `unknown additional files should be sent to the server`() {
     (settingsSyncStorage / ".metainfo" / "newformat.json").write("File with new unknown format")
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
@@ -393,13 +403,14 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @TestFor(issues = ["IDEA-326189"])
-  @Test fun `create initial commit for empty repo`(){
+  @Test
+  fun `create initial commit for empty repo`(){
     val dotGit: Path = settingsSyncStorage.resolve(".git")
     val repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
     repository.create()
     initSettingsSync()
-    assertNotNull(repository.findRef(GitSettingsLog.CLOUD_REF_NAME))
-    assertNotNull(repository.findRef(GitSettingsLog.IDE_REF_NAME))
+    Assertions.assertNotNull(repository.findRef(GitSettingsLog.CLOUD_REF_NAME))
+    Assertions.assertNotNull(repository.findRef(GitSettingsLog.IDE_REF_NAME))
   }
 
   @Test
@@ -421,7 +432,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     LoggedErrorProcessor.executeAndReturnLoggedError {
       initSettingsSync()
     }
-    assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
   }
 
   private fun syncSettingsAndWait() {
@@ -460,8 +471,8 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
   private fun assertAppliedToIde(fileSpec: String, expectedContent: String) {
     val value = ideMediator.files[fileSpec]
-    assertNotNull("$fileSpec was not applied to the IDE", value)
-    assertEquals("Incorrect content of the applied $fileSpec", expectedContent, value)
+    Assertions.assertNotNull(value, "$fileSpec was not applied to the IDE")
+    Assertions.assertEquals(expectedContent, value, "Incorrect content of the applied $fileSpec")
   }
 
   private fun getContent(repository: Repository, commit: RevCommit, path: String): String {

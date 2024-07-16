@@ -4,13 +4,9 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requ
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiJvmSubstitutor
-import com.intellij.psi.PsiType
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind.PARAMETER
-import com.intellij.psi.util.createSmartPointer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
@@ -27,7 +23,7 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
 
   private val psiManager = call.manager
   private val project = psiManager.project
-  private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
+  private val callPointer: SmartPsiElementPointer<T> = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(call)
   protected val call: T get() = callPointer.element ?: error("dead pointer")
 
   abstract fun getArguments(): List<Argument>?

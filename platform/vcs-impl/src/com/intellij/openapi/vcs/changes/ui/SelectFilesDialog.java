@@ -118,17 +118,12 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
       myDeleteProvider = (deletableFiles ? new VirtualFileDeleteProvider() : null);
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId) && myDeleteProvider != null) {
-        return myDeleteProvider;
-      }
-      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return getSelectedChanges().toArray(VirtualFile.EMPTY_ARRAY);
-      }
-
-      return super.getData(dataId);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+      sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY,
+               getSelectedChanges().toArray(VirtualFile.EMPTY_ARRAY));
     }
 
     @Override

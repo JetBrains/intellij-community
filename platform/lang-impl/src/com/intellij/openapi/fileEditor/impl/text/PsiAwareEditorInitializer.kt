@@ -32,8 +32,10 @@ private class DocRenderTextEditorInitializer : TextEditorInitializer {
       DocRenderPassFactory.calculateItemsToRender(editor, psiFile)
     } ?: return
 
-    withContext(Dispatchers.EDT) {
-      DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
+    if (!items.isEmpty) {
+      withContext(Dispatchers.EDT) {
+        DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
+      }
     }
   }
 }

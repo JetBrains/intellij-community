@@ -78,8 +78,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
 
     PsiElement element = elements[0];
 
-    if (element instanceof GrTypeDefinition) {
-      GrTypeDefinition aClass = (GrTypeDefinition)element;
+    if (element instanceof GrTypeDefinition aClass) {
       invokeImpl(project, dataContext, aClass, null);
     }
     else if (element instanceof GrMethod || element instanceof GrField) {

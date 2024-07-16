@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GdslClosureCompleter extends ClosureCompleter {
+public final class GdslClosureCompleter extends ClosureCompleter {
   @Override
   protected List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
                                                          PsiMethod method,

@@ -23,7 +23,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.METHOD_IDENTIFIE
 /**
  * @author Dmitry Avdeev
  */
-public class GroovyTestLineMarkerContributor extends TestRunLineMarkerProvider {
+public final class GroovyTestLineMarkerContributor extends TestRunLineMarkerProvider {
 
   @Override
   protected boolean isIdentifier(PsiElement e) {

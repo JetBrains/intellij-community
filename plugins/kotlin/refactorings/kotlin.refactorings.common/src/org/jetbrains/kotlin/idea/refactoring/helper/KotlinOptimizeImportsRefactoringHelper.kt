@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.helper
 
-import com.intellij.formatting.service.DelayedImportsOptimizerService
+import com.intellij.formatting.service.PostQuickFixTaskService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -10,10 +10,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
@@ -23,7 +25,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 // Based on com.intellij.refactoring.OptimizeImportsRefactoringHelper
 class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
@@ -94,7 +95,9 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
     }
 
     override fun prepareOperation(usages: Array<UsageInfo>, elements: List<PsiElement>): Set<KtFile> {
-        return elements.mapNotNull { it.containingFile as? KtFile }.toSet() + prepareOperation(usages)
+        return prepareOperation(usages) + elements
+            .mapNotNull { it.containingFile as? KtFile }
+            .filter { ProjectFileIndex.getInstance(elements.first().project).isInSourceContent(it.virtualFile) }.toSet()
     }
 
     override fun performOperation(project: Project, operationData: Set<KtFile>) {
@@ -114,7 +117,8 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
                 progressManager.run(progressTask)
             }
         }
-        if (!DelayedImportsOptimizerService.getInstance(project).delayOptimizeImportsTask(collectTask)) {
+
+        PostQuickFixTaskService.getInstance(project).runOrRegisterPostQuickFixTask(emptyList()) {
             progressManager.run(collectTask)
         }
     }

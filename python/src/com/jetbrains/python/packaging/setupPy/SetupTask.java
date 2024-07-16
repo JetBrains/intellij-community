@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableList;
@@ -28,9 +28,8 @@ public class SetupTask implements ChooseByNameItem {
     this.description = description;
   }
 
-  @NotNull
   @Override
-  public @NlsSafe String getName() {
+  public @NotNull @NlsSafe String getName() {
     return name;
   }
 

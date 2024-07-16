@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
+import com.intellij.idea.IJIgnore
 import com.intellij.psi.util.parentOfType
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
@@ -130,6 +131,7 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  @IJIgnore(issue = "IDEA-355847")
   fun testNavigationWithCapitalLetters(gradleVersion: GradleVersion) {
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       testGotoDefinition("libs2.getCheck().getCapital().getLe<caret>tter()") {

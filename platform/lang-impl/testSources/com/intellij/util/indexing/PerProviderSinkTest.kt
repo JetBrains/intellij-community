@@ -6,12 +6,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import junit.framework.TestCase
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -23,6 +24,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
 
   private lateinit var queue: PerProjectIndexingQueue
   private lateinit var provider: FakeIterator
+  private val idCounter = AtomicInteger(0)
 
   override fun setUp() {
     super.setUp()
@@ -30,69 +32,50 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     provider = FakeIterator()
   }
 
-  fun testNoAddCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.commit()
-    }
+  private class LightVirtualFileWithId(name: String, private val id: Int) : LightVirtualFile(name), VirtualFileWithId {
+    override fun getId(): Int = id
+  }
+
+  private fun createFile(name: String): VirtualFile {
+    return LightVirtualFileWithId(name, idCounter.incrementAndGet())
+  }
+
+  fun testNoAddClose() {
+    queue.getSink(provider, DEFAULT_SCANNING_ID).close()
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
   }
 
-  fun testAddCommit() {
+  fun testAddClose() {
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
+      sink.addFile(createFile("f1"))
     }
     val (filesInQueue) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
 
-  fun testAddNoCommit() {
+  fun testAddCloseClose() {
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-    }
-    val (filesInQueue, _) = getAndResetQueuedFiles(queue)
-    TestCase.assertEquals(0, filesInQueue.size)
-  }
-
-  fun testAddClearCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-      sink.clear()
-      sink.commit()
-    }
-    val (filesInQueue, _) = getAndResetQueuedFiles(queue)
-    TestCase.assertEquals(0, filesInQueue.size)
-  }
-
-  fun testAddCommitCommit() {
-    queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
-      sink.commit()
+      sink.addFile(createFile("f1"))
+      sink.close()
+      sink.close()
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(1, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
   }
 
-  fun testAddCommitTwoSinks() {
+  fun testAddCloseTwoSinks() {
     val provider2 = FakeIterator()
 
     queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f1"))
-      sink.commit()
+      sink.addFile(createFile("f1"))
     }
 
     queue.getSink(provider2, DEFAULT_SCANNING_ID).use { sink ->
-      sink.addFile(LightVirtualFile("f2"))
-      sink.commit()
+      sink.addFile(createFile("f2"))
     }
     val (filesInQueue, _) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(2, filesInQueue.size)
-    TestCase.assertEquals(1, filesInQueue[provider]?.size)
-    TestCase.assertEquals(1, filesInQueue[provider2]?.size)
   }
 
   fun testCancelAllTasksAndWait() {
@@ -107,7 +90,7 @@ class PerProviderSinkTest : LightPlatformTestCase() {
           sinkRunning.set(true)
           phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) // p2
           Thread.sleep(500) // give a chance for cancelAllTasksAndWait to take effect
-          sink.addFile(LightVirtualFile("f1"))
+          sink.addFile(createFile("f1"))
         }
         finally {
           sinkRunning.set(false)
@@ -140,11 +123,14 @@ class PerProviderSinkTest : LightPlatformTestCase() {
             try {
               TestCase.assertFalse(indicator.isCanceled)
               queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
-                sink.addFile(LightVirtualFile("f1"))
+                sink.addFile(createFile("f1"))
               }
             }
             catch (pce: ProcessCanceledException) {
               TestCase.fail("Should not throw PCE in non-cancellable section")
+            }
+            catch (t: Throwable) {
+              assertEquals("Could not cancel sink creation", t.message)
             }
           }
           nonCancelableSectionCompeteNormally.set(true)
@@ -183,10 +169,9 @@ class PerProviderSinkTest : LightPlatformTestCase() {
           val provider = providers.random()
           queue.getSink(provider, DEFAULT_SCANNING_ID).use { sink ->
             for (f in 1..batchSize) {
-              sink.addFile(LightVirtualFile("$producerName batch $batch file $f"))
+              sink.addFile(createFile("$producerName batch $batch file $f"))
+              filesSubmitted.incrementAndGet()
             }
-            sink.commit()
-            filesSubmitted.addAndGet(batchSize)
           }
         }
       }
@@ -213,10 +198,8 @@ class PerProviderSinkTest : LightPlatformTestCase() {
       }
 
       val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
-      // Don't test latch: it is always `null` because in unit tests [UnindexedFilesScanner.shouldScanInSmartMode()] reports `false`
-      //TestCase.assertTrue("Total files: $totalFiles, latch: $currentLatch", (totalFiles < DUMB_MODE_THRESHOLD) == (currentLatch == null))
-      val totalFilesInThisQueue = filesInQueue.values.sumOf(Collection<*>::size)
-      TestCase.assertEquals(totalFiles, totalFilesInThisQueue)
+      val totalFilesInThisQueue = filesInQueue.size
+      TestCase.assertEquals("iteration $i", totalFiles, totalFilesInThisQueue)
       totalFilesSum += totalFilesInThisQueue
       Thread.sleep(50)
     }
@@ -224,15 +207,15 @@ class PerProviderSinkTest : LightPlatformTestCase() {
     val (filesInQueue, totalFiles) = getAndResetQueuedFiles(queue)
     TestCase.assertEquals(0, filesInQueue.size)
     TestCase.assertEquals(0, totalFiles)
-    TestCase.assertEquals(0, queue.estimatedFilesCount().value)
 
     TestCase.assertEquals(threadsCompleted.get(), threadsCount)
     TestCase.assertEquals(filesSubmitted.get(), totalFilesSum)
   }
 
-  private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue):
-    Pair<ConcurrentMap<IndexableFilesIterator, Collection<VirtualFile>>, Int> =
-    PerProjectIndexingQueue.TestCompanion(queue).getAndResetQueuedFiles()
+  private fun getAndResetQueuedFiles(queue: PerProjectIndexingQueue): Pair<Set<FileIndexingRequest>, Int> {
+    val queuedFiles = PerProjectIndexingQueue.TestCompanion(queue).getAndResetQueuedFiles()
+    return Pair(queuedFiles.requests, queuedFiles.size)
+  }
 
   private class FakeIterator : IndexableFilesIterator {
     override fun getDebugName(): String = "FakeIterator"

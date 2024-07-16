@@ -6,9 +6,11 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.IdeUiService;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -74,7 +76,7 @@ public class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public @NotNull DataContext createUiDataContext(Component component) {
-    return new EdtDataContext(component);
+    return Utils.createAsyncDataContext(component);
   }
 
   @Override
@@ -84,7 +86,7 @@ public class IdeUiServiceImpl extends IdeUiService {
 
   @Override
   public @NotNull DataContext createCustomizedDataContext(@NotNull DataContext dataContext, @NotNull DataProvider dataProvider) {
-    return CustomizedDataContext.create(dataContext, dataProvider);
+    return Utils.createAsyncDataContext(dataContext, dataProvider);
   }
 
   @Override

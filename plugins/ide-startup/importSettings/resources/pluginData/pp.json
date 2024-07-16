@@ -35,6 +35,11 @@
     "ideaId": "Pythonid"
   },
   {
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "codezombiech.gitignore",
     "ideaName": "gitignore",
     "builtIn": true
@@ -131,8 +136,8 @@
   },
   {
     "vsCodeId": "GitLab.gitlab-workflow",
-    "ideaName": "GitLab Workflow",
-    "builtIn": true
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
@@ -185,6 +190,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
@@ -203,6 +213,11 @@
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
     "ideaName": "Japanese Language Pack / 日本語言語パック",
     "ideaId": "com.intellij.ja"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
+    "ideaName": "Korean Language Pack / 한국어 언어 팩",
+    "ideaId": "com.intellij.ko"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
@@ -236,8 +251,8 @@
   },
   {
     "vsCodeId": "ms-toolsai.jupyter",
-    "ideaName": "Jupyter",
-    "ideaId": "intellij.jupyter"
+    "ideaName": "Python Support for Jupyter",
+    "ideaId": "intellij.jupyter.py"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -258,6 +273,11 @@
     "vsCodeId": "ms-vscode-remote.vscode-remote-extensionpack",
     "ideaName": "Remote Development",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.node-debug2",
+    "ideaName": "Node.js",
+    "ideaId": "NodeJS"
   },
   {
     "vsCodeId": "ms-vscode.vscode-typescript-next",
@@ -368,6 +388,16 @@
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
     "ideaId": "IdeaVIM"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "wholroyd.jinja",

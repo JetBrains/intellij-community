@@ -15,7 +15,7 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 /**
  * @author Konstantin Bulenkov
  */
-public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
+public final class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
 
   @Override
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement element, Editor editor) {

@@ -1,67 +1,67 @@
 package xxx
 
-import xxx.E1.AAA1
-import xxx.E2.*
-import xxx.E3.AAA3
-import xxx.E4.*
+import xxx.E1E800.AAA1E800
+import xxx.E2E800.*
+import xxx.E3E800.AAA3E800
+import xxx.E4E800.*
 
-enum class E1 {
-    AAA1, BBB1
+enum class E1E800 {
+    AAA1E800, BBB1E800
 }
 
-enum class E2 {
-    AAA2, BBB2
+enum class E2E800 {
+    AAA2E800, BBB2E800
 }
 
-enum class E3 {
-    AAA3, BBB3
+enum class E3E800 {
+    AAA3E800, BBB3E800
 }
 
-enum class E4 {
-    AAA4, BBB4
+enum class E4E800 {
+    AAA4E800, BBB4E800
 }
 
-fun f() {
-    print(AAA1)
-    print(AAA2)
+fun fE800() {
+    print(AAA1E800)
+    print(AAA2E800)
 }
 
-enum class E5 {
-    AAA4, BBB4
+enum class E5E800 {
+    AAA4E800, BBB4E800
 }
 
-enum class E6 {
-    AAA4, BBB4
+enum class E6E800 {
+    AAA4E800, BBB4E800
 }
 
-enum class E7 {
-    AAA4, BBB4;
+enum class E7E800 {
+    AAA4E800, BBB4E800;
 
-    enum class E8 {
-        AAA4, BBB4;
+    enum class E8E800 {
+        AAA4E800, BBB4E800;
     }
 }
 
-enum class E9 {
-    AAA4, BBB4
+enum class E9E800 {
+    AAA4E800, BBB4E800
 }
 
-enum class E10 {
-    AAA4, BBB4
+enum class E10E800 {
+    AAA4E800, BBB4E800
 }
 
-enum class E11 {
-    AAA4, BBB4
+enum class E11E800 {
+    AAA4E800, BBB4E800
 }
 
-enum class E12 {
-    AAA4, BBB4;
+enum class E12E800 {
+    AAA4E800, BBB4E800;
 
-    enum class E13 {
-        AAA4, BBB4
+    enum class E13E800 {
+        AAA4E800, BBB4E800
     }
 }
 
-enum class E14 {
-    AAA4, BBB4
+enum class E14E800 {
+    AAA4E800, BBB4E800
 }

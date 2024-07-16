@@ -11,7 +11,7 @@ fun foo(t: T) {
 /*
 1
 { 1 }
-t.foo{...}
-t.foo{...}.foo{...}
-t.foo{...}.foo{...}.foo(...)
+t.foo{…}
+t.foo{…}.foo{…}
+t.foo{…}.foo{…}.foo(…)
 */

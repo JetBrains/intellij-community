@@ -4,29 +4,19 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveCompanionObjectShortReferenceToContainingClassSymbol
 import org.jetbrains.kotlin.idea.references.mainReference
 
 class RenameClassByCompanionObjectShortReferenceHandler : AbstractReferenceSubstitutionRenameHandler() {
   override fun getElementToRename(dataContext: DataContext): PsiElement? {
     val refExpr = getReferenceExpression(dataContext) ?: return null
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
       analyze(refExpr) {
-        val symbol = refExpr.mainReference.resolveToSymbol() as? KtClassOrObjectSymbol ?: return null
-        if (symbol.classKind != KtClassKind.COMPANION_OBJECT) return null
-        //Class name reference resolves to companion
-        if (refExpr.getReferencedName() == symbol.name?.asString()) {
-          return null
-        }
-        val containingSymbol = symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol ?: return null
-        if (containingSymbol.companionObject != symbol) return null
-        return containingSymbol.psi
+        return refExpr.mainReference.resolveCompanionObjectShortReferenceToContainingClassSymbol()?.psi
       }
     }
   }

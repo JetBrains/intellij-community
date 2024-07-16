@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.diagnostic.LoadingState;
@@ -85,10 +85,12 @@ public final class BrowserUtil {
     return LoadingState.COMPONENTS_LOADED.isOccurred() ? BrowserLauncher.getInstance() : new BrowserLauncherAppless();
   }
 
-  public static @NotNull List<String> getOpenBrowserCommand(@NotNull String browserPathOrName,
-                                                            @Nullable String url,
-                                                            @NotNull List<String> parameters,
-                                                            boolean newWindowIfPossible) {
+  public static @NotNull List<String> getOpenBrowserCommand(
+    @NotNull String browserPathOrName,
+    @Nullable String url,
+    @NotNull List<String> parameters,
+    boolean newWindowIfPossible
+  ) {
     var command = new ArrayList<String>();
 
     var path = NioFiles.toPath(browserPathOrName);
@@ -127,7 +129,6 @@ public final class BrowserUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
   /** @deprecated Use {@link #browse(String)} */
   @Deprecated(forRemoval = true)
   public static void launchBrowser(@NotNull String url) {

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RngHrefConverter extends Converter<XmlFile> implements CustomReferenceConverter<XmlFile> {
   @Override
-  public XmlFile fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public XmlFile fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s != null) {
       final GenericAttributeValue<XmlFile> element = (GenericAttributeValue<XmlFile>)context.getInvocationElement();
       final PsiReference[] references = createReferences(element, element.getXmlAttributeValue(), context);
@@ -44,7 +44,7 @@ public class RngHrefConverter extends Converter<XmlFile> implements CustomRefere
   }
 
   @Override
-  public String toString(@Nullable XmlFile psiFile, ConvertContext context) {
+  public String toString(@Nullable XmlFile psiFile, @NotNull ConvertContext context) {
     return psiFile == null ? null : psiFile.getName();
   }
 

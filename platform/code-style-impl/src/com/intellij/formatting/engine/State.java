@@ -15,6 +15,9 @@
  */
 package com.intellij.formatting.engine;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public abstract class State {
 
   private boolean myDone;

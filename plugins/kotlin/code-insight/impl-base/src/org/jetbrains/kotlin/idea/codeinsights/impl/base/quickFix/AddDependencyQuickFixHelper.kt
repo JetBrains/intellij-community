@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.util.runWhenSmart
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
@@ -27,31 +29,44 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-object AddDependencyQuickFixHelper {
-    fun createQuickFix(psiElement: PsiElement): List<IntentionAction> {
-        val simpleExpression = psiElement as? KtSimpleNameExpression ?: return emptyList()
-        if (!RootKindFilter.projectSources.matches(simpleExpression)) return emptyList()
-        val project = simpleExpression.project
+object AddDependencyQuickFixHelper: QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+    override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+        val expression =
+            when (psiElement) {
+                is KtSimpleNameExpression -> psiElement
+                is KtImportDirective -> psiElement.importedReference
+                else -> null
+            }
+        if (expression == null || !RootKindFilter.projectSources.matches(expression)) return emptyList()
+        val project = expression.project
 
-        val importDirective = simpleExpression.parentOfType<KtImportDirective>()
-        val refElement: KtElement = simpleExpression.getQualifiedElement()
-
-        val reference = object : PsiReferenceBase<KtElement>(refElement) {
-            override fun resolve() = null
-
-            override fun getVariants() = PsiReference.EMPTY_ARRAY
-
-            override fun getRangeInElement(): TextRange {
-                val offset = simpleExpression.startOffset - refElement.startOffset
-                return TextRange(offset, offset + simpleExpression.textLength)
+        val importDirective = expression.parentOfType<KtImportDirective>()
+        val refElement: KtElement =
+            when (expression) {
+                is KtSimpleNameExpression -> expression.getQualifiedElement()
+                is KtQualifiedExpression -> expression
+                else ->  return emptyList()
             }
 
-            override fun getCanonicalText() = refElement.text
+        val reference = object : PsiReferenceBase<KtElement>(refElement) {
+            override fun resolve(): PsiElement? = null
+
+            override fun getVariants(): Array<PsiReference> = PsiReference.EMPTY_ARRAY
+
+            override fun getRangeInElement(): TextRange {
+                val offset = expression.startOffset - refElement.startOffset
+                return TextRange(offset, offset + expression.textLength)
+            }
+
+            override fun getCanonicalText(): String = refElement.text
 
             override fun bindToElement(element: PsiElement): PsiElement {
                 project.runWhenSmart {
                     project.executeWriteCommand("") {
-                        simpleExpression.mainReference.bindToElement(element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+                        when(expression) {
+                            is KtSimpleNameExpression -> expression.mainReference.bindToElement(element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
+                            is KtQualifiedExpression -> expression.mainReference?.bindToElement(element)
+                        }
                     }
                 }
                 return element

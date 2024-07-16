@@ -1,6 +1,5 @@
 // "Propagate 'PropertyTypeMarker' opt-in requirement to constructor" "true"
 // RUNTIME_WITH_SCRIPT_RUNTIME
-// ACTION: Add '-opt-in=PropertyInConstructor.PropertyTypeMarker' to module light_idea_test_case compiler arguments
 // ACTION: Add full qualifier
 // ACTION: Convert to secondary constructor
 // ACTION: Create test
@@ -8,6 +7,7 @@
 // ACTION: Introduce import alias
 // ACTION: Move to class body
 // ACTION: Opt in for 'PropertyTypeMarker' in containing file 'propertyInConstructor.kts'
+// ACTION: Opt in for 'PropertyTypeMarker' in module 'light_idea_test_case'
 // ACTION: Opt in for 'PropertyTypeMarker' on constructor
 // ACTION: Opt in for 'PropertyTypeMarker' on containing class 'PropertyTypeContainer'
 // ACTION: Propagate 'PropertyTypeMarker' opt-in requirement to constructor

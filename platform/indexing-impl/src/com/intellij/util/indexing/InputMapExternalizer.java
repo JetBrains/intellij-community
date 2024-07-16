@@ -5,6 +5,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -21,6 +22,7 @@ import java.util.Map;
  * both {@link IndexExtension#getKeyDescriptor()} and {@link IndexExtension#getValueExternalizer()},
  * so that all forward indexes internally are [Key -> ByteArraySequence(serialized Map[Key,Value])]
  */
+@Internal
 public final class InputMapExternalizer<Key, Value> implements DataExternalizer<Map<Key, Value>> {
   private final DataExternalizer<Value> myValueExternalizer;
   private final DataExternalizer<Collection<Key>> myKeysExternalizer;

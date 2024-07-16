@@ -15,10 +15,12 @@
  */
 package org.jetbrains.debugger
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.thenRun
 import org.jetbrains.debugger.values.ValueManager
 
+@ApiStatus.Internal
 abstract class EvaluateContextBase<VALUE_MANAGER : ValueManager>(val valueManager: VALUE_MANAGER) : EvaluateContext {
   override fun withValueManager(objectGroup: String): EvaluateContextBase<VALUE_MANAGER> = this
 

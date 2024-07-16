@@ -103,7 +103,10 @@ public class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFil
       db.setPreferredFocusComponent(dateComponent.getPanel());
       db.setTitle(VcsLogBundle.message("vcs.log.date.filter.select.period.dialog.title"));
       if (DialogWrapper.OK_EXIT_CODE == db.show()) {
-        myFilterModel.setFilter(VcsLogFilterObject.fromDates(dateComponent.getAfter(), dateComponent.getBefore()));
+        VcsLogDateFilter dateFilter = VcsLogFilterObject.fromDates(dateComponent.getAfter(), dateComponent.getBefore());
+        if (dateFilter.getAfter() != null || dateFilter.getBefore() != null) {
+          myFilterModel.setFilter(dateFilter);
+        }
       }
     }
   }

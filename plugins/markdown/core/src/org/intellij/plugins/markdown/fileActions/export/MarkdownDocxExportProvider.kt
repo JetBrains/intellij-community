@@ -14,6 +14,7 @@ import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownImportExportUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.settings.pandoc.PandocExecutableDetector
+import org.intellij.plugins.markdown.settings.pandoc.PandocSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import java.util.*
 
@@ -26,11 +27,11 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
   }
 
   override fun validate(project: Project, file: VirtualFile): String? {
-    val detected = PandocExecutableDetector.detect(project)
+    val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: PandocExecutableDetector.detect(project)
 
     return when {
-      detected == null -> MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
-      detected.isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
+      pandoc == null -> MarkdownBundle.message("markdown.settings.pandoc.executable.run.in.safe.mode")
+      pandoc.isEmpty() -> MarkdownBundle.message("markdown.export.to.docx.failure.msg")
       else -> null
     }
   }
@@ -76,8 +77,9 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
     }
 
     private fun getConvertMdToDocxCommandLine(srcFile: VirtualFile, targetFile: String, refFile: String): GeneralCommandLine {
+      val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: "pandoc"
       val commandLine = mutableListOf(
-        "pandoc",
+        pandoc,
         srcFile.path,
         "-f",
         MarkdownFileType.INSTANCE.name.lowercase(Locale.getDefault()),

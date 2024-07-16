@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -17,15 +15,18 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 internal sealed class ReplaceSizeCheckInspectionBase :
-  AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>() {
+    KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitBinaryExpression(expression: KtBinaryExpression) {
-                visitTargetElement(expression, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitBinaryExpression(expression: KtBinaryExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
         }
     }
+
     enum class EmptinessCheckMethod(val callString: String) {
         IS_EMPTY("isEmpty()"), IS_NOT_EMPTY("isNotEmpty()")
     }
@@ -34,22 +35,29 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 
     protected abstract fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression?
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
-
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
         return extractTargetExpressionFromPsi(element) != null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     final override fun prepareContext(element: KtBinaryExpression): ReplacementInfo? {
         val target = extractTargetExpressionFromPsi(element) ?: return null
         return getReplacementIfApplicable(target)
     }
 
-    override fun apply(element: KtBinaryExpression, context: ReplacementInfo, project: Project, updater: ModPsiUpdater) {
-        val target = extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression
-        val replacedCheck = KtPsiFactory(project).createExpression(context.expressionString(target))
-        element.replace(replacedCheck)
+    protected abstract inner class ReplaceSizeCheckQuickFixBase(
+        private val context: ReplacementInfo,
+    ) : KotlinModCommandQuickFix<KtBinaryExpression>() {
+
+        override fun applyFix(
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val target = extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression
+            val replacedCheck = KtPsiFactory(project).createExpression(context.expressionString(target))
+            element.replace(replacedCheck)
+        }
     }
 
     data class ReplacementInfo(val method: EmptinessCheckMethod, val negate: Boolean) {
@@ -63,9 +71,9 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         fun fixMessage(): String = expressionString(null)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getReplacementIfApplicable(target: KtExpression): ReplacementInfo? {
-        val resolvedCall = target.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>() ?: return null
+        val resolvedCall = target.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
         val replaceableCall = resolvedCall.findReplaceableOverride() ?: return null
 
         val replaceWithNegatedIsEmpty = methodToReplaceWith == EmptinessCheckMethod.IS_NOT_EMPTY && !replaceableCall.hasIsNotEmpty
@@ -77,8 +85,8 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         }
     }
 
-    context(KtAnalysisSession)
-    private fun KtCallableMemberCall<*, *>.findReplaceableOverride(): ReplaceableCall? {
+    context(KaSession)
+    private fun KaCallableMemberCall<*, *>.findReplaceableOverride(): ReplaceableCall? {
         val partiallyAppliedSymbol = this.partiallyAppliedSymbol
         val receiverType = (partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver)
             ?.type
@@ -86,14 +94,14 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 
         val symbolWithOverrides = sequence {
             yield(partiallyAppliedSymbol.symbol)
-            yieldAll(partiallyAppliedSymbol.symbol.getAllOverriddenSymbols())
+            yieldAll(partiallyAppliedSymbol.symbol.allOverriddenSymbols)
         }
         val replaceableCall = symbolWithOverrides.firstNotNullOfOrNull { symbol ->
             when (this) {
-                is KtVariableAccessCall -> REPLACEABLE_FIELDS_BY_CALLABLE_ID[symbol.callableIdIfNonLocal]
+                is KaVariableAccessCall -> REPLACEABLE_FIELDS_BY_CALLABLE_ID[symbol.callableId]
 
-                is KtFunctionCall -> REPLACEABLE_COUNT_CALL.takeIf {
-                    symbol.callableIdIfNonLocal == REPLACEABLE_COUNT_CALL.callableId && this.partiallyAppliedSymbol.signature.valueParameters.isEmpty()
+                is KaFunctionCall -> REPLACEABLE_COUNT_CALL.takeIf {
+                    symbol.callableId == REPLACEABLE_COUNT_CALL.callableId && this.partiallyAppliedSymbol.signature.valueParameters.isEmpty()
                 }
             }
         } ?: return null
@@ -102,7 +110,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
             yield(receiverType)
             yieldAll(receiverType.getAllSuperTypes())
         }
-        if (receiverTypeAndSuperTypes.any { it.expandedClassSymbol?.classIdIfNonLocal in replaceableCall.supportedReceivers }) {
+        if (receiverTypeAndSuperTypes.any { it.expandedSymbol?.classId in replaceableCall.supportedReceivers }) {
             return replaceableCall
         } else {
             return null

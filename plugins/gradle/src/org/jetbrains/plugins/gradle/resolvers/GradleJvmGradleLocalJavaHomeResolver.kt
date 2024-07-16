@@ -23,6 +23,6 @@ class GradleJvmGradleLocalJavaHomeResolver : GradleJvmResolver() {
     sdkLookupProvider: SdkLookupProvider
   ) = createSdkInfo(
     name = GRADLE_LOCAL_JAVA_HOME,
-    homePath = getJavaHome(project, externalProjectPath, GradleLocalPropertiesFile)
+    homePath = GradleLocalPropertiesFile.getJavaHome(externalProjectPath)
   )
 }

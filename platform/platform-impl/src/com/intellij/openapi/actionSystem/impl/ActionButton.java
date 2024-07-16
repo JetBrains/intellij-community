@@ -22,10 +22,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
@@ -52,21 +52,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   // Contains action IDs which descriptions are permitted for displaying in the ActionButton tooltip
   private static final @NonNls Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
-  /**
-   * By default, a toolbar button for a popup action group paints additional "drop-down-arrow" mark over its icon.
-   * Set this key to disable the painting of that mark as follows:
-   * <p>
-   * {@code presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)}.
-   * <p>
-   * Both ordinary and template presentations are supported.
-   *
-   * @see Presentation#setPerformGroup(boolean)
-   */
-  public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
+  /** @deprecated Use {@link ActionUtil#HIDE_DROPDOWN_ICON} instead */
+  @Deprecated
+  public static final Key<Boolean> HIDE_DROPDOWN_ICON = ActionUtil.HIDE_DROPDOWN_ICON;
 
   public static final Key<HelpTooltip> CUSTOM_HELP_TOOLTIP = Key.create("CUSTOM_HELP_TOOLTIP");
-
-  private static final String IS_SELECTED_BUTTON = "IS_SELECTED_BUTTON";
 
   private JBDimension myMinimumButtonSize;
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
@@ -178,12 +168,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public final boolean isSelected() {
-    return Toggleable.isSelected(myPresentation) || Boolean.TRUE.equals(getClientProperty(IS_SELECTED_BUTTON));
-  }
-
-  public void setSelected(boolean value) {
-    putClientProperty(IS_SELECTED_BUTTON, value);
-    repaint();
+    Boolean isSelectedComponent = Toggleable.isSelected(this);
+    if (isSelectedComponent != null) return isSelectedComponent;
+    return Toggleable.isSelected(myPresentation);
   }
 
   @Override
@@ -246,11 +233,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
     PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-      null, null, actionGroup, event.getDataContext(), false,
-      false, true, false,
-      null, -1, null,
+      null, null, actionGroup, event.getDataContext(),
       ActionPlaces.getActionGroupPopupPlace(event.getPlace()),
-      createPresentationFactory(), false);
+      createPresentationFactory(), ActionPopupOptions.showDisabled(), null);
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
@@ -280,7 +265,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private boolean isPopupMenuAction(@NotNull AnActionEvent event) {
     if (!(myAction instanceof ActionGroup)) return false;
-    if (myAction instanceof CustomComponentAction) return false;
     if (!event.getPresentation().isPopupGroup()) return false;
     if (event.getPresentation().isPerformGroup()) return false;
     return true;
@@ -323,12 +307,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (!myUpdateThreadOnDirectUpdateChecked) {
       myUpdateThreadOnDirectUpdateChecked = true;
       if (myAction.getActionUpdateThread() == ActionUpdateThread.BGT &&
-          !(myAction instanceof OverridingAction) && // todo workaround BackendDelegatingAction
-          !AnAction.class.equals(ReflectionUtil.getMethodDeclaringClass(myAction.getClass(), "update", AnActionEvent.class))) {
-        String name = myAction.getClass().getName();
+          !ActionClassMetaData.isDefaultUpdate(myAction)) {
+        ActionManager actionManager = ActionManager.getInstance();
         LOG.error(PluginException.createByClass(
-          myAction.getActionUpdateThread() + " action " + StringUtil.getShortName(name) + " (" + name + ") is not allowed. " +
-          "Only EDT actions are allowed.", null, myAction.getClass()));
+          "BGT operation " + Utils.operationName(
+            myAction, "update", myPlace, o -> o instanceof AnAction a ? actionManager.getId(a) : null) +
+          " is not allowed on EDT", null, myAction.getClass()));
       }
     }
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);

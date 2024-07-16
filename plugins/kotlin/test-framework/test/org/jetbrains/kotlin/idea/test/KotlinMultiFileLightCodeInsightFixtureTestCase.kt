@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -91,7 +92,7 @@ abstract class KotlinMultiFileLightCodeInsightFixtureTestCase : KotlinLightCodeI
     )
 
     protected open fun doMultiFileTest(testDataPath: String, files: List<TestFileWithVirtualFile>, globalDirectives: Directives) {
-        val psiFiles = files.mapNotNull { it.virtualFile.toPsiFile(project) }
+        val psiFiles = runReadAction { files.mapNotNull { it.virtualFile.toPsiFile(project) } }
         doMultiFileTest(psiFiles, globalDirectives)
     }
 

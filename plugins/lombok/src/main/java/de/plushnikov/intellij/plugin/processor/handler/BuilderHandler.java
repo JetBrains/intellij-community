@@ -75,7 +75,7 @@ public class BuilderHandler {
 
   public static Map<String, List<List<PsiType>>> getExistingMethodsWithParameterTypes(@NotNull PsiClass psiClass) {
     return PsiClassUtil.collectClassMethodsIntern(psiClass).stream()
-      .filter(psiMethod -> !psiMethod.hasAnnotation(LombokClassNames.TOLERATE))
+      .filter(psiMethod -> !PsiAnnotationSearchUtil.isAnnotatedWith(psiMethod, LombokClassNames.TOLERATE))
       .collect(Collectors.groupingBy(PsiMethod::getName,
                                      Collectors.mapping(BuilderHandler::getMethodParameterTypes, Collectors.toList())));
   }

@@ -20,10 +20,10 @@ import java.util.function.BiConsumer;
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
 
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = new ConcurrentHashMap<>();
-  private final BiConsumer<? super ConcurrentMap<K, V>, ? super K> myEvictionListener;
+  private final BiConsumer<? super @NotNull ConcurrentMap<K, V>, ? super K> myEvictionListener;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
-  ConcurrentRefValueHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+  ConcurrentRefValueHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
     myEvictionListener = evictionListener;
   }
 

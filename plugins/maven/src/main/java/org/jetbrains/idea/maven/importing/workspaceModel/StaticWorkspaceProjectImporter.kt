@@ -6,7 +6,10 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
-import org.jetbrains.idea.maven.importing.*
+import org.jetbrains.idea.maven.importing.MavenImporter
+import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil
+import org.jetbrains.idea.maven.importing.MavenStaticSyncAware
+import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.project.*
 
 internal class StaticWorkspaceProjectImporter(
@@ -36,15 +39,15 @@ internal class StaticWorkspaceProjectImporter(
         val importers = MavenImporter
           .getSuitableImporters(projectWithModules.mavenProject, true)
           .filter { it is MavenStaticSyncAware }
-        MavenLegacyModuleImporter.ExtensionImporter.createIfApplicable(projectWithModules.mavenProject,
-                                                                       moduleWithType.module,
-                                                                       moduleWithType.type,
-                                                                       myProjectsTree,
-                                                                       projectWithModules.changes,
-                                                                       moduleNameByProject,
-                                                                       importers)
+        MavenProjectImporterUtil.LegacyExtensionImporter.createIfApplicable(projectWithModules.mavenProject,
+                                                                            moduleWithType.module,
+                                                                            moduleWithType.type,
+                                                                            myProjectsTree,
+                                                                            projectWithModules.changes,
+                                                                            moduleNameByProject,
+                                                                            importers)
       }
     }
-    MavenProjectImporterBase.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
+    MavenProjectImporterUtil.importLegacyExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
   }
 }

@@ -27,7 +27,7 @@ import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitUserRegistry
 import git4idea.GitUtil.getRepositoryManager
-import git4idea.checkin.GitCheckinEnvironment.collectActiveMovementProviders
+import git4idea.checkin.GitCheckinEnvironment.Companion.collectActiveMovementProviders
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import java.awt.Point

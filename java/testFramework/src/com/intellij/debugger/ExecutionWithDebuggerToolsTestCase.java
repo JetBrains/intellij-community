@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.*;
@@ -32,6 +32,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProp
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +57,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess;
   private final List<Throwable> myException = new SmartList<>();
+  protected boolean myWasUsedOnlyDefaultSuspendPolicy = true;
 
   private static class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -104,6 +107,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myDebugProcess = null;
       myBreakpointProvider = null;
       myRatherLaterRequests.clear();
+      myWasUsedOnlyDefaultSuspendPolicy = true;
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -303,7 +307,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
     else {
       if (!SwingUtilities.isEventDispatchThread()) {
-        UIUtil.invokeAndWaitIfNeeded(() -> pumpSwingThread());
+        try {
+          EdtInvocationManager.getInstance().invokeAndWait(() -> pumpSwingThread());
+        }
+        catch (InvocationTargetException | InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
       else {
         SwingUtilities.invokeLater(() -> pumpSwingThread());
@@ -462,6 +471,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           //breakpoint.setSuspend(!DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy));
           breakpoint.setSuspendPolicy(suspendPolicy);
           systemPrintln("SUSPEND_POLICY = " + suspendPolicy);
+          myWasUsedOnlyDefaultSuspendPolicy = false;
         }
 
         String condition = comment.readValue("Condition");
@@ -567,6 +577,17 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     @Override
     public void paused(SuspendContextImpl suspendContext) {
+      // Need to add SuspendContextCommandImpl because the stepping pause is not now in SuspendContextCommandImpl
+      DebuggerManagerThreadImpl debuggerManagerThread = Objects.requireNonNull(suspendContext.getDebugProcess()).getManagerThread();
+      debuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
+        @Override
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+          pausedImpl(suspendContext);
+        }
+      });
+    }
+
+    private void pausedImpl(SuspendContextImpl suspendContext) {
       try {
         if (myScriptRunnables.isEmpty() && myRepeatingRunnables.isEmpty()) {
           print("resuming ", ProcessOutputTypes.SYSTEM);

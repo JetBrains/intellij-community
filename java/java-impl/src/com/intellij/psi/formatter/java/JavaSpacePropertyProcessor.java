@@ -388,14 +388,21 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (prev instanceof PsiWhiteSpace && prev.textContains('\n')) {
       return false;
     }
-    return !node.textContains('\n');
+    PsiElement element = node.getPsi();
+
+    return !node.textContains('\n') &&
+           (element instanceof PsiCodeBlock body && shouldAddNewLineWhenBodyIsPresent(body) ||
+            element instanceof PsiBlockStatement statement && shouldAddNewLineWhenBodyIsPresent(statement.getCodeBlock()));
+  }
+
+  private boolean shouldAddNewLineWhenBodyIsPresent(@NotNull PsiCodeBlock body) {
+    return !myJavaSettings.NEW_LINE_WHEN_BODY_IS_PRESENTED || body.isEmpty();
   }
 
   private boolean shouldHandleAsSimpleMethod(@NotNull PsiMethod method) {
     if (!mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE) return false;
     PsiCodeBlock body = method.getBody();
-    return body != null && !body.textContains('\n') &&
-           (!myJavaSettings.NEW_LINE_WHEN_BODY_IS_PRESENTED || body.isEmpty());
+    return body != null && !body.textContains('\n') && shouldAddNewLineWhenBodyIsPresent(body);
   }
 
   private static int getMethodHeaderStartOffset(@NotNull PsiMethod method) {
@@ -652,7 +659,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private static boolean isAbstractMethod(ASTNode node) {
-    return node.getPsi() instanceof PsiMethod method && method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
+    return node.getPsi() instanceof PsiMethod method && JavaFormatterUtil.isExplicitlyAbstract(method);
   }
 
   @Override
@@ -915,7 +922,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole1 == ChildRole.LBRACE) {
-      int spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+      int spacesAfterLBrace;
+      if (myRole2 == ChildRole.RBRACE) spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+      else spacesAfterLBrace = mySettings.SPACE_WITHIN_BRACES || myJavaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT ? 1 : 0;
+
       if (!keepInOneLine) {
         int blankLines = 1;
         if (myParent != null) {
@@ -936,7 +946,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       }
     }
     else if (myRole2 == ChildRole.RBRACE) {
-      int spacesBeforeRBrace = mySettings.SPACE_WITHIN_BRACES ? 1 : 0;
+      int spacesBeforeRBrace = mySettings.SPACE_WITHIN_BRACES || myJavaSettings.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT ? 1 : 0;
       if (!keepInOneLine) {
         myResult = Spacing.createSpacing(
           spacesBeforeRBrace, spacesBeforeRBrace, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
@@ -994,7 +1004,12 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private boolean shouldHandleAsSimpleLambda(PsiLambdaExpression lambda) {
-    return mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
+    PsiElement body = lambda.getBody();
+    boolean isSimpleLambda = mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
+    if (body instanceof PsiCodeBlock block) {
+      return isSimpleLambda && shouldAddNewLineWhenBodyIsPresent(block);
+    }
+    return isSimpleLambda;
   }
 
   @Override
@@ -1226,7 +1241,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.PACKAGE_KEYWORD) {
       myResult = Spacing.createSpacing(1, 1, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
-    else if (myRole2 == ChildRole.TYPE
+    else if ((myRole2 == ChildRole.TYPE || myRole2 == ChildRole.TYPE_PARAMETER_LIST)
              && myChild1.getLastChildNode() != null
              && myChild1.getLastChildNode().getElementType() == JavaElementType.ANNOTATION
              || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.RBRACE

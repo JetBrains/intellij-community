@@ -92,16 +92,15 @@ public final class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
 
     final FieldDescriptor fieldDescriptor = usage.getFieldDescriptor();
     PsiField field = fieldDescriptor.getField();
-    boolean processGet = descriptor.isToEncapsulateGet();
-    boolean processSet = descriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
+    boolean processGet = descriptor.isToEncapsulateGet() && getter != null;
+    boolean processSet = descriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL) && setter != null;
     if (!processGet && !processSet) return true;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(descriptor.getTargetClass().getProject());
 
     try{
       final PsiReferenceExpression expr = (PsiReferenceExpression)element;
       final PsiElement parent = expr.getParent();
-      if (parent instanceof PsiAssignmentExpression && expr.equals(((PsiAssignmentExpression)parent).getLExpression())){
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression assignment && expr.equals(((PsiAssignmentExpression)parent).getLExpression())){
         if (assignment.getRExpression() == null) return true;
         PsiJavaToken opSign = assignment.getOperationSign();
         IElementType opType = opSign.getTokenType();

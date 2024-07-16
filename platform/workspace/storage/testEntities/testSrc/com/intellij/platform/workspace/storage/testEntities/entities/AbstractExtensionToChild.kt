@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -9,17 +14,21 @@ interface ParentWithExtensionEntity : WorkspaceEntity {
   val data: String
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ParentWithExtensionEntity, WorkspaceEntity.Builder<ParentWithExtensionEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ParentWithExtensionEntity> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<ParentWithExtensionEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentWithExtensionEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -31,12 +40,15 @@ interface ParentWithExtensionEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentWithExtensionEntity,
-                                      modification: ParentWithExtensionEntity.Builder.() -> Unit): ParentWithExtensionEntity = modifyEntity(
-  ParentWithExtensionEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyParentWithExtensionEntity(
+  entity: ParentWithExtensionEntity,
+  modification: ParentWithExtensionEntity.Builder.() -> Unit,
+): ParentWithExtensionEntity {
+  return modifyEntity(ParentWithExtensionEntity.Builder::class.java, entity, modification)
+}
 
-var ParentWithExtensionEntity.Builder.child: @Child AbstractChildEntity?
-  by WorkspaceEntity.extension()
+var ParentWithExtensionEntity.Builder.child: @Child AbstractChildEntity.Builder<out AbstractChildEntity>?
+  by WorkspaceEntity.extensionBuilder(AbstractChildEntity::class.java)
 //endregion
 
 @Abstract
@@ -45,20 +57,22 @@ interface AbstractChildEntity : WorkspaceEntity {
   val parent: ParentWithExtensionEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder<T : AbstractChildEntity> : AbstractChildEntity, WorkspaceEntity.Builder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : AbstractChildEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var data: String
-    override var parent: ParentWithExtensionEntity
+    var data: String
+    var parent: ParentWithExtensionEntity.Builder
   }
 
   companion object : EntityType<AbstractChildEntity, Builder<AbstractChildEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String,
-                        entitySource: EntitySource,
-                        init: (Builder<AbstractChildEntity>.() -> Unit)? = null): AbstractChildEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder<AbstractChildEntity>.() -> Unit)? = null,
+    ): Builder<AbstractChildEntity> {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -71,18 +85,22 @@ interface AbstractChildEntity : WorkspaceEntity {
 
 interface SpecificChildEntity : AbstractChildEntity {
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SpecificChildEntity, AbstractChildEntity.Builder<SpecificChildEntity>, WorkspaceEntity.Builder<SpecificChildEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SpecificChildEntity>, AbstractChildEntity.Builder<SpecificChildEntity> {
     override var entitySource: EntitySource
     override var data: String
-    override var parent: ParentWithExtensionEntity
+    override var parent: ParentWithExtensionEntity.Builder
   }
 
   companion object : EntityType<SpecificChildEntity, Builder>(AbstractChildEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SpecificChildEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -94,9 +112,12 @@ interface SpecificChildEntity : AbstractChildEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SpecificChildEntity,
-                                      modification: SpecificChildEntity.Builder.() -> Unit): SpecificChildEntity = modifyEntity(
-  SpecificChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifySpecificChildEntity(
+  entity: SpecificChildEntity,
+  modification: SpecificChildEntity.Builder.() -> Unit,
+): SpecificChildEntity {
+  return modifyEntity(SpecificChildEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 val ParentWithExtensionEntity.child: @Child AbstractChildEntity? by WorkspaceEntity.extension()

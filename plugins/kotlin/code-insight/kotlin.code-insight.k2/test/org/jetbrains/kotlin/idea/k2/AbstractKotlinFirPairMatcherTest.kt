@@ -3,8 +3,4 @@ package org.jetbrains.kotlin.idea.k2
 
 import org.jetbrains.kotlin.idea.codeInsight.AbstractPairMatcherTest
 
-abstract class AbstractKotlinFirPairMatcherTest: AbstractPairMatcherTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
-}
+abstract class AbstractKotlinFirPairMatcherTest : AbstractPairMatcherTest()

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class ReplaceSynchronizedWithLombokAction extends AbstractLombokIntentionAction {
+public final class ReplaceSynchronizedWithLombokAction extends AbstractLombokIntentionAction {
   @Override
   public @NotNull String getFamilyName() {
     return LombokBundle.message("replace.synchronized.lombok.intention");

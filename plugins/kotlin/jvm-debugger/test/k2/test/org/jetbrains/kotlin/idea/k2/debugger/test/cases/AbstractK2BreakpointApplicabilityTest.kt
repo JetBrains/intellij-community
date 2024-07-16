@@ -2,12 +2,11 @@
 
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
-import org.jetbrains.kotlin.idea.debugger.test.AbstractBreakpointApplicabilityTest
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.debugger.test.AbstractBreakpointApplicabilityTest
 import java.nio.file.Paths
 
 abstract class AbstractK2BreakpointApplicabilityTest : AbstractBreakpointApplicabilityTest()  {
-    override fun isFirPlugin(): Boolean = true
 
     override fun doTest(unused: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(

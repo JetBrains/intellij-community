@@ -74,8 +74,8 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
       alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f).coerceIn(0f, 1f)
     }
 
-    // FIXME[inline-bp]: introduce option to make inline icons slightly smaller than gutter ones
-    // FIXME[inline-bp]: limit icon size to region size with some padding
+    // Icon might not fit into a two-character box if the font is really narrow,
+    // however, it seems like a really rare case, so just ignore it.
     val editorScale = (inlay.editor as? EditorImpl)?.scale ?: 1f
     val iconScale = 0.75f * editorScale
 
@@ -143,7 +143,6 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
 
     if (action == null) return
 
-    // FIXME[inline-bp]: what about removal by drag and drop?
     val editor = inlay.editor
     val project = editor.project ?: return
     val file = editor.virtualFile ?: return
@@ -151,7 +150,6 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
 
     when (action) {
       ClickAction.SET -> {
-        // FIXME[inline-bp]: is it ok to keep variant so long or should we obtain fresh variants and find similar one?
         val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
         val line = editor.document.getLineNumber(offset)
         XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)

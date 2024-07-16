@@ -525,16 +525,8 @@ private class ControllerTestComponent : SerializablePersistentStateComponent<Con
 }
 
 private data class ControllerTestState(
-  @JvmField @Attribute val foo: String = "",
-  @JvmField @Attribute val bar: String? = "",
-  @JvmField @Text val text: String = "",
+  @JvmField @Attribute var foo: String = "",
+  @JvmField @Attribute var bar: String? = "",
+  @JvmField @Text var text: String = "",
   @JvmField @XCollection val list: List<String> = emptyList(),
-) {
-  fun withFoo(newFoo: String) : ControllerTestState {
-    return ControllerTestState(newFoo, bar, text, list)
-  }
-  fun withBar(newBar: String) : ControllerTestState {
-    return ControllerTestState(foo, newBar, text, list)
-  }
-
-}
+)

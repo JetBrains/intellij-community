@@ -178,7 +178,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       if (index != -1) {
         PsiNamedElement element = myRenames[index];
         UsageInfo usageInfo = new UsageInfo(element);
-        myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+        myUsagePreviewPanel.updateLayout(myProject, Collections.singletonList(usageInfo));
         final PsiFile containingFile = element.getContainingFile();
         if (containingFile != null) {
           final VirtualFile virtualFile = containingFile.getVirtualFile();
@@ -188,13 +188,13 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         }
       }
       else {
-        myUsagePreviewPanel.updateLayout(null);
+        myUsagePreviewPanel.updateLayout(myProject, null);
       }
     };
     myTable.getSelectionModel().addListSelectionListener(myListSelectionListener);
 
     myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
-    myUsagePreviewPanel.updateLayout(null);
+    myUsagePreviewPanel.updateLayout(myProject, null);
     myPanelForPreview.add(myUsageFileLabel, BorderLayout.NORTH);
     double top = mySplitPane.getTopComponent().getPreferredSize().getHeight();
     double bottom = mySplitPane.getBottomComponent().getPreferredSize().getHeight();

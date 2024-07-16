@@ -99,7 +99,8 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
     val contributors = foundElementsInfo.map { info -> info.contributor }.toHashSet()
     val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
-    val contributorFeatures = contributors.map { contributorFeaturesProvider.getFeatures(it, searchSession.mixedListInfo) }
+    val contributorFeatures = contributors.map { contributorFeaturesProvider.getFeatures(it, searchSession.mixedListInfo,
+                                                                                         searchSession.sessionStartTime)}
 
     val diffInfos = if (state.orderByMl) SearchEverywhereRankingDiffCalculator.getRankingDiffInfos(foundElementsInfo) else emptyList()
 

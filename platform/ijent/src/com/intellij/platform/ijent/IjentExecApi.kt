@@ -1,12 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
-
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
  */
-@ApiStatus.Experimental
 interface IjentExecApi {
   /**
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.

@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
 import org.jetbrains.kotlin.name.FqName
@@ -32,7 +32,7 @@ object FoldIfOrWhenToFunctionCallUtils {
         return differentArgumentIndex(callExpressions) != null
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getFoldingContext(element: KtExpression): Context? {
         val callExpressions = element.callExpressionsFromAllBranches() ?: return null
         val differentArgumentIndex = differentArgumentIndex(callExpressions) ?: return null
@@ -80,10 +80,10 @@ object FoldIfOrWhenToFunctionCallUtils {
         element.replace(headCall.getQualifiedExpressionForSelectorOrThis()).reformatted()
     }
 
-    context(KtAnalysisSession)
-    private fun KtCallExpression.fqNameAndParameters(): Pair<FqName, List<KtVariableLikeSignature<KtValueParameterSymbol>>>? {
-        val functionCall = resolveCall()?.singleFunctionCallOrNull() ?: return null
-        val fqName = functionCall.symbol.callableIdIfNonLocal?.asSingleFqName() ?: return null
+    context(KaSession)
+    private fun KtCallExpression.fqNameAndParameters(): Pair<FqName, List<KaVariableSignature<KaValueParameterSymbol>>>? {
+        val functionCall = resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val fqName = functionCall.symbol.callableId?.asSingleFqName() ?: return null
         val parameters = valueArguments.mapNotNull { functionCall.argumentMapping[it.getArgumentExpression()] }
         return fqName to parameters
     }

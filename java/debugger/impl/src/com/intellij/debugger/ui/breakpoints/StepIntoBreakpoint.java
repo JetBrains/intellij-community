@@ -14,6 +14,7 @@ import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -55,26 +56,21 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
             methods.putValue(loc.method(), loc);
           }
         }
-        Location location = null;
+        List<Location> acceptedLocations = new ArrayList<>();
         final int methodsFound = methods.size();
-        if (methodsFound == 1) {
-          location = methods.values().iterator().next();
+        if (methodsFound > 1 && myFilter instanceof LambdaMethodFilter lambdaFilter) {
+          if (lambdaFilter.getLambdaOrdinal() < methodsFound) {
+            Method[] candidates = methods.keySet().toArray(new Method[methodsFound]);
+            Arrays.sort(candidates, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
+            acceptedLocations.addAll(methods.get(candidates[lambdaFilter.getLambdaOrdinal()]));
+          }
         }
         else {
-          if (myFilter instanceof LambdaMethodFilter lambdaFilter) {
-            if (lambdaFilter.getLambdaOrdinal() < methodsFound) {
-              Method[] candidates = methods.keySet().toArray(new Method[methodsFound]);
-              Arrays.sort(candidates, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
-              location = methods.get(candidates[lambdaFilter.getLambdaOrdinal()]).iterator().next();
-            }
-          }
-          else {
-            if (methodsFound > 0) {
-              location = methods.values().iterator().next();
-            }
-          }
+          acceptedLocations.addAll(methods.values());
         }
-        createLocationBreakpointRequest(this, location, debugProcess);
+        for (Location location : acceptedLocations) {
+          createLocationBreakpointRequest(this, location, debugProcess);
+        }
       }
     }
     catch (ClassNotPreparedException ex) {

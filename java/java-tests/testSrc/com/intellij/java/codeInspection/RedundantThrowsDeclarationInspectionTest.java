@@ -64,4 +64,8 @@ public class RedundantThrowsDeclarationInspectionTest extends JavaInspectionTest
   public void testInterfaces() {
     doTest();
   }
+  
+  public void testUnresolvedCalls() {
+    doTest();
+  }
 }

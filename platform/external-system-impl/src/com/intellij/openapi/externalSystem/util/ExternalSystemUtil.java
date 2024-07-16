@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,6 +60,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -66,12 +68,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -290,10 +294,14 @@ public final class ExternalSystemUtil {
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
     if (!isPreviewMode && !TrustedProjects.isTrusted(project)) {
-      LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
+      }
       return;
     }
-    LOG.debug("Stated " + externalSystemId + " load", new Throwable());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Stated " + externalSystemId + " load", new Throwable());
+    }
 
     AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
     var projectSyncTypeStorage = localSettings.getProjectSyncType();
@@ -395,7 +403,7 @@ public final class ExternalSystemUtil {
     var syncViewManager = project.getService(SyncViewManager.class);
     try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(taskId, syncViewManager, false)) {
       var finishSyncEventSupplier = new Ref<Supplier<? extends FinishBuildEvent>>();
-      var taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
+      var taskListener = new ExternalSystemTaskNotificationListener() {
 
         @Override
         public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
@@ -463,14 +471,34 @@ public final class ExternalSystemUtil {
         }
       };
 
-      LOG.info("External project [" + externalProjectPath + "] resolution task started");
-      var startTS = System.currentTimeMillis();
-      resolveProjectTask.execute(indicator, taskListener);
-      var endTS = System.currentTimeMillis();
-      LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (endTS - startTS) + " ms.");
-      ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncResultProcessing",
-                                              (ignore) -> handleSyncResult(externalProjectPath, importSpec, resolveProjectTask,
-                                                                         eventDispatcher, finishSyncEventSupplier));
+      incompleteDependenciesState(project, resolveProjectTask, () -> {
+        LOG.info("External project [" + externalProjectPath + "] resolution task started");
+        var startTS = System.currentTimeMillis();
+        resolveProjectTask.execute(indicator, taskListener);
+        var endTS = System.currentTimeMillis();
+        LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (endTS - startTS) + " ms.");
+        ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncResultProcessing",
+                                                (ignore) -> handleSyncResult(externalProjectPath, importSpec, resolveProjectTask,
+                                                                             eventDispatcher, finishSyncEventSupplier));
+      });
+    }
+  }
+
+  private static void incompleteDependenciesState(@NotNull Project project, @NotNull Object requestor, @NotNull Runnable runnable) {
+    if (!Registry.is("external.system.incomplete.dependencies.state.during.sync")) {
+      runnable.run();
+    }
+    var incompleteDependenciesService = project.getService(IncompleteDependenciesService.class);
+    var incompleteDependenciesAccessToken = WriteAction.computeAndWait(() -> {
+      return incompleteDependenciesService.enterIncompleteState(requestor);
+    });
+    try {
+      runnable.run();
+    }
+    finally {
+      WriteAction.runAndWait(() -> {
+        incompleteDependenciesAccessToken.finish();
+      });
     }
   }
 
@@ -721,7 +749,7 @@ public final class ExternalSystemUtil {
   /**
    * @deprecated use {@link #createFailureResult(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static @NotNull FailureResultImpl createFailureResult(
     @NotNull @Nls(capitalization = Sentence) String title,
@@ -822,6 +850,7 @@ public final class ExternalSystemUtil {
     return buildEvent;
   }
 
+  @ApiStatus.Obsolete
   public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              @NotNull String executorId,
                              @NotNull Project project,
@@ -829,6 +858,7 @@ public final class ExternalSystemUtil {
     runTask(taskSettings, executorId, project, externalSystemId, null, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
   }
 
+  @ApiStatus.Obsolete
   public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              final @NotNull String executorId,
                              final @NotNull Project project,
@@ -838,6 +868,7 @@ public final class ExternalSystemUtil {
     runTask(taskSettings, executorId, project, externalSystemId, callback, progressExecutionMode, true);
   }
 
+  @ApiStatus.Obsolete
   public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              final @NotNull String executorId,
                              final @NotNull Project project,
@@ -848,6 +879,7 @@ public final class ExternalSystemUtil {
     runTask(taskSettings, executorId, project, externalSystemId, callback, progressExecutionMode, activateToolWindowBeforeRun, null);
   }
 
+  @ApiStatus.Obsolete
   public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              final @NotNull String executorId,
                              final @NotNull Project project,
@@ -856,7 +888,20 @@ public final class ExternalSystemUtil {
                              final @NotNull ProgressExecutionMode progressExecutionMode,
                              boolean activateToolWindowBeforeRun,
                              @Nullable UserDataHolderBase userData) {
-    var environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
+    TaskExecutionSpec spec = TaskExecutionSpec.create(project, externalSystemId, executorId, taskSettings)
+      .withProgressExecutionMode(progressExecutionMode)
+      .withCallback(callback)
+      .withUserData(userData)
+      .withActivateToolWindowBeforeRun(activateToolWindowBeforeRun)
+      .build();
+    runTask(spec);
+  }
+
+  public static void runTask(@NotNull TaskExecutionSpec spec) {
+    Project project = spec.getProject();
+    ProjectSystemId externalSystemId = spec.getSystemId();
+
+    var environment = createExecutionEnvironment(project, externalSystemId, spec.getSettings(), spec.getExecutorId());
     if (environment == null) {
       LOG.warn("Execution environment for " + externalSystemId + " is null");
       return;
@@ -864,21 +909,25 @@ public final class ExternalSystemUtil {
 
     var runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
     assert runnerAndConfigurationSettings != null;
-    runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(activateToolWindowBeforeRun);
+    runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(spec.getActivateToolWindowBeforeRun());
 
+    UserDataHolderBase userData = spec.getUserData();
     if (userData != null) {
       var runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
       userData.copyUserDataTo(runConfiguration);
     }
 
-    var title = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
-    ExternalSystemTaskUnderProgress.executeTaskUnderProgress(project, title, progressExecutionMode, new ExternalSystemTaskUnderProgress() {
+    var title = AbstractExternalSystemTaskConfigurationType.generateName(project, spec.getSettings());
+    ExternalSystemTaskUnderProgress.executeTaskUnderProgress(project, title, spec.getProgressExecutionMode(),
+                                                             new ExternalSystemTaskUnderProgress() {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         environment.putUserData(ExternalSystemRunnableState.PROGRESS_INDICATOR_KEY, indicator);
+        environment.putUserData(ExternalSystemRunnableState.TASK_NOTIFICATION_LISTENER_KEY, spec.getListener());
         indicator.setIndeterminate(true);
 
         boolean result = waitForProcessExecution(project, environment, () -> environment.getRunner().execute(environment));
+        TaskCallback callback = spec.getCallback();
         if (callback != null) {
           if (result) {
             callback.onSuccess();
@@ -887,7 +936,7 @@ public final class ExternalSystemUtil {
             callback.onFailure();
           }
         }
-        if (!result) {
+        if (!result && spec.getActivateToolWindowOnFailure()) {
           ApplicationManager.getApplication().invokeLater(() -> {
             var window = ToolWindowManager.getInstance(project).getToolWindow(environment.getExecutor().getToolWindowId());
             if (window != null) {

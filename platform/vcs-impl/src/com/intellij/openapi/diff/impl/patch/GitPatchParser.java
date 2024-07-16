@@ -125,9 +125,11 @@ public final class GitPatchParser {
     // 'patch.getBeforeName() | getAfterName()' values pre-filled from '--- a/1.txt | +++ b/1.txt' lines
     if (patch.getBeforeName() == null || patchInfo.myPreferPatchInfoPaths) patch.setBeforeName(patchInfo.myBeforeName);
     if (patch.getAfterName() == null || patchInfo.myPreferPatchInfoPaths) patch.setAfterName(patchInfo.myAfterName);
-    //remember sha-1 as version ids or set null if no info
-    patch.setBeforeVersionId(patchInfo.myBeforeIndex);
-    patch.setAfterVersionId(patchInfo.myAfterIndex);
+    //remember sha-1 as version ids, but keep '(revision <hash>)' suffixes from TextPatchBuilder.REVISION_NAME_TEMPLATE
+    if (patchInfo.myBeforeIndex != null || patchInfo.myAfterIndex != null) {
+      patch.setBeforeVersionId(patchInfo.myBeforeIndex);
+      patch.setAfterVersionId(patchInfo.myAfterIndex);
+    }
     //set new file mode
     patch.setNewFileMode(patchInfo.myNewFileMode);
   }

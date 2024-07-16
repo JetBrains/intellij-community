@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
+import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,6 +20,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+
 
 /**
  * @author Eugene Zhuravlev
@@ -58,7 +61,8 @@ public final class EndUserAgreement {
   }
 
   private static @NotNull Path getDocumentNameFile() {
-    return getDataRoot().resolve(isEAP() ? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
+    boolean isEAP = isEAP() && !Agreements.isReleaseAgreementsEnabled();
+    return getDataRoot().resolve(isEAP ? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
   }
 
   private static boolean isEAP() {
@@ -101,6 +105,19 @@ public final class EndUserAgreement {
     }
 
     String docName = getDocumentName();
+    Document defaultDocument = loadDocument(docName);
+    Locale locale = Locale.getDefault();
+    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
+
+    Document document;
+    for (String localizedDocName : localizedDocsNames) {
+      document = loadDocument(localizedDocName);
+      if (!document.getText().isEmpty() && !defaultDocument.getVersion().isNewer(document.getVersion())) return document;
+    }
+    return defaultDocument;
+  }
+
+  private static @NotNull Document loadDocument(String docName) {
     Document fromFile = loadContent(docName, getDocumentContentFile(docName));
     if (fromFile != null && !fromFile.getVersion().isUnknown()) {
       return fromFile;
@@ -108,12 +125,21 @@ public final class EndUserAgreement {
     return loadContent(docName, getBundledResourcePath(docName));
   }
 
-  public static boolean updateCachedContentToLatestBundledVersion() {
+  public static void updateCachedContentToLatestBundledVersion() {
+    String docName = getDocumentName();
+    Locale locale = Locale.getDefault();
+    List<String> localizedDocsNames = LocalizationUtil.INSTANCE.getSuffixLocalizedPaths(Path.of(docName), locale);
+    for (String localizedDocName : localizedDocsNames) {
+      updateCachedContentToLatestBundledVersion(localizedDocName);
+    }
+    updateCachedContentToLatestBundledVersion(docName);
+  }
+
+  private static void updateCachedContentToLatestBundledVersion(@NotNull String docName) {
     try {
-      String docName = getDocumentName();
       Document cached = loadContent(docName, getDocumentContentFile(docName));
       if (cached == null || cached.getVersion().isUnknown()) {
-        return false;
+        return;
       }
 
       Document bundled = loadContent(docName, getBundledResourcePath(docName));
@@ -121,12 +147,9 @@ public final class EndUserAgreement {
         // update content only and not the active document name
         // active document name can be changed by JBA only
         writeToFile(getDocumentContentFile(docName), bundled.getText());
-        return true;
       }
     }
-    catch (Throwable ignored) {
-    }
-    return false;
+    catch (Throwable ignored) { }
   }
 
   private static void writeToFile(@NotNull Path file, @NotNull String text) {
@@ -181,15 +204,15 @@ public final class EndUserAgreement {
   private static @NotNull String getDocumentName() {
     if (!PlatformUtils.isCommercialEdition()) {
       if (PlatformUtils.isCommunityEdition()) {
-        return isEAP() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
+        return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
       }
       if (PlatformUtils.isJetBrainsClient()) {
         return CWM_GUEST_EULA_NAME;
       }
       if (PlatformUtils.isGateway()) {
-        return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+        return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
       }
-      return isEAP()? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
+      return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
     }
 
     try {
@@ -199,7 +222,7 @@ public final class EndUserAgreement {
       }
     }
     catch (IOException ignored) { }
-    return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+    return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
   private static @NotNull String getAcceptedVersionKey(@NotNull String docName) {

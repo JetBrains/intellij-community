@@ -34,8 +34,7 @@ public final class ClassNameSameAsAncestorNameInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.name.same.as.ancestor.name.problem.descriptor");
   }

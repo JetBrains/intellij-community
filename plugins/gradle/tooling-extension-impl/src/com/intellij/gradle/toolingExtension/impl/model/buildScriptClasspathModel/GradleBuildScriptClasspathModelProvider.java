@@ -16,8 +16,8 @@ public class GradleBuildScriptClasspathModelProvider implements ProjectImportMod
   public void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModelsRecursively(controller, buildModel, GradleBuildScriptClasspathModel.class, consumer);
+    GradleModelProviderUtil.buildModelsRecursively(controller, buildModel, GradleBuildScriptClasspathModel.class, modelConsumer);
   }
 }

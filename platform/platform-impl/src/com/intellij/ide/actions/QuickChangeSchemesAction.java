@@ -15,7 +15,7 @@ public final class QuickChangeSchemesAction extends QuickSwitchSchemeAction impl
 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
-    final AnAction[] actions = getGroup().getChildren(null);
+    AnAction[] actions = getGroup().getChildren(ActionManager.getInstance());
     for (AnAction action : actions) {
       group.add(action);
     }

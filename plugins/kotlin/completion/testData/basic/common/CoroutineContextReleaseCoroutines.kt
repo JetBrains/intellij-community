@@ -1,5 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
+// IGNORE_PLATFORM_COMMON_NATIVE+JVM: KTIJ-29847
 
 suspend fun foo() {
     corou<caret>

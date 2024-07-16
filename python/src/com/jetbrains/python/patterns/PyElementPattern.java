@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.patterns;
 
 import com.intellij.patterns.InitialPatternCondition;
@@ -12,7 +12,7 @@ public class PyElementPattern<T extends PyElement, Self extends PyElementPattern
     super(aClass);
   }
 
-  public PyElementPattern(@NotNull final InitialPatternCondition<T> condition) {
+  public PyElementPattern(final @NotNull InitialPatternCondition<T> condition) {
     super(condition);
   }
 
@@ -21,7 +21,7 @@ public class PyElementPattern<T extends PyElement, Self extends PyElementPattern
       super(aClass);
     }
 
-    public Capture(@NotNull final InitialPatternCondition<T> condition) {
+    public Capture(final @NotNull InitialPatternCondition<T> condition) {
       super(condition);
     }
   }

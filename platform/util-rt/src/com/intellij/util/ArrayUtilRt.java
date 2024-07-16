@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -27,6 +27,8 @@ public final class ArrayUtilRt {
   public static final long[] EMPTY_LONG_ARRAY = new long[0];
   public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
   public static final File[] EMPTY_FILE_ARRAY = new File[0];
+
+  private ArrayUtilRt() { }
 
   @NotNull
   @Contract(pure=true)

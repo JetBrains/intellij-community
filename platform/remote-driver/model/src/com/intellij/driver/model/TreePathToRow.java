@@ -5,7 +5,7 @@ import com.intellij.driver.model.transport.PassByValue;
 import java.io.Serializable;
 import java.util.List;
 
-public final class TreePathToRow implements Serializable, PassByValue {
+public class TreePathToRow implements Serializable, PassByValue {
   private List<String> path;
   private int row;
 

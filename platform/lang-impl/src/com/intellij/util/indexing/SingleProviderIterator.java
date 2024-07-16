@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import com.intellij.util.indexing.FilesScanningTaskBase.CheckCancelOnlyProgressIndicator;
+import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
@@ -26,7 +26,7 @@ import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.ge
 final class SingleProviderIterator implements ContentIterator {
   private final Project project;
   private final PerProjectIndexingQueue.PerProviderSink perProviderSink;
-  private final CheckCancelOnlyProgressIndicator indicator;
+  private final CheckPauseOnlyProgressIndicator indicator;
   private final List<FilePropertyPusher<?>> pushers;
   private final List<FilePropertyPusherEx<?>> pusherExs;
   private final Object[] moduleValues;
@@ -35,7 +35,7 @@ final class SingleProviderIterator implements ContentIterator {
   private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
   private final boolean mayBeUsed;
 
-  SingleProviderIterator(Project project, @NotNull CheckCancelOnlyProgressIndicator indicator, IndexableFilesIterator provider,
+  SingleProviderIterator(Project project, @NotNull CheckPauseOnlyProgressIndicator indicator, IndexableFilesIterator provider,
                          UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
                          PerProjectIndexingQueue.PerProviderSink perProviderSink) {
     this.project = project;
@@ -90,9 +90,6 @@ final class SingleProviderIterator implements ContentIterator {
   public boolean processFile(@NotNull VirtualFile fileOrDir) {
     indicator.freezeIfPaused(); // give a chance to suspend indexing
     ProgressManager.checkCanceled();
-    if (indicator.isCanceled()) {
-      return false;
-    }
 
     try {
       processFileRethrowExceptions(fileOrDir);

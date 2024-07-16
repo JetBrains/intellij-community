@@ -79,14 +79,12 @@ public final class BadExceptionDeclaredInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ProhibitedExceptionDeclared";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("bad.exception.declared.problem.descriptor");
   }
 

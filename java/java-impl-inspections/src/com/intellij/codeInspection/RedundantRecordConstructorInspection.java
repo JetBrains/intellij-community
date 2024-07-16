@@ -99,6 +99,7 @@ public final class RedundantRecordConstructorInspection extends AbstractBaseJava
     if (!JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) return null;
     PsiCodeBlock body = ctor.getBody();
     if (body == null) return null;
+    if (!ctor.getThrowsList().getText().isEmpty()) return null;
     PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
     if (nameIdentifier == null) return null;
     PsiRecordComponent[] components = Objects.requireNonNull(ctor.getContainingClass()).getRecordComponents();

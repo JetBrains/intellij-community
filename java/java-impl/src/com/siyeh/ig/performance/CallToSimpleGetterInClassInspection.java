@@ -60,14 +60,12 @@ public final class CallToSimpleGetterInClassInspection extends BaseInspection im
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToSimpleGetterFromWithinClass";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("call.to.simple.getter.in.class.problem.descriptor");
   }
 

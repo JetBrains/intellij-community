@@ -18,9 +18,11 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.generateDisplayName
+import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getLogProviders
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.util.concurrent.ExecutionException
@@ -32,6 +34,7 @@ import java.util.function.Supplier
  *
  * Delegates to the VcsLogManager.
  */
+@ApiStatus.Internal
 class VcsLogContentProvider(private val project: Project) : ChangesViewContentProvider {
   private val projectLog = VcsProjectLog.getInstance(project)
   private val container = JBPanel<JBPanel<*>>(BorderLayout())
@@ -78,7 +81,7 @@ class VcsLogContentProvider(private val project: Project) : ChangesViewContentPr
       DataManager.registerDataProvider(container, panel)
 
       updateDisplayName()
-      ui!!.filterUi.addFilterListener { updateDisplayName() }
+      ui!!.onDisplayNameChange { updateDisplayName() }
 
       if (logCreationCallback != null) {
         logCreationCallback!!.set(ui)

@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
-public class GroovyTrivialConditionalInspection extends BaseInspection {
+public final class GroovyTrivialConditionalInspection extends BaseInspection {
 
   @NotNull
   @Override

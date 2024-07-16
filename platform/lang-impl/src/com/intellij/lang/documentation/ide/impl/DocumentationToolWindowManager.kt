@@ -41,11 +41,12 @@ internal class DocumentationToolWindowManager(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {
-
   companion object {
     const val TOOL_WINDOW_ID: String = "documentation.v2"
 
-    fun instance(project: Project): DocumentationToolWindowManager = project.service()
+    fun getInstance(project: Project): DocumentationToolWindowManager = project.service()
+
+    fun getInstanceIfCreated(project: Project): DocumentationToolWindowManager? = project.serviceIfCreated()
 
     private var autoUpdate_: Boolean by propComponentProperty(name = "documentation.auto.update", defaultValue = true)
 

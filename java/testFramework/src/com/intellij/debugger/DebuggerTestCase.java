@@ -457,14 +457,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected static StackFrameProxyImpl getFrameProxy(@NotNull SuspendContextImpl suspendContext) {
-    if (suspendContext.getAnotherThreadToFocus() != null) {
-      try {
-        return suspendContext.getAnotherThreadToFocus().frame(0);
-      }
-      catch (EvaluateException e) {
-        throw new RuntimeException(e);
-      }
-    }
     return suspendContext.getFrameProxy();
   }
 

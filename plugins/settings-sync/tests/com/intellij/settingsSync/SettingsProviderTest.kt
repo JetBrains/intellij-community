@@ -5,17 +5,17 @@ import com.intellij.testFramework.registerExtension
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.io.path.div
 
 internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
 
   private lateinit var settingsProvider: TestSettingsProvider
 
-  @Before
+  @BeforeEach
   internal fun initFields() {
     settingsProvider = TestSettingsProvider()
     application.registerExtension(SettingsProvider.SETTINGS_PROVIDER_EP, settingsProvider, disposable)
@@ -35,7 +35,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
     assertFileWithContent(expectedContent, settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
 
     val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
+    assertNotNull(pushedSnapshot, "Nothing has been pushed")
     pushedSnapshot!!.assertSettingsSnapshot {
       fileState {
         GeneralSettings().withState {
@@ -59,7 +59,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
 
     val expectedContent = TestSettingsProvider().serialize(state)
     assertFileWithContent(expectedContent, settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
-    assertEquals("Settings from server were not applied", "Server value", settingsProvider.settings!!.property)
+    assertEquals("Server value", settingsProvider.settings!!.property, "Settings from server were not applied")
   }
 
   @Test
@@ -81,7 +81,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
     val expectedState = TestState(property = "Server value", foo = "Local value")
     assertFileWithContent(TestSettingsProvider().serialize(expectedState),
                           settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
-    assertEquals("Settings were not applied", expectedState, settingsProvider.settings)
+    assertEquals(expectedState, settingsProvider.settings, "Settings were not applied")
   }
 
   @Serializable

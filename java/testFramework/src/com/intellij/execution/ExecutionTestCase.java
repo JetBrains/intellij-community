@@ -57,6 +57,10 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
 
   protected abstract String getTestAppPath();
 
+  protected boolean areLogErrorsIgnored() {
+    return false;
+  }
+
   @Override
   protected void setUp() throws Exception {
     setupTempDir();
@@ -139,9 +143,14 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
     myChecker.print(s, outputType);
   }
 
+  @SuppressWarnings("CallToPrintStackTrace")
   @Override
   protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
+    int errorLoggingHappened = TestLoggerFactory.getRethrowErrorNumber();
+    if (errorLoggingHappened != 0 && !areLogErrorsIgnored()) {
+      assertEquals("No ignored errors should happen during execution tests", 0, errorLoggingHappened);
+    }
   }
 
   @Override

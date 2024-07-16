@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -67,18 +68,32 @@ public final class IdeaTestUtil {
     }
   }
 
-  public static void setModuleLanguageLevel(@NotNull Module module, @Nullable LanguageLevel level) {
+  public static void setProjectLanguageLevel(@NotNull Project project, @NotNull LanguageLevel level, @NotNull Disposable disposable) {
+    LanguageLevel oldLevel = setProjectLanguageLevel(project, level);
+    Disposer.register(disposable, () -> {
+      setProjectLanguageLevel(project, oldLevel);
+    });
+  }
+
+  public static LanguageLevel setProjectLanguageLevel(@NotNull Project project, @NotNull LanguageLevel level) {
+    LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(project);
+    LanguageLevel oldLevel = projectExt.getLanguageLevel();
+    projectExt.setLanguageLevel(level);
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    return oldLevel;
+  }
+
+  public static LanguageLevel setModuleLanguageLevel(@NotNull Module module, @Nullable LanguageLevel level) {
+    LanguageLevel prev = LanguageLevelUtil.getCustomLanguageLevel(module);
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level));
     IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
+    return prev;
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level, @NotNull Disposable parentDisposable) {
-    LanguageLevel prev = LanguageLevelUtil.getCustomLanguageLevel(module);
-    IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
-    setModuleLanguageLevel(module, level);
+    LanguageLevel prev = setModuleLanguageLevel(module, level);
     Disposer.register(parentDisposable, () -> {
       setModuleLanguageLevel(module, prev);
-      IndexingTestUtil.waitUntilIndexesAreReady(module.getProject());
     });
   }
 

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CustomExceptionHandler
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.JavaSdkVersion
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
@@ -32,7 +31,7 @@ class UnhandledExceptionsHighlightingTest : LightDaemonAnalyzerTestCase() {
   }
 
   private fun doTest() {
-    LanguageLevelProjectExtension.getInstance(javaFacade.project).languageLevel = LanguageLevel.JDK_1_8
+    IdeaTestUtil.setProjectLanguageLevel(javaFacade.project, LanguageLevel.JDK_1_8)
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, module, testRootDisposable)
     doTest("""/codeInsight/daemonCodeAnalyzer/exceptionHighlighting/${getTestName(false)}.java""", false, false)
   }

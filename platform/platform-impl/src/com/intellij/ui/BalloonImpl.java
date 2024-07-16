@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
@@ -334,6 +335,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private final int myCornerToPointerDistance;
   private int myCornerRadius = -1;
   private int myClipY = -1;
+  private boolean myTopClip;
 
   public BalloonImpl(@NotNull JComponent content,
                      @NotNull Color borderColor,
@@ -1001,7 +1003,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       myFadeoutAlarm.cancelAllRequests();
       myFadeoutRequestMillis = System.currentTimeMillis();
       myFadeoutRequestDelay = fadeoutDelay;
-      myFadeoutAlarm.addRequest(() -> {
+      myFadeoutAlarm.addRequest((ContextAwareRunnable)() -> {
         if (mySmartFadeout) {
           setAnimationEnabled(true);
         }
@@ -1939,8 +1941,14 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     @Override
     protected void paintComponent(final Graphics g) {
       if (myClipY != -1) {
-        //noinspection GraphicsSetClipInspection
-        g.setClip(0, 0, getWidth(), myClipY);
+        if (myTopClip) {
+          //noinspection SSBasedInspection
+          g.setClip(0, myClipY, getWidth(), getHeight() - myClipY);
+        }
+        else {
+          //noinspection SSBasedInspection
+          g.setClip(0, 0, getWidth(), myClipY);
+        }
       }
 
       super.paintComponent(g);
@@ -2265,6 +2273,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   public int getClipY() {
     return myClipY;
+  }
+
+  public void setTopClip(boolean value) {
+    myTopClip = value;
   }
 
   public void setClipY(int clipY) {

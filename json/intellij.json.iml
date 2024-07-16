@@ -29,5 +29,6 @@
     <orderEntry type="library" name="jackson-dataformat-yaml" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>
 </module>

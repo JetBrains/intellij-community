@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.java.JavaBundle;
@@ -67,7 +67,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
   }
 
   @Override
-  public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CommonCodeStyleSettings.IndentOptions options) {
+  public void reset(final @NotNull CodeStyleSettings settings, final @NotNull CommonCodeStyleSettings.IndentOptions options) {
     super.reset(settings, options);
     myLabelIndent.setValue(options.LABEL_INDENT_SIZE);
     myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);

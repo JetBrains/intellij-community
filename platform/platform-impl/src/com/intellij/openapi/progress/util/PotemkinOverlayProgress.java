@@ -45,6 +45,12 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   private long myLastInteraction;
   private boolean myShowing;
 
+  static {
+    // preload classes
+    //noinspection ResultOfMethodCallIgnored
+    NlsMessages.formatDurationApproximateNarrow(0);
+  }
+
   @Obsolete
   public PotemkinOverlayProgress(@Nullable Component component) {
     EDT.assertIsEdt();

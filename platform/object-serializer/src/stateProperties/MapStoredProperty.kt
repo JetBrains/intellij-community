@@ -7,7 +7,9 @@ import com.intellij.openapi.components.StoredProperty
 import com.intellij.openapi.components.StoredPropertyBase
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectSet
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MapStoredProperty<K: Any, V>(value: MutableMap<K, V>?) : StoredPropertyBase<MutableMap<K, V>>() {
   private val value: MutableMap<K, V> = value ?: MyMap()
 

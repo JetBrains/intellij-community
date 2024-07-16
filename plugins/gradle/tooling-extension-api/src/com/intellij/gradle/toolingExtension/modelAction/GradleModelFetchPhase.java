@@ -10,25 +10,36 @@ public enum GradleModelFetchPhase {
    * This can be used to set up "sync" tasks for the import
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#projectsLoaded
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   PROJECT_LOADED_PHASE("Project loaded phase"),
 
   /**
    * Model provider, in this phase, fetches and caches a Gradle task model into
-   * {@link com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache}.
+   * {@link com.intellij.gradle.toolingExtension.impl.model.taskIndex.GradleTaskIndex}.
    * This cache is available by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderContext}.
    * <p>
-   * [TASK_WARM_UP_PHASE] should be first, because this phase evaluates all lazy Task configurations.
+   * This phase should be first, because this phase evaluates all lazy Task configurations.
    * These configurations may modify a Gradle project model which is necessary for the following phases.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
-  TASK_WARM_UP_PHASE("Task warm-up phase"),
+  WARM_UP_PHASE("Configuration warm-up phase"),
+
+  /**
+   * Model providers, in this phase, fetch a Gradle project identification models.
+   *
+   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
+   */
+  PROJECT_MODEL_PHASE("Project model phase"),
 
   /**
    * Model providers, in this phase, fetch a Gradle project source set models and resolve dependencies.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   PROJECT_SOURCE_SET_PHASE("Project source set phase"),
 
@@ -40,17 +51,9 @@ public enum GradleModelFetchPhase {
    * </ul>
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   PROJECT_SOURCE_SET_DEPENDENCY_PHASE("Project source set dependency phase"),
-
-  /**
-   * Model providers, in this phase, fetch an initial set of Gradle models for IDEA project structure.
-   * These models form a minimal set to start working with a project: basic code insight of source code.
-   * It is module names, source sets and content roots, project and module SDKs, language level, etc.
-   *
-   * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
-   */
-  PROJECT_MODEL_PHASE("Project model phase"),
 
   /**
    * Model provides, in this phase, fetches rest of Gradle models, which needed for rich experience in IntelliJ IDEA.
@@ -58,6 +61,7 @@ public enum GradleModelFetchPhase {
    * data for code profiling, etc.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   ADDITIONAL_MODEL_PHASE("Additional model phase");
 

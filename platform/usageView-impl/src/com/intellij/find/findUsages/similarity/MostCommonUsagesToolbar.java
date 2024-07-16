@@ -16,10 +16,10 @@ import java.awt.*;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.SIMILAR_USAGES_PREVIEW_TOOLBAR;
 
-public class MostCommonUsagesToolbar extends JPanel {
+class MostCommonUsagesToolbar extends JPanel {
   private final @NotNull SimpleColoredComponent myResultsText;
 
-  public MostCommonUsagesToolbar(@NotNull JComponent targetComponent, @Nls String usagesMessage, @NotNull AnAction refreshAction) {
+  MostCommonUsagesToolbar(@NotNull JComponent targetComponent, @Nls String usagesMessage, @NotNull AnAction refreshAction) {
     super(new FlowLayout(FlowLayout.LEFT));
     setBackground(UIUtil.getTextFieldBackground());
     myResultsText = new SimpleColoredComponent();

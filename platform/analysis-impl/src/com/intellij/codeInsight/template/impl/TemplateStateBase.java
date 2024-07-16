@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,10 +123,12 @@ public class TemplateStateBase {
     return myTemplate;
   }
 
+  @ApiStatus.Internal
   protected TemplateSegments getSegments() {
     return mySegments;
   }
 
+  @ApiStatus.Internal
   protected void setSegments(TemplateSegments segments) {
     mySegments = segments;
   }

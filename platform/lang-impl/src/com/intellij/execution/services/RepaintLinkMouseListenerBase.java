@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.openapi.util.Comparing;
@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,6 +21,7 @@ import java.awt.event.MouseEvent;
  * Tag could be retrieved from the component by {@link RepaintLinkMouseListenerBase#ACTIVE_TAG} key.
  */
 @ApiStatus.Experimental
+@Internal
 public abstract class RepaintLinkMouseListenerBase<T> extends LinkMouseListenerBase<T> {
   public static final Key<Object> ACTIVE_TAG = Key.create("RepaintLinkMouseListenerActiveTag");
 

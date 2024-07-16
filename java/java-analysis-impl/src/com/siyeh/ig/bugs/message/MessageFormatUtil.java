@@ -2,6 +2,7 @@
 package com.siyeh.ig.bugs.message;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import org.jetbrains.annotations.ApiStatus;
@@ -67,7 +68,10 @@ public final class MessageFormatUtil {
       if (part.getParsedType() == MessageFormatParsedType.FORMAT_ELEMENT &&
           part.getMessageFormatElement() != null &&
           part.getMessageFormatElement().getIndex() != null) {
-        placeholderIndexes.add(new MessageFormatPlaceholder(part.getMessageFormatElement().getIndex()));
+        placeholderIndexes.add(new MessageFormatPlaceholder(part.getMessageFormatElement().getIndex(),
+                                                            new TextRange(part.start, part.start + part.text.length()),
+                                                            part.getMessageFormatElement().formatType == null &&
+                                                            part.getMessageFormatElement().currentPart == MessageFormatElementPart.ARGUMENT_INDEX));
       }
     }
     return new MessageFormatResult(errors.isEmpty(), errors, placeholderIndexes);
@@ -445,7 +449,7 @@ public final class MessageFormatUtil {
                                     @NotNull List<MessageFormatPlaceholder> placeholders) {
   }
 
-  public record MessageFormatPlaceholder(int index) {
+  public record MessageFormatPlaceholder(int index, @NotNull  TextRange range, boolean isString) {
   }
 
   static class MessageFormatPart {

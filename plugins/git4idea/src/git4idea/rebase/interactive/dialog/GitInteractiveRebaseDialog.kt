@@ -12,11 +12,11 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.PopupHandler
-import com.intellij.ui.ToolbarDecorator
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.util.ArrayUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -27,10 +27,15 @@ import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntryWithDetails
+import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.interactive.GitRebaseTodoModel
+import git4idea.rebase.interactive.GitRebaseTodoModel.Element
+import git4idea.rebase.interactive.GitRebaseTodoModel.Type
+import git4idea.rebase.interactive.dialog.view.MoveTableItemRunnable
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.SwingConstants
@@ -38,7 +43,7 @@ import javax.swing.SwingConstants
 @ApiStatus.Internal
 const val GIT_INTERACTIVE_REBASE_DIALOG_DIMENSION_KEY = "Git.Interactive.Rebase.Dialog"
 
-internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
+internal class GitInteractiveRebaseDialog<T : GitRebaseEntry>(
   private val project: Project,
   root: VirtualFile,
   entries: List<T>
@@ -97,8 +102,13 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   private var modified = false
 
   init {
+    fun getCommitDetailsFromRow(row: Int): VcsCommitMetadata? {
+      val entryWithDetails = commitsTableModel.getEntry(row) as? GitRebaseEntryWithDetails
+      return entryWithDetails?.commitDetails
+    }
     commitsTable.selectionModel.addListSelectionListener { _ ->
-      fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.getEntry(it).commitDetails })
+      val commitDetailsList = commitsTable.selectedRows.map { getCommitDetailsFromRow(it) }.filterNotNull()
+      fullCommitDetailsListPanel.commitsSelected(commitDetailsList)
     }
     commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
     commitsTableModel.addTableModelListener { modified = true }
@@ -126,6 +136,8 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   override fun createCenterPanel() = BorderLayoutPanel().apply {
     val decorator = ToolbarDecorator.createDecorator(commitsTable)
       .setToolbarPosition(ActionToolbarPosition.TOP)
+      .setMoveUpAction(MoveTableItemRunnable(-1, commitsTable))
+      .setMoveDownAction(MoveTableItemRunnable(1, commitsTable))
       .setPanelBorder(JBUI.Borders.empty())
       .setScrollPaneBorder(JBUI.Borders.empty())
       .disableAddAction()

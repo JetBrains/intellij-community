@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +11,7 @@ import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.Enumeration;
 
-public class DelegateKeyStore extends KeyStoreSpi {
+class DelegateKeyStore extends KeyStoreSpi {
   protected static Provider ourProvider = new Provider("IDEA", 1, "IDEA Key Store") {{
     Security.addProvider(this);
   }};
@@ -34,7 +34,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
     return jssecacerts.exists() ? jssecacerts.getPath() : new File(base, "cacerts").getPath();
   }
 
-  public DelegateKeyStore(String type) {
+  DelegateKeyStore(String type) {
     try {
       delegate = KeyStore.getInstance(type);
     }
@@ -43,7 +43,7 @@ public class DelegateKeyStore extends KeyStoreSpi {
     }
   }
 
-  public DelegateKeyStore(KeyStore delegate) {
+  DelegateKeyStore(KeyStore delegate) {
     this.delegate = delegate;
   }
 

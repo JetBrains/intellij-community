@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.mavenRepository
+import org.gradle.util.GradleVersion.version
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
@@ -227,7 +227,8 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
   @Test
   fun `test unresolved build script dependencies errors on Sync`() {
     val artifacts = when {
-      isGradleAtLeast("4.6") && isGradleOlderThan("7.4") -> "artifacts"
+      currentGradleBaseVersion in version("4.6")..version("7.4") -> "artifacts"
+      currentGradleBaseVersion >= version("8.7") -> "artifacts"
       else -> "files"
     }
 
@@ -235,19 +236,23 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     importProject {
       addBuildScriptDependency("classpath 'junit:junit:4.12'")
     }
-    assertSyncViewTreeEquals("-\n" +
-                             " -failed\n" +
-                             "  Could not resolve junit:junit:4.12 because no repositories are defined")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
-                               "A problem occurred configuring root project 'project'.\n" +
-                               "> Could not resolve all $artifacts for configuration ':classpath'.\n" +
-                               "   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
-                               "     Required by:\n" +
-                               "         project :\n" +
-                               "\n" +
-                               "Possible solution:\n" +
-                               " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
-                               "\n")
+    assertSyncViewTree {
+      assertNode("failed") {
+        assertNode("Could not resolve junit:junit:4.12 because no repositories are defined")
+      }
+    }
+    assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined", """
+      |A problem occurred configuring root project 'project'.
+      |> Could not resolve all $artifacts for configuration ':classpath'.
+      |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
+      |     Required by:
+      |         project :
+      |
+      |Possible solution:
+      | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+      |
+      |
+    """.trimMargin())
 
     // successful import when repository is added
     importProject {
@@ -268,27 +273,26 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       withBuildScriptRepository {
         mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
-      addBuildScriptDependency("classpath 'junit:junit:4.12'")
       addBuildScriptDependency("classpath 'junit:junit:99.99'")
     }
-    assertSyncViewTreeEquals("-\n" +
-                             " -failed\n" +
-                             "  Could not resolve junit:junit:99.99")
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
-                               "A problem occurred configuring root project 'project'.\n" +
-                               "> Could not resolve all $artifacts for configuration ':classpath'.\n" +
-                               "   > Could not resolve junit:junit:99.99.\n" +
-                               "     Required by:\n" +
-                               "         project :\n" +
-                               "      > No cached version of junit:junit:99.99 available for offline mode.\n" +
-                               "   > Could not resolve junit:junit:99.99.\n" +
-                               "     Required by:\n" +
-                               "         project :\n" +
-                               "      > No cached version of junit:junit:99.99 available for offline mode.\n" +
-                               "\n" +
-                               "Possible solution:\n" +
-                               " - Disable offline mode and rerun the build\n" +
-                               "\n")
+    assertSyncViewTree {
+      assertNode("failed") {
+        assertNode("Could not resolve junit:junit:99.99")
+      }
+    }
+    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99", """
+      |A problem occurred configuring root project 'project'.
+      |> Could not resolve all $artifacts for configuration ':classpath'.
+      |   > Could not resolve junit:junit:99.99.
+      |     Required by:
+      |         project :
+      |      > No cached version of junit:junit:99.99 available for offline mode.
+      |
+      |Possible solution:
+      | - Disable offline mode and rerun the build
+      |
+      |
+    """.trimMargin())
     assertSyncViewRerunActions() // quick fix above uses Sync view 'rerun' action to restart import with changes offline mode
 
     // check unresolved dependency for disabled offline mode
@@ -298,21 +302,16 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       withBuildScriptRepository {
         mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
       }
-      addBuildScriptDependency("classpath 'junit:junit:4.12'")
       addBuildScriptDependency("classpath 'junit:junit:99.99'")
     }
-    assertSyncViewTreeEquals("-\n" +
-                             " -failed\n" +
-                             "  Could not resolve junit:junit:99.99")
+    assertSyncViewTree {
+      assertNode("failed") {
+        assertNode("Could not resolve junit:junit:99.99")
+      }
+    }
     assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
                                "A problem occurred configuring root project 'project'.\n" +
                                "> Could not resolve all $artifacts for configuration ':classpath'.\n" +
-                               "   > Could not find junit:junit:99.99.\n" +
-                               "     Searched in the following locations:\n" +
-                               "       $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
-                               "       $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar\n" +
-                               "     Required by:\n" +
-                               "         project :\n" +
                                "   > Could not find junit:junit:99.99.\n" +
                                "     Searched in the following locations:\n" +
                                "       $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +

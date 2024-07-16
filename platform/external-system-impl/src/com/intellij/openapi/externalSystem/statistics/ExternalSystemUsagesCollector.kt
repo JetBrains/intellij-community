@@ -11,10 +11,12 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.lang.JavaVersion
 
 object ExternalSystemUsageFields {
+
+  private const val UNKNOWN = "unknown"
+
   val JRE_TYPE_FIELD: EnumEventField<JreType> = EventFields.Enum("value", JreType::class.java) { it.description }
 
   fun getJreType(jreName: String?): JreType {
@@ -28,10 +30,14 @@ object ExternalSystemUsageFields {
   }
 
   fun getJreVersion(project: Project, jreName: String?): String {
-    val jdk = ExternalSystemJdkUtil.getJdk(project, jreName)
-    return jdk?.versionString?.let<@NlsSafe String, String?> {
-      JavaVersion.tryParse(it)?.let { parsed -> "${parsed.feature}.${parsed.minor}" }
-    } ?: "unknown"
+    val jdk = try {
+      ExternalSystemJdkUtil.getJdk(project, jreName)
+    }
+    catch (ignored: Throwable) {
+      return UNKNOWN
+    }
+    val javaVersion = JavaVersion.tryParse(jdk?.versionString) ?: return UNKNOWN
+    return "${javaVersion.feature}.${javaVersion.minor}"
   }
 }
 

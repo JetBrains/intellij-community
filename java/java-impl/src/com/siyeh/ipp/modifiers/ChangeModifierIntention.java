@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -121,9 +121,8 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
     }
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -299,8 +298,7 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
     return TextRange.from(modifierList.getTextRange().getEndOffset(), 0);
   }
 
-  @Nullable
-  private static PsiKeyword getAnchorKeyword(@NotNull PsiModifierList modifierList) {
+  private static @Nullable PsiKeyword getAnchorKeyword(@NotNull PsiModifierList modifierList) {
     for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiKeyword keyword && AccessModifier.fromKeyword(keyword)!=null) {
         return keyword;
@@ -309,10 +307,8 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
     return null;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("change.modifier.intention.name");
   }
 
@@ -384,8 +380,7 @@ public final class ChangeModifierIntention extends BaseElementAtCaretIntentionAc
       });
   }
 
-  @Nullable
-  private static MultiMap<PsiElement, @DialogMessage String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
+  private static @Nullable MultiMap<PsiElement, @DialogMessage String> checkForConflicts(@NotNull PsiMember member, AccessModifier modifier) {
     if (member instanceof PsiClass aClass && modifier == AccessModifier.PUBLIC) {
       final PsiElement parent = aClass.getParent();
       if (!(parent instanceof PsiJavaFile javaFile)) {

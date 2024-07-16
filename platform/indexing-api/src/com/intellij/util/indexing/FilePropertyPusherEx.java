@@ -4,11 +4,11 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
+@Internal
 public interface FilePropertyPusherEx<T> extends FilePropertyPusher<T> {
 
   boolean acceptsOrigin(@NotNull Project project, @NotNull IndexableSetOrigin origin);

@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.IntList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public final class CompressedIntList implements IntList {
   public static final int DEFAULT_BLOCK_SIZE = 30;
@@ -26,6 +27,21 @@ public final class CompressedIntList implements IntList {
         return delegateArray[index];
       }
     }, blockSize);
+  }
+
+  @NotNull
+  public static IntList newInstance(@NotNull List<Integer> delegateList) {
+    return newInstance(new IntList() {
+      @Override
+      public int size() {
+        return delegateList.size();
+      }
+
+      @Override
+      public int get(int index) {
+        return delegateList.get(index);
+      }
+    }, DEFAULT_BLOCK_SIZE);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,7 +34,6 @@ import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -45,18 +44,16 @@ public final class UnnecessaryUnboxingInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyReportSuperfluouslyUnboxed = false;
 
-  @NonNls static final Map<String, String> s_unboxingMethods = new HashMap<>(8);
-
-  static {
-    s_unboxingMethods.put(CommonClassNames.JAVA_LANG_INTEGER, "intValue");
-    s_unboxingMethods.put(CommonClassNames.JAVA_LANG_SHORT, "shortValue");
-    s_unboxingMethods.put(CommonClassNames.JAVA_LANG_BOOLEAN, "booleanValue");
-    s_unboxingMethods.put(CommonClassNames.JAVA_LANG_LONG, "longValue");
-    s_unboxingMethods.put(CommonClassNames.JAVA_LANG_BYTE, "byteValue");
-    s_unboxingMethods.put(CommonClassNames.JAVA_LANG_FLOAT, "floatValue");
-    s_unboxingMethods.put(CommonClassNames.JAVA_LANG_DOUBLE, "doubleValue");
-    s_unboxingMethods.put(CommonClassNames.JAVA_LANG_CHARACTER, "charValue");
-  }
+  @NonNls static final Map<String, String> s_unboxingMethods = Map.of(
+    CommonClassNames.JAVA_LANG_INTEGER, "intValue",
+    CommonClassNames.JAVA_LANG_SHORT, "shortValue",
+    CommonClassNames.JAVA_LANG_BOOLEAN, "booleanValue",
+    CommonClassNames.JAVA_LANG_LONG, "longValue",
+    CommonClassNames.JAVA_LANG_BYTE, "byteValue",
+    CommonClassNames.JAVA_LANG_FLOAT, "floatValue",
+    CommonClassNames.JAVA_LANG_DOUBLE, "doubleValue",
+    CommonClassNames.JAVA_LANG_CHARACTER, "charValue"
+  );
 
   @Override
   @NotNull

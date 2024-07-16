@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,14 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
 
   public void setGradleVmOptions(@Nullable String gradleVmOptions) {
     myGradleVmOptions = gradleVmOptions;
+  }
+
+  public boolean isDownloadSources() {
+    return AdvancedSettings.getBoolean("gradle.download.sources");
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    AdvancedSettings.setBoolean("gradle.download.sources", downloadSources);
   }
 
   /**

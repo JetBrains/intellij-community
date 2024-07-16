@@ -5,6 +5,7 @@ import com.intellij.util.io.addChannelListener
 import com.intellij.util.io.shutdownIfOio
 import io.netty.channel.Channel
 import io.netty.util.ReferenceCountUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.errorIfNotMessage
@@ -14,6 +15,7 @@ import org.jetbrains.rpc.CONNECTION_CLOSED_MESSAGE
 import org.jetbrains.rpc.LOG
 import org.jetbrains.rpc.MessageProcessor
 
+@ApiStatus.Internal
 open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
   @Volatile
   private var channel: Channel? = channel
@@ -72,6 +74,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
   }
 }
 
+@ApiStatus.Internal
 fun doCloseChannel(channel: Channel, promise: AsyncPromise<Any?>) {
   channel.close().addChannelListener {
     try {

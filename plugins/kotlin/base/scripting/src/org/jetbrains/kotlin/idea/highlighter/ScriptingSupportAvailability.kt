@@ -8,13 +8,19 @@ import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
-class ScriptingSupportAvailability: KotlinSupportAvailability {
+val supportedScriptPredicates: List<(KtFile) -> Boolean> = listOf(
+    { ktFile: KtFile -> ktFile.name.endsWith(".main.kts") },
+    { ktFile: KtFile -> ktFile.name.endsWith(".gradle.kts") || ktFile.name.startsWith(".gradle") },
+)
+
+class ScriptingSupportAvailability : KotlinSupportAvailability {
     override fun name(): String = KotlinBaseScriptingBundle.message("scripting.support.availability.name")
 
     override fun isSupported(ktElement: KtElement): Boolean {
         val ktFile = ktElement.containingFile as? KtFile ?: return true
-        return Registry.`is`("kotlin.k2.scripting.enabled", true) ||
-                !KotlinScriptingSettings.getInstance(ktFile.project).showK2SupportWarning ||
-                !ktFile.isScript()
+        if (!ktFile.isScript()) return true
+
+        return (Registry.`is`("kotlin.k2.scripting.enabled", true) || !KotlinScriptingSettings.getInstance(ktFile.project).showK2SupportWarning)
+                && supportedScriptPredicates.any { it(ktFile) }
     }
 }

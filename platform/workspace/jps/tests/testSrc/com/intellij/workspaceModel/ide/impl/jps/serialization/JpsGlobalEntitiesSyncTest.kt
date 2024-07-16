@@ -19,8 +19,6 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
-import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -47,7 +45,6 @@ class JpsGlobalEntitiesSyncTest {
 
   @Test
   fun `test project and global storage sdk sync`() {
-    Assume.assumeTrue("Test has to be executed on the new implementation of SDK", GlobalSdkTableBridge.isEnabled())
     copyAndLoadGlobalEntities(originalFile = "sdk/loading", expectedFile = "sdk/sync", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable, ) { _, entitySource ->
       val sdkInfos = mutableListOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),
@@ -92,9 +89,9 @@ class JpsGlobalEntitiesSyncTest {
           val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
             val projectSdkEntity = SdkEntity("oracle-1.8", "JavaSDK",
-                                             listOf(SdkRoot(virtualFileManager.getOrCreateFromUri("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
+                                             listOf(SdkRoot(virtualFileManager.getOrCreateFromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
                                              "", entitySource) {
-              homePath = virtualFileManager.getOrCreateFromUri("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home")
+              homePath = virtualFileManager.getOrCreateFromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home")
               version = "1.8"
             }
             builder.addEntity(projectSdkEntity)
@@ -132,8 +129,8 @@ class JpsGlobalEntitiesSyncTest {
         val globalVfu = sdkEntities.find { it.name == projectSdk.name }!!.roots[0].url
 
         assertEquals(globalVfu.url, projectVfu.url)
-        assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUri(projectVfu.url))
-        assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUri(globalVfu.url))
+        assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUrl(projectVfu.url))
+        assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUrl(globalVfu.url))
         assertNotSame(globalVfu, projectVfu)
       }
     }
@@ -181,7 +178,7 @@ class JpsGlobalEntitiesSyncTest {
             val gradleLibraryEntity = LibraryEntity("com.gradle",
                                                     LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL),
                                                     listOf(
-                                                      LibraryRoot(virtualFileManager.getOrCreateFromUri("/a/b/one.txt"), LibraryRootTypeId.SOURCES)),
+                                                      LibraryRoot(virtualFileManager.getOrCreateFromUrl("/a/b/one.txt"), LibraryRootTypeId.SOURCES)),
                                                     entitySource)
             builder.addEntity(gradleLibraryEntity)
             globalLibrariesNames.add(gradleLibraryEntity.name)
@@ -223,8 +220,8 @@ class JpsGlobalEntitiesSyncTest {
         val globalVfu = globalLibraryEntities[projectLibrary.name]!!.roots[0].url
 
         assertEquals(globalVfu.url, projectVfu.url)
-        assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUri(projectVfu.url))
-        assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUri(globalVfu.url))
+        assertSame(projectVfu, projectVirtualFileUrlManager.getOrCreateFromUrl(projectVfu.url))
+        assertSame(globalVfu, globalVirtualFileUrlManager.getOrCreateFromUrl(globalVfu.url))
         assertNotSame(globalVfu, projectVfu)
       }
     }

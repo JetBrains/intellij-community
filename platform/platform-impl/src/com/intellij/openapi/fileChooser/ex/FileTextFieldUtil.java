@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.application.ReadAction;
@@ -144,7 +144,7 @@ public final class FileTextFieldUtil {
 
         if (toPreselect == null || !variants.contains(toPreselect)) {
           boolean toPreselectFixed = false;
-          if (effectivePrefix.length() > 0) {
+          if (!effectivePrefix.isEmpty()) {
             for (FileLookup.LookupFile each : variants) {
               String eachName = StringUtil.toUpperCase(each.getName());
               if (!eachName.startsWith(effectivePrefix)) continue;
@@ -165,19 +165,19 @@ public final class FileTextFieldUtil {
             if (variants.size() == 1) {
               toPreselect = variants.get(0);
             }
-            else if (effectivePrefix.length() == 0) {
-              if (siblings.size() > 0) {
+            else if (effectivePrefix.isEmpty()) {
+              if (!siblings.isEmpty()) {
                 toPreselect = siblings.get(0);
               }
             }
 
-            if (toPreselect == null && !variants.contains(null) && variants.size() > 0) {
+            if (toPreselect == null && !variants.contains(null) && !variants.isEmpty()) {
               toPreselect = variants.get(0);
             }
           }
         }
 
-        if (currentParentMatch && siblings.size() > 0) {
+        if (currentParentMatch && !siblings.isEmpty()) {
           toPreselect = null;
         }
 
@@ -329,14 +329,14 @@ public final class FileTextFieldUtil {
 
     if (caretPos >= start) {
       String prefix = doc.getText(start, caretPos - start);
-      if (prefix.length() == 0) {
+      if (prefix.isEmpty()) {
         prefix = doc.getText(start, end - start);
       }
       if (SystemInfo.isFileSystemCaseSensitive) {
-        toRemoveExistingName = name.startsWith(prefix) && prefix.length() > 0;
+        toRemoveExistingName = name.startsWith(prefix) && !prefix.isEmpty();
       }
       else {
-        toRemoveExistingName = StringUtil.toUpperCase(name).startsWith(StringUtil.toUpperCase(prefix)) && prefix.length() > 0;
+        toRemoveExistingName = StringUtil.toUpperCase(name).startsWith(StringUtil.toUpperCase(prefix)) && !prefix.isEmpty();
       }
     }
     else {

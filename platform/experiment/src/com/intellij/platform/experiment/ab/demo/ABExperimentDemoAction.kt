@@ -5,14 +5,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.platform.experiment.ab.impl.bundle.ABExperimentBundle
 import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
-import com.intellij.platform.experiment.ab.impl.option.isControlOptionEnabled
 
 internal class ABExperimentDemoAction : AnAction(ABExperimentBundle.message("experiment.ab.demo.action.name")) {
   override fun actionPerformed(e: AnActionEvent) {
     val service = getABExperimentInstance()
 
     println("User experiment option is: " + service.getUserExperimentOption())
-    println("Is control experiment option enabled (check by service): " + service.isControlExperimentOptionEnabled())
-    println("Is control experiment option enabled (check by option itself): " + isControlOptionEnabled())
+    println("User experiment option id is: " + service.getUserExperimentOptionId())
+    println("Is control experiment option enabled: " + service.isControlExperimentOptionEnabled())
   }
 }

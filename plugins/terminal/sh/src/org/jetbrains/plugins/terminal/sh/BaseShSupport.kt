@@ -1,21 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.sh
 
-import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.sh.ShLanguage
 import com.intellij.sh.psi.ShCommandsList
+import com.intellij.sh.psi.ShFileElementType
 import com.intellij.sh.psi.ShSimpleCommand
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
-abstract class BaseShSupport : TerminalShellSupport {
-  override val promptLanguage: Language
-    get() = ShLanguage.INSTANCE
+internal abstract class BaseShSupport : TerminalShellSupport {
+  override val promptContentElementType: IElementType
+    get() = ShFileElementType.INSTANCE
 
   override val lineContinuationChar: Char = '\\'
 
@@ -74,5 +76,17 @@ internal fun getShellCommandTokens(project: Project, command: String): List<Stri
   val psiFile = PsiFileFactory.getInstance(project).createFileFromText(ShLanguage.INSTANCE, command)
   val commands = PsiTreeUtil.getChildrenOfType(psiFile, ShCommandsList::class.java)?.lastOrNull() ?: return null
   val lastCommand = commands.commandList.lastOrNull { it is ShSimpleCommand } ?: return null
-  return lastCommand.children.map { it.text }
+  val tokens = mutableListOf<String>()
+  // Append trailing error elements to the previous token.
+  // It is the case for Windows with paths delimited by `\`.
+  // Shell Script treats the trailing `\` as an error element, while it should be appended to the last token:
+  // `cd src\` -> `src` and `\` are separate tokens, but should be single.
+  for (literal in lastCommand.children) {
+    val text = literal.text
+    if (literal is PsiErrorElement && tokens.isNotEmpty()) {
+      tokens[tokens.lastIndex] = tokens.last() + text
+    }
+    else tokens.add(text)
+  }
+  return tokens
 }

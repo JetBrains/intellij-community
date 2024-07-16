@@ -7,7 +7,9 @@ import com.intellij.driver.client.Timed
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.ProductVersion
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.transport.*
+import java.lang.IllegalStateException
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
@@ -17,13 +19,13 @@ import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
-internal class DriverImpl(host: JmxHost?) : Driver {
+open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver {
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
 
-  private val appServices: MutableMap<Class<*>, Any> = ConcurrentHashMap()
+  private val appServices: MutableMap<AppServiceId, Any> = ConcurrentHashMap()
   private val projectServices: MutableMap<ProjectServiceId, Any> = ConcurrentHashMap()
-  private val utils: MutableMap<Class<*>, Any> = ConcurrentHashMap()
+  private val utils: MutableMap<UtilityId, Any> = ConcurrentHashMap()
 
   override val isConnected: Boolean
     get() {
@@ -42,6 +44,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       }
     }
 
+  fun getInvoker() = invoker
+
   override fun getProductVersion(): ProductVersion {
     return invoker.getProductVersion()
   }
@@ -50,31 +54,32 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     invoker.exit()
   }
 
-  override fun takeScreenshot(outFolder: String?) {
-    invoker.takeScreenshot(outFolder)
+  override fun takeScreenshot(outFolder: String?): String? {
+    return invoker.takeScreenshot(outFolder)
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> service(clazz: KClass<T>): T {
-    return appServices.computeIfAbsent(clazz.java, ::serviceBridge) as T
+  override fun <T : Any> service(clazz: KClass<T>, rdTarget: RdTarget): T {
+    return appServices.computeIfAbsent(AppServiceId(clazz.java, rdTarget)) { serviceBridge(clazz.java, null, rdTarget) } as T
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> service(clazz: KClass<T>, project: ProjectRef): T {
-    val id = ProjectServiceId((project as RefWrapper).getRef().identityHashCode, clazz.java)
-    return projectServices.computeIfAbsent(id) { serviceBridge(clazz.java, project) } as T
+  override fun <T : Any> service(clazz: KClass<T>, project: ProjectRef?, rdTarget: RdTarget): T {
+    val id = ProjectServiceId((project as RefWrapper).getRef().identityHashCode, clazz.java, rdTarget)
+    return projectServices.computeIfAbsent(id) { serviceBridge(clazz.java, project, rdTarget) } as T
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> utility(clazz: KClass<T>): T {
-    return utils.computeIfAbsent(clazz.java, ::utilityBridge) as T
+  override fun <T : Any> utility(clazz: KClass<T>, rdTarget: RdTarget): T {
+    return utils.computeIfAbsent(UtilityId(clazz.java, rdTarget)) { utilityBridge(clazz.java, rdTarget) } as T
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T : Any> new(clazz: KClass<T>, vararg args: Any?): T {
+  override fun <T : Any> new(clazz: KClass<T>, vararg args: Any?, rdTarget: RdTarget): T {
     val remote = findRemoteMeta(clazz.java)
                  ?: throw IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
 
+    val rdTarget = mergeRdTargets(rdTarget, remote, *args)
     val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
     val call = NewInstanceCall(
       sessionId,
@@ -83,6 +88,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       dispatcher,
       semantics,
       remote.value,
+      if (rdTarget == RdTarget.DEFAULT) RdTarget.FRONTEND else rdTarget,
       convertArgsToPass(args)
     )
     val callResult = makeCall(call)
@@ -90,7 +96,9 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   }
 
   override fun <T : Any> cast(instance: Any, clazz: KClass<T>): T {
-    if (instance !is RefWrapper) throw IllegalArgumentException("instance not a Ref to remote instance")
+    if (instance !is RefWrapper) {
+      throw IllegalArgumentException("$instance not a Ref to remote instance")
+    }
 
     val ref = instance.getRef()
     val refPluginId = instance.getRefPluginId()
@@ -156,48 +164,20 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     return value // let's hope we will be able to cast it
   }
 
-  private fun serviceBridge(clazz: Class<*>): Any {
-    val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
-
-    return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
-      when (method.name) {
-        "equals" -> proxy === args?.firstOrNull()
-        "hashCode" -> clazz.hashCode()
-        "toString" -> "@Service " + remote.value
-        else -> {
-          val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
-          val call = ServiceCall(
-            sessionId,
-            findTimedMeta(method)?.value,
-            getPluginId(remote),
-            dispatcher,
-            semantics,
-            remote.value,
-            method.name,
-            convertArgsToPass(args),
-            null,
-            remote.serviceInterface.takeIf { it.isNotBlank() }
-          )
-          val callResult = makeCall(call)
-          convertResult(callResult, method, getPluginId(remote))
-        }
-      }
-    }
-  }
-
   private fun getPluginId(remote: Remote): String? {
     return remote.plugin.takeIf { it.isNotBlank() }
   }
 
-  private fun serviceBridge(clazz: Class<*>, project: ProjectRef): Any {
+  private fun serviceBridge(clazz: Class<*>, project: ProjectRef? = null, rdTarget: RdTarget): Any {
     val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
 
-    return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
+    return Proxy.newProxyInstance(clazz.classLoader, arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
         "equals" -> proxy === args?.firstOrNull()
         "hashCode" -> clazz.hashCode()
         "toString" -> "@Service(APP) " + remote.value
         else -> {
+          val rdTarget = mergeRdTargets(rdTarget, remote, project, *(args ?: emptyArray()))
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = ServiceCall(
             sessionId,
@@ -208,8 +188,9 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             remote.value,
             method.name,
             convertArgsToPass(args),
-            (project as RefWrapper).getRef(),
-            remote.serviceInterface.takeIf { it.isNotBlank() }
+            (project as? RefWrapper?)?.getRef(),
+            remote.serviceInterface.takeIf { it.isNotBlank() },
+            rdTarget
           )
           val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
@@ -227,15 +208,16 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     }
   }
 
-  private fun utilityBridge(clazz: Class<*>): Any {
+  private fun utilityBridge(clazz: Class<*>, rdTarget: RdTarget): Any {
     val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
 
-    return Proxy.newProxyInstance(getClassLoader(), arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
+    return Proxy.newProxyInstance(clazz.classLoader, arrayOf(clazz)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
         "equals" -> proxy === args?.firstOrNull()
         "hashCode" -> clazz.hashCode()
         "toString" -> "Utility " + remote.value
         else -> {
+          val rdTarget = mergeRdTargets(rdTarget, remote, *(args ?: emptyArray()))
           val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = UtilityCall(
             sessionId,
@@ -245,7 +227,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             semantics,
             remote.value,
             method.name,
-            convertArgsToPass(args)
+            rdTarget,
+            convertArgsToPass(args),
           )
           val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
@@ -257,7 +240,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   private fun refBridge(clazz: Class<*>, ref: Ref, pluginId: String?): Any {
     val remote = findRemoteMeta(clazz) ?: throw notAnnotatedError(clazz)
 
-    return Proxy.newProxyInstance(getClassLoader(),
+    return Proxy.newProxyInstance(clazz.classLoader,
                                   arrayOf(clazz, RefWrapper::class.java)) { proxy: Any?, method: Method, args: Array<Any?>? ->
       when (method.name) {
         "equals" -> proxy === args?.firstOrNull()
@@ -279,18 +262,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             ref
           )
           val callResult = makeCall(call)
-          convertResult(callResult, method, getPluginId(remote))
+          convertResult(callResult, method, pluginId)
         }
       }
     }
-  }
-
-  private fun notAnnotatedError(clazz: Class<*>): IllegalArgumentException {
-    return IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
-  }
-
-  private fun getClassLoader(): ClassLoader? {
-    return javaClass.classLoader
   }
 
   override fun <T> withContext(dispatcher: OnDispatcher,
@@ -301,10 +276,6 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     sessionHolder.set(runAsSession)
     return try {
       this.code()
-    }
-    catch (t: Throwable) {
-      invoker.takeScreenshot("beforeKill")
-      throw t
     }
     finally {
       if (currentValue != null) {
@@ -342,6 +313,10 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   }
 }
 
+private fun notAnnotatedError(clazz: Class<*>): IllegalArgumentException {
+  return IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
+}
+
 private fun findTimedMeta(method: Method): Timed? {
   return method.annotations
     .filterIsInstance<Timed>()
@@ -354,6 +329,28 @@ private fun findRemoteMeta(clazz: Class<*>): Remote? {
     .firstOrNull()
 }
 
+private fun mergeRdTargets(
+  rdTarget: RdTarget,
+  remote: Remote,
+  vararg args: Any?
+): RdTarget {
+  val rdTargets = args.filterIsInstance<RefWrapper>()
+    .map { it.getRef().rdTarget() }
+
+  return (rdTargets + rdTarget + remote.rdTarget).reduce { acc, b ->
+    if (acc == RdTarget.DEFAULT) b
+    else if (b == RdTarget.DEFAULT) acc
+    else if (acc == b) acc
+    else throw IllegalStateException("Inconsistent rdTargets. " +
+                                     "ForceRdTarget=$rdTarget " +
+                                     "Remote(value=${remote.value}, rdTarget=${remote.rdTarget}), " +
+                                     "Args: [${args.filterIsInstance<RefWrapper>().map { "${it.getRef().rdTarget()} -> $it" }.joinToString()}]"
+    )
+  }.let {
+    if (it == RdTarget.DEFAULT) RdTarget.FRONTEND else it
+  }
+}
+
 internal data class Session(
   val id: Int,
   val dispatcher: OnDispatcher,
@@ -361,6 +358,12 @@ internal data class Session(
 )
 
 private val NO_SESSION: Session = Session(0, OnDispatcher.DEFAULT, LockSemantics.NO_LOCK)
+
+class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)
+
+private data class AppServiceId(val clazz: Class<*>, val rdTarget: RdTarget)
+private data class ProjectServiceId(val projectId: Int, val serviceClass: Class<*>, val rdTarget: RdTarget)
+private data class UtilityId(val clazz: Class<*>, val rdTarget: RdTarget)
 
 @JmxName("com.intellij.driver:type=Invoker")
 interface Invoker : AutoCloseable {
@@ -378,9 +381,5 @@ interface Invoker : AutoCloseable {
 
   fun cleanup(sessionId: Int)
 
-  fun takeScreenshot(folder: String?)
+  fun takeScreenshot(folder: String?): String?
 }
-
-class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)
-
-private data class ProjectServiceId(val projectId: Int, val serviceClass: Class<*>)

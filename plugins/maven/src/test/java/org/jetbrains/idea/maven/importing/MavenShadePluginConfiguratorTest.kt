@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.runBlocking
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
@@ -12,8 +11,6 @@ import java.nio.file.Path
 class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun `test maven shade plugin uber jar dependency`() = runBlocking {
-    assumeTrue(isWorkspaceImport)
-
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -47,6 +44,22 @@ class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>shade</goal>
+                </goals>
+                <configuration>
+                  <relocations>
+                    <relocation>
+                      <pattern>org.example</pattern>
+                      <shadedPattern>shaded.org.example</shadedPattern>
+                    </relocation>
+                  </relocations>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>                  
         </plugins>    
       </build>  

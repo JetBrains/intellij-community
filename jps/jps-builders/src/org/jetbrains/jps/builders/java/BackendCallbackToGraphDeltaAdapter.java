@@ -3,11 +3,9 @@ package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
+import kotlinx.metadata.*;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.dependency.GraphConfiguration;
-import org.jetbrains.jps.dependency.Node;
-import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -24,6 +22,7 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   private final Map<String, Set<Usage>> myAdditionalUsages = Collections.synchronizedMap(new HashMap<>());
   private final Map<Path, Set<Usage>> myPerSourceAdditionalUsages = Collections.synchronizedMap(new HashMap<>());
   private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
+  private final Map<NodeSource, Set<Usage>> mySelfUsages = new HashMap<>();
   private final GraphConfiguration myGraphConfig;
 
   BackendCallbackToGraphDeltaAdapter(GraphConfiguration graphConfig) {
@@ -41,24 +40,66 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
     if (imports != null) {
       addImportUsages(builder, imports.getFirst(), imports.getSecond());
     }
-    Set<Usage> additional = myAdditionalUsages.remove(nodeName);
-    if (additional != null) {
-      for (Usage usage : additional) {
-        if (!nodeID.equals(usage.getElementOwner())) {
-          builder.addUsage(usage);
-        }
+    Set<Usage> additionalUsages = myAdditionalUsages.remove(nodeName);
+    if (additionalUsages != null) {
+      for (Usage usage : additionalUsages) {
+        builder.addUsage(usage);
       }
     }
-    for (Usage usage : Iterators.flat(Iterators.map(sources, src -> myPerSourceAdditionalUsages.remove(Path.of(src))))) {
-      builder.addUsage(usage);
-    }
+
     var node = builder.getResult();
-    if (!node.isPrivate()) {
-      myNodes.add(new Pair<>(node, Iterators.collect(Iterators.map(sources, myGraphConfig.getPathMapper()::toNodeSource), new SmartList<>())));
+    List<NodeSource> nodeSources = Iterators.collect(Iterators.map(sources, myGraphConfig.getPathMapper()::toNodeSource), new SmartList<>());
+
+    Iterable<LookupNameUsage> lookups = Iterators.flat(Iterators.map(node.getMetadata(KotlinMeta.class), meta -> {
+      KmDeclarationContainer container = meta.getDeclarationContainer();
+      final JvmNodeReferenceID owner;
+      LookupNameUsage clsUsage = null;
+      if (container instanceof KmPackage) {
+        owner = new JvmNodeReferenceID(JvmClass.getPackageName(node.getName()));
+      }
+      else if (container instanceof KmClass) {
+        owner = new JvmNodeReferenceID(((KmClass)container).getName());
+        String ownerName = owner.getNodeName();
+        String scopeName = JvmClass.getPackageName(ownerName);
+        String symbolName = scopeName.isEmpty()? ownerName : ownerName.substring(scopeName.length() + 1);
+        clsUsage = new LookupNameUsage(scopeName, symbolName);
+      }
+      else {
+        owner = null;
+      }
+      if (owner == null) {
+        return Collections.emptyList();
+      }
+      Iterable<LookupNameUsage> memberLookups =
+        Iterators.map(Iterators.unique(Iterators.flat(Iterators.map(container.getFunctions(), KmFunction::getName), Iterators.map(container.getProperties(), KmProperty::getName))), name -> new LookupNameUsage(owner, name));
+      return clsUsage == null? memberLookups : Iterators.flat(Iterators.asIterable(clsUsage), memberLookups);
+    }));
+
+    for (LookupNameUsage lookup : lookups) {
+      for (NodeSource src : nodeSources) {
+        mySelfUsages.computeIfAbsent(src, s -> new HashSet<>()).add(lookup);
+      }
     }
+
+    myNodes.add(new Pair<>(node, nodeSources));
   }
 
   public List<Pair<Node<?, ?>, Iterable<NodeSource>>> getNodes() {
+    
+    if (!myPerSourceAdditionalUsages.isEmpty()) {
+      NodeSourcePathMapper pathMapper = myGraphConfig.getPathMapper();
+      for (Map.Entry<Path, Set<Usage>> entry : myPerSourceAdditionalUsages.entrySet()) {
+        NodeSource src = pathMapper.toNodeSource(entry.getKey());
+        Set<Usage> usages = entry.getValue();
+        Set<Usage> selfUsages = mySelfUsages.get(src);
+        if (selfUsages != null) {
+          usages.removeAll(selfUsages);
+        }
+        myNodes.add(new Pair<>(new FileNode(src.toString(), usages), List.of(src)));
+      }
+      myPerSourceAdditionalUsages.clear();
+    }
+
     return myNodes;
   }
 

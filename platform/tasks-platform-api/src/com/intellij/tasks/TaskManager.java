@@ -103,12 +103,6 @@ public abstract class TaskManager {
 
   public abstract void removeTask(@NotNull LocalTask task);
 
-  /**
-   * @deprecated use {@link TaskManager#addTaskListener(TaskListener, Disposable)}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void addTaskListener(TaskListener listener);
-
   public abstract void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable);
 
   // repositories management

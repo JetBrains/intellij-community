@@ -350,7 +350,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   protected static int compareFileNames(@NotNull String name1, @NotNull String name2) {
-    return FileNameComparator.INSTANCE.compare(name1, name2);
+    return FileNameComparator.getInstance().compare(name1, name2);
   }
 
   public static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {

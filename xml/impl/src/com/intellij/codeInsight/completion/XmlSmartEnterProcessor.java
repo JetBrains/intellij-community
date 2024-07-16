@@ -66,7 +66,11 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
           }
 
           if (tagNameText == null) {
-            tagNameText = text.subSequence(tagAtCaret.getTextRange().getStartOffset() + 1, caretAt);
+            int start = tagAtCaret.getTextRange().getStartOffset() + 1;
+            if (start > caretAt) {
+              return false;
+            }
+            tagNameText = text.subSequence(start, caretAt);
           }
 
           final PsiElement element = psiFile.findElementAt(probableCommaOffset);

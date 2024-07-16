@@ -6,12 +6,13 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
@@ -24,16 +25,17 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
 
 internal class VariableLookupElementFactory {
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     fun createLookup(
-        signature: KtVariableLikeSignature<*>,
+        signature: KaVariableSignature<*>,
         options: CallableInsertionOptions,
     ): LookupElementBuilder {
         val rendered = renderVariable(signature)
         var builder = createLookupElementBuilder(options, signature, rendered)
 
         val symbol = signature.symbol
-        if (symbol is KtPropertySymbol) {
+        if (symbol is KaPropertySymbol) {
             builder = builder.withLookupString(symbol.javaGetterName.asString())
             symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
         }
@@ -41,10 +43,10 @@ internal class VariableLookupElementFactory {
         return withCallableSignatureInfo(signature, builder)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createLookupElementBuilder(
         options: CallableInsertionOptions,
-        signature: KtVariableLikeSignature<*>,
+        signature: KaVariableSignature<*>,
         rendered: String,
         insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
     ): LookupElementBuilder {
@@ -52,7 +54,7 @@ internal class VariableLookupElementFactory {
 
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
-                val functionalType = signature.returnType as KtFunctionalType
+                val functionalType = signature.returnType as KaFunctionType
                 val lookupObject = FunctionCallLookupObject(
                     name,
                     options,
@@ -84,12 +86,13 @@ internal class VariableLookupElementFactory {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,
-        symbol: KtVariableLikeSymbol
+        symbol: KaVariableSymbol
     ): LookupElementBuilder = when (symbol) {
-        is KtSyntheticJavaPropertySymbol -> {
+        is KaSyntheticJavaPropertySymbol -> {
             val getterName = symbol.javaGetterName.asString()
             val setterName = symbol.javaSetterName?.asString()
             lookupElementBuilder.withTailText((" (from ${buildSyntheticPropertyTailText(getterName, setterName)})"))

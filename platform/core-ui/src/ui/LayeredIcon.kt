@@ -322,7 +322,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     return floor(scaleVal(vShifts[i].toDouble(), ScaleType.USR_SCALE)).toInt()
   }
 
-  protected fun updateSize(allLayers: Array<Icon?>) {
+  private fun updateSize(allLayers: Array<Icon?>) {
     sizeIsDirty = false
 
     var minX = Int.MAX_VALUE

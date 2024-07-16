@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.inspectopedia.extractor.utils;
 
 import com.intellij.openapi.util.Pair;
@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class HtmlUtils {
-  public static final Safelist SAFELIST = new Safelist();
+  private static final Safelist SAFELIST = new Safelist();
 
   static {
     SAFELIST.addTags("a", "b", "code", "i", "li", "list", "p", "s", "u");
@@ -46,8 +46,7 @@ public final class HtmlUtils {
     "code[style=block] > *"
   );
 
-  @NotNull
-  public static String cleanupHtml(@NotNull String source, @Nullable String languageForCodeBlocks) {
+  public static @NotNull String cleanupHtml(@NotNull String source, @Nullable String languageForCodeBlocks) {
     final Document document = Jsoup.parse(source);
 
     RENAME_MAP.forEach(map -> document.select(map.first).tagName(map.second));

@@ -3,6 +3,7 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implement
   private volatile boolean myIsCanceled;
 
   @Obsolete
+  @Contract(pure = true)
   public EmptyProgressIndicator() { }
 
   @Obsolete

@@ -38,13 +38,12 @@ public final class CharToStringIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new CharToStringPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiLiteralExpression charLiteral = (PsiLiteralExpression)element;
     final String charLiteralText = charLiteral.getText();
     final String stringLiteral = PsiLiteralUtil.stringForCharLiteral(charLiteralText);

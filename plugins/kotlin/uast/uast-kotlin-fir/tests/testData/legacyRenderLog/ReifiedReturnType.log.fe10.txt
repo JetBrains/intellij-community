@@ -147,4 +147,3 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                     UIdentifier (Identifier (TODO))
-                    USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)

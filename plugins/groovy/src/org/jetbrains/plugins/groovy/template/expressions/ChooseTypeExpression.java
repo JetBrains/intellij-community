@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,10 @@ public class ChooseTypeExpression extends Expression {
 
   @Override
   public Result calculateResult(ExpressionContext context) {
-    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+    Editor editor = context.getEditor();
+    if (editor != null) {
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(editor.getDocument());
+    }
     PsiType type = myTypePointer.getType();
     if (type != null) {
       if (myAddDefType && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || mySelectDef)) {

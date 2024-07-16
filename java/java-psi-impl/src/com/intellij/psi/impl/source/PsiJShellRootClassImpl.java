@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -67,15 +53,13 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, level, false);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @Nullable
   @Override
-  public String getQualifiedName() {
+  public @Nullable String getQualifiedName() {
     return myQName;
   }
 
@@ -94,15 +78,13 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiReferenceList getExtendsList() {
+  public @Nullable PsiReferenceList getExtendsList() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiReferenceList getImplementsList() {
+  public @Nullable PsiReferenceList getImplementsList() {
     return null;
   }
 
@@ -116,9 +98,8 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return PsiClassType.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public PsiClass getSuperClass() {
+  public @Nullable PsiClass getSuperClass() {
     return null;
   }
 
@@ -177,15 +158,13 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return PsiClassImplUtil.getAllInnerClasses(this);
   }
 
-  @Nullable
   @Override
-  public PsiField findFieldByName(String name, boolean checkBases) {
+  public @Nullable PsiField findFieldByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findFieldByName(this, name, checkBases);
   }
 
-  @Nullable
   @Override
-  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
+  public @Nullable PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
@@ -199,27 +178,23 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
-  @NotNull
   @Override
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
-  @NotNull
   @Override
-  public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiClassImplUtil.MemberType.METHOD);
   }
 
-  @Nullable
   @Override
-  public PsiClass findInnerClassByName(String name, boolean checkBases) {
+  public @Nullable PsiClass findInnerClassByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findInnerByName(this, name, checkBases);
   }
 
-  @Nullable
   @Override
-  public PsiIdentifier getNameIdentifier() {
+  public @Nullable PsiIdentifier getNameIdentifier() {
     return null;
   }
 
@@ -238,15 +213,13 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
-  @Nullable
   @Override
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     return null;
   }
 
-  @NotNull
   @Override
-  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+  public @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
@@ -260,9 +233,8 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiDocComment getDocComment() {
+  public @Nullable PsiDocComment getDocComment() {
     return null;
   }
 
@@ -271,9 +243,8 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiTypeParameterList getTypeParameterList() {
+  public @Nullable PsiTypeParameterList getTypeParameterList() {
     return null;
   }
 
@@ -282,9 +253,8 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public PsiModifierList getModifierList() {
+  public @Nullable PsiModifierList getModifierList() {
     return null;
   }
 
@@ -293,15 +263,13 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return PsiModifier.PUBLIC.equals(name) || PsiModifier.FINAL.equals(name);
   }
 
-  @Nullable
   @Override
-  public PsiJavaToken getLBrace() {
+  public @Nullable PsiJavaToken getLBrace() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiJavaToken getRBrace() {
+  public @Nullable PsiJavaToken getRBrace() {
     return null;
   }
 

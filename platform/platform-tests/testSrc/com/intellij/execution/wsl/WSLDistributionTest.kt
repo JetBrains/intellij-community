@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
 import com.intellij.platform.ijent.*
-import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerOrReplaceServiceInstance
@@ -135,6 +135,39 @@ class WSLDistributionTest {
           cmd = listOf(
             TEST_SHELL, "-l", "-c",
             """export FOOBAR=''"'"'o"ops 2'"'"'' && export HURR=DURR && printf foo bar ''"'"'o"ops 1'"'"''""",
+          ),
+        ))
+        environment.entries should beEmpty()
+      }
+    }
+
+    /** IDEA-351354 */
+    @TestTemplate
+    fun `environment variables with brackets`(strategy: WslTestStrategy) {
+      val options = WSLCommandLineOptions()
+      withClue("Checking the default value for an option. If it fails, the test should be revised") {
+        options.isPassEnvVarsUsingInterop should be(false)
+      }
+      val cmd = strategy.patch(
+        GeneralCommandLine("true")
+          .withEnvironment("CommonProgramFiles", "/mnt/c/Program Files/Common Files")
+          .withEnvironment("CommonProgramFiles(x86)", "/mnt/c/Program Files (x86)/Common Files")
+          .withEnvironment("ProgramFiles", "/mnt/c/Program Files")
+          .withEnvironment("Path", "/mnt/c/ProgramData/chocolatey/bin;C:/WINDOWS/system32;C:/WINDOWS;C:/Program Files (x86)/Gpg4win/../GnuPG/bin")
+          .withEnvironment("ProgramFiles(x86)", "/mnt/c/Program Files (x86)"),
+        options,
+      )
+      assertSoftly(cmd) {
+        argv should be(strategy.argv(
+          wslExeParams = listOf(wslExe, "--distribution", WSL_ID, "--exec", "$toolsRoot/ttyfix"),
+          cmd = listOf(
+            TEST_SHELL, "-l", "-c",
+            // It doesn't matter if Windows paths should be passed into environment variables for running something on Linux.
+            // The goal of this test is to ensure that both filters return the same output.
+            "export CommonProgramFiles='/mnt/c/Program Files/Common Files'" +
+            " && export Path='/mnt/c/ProgramData/chocolatey/bin;C:/WINDOWS/system32;C:/WINDOWS;C:/Program Files (x86)/Gpg4win/../GnuPG/bin'" +
+            " && export ProgramFiles='/mnt/c/Program Files'" +
+            " && true",
           ),
         ))
         environment.entries should beEmpty()
@@ -414,15 +447,15 @@ class WSLDistributionTest {
       }
     }
 
-    return when (this) {
-      WslTestStrategy.Legacy -> mockWslDistribution.patchCommandLine(cmd, null, options)
-      WslTestStrategy.Ijent -> ProgressManager.getInstance().runProcess(
-        Computable {
-          passGeneralCommandLineThroughWslIjentManager(mockWslDistribution, cmd, options)
-        },
-        EmptyProgressIndicator()  // These particular tests don't require any really cancellable progress indicator.
-      )
-    }
+    return ProgressManager.getInstance().runProcess(
+      Computable {
+        when (this) {
+          WslTestStrategy.Legacy -> mockWslDistribution.patchCommandLine(cmd, null, options)
+          WslTestStrategy.Ijent -> passGeneralCommandLineThroughWslIjentManager(mockWslDistribution, cmd, options)
+        }
+      },
+      EmptyProgressIndicator()  // These particular tests don't require any really cancellable progress indicator.
+    )
   }
 
   private fun passGeneralCommandLineThroughWslIjentManager(
@@ -442,7 +475,7 @@ class WSLDistributionTest {
           @DelicateCoroutinesApi
           override val processAdapterScope: CoroutineScope = scope
 
-          override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
+          override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
             require(wslDistribution == mockWslDistribution) { "$wslDistribution != $mockWslDistribution" }
             return MockIjentApi(adapter, rootUser)
           }
@@ -470,22 +503,22 @@ class WSLDistributionTest {
 
 enum class WslTestStrategy { Legacy, Ijent }
 
-private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentApi {
+private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
   override val id: IjentId get() = throw UnsupportedOperationException()
 
-  override val platform: IjentExecFileProvider.SupportedPlatform get() = throw UnsupportedOperationException()
+  override val platform: IjentPlatform get() = throw UnsupportedOperationException()
 
   override val isRunning: Boolean get() = true
 
-  override val info: IjentApi.Info get() = throw UnsupportedOperationException()
+  override val info: IjentPosixInfo get() = throw UnsupportedOperationException()
 
   override fun close(): Unit = Unit
 
   override val exec: IjentExecApi get() = MockIjentExecApi(adapter, rootUser)
 
-  override val fs: IjentFileSystemApi get() = throw UnsupportedOperationException()
+  override val fs: IjentFileSystemPosixApi get() = throw UnsupportedOperationException()
 
-  override val tunnels: IjentTunnelsApi get() = throw UnsupportedOperationException()
+  override val tunnels: IjentTunnelsPosixApi get() = throw UnsupportedOperationException()
 }
 
 private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
@@ -554,9 +587,10 @@ private class WslTestStrategyExtension
     val disposable = Disposer.newDisposable()
     context.getStore(ExtensionContext.Namespace.GLOBAL).put(this to Disposable::class.java, disposable)
 
+    val oldService = WslIjentAvailabilityService.getInstance()
     ApplicationManager.getApplication().registerOrReplaceServiceInstance(
       WslIjentAvailabilityService::class.java,
-      object : WslIjentAvailabilityService {
+      object : WslIjentAvailabilityService by oldService {
         override fun runWslCommandsViaIjent(): Boolean =
           when (context.getStore(ExtensionContext.Namespace.GLOBAL).get(WslTestStrategy::class.java) as WslTestStrategy?) {
             null -> false

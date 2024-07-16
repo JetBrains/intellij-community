@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
@@ -171,6 +172,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
     PsiFile file = referringElement.getContainingFile();
     if (file instanceof GroovyFile) {
       ((GroovyFile)file).importClass(targetClass);
+      JavaModuleGraphUtil.addDependency(file, targetClass, null);
     }
   }
 

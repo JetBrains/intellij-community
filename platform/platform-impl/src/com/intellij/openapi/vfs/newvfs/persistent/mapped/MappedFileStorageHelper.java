@@ -8,9 +8,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.Unmappable;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -27,6 +27,7 @@ import java.util.function.IntSupplier;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
 
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.CLEAN;
 import static com.intellij.util.io.IOUtil.MiB;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
@@ -88,6 +89,7 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
 
       return MMappedFileStorageFactory.withDefaults()
         .pageSize(DEFAULT_PAGE_SIZE)
+        .ifFileIsNotPageAligned(CLEAN)
         .wrapStorageSafely(
           absoluteStoragePath,
           mappedFileStorage -> {
@@ -585,10 +587,9 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
   }
 
   private static int extractFileId(@NotNull VirtualFile vFile) {
-    if (!(vFile instanceof VirtualFileWithId)) {
+    if (!(vFile instanceof VirtualFileWithId fileWithId)) {
       throw new IllegalArgumentException(vFile + " must be VirtualFileWithId");
     }
-    VirtualFileWithId fileWithId = (VirtualFileWithId)vFile;
 
     return fileWithId.getId();
   }

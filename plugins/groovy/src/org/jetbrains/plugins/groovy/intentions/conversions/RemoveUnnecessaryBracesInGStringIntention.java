@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class RemoveUnnecessaryBracesInGStringIntention extends GrPsiUpdateIntention {
+public final class RemoveUnnecessaryBracesInGStringIntention extends GrPsiUpdateIntention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {

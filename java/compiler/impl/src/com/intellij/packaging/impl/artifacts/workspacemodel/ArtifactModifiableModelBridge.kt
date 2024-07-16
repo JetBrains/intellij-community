@@ -17,7 +17,7 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridg
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -131,7 +131,7 @@ class ArtifactModifiableModelBridge(
 
     val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, externalSource)
 
-    val rootElementEntity = rootElement.getOrAddEntity(diff, source, project) as CompositePackagingElementEntity
+    val rootElementEntity = rootElement.getOrAddEntityBuilder(diff, source, project) as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
     rootElement.forThisAndFullTree {
       if (!it.hasStorage()) {
         it.setStorage(versionedOnBuilder, project, elementsWithDiff, PackagingElementInitializer)
@@ -139,7 +139,7 @@ class ArtifactModifiableModelBridge(
       }
     }
 
-    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(it)) }
+    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(it)) }
     val artifactEntity = diff addEntity ArtifactEntity(uniqueName, artifactType.id, false, source) {
       this.outputUrl = outputUrl
       this.rootElement = rootElementEntity
@@ -239,7 +239,7 @@ class ArtifactModifiableModelBridge(
       when (it) {
         is EntityChange.Removed<*> -> Unit
         is EntityChange.Added -> {
-          val artifactBridge = diff.artifactsMap.getDataByEntity(it.entity)!!
+          val artifactBridge = diff.artifactsMap.getDataByEntity(it.newEntity)!!
           added.add(artifactBridge)
         }
         is EntityChange.Replaced -> {
@@ -258,7 +258,7 @@ class ArtifactModifiableModelBridge(
       }
     }
 
-    val entityStorage = WorkspaceModel.getInstance(project).internal.entityStorage
+    val entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
     added.forEach { bridge ->
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ide.highlighter.ArchiveFileType
@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
+import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
@@ -105,7 +105,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             } else if (
                 nameSequence.endsWith(JavaClassFileType.DOT_DEFAULT_EXTENSION) ||
                 nameSequence.endsWith(BuiltInSerializerProtocol.DOT_DEFAULT_EXTENSION) ||
-                nameSequence.endsWith(MetadataPackageFragment.Companion.DOT_METADATA_FILE_EXTENSION)
+                nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION)
             ) {
                 canContainClassFiles = false
                 isBinary = true
@@ -123,7 +123,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             }
 
           val classFileScope = when {
-            correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(
+            correctedFilter.includeScriptDependencies -> ScriptDependencyAware.getInstance(
               project).getAllScriptsDependenciesClassFilesScope()
             else -> null
           }
@@ -139,7 +139,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             }
 
             val sourceFileScope = when {
-                correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(project)
+                correctedFilter.includeScriptDependencies -> ScriptDependencyAware.getInstance(project)
                     .getAllScriptDependenciesSourcesScope()
 
                 else -> null

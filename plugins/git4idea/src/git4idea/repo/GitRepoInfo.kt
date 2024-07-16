@@ -7,7 +7,6 @@ import com.intellij.vcs.log.Hash
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.NonNls
 
 data class GitRepoInfo(val currentBranch: GitLocalBranch?,
@@ -26,6 +25,11 @@ data class GitRepoInfo(val currentBranch: GitLocalBranch?,
   val remoteBranches: Collection<GitRemoteBranch>
     @Deprecated("")
     get() = remoteBranchesWithHashes.keys
+
+  val isOnBranch: Boolean
+    get() = currentBranch != null &&
+            state != Repository.State.DETACHED &&
+            state != Repository.State.REBASING
 
   @NonNls
   override fun toString(): String {

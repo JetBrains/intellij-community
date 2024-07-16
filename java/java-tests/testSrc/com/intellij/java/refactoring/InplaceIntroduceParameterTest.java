@@ -131,14 +131,9 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
   }
 
   public void testExtractConflictingParamOverLocal() {
-    try {
-      doTest(introducer -> type("p"));
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("There is already a parameter <b><code>p</code></b>. It will conflict with the introduced parameter", e.getMessage());
-      return;
-    }
-    fail("Conflict expected");
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+                 "There is already a parameter <b><code>p</code></b>. It will conflict with the introduced parameter",
+                 () -> doTest(introducer -> type("p")));
   }
 
   private static class MyIntroduceParameterHandler extends IntroduceParameterHandler implements MyIntroduceHandler {

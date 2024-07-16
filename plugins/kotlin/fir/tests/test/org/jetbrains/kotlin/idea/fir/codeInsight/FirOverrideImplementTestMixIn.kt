@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.fir.codeInsight
 
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTestMixIn
 import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
@@ -19,25 +19,25 @@ internal interface FirOverrideImplementTestMixIn : OverrideImplementTestMixIn<Kt
 
     override fun createOverrideMembersHandler(): AbstractGenerateMembersHandler<KtClassMember> = KtOverrideMembersHandler()
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun isMemberOfAny(parentClass: KtClassOrObject, chooserObject: KtClassMember): Boolean = allowAnalysisOnEdt {
         analyze(parentClass) {
             val symbol = chooserObject.memberInfo.symbolPointer.restoreSymbol() ?: return false
-            symbol.callableIdIfNonLocal?.classId == StandardClassIds.Any
+            symbol.callableId?.classId == StandardClassIds.Any
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getMemberName(parentClass: KtClassOrObject, chooserObject: KtClassMember): String = allowAnalysisOnEdt {
         analyze(parentClass) {
-            (chooserObject.memberInfo.symbolPointer.restoreSymbol() as? KtNamedSymbol)?.name?.asString() ?: ""
+            (chooserObject.memberInfo.symbolPointer.restoreSymbol() as? KaNamedSymbol)?.name?.asString() ?: ""
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun getContainingClassName(parentClass: KtClassOrObject, chooserObject: KtClassMember): String = allowAnalysisOnEdt {
         analyze(parentClass) {
-            chooserObject.memberInfo.symbolPointer.restoreSymbol()?.callableIdIfNonLocal?.classId?.shortClassName?.asString() ?: ""
+            chooserObject.memberInfo.symbolPointer.restoreSymbol()?.callableId?.classId?.shortClassName?.asString() ?: ""
         }
     }
 }

@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.maven.importer
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenImporterTest
-import org.jetbrains.kotlin.idea.maven.toJpsVersionAgnosticKotlinBundledPath
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.internal.runners.JUnit38ClassRunner

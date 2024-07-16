@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.addingPolicy.ElementsAddingPolicy
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.codeInsight.lookup.LookupElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.codeInsight.LOOKUP_ELEMENT_CONTRIBUTOR
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
@@ -32,7 +32,7 @@ internal class RecordingFirCompletionContributorDelegate<C : KotlinRawPositionCo
     private val originalContributor: FirCompletionContributor<C>,
     private val resultController: PolicyController,
 ) : FirCompletionContributor<C> {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: C,
         weighingContext: WeighingContext,

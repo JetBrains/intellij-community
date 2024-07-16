@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.data.DataGetter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import javax.swing.event.ListSelectionListener;
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class CommitSelectionListener<T extends VcsCommitMetadata> implements ListSelectionListener {
   private static final Logger LOG = Logger.getInstance(CommitSelectionListener.class);
   protected final @NotNull VcsLogGraphTable myGraphTable;

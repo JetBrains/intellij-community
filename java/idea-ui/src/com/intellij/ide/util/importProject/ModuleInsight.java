@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
+import com.intellij.util.text.UniqueNameGenerator;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -188,7 +189,7 @@ public abstract class ModuleInsight {
     }
     final Set<String> moduleNames = new HashSet<>(myExistingModuleNames);
     for (ModuleDescriptor module : newModules) {
-      final String suggested = suggestUniqueName(moduleNames, module.getName());
+      final String suggested = UniqueNameGenerator.generateUniqueName(module.getName(), moduleNames);
       module.setName(suggested);
       moduleNames.add(suggested);
     }
@@ -272,8 +273,8 @@ public abstract class ModuleInsight {
       final Set<String> libNames = new HashSet<>(myExistingProjectLibraryNames);
       for (LibraryDescriptor library : libraries) {
         final Collection<File> libJars = library.getJars();
-        final String newName = suggestUniqueName(libNames, libJars.size() == 1 ? FileUtilRt
-          .getNameWithoutExtension(libJars.iterator().next().getName()) : library.getName());
+        String baseName = libJars.size() == 1 ? FileUtilRt.getNameWithoutExtension(libJars.iterator().next().getName()) : library.getName();
+        final String newName = UniqueNameGenerator.generateUniqueName(baseName, libNames);
         library.setName(newName);
         libNames.add(newName);
       }
@@ -285,15 +286,6 @@ public abstract class ModuleInsight {
   }
 
   public abstract boolean isApplicableRoot(final DetectedProjectRoot root);
-
-  private static String suggestUniqueName(Set<String> existingNames, String baseName) {
-    String name = baseName;
-    int index = 1;
-    while (existingNames.contains(name)) {
-      name = baseName + (index++);
-    }
-    return name;
-  }
 
   public void merge(final ModuleDescriptor mainModule, final ModuleDescriptor module) {
     for (File contentRoot : module.getContentRoots()) {

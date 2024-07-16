@@ -1,0 +1,2 @@
+match "foo":
+    cas<caret>

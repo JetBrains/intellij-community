@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
+import com.intellij.collaboration.async.launchNowIn
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
@@ -9,14 +12,10 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
@@ -43,71 +42,47 @@ internal class GHPRChangesViewModelImpl(
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope()
 
-  private val commitsResult: Flow<Result<List<GHCommit>>> = channelFlow {
-    val disp = Disposer.newDisposable()
-    var prev: Job? = null
-    dataProvider.changesData.loadCommitsFromApi(disp) {
-      prev?.cancel()
-      prev = launch {
-        val result = runCatching {
-          it.asDeferred().await()
-        }
-        send(result)
-      }
-    }
-    awaitClose { Disposer.dispose(disp) }
-  }
-
-  private val isUpdatingChanges = MutableStateFlow(false)
-  private val changesResult: Flow<Result<GitBranchComparisonResult>> = channelFlow {
-    val disp = Disposer.newDisposable()
-    var prev: Job? = null
-    dataProvider.changesData.loadChanges(disp) {
-      val isUpdate = prev != null
-      prev?.cancel()
-      prev = launch {
-        isUpdatingChanges.value = isUpdate
-        try {
-          val result = runCatching {
-            it.asDeferred().await()
-          }
-          send(result)
-        }
-        finally {
-          isUpdatingChanges.value = false
-        }
-      }
-    }
-    awaitClose { Disposer.dispose(disp) }
-  }
-
-  init {
-    // pre-fetch to show diff quicker
-    dataProvider.changesData.fetchBaseBranch()
-    dataProvider.changesData.fetchHeadBranch()
-  }
+  private val isLoadingChanges = MutableStateFlow(false)
 
   override val changesLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
-    dataProvider.changesData.reloadChanges()
-  }
-
-  override val reviewCommits: StateFlow<List<GHCommit>> = commitsResult
-    .map { it.getOrNull() ?: listOf() }
-    .stateIn(cs, SharingStarted.Eagerly, listOf())
-
-  private val changesContainer: Flow<Result<CodeReviewChangesContainer>> = changesResult.map { changesResult ->
-    changesResult.map {
-      CodeReviewChangesContainer(it.changes, it.commits.map { it.sha }, it.changesByCommits)
+    cs.launch {
+      dataProvider.changesData.signalChangesNeedReload()
     }
   }
 
-  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) { changes, changeList ->
-    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList).also { vm ->
-      launch {
-        isUpdatingChanges.collect {
-          vm.setUpdating(it)
-        }
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override val reviewCommits: StateFlow<List<GHCommit>> =
+    dataProvider.changesData.changesNeedReloadSignal.withInitial(Unit).transformLatest {
+      try {
+        dataProvider.changesData.loadCommits()
       }
+      catch (e: Exception) {
+        emptyList()
+      }.also {
+        emit(it)
+      }
+    }.stateIn(cs, SharingStarted.Eagerly, listOf())
+
+  private val changesContainer: StateFlow<Result<CodeReviewChangesContainer>?> =
+    dataProvider.changesData.changesNeedReloadSignal.withInitial(Unit).map {
+    isLoadingChanges.value = true
+    try {
+      runCatching {
+        dataProvider.changesData.loadChanges()
+      }.map {
+        CodeReviewChangesContainer(it.changes, it.commits.map { it.sha }, it.changesByCommits)
+      }
+    }
+    finally {
+      isLoadingChanges.value = false
+    }
+    }.stateInNow(cs, null)
+
+  private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changes, changeList ->
+    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList).also { vm ->
+      changesContainer.combine(isLoadingChanges) { _, loading ->
+        vm.setUpdating(loading)
+      }.launchNowIn(this)
     }
   }
 
@@ -123,23 +98,26 @@ internal class GHPRChangesViewModelImpl(
   override val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModelImpl>> = delegate.changeListVm
 
   override fun selectCommit(index: Int) {
-    delegate.selectCommit(index)
+    delegate.selectCommit(index)?.selectChange(null)
   }
 
   override fun selectNextCommit() {
-    delegate.selectNextCommit()
+    delegate.selectNextCommit()?.selectChange(null)
   }
 
   override fun selectPreviousCommit() {
-    delegate.selectPreviousCommit()
+    delegate.selectPreviousCommit()?.selectChange(null)
   }
 
   override fun selectCommit(sha: String) {
-    delegate.selectCommit(sha)
+    delegate.selectCommit(sha)?.selectChange(null)
   }
 
   override fun selectChange(change: RefComparisonChange) {
-    delegate.selectChange(change)
+    val commit = changesContainer.value?.getOrNull()?.let {
+      it.commitsByChange[change]
+    }
+    delegate.selectCommit(commit)?.selectChange(change)
   }
 
   override fun commitHash(commit: GHCommit): String = commit.abbreviatedOid

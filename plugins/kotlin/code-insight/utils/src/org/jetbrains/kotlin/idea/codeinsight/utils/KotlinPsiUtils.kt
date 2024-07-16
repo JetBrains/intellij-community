@@ -7,12 +7,11 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.parsing.*
 import org.jetbrains.kotlin.psi.*
@@ -204,8 +204,11 @@ private fun getNegatedOperatorText(token: IElementType): String {
     return negatedOperator.value
 }
 
-fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
-    (receiverExpression as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+fun KtQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
+    (receiverExpression as? KtQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+
+fun KtExpression.getLeftMostReceiverExpressionOrThis(): KtExpression =
+    (this as? KtQualifiedExpression)?.getLeftMostReceiverExpression() ?: this
 
 fun KtDotQualifiedExpression.replaceFirstReceiver(
     factory: KtPsiFactory,
@@ -349,34 +352,47 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
 fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
 fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
-        resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
-    return symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED
+        resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
+    return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
-fun KtCallExpression.isCalling(fqNames: List<FqName>): Boolean {
+context(KaSession)
+fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
-    if (targetFqNames.isEmpty()) return false
-    return analyze(this) {
-        val symbol = resolveCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtCallableSymbol ?: return false
-        targetFqNames.any { symbol.callableIdIfNonLocal?.asSingleFqName() == it }
-    }
+    if (targetFqNames.none()) return false
+
+    val fqName = resolveToCall()
+        ?.singleFunctionCallOrNull()
+        ?.partiallyAppliedSymbol
+        ?.symbol
+        ?.callableId
+        ?.asSingleFqName()
+        ?: return false
+    return targetFqNames.any { it == fqName }
 }
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTIONS = listOf(FqName("kotlin.enumValues"), FqName("kotlin.enumValueOf"))
+operator fun FqName.plus(name: Name): FqName = child(name)
 
-context(KtAnalysisSession)
+operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
+
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Sequence<FqName> = sequenceOf(
+    "enumValues",
+    "enumValueOf",
+).map { StandardNames.BUILT_INS_PACKAGE_FQ_NAME + it }
+
+context(KaSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
         .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
     return when (target) {
-        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS)
+        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
         is KtCallableDeclaration -> {
             target.anyDescendantOfType<KtCallExpression> {
-                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTIONS) && it.isUsedAsExpression()
+                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression
             }
         }
 
@@ -384,13 +400,13 @@ fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     val calleeExpression = this.calleeExpression ?: return false
     return (calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName() in ENUM_STATIC_METHOD_NAMES && calleeExpression.isSynthesizedFunction()
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun KtCallableReferenceExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     return this.canBeReferenceToBuiltInEnumFunction() && this.callableReference.isSynthesizedFunction()
 }
@@ -406,3 +422,34 @@ val KtIfExpression.branches: List<KtExpression?>
     }
 
 fun KtClass.isFunInterface(): Boolean = isInterface() && getFunKeyword() != null
+
+fun KtParenthesizedExpression.removeUnnecessaryParentheses() {
+    val commentSaver = CommentSaver(this)
+    val innerExpression = this.expression ?: return
+    val binaryExpressionParent = this.parent as? KtBinaryExpression
+    val ktPsiFactory = KtPsiFactory(this.project)
+
+    val replaced = if (binaryExpressionParent != null &&
+        innerExpression is KtBinaryExpression &&
+        binaryExpressionParent.right == this
+    ) {
+        val newElement = ktPsiFactory.createExpressionByPattern(
+            "$0 $1 $2 $3 $4",
+            binaryExpressionParent.left!!,
+            binaryExpressionParent.operationReference,
+            innerExpression.left!!,
+            innerExpression.operationReference,
+            innerExpression.right!!,
+        )
+        val replace = binaryExpressionParent.replace(newElement)
+        replace.replace(ktPsiFactory.createExpression(replace.text))
+    } else {
+        this.replace(innerExpression)
+    }
+
+    if (innerExpression.firstChild is KtLambdaExpression) {
+        ktPsiFactory.appendSemicolonBeforeLambdaContainingElement(replaced)
+    }
+
+    commentSaver.restore(replaced)
+}

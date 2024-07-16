@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
-class CombinedDiffSearchProviderImpl(private val project: Project) : CombinedDiffSearchProvider {
+internal class CombinedDiffSearchProviderImpl(private val project: Project) : CombinedDiffSearchProvider {
 
   override fun installSearch(viewer: CombinedDiffViewer) {
     val mainUI = viewer.getMainUI()

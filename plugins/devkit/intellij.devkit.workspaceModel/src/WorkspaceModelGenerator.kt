@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
@@ -33,32 +34,61 @@ private val LOG = logger<WorkspaceModelGenerator>()
 class WorkspaceModelGenerator(private val project: Project, private val coroutineScope: CoroutineScope) {
 
   fun generate(module: Module) {
+    LOG.info("Selected module ${module.name}")
+    coroutineScope.launch {
+      onModule(module)
+    }
+  }
+
+  fun generate(modules: Array<Module>) {
+    coroutineScope.launch {
+      modules.forEachIndexed { index, module ->
+        LOG.info("Updating ${module.name}, $index")
+        onModule(module)
+      }
+    }
+  }
+
+  private suspend fun onModule(module: Module) {
     val acceptedSourceRoots = getSourceRoot(module)
     if (acceptedSourceRoots.isEmpty()) {
       LOG.info("Acceptable module source roots not found")
       return
     }
-    coroutineScope.launch {
-      acceptedSourceRoots.map { sourceRoot ->
-        withContext(Dispatchers.EDT) {
-          CodeWriter.generate(
-            project, module, sourceRoot.file!!,
-            processAbstractTypes = module.withAbstractTypes,
-            explicitApiEnabled = module.explicitApiEnabled,
-            isTestModule = module.isTestModule // TODO(It doesn't work for all modules)
-          ) {
-            createGeneratedSourceFolder(module, sourceRoot)
-          }
-        }
+    acceptedSourceRoots.forEach { sourceRoot ->
+      withContext(Dispatchers.EDT) {
+        DumbService.getInstance(project).completeJustSubmittedTasks() // Waiting for smart mode
+        CodeWriter.generate(
+          project, module, sourceRoot.file!!,
+          processAbstractTypes = module.withAbstractTypes,
+          explicitApiEnabled = module.explicitApiEnabled,
+          isTestModule = module.isTestModule, // TODO(It doesn't work for all modules)
+          targetFolderGenerator = { createGeneratedSourceFolder(module, sourceRoot) },
+          existingTargetFolder = { calculateExistingGenFolder(sourceRoot) }
+        )
       }
     }
-    println("Selected module ${module.name}")
+  }
+
+  private fun calculateExistingGenFolder(sourceFolder: SourceFolder): VirtualFile? {
+    if (sourceFolder.contentEntry.file == sourceFolder.file) return null
+    return sourceFolder.file?.parent?.children?.find {
+      if (sourceFolder.isTestSource) {
+        it.name == TEST_GENERATED_FOLDER_NAME
+      } else {
+        it.name == GENERATED_FOLDER_NAME
+      }
+    }
   }
 
   private fun createGeneratedSourceFolder(module: Module, sourceFolder: SourceFolder): VirtualFile? {
     // Create gen folder if it doesn't exist
     val generatedFolder = WriteAction.compute<VirtualFile, RuntimeException> {
-      VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, GENERATED_FOLDER_NAME)
+      if (sourceFolder.isTestSource) {
+        VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, TEST_GENERATED_FOLDER_NAME)
+      } else {
+        VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, GENERATED_FOLDER_NAME)
+      }
     }
 
     val moduleRootManager = ModuleRootManager.getInstance(module)
@@ -97,6 +127,7 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     //}
     return contentEntries.flatMap { it.sourceFolders.asIterable() }.filter {
       if (it.file == null) return@filter false
+      if (it.rootType !is JavaSourceRootType)  return@filter false
       val javaSourceRootProperties = it.jpsElement.properties as? JavaSourceRootProperties
       if (javaSourceRootProperties == null) return@filter true
       return@filter !javaSourceRootProperties.isForGeneratedSources
@@ -115,6 +146,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
 
   companion object {
     const val GENERATED_FOLDER_NAME = "gen"
+
+    const val TEST_GENERATED_FOLDER_NAME = "testGen"
 
     private const val RIDER_MODULES_PREFIX = "intellij.rider"
 

@@ -680,6 +680,6 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
   private operator fun Data.get(key: EventField<*>): Any? = get(key.name)
 
   companion object {
-    private fun LogEventGroup.isInlineCompletion(): Boolean = id == "inline.completion"
+    private fun LogEventGroup.isInlineCompletion(): Boolean = id == InlineCompletionUsageTracker.group.id
   }
 }

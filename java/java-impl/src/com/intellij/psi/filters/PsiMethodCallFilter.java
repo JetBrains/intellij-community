@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
@@ -11,11 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class PsiMethodCallFilter implements ElementFilter {
-  @NonNls private final String myClassName;
-  @NonNls private final Set<String> myMethodNames;
+  private final @NonNls String myClassName;
+  private final @NonNls Set<String> myMethodNames;
 
 
-  public PsiMethodCallFilter(@NonNls final String className, @NotNull @NonNls final String @NotNull ... methodNames) {
+  public PsiMethodCallFilter(final @NonNls String className, final @NotNull @NonNls String @NotNull ... methodNames) {
     myClassName = className;
     myMethodNames = Set.of(methodNames);
   }
@@ -41,8 +41,7 @@ public class PsiMethodCallFilter implements ElementFilter {
     return PsiMethodCallExpression.class.isAssignableFrom(hintClass);
   }
 
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "methodcall(" + myClassName + "." + myMethodNames + ")";
   }
 }

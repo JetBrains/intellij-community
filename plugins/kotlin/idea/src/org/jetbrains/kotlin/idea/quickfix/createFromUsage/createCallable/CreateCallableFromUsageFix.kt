@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.quickfix.KotlinCrossLanguageQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
-import org.jetbrains.kotlin.idea.refactoring.canRefactor
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -237,7 +237,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         if (isExtension && staticContextRequired && descriptor is JavaClassDescriptor) return null
         val declaration = getDeclaration(descriptor, project) ?: return null
         if (declaration !is KtClassOrObject && declaration !is KtTypeParameter && declaration !is PsiClass) return null
-        return if ((isExtension && !staticContextRequired) || declaration.canRefactor()) declaration else null
+        return if ((isExtension && !staticContextRequired) || declaration.canRefactorElement()) declaration else null
     }
 
     private fun checkIsInitialized() {
@@ -306,7 +306,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
             val containers = receiverTypeCandidates
                 .mapNotNull { candidate -> getDeclarationIfApplicable(project, candidate, staticContextRequired)?.let { candidate to it } }
 
-            chooseContainerElementIfNecessary(containers, editorForBuilder, popupTitle, false, { it.second }) {
+            chooseContainerElementIfNecessary(containers, editorForBuilder, popupTitle, false, null, { it.second }) {
                 runBuilder {
                     val receiverClass = it.second as? KtClass
                     if (staticContextRequired && receiverClass?.isWritable == true) {

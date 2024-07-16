@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -64,10 +65,10 @@ object CreateClassFromReferenceExpressionActionFactory : CreateClassFromUsageFac
 
             if (!name.checkClassName()) return emptyList()
 
-            return ClassKind.values().filter {
+            return ClassKind.entries.filter {
                 when (it) {
                     ClassKind.ANNOTATION_CLASS -> inImport
-                    ClassKind.ENUM_ENTRY -> inImport && targetParents.any { isEnum(it) }
+                    ClassKind.ENUM_ENTRY -> inImport && targetParents.any { parent -> isEnum(parent) }
                     else -> true
                 }
             }

@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.openapi.progress.ProgressManager
 import kotlinx.coroutines.currentCoroutineContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -26,6 +27,23 @@ fun CoroutineContext.contextModality(): ModalityState? {
   return this[ModalityStateElementKey]?.modalityState
 }
 
+/**
+ * Do not call this function directly!
+ * [ModalityState.defaultModalityState] delegates here, use it instead.
+ */
+@Internal
+fun defaultModalityImpl(): ModalityState {
+  return ProgressManager.getInstanceOrNull()?.currentProgressModality
+         ?: currentTemporaryThreadContextOrNull()?.contextModality()
+         ?: currentThreadContext().contextModality()
+         ?: ModalityState.nonModal()
+}
+
+/**
+ * Do not call this function directly!
+ * Use [ModalityState.defaultModalityState] instead.
+ */
+@Deprecated("Use ModalityState.defaultModalityState", ReplaceWith("ModalityState.defaultModalityState()"))
 @Internal
 fun currentThreadContextModality(): ModalityState? {
   return currentTemporaryThreadContextOrNull()?.contextModality()

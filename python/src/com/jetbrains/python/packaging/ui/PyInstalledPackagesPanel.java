@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.ui;
 
 import com.google.common.collect.ImmutableList;
@@ -21,11 +21,11 @@ import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,14 +51,13 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   }
 
   class PyInstallPackageManagementFix implements PyExecutionFix {
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return PyBundle.message("python.packaging.install.packaging.tools");
     }
 
     @Override
-    public void run(@NotNull final Sdk sdk) {
+    public void run(final @NotNull Sdk sdk) {
       final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, sdk, new PyPackageManagerUI.Listener() {
         @Override
         public void started() {
@@ -84,7 +83,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     }
   }
 
-  public void updateNotifications(@Nullable final Sdk selectedSdk) {
+  public void updateNotifications(final @Nullable Sdk selectedSdk) {
     if (selectedSdk == null) {
       myNotificationArea.hide();
       return;
@@ -169,7 +168,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   }
 
   @Override
-  protected boolean canInstallPackage(@NotNull final InstalledPackage pyPackage) {
+  protected boolean canInstallPackage(final @NotNull InstalledPackage pyPackage) {
     return installEnabled();
   }
 

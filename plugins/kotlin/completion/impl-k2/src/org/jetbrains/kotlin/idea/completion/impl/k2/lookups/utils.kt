@@ -5,20 +5,19 @@ package org.jetbrains.kotlin.idea.completion.lookups
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.util.elementType
-import com.intellij.psi.util.nextLeaf
-import com.intellij.psi.util.prevLeaf
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import com.intellij.psi.util.*
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
@@ -31,29 +30,38 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun withClassifierSymbolInfo(
-    symbol: KtClassifierSymbol,
+    symbol: KaClassifierSymbol,
     elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder
     .withPsiElement(symbol.psi) // TODO check if it is a heavy operation and should be postponed
     .withIcon(getIconFor(symbol))
     .withTypeText(getTypeTextForClassifier(symbol))
+    .withStrikeoutness(symbol.requireStrikeoutness())
 
-context(KtAnalysisSession)
+context(KaSession)
 internal fun withCallableSignatureInfo(
-    signature: KtCallableSignature<*>,
+    signature: KaCallableSignature<*>,
     elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder
     .withPsiElement(signature.symbol.psi)
     .withIcon(getIconFor(signature.symbol))
     .withTypeText(getTypeTextForCallable(signature, treatAsFunctionCall = elementBuilder.`object` is FunctionCallLookupObject))
+    .withStrikeoutness(signature.symbol.requireStrikeoutness())
 
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+private fun KaDeclarationSymbol.requireStrikeoutness(): Boolean = when {
+    deprecationStatus != null -> true
+    this is KaPropertySymbol -> getterDeprecationStatus != null && (isVal || setterDeprecationStatus != null)
+    else -> false
+}
 
 // FIXME: This is a hack, we should think how we can get rid of it
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 internal inline fun <T> withAllowedResolve(action: () -> T): T {
-    @OptIn(KtAllowAnalysisFromWriteAction::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class)
     allowAnalysisFromWriteAction {
         return allowAnalysisOnEdt(action)
     }
@@ -102,6 +110,6 @@ private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRang
     (typeReference.nextLeaf { it.elementType == KtTokens.GT } ?: typeReference).endOffset
 )
 
-context(KtAnalysisSession)
-internal fun KtCallableSymbol.isExtensionCall(isFunctionalVariableCall: Boolean): Boolean =
-    isExtension || isFunctionalVariableCall && (returnType as? KtFunctionalType)?.hasReceiver == true
+context(KaSession)
+internal fun KaCallableSymbol.isExtensionCall(isFunctionalVariableCall: Boolean): Boolean =
+    isExtension || isFunctionalVariableCall && (returnType as? KaFunctionType)?.hasReceiver == true

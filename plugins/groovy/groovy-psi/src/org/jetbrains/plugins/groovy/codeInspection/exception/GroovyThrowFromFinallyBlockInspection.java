@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 
-public class GroovyThrowFromFinallyBlockInspection extends BaseInspection {
+public final class GroovyThrowFromFinallyBlockInspection extends BaseInspection {
 
   @Override
   @Nullable

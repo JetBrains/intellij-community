@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -18,15 +18,13 @@ public class PsiUsesStatementImpl extends JavaStubPsiElement<PsiUsesStatementStu
     super(node);
   }
 
-  @Nullable
   @Override
-  public PsiJavaCodeReferenceElement getClassReference() {
+  public @Nullable PsiJavaCodeReferenceElement getClassReference() {
     return PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
   }
 
-  @Nullable
   @Override
-  public PsiClassType getClassType() {
+  public @Nullable PsiClassType getClassType() {
     PsiUsesStatementStub stub = getStub();
     PsiJavaCodeReferenceElement ref =
       stub != null ? JavaPsiFacade.getElementFactory(getProject()).createReferenceFromText(stub.getClassName(), this) : getClassReference();

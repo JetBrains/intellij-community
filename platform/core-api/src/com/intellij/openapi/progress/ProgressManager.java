@@ -13,10 +13,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.platform.util.progress.StepsKt;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-import kotlin.coroutines.Continuation;
-import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function1;
-import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
@@ -403,6 +399,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   @ApiStatus.Internal
   public abstract <X> X silenceGlobalIndicator(@NotNull Supplier<? extends X> computable);
 
+  /**
+   * Don't call this method directly!
+   * Use {@link ModalityState#defaultModalityState()} instead.
+   */
+  @Obsolete
   @ApiStatus.Internal
   public abstract @Nullable ModalityState getCurrentProgressModality();
 

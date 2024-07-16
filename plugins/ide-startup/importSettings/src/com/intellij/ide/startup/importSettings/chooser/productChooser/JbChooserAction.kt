@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.transfer.icon
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.ui.scale.JBUIScale
 import java.awt.Component
@@ -16,11 +17,16 @@ class JbChooserAction(callback: ImportSettingsController) : MainChooserAction<Jb
   }
 }
 
-class ExpChooserAction(callback: ImportSettingsController) : MainChooserAction<ExternalService>(ExtActionsDataProvider.getInstance(),
-                                                                                                callback)
+class ExpChooserAction(
+  provider: ExtActionsDataProvider,
+  callback: ImportSettingsController
+) : MainChooserAction<ExternalProductService>(provider, callback) {
+  override fun getIcon(products: List<Product>): Icon? =
+    provider.productService.productId.icon(IconProductSize.SMALL)
+}
 
-class SyncChooserAction(callback: ImportSettingsController) : MainChooserAction<SyncService>(SyncActionsDataProvider.getInstance(),
-                                                                                             callback) {
+class SyncChooserAction(controller: ImportSettingsController, syncDataProvider: SyncActionsDataProvider) : MainChooserAction<SyncService>(syncDataProvider,
+                                                                                               controller) {
   private val service = SettingsService.getInstance()
 
   override fun getIcon(products: List<Product>): Icon {
@@ -29,7 +35,7 @@ class SyncChooserAction(callback: ImportSettingsController) : MainChooserAction<
 
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = false
-    if (!service.isSyncEnabled.value) {
+    if (!service.isSyncEnabled || !service.hasDataToSync.value) {
       return
     }
     super.update(e)

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.rename.RenameCodeVisionSupport
+import com.intellij.refactoring.RefactoringCodeVisionSupport
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
@@ -36,8 +36,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     override fun equals(other: Any?): Boolean {
       return other is Data
              && other.document == document
-             && other.highlighterRangeMarker.range == highlighterRangeMarker.range
-             && other.availabilityRangeMarker.range == availabilityRangeMarker.range
+             && other.highlighterRangeMarker.asTextRange == highlighterRangeMarker.asTextRange
+             && other.availabilityRangeMarker.asTextRange == availabilityRangeMarker.asTextRange
              && other.refactoringEnabled == refactoringEnabled
              && other.tooltip == tooltip
     }
@@ -110,8 +110,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     if (data.refactoringEnabled) {
       show(
         data.document,
-        data.highlighterRangeMarker.range ?: return,
-        data.availabilityRangeMarker.range ?: return,
+        data.highlighterRangeMarker.asTextRange ?: return,
+        data.availabilityRangeMarker.asTextRange ?: return,
         false,
         data.tooltip
       )
@@ -138,9 +138,9 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
       editorsAndHighlighters.remove(editor)
     }
 
-    val range = data?.availabilityRangeMarker?.range ?: return
+    val range = data?.availabilityRangeMarker?.asTextRange ?: return
     if (!range.containsOffset(editor.caretModel.offset)) return
-    val highlighterRange = data!!.highlighterRangeMarker.range ?: return
+    val highlighterRange = data!!.highlighterRangeMarker.asTextRange ?: return
 
     val highlighter = editor.markupModel.addRangeHighlighter(
       highlighterRange.startOffset,
@@ -217,7 +217,9 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
   val availabilityRange: TextRange?
 
   when {
-    refactoringData is SuggestedRenameData && RenameCodeVisionSupport.isEnabledFor(psiFile.fileType) -> {
+    // The gutter icon should be hidden when the corresponding inlay is shown
+    refactoringData is SuggestedRenameData && RefactoringCodeVisionSupport.isRenameCodeVisionEnabled(psiFile.fileType) ||
+    refactoringData is SuggestedChangeSignatureData && RefactoringCodeVisionSupport.isChangeSignatureCodeVisionEnabled(psiFile.fileType) -> {
       refactoringAvailable = false
       tooltip = ""
       markerRange = TextRange.EMPTY_RANGE
@@ -229,7 +231,7 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
       tooltip = RefactoringBundle.message(
         "suggested.refactoring.rename.gutter.icon.tooltip",
         refactoringData.oldName,
-        refactoringData.declaration.name,
+        refactoringData.newName,
         intentionActionShortcutHint()
       )
       markerRange = refactoringSupport.nameRange(refactoringData.declaration)!!

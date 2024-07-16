@@ -47,7 +47,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_TD
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertConcatenationToGstringIntention extends Intention {
+public final class ConvertConcatenationToGstringIntention extends Intention {
   private static final String END_BRACE = "}";
   private static final String START_BRACE = "${";
 

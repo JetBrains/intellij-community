@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("UnusedDeclaration")
+@SuppressWarnings({"UnusedDeclaration", "MismatchedQueryAndUpdateOfCollection"})
 public class GithubGist {
   private String id;
   private String description;

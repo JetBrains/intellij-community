@@ -115,301 +115,304 @@ SHELL_SCRIPT
           PsiComment(Comment)('# rename local branches "branches/*__closed__*" -> tags')
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('git')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('git')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('branch')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('--list')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''branches/*__closed__*'')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+                PsiElement(word)('branch')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('cut')
+                PsiElement(word)('--list')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(RAW_STRING)(''branches/*__closed__*'')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-c12-')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          WHILE_COMMAND
-            PsiElement(while)('while')
+            PsiElement(|)('|')
             PsiWhiteSpace(' ')
-            COMPOUND_LIST
-              SIMPLE_COMMAND
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('IFS')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(RAW_STRING)('''')
-                PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
                 LITERAL
-                  PsiElement(word)('read')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('-r')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('branchname')
-              PsiElement(;)(';')
+                  PsiElement(word)('cut')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-c12-')
             PsiWhiteSpace(' ')
-            DO_BLOCK
-              PsiElement(do)('do')
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            WHILE_COMMAND
+              PsiElement(while)('while')
+              PsiWhiteSpace(' ')
               COMPOUND_LIST
-                PsiElement(\n)('\n')
-                PsiWhiteSpace('    ')
                 SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
+                  ASSIGNMENT_COMMAND
                     LITERAL
-                      PsiElement(word)('git')
+                      PsiElement(word)('IFS')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(RAW_STRING)('''')
                   PsiWhiteSpace(' ')
                   LITERAL
-                    PsiElement(word)('tag')
+                    PsiElement(word)('read')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
+                  LITERAL
+                    PsiElement(word)('-r')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('branches/')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(\n)('\n')
-                PsiWhiteSpace('    ')
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('branchname')
+                PsiElement(;)(';')
+              PsiWhiteSpace(' ')
+              DO_BLOCK
+                PsiElement(do)('do')
+                COMPOUND_LIST
+                  PsiElement(\n)('\n')
+                  PsiWhiteSpace('    ')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('git')
+                    PsiWhiteSpace(' ')
                     LITERAL
-                      PsiElement(word)('git')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('branch')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('-D')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('branches/')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(\n)('\n')
-              PsiWhiteSpace('  ')
-              PsiElement(done)('done')
+                      PsiElement(word)('tag')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('branches/')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(\n)('\n')
+                  PsiWhiteSpace('    ')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('git')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('branch')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('-D')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('branches/')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(\n)('\n')
+                PsiWhiteSpace('  ')
+                PsiElement(done)('done')
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
           PsiComment(Comment)('# rename local branches "branches/*__head__*" -> tags')
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('git')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('git')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('branch')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('--list')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''branches/*__head__*'')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+                PsiElement(word)('branch')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('cut')
+                PsiElement(word)('--list')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(RAW_STRING)(''branches/*__head__*'')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-c12-')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          WHILE_COMMAND
-            PsiElement(while)('while')
+            PsiElement(|)('|')
             PsiWhiteSpace(' ')
-            COMPOUND_LIST
-              SIMPLE_COMMAND
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('IFS')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(RAW_STRING)('''')
-                PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
                 LITERAL
-                  PsiElement(word)('read')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('-r')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('branchname')
-              PsiElement(;)(';')
+                  PsiElement(word)('cut')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-c12-')
             PsiWhiteSpace(' ')
-            DO_BLOCK
-              PsiElement(do)('do')
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            WHILE_COMMAND
+              PsiElement(while)('while')
+              PsiWhiteSpace(' ')
               COMPOUND_LIST
-                PsiElement(\n)('\n')
-                PsiWhiteSpace('    ')
                 SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
+                  ASSIGNMENT_COMMAND
                     LITERAL
-                      PsiElement(word)('git')
+                      PsiElement(word)('IFS')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(RAW_STRING)('''')
                   PsiWhiteSpace(' ')
                   LITERAL
-                    PsiElement(word)('tag')
+                    PsiElement(word)('read')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
+                  LITERAL
+                    PsiElement(word)('-r')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('branches/')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(\n)('\n')
-                PsiWhiteSpace('    ')
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('branchname')
+                PsiElement(;)(';')
+              PsiWhiteSpace(' ')
+              DO_BLOCK
+                PsiElement(do)('do')
+                COMPOUND_LIST
+                  PsiElement(\n)('\n')
+                  PsiWhiteSpace('    ')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('git')
+                    PsiWhiteSpace(' ')
                     LITERAL
-                      PsiElement(word)('git')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('branch')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('-D')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('branches/')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(\n)('\n')
-              PsiWhiteSpace('  ')
-              PsiElement(done)('done')
+                      PsiElement(word)('tag')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('branches/')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(\n)('\n')
+                  PsiWhiteSpace('    ')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('git')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('branch')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('-D')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('branches/')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(\n)('\n')
+                PsiWhiteSpace('  ')
+                PsiElement(done)('done')
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
           PsiComment(Comment)('# rename local branches "branches/XXX" -> "XXX"')
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('git')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('git')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('branch')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('--list')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''branches/*'')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+                PsiElement(word)('branch')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('cut')
+                PsiElement(word)('--list')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(RAW_STRING)(''branches/*'')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-c12-')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          WHILE_COMMAND
-            PsiElement(while)('while')
+            PsiElement(|)('|')
             PsiWhiteSpace(' ')
-            COMPOUND_LIST
-              SIMPLE_COMMAND
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('IFS')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(RAW_STRING)('''')
-                PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
                 LITERAL
-                  PsiElement(word)('read')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('-r')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('branchname')
-              PsiElement(;)(';')
+                  PsiElement(word)('cut')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-c12-')
             PsiWhiteSpace(' ')
-            DO_BLOCK
-              PsiElement(do)('do')
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            WHILE_COMMAND
+              PsiElement(while)('while')
+              PsiWhiteSpace(' ')
               COMPOUND_LIST
-                PsiElement(\n)('\n')
-                PsiWhiteSpace('    ')
                 SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
+                  ASSIGNMENT_COMMAND
                     LITERAL
-                      PsiElement(word)('git')
+                      PsiElement(word)('IFS')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(RAW_STRING)('''')
                   PsiWhiteSpace(' ')
                   LITERAL
-                    PsiElement(word)('branch')
+                    PsiElement(word)('read')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
+                  LITERAL
+                    PsiElement(word)('-r')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('branches/')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(\n)('\n')
-                PsiWhiteSpace('    ')
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('branchname')
+                PsiElement(;)(';')
+              PsiWhiteSpace(' ')
+              DO_BLOCK
+                PsiElement(do)('do')
+                COMPOUND_LIST
+                  PsiElement(\n)('\n')
+                  PsiWhiteSpace('    ')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('git')
+                    PsiWhiteSpace(' ')
                     LITERAL
-                      PsiElement(word)('git')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('branch')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('-D')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('branches/')
-                    VARIABLE
-                      PsiElement(var)('$branchname')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(\n)('\n')
-              PsiWhiteSpace('  ')
-              PsiElement(done)('done')
+                      PsiElement(word)('branch')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('branches/')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(\n)('\n')
+                  PsiWhiteSpace('    ')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('git')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('branch')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('-D')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('branches/')
+                      VARIABLE
+                        PsiElement(var)('$branchname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(\n)('\n')
+                PsiWhiteSpace('  ')
+                PsiElement(done)('done')
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
           SIMPLE_COMMAND
@@ -433,28 +436,29 @@ SHELL_SCRIPT
           PsiElement(\n)('\n')
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('git')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('git')
+                PsiElement(word)('branch')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('branch')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('cut')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('cut')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-b3-')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              REDIRECTION
-                PsiElement(>>)('>>')
-                PsiElement(word)('../all-branches-non-unique')
+                PsiElement(word)('-b3-')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                REDIRECTION
+                  PsiElement(>>)('>>')
+                  PsiElement(word)('../all-branches-non-unique')
           PsiElement(\n)('\n')
           PsiWhiteSpace('  ')
           SIMPLE_COMMAND

@@ -28,7 +28,8 @@ private class ExecuteOnCoroutine(coroutineScope: CoroutineScope) : VFSAsyncTaskE
    * b) resource management become quite complex with implicit task cancellation
    */
   private val supervisorScope = coroutineScope.childScope(
-    context = CoroutineName("PersistentFsLoader") + Dispatchers.IO,
+    name = "PersistentFsLoader",
+    context = Dispatchers.IO,
     supervisor = true // default, but to be explicit -- this is the main reason to create .childScope
   )
 

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
-public class GroovyAnnotationSupport implements PsiAnnotationSupport {
+public final class GroovyAnnotationSupport implements PsiAnnotationSupport {
   @Override
   @NotNull
   public GrLiteral createLiteralValue(@NotNull String value, @NotNull PsiElement context) {

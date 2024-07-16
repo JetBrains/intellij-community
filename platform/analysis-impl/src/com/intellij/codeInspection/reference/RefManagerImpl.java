@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -62,7 +62,7 @@ public class RefManagerImpl extends RefManager {
   public static final ExtensionPointName<RefGraphAnnotator> EP_NAME = ExtensionPointName.create("com.intellij.refGraphAnnotator");
   private static final Logger LOG = Logger.getInstance(RefManager.class);
 
-  private long myLastUsedMask = 0b1000_00000000_00000000_00000000; // guarded by this
+  private long myLastUsedMask = 0b1000_00000000_00000000_00000000; // 28th bit, guarded by this
 
   private final @NotNull Project myProject;
   private AnalysisScope myScope;
@@ -279,6 +279,7 @@ public class RefManagerImpl extends RefManager {
     }
     else if (refEntity instanceof RefElement refElement) {
       final SmartPsiElementPointer<?> pointer = refElement.getPointer();
+      if (pointer == null) return null;
       PsiFile psiFile = pointer.getContainingFile();
       if (psiFile == null) return null;
 
@@ -649,8 +650,8 @@ public class RefManagerImpl extends RefManager {
                 }
 
                 if (refWhat != null) {
-                  ((RefElementImpl)refWhat).addInReference(refFile);
-                  ((RefElementImpl)refFile).addOutReference(refWhat);
+                  ((WritableRefElement)refWhat).addInReference(refFile);
+                  ((WritableRefElement)refFile).addOutReference(refWhat);
                 }
               }
             }
@@ -679,33 +680,35 @@ public class RefManagerImpl extends RefManager {
 
     @Override
     public void visitFile(@NotNull PsiFile file) {
+      if (!(file instanceof PsiBinaryFile) && !file.getFileType().isBinary()) {
+        final FileViewProvider viewProvider = file.getViewProvider();
+        final Set<Language> relevantLanguages = viewProvider.getLanguages();
+        for (Language language : relevantLanguages) {
+          try {
+            visitElement(viewProvider.getPsi(language));
+          }
+          catch (ProcessCanceledException | IndexNotReadyException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+              LOG.error(file.getName(), e);
+            }
+            else {
+              LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", file.getName())));
+            }
+          }
+        }
+        myPsiManager.dropResolveCaches();
+      }
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        String relative = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);
-        myContext.incrementJobDoneAmount(myContext.getStdJobDescriptors().BUILD_GRAPH, relative);
+        executeTask(() -> {
+          String relative =
+            ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);
+          myContext.incrementJobDoneAmount(myContext.getStdJobDescriptors().BUILD_GRAPH, relative);
+        });
       }
-      if (file instanceof PsiBinaryFile || file.getFileType().isBinary()) {
-        return;
-      }
-      final FileViewProvider viewProvider = file.getViewProvider();
-      final Set<Language> relevantLanguages = viewProvider.getLanguages();
-      for (Language language : relevantLanguages) {
-        try {
-          visitElement(viewProvider.getPsi(language));
-        }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-            LOG.error(file.getName(), e);
-          }
-          else {
-            LOG.error(new RuntimeExceptionWithAttachments(e, new Attachment("diagnostics.txt", file.getName())));
-          }
-        }
-      }
-      myPsiManager.dropResolveCaches();
     }
   }
 

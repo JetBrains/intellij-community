@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(EntityStorageInstrumentationApi::class)
-
 package com.intellij.platform.workspace.storage.impl
 
 import com.google.common.collect.HashBiMap
@@ -8,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ReplaceBySourceAsTree.OperationsApplier
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
@@ -198,21 +195,21 @@ internal class ReplaceBySourceAsTree {
     }
 
     private fun addElement(parents: Set<EntityId>?, replaceWithDataSource: EntityId, replaceToTarget: HashBiMap<EntityId, EntityId>) {
-      val targetParents = mutableListOf<WorkspaceEntity>()
+      val targetParentBuilders = mutableListOf<WorkspaceEntity.Builder<*>>()
       parents?.forEach { parent ->
-        targetParents += targetStorage.entityDataByIdOrDie(parent).createEntity(targetStorage)
+        targetParentBuilders += targetStorage.entityDataByIdOrDie(parent).wrapAsModifiable(targetStorage)
       }
 
-      val modifiableEntity = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParents)
+      val modifiableEntity = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParentBuilders)
       modifiableEntity as ModifiableWorkspaceEntityBase<out WorkspaceEntity, out WorkspaceEntityData<*>>
 
       // We actually bind parents in [createDetachedEntity], but we can't do it for external entities (that are defined in a separate module)
       // Here we bind them again, so I guess we can remove "parents binding" from [createDetachedEntity], but let's do it twice for now.
       // Actually, I hope to get rid of [createDetachedEntity] at some moment.
-      targetParents.groupBy { it::class }.forEach { (_, entities) ->
-        modifiableEntity.updateReferenceToEntity(entities.first().getEntityInterface(), false, entities)
+      targetParentBuilders.groupBy { it::class }.forEach { (_, entities) ->
+        modifiableEntity.updateReferenceToEntity((entities.first() as ModifiableWorkspaceEntityBase<*, *>).getEntityInterface(), false, entities)
       }
-      targetStorage.addEntity(modifiableEntity)
+      targetStorage.addEntity(modifiableEntity as WorkspaceEntity.Builder)
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, modifiableEntity.id, replaceWithStorage.indexes)
       replaceToTarget[replaceWithDataSource] = modifiableEntity.id
     }

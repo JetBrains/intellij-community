@@ -26,7 +26,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import kotlinx.coroutines.runBlocking
-import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
@@ -654,8 +653,6 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
   @Test
   fun testCopyTestResourceWhenBuildingTestModule() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
-
     createProjectSubFile("src/test/resources/file.properties")
 
     importProjectAsync("""
@@ -684,8 +681,6 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
   @Test
   fun testAnnotationPathsInCompoundModules() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
-
     createProjectSubFile("src/main/java/Main.java", "class Main {}")
     createProjectSubFile("src/test/java/Test.java", "class Test {}")
 

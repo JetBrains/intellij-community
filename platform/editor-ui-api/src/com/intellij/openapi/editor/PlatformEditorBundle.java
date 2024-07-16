@@ -2,14 +2,13 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
 public final class PlatformEditorBundle {
+
+  @ApiStatus.Internal
   public static final @NonNls String BUNDLE = "messages.PlatformEditorBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(PlatformEditorBundle.class, BUNDLE);
 

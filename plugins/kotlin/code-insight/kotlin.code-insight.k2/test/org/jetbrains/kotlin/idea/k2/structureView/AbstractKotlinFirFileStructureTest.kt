@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.structureView
 
 import com.intellij.ide.util.InheritedMembersNodeProvider
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirInheritedMembersNodeProvider
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinFileStructureTest
@@ -10,9 +9,6 @@ import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
 abstract class AbstractKotlinFirFileStructureTest : AbstractKotlinFileStructureTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
 
     override fun nodeProviderClass(): Class<out InheritedMembersNodeProvider<*>> {
         return KotlinFirInheritedMembersNodeProvider::class.java
@@ -20,8 +16,8 @@ abstract class AbstractKotlinFirFileStructureTest : AbstractKotlinFileStructureT
 
     override fun tearDown() {
         runAll(
-          ThrowableRunnable { project.invalidateCaches() },
-          ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 

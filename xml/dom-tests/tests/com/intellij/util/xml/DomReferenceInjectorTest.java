@@ -107,12 +107,12 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
 
   public static class MyConverter extends Converter<String> {
     @Override
-    public String fromString(@Nullable @NonNls String s, ConvertContext context) {
+    public String fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
       return s == null ? null : s.replaceAll("FOO", "BAR");
     }
 
     @Override
-    public String toString(@Nullable String s, ConvertContext context) {
+    public String toString(@Nullable String s, @NotNull ConvertContext context) {
       return s;
     }
   }

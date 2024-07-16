@@ -8,11 +8,11 @@ import com.intellij.psi.PsiClass
 import com.intellij.ui.IconManager
 import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.psi.KtClass
@@ -22,8 +22,8 @@ import javax.swing.Icon
 object KtIconProvider {
     private val LOG = Logger.getInstance(KtIconProvider::class.java)
 
-    context(KtAnalysisSession)
-    fun getIcon(ktSymbol: KtSymbol): Icon? {
+    context(KaSession)
+    fun getIcon(ktSymbol: KaSymbol): Icon? {
         // logic copied from org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
         val declaration = ktSymbol.psi
         return if (declaration?.isValid == true) {
@@ -42,8 +42,8 @@ object KtIconProvider {
         }
     }
 
-    context(KtAnalysisSession)
-    private fun getIcon(symbol: KtSymbol, flags: Int): Icon? {
+    context(KaSession)
+    private fun getIcon(symbol: KaSymbol, flags: Int): Icon? {
         var result: Icon = getBaseIcon(symbol) ?: return null
 
         if (flags and Iconable.ICON_FLAG_VISIBILITY > 0) {
@@ -55,14 +55,14 @@ object KtIconProvider {
         return result
     }
 
-    context(KtAnalysisSession)
-    fun getBaseIcon(symbol: KtSymbol): Icon? {
-        val isAbstract = (symbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
+    context(KaSession)
+    fun getBaseIcon(symbol: KaSymbol): Icon? {
+        val isAbstract = (symbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT
         return when (symbol) {
-            is KtPackageSymbol -> AllIcons.Nodes.Package
-            is KtFunctionLikeSymbol -> {
+            is KaPackageSymbol -> AllIcons.Nodes.Package
+            is KaFunctionSymbol -> {
                 val isExtension = symbol.isExtension
-                val isMember = symbol.symbolKind == KtSymbolKind.CLASS_MEMBER
+                val isMember = symbol.symbolKind == KaSymbolKind.CLASS_MEMBER
                 when {
                     isExtension && isAbstract -> KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
                     isExtension && !isAbstract -> KotlinIcons.EXTENSION_FUNCTION
@@ -71,29 +71,29 @@ object KtIconProvider {
                     else -> KotlinIcons.FUNCTION
                 }
             }
-            is KtClassOrObjectSymbol -> {
+            is KaClassSymbol -> {
                 when (symbol.classKind) {
-                    KtClassKind.CLASS -> when {
+                    KaClassKind.CLASS -> when {
                         isAbstract -> KotlinIcons.ABSTRACT_CLASS
                         else -> KotlinIcons.CLASS
                     }
-                    KtClassKind.ENUM_CLASS -> KotlinIcons.ENUM
-                    KtClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
-                    KtClassKind.INTERFACE -> KotlinIcons.INTERFACE
-                    KtClassKind.ANONYMOUS_OBJECT, KtClassKind.OBJECT, KtClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
+                    KaClassKind.ENUM_CLASS -> KotlinIcons.ENUM
+                    KaClassKind.ANNOTATION_CLASS -> KotlinIcons.ANNOTATION
+                    KaClassKind.INTERFACE -> KotlinIcons.INTERFACE
+                    KaClassKind.ANONYMOUS_OBJECT, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT -> KotlinIcons.OBJECT
                 }
             }
-            is KtValueParameterSymbol -> KotlinIcons.PARAMETER
-            is KtLocalVariableSymbol -> when {
+            is KaValueParameterSymbol -> KotlinIcons.PARAMETER
+            is KaLocalVariableSymbol -> when {
                 symbol.isVal -> KotlinIcons.VAL
                 else -> KotlinIcons.VAR
             }
-            is KtPropertySymbol -> when {
+            is KaPropertySymbol -> when {
                 symbol.isVal -> KotlinIcons.FIELD_VAL
                 else -> KotlinIcons.FIELD_VAR
             }
-            is KtTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)
-            is KtTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
+            is KaTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class)
+            is KaTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
 
             else -> {
                 LOG.warn("No icon for symbol: $symbol")
@@ -102,15 +102,16 @@ object KtIconProvider {
         }
     }
 
-    context(KtAnalysisSession)
-    private fun getVisibilityIcon(symbol: KtSymbol): Icon? {
-        return when ((symbol as? KtSymbolWithVisibility)?.visibility?.normalize()) {
-            Visibilities.Public -> PlatformIcons.PUBLIC_ICON
-            Visibilities.Protected -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)
-            Visibilities.Private, Visibilities.PrivateToThis -> IconManager.getInstance()
-                .getPlatformIcon(com.intellij.ui.PlatformIcons.Private)
-            Visibilities.Internal -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local)
-            else -> null
-        }
+    context(KaSession)
+    private fun getVisibilityIcon(symbol: KaSymbol): Icon? = when ((symbol as? KaSymbolWithVisibility)?.visibility) {
+        KaSymbolVisibility.PUBLIC -> PlatformIcons.PUBLIC_ICON
+        KaSymbolVisibility.PROTECTED,
+        KaSymbolVisibility.PACKAGE_PROTECTED,
+        KaSymbolVisibility.PACKAGE_PRIVATE,
+            -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)
+
+        KaSymbolVisibility.PRIVATE -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Private)
+        KaSymbolVisibility.INTERNAL -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local)
+        else -> null
     }
 }

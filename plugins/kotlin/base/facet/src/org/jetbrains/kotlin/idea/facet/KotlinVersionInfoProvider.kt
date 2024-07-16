@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.facet
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -22,6 +23,7 @@ interface KotlinVersionInfoProvider {
 
     fun getCompilerVersion(): IdeKotlinVersion?
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use getLibraryVersionSequence(Module, IdePlatformKind, ModuleRootModel)")
     fun getLibraryVersions(
         module: Module,

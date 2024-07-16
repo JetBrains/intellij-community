@@ -36,7 +36,7 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
 
 private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 
-class LoadAllGitLabMergeRequestTimelineViewModel(
+internal class LoadAllGitLabMergeRequestTimelineViewModel(
   private val project: Project,
   parentCs: CoroutineScope,
   private val projectData: GitLabProject,
@@ -50,10 +50,10 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
-    GitLabUIUtil.convertToHtml(project, title)
+    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, title)
   }.modelFlow(cs, LOG)
   override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
-    GitLabUIUtil.convertToHtml(project, description)
+    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, description)
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
@@ -63,7 +63,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
     mergeRequest.createTimelineItemsFlow(showEvents)
       .transformConsecutiveSuccesses {
-        mapDataToModel({ it.id }, { createItemVm(mergeRequest, it) }, {})
+        mapDataToModel({ it.id }, { createItemVm(it) }, {})
       }
       .modelFlow(cs, LOG)
 
@@ -138,17 +138,17 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
       }
     }
 
-  private fun CoroutineScope.createItemVm(mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
+  private fun CoroutineScope.createItemVm(item: GitLabMergeRequestTimelineItem)
     : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
-        GitLabMergeRequestTimelineItemViewModel.Immutable(item)
+        GitLabMergeRequestTimelineItemViewModel.Immutable.fromModel(project, mergeRequest, item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mr, item.discussion).also {
+        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mergeRequest, item.discussion).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->
-        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mr, item.note).also {
+        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, item.note).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }

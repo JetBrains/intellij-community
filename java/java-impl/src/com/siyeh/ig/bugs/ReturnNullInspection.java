@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -65,21 +65,18 @@ public final class ReturnNullInspection extends BaseInspection {
 
   @Override
   @Pattern("[a-zA-Z_0-9.-]+")
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ReturnOfNull";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "return.of.null.problem.descriptor");
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiElement elt = (PsiElement)infos[0];
     if (!AnnotationUtil.isAnnotatingApplicable(elt)) {
       return null;
@@ -111,17 +108,13 @@ public final class ReturnNullInspection extends BaseInspection {
       myTypeText = typeText;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", getReplacementText());
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Optional.empty()");
     }
 

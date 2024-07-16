@@ -54,7 +54,7 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
       for (Map.Entry<String, String> entry : pathVariables.entrySet()) {
         configuration.addPathVariable(entry.getKey(), entry.getValue());
       }
-      JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), optionsPath);
+      JpsGlobalSettingsLoading.loadGlobalSettings(myModel.getGlobal(), optionsPath);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

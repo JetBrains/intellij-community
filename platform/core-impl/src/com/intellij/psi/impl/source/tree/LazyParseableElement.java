@@ -181,9 +181,9 @@ public class LazyParseableElement extends CompositeElement {
 
       DebugUtil.performPsiModification("lazy-parsing", () -> {
         TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
-        assertTextLengthIntact(text, parsedNode);
 
         if (parsedNode != null) {
+          assertTextLengthIntact(text, parsedNode);
           setChildren(parsedNode);
         }
 

@@ -39,9 +39,6 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
   private val scriptNamePrefix: @NonNls String,
   private val scriptMainClass: Class<out ExternalApp>
 ) {
-  companion object {
-    private val LOG = logger<ExternalProcessHandlerService<*>>()
-  }
 
   private val scriptPaths = HashMap<@NonNls String, File>()
   private val SCRIPT_FILE_LOCK = Any()
@@ -86,7 +83,7 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
   private fun unregisterHandler(key: UUID) {
     val handler = handlers.remove(key)
     if (handler == null) {
-      LOG.error("The handler $key is not registered")
+      LOG_SERVICE.error("The handler $key is not registered")
     }
   }
 
@@ -105,9 +102,6 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
 abstract class ExternalProcessRest<T : ExternalAppHandler>(
   private val entryPointName: @NonNls String
 ) : RestService() {
-  companion object {
-    private val LOG = logger<ExternalProcessRest<*>>()
-  }
 
   protected abstract val externalProcessHandler: ExternalProcessHandlerService<T>
 
@@ -145,7 +139,7 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
           channel.close()
         }
         else {
-          LOG.warn(Throwable(err))
+          LOG_REST.warn(Throwable(err))
           sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
         }
       }
@@ -167,3 +161,7 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
   private fun runHandler(indicator: EmptyProgressIndicator, uuid: UUID, bodyContent: String): String? =
     ProgressManager.getInstance().runProcess(Computable { externalProcessHandler.invokeHandler(uuid, bodyContent) }, indicator)
 }
+
+private val LOG_SERVICE = logger<ExternalProcessHandlerService<*>>()
+
+private val LOG_REST = logger<ExternalProcessRest<*>>()

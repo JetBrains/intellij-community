@@ -18,6 +18,8 @@ public final class ToggleFindInSelectionAction extends ToggleAction implements C
                                                                                ActionRemoteBehaviorSpecification.Frontend {
   public ToggleFindInSelectionAction() {
     super(FindBundle.message("find.selection.only"), null, AllIcons.Actions.InSelection);
+
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
   }
 
   @Override

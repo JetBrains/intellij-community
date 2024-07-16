@@ -3,6 +3,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +11,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@NonExtendable
 public interface TodoItem {
+  TodoItem[] EMPTY_ARRAY = new TodoItem[0];
   @NotNull
   PsiFile getFile();
 

@@ -10,10 +10,12 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Internal
 public abstract class IndexedFilesListener implements AsyncFileListener {
   @NotNull
   private final VfsEventsMerger myEventMerger = new VfsEventsMerger();

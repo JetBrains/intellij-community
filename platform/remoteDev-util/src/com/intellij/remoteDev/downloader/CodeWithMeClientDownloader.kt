@@ -24,7 +24,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
-import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
+import com.intellij.remoteDev.connection.JetBrainsClientDownloadInfo
 import com.intellij.remoteDev.util.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
@@ -94,7 +94,7 @@ object CodeWithMeClientDownloader {
   }
 
   private const val minimumClientBuildWithBundledJre = "223.4374"
-  fun isClientWithBundledJre(clientBuildNumber: String) = VersionComparatorUtil.compare(clientBuildNumber, minimumClientBuildWithBundledJre) >= 0
+  fun isClientWithBundledJre(clientBuildNumber: String) = clientBuildNumber.contains("SNAPSHOT") || VersionComparatorUtil.compare(clientBuildNumber, minimumClientBuildWithBundledJre) >= 0
 
   @ApiStatus.Internal
   class DownloadableFileData(
@@ -140,17 +140,17 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  private const val buildNumberPattern = """[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)"""
-  val buildNumberRegex = Regex(buildNumberPattern)
-
   private fun getClientDistributionName(clientBuildVersion: String) = when {
+    clientBuildVersion.contains("SNAPSHOT") -> "JetBrainsClient"
     VersionComparatorUtil.compare(clientBuildVersion, "211.6167") < 0 -> "IntelliJClient"
     VersionComparatorUtil.compare(clientBuildVersion, "213.5318") < 0 -> "CodeWithMeGuest"
     else -> "JetBrainsClient"
   }
 
-  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): JetbrainsClientDownloadInfo {
-    val isSnapshot = "SNAPSHOT" in clientBuildVersion
+  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): JetBrainsClientDownloadInfo {
+    val buildNumber = requireNotNull(BuildNumber.fromStringOrNull(clientBuildVersion)) { "Invalid build version: $clientBuildVersion" }
+
+    val isSnapshot = buildNumber.isSnapshot
     if (isSnapshot) {
       LOG.warn("Thin client download from sources may result in failure due to different sources on host and client, " +
                "don't forget to update your locally built archive")
@@ -164,7 +164,7 @@ object CodeWithMeClientDownloader {
       jreBuild ?: error("JRE build number must be passed for client build number < $clientBuildVersion")
     }
 
-    val hostBuildNumber = buildNumberRegex.find(clientBuildVersion)!!.value
+    val hostBuildNumber = buildNumber.asStringWithoutProductCode()
 
     val platformSuffix = if (jreBuildToDownload != null) when {
       SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
@@ -224,7 +224,7 @@ object CodeWithMeClientDownloader {
       RemoteDevSystemSettings.getPgpPublicKeyUrl().value
     } else null
 
-    val sessionInfo = JetbrainsClientDownloadInfo(
+    val sessionInfo = JetBrainsClientDownloadInfo(
       hostBuildNumber = hostBuildNumber,
       compatibleClientUrl = clientDownloadUrl,
       compatibleJreUrl = jreDownloadUrl,
@@ -247,7 +247,7 @@ object CodeWithMeClientDownloader {
       }
     }
     finally {
-      Files.delete(tempFile)
+      Files.deleteIfExists(tempFile)
     }
   }
 
@@ -334,7 +334,7 @@ object CodeWithMeClientDownloader {
   }
 
 
-  suspend fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo): ExtractedJetBrainsClientData {
+  suspend fun downloadClientAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo): ExtractedJetBrainsClientData {
     return withProgressText(RemoteDevUtilBundle.message("launcher.get.client.info")) {
       coroutineToIndicator {
         downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
@@ -342,7 +342,7 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo,
+  fun downloadClientAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
@@ -732,7 +732,16 @@ object CodeWithMeClientDownloader {
                                          clientVersion: String,
                                          url: String,
                                          lifetime: Lifetime): Lifetime {
-    val parameters = listOf("thinClient", url)
+    return runJetBrainsClientProcess(launcherData, workingDirectory, clientVersion, url, emptyList(),  lifetime)
+  }
+
+  internal fun runJetBrainsClientProcess(launcherData: JetBrainsClientLauncherData,
+                                         workingDirectory: Path,
+                                         clientVersion: String,
+                                         url: String,
+                                         extraArguments: List<String>,
+                                         lifetime: Lifetime): Lifetime {
+    val parameters = listOf("thinClient", url) + extraArguments
     val processLifetimeDef = lifetime.createNested()
 
     val vmOptionsFile = if (SystemInfoRt.isMac) {

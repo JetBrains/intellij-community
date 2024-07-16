@@ -343,8 +343,7 @@ public final class GlobalSearchScopesCore {
       if (equals(scope)) {
         return this;
       }
-      if (scope instanceof DirectoryScope) {
-        DirectoryScope other = (DirectoryScope)scope;
+      if (scope instanceof DirectoryScope other) {
         if (myDirectories.contains(other.myDirectory) || VfsUtilCore.isUnder(other.myDirectory, myDirectoriesWithSubdirectories)) {
           return this;
         }
@@ -362,8 +361,7 @@ public final class GlobalSearchScopesCore {
         }
         return new DirectoriesScope(Objects.requireNonNull(getProject()), directories, directoriesWithSubdirectories);
       }
-      if (scope instanceof DirectoriesScope) {
-        DirectoriesScope other = (DirectoriesScope)scope;
+      if (scope instanceof DirectoriesScope other) {
         Set<? extends VirtualFile> directories = myDirectories;
         Set<? extends VirtualFile> directoriesWithSubdirectories = myDirectoriesWithSubdirectories;
         if (!other.myDirectories.isEmpty()) {

@@ -7,19 +7,30 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Properties;
 
 public final class MavenGoalExecutionRequest implements Serializable {
   @NotNull private final File file;
   @NotNull private final MavenExplicitProfiles profiles;
+  @NotNull private final Properties userProperties;
 
-  public MavenGoalExecutionRequest(@NotNull File file, @NotNull MavenExplicitProfiles profiles) {
+  public MavenGoalExecutionRequest(@NotNull File file, @NotNull MavenExplicitProfiles profiles)  {
+    this(file, profiles, new Properties());
+  }
+
+  public MavenGoalExecutionRequest(@NotNull File file, @NotNull MavenExplicitProfiles profiles, @NotNull Properties userProperties) {
     this.file = file;
     this.profiles = profiles;
+    this.userProperties = userProperties;
   }
 
   public File file() { return file; }
 
   public MavenExplicitProfiles profiles() { return profiles; }
+
+  public @NotNull Properties userProperties() {
+    return userProperties;
+  }
 
   @Override
   public boolean equals(Object obj) {
@@ -27,7 +38,8 @@ public final class MavenGoalExecutionRequest implements Serializable {
     if (obj == null || obj.getClass() != this.getClass()) return false;
     MavenGoalExecutionRequest that = (MavenGoalExecutionRequest)obj;
     return Objects.equals(this.file, that.file) &&
-           Objects.equals(this.profiles, that.profiles);
+           Objects.equals(this.profiles, that.profiles) &&
+           Objects.equals(this.userProperties, that.userProperties);
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JavaReferenceEditorUtil;
 import com.intellij.util.ArrayUtil;
@@ -75,9 +76,7 @@ public final class PsiUtilEx {
   }
   
   public static boolean isInjectionTargetType(@NotNull PsiType type) {
-    if (isStringOrStringArray(type)) return true;
-    PsiClass classType = PsiUtil.resolveClassInClassTypeOnly(type);
-    return classType != null && CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR.equals(classType.getQualifiedName());
+    return isStringOrStringArray(type) || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR);
   }
 
   public static boolean isStringOrStringArray(@NotNull PsiType type) {

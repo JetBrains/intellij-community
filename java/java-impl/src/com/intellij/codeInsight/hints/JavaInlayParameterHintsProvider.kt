@@ -10,8 +10,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 
 class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
-  
-  companion object {
+
+  object Utils {
+    @JvmStatic
     fun getInstance(): JavaInlayParameterHintsProvider = InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE) as JavaInlayParameterHintsProvider
   }
   

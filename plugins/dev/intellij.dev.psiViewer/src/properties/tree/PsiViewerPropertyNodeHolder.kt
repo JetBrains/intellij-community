@@ -1,8 +1,7 @@
 package com.intellij.dev.psiViewer.properties.tree
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.checkCancelled
-import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener
+import com.intellij.openapi.progress.checkCanceled
 import kotlinx.coroutines.*
 
 class PsiViewerPropertyNodeHolder(
@@ -10,12 +9,12 @@ class PsiViewerPropertyNodeHolder(
   private val nodeContext: PsiViewerPropertyNode.Context,
   private val depth: Int,
   private val scope: CoroutineScope
-) : TreeLinkMouseListener.IsLeafProvider {
+) {
   val childrenListAsync: Deferred<List<PsiViewerPropertyNodeHolder>> = childrenListAsync()
 
   private fun childrenListAsync(): Deferred<List<PsiViewerPropertyNodeHolder>> {
     return scope.async(Dispatchers.Default, start = CoroutineStart.LAZY) {
-      checkCancelled()
+      checkCanceled()
       val mainChildren = async {
         when (val children = node.children) {
           is PsiViewerPropertyNode.Children.Enumeration -> {
@@ -37,8 +36,6 @@ class PsiViewerPropertyNodeHolder(
   private fun childNodeHolder(childNode: PsiViewerPropertyNode): PsiViewerPropertyNodeHolder {
     return PsiViewerPropertyNodeHolder(childNode, nodeContext, depth + 1, scope)
   }
-
-  override fun isLeaf(): Boolean = node.isLeaf
 }
 
 interface PsiViewerPropertyNodeAppender {

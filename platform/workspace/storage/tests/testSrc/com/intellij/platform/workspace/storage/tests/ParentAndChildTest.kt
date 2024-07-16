@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.modifyParentEntity
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -139,9 +139,9 @@ class ParentAndChildTest {
     val entity = ParentEntity("ParentData", MySource)
 
     val builder = MutableEntityStorage.create()
-    builder.addEntity(entity)
+    val addedEntity = builder.addEntity(entity)
 
-    builder.modifyEntity(entity) {
+    builder.modifyParentEntity(addedEntity) {
       this.parentData = "NewData"
     }
 

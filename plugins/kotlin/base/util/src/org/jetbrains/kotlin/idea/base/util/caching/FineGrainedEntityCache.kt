@@ -393,7 +393,7 @@ abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(
 
 fun <T : WorkspaceEntity> EntityChange<T>.oldEntity() = when (this) {
     is EntityChange.Added -> null
-    is EntityChange.Removed -> entity
+    is EntityChange.Removed -> oldEntity
     is EntityChange.Replaced -> oldEntity
 }
 

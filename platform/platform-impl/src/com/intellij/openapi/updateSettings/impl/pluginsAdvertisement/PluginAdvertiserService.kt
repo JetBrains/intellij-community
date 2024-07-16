@@ -128,7 +128,7 @@ sealed interface PluginAdvertiserService {
   ): List<IdeaPluginDescriptor>
 
   @ApiStatus.Internal
-  fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false)
+  suspend fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false)
 
   @ApiStatus.Internal
   fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {})
@@ -551,26 +551,22 @@ open class PluginAdvertiserServiceImpl(
     }
   }
 
-  override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {
+  override suspend fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {
     val featuresCollector = UnknownFeaturesCollector.getInstance(project)
 
     featuresCollector.getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
       .forEach { featuresCollector.unregisterUnknownFeature(it) }
 
-    DependencyCollectorBean.EP_NAME.extensionList
-      .asSequence()
-      .flatMap { dependencyCollectorBean ->
-        dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
-          UnknownFeature(
-            DEPENDENCY_SUPPORT_FEATURE,
-            IdeBundle.message("plugins.advertiser.feature.dependency"),
-            dependencyCollectorBean.kind + ":" + coordinate,
-            null,
-          )
-        }
-      }.forEach {
-        featuresCollector.registerUnknownFeature(it)
+    for (extension in DependencyCollectorBean.EP_NAME.extensionList) {
+      for (dependency in extension.instance.collectDependencies(project)) {
+        featuresCollector.registerUnknownFeature(UnknownFeature(
+          DEPENDENCY_SUPPORT_FEATURE,
+          IdeBundle.message("plugins.advertiser.feature.dependency"),
+          extension.kind + ":" + dependency,
+          null,
+        ))
       }
+    }
   }
 
   private fun collectFeaturesByName(
@@ -621,7 +617,7 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
     return emptyList()
   }
 
-  final override fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {}
+  final override suspend fun collectDependencyUnknownFeatures(includeIgnored: Boolean) {}
 
   final override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {}
 }

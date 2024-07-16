@@ -6,22 +6,27 @@ import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.util.indexing.roots.kind.ContentOrigin
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.ModuleContentOrigin
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 interface ModuleAwareContentEntityOrigin : ModuleContentOrigin {
   val reference: EntityPointer<*>
   val rootHolder: IndexingRootHolder
 }
 
+@Internal
 interface GenericContentEntityOrigin : ContentOrigin {
   val reference: EntityPointer<*>
   val rootHolder: IndexingRootHolder
 }
 
+@Internal
 interface ExternalEntityOrigin : IndexableSetOrigin {
   val reference: EntityPointer<*>
   val rootHolder: IndexingSourceRootHolder
 }
 
+@Internal
 interface CustomKindEntityOrigin : IndexableSetOrigin {
   val reference: EntityPointer<*>
   val rootHolder: IndexingRootHolder

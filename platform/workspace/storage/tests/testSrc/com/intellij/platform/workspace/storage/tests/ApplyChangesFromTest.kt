@@ -49,9 +49,9 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `add entity`() {
     val source = createEmptyBuilder()
-    source addEntity SampleEntity(false, "first", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    source addEntity SampleEntity(false, "first", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
-    target addEntity SampleEntity(false, "second", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    target addEntity SampleEntity(false, "second", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
     val storage = target.applyChanges(source)
     assertEquals(setOf("first", "second"), storage.entities(SampleEntity::class.java).mapTo(HashSet()) { it.stringProperty })
@@ -59,9 +59,11 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `remove entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                               virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                                SampleEntitySource("test"))
-    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                                virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                                 SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     source.removeEntity(entity.from(source))
@@ -71,10 +73,11 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `modify entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                               virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                                SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
-    source.modifyEntity(entity.from(source)) {
+    source.modifySampleEntity(entity.from(source)) {
       stringProperty = "changed"
     }
     val storage = target.applyChanges(source)
@@ -83,9 +86,11 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `remove removed entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                               virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                                SampleEntitySource("test"))
-    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    val entity2 = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                                virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                                 SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     target.removeEntity(entity)
@@ -98,12 +103,13 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `modify removed entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                               virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                                SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
     target.removeEntity(entity)
     source.assertConsistency()
-    source.modifyEntity(entity.from(source)) {
+    source.modifySampleEntity(entity.from(source)) {
       stringProperty = "changed"
     }
     val storage = target.applyChanges(source)
@@ -113,15 +119,16 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `modify removed child entity`() {
     val parent = target addEntity XParentEntity("parent", MySource)
-    val child = target addEntity XChildEntity("child", MySource) {
-      parentEntity = parent
+    target.modifyXParentEntity(parent) {
+      this.children = listOf(XChildEntity("child", MySource))
     }
+    val child = parent.children.single()
     val source = createBuilderFrom(target)
     target.removeEntity(child)
-    source.modifyEntity(parent.from(source)) {
+    source.modifyXParentEntity(parent.from(source)) {
       this.parentProperty = "new property"
     }
-    source.modifyEntity(child.from(source)) {
+    source.modifyXChildEntity(child.from(source)) {
       this.childProperty = "new property"
     }
 
@@ -134,10 +141,11 @@ class ApplyChangesFromTest {
 
   @RepeatedTest(10)
   fun `remove modified entity`() {
-    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    val entity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                               virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                                SampleEntitySource("test"))
     val source = createBuilderFrom(target.toSnapshot())
-    target.modifyEntity(entity) {
+    target.modifySampleEntity(entity) {
       stringProperty = "changed"
     }
     source.removeEntity(entity.from(source))
@@ -149,10 +157,10 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `add entity with refs at the same slot`() {
     val source = createEmptyBuilder()
-    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
-    val parentEntity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
+    val parentEntity = SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                                     virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
     target addEntity ChildSampleEntity("data", SampleEntitySource("test")) {
       this@ChildSampleEntity.parentEntity = parentEntity
     }
@@ -171,14 +179,14 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `add remove and add with refs`() {
     val source = createEmptyBuilder()
-    val parent = source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(),
-                                               virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
+    val parent = SampleEntity(false, "Another entity", ArrayList(), HashMap(),
+                              virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
     source addEntity ChildSampleEntity("String", SampleEntitySource("test")) {
       parentEntity = parent
     }
 
-    val parentEntity = target addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
+    val parentEntity = SampleEntity(false, "hello", ArrayList(), HashMap(),
+                                    virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
     target addEntity ChildSampleEntity("data", SampleEntitySource("test")) {
       this@ChildSampleEntity.parentEntity = parentEntity
     }
@@ -202,15 +210,17 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `add dependency without changing entities`() {
     val source = createEmptyBuilder()
-    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    source addEntity SampleEntity(false, "Another entity", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
     source addEntity ChildSampleEntity("String", SampleEntitySource("test"))
 
     val target = createBuilderFrom(source)
     val pchild = target.entities(ChildSampleEntity::class.java).single()
     val pparent = target.entities(SampleEntity::class.java).single()
-    target.modifyEntity(pchild) {
-      this.parentEntity = pparent
+    target.modifyChildSampleEntity(pchild) pchild@ {
+      target.modifySampleEntity(pparent) pparent@ {
+        this@pchild.parentEntity = this@pparent
+      }
     }
 
     source.applyChangesFrom(target)
@@ -230,8 +240,10 @@ class ApplyChangesFromTest {
     val parent = source addEntity XParentEntity("parent", MySource)
 
     val target = createBuilderFrom(source)
-    target addEntity XChildWithOptionalParentEntity("child", MySource) {
-      optionalParent = parent
+    target.modifyXParentEntity(parent.from(target)) parent@ {
+      target addEntity XChildWithOptionalParentEntity("child", MySource) {
+        optionalParent = this@parent
+      }
     }
     source.removeEntity(parent)
 
@@ -242,16 +254,16 @@ class ApplyChangesFromTest {
   fun `modify child and parent`() {
     val source = createEmptyBuilder()
     val parent = source addEntity XParentEntity("parent", MySource)
-    source addEntity XChildEntity("child", MySource) {
-      parentEntity = parent
+    source.modifyXParentEntity(parent) {
+      this.children += XChildEntity("child", MySource)
     }
 
     val target = createBuilderFrom(source)
-    target.modifyEntity(parent.from(target)) {
+    target.modifyXParentEntity(parent.from(target)) {
       this.parentProperty = "anotherValue"
     }
-    source addEntity XChildEntity("child", MySource) {
-      parentEntity = parent
+    source.modifyXParentEntity(parent) {
+      this.children += XChildEntity("child", MySource)
     }
 
     source.applyChanges(target)
@@ -263,8 +275,8 @@ class ApplyChangesFromTest {
     val parent = source addEntity XParentEntity("parent", MySource)
 
     val target = createBuilderFrom(source)
-    target addEntity XChildWithOptionalParentEntity("child", MySource) {
-      optionalParent = parent
+    target.modifyXParentEntity(parent.from(target)) {
+      this.optionalChildren += XChildWithOptionalParentEntity("child", MySource)
     }
     target.removeEntity(parent.from(target))
     source.removeEntity(parent)
@@ -279,8 +291,10 @@ class ApplyChangesFromTest {
     val optionalChild = source addEntity XChildWithOptionalParentEntity("child", MySource)
 
     val target = createBuilderFrom(source)
-    target.modifyEntity(optionalChild.from(target)) {
-      this.optionalParent = parent
+    target.modifyXChildWithOptionalParentEntity(optionalChild.from(target)) optionalChild@{
+      target.modifyXParentEntity(parent.from(target)) parent@{
+        this@optionalChild.optionalParent = this@parent
+      }
     }
 
     source.removeEntity(parent)
@@ -293,8 +307,12 @@ class ApplyChangesFromTest {
     val source = createEmptyBuilder()
     val target = createBuilderFrom(source)
 
-    target.addNamedEntity("Name")
-    source.addNamedEntity("Name")
+    target addEntity NamedEntity("Name", MySource) {
+      children = emptyList()
+    }
+    source addEntity NamedEntity("Name", MySource) {
+      children = emptyList()
+    }
 
     assertThrowsLogError<ApplyChangesFromException> {
       source.applyChanges(target)
@@ -304,11 +322,13 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `modifying duplicated persistent ids`() {
     val source = createEmptyBuilder()
-    val namedEntity = source.addNamedEntity("Hello")
+    val namedEntity = source addEntity NamedEntity("Hello", MySource)
     val target = createBuilderFrom(source)
 
-    source.addNamedEntity("Name")
-    target.modifyEntity(namedEntity.from(target)) {
+    source addEntity NamedEntity("Name", MySource) {
+      children = emptyList()
+    }
+    target.modifyNamedEntity(namedEntity.from(target)) {
       this.myName = "Name"
     }
 
@@ -321,12 +341,13 @@ class ApplyChangesFromTest {
   fun `checking external mapping`() {
     val target = createEmptyBuilder()
 
-    target addEntity SampleEntity(false, "Entity at index 0", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    target addEntity SampleEntity(false, "Entity at index 0", ArrayList(), HashMap(),
+                                  virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
 
     val source = createEmptyBuilder()
     val sourceSample = source addEntity SampleEntity(false, "Entity at index 1", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
+                                                     virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
     val mutableExternalMapping = source.getMutableExternalMapping(externalMappingName)
     val anyObj = Any()
     mutableExternalMapping.addMapping(sourceSample, anyObj)
@@ -365,10 +386,10 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `change source in diff`() {
     val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), MySource)
+                                                     virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(sampleEntity.from(source)) {
+    source.modifySampleEntity(sampleEntity.from(source)) {
       this.entitySource = AnotherSource
     }
 
@@ -384,13 +405,13 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `change source and data in diff`() {
     val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), MySource)
+                                                     virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(sampleEntity.from(source)) {
+    source.modifySampleEntity(sampleEntity.from(source)) {
       this.entitySource = AnotherSource
     }
-    source.modifyEntity(sampleEntity.from(source)) {
+    source.modifySampleEntity(sampleEntity.from(source)) {
       stringProperty = "Prop2"
     }
 
@@ -410,14 +431,14 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `change source in target`() {
     val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), MySource)
+                                                     virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
-    target.modifyEntity(sampleEntity) {
+    target.modifySampleEntity(sampleEntity) {
       this.entitySource = AnotherSource
     }
 
-    source.modifyEntity(sampleEntity.from(source)) {
+    source.modifySampleEntity(sampleEntity.from(source)) {
       this.stringProperty = "Updated"
     }
 
@@ -436,9 +457,8 @@ class ApplyChangesFromTest {
     target addEntity XChildWithOptionalParentEntity("Existing", MySource)
 
     val source = createEmptyBuilder()
-    val parent = source addEntity XParentEntity(parentAndChildProperty, MySource)
     source addEntity XChildWithOptionalParentEntity(parentAndChildProperty, MySource) {
-      optionalParent = parent
+      optionalParent = XParentEntity(parentAndChildProperty, MySource)
     }
 
     target.applyChangesFrom(source)
@@ -454,10 +474,9 @@ class ApplyChangesFromTest {
     target addEntity XChildWithOptionalParentEntity("Existing", MySource)
 
     val source = createEmptyBuilder()
-    val child = source addEntity XChildWithOptionalParentEntity(parentAndChildProperty, MySource)
     val parent = source addEntity XParentEntity(parentAndChildProperty, MySource)
-    source.modifyEntity(parent) {
-      this.optionalChildren += child
+    source.modifyXParentEntity(parent) {
+      this.optionalChildren += XChildWithOptionalParentEntity(parentAndChildProperty, MySource)
     }
 
     target.applyChangesFrom(source)
@@ -474,9 +493,8 @@ class ApplyChangesFromTest {
 
     val source = createEmptyBuilder()
     val child = source addEntity XChildWithOptionalParentEntity(parentAndChildProperty, MySource)
-    val parent = source addEntity XParentEntity(parentAndChildProperty, MySource)
-    source.modifyEntity(child) {
-      this.optionalParent = parent
+    source.modifyXChildWithOptionalParentEntity(child) {
+      this.optionalParent = XParentEntity(parentAndChildProperty, MySource)
     }
 
     target.applyChangesFrom(source)
@@ -490,7 +508,7 @@ class ApplyChangesFromTest {
   fun `removing non-existing entity while adding the new one`() {
     val initial = createEmptyBuilder()
     val toBeRemoved = initial addEntity SampleEntity(false, "En1", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), SampleEntitySource("test"))
+                                                     virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), SampleEntitySource("test"))
 
     val source = createBuilderFrom(initial)
 
@@ -498,7 +516,7 @@ class ApplyChangesFromTest {
     val target = createBuilderFrom(initial.toSnapshot())
 
     // In the incorrect implementation remove event will remove added entity
-    source addEntity SampleEntity(false, "En2", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUri("file:///tmp"),
+    source addEntity SampleEntity(false, "En2", ArrayList(), HashMap(), virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"),
                                   SampleEntitySource("test"))
     source.removeEntity(toBeRemoved.from(source))
 
@@ -511,17 +529,19 @@ class ApplyChangesFromTest {
   fun `remove entity and reference`() {
     val initial = createEmptyBuilder()
     val parentEntity = initial addEntity XParentEntity("parent", MySource)
-    val childEntity = initial addEntity XChildWithOptionalParentEntity("child", MySource) {
-      optionalParent = parentEntity
+    val childEntity = initial addEntity XChildWithOptionalParentEntity("child", MySource) child@ {
+      initial.modifyXParentEntity(parentEntity) parent@ {
+        this@child.optionalParent = this@parent
+      }
     }
 
     val source = createBuilderFrom(initial)
 
-    source.modifyEntity(childEntity.from(source)) {
+    source.modifyXChildWithOptionalParentEntity(childEntity.from(source)) {
       this.childProperty = "newProp"
     }
 
-    source.modifyEntity(parentEntity.from(source)) {
+    source.modifyXParentEntity(parentEntity.from(source)) {
       this.optionalChildren = emptyList()
     }
 
@@ -538,16 +558,20 @@ class ApplyChangesFromTest {
   fun `remove reference to created entity`() {
     val initial = createEmptyBuilder()
     val parentEntity = initial addEntity XParentEntity("parent", MySource)
-    initial addEntity XChildWithOptionalParentEntity("child", MySource) {
-      optionalParent = parentEntity
+    initial addEntity XChildWithOptionalParentEntity("child", MySource) child@ {
+      initial.modifyXParentEntity(parentEntity) parent@ {
+        this@child.optionalParent = this@parent
+      }
     }
     val source = createBuilderFrom(initial)
 
-    source addEntity XChildWithOptionalParentEntity("child", MySource) {
-      optionalParent = parentEntity
+    source addEntity XChildWithOptionalParentEntity("child", MySource) child@ {
+      source.modifyXParentEntity(parentEntity.from(source)) parent@ {
+        this@child.optionalParent = this@parent
+      }
     }
 
-    source.modifyEntity(parentEntity.from(source)) {
+    source.modifyXParentEntity(parentEntity.from(source)) {
       this.optionalChildren = emptyList()
     }
 
@@ -562,7 +586,7 @@ class ApplyChangesFromTest {
   fun `add parent with children`() {
     target addEntity ParentMultipleEntity("Parent", MySource)
     val source = createBuilderFrom(target)
-    source.modifyEntity(source.entities(ParentMultipleEntity::class.java).single()) {
+    source.modifyParentMultipleEntity(source.entities(ParentMultipleEntity::class.java).single()) {
       this.children = listOf(
         ChildMultipleEntity("child1", MySource),
         ChildMultipleEntity("child2", MySource),
@@ -579,7 +603,7 @@ class ApplyChangesFromTest {
     target addEntity ParentMultipleEntity("Parent", MySource)
     val source = createBuilderFrom(target)
     val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
-    source.modifyEntity(parentToModify) {
+    source.modifyParentMultipleEntity(parentToModify) {
       this.children = listOf(
         ChildMultipleEntity("child1", MySource),
         ChildMultipleEntity("child2", MySource),
@@ -596,7 +620,7 @@ class ApplyChangesFromTest {
     target addEntity ParentMultipleEntity("Parent", MySource)
     val source = createBuilderFrom(target)
     val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
-    source.modifyEntity(parentToModify) {
+    source.modifyParentMultipleEntity(parentToModify) {
       this.children = listOf(
         ChildMultipleEntity("child1", MySource),
       )
@@ -617,11 +641,11 @@ class ApplyChangesFromTest {
     builder = snapshot.toBuilder()
 
     val parentEntity = builder.entities(OoParentEntity::class.java).single()
-    builder.modifyEntity(parentEntity) {
+    builder.modifyOoParentEntity(parentEntity) {
       this.parentProperty = "eee"
     }
     parentEntity.child?.let { builder.removeEntity(it) }
-    builder.modifyEntity(parentEntity) {
+    builder.modifyOoParentEntity(parentEntity) {
       this.child = OoChildEntity("ccc", MySource)
     }
 
@@ -637,10 +661,10 @@ class ApplyChangesFromTest {
 
     val parentEntity = builder.entities(OoParentEntity::class.java).single()
     val newChild = OoChildEntity("ccc", MySource)
-    builder.modifyEntity(parentEntity) {
+    val updatedParent = builder.modifyOoParentEntity(parentEntity) {
       this.child = newChild
     }
-    builder.removeEntity(newChild)
+    builder.removeEntity(updatedParent.child!!)
 
     snapshot.toBuilder().applyChangesFrom(builder)
   }
@@ -648,10 +672,10 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `change source and data`() {
     val sampleEntity = target addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
-                                                     virtualFileUrlManager.getOrCreateFromUri("file:///tmp"), MySource)
+                                                     virtualFileUrlManager.getOrCreateFromUrl("file:///tmp"), MySource)
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(sampleEntity.from(source)) {
+    source.modifySampleEntity(sampleEntity.from(source)) {
       this.stringProperty = "Updated"
       this.entitySource = AnotherSource
     }
@@ -668,14 +692,15 @@ class ApplyChangesFromTest {
   @RepeatedTest(10)
   fun `modify and update`() {
     val parentEntity1 = target addEntity XParentEntity("Parent1", MySource)
-    val parentEntity2 = target addEntity XParentEntity("Parent2", MySource)
     val childEntity = target addEntity XChildEntity("property", MySource) {
-      this.parentEntity = parentEntity2
+      this.parentEntity = XParentEntity("Parent2", MySource)
     }
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(childEntity.from(source)) {
-      this.parentEntity = parentEntity1
+    source.modifyXChildEntity(childEntity.from(source)) child@ {
+      source.modifyXParentEntity(parentEntity1.from(source)) parent@ {
+        this@child.parentEntity = this@parent
+      }
     }
 
     target.applyChangesFrom(source)
@@ -692,7 +717,7 @@ class ApplyChangesFromTest {
     }
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(parentEntity.from(source)) {
+    source.modifyXParentEntity(parentEntity.from(source)) {
       this.optionalChildren = emptyList()
     }
 
@@ -715,8 +740,10 @@ class ApplyChangesFromTest {
     val parentEntity = target addEntity XParentEntity("Parent2", MySource)
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(parentEntity.from(source)) {
-      this.optionalChildren = listOf(child)
+    source.modifyXParentEntity(parentEntity.from(source)) parent@ {
+      source.modifyXChildWithOptionalParentEntity(child.from(source)) child@ {
+        this@parent.optionalChildren = listOf(this@child)
+      }
     }
 
     source.removeEntity(parentEntity.from(source))
@@ -739,7 +766,7 @@ class ApplyChangesFromTest {
     }
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(parentEntity.from(source)) {
+    source.modifyOoParentEntity(parentEntity.from(source)) {
       this.anotherChild = OoChildWithNullableParentEntity(AnotherSource)
     }
 
@@ -762,7 +789,7 @@ class ApplyChangesFromTest {
     }
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(parentEntity.from(source)) {
+    source.modifyOoParentEntity(parentEntity.from(source)) {
       this.anotherChild = OoChildWithNullableParentEntity(AnotherSource)
     }
 
@@ -783,12 +810,12 @@ class ApplyChangesFromTest {
     val parentEntity = target addEntity OoParentEntity("Parent2", MySource)
 
     val source = createBuilderFrom(target)
-    source.modifyEntity(parentEntity.from(source)) {
+    source.modifyOoParentEntity(parentEntity.from(source)) {
       this.anotherChild = OoChildWithNullableParentEntity(AnotherSource)
     }
 
     // Update target builder in parallel with the source builder
-    target.modifyEntity(parentEntity.from(source)) {
+    target.modifyOoParentEntity(parentEntity.from(source)) {
       this.anotherChild = OoChildWithNullableParentEntity(MySource)
     }
 
@@ -865,7 +892,7 @@ class ApplyChangesFromTest {
     }
     val source = createBuilderFrom(target)
     source.entities(ChildMultipleEntity::class.java).forEach { source.removeEntity(it) }
-    source.modifyEntity(parent.from(source)) {
+    source.modifyParentMultipleEntity(parent.from(source)) {
       this.children = listOf(
         ChildMultipleEntity("data11", MySource),
         ChildMultipleEntity("data21", MySource),

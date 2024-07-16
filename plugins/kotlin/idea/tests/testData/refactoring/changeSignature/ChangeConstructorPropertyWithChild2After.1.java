@@ -5,14 +5,13 @@ class JA extends A {
         super(a);
     }
 
-    @NotNull
     @Override
     public int getB() {
         return super.getB();
     }
 
     @Override
-    public void setB(@NotNull int a) {
+    public void setB(int a) {
         super.setB(a);
     }
 }

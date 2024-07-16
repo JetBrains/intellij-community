@@ -29,9 +29,8 @@ interface ServiceModuleMapping {
 
       val errors = SmartList<String>()
       fun collectDependencies(descriptor: RuntimeModuleDescriptor, pluginGroup: PluginModuleGroup, dependencyPath: FList<RuntimeModuleDescriptor>?) {
-        val toSkip = dependenciesToSkip[descriptor.moduleId.stringId] ?: emptySet()
         for (dependency in descriptor.dependencies) {
-          if (dependency !in mainGroupModulesSet && dependency !in pluginGroupModules && dependency.moduleId.stringId !in toSkip) {
+          if (dependency !in mainGroupModulesSet && dependency !in pluginGroupModules) {
             val previousGroup = moduleOutsideGroupsToPlugin[dependency]
             if (previousGroup == null) {
               moduleOutsideGroupsToPlugin[dependency] = pluginGroup
@@ -66,16 +65,6 @@ interface ServiceModuleMapping {
     
     private fun showPath(dependency: RuntimeModuleDescriptor, path: FList<RuntimeModuleDescriptor>?): String =
       if (path != null) " (${path.prepend(dependency).joinToString(" <- ") { it.moduleId.stringId }})" else ""
-
-    //has a duplicate in runtimeModuleRepositoryGenerator.kt
-    private val dependenciesToSkip = mapOf(
-      //RDCT-488
-      "intellij.performanceTesting" to setOf(
-        "intellij.platform.vcs.impl",
-        "intellij.platform.vcs.log",
-        "intellij.platform.vcs.log.impl",
-      )
-    )
   }
 }
 

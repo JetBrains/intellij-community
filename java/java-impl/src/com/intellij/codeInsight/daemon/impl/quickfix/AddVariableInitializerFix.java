@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.impl.ConstantNode;
-import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -29,8 +29,7 @@ public class AddVariableInitializerFix extends PsiUpdateModCommandAction<PsiVari
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("quickfix.add.variable.family.name");
   }
 
@@ -70,7 +69,7 @@ public class AddVariableInitializerFix extends PsiUpdateModCommandAction<PsiVari
     if (aClass != null) {
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.hasDefaultConstructor(aClass)) {
         String typeText = type.getCanonicalText(false);
-        if (aClass.getTypeParameters().length > 0 && PsiUtil.isLanguageLevel7OrHigher(variable)) {
+        if (aClass.getTypeParameters().length > 0 && PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, variable)) {
           if (!PsiDiamondTypeImpl.haveConstructorsGenericsParameters(aClass)) {
             typeText = TypeConversionUtil.erasure(type).getCanonicalText(false) + "<>";
           }

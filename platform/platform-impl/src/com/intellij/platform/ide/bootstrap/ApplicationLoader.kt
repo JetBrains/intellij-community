@@ -7,7 +7,6 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
-import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
@@ -16,6 +15,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.plugins.saveBundledPluginsState
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.NotRoamableUiSettings
@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -40,6 +41,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
@@ -56,7 +58,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
-import com.intellij.util.system.CpuArch
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -66,10 +67,10 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 import java.util.function.BiFunction
+import kotlin.coroutines.jvm.internal.CoroutineDumpState
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.minutes
 
 @Suppress("SSBasedInspection")
 private val LOG: Logger
@@ -82,16 +83,18 @@ fun initApplication(context: InitAppContext) {
   }
 }
 
-internal suspend fun loadApp(app: ApplicationImpl,
-                             pluginSetDeferred: Deferred<Deferred<PluginSet>>,
-                             appInfoDeferred: Deferred<ApplicationInfoEx>,
-                             euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
-                             asyncScope: CoroutineScope,
-                             initLafJob: Job,
-                             logDeferred: Deferred<Logger>,
-                             appRegisteredJob: CompletableDeferred<Unit>,
-                             args: List<String>,
-                             initAwtToolkitAndEventQueueJob: Job): ApplicationStarter {
+internal suspend fun loadApp(
+  app: ApplicationImpl,
+  pluginSetDeferred: Deferred<Deferred<PluginSet>>,
+  appInfoDeferred: Deferred<ApplicationInfoEx>,
+  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
+  asyncScope: CoroutineScope,
+  initLafJob: Job,
+  logDeferred: Deferred<Logger>,
+  appRegisteredJob: CompletableDeferred<Unit>,
+  args: List<String>,
+  initAwtToolkitAndEventQueueJob: Job
+): ApplicationStarter {
   return span("app initialization") {
     val initServiceContainerJob = launch {
       val pluginSet = span("plugin descriptor init waiting") {
@@ -198,14 +201,14 @@ internal suspend fun loadApp(app: ApplicationImpl,
       getAppInitializedListeners(app)
     }
 
+    appRegisteredJob.join()
+    initConfigurationStoreJob.join()
+
     asyncScope.launch {
       enableCoroutineDumpAndJstack()
     }
 
-    appRegisteredJob.join()
-    initConfigurationStoreJob.join()
-
-    val appInitializedListenerJob = launch {
+    launch {
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
@@ -220,24 +223,29 @@ internal suspend fun loadApp(app: ApplicationImpl,
         checkThirdPartyPluginsAllowed()
       }
 
+      addActivateAndWindowsCliListeners()
+
       // doesn't block app start-up
       span("post app init tasks") {
         runPostAppInitTasks()
       }
 
-      addActivateAndWindowsCliListeners()
+      app.getCoroutineScope().launch {
+        // postpone avoiding getting PropertiesComponent and writing to disk too early
+        delay(1.minutes)
+        if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+          span("save bundled plugin state") {
+            saveBundledPluginsState()
+          }
+        }
+      }
     }
-
-    appInitializedListenerJob.join()
 
     applicationStarter.await()
   }
 }
 
-private suspend fun preloadNonHeadlessServices(
-  app: ApplicationImpl,
-  initLafJob: Job,
-) {
+private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob: Job) {
   coroutineScope {
     launch { // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
       initLafJob.join()
@@ -253,14 +261,11 @@ private suspend fun preloadNonHeadlessServices(
     }
 
     launch(CoroutineName("actionConfigurationCustomizer preloading")) {
-      @Suppress("ControlFlowWithEmptyBody")
-      for (ignored in ActionConfigurationCustomizer.EP.lazySequence()) {
-        // just preload
-      }
+      ActionConfigurationCustomizer.EP.lazySequence().forEach { /* just preload */ }
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
-    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "true").toBoolean()) {
+    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
       // ActionManager can use UISettings (KeymapManager doesn't use, but just to be sure)
       initLafJob.join()
     }
@@ -278,25 +283,15 @@ private suspend fun preloadNonHeadlessServices(
 }
 
 private suspend fun enableCoroutineDumpAndJstack() {
-  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean() || (SystemInfoRt.isWindows && CpuArch.isArm64())) {
+  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
     return
   }
 
   var isInstalled = false
   span("coroutine debug probes init") {
     try {
-      enableCoroutineDump()
-        .onFailure { e ->
-          if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-            LOG.warn("Cannot enable coroutine debug dump", e)
-          }
-          else {
-            LOG.error("Cannot enable coroutine debug dump", e)
-          }
-        }
-        .onSuccess {
-          isInstalled = true
-        }
+      CoroutineDumpState.install()
+      isInstalled = true
     }
     catch (e: Throwable) {
       LOG.error("Cannot enable coroutine debug dump", e)
@@ -319,12 +314,7 @@ ${dumpCoroutines(stripDump = false)}
   }
 }
 
-private suspend fun initLafManagerAndCss(
-  app: ApplicationImpl,
-  asyncScope: CoroutineScope,
-  initLafJob: Job,
-  loadIconMapping: Job?,
-): Job? {
+private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: CoroutineScope, initLafJob: Job, loadIconMapping: Job?): Job? {
   return coroutineScope {
     // LaF must be initialized before app init because icons maybe requested and, as a result,
     // a scale must be already initialized (especially important for Linux)
@@ -396,17 +386,8 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
       }
     }
     else {
-      // todo https://youtrack.jetbrains.com/issue/IDEA-298594
-      CompletableFuture.runAsync {
-        ForkJoinPool.managedBlock(object : ForkJoinPool.ManagedBlocker {
-          override fun block(): Boolean {
-            starter.main(args)
-            return true
-          }
-          override fun isReleasable(): Boolean {
-            return false
-          }
-        })
+      blockingContext {
+        starter.main(args)
       }
     }
   }
@@ -457,14 +438,14 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
       span("app custom starter creation") {
         val starter = findStarter(commandName) ?: createDefaultAppStarter()
         if (AppMode.isHeadless() && !starter.isHeadless) {
-          val message = IdeBundle.message(
-            "application.cannot.start.in.a.headless.mode",
+          val message = BootstrapBundle.message(
+            "bootstrap.error.message.headless",
             if (starter is IdeStarter) 0 else 1,
             commandName,
             if (args.isEmpty()) 0 else 1,
             args.joinToString(" ")
           )
-          StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
+          StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), message)
           exitProcess(AppExitCodes.NO_GRAPHICS)
         }
         // must be executed before container creation
@@ -475,9 +456,8 @@ private suspend fun createAppStarter(args: List<String>, asyncScope: CoroutineSc
   }
 }
 
-private fun createDefaultAppStarter(): ApplicationStarter {
-  return if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
-}
+private fun createDefaultAppStarter(): ApplicationStarter =
+  if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
 
 @VisibleForTesting
 internal fun createAppLocatorFile() {

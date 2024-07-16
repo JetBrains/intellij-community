@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -8,16 +8,20 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
  * Provides services for creating document and editor instances.
- *
+ * <p>
  * Creating and releasing of editors must be done from EDT.
  */
+@ApiStatus.NonExtendable
 public abstract class EditorFactory {
   /**
    * Returns the editor factory instance.
@@ -44,6 +48,7 @@ public abstract class EditorFactory {
    * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
    * </p>
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document);
 
   /**
@@ -52,6 +57,7 @@ public abstract class EditorFactory {
    * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
    * </p>
    */
+  @RequiresEdt
   public abstract Editor createViewer(@NotNull Document document);
 
   /**
@@ -61,11 +67,13 @@ public abstract class EditorFactory {
    * </p>
    * @see Editor#getProject()
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project);
 
   /**
    * Does the same as {@link #createEditor(Document, Project)} and also sets the special kind for the created editor
    */
+  @RequiresEdt
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
   /**
@@ -80,7 +88,8 @@ public abstract class EditorFactory {
    * @param isViewer true if read-only editor should be created
    * @see Editor#getProject()
    */
-  public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull FileType fileType, boolean isViewer);
+  @RequiresEdt
+  public abstract Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull FileType fileType, boolean isViewer);
 
   /**
    * Creates an editor for the specified document associated with the specified project. Must be invoked in EDT.
@@ -94,12 +103,14 @@ public abstract class EditorFactory {
    * @return the editor instance.
    * @see Editor#getProject()
    */
-  public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer);
+  @RequiresEdt
+  public abstract Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull VirtualFile file, boolean isViewer);
 
   /**
    * Does the same as {@link #createEditor(Document, Project, VirtualFile, boolean)} and also sets the special kind for the created editor
    */
-  public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer,
+  @RequiresEdt
+  public abstract Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull VirtualFile file, boolean isViewer,
                                       @NotNull EditorKind kind);
 
   /**
@@ -108,16 +119,19 @@ public abstract class EditorFactory {
    * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}
    * </p>
    */
+  @RequiresEdt
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project);
 
   /**
    * Does the same as {@link #createViewer(Document, Project)} and also sets the special kind for the created viewer
    */
+  @RequiresEdt
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
   /**
    * Disposes the specified editor instance. Must be invoked in EDT.
    */
+  @RequiresEdt
   public abstract void releaseEditor(@NotNull Editor editor);
 
   /**
@@ -155,6 +169,8 @@ public abstract class EditorFactory {
    */
   public abstract Editor @NotNull [] getAllEditors();
 
+  public abstract @NotNull List<Editor> getEditorList();
+
   /**
    * Registers a listener for receiving notifications when editor instances are created
    * and released.
@@ -185,5 +201,6 @@ public abstract class EditorFactory {
   /**
    * Reloads the editor settings and refreshes all currently open editors.
    */
+  @RequiresEdt
   public abstract void refreshAllEditors();
 }

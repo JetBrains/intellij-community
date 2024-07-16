@@ -49,7 +49,7 @@ open class LineMarkerConfiguration(
             }
 
             if (targets.size > 1) {
-                params.add(targets.joinToString(prefix = "targets=[", postfix = "]", separator = "; "))
+                params.add(targets.sorted().joinToString(prefix = "targets=[", postfix = "]", separator = "; "))
             }
         }
 

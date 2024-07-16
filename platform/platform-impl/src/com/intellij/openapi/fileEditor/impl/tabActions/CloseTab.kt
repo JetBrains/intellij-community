@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.tabActions
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -33,10 +32,12 @@ import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class CloseTab(component: JComponent,
-                        private val file: VirtualFile,
-                        private val editorWindow: EditorWindow,
-                        parentDisposable: Disposable) : AnAction(), DumbAware {
+internal class CloseTab(
+  component: JComponent,
+  private val file: VirtualFile,
+  private val editorWindow: EditorWindow,
+  parentDisposable: Disposable,
+) : AnAction(), DumbAware {
 
   init {
     ShadowAction(this, IdeActions.ACTION_CLOSE, component, parentDisposable)
@@ -175,7 +176,7 @@ private class DotIcon(private val color: Color) : Icon {
  }
 
 private val CLOSE_ICON: Icon
-  get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.General.CloseSmall else AllIcons.Actions.Close
+  get() = AllIcons.Actions.Close
 
 private val CLOSE_HOVERED_ICON: Icon
-  get() = (if (ExperimentalUI.isNewUI()) ExpUiIcons.General.CloseSmallHovered else AllIcons.Actions.CloseHovered)
+  get() = AllIcons.Actions.CloseHovered

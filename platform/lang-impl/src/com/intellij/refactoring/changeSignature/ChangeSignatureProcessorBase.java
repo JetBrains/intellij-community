@@ -7,7 +7,6 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -245,10 +244,10 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
     @Override
     public void undo() {
-      if (myElementListener instanceof UndoRefactoringElementListener) {
+      if (myElementListener instanceof UndoRefactoringElementListener listener) {
         PsiElement element = myPointer.getElement();
         if (element != null) {
-          ((UndoRefactoringElementListener)myElementListener).undoElementMovedOrRenamed(element, myFqn);
+          listener.undoElementMovedOrRenamed(element, myFqn);
         }
       }
     }

@@ -3,8 +3,10 @@ package com.intellij.ide.todo;
 
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class TodoIndexPatternProvider implements IndexPatternProvider {
   public static TodoIndexPatternProvider getInstance() {
     return EP_NAME.findExtensionOrFail(TodoIndexPatternProvider.class);

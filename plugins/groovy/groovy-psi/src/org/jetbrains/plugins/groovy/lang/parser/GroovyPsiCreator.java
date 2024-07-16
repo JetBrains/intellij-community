@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -54,14 +54,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
- * Creates Groovy PSI element by given AST node
+ * Creates Groovy PSI elements from the supplied AST nodes
  *
  * @author Dmitry.Krasilschikov
  */
 public final class GroovyPsiCreator {
 
   /**
-   * Creates Groovy PSI element by given AST node
+   * Creates a Groovy PSI element from the supplied AST node
    *
    * @param node Given node
    * @return Respective PSI element

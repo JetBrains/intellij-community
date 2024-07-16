@@ -41,7 +41,7 @@ class PyCharmCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHomePath = BuildDependenciesCommunityRoot(homePath.resolve("community"))
     runTestBuild(
-      homePath = communityHomePath.communityRoot,
+      homeDir = communityHomePath.communityRoot,
       traceSpanName = testInfo.spanName,
       productProperties = PyCharmCommunityProperties(communityHomePath.communityRoot),
     ) {

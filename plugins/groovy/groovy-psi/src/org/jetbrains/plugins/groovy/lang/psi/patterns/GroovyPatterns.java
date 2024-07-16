@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
-public class GroovyPatterns extends PsiJavaPatterns {
+public final class GroovyPatterns extends PsiJavaPatterns {
 
   public static GroovyElementPattern groovyElement() {
     return new GroovyElementPattern.Capture<>(GroovyPsiElement.class);

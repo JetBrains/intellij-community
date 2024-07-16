@@ -11,10 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 public interface DocumentationMarkup {
 
   @ApiStatus.Internal String CLASS_DEFINITION = "definition";
-  @ApiStatus.Internal String CLASS_DEFINITION_SEPARATED = "definition-separated";
   @ApiStatus.Internal String CLASS_CONTENT = "content";
-  @ApiStatus.Internal String CLASS_CONTENT_SEPARATED = "content-separated";
-  @ApiStatus.Internal String CLASS_SEPARATED = "separated";
   @ApiStatus.Internal String CLASS_SECTIONS = "sections";
   @ApiStatus.Internal String CLASS_SECTION = "section";
   @ApiStatus.Internal String CLASS_GRAYED = "grayed";

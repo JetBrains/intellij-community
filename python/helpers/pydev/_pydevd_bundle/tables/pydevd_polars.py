@@ -32,14 +32,14 @@ def get_column_types(table):
         return TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
 
-# used by pydevd, isDisplaySupported equals false
+# used by pydevd
 def get_data(table, start_index=None, end_index=None):
     # type: (pl.DataFrame, int, int) -> str
     with __create_config():
         return table[start_index:end_index]._repr_html_()
 
 
-# used by DSTableCommands isDisplaySupported equals true
+# used by DSTableCommands
 def display_data(table, start, end):
     # type: (pl.DataFrame, int, int) -> None
     with __create_config():
@@ -62,12 +62,6 @@ def get_column_descriptions(table):
         return get_data(described_results, None, None)
     else:
         return ""
-
-
-# Polars compute NaN-s in describe. So, we don't need get_value_counts for Polars
-def get_value_counts(table):
-    # type: (Union[pl.DataFrame, pl.Series]) -> str
-    return ""
 
 
 class ColumnVisualisationType:
@@ -166,7 +160,13 @@ def analyze_numeric_column(column, col_name):
         unique_values = column.n_unique()
     if unique_values > ColumnVisualisationUtils.NUM_BINS:
         import numpy as np
-        format_function = int if column.is_integer() else lambda x: round(x, 1)
+
+        def format_function(x):
+            if x == int(x):
+                return int(x)
+            else:
+                return round(x, 3)
+
         counts, bin_edges = np.histogram(column, bins=ColumnVisualisationUtils.NUM_BINS)
         # so the long dash will be correctly viewed both on Mac and Windows
         bin_labels = ['{} \u2014 {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i + 1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]

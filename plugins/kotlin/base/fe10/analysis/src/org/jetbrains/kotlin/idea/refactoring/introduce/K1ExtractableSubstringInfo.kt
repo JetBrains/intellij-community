@@ -36,7 +36,7 @@ class K1ExtractableSubstringInfo(
         val tempContext = expr.analyzeInContext(scope, template)
         val trace = DelegatingBindingTrace(tempContext, "Evaluate '$literal'")
         val languageVersionSettings = facade.languageVersionSettings
-        val value = ConstantExpressionEvaluator(module, languageVersionSettings, facade.project).evaluateExpression(expr, trace)
+        val value = ConstantExpressionEvaluator(module, languageVersionSettings).evaluateExpression(expr, trace)
         if (value == null || value.isError) return stringType
 
         return value.toConstantValue(TypeUtils.NO_EXPECTED_TYPE).getType(module)

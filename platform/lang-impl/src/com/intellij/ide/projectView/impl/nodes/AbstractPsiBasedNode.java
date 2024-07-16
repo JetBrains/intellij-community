@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -39,6 +39,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileAttributes;
+import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.getFileTimestamp;
 import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsKt.getVirtualFileForNodeOrItsPSI;
 import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
@@ -71,6 +72,13 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   protected abstract @Nullable Collection<AbstractTreeNode<?>> getChildrenImpl();
 
   protected abstract void updateImpl(@NotNull PresentationData data);
+
+  @ApiStatus.Internal
+  @Override
+  protected @Nullable VirtualFile getCacheableFile() {
+    var file = super.getCacheableFile();
+    return file != null ? file : getVirtualFileForValue();
+  }
 
   @Override
   public final @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
@@ -219,8 +227,8 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       timestamp = 0; // skip for performance reasons
       return;
     }
-    var attributes = getFileAttributes(getVirtualFileForNodeOrItsPSI(this));
-    timestamp = attributes == null ? 0 : attributes.lastModifiedTime().toMillis();
+    var timestamp = getFileTimestamp(getVirtualFileForNodeOrItsPSI(this));
+    this.timestamp = timestamp == null ? 0 : timestamp;
   }
 
   @Iconable.IconFlags
@@ -242,7 +250,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     Icon icon = original;
 
     if (file.is(VFileProperty.SYMLINK)) {
-      PredefinedIconOverlayService iconOverlayService = PredefinedIconOverlayService.getInstanceOrNull();
+      PredefinedIconOverlayService iconOverlayService = PredefinedIconOverlayService.Companion.getInstanceOrNull();
       if (iconOverlayService != null) {
         icon = iconOverlayService.createSymlinkIcon(icon);
       }

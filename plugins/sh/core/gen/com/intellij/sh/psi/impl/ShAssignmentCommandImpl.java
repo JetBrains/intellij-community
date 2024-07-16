@@ -16,6 +16,7 @@ public class ShAssignmentCommandImpl extends ShAssignmentCommandMixin implements
     super(node);
   }
 
+  @Override
   public void accept(@NotNull ShVisitor visitor) {
     visitor.visitAssignmentCommand(this);
   }

@@ -81,7 +81,10 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
 
   /**
    * Enhances the run process console by adding any extension-specific information to it.
+   *
+   * @deprecated use {@code com.intellij.execution.application.JavaConsoleDecorator.decorate}
    */
+  @Deprecated(forRemoval = true)
   @NotNull
   protected ConsoleView decorate(@NotNull ConsoleView console, @NotNull RunConfigurationBase<?> configuration, @NotNull Executor executor) {
     return console;

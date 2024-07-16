@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
-public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
+public final class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
   private static final TokenSet GSTRING_TOKENS = TokenSet.create(GroovyTokenTypes.mGSTRING_BEGIN, GroovyTokenTypes.mGSTRING_CONTENT,
                                                                  GroovyTokenTypes.mGSTRING_END, STRING_DQ, STRING_TDQ);
@@ -169,9 +169,9 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     return Result.Continue;
   }
 
-  protected static boolean handleEnter(Editor editor,
-                                       DataContext dataContext,
-                                       EditorActionHandler originalHandler) {
+  private static boolean handleEnter(Editor editor,
+                                     DataContext dataContext,
+                                     EditorActionHandler originalHandler) {
     if (HandlerUtils.isReadOnly(editor)) {
       return false;
     }

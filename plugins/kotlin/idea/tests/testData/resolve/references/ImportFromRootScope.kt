@@ -2,4 +2,4 @@ package test
 
 import <caret>Klass
 
-//REF: (<root>).Klass
+//REF: Klass

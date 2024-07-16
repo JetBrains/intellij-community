@@ -49,14 +49,12 @@ public final class ParameterHidingMemberVariableInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ParameterHidesMemberVariable";
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "hiding";
   }
 
@@ -66,8 +64,7 @@ public final class ParameterHidingMemberVariableInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message("parameter.hides.member.variable.problem.descriptor", aClass.getName());
   }

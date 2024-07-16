@@ -4,6 +4,8 @@ package com.intellij.execution.impl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.ProjectScope
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.kind.ContentOrigin
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
@@ -29,6 +31,9 @@ private class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
     }
   }
 }
+
+internal fun loadFileWithRunConfigs(project: Project): List<String> =
+  FilenameIndex.getAllFilesByExt(project, "run.xml", ProjectScope.getContentScope(project)).filter { isFileWithRunConfigs(it) }.map { it.path }
 
 private fun isFileWithRunConfigs(file: VirtualFile): Boolean {
   if (!file.isInLocalFileSystem || !file.nameSequence.endsWith(".run.xml")) return false

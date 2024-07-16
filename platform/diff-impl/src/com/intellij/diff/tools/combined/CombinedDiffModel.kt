@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
@@ -23,9 +23,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 class CombinedDiffModel(val project: Project) {
   val ourDisposable = Disposer.newCheckedDisposable()
 
@@ -164,6 +166,7 @@ private class CombinedDiffContext(private val project: Project) : DiffContext() 
   }
 }
 
+@ApiStatus.Experimental
 interface CombinedDiffModelListener : EventListener {
   fun onModelReset()
 

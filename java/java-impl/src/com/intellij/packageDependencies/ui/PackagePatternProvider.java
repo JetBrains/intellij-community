@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -26,11 +26,10 @@ import javax.swing.*;
 import java.util.Set;
 
 public final class PackagePatternProvider extends PatternDialectProvider {
-  @NonNls public static final String PACKAGES = "package";
+  public static final @NonNls String PACKAGES = "package";
   private static final Logger LOG = Logger.getInstance(PackagePatternProvider.class);
 
-  @Nullable
-  private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
+  private static @Nullable GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
     if (node instanceof GeneralGroupNode) return (GeneralGroupNode)node;
     if (node == null || node instanceof RootNode) return null;
     return getGroupParent((PackageDependenciesNode)node.getParent());
@@ -117,14 +116,12 @@ public final class PackagePatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return PACKAGES;
   }
 
-  @Nls
   @Override
-  public @NotNull String getHintMessage() {
+  public @Nls @NotNull String getHintMessage() {
     return JavaBundle.message("package.pattern.provider.hint.label");
   }
 

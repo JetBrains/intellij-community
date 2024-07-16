@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownTypedHandler extends TypedHandlerDelegate {
+public final class MarkdownTypedHandler extends TypedHandlerDelegate {
   @NotNull
   @Override
   public Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

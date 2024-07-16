@@ -40,11 +40,11 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
   public void testParenthesesHighlighting() {
     highlightTest("""
       import org.intellij.lang.annotations.Language;
-                    
+    
       class X {
         @Language("JavaScript")
         String JS_CODE = "var x;";
-                        
+    
         @Language("XPath")
         String XPATH_CODE = (((<warning descr="Language mismatch: Expected 'XPath', got 'JavaScript'">JS_CODE</warning>)));
       }
@@ -54,7 +54,7 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAnnotateFix() {
     quickFixTest("""
     import org.intellij.lang.annotations.Language;
-                      
+    
     class X {
       String JS_CODE = "var y;";
 
@@ -63,7 +63,7 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
     }
     """, """
     import org.intellij.lang.annotations.Language;
-                      
+    
     class X {
       @Language("JavaScript")
       String JS_CODE = "var y;";
@@ -84,13 +84,25 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
                       }""");
   }
 
+  public void testProcessorFromMethod() {
+    highlightTest("""
+                      import org.intellij.lang.annotations.Language;
+                      
+                      interface MyProcessor extends StringTemplate.Processor<Object, RuntimeException> {}
+                      
+                      class Hello {
+                          @Language("JAVA")
+                          public static native MyProcessor getProcessor();
+                      }""");
+
+  }
   public void testEmptyArrayConstant() {
     highlightTest("""
       import org.intellij.lang.annotations.Language;
-      
+    
       class X {
         public static final String[] EMPTY_ARRAY = {};
-          
+    
         @Language("HTML")
         String[] getCode() {
           return EMPTY_ARRAY;

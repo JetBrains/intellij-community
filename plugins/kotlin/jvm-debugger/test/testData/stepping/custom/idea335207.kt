@@ -10,5 +10,3 @@ fun main() {
     }
     localFun()
 }
-
-// IGNORE_K2

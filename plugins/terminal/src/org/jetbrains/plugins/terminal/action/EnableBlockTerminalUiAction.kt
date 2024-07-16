@@ -4,18 +4,19 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.exp.feedback.showBlockTerminalFeedbackNotification
+import org.jetbrains.plugins.terminal.block.feedback.showBlockTerminalFeedbackNotification
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 
-class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundle.messagePointer("action.Terminal.EnableNewUi.text")) {
+internal class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundle.messagePointer("action.Terminal.EnableNewUi.text")) {
   override fun isSelected(e: AnActionEvent): Boolean {
     return Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
   }
@@ -33,7 +34,8 @@ class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundle.message
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.project != null && ExperimentalUI.isNewUI()
-    e.presentation.putClientProperty(ActionMenu.SECONDARY_ICON, AllIcons.General.Beta)
+    e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, AllIcons.General.Beta)
+    e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

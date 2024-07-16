@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -8,16 +8,19 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LazyExtension
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG: Logger
   get() = logger<FileEditorProviderManagerImpl>()
 
-private fun computeKey(providers: List<FileEditorProvider>) = providers.joinToString(separator = ",") { it.editorTypeId }
+private fun computeKey(providers: List<FileEditorWithProvider>) = providers.joinToString(separator = ",") { it.provider.editorTypeId }
 
 @Serializable
 data class FileEditorProviderManagerState(@JvmField val selectedProviders: Map<String, String> = emptyMap())
@@ -50,14 +53,15 @@ class FileEditorProviderManagerImpl
         FileDocumentManager.getInstance().getDocument(file) != null
       }
     }
-    val fileType = lazy { file.fileType }
+
+    val fileType = file.fileType
     for (item in FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence()) {
       if (!isAcceptedByFileType(item = item, fileType = fileType, file = file) || (item.isDocumentRequired && !hasDocument)) {
         continue
       }
 
       val provider = item.instance ?: continue
-      if (!DumbService.isDumbAware(provider) && DumbService.isDumb(project)) {
+      if (!DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
         continue
       }
 
@@ -72,26 +76,57 @@ class FileEditorProviderManagerImpl
     return postProcessResult(sharedProviders)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Suppress("DuplicatedCode")
   override suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider> {
+    return getProviders(project, file, dumUnawareOnly = false, excludeIds = emptySet())
+  }
+
+  override suspend fun getDumbUnawareProviders(project: Project, file: VirtualFile, excludeIds: Set<String>): List<FileEditorProvider> {
+    return getProviders(project = project, file = file, dumUnawareOnly = true, excludeIds = excludeIds)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Suppress("DuplicatedCode")
+  private suspend fun getProviders(
+    project: Project,
+    file: VirtualFile,
+    dumUnawareOnly: Boolean,
+    excludeIds: Set<String>,
+  ): List<FileEditorProvider> {
     // collect all possible editors
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
 
-    val fileType = lazy { file.fileType }
+    // Not lazy - avoid thread starvation.
+    // We run in parallel, and each provider can get blocked while getting the file type (e.g., during TextMate bundle initialization).
 
     val sharedProviders = coroutineScope {
+      val fileType = async {
+        blockingContext { file.fileType }
+      }
+
       var hasDocument: Boolean? = null
 
-      FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().map { item ->
+      FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().mapNotNull { item ->
+        if (excludeIds.contains(item.id)) {
+          return@mapNotNull null
+        }
+
         async {
+          if (dumUnawareOnly) {
+            val aClass = item.implementationClass
+            if (aClass != null && DumbAware::class.java.isAssignableFrom(aClass)) {
+              return@async null
+            }
+          }
+
           if (!isAcceptedByFileType(item = item, fileType = fileType, file = file)) {
             return@async null
           }
 
           if (item.isDocumentRequired) {
             if (hasDocument == null) {
-              hasDocument = readAction { FileDocumentManager.getInstance().getDocument(file) != null }
+              val fileDocumentManager = serviceAsync<FileDocumentManager>()
+              hasDocument = readAction { fileDocumentManager.getDocument(file) != null }
             }
 
             if (hasDocument == false) {
@@ -101,7 +136,18 @@ class FileEditorProviderManagerImpl
 
           try {
             withTimeout(30.seconds) {
-              getProviderIfApplicable(item = item, project = project, file = file, suppressors = suppressors)
+              val provider = item.instance ?: return@withTimeout null
+              if (excludeIds.contains(provider.editorTypeId)) {
+                return@withTimeout null
+              }
+
+              getProviderIfApplicable(
+                provider = provider,
+                project = project,
+                file = file,
+                suppressors = suppressors,
+                pluginDescriptor = item.pluginDescriptor,
+              )?.takeIf { !dumUnawareOnly || !DumbService.isDumbAware(it) }
             }
           }
           catch (e: TimeoutCancellationException) {
@@ -140,24 +186,34 @@ class FileEditorProviderManagerImpl
   }
 
   fun providerSelected(composite: EditorComposite) {
-    val providers = composite.allProviders
-    if (providers.size < 2) {
+    val list = composite.allEditorsWithProviders
+    if (list.size < 2) {
       return
     }
 
     updateState {
-      FileEditorProviderManagerState(it.selectedProviders +
-                                     (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
+      FileEditorProviderManagerState(it.selectedProviders + (computeKey(list) to composite.selectedWithProvider!!.provider.editorTypeId))
     }
   }
 
   internal fun getSelectedFileEditorProvider(composite: EditorComposite, project: Project): FileEditorProvider? {
-    val provider = EditorHistoryManager.getInstance(project).getSelectedProvider(composite.file)
-    val providers = composite.allProviders
-    if (provider != null || providers.size < 2) {
+    return getSelectedFileEditorProvider(
+      file = composite.file,
+      fileEditorWithProviders = composite.allEditorsWithProviders,
+      editorHistoryManager = EditorHistoryManager.getInstance(project),
+    )
+  }
+
+  internal fun getSelectedFileEditorProvider(
+    file: VirtualFile,
+    fileEditorWithProviders: List<FileEditorWithProvider>,
+    editorHistoryManager: EditorHistoryManager,
+  ): FileEditorProvider? {
+    val provider = editorHistoryManager.getSelectedProvider(file)
+    if (provider != null || fileEditorWithProviders.size < 2) {
       return provider
     }
-    return getProvider(state.selectedProviders.get(computeKey(providers)) ?: return null)
+    return getProvider(state.selectedProviders.get(computeKey(fileEditorWithProviders)) ?: return null)
   }
 
   @TestOnly
@@ -168,16 +224,16 @@ class FileEditorProviderManagerImpl
   }
 }
 
-private suspend fun getProviderIfApplicable(item: LazyExtension<FileEditorProvider>,
-                                            project: Project,
-                                            file: VirtualFile,
-                                            suppressors: List<FileEditorProviderSuppressor>): FileEditorProvider? {
-  val provider = item.instance ?: return null
-  if (!DumbService.isDumbAware(provider)) {
-    LOG.debug { "Please make ${provider.javaClass} dumb-aware" }
-    if (DumbService.isDumb(project)) {
-      return null
-    }
+private suspend fun getProviderIfApplicable(
+  provider: FileEditorProvider,
+  project: Project,
+  file: VirtualFile,
+  suppressors: List<FileEditorProviderSuppressor>,
+  pluginDescriptor: PluginDescriptor,
+): FileEditorProvider? {
+  if (!DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
+    LOG.warn("Please make ${provider.javaClass} dumb-aware")
+    return null
   }
 
   try {
@@ -202,7 +258,7 @@ private suspend fun getProviderIfApplicable(item: LazyExtension<FileEditorProvid
     throw e
   }
   catch (e: Throwable) {
-    LOG.error(PluginException(e, item.pluginDescriptor.pluginId))
+    LOG.error(PluginException(e, pluginDescriptor.pluginId))
     return null
   }
 }
@@ -244,12 +300,23 @@ private val LazyExtension<FileEditorProvider>.isDocumentRequired
 private val LazyExtension<FileEditorProvider>.fileType
   get() = getCustomAttribute("fileType")
 
-private fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>,
-                                 fileType: Lazy<FileType>,
-                                 file: VirtualFile): Boolean {
+private suspend fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>, fileType: Deferred<FileType>, file: VirtualFile): Boolean {
   val providerFileTypeName = item.fileType
   // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
-  if (providerFileTypeName != null && fileType.value.name != providerFileTypeName) {
+  if (providerFileTypeName != null && fileType.await().name != providerFileTypeName) {
+    val fileTypeRegistry = FileTypeRegistry.getInstance()
+    val providerFileType = fileTypeRegistry.findFileTypeByName(providerFileTypeName)
+    if (providerFileType == null || !fileTypeRegistry.isFileOfType(file, providerFileType)) {
+      return false
+    }
+  }
+  return true
+}
+
+private fun isAcceptedByFileType(item: LazyExtension<FileEditorProvider>, fileType: FileType, file: VirtualFile): Boolean {
+  val providerFileTypeName = item.fileType
+  // VcsLogFileType is not registered in FileTypeRegistry - we should check also by name
+  if (providerFileTypeName != null && fileType.name != providerFileTypeName) {
     val fileTypeRegistry = FileTypeRegistry.getInstance()
     val providerFileType = fileTypeRegistry.findFileTypeByName(providerFileTypeName)
     if (providerFileType == null || !fileTypeRegistry.isFileOfType(file, providerFileType)) {

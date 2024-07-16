@@ -61,13 +61,15 @@ def __get_data_slice(table, start, end):
 def _compute_sliced_data(table, fun, start_index=None, end_index=None):
     # type: (Union[pd.DataFrame, pd.Series], function, int, int) -> str
 
-    max_cols, max_colwidth = __get_tables_display_options()
+    max_cols, max_colwidth, max_rows = __get_tables_display_options()
 
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
+    _jb_max_rows = pd.get_option('display.max_rows')
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_colwidth', max_colwidth)
+    pd.set_option('display.max_rows', max_rows)
 
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
@@ -76,6 +78,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
+    pd.set_option('display.max_rows', _jb_max_rows)
 
     return data
 
@@ -88,13 +91,6 @@ def get_column_descriptions(table):
         return get_data(described_result, None, None)
     else:
         return ""
-
-
-def get_value_counts(table):
-    # type: (Union[pd.DataFrame, pd.Series]) -> str
-    counts_result = __get_counts(table)
-
-    return get_data(counts_result, None, None)
 
 
 def __get_describe(table):
@@ -118,11 +114,6 @@ def __get_describe(table):
         return described_.reindex(columns=table.columns, copy=False)
 
 
-def __get_counts(table):
-    # type: (Union[pd.DataFrame, pd.Series]) -> pd.DataFrame
-    return __convert_to_df(table).count().to_frame().transpose()
-
-
 class ColumnVisualisationType:
     HISTOGRAM = "histogram"
     UNIQUE = "unique"
@@ -144,8 +135,8 @@ def get_value_occurrences_count(table):
     df = __convert_to_df(table)
     bin_counts = []
 
-    for col_name in df.columns:
-        column_visualisation_type, result = analyze_column(df[col_name])
+    for _, column_data in df.items():
+        column_visualisation_type, result = analyze_column(column_data)
 
         bin_counts.append(str({column_visualisation_type:result}))
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
@@ -198,7 +189,12 @@ def analyze_numeric_column(column):
     if column.size <= ColumnVisualisationUtils.NUM_BINS:
         res = column.value_counts().sort_index().to_dict()
     else:
-        format_function = int if column.dtype.kind == 'i' else lambda x: round(x, 1)
+        def format_function(x):
+            if x == int(x):
+                return int(x)
+            else:
+                return round(x, 3)
+
         counts, bin_edges = np.histogram(column.dropna(), bins=ColumnVisualisationUtils.NUM_BINS)
 
         # so the long dash will be correctly viewed both on Mac and Windows
@@ -258,8 +254,8 @@ def __categorical_to_df(table):
 
 # In old versions of pandas max_colwidth accepted only Int-s
 def __get_tables_display_options():
-    # type: () -> Tuple[None, Union[int, None]]
+    # type: () -> Tuple[None, Union[int, None], None]
     import sys
     if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH_PYTHON_2
-    return None, None
+        return None, MAX_COLWIDTH_PYTHON_2, None
+    return None, None, None

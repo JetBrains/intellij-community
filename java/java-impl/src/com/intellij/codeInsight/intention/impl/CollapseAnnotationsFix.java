@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -63,10 +63,8 @@ public final class CollapseAnnotationsFix extends PsiUpdateModCommandAction<PsiA
     ct.replaceAndRestoreComments(origValue, Objects.requireNonNull(dummy.getParameterList().getAttributes()[0].getValue()));
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("intention.text.collapse.repeating.annotations");
   }
 
@@ -91,8 +89,7 @@ public final class CollapseAnnotationsFix extends PsiUpdateModCommandAction<PsiA
     return annotations;
   }
 
-  @Nullable
-  public static IntentionAction from(PsiAnnotation annotation) {
+  public static @Nullable IntentionAction from(PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
     String name = annotation.getQualifiedName();
     if (owner == null || name == null) return null;
@@ -110,8 +107,7 @@ public final class CollapseAnnotationsFix extends PsiUpdateModCommandAction<PsiA
     return new CollapseAnnotationsFix(annotation).asIntention();
   }
 
-  @Nullable
-  private static PsiMethod findAttributeMethod(PsiNameValuePair attribute) {
+  private static @Nullable PsiMethod findAttributeMethod(PsiNameValuePair attribute) {
     PsiReference ref = attribute.getReference();
     if (ref == null) return null;
     PsiElement target = ref.resolve();

@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus.Internal
 
 class LocalPtyOptions private constructor(val consoleMode: Boolean,
                                           val useCygwinLaunch: Boolean,
@@ -18,11 +20,16 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
   }
 
   companion object {
+    @JvmStatic
+    fun defaults(): LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, shouldUseWinConPty())
+
+    @Deprecated("Use [defaults] instead", ReplaceWith("LocalPtyOptions.defaults()"))
     @JvmField
     val DEFAULT: LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, false)
 
     @JvmStatic
-    fun shouldUseWinConPty() : Boolean = Registry.`is`("terminal.use.conpty.on.windows", false)
+    @Internal
+    fun shouldUseWinConPty() : Boolean = SystemInfo.isWindows && Registry.`is`("terminal.use.conpty.on.windows", true)
   }
 
   class Builder internal constructor(private var consoleMode: Boolean,
@@ -46,7 +53,14 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
     fun initialColumns(): Int = initialColumns
     fun initialRows(initialRows: Int): Builder = apply { this.initialRows = initialRows }
     fun initialRows(): Int = initialRows
+
+    /**
+     * If this method is not called, the value of [shouldUseWinConPty] is applied by default.
+     */
+    @Internal
     fun useWinConPty(useWinConPty: Boolean): Builder = apply { this.useWinConPty = useWinConPty }
+
+    @Internal
     fun useWinConPty(): Boolean = useWinConPty
 
     fun build(): LocalPtyOptions = LocalPtyOptions(consoleMode, useCygwinLaunch, initialColumns, initialRows, useWinConPty)

@@ -8,6 +8,8 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.impl.selectBest
+import com.intellij.webSymbols.impl.withDisplayName
+import com.intellij.webSymbols.impl.withOffset
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolMatch
@@ -28,7 +30,7 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
                      end: Int): List<MatchResult> {
     if (start == end) {
       // TODO should be "missing required part", but needs improvements in sequence pattern code completion
-      return listOf(MatchResult(listOf(WebSymbolNameSegment(
+      return listOf(MatchResult(listOf(WebSymbolNameSegment.create(
         start, end, emptyList(),
         problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
         displayName = displayName,
@@ -50,11 +52,11 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
           }
 
         hits.isNotEmpty() ->
-          listOf(WebSymbolNameSegment(
+          listOf(WebSymbolNameSegment.create(
             start, end, hits, displayName = displayName
           ))
 
-        else -> listOf(WebSymbolNameSegment(
+        else -> listOf(WebSymbolNameSegment.create(
           start, end,
           emptyList(),
           problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
@@ -81,7 +83,7 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
             }
 
           list.isNotEmpty() ->
-            listOf(ListResult(name, WebSymbolNameSegment(
+            listOf(ListResult(name, WebSymbolNameSegment.create(
               0, name.length, list, displayName = displayName
             )))
 

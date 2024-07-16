@@ -92,7 +92,6 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val actions = expandMainActionGroup(isFirstUpdate = true)
       doUpdateVisibleActions(newVisibleActions = actions, forceRebuild = false)
-      postInitActions(actions)
     }
     initJob.invokeOnCompletion { error ->
       if (error != null) {
@@ -152,13 +151,6 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       LOG.debug(Throwable("Force rebuild menu bar"))
     }
     check(updateRequests.tryEmit(forceRebuild))
-  }
-
-  @RequiresEdt
-  private fun postInitActions(actions: List<ActionGroup>) {
-    for (action in actions) {
-      PopupMenuPreloader.install(component = menuBar.component, actionPlace = ActionPlaces.MAIN_MENU, popupHandler = null) { action }
-    }
   }
 
   @RequiresEdt

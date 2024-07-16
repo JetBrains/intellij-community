@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.reference.SoftReference
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.containers.ContainerUtil
@@ -109,32 +108,23 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
   }
 
   protected open fun getDataInner(dataId: String, cacheable: Boolean): Any? {
-    val component = SoftReference.dereference(ref)
-    if (PlatformCoreDataKeys.IS_MODAL_CONTEXT.`is`(dataId)) {
-      return if (component == null) null else Utils.isModalContext(component)
-    }
-
-    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId)) {
-      return component
-    }
-
-    if (PlatformDataKeys.MODALITY_STATE.`is`(dataId)) {
-      return if (component == null) ModalityState.nonModal() else ModalityState.stateForComponent(component)
-    }
-
-    if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) || PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId)) {
-      val supply = if (component is JComponent) SpeedSearchSupply.getSupply(component) else null
-      val result: Any? = when {
-        supply == null -> null
-        PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) -> supply.enteredPrefix
-        supply is SpeedSearchBase<*> -> supply.searchField
-        else -> null
-      }
-      if (result != null) {
-        return result
+    when {
+      PlatformCoreDataKeys.IS_MODAL_CONTEXT.`is`(dataId) -> return ref?.get()?.let { Utils.isModalContext(it) }
+      PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId) -> return ref?.get()
+      PlatformDataKeys.MODALITY_STATE.`is`(dataId) ->
+        return ref?.get()?.let { ModalityState.stateForComponent(it) } ?: ModalityState.nonModal()
+      PlatformDataKeys.SPEED_SEARCH_COMPONENT.`is`(dataId) || PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) -> {
+        val supply = (ref?.get() as? JComponent)?.let { SpeedSearchSupply.getSupply(it) }
+        val result: Any? = when {
+          supply == null -> null
+          PlatformDataKeys.SPEED_SEARCH_TEXT.`is`(dataId) -> supply.enteredPrefix
+          supply is SpeedSearchBase<*> -> supply.searchField
+          else -> null
+        }
+        if (result != null) return result
       }
     }
-
+    val component = ref?.get()
     var answer = if (cacheable) cachedData.get(dataId) else null
     if (answer != null) {
       return answer
@@ -171,6 +161,8 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
   }
 
   internal fun getRawDataIfCached(dataId: String): Any? {
+    if (PlatformCoreDataKeys.CONTEXT_COMPONENT.`is`(dataId)) ref?.get()
+
     val data = cachedData.get(dataId)
     return if (data === CustomizedDataContext.EXPLICIT_NULL) null else data
   }
@@ -183,7 +175,7 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
   }
 
   override fun toString(): @NonNls String {
-    return "${if (this is InjectedDataContext) "injected:" else ""}component=${SoftReference.dereference(ref)}"
+    return "${if (this is InjectedDataContext) "injected:" else ""}component=${ref?.get()}"
   }
 
   private class InjectedDataContext(componentReference: Reference<Component>?,

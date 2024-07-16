@@ -4,7 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.util.io.URLUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
-import org.cef.callback.CefSchemeHandlerFactory;
+import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefResourceHandler;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +22,24 @@ import java.util.*;
  *
  * @author tav
  */
-final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory {
+final class JBCefFileSchemeHandlerFactory implements JBCefApp.JBCefCustomSchemeHandlerFactory {
   public static final String FILE_SCHEME_NAME = "file";
   public static final String LOADHTML_RANDOM_URL_PREFIX = FILE_SCHEME_NAME + ":///jbcefbrowser/";
 
   public static final Map<CefBrowser, Map<String/* url */, String /* html */>> LOADHTML_REQUEST_MAP = new WeakHashMap<>();
+
+  @Override
+  public void registerCustomScheme(@NotNull CefSchemeRegistrar registrar) {}
+
+  @Override
+  public @NotNull String getSchemeName() {
+    return FILE_SCHEME_NAME;
+  }
+
+  @Override
+  public @NotNull String getDomainName() {
+    return "";
+  }
 
   @Override
   public CefResourceHandler create(@NotNull CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {

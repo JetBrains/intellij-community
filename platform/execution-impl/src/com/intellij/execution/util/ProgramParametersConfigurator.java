@@ -14,6 +14,7 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacroWithParams;
 import com.intellij.ide.macro.PromptingMacro;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -93,14 +94,14 @@ public class ProgramParametersConfigurator {
 
   @ApiStatus.Internal
   public static @NotNull DataContext projectContext(@NotNull Project project, @Nullable Module module, @Nullable Boolean validationMode) {
-    return dataId -> {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return project.getBaseDir();
-      if (CommonDataKeys.PROJECT.is(dataId)) return project;
-      if (PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY.is(dataId)) return project.getBaseDir();
-      if (PlatformCoreDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
-      if (VALIDATION_MODE.is(dataId)) return validationMode;
-      return null;
-    };
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.VIRTUAL_FILE, project.getBaseDir())
+      .add(CommonDataKeys.PROJECT, project)
+      .add(PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY, project.getBaseDir())
+      .add(PlatformCoreDataKeys.MODULE, module)
+      .add(LangDataKeys.MODULE_CONTEXT, module)
+      .add(VALIDATION_MODE, validationMode)
+      .build();
   }
 
   /**

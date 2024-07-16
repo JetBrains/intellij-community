@@ -1,0 +1,10 @@
+javax/tools/Diagnostic
+javax/tools/Diagnostic$Kind
+javax/tools/DiagnosticListener
+javax/tools/JavaCompiler
+javax/tools/JavaCompiler$CompilationTask
+javax/tools/JavaFileManager$Location
+javax/tools/JavaFileObject
+javax/tools/JavaFileObject$Kind
+javax/tools/SimpleJavaFileObject
+org/jetbrains/jps/javac/ast/api/JavacFileData

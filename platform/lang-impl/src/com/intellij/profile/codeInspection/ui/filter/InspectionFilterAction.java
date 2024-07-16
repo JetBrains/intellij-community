@@ -23,6 +23,7 @@ import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -244,8 +245,16 @@ public final class InspectionFilterAction extends DefaultActionGroup implements 
     private final Language myLanguage;
 
     LanguageFilterAction(final @Nullable Language language) {
-      super(language == null ? AnalysisBundle.message("inspections.settings.language.not.specified.warning") : language.getDisplayName());
+      super(getDisplayNameForLanguage(language));
       myLanguage = language;
+    }
+
+    private static @Nls @NotNull String getDisplayNameForLanguage(@Nullable Language language) {
+      if (language == null) {
+        return AnalysisBundle.message("inspections.settings.language.not.specified.warning");
+      }
+      String displayName = language.getDisplayName();
+      return displayName.isEmpty() ? AnalysisBundle.message("inspections.settings.language.any") : displayName;
     }
 
     @Override

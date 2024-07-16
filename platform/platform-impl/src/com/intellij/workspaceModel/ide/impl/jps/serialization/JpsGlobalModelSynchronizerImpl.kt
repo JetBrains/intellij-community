@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
@@ -57,9 +57,9 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   override fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
                                 loadedFromCache: Boolean): () -> Unit = jpsLoadInitialStateMs.addMeasuredTime {
     val callback = if (loadedFromCache) {
-      val callback = bridgesInitializationCallback(mutableStorage, initialEntityStorage)
+      val callback = bridgesInitializationCallback(mutableStorage, initialEntityStorage, false)
       coroutineScope.launch {
-        delay(10.seconds)
+        delay(5.seconds)
         delayLoadGlobalWorkspaceModel()
       }
       callback
@@ -153,6 +153,8 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
           builder.replaceBySource({ it is JpsGlobalFileEntitySource }, mutableStorage)
         }
       }
+      // Notify the listeners that synchronization process completed
+      ApplicationManager.getApplication().messageBus.syncPublisher(JpsGlobalModelLoadedListener.LOADED).loaded()
     }
   }
 
@@ -173,7 +175,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       newEntities.exception?.let { throw it }
     }
     val callback = if (initializeBridges) {
-      bridgesInitializationCallback(mutableStorage, initialEntityStorage)
+      bridgesInitializationCallback(mutableStorage, initialEntityStorage, true)
     } else {
       { }
     }
@@ -188,11 +190,16 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   }
 
   private fun bridgesInitializationCallback(mutableStorage: MutableEntityStorage,
-                                            initialEntityStorage: VersionedEntityStorage): () -> Unit {
+                                            initialEntityStorage: VersionedEntityStorage,
+                                            notifyListeners: Boolean): () -> Unit {
     val callbacks = GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers()
       .map { it.initializeBridgesAfterLoading(mutableStorage, initialEntityStorage) }
     return {
       callbacks.forEach { it.invoke() }
+      if (notifyListeners) {
+        // Notify the listeners that synchronization process completed
+        ApplicationManager.getApplication().messageBus.syncPublisher(JpsGlobalModelLoadedListener.LOADED).loaded()
+      }
     }
   }
 

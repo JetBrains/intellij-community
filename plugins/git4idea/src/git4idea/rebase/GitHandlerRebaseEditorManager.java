@@ -59,7 +59,7 @@ public final class GitHandlerRebaseEditorManager implements AutoCloseable {
       myHandler.addCustomEnvironmentVariable(GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV, Integer.toString(port));
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.warn(e);
     }
   }
 

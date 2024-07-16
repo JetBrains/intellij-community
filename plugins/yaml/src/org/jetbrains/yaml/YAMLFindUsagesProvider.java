@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml;
 
 import com.intellij.lang.HelpID;
@@ -14,9 +15,8 @@ import org.jetbrains.yaml.psi.*;
  * @author shalupov
  */
 public class YAMLFindUsagesProvider implements FindUsagesProvider {
-  @Nullable
   @Override
-  public WordsScanner getWordsScanner() {
+  public @Nullable WordsScanner getWordsScanner() {
     return new YAMLWordsScanner();
   }
 
@@ -25,15 +25,13 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
     return psiElement instanceof PsiNamedElement || psiElement instanceof YAMLScalar;
   }
 
-  @Nullable
   @Override
-  public String getHelpId(@NotNull PsiElement psiElement) {
+  public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
     return HelpID.FIND_OTHER_USAGES;
   }
 
-  @NotNull
   @Override
-  public String getType(@NotNull PsiElement element) {
+  public @NotNull String getType(@NotNull PsiElement element) {
     if (element instanceof YAMLScalarText) {
       return YAMLBundle.message("find.usages.scalar");
     } else if (element instanceof YAMLSequence) {
@@ -49,9 +47,8 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
     }
   }
 
-  @NotNull
   @Override
-  public String getDescriptiveName(@NotNull PsiElement element) {
+  public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return StringUtil.notNullize(((PsiNamedElement)element).getName(), YAMLBundle.message("find.usages.unnamed"));
     }
@@ -63,9 +60,8 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
     return YAMLBundle.message("find.usages.unnamed");
   }
 
-  @NotNull
   @Override
-  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+  public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     return getDescriptiveName(element);
   }
 }

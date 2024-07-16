@@ -3,11 +3,25 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPrimitiveType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
+import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalClassName
+import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.org.objectweb.asm.Type
 import java.util.*
 
 class KotlinSmartStepTargetFilterer(
@@ -18,8 +32,10 @@ class KotlinSmartStepTargetFilterer(
     private val targetWasVisited = BooleanArray(targets.size) { false }
 
     fun visitInlineFunction(function: KtNamedFunction) {
-        val descriptor = function.descriptor ?: return
-        val label = KotlinMethodSmartStepTarget.calcLabel(descriptor)
+        val label = analyze(function) {
+            val symbol = function.symbol
+            KotlinMethodSmartStepTarget.calcLabel(symbol)
+        }
         val currentCount = functionCounter.increment(label) - 1
         val matchedSteppingTargetIndex = targets.indexOfFirst {
             it.getDeclaration() === function && it.ordinal == currentCount
@@ -40,18 +56,11 @@ class KotlinSmartStepTargetFilterer(
 
     private fun KotlinMethodSmartStepTarget.shouldBeVisited(owner: String, name: String, signature: String, currentCount: Int): Boolean {
         val actualName = name.trimIfMangledInBytecode(methodInfo.isNameMangledInBytecode)
-        if (methodInfo.isInlineClassMember) {
-            return matches(
-                owner,
-                actualName,
-                // Inline class constructor argument is injected as the first
-                // argument in inline class' functions. This doesn't correspond
-                // with the PSI, so we delete the first argument from the signature
-                signature.getSignatureWithoutFirstArgument(),
-                currentCount
-            )
-        }
-        return matches(owner, actualName, signature, currentCount)
+        // Inline class constructor argument is injected as the first
+        // argument in inline class' functions. This doesn't correspond
+        // with the PSI, so we delete the first argument from the signature
+        val updatedSignature = if (methodInfo.isInlineClassMember) signature.getSignatureWithoutFirstArgument() else signature
+        return matches(owner, actualName, updatedSignature, currentCount)
     }
 
     private fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
@@ -61,30 +70,40 @@ class KotlinSmartStepTargetFilterer(
                 // it means the method is, in fact, the implicit primary constructor
                 return primaryConstructorMatches(declaration, owner, name, signature)
             }
-            val lightClassMethod = declaration.getLightClassMethod() ?: return false
-            return lightClassMethod.matches(owner, name, signature, debugProcess)
+
+            val lightClassMethod by lazy { declaration.getLightClassMethod() }
+            if (methodInfo.isInlineClassMember || lightClassMethod == null) {
+                // Cannot create light class for functions with inline classes
+                return matchesBySignature(declaration, owner, signature)
+            }
+            return lightClassMethod!!.matches(owner, name, signature, debugProcess)
         }
         return false
     }
 
     private fun primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
         return name == "<init>" && signature == "()V" &&
-                owner.replace('/', '.') == declaration.fqName?.asString()
+                owner.internalNameToFqn() == declaration.fqName?.asString()
+    }
+
+    private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
+        analyze(declaration) {
+            val symbol = declaration.symbol as? KaFunctionSymbol ?: return false
+            return owner == symbol.getJvmInternalClassName() && signature == symbol.getJvmSignature()
+        }
     }
 
     fun getUnvisitedTargets(): List<KotlinMethodSmartStepTarget> =
         targets.filterIndexed { i, _ ->
             !targetWasVisited[i]
         }
-
-    fun reset() {
-        Arrays.fill(targetWasVisited, false)
-        functionCounter.clear()
-    }
 }
 
-private fun String.getSignatureWithoutFirstArgument() =
-    removeRange(indexOf('(') + 1..indexOf(';'))
+private fun String.getSignatureWithoutFirstArgument(): String {
+    val type = Type.getType(this)
+    val arguments = type.argumentTypes.drop(1).joinToString("") { it.descriptor }
+    return "($arguments)${type.returnType.descriptor}"
+}
 
 private fun KtDeclaration.getLightClassMethod(): PsiMethod? =
     when (this) {
@@ -96,7 +115,7 @@ private fun KtDeclaration.getLightClassMethod(): PsiMethod? =
 private fun PsiMethod.matches(className: String, methodName: String, signature: String, debugProcess: DebugProcessImpl): Boolean =
     DebuggerUtilsEx.methodMatches(
         this,
-        className.replace("/", "."),
+        className.internalNameToFqn(),
         methodName,
         signature,
         debugProcess
@@ -107,3 +126,35 @@ private fun MutableMap<String, Int>.increment(key: String): Int {
     put(key, newValue)
     return newValue
 }
+
+context(KaSession)
+private fun KaFunctionSymbol.getJvmSignature(): String? {
+    val element = psi ?: return null
+    val receiver = receiverType?.jvmName(element) ?: ""
+    val parameterTypes = valueParameters.map { it.returnType.jvmName(element) ?: return null }.joinToString("")
+    val returnType = returnType.jvmName(element) ?: return null
+    return "($receiver$parameterTypes)$returnType"
+}
+
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+private fun KaType.jvmName(element: PsiElement): String? {
+    if (this !is KaClassType) return null
+    val psiType = asPsiType(element, allowErrorTypes = false) ?: return null
+    if (symbol.isInlineClass()) {
+        // handle wrapped types
+        if (psiType.canonicalText == "java.lang.Object") return "Ljava/lang/Object;"
+        if (psiType is PsiPrimitiveType) {
+            return psiType.kind.binaryName
+        }
+    }
+    if (isPrimitive) {
+        return if (psiType is PsiPrimitiveType) psiType.kind.binaryName
+        else psiType.canonicalText.fqnToInternalName().internalNameToReferenceTypeName()
+    }
+    if (psiType.canonicalText == "kotlin.Unit") return "V"
+    return JvmClassName.internalNameByClassId(classId).internalNameToReferenceTypeName()
+}
+
+private fun String.internalNameToReferenceTypeName(): String = "L$this;"
+

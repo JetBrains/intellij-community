@@ -22,7 +22,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Standard interpreter implementation
@@ -362,13 +365,22 @@ public class StandardDataFlowInterpreter implements DataFlowInterpreter {
 
   private void reportDfaProblem(@Nullable DfaInstructionState lastInstructionState, @NotNull Throwable e) {
     Attachment[] attachments = {new Attachment("method_body.txt", myPsiAnchor.getText())};
-    String flowText = myFlow.toString();
-    if (lastInstructionState != null) {
-      int index = lastInstructionState.getInstruction().getIndex();
-      flowText = flowText.replaceAll("(?m)^", "  ");
-      flowText = flowText.replaceFirst("(?m)^ {2}" + index + ": ", "* " + index + ": ");
+    try {
+      String flowText = myFlow.toString();
+      if (lastInstructionState != null) {
+        int index = lastInstructionState.getInstruction().getIndex();
+        flowText = flowText.replaceAll("(?m)^", "  ");
+        flowText = flowText.replaceFirst("(?m)^ {2}" + index + ": ", "* " + index + ": ");
+      }
+      attachments = ArrayUtil.append(attachments, new Attachment("flow.txt", flowText));
     }
-    attachments = ArrayUtil.append(attachments, new Attachment("flow.txt", flowText));
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
+    catch (Exception ex) {
+      ex.addSuppressed(e);
+      LOG.error("While gathering flow text", ex);
+    }
     if (lastInstructionState != null) {
       DfaMemoryState memoryState = lastInstructionState.getMemoryState();
       String memStateText = null;

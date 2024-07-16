@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker;
 
 import com.intellij.psi.*;
@@ -57,15 +43,13 @@ public class NamedElementTokenizer<T extends PsiNamedElement> extends Tokenizer<
     return source != null && name.toLowerCase(Locale.ROOT).endsWith(source.toLowerCase(Locale.ROOT));
   }
 
-  @Nullable
-  private static String getTypeText(PsiElement element) {
+  private static @Nullable String getTypeText(PsiElement element) {
     PsiTypeElement typeElement = PsiTreeUtil.getChildOfType(element, PsiTypeElement.class);
     PsiType type = typeElement != null ? typeElement.getType() : element instanceof PsiVariable ? ((PsiVariable)element).getType() : null;
     return getClassName(type);
   }
 
-  @Nullable
-  private static String getClassName(PsiType type) {
+  private static @Nullable String getClassName(PsiType type) {
     PsiType component = type == null ? null : type.getDeepComponentType();
     return component instanceof PsiClassType ? ((PsiClassType)component).getClassName() : null;
   }

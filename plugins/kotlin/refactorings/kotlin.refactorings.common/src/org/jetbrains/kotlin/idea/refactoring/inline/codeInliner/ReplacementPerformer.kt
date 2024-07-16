@@ -6,11 +6,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.*
@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -169,16 +171,23 @@ class ExpressionReplacementPerformer(
                 // NB: Unit is never used as expression
                 val stub = elementToBeReplaced.replaced(psiFactory.createExpression("0"))
 
-                @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+                @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
                 val canDropElementToBeReplaced = allowAnalysisFromWriteAction {
                     allowAnalysisOnEdt {
                         analyze(stub) {
-                            !stub.isUsedAsExpression()
+                            !stub.isUsedAsExpression
                         }
                     }
                 }
                 if (canDropElementToBeReplaced) {
-                    stub.delete()
+                    val parent = stub.parents.first { it !is KtParenthesizedExpression }
+                    if (parent is KtWhenExpression && parent.subjectExpression?.safeDeparenthesize() == stub && parent.leftParenthesis != null && parent.rightParenthesis != null) {
+                        parent.deleteChildRange(parent.leftParenthesis, parent.rightParenthesis)
+                    } else if (parent is KtQualifiedExpression && parent.selectorExpression?.safeDeparenthesize() == stub) {
+                        parent.replaced(parent.receiverExpression)
+                    } else {
+                        stub.delete()
+                    }
                     null
                 } else {
                     stub.replaced(psiFactory.createExpression("Unit"))
@@ -225,7 +234,7 @@ class ExpressionReplacementPerformer(
     /**
      * Returns statement in a block to insert statement before it
      */
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     private fun findOrCreateBlockToInsertStatement(): KtExpression {
         for (element in elementToBeReplaced.parentsWithSelf) {
             val parent = element.parent
@@ -277,10 +286,11 @@ class ExpressionReplacementPerformer(
     }
 
     private fun KtElement.replaceWithRunBlockAndGetExpression(): KtExpression {
-        val runExpression = psiFactory.createExpressionByPattern("run { $0 }", this) as KtCallExpression
+        val runExpressionText = if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) "run({ $0 })" else "run { $0 }"
+        val runExpression = psiFactory.createExpressionByPattern(runExpressionText, this) as KtCallExpression
         val runAfterReplacement = this.replaced(runExpression)
-        val ktLambdaArgument = runAfterReplacement.lambdaArguments[0]
-        return ktLambdaArgument.getLambdaExpression()?.bodyExpression?.statements?.singleOrNull()
+        val ktLambdaArgument = runAfterReplacement.valueArguments[0]
+        return (ktLambdaArgument.getArgumentExpression() as? KtLambdaExpression)?.bodyExpression?.statements?.singleOrNull()
             ?: throw KotlinExceptionWithAttachments("cant get body expression for $ktLambdaArgument")
                 .withPsiAttachment("ktLambdaArgument", ktLambdaArgument)
     }

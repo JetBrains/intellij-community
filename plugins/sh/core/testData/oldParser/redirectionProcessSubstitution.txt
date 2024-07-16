@@ -46,15 +46,16 @@ SHELL_SCRIPT
           PROCESS_SUBSTITUTION
             PsiElement(<()('<(')
             COMPOUND_LIST
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('true')
-              PsiWhiteSpace(' ')
-              PsiElement(&&)('&&')
-              PsiWhiteSpace(' ')
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('false')
+              PIPELINE_COMMAND_LIST
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('true')
+                PsiWhiteSpace(' ')
+                PsiElement(&&)('&&')
+                PsiWhiteSpace(' ')
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('false')
             PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -68,15 +69,16 @@ SHELL_SCRIPT
           PROCESS_SUBSTITUTION
             PsiElement(>()('>(')
             COMPOUND_LIST
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('true')
-              PsiWhiteSpace(' ')
-              PsiElement(&&)('&&')
-              PsiWhiteSpace(' ')
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('false')
+              PIPELINE_COMMAND_LIST
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('true')
+                PsiWhiteSpace(' ')
+                PsiElement(&&)('&&')
+                PsiWhiteSpace(' ')
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('false')
             PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST

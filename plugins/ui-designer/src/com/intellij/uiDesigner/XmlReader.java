@@ -194,8 +194,7 @@ public final class XmlReader {
       component.getDelegee().putClientProperty(entry.getKey(), value);
     }
 
-    if (component instanceof RadContainer) {
-      final RadContainer container = (RadContainer)component;
+    if (component instanceof RadContainer container) {
       final LwContainer lwContainer = (LwContainer)lwComponent;
 
       copyBorder(container, lwContainer);

@@ -14,6 +14,7 @@
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.searching.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
   </component>
 </module>

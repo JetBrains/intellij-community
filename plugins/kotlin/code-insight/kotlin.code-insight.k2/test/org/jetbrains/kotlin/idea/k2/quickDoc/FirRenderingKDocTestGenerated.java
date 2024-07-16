@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.quickDoc;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/codeInsight/renderingKDoc")
 public class FirRenderingKDocTestGenerated extends AbstractFirRenderingKDocTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K2;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -41,5 +48,10 @@ public class FirRenderingKDocTestGenerated extends AbstractFirRenderingKDocTest 
     @TestMetadata("propertyRendering.kt")
     public void testPropertyRendering() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/renderingKDoc/propertyRendering.kt");
+    }
+
+    @TestMetadata("trickyMarkdown.kt")
+    public void testTrickyMarkdown() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/renderingKDoc/trickyMarkdown.kt");
     }
 }

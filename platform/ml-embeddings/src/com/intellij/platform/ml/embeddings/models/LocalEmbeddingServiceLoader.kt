@@ -4,12 +4,17 @@ package com.intellij.platform.ml.embeddings.models
 import ai.grazie.nlp.encoder.PreTrainedTextEncoder
 import ai.grazie.nlp.encoder.bert.uncased.BertBaseUncasedTextEncoder
 import ai.grazie.utils.mpp.*
+import java.io.EOFException
 
 class LocalEmbeddingServiceLoader {
-  suspend fun load(loader: RootDataLoader): LocalEmbeddingService {
-    val network = loadNetwork(loader)
-    val encoder = loadTextEncoder(loader)
-    return LocalEmbeddingService(network, encoder)
+  suspend fun load(loader: RootDataLoader): LocalEmbeddingService? {
+    try {
+      val network = loadNetwork(loader)
+      val encoder = loadTextEncoder(loader)
+      return LocalEmbeddingService(network, encoder)
+    } catch (e: EOFException) {
+      return null
+    }
   }
 
   private suspend fun loadNetwork(loader: RootDataLoader): LocalEmbeddingNetwork {

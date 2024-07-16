@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.frameworkSupport
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.testFramework.util.buildScript
 import org.junit.jupiter.api.Assertions
 
 abstract class GradleBuildScriptBuilderTestCase {
@@ -14,10 +13,12 @@ abstract class GradleBuildScriptBuilderTestCase {
   ) {
     for ((gradleVersion, expectedScripts) in cases) {
       val (expectedGroovyScript, expectedKotlinScript) = expectedScripts
-      Assertions.assertEquals(expectedGroovyScript, buildScript(gradleVersion, useKotlinDsl = false, configure)) {
+      val actualGroovyScript = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl = false).apply(configure).generate()
+      val actualKotlinScript = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl = true).apply(configure).generate()
+      Assertions.assertEquals(expectedGroovyScript, actualGroovyScript) {
         "Groovy scripts should be equal"
       }
-      Assertions.assertEquals(expectedKotlinScript, buildScript(gradleVersion, useKotlinDsl = true, configure)) {
+      Assertions.assertEquals(expectedKotlinScript, actualKotlinScript) {
         "Kotlin scripts should be equal"
       }
     }

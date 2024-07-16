@@ -50,22 +50,19 @@ public final class SplitDeclarationAndInitializationIntention extends MCIntentio
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new SplitDeclarationAndInitializationPredicate();
   }
 
   @Override
-  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    PsiElement element = findMatchingElement(context);
-    if (element == null) return null;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(context.findLeaf(), PsiCodeBlock.class);
     if (codeBlock != null && PsiTreeUtil.isAncestor(element, codeBlock, true)) return null;
     return Presentation.of(getTextForElement(element));
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  public void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiField field = (PsiField)element.getParent();
     final PsiExpression initializer = field.getInitializer();
     if (initializer == null) {
@@ -113,7 +110,7 @@ public final class SplitDeclarationAndInitializationIntention extends MCIntentio
       containingClass.addAfter(whitespace, field);
     }
     final PsiCodeBlock body = classInitializer.getBody();
-    @NonNls final String initializationStatementText = field.getName() + " = " + initializerText + ';';
+    final @NonNls String initializationStatementText = field.getName() + " = " + initializerText + ';';
     final PsiExpressionStatement statement = (PsiExpressionStatement)elementFactory.createStatementFromText(initializationStatementText, body);
     final PsiElement addedElement = body.addAfter(statement, null);
     if (fieldIsStatic) {

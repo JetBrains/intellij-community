@@ -9,11 +9,11 @@ import com.intellij.vcs.log.data.index.VcsLogIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class IndexHighlighter implements VcsLogHighlighter {
+class IndexHighlighter implements VcsLogHighlighter {
   public static final JBColor NOT_INDEXED_COMMIT_FOREGROUND = JBColor.BLUE;
   private final @NotNull VcsLogData myLogData;
 
-  public IndexHighlighter(@NotNull VcsLogData logData) {
+  IndexHighlighter(@NotNull VcsLogData logData) {
     myLogData = logData;
   }
 

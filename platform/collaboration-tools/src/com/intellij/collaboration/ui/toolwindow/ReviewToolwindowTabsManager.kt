@@ -4,12 +4,12 @@ package com.intellij.collaboration.ui.toolwindow
 import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.content.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -69,7 +69,7 @@ private class ReviewToolwindowTabsManager<
               content.component = tabComponentFactory.createEmptyTabContent(contentCs)
               content.isCloseable = false
             }
-            withContext(NonCancellable) {
+            withContext(Dispatchers.EDT + NonCancellable) {
               contentManager.addContent(loginContent)
               contentManager.setSelectedContent(loginContent)
             }
@@ -176,7 +176,7 @@ private class ReviewToolwindowTabsManager<
     return factory.createContent(null, tabTitle, false).apply {
       val disposable = Disposer.newDisposable()
       setDisposer(disposable)
-      modifier(this, cs.namedChildScope(debugName).cancelledWith(disposable))
+      modifier(this, cs.childScope(debugName).cancelledWith(disposable))
     }
   }
 

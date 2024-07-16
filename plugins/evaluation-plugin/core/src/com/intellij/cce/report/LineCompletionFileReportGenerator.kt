@@ -25,18 +25,15 @@ class LineCompletionFileReportGenerator(
     val totalLatency = TotalLatencyMetric().evaluate(listOf(session))
 
     val info = mutableListOf<String>().apply {
-      add("${(matchedRatio * 100).format()}%".padEnd(4, ' '))
-      add("${(similarity * 100).format()}%".padEnd(4, ' '))
-      add("${(totalLatency / 1000).format()}s".padEnd(4, ' '))
+      add("${formatDouble((matchedRatio * 100))}%".padEnd(4, ' '))
+      add("${formatDouble((similarity * 100))}%".padEnd(4, ' '))
+      add("${formatDouble((totalLatency / 1000))}s".padEnd(4, ' '))
     }
 
     return info
   }
 
   override fun getKindClass(lookup: Lookup, expectedText: String): String {
-    if (lookup.additionalInfo["trigger_decision"] == "SKIP") {
-      return "cg-skipped"
-    }
     if (lookup.suggestions.isEmpty()) {
       return "cg-empty"
     }
@@ -49,12 +46,22 @@ class LineCompletionFileReportGenerator(
     }
   }
 
-  override fun getBackgroundClass(lookup: Lookup, expectedText: String): String {
+  override fun getFilterCheckClass(lookup: Lookup, expectedText: String): String {
     if (lookup.additionalInfo["wrong_raw_filters"] == true) {
-      return "bg-raw-filter"
+      return "raw-filter"
     }
     if (lookup.additionalInfo["wrong_analyzed_filters"] == true) {
-      return "bg-analyzed-filter"
+      return "analyzed-filter"
+    }
+    return ""
+  }
+
+  override fun getSkippedByModelClass(lookup: Lookup, expectedText: String): String {
+    if (lookup.additionalInfo["trigger_decision"] == "SKIP") {
+      return "trigger-skipped"
+    }
+    if (lookup.additionalInfo["filter_decision"] == "SKIP") {
+      return "filter-skipped"
     }
     return ""
   }

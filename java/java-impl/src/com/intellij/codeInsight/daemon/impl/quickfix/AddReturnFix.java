@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -31,8 +31,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.return.statement.text");
   }
 
@@ -93,11 +92,10 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
     return PsiTypesUtil.getDefaultValueOfType(type, true);
   }
 
-  @NonNls
-  private static String getConversionToType(@NotNull PsiParameterListOwner method,
-                                            @NotNull PsiVariable variable,
-                                            @Nullable PsiType type,
-                                            boolean preciseTypeRequired) {
+  private static @NonNls String getConversionToType(@NotNull PsiParameterListOwner method,
+                                                    @NotNull PsiVariable variable,
+                                                    @Nullable PsiType type,
+                                                    boolean preciseTypeRequired) {
     PsiType varType = variable.getType();
     if (!(type instanceof PsiArrayType arrayType)) return null;
     PsiType arrayComponentType = arrayType.getComponentType();
@@ -118,8 +116,7 @@ public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwne
     return null;
   }
 
-  @NotNull
-  private static List<PsiVariable> getDeclaredVariables(PsiParameterListOwner method) {
+  private static @NotNull List<PsiVariable> getDeclaredVariables(PsiParameterListOwner method) {
     List<PsiVariable> variables = new ArrayList<>();
     PsiCodeBlock body = ObjectUtils.tryCast(method.getBody(), PsiCodeBlock.class);
     if (body != null) {

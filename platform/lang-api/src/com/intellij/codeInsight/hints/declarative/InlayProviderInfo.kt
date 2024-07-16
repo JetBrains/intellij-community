@@ -42,7 +42,11 @@ class InlayProviderPassInfo(
   val provider: InlayHintsProvider,
   val providerId: String,
   val optionToEnabled: Map<String, Boolean>
-)
+) {
+  override fun toString(): String {
+    return "InlayProviderPassInfo(providerId='$providerId', provider=$provider)"
+  }
+}
 
 class InlayOptionInfo(
   val id: String,

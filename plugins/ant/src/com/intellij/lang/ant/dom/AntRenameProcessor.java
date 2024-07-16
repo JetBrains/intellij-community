@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntRenameProcessor extends RenamePsiElementProcessor{
+public final class AntRenameProcessor extends RenamePsiElementProcessor{
 
   @Override
   public void prepareRenaming(@NotNull PsiElement element, @NotNull @NlsSafe String newName, @NotNull Map<PsiElement, String> allRenames) {

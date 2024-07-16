@@ -1,14 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.Formats
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
-import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -17,12 +14,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.idea.maven.aether.ArtifactKind
-import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
-import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.impl.moduleBased.findProductModulesFile
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
@@ -31,20 +25,9 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
 import org.jetbrains.intellij.build.impl.sbom.SoftwareBillOfMaterialsImpl
-import org.jetbrains.intellij.build.io.copyDir
-import org.jetbrains.intellij.build.io.logFreeDiskSpace
-import org.jetbrains.intellij.build.io.writeNewFile
-import org.jetbrains.intellij.build.io.zipWithCompression
-import org.jetbrains.jps.model.JpsGlobal
-import org.jetbrains.jps.model.JpsSimpleElement
+import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.*
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
-import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
@@ -54,19 +37,10 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
 import kotlin.io.NoSuchFileException
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.name
-import kotlin.io.path.walk
-import kotlin.time.Duration.Companion.seconds
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
-class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
-
-  override suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
-    zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = includeLibraries, context = context)
-  }
-
+internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
   override suspend fun buildDistributions() {
     buildDistributions(context)
   }
@@ -78,41 +52,29 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
     val distState = createDistributionBuilderState(pluginsToPublish = pluginsToPublish, context = context)
     val compilationTasks = CompilationTasks.create(context = context)
-    compilationTasks.compileModules(
-      moduleNames = distState.getModulesForPluginsToPublish() + listOf("intellij.idea.community.build.tasks",
-                                                                       "intellij.platform.images.build",
-                                                                       "intellij.tools.launcherGenerator"),
-    )
+    distState.getModulesForPluginsToPublish() + listOf(
+      "intellij.idea.community.build.tasks",
+      "intellij.platform.images.build",
+      "intellij.tools.launcherGenerator"
+    ).let {
+      compilationTasks.compileModules(moduleNames = it)
+    }
 
     buildProjectArtifacts(
       platform = distState.platform,
-      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = distState.pluginsToPublish,
-                                                     productProperties = context.productProperties),
+      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = distState.pluginsToPublish, context = context),
       compilationTasks = compilationTasks,
       context = context,
     )
-    buildSearchableOptions(distState.platform, context)
-    buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
-                           compressPluginArchive = context.options.compressZipFiles,
-                           buildPlatformLibJob = null,
-                           state = distState,
-                           context = context)
-  }
-
-  override fun compileProjectAndTests(includingTestsInModules: List<String>) {
-    compileModules(moduleNames = null, includingTestsInModules = includingTestsInModules)
-  }
-
-  override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>) {
-    CompilationTasks.create(context).compileModules(moduleNames, includingTestsInModules)
-  }
-
-  override fun compileModules(moduleNames: Collection<String>?) {
-    CompilationTasks.create(context).compileModules(moduleNames)
-  }
-
-  override suspend fun buildFullUpdaterJar() {
-    buildUpdaterJar(context = context, artifactName = "updater-full.jar")
+    val searchableOptionSet = buildSearchableOptions(context)
+    buildNonBundledPlugins(
+      pluginsToPublish = pluginsToPublish,
+      compressPluginArchive = context.options.compressZipFiles,
+      buildPlatformLibJob = null,
+      state = distState,
+      searchableOptionSet = searchableOptionSet,
+      context = context
+    )
   }
 
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
@@ -123,6 +85,7 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
       BuildOptions.GENERATE_JAR_ORDER_STEP,
       SoftwareBillOfMaterials.STEP_ID,
     )
+    context.checkDistributionBuildNumber()
     BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
@@ -155,21 +118,14 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
  * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val entries = generateProjectStructureMapping(
-    context = context,
-    platformLayout = createPlatformLayout(pluginsToPublish = emptySet(), context = context),
-  )
-  writeProjectStructureReport(
-    entries = entries.first + entries.second,
-    file = targetFile,
-    buildPaths = context.paths
-  )
+  val entries = generateProjectStructureMapping(context = context, platformLayout = createPlatformLayout(context = context))
+  writeProjectStructureReport(entries = entries.first + entries.second, file = targetFile, buildPaths = context.paths)
 }
 
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
 
 @JvmField
-val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = java.util.List.of(
+val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
   SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
@@ -177,19 +133,6 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = java.util.List.of(
   SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.aarch64),
 )
-
-private fun isSourceFile(path: String): Boolean {
-  return path.endsWith(".java") && path != "module-info.java" || path.endsWith(".groovy") || path.endsWith(".kt")
-}
-
-private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
-  JpsModelSerializationDataService.getPathVariablesConfiguration(global)!!.getUserVariableValue("MAVEN_REPOSITORY")?.let {
-    return Path.of(it)
-  }
-
-  val root = System.getProperty("user.home", null)
-  return if (root == null) Path.of(".m2/repository") else Path.of(root, ".m2/repository")
-}
 
 fun createIdeaPropertyFile(context: BuildContext): CharSequence {
   val builder = StringBuilder(Files.readString(context.paths.communityHomeDir.resolve("bin/idea.properties")))
@@ -210,7 +153,8 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
       "# Change to 'disabled' if you don't want to receive instant visual notifications\n" +
       "# about fatal errors that happen to an IDE or plugins installed.\n" +
       "#-----------------------------------------------------------------------\n" +
-      "idea.fatal.error.notification=enabled\n")
+      "idea.fatal.error.notification=enabled\n"
+    )
   }
   else {
     builder.append(
@@ -218,7 +162,8 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
       "# Change to 'enabled' if you want to receive instant visual notifications\n" +
       "# about fatal errors that happen to an IDE or plugins installed.\n" +
       "#-----------------------------------------------------------------------\n" +
-      "idea.fatal.error.notification=disabled\n")
+      "idea.fatal.error.notification=disabled\n"
+    )
   }
   return builder
 }
@@ -257,19 +202,25 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
     }
   }
 
-  throw RuntimeException("Cannot find \'$normalizedRelativePath\' " +
-                         "neither in sources of \'${context.productProperties.applicationInfoModule}\' " +
-                         "nor in ${context.productProperties.brandingResourcePaths}")
+  throw RuntimeException(
+    "Cannot find \'$normalizedRelativePath\' " +
+    "neither in sources of \'${context.productProperties.applicationInfoModule}\' " +
+    "nor in ${context.productProperties.brandingResourcePaths}"
+  )
 }
 
 internal suspend fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
   spanBuilder("update executable permissions").setAttribute("dir", "$destinationDir").useWithScope(Dispatchers.IO) {
-    val executable = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-                                PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
-                                PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
-                                PosixFilePermission.OTHERS_EXECUTE)
-    val regular = EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-                             PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)
+    val executable = EnumSet.of(
+      PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+      PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
+      PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_READ,
+      PosixFilePermission.OTHERS_EXECUTE
+    )
+    val regular = EnumSet.of(
+      PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+      PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ
+    )
     Files.walk(destinationDir).use { stream ->
       for (file in stream) {
         if (Files.isDirectory(file)) {
@@ -289,37 +240,11 @@ internal suspend fun updateExecutablePermissions(destinationDir: Path, executabl
   }
 }
 
-private fun downloadMissingLibrarySources(
-  librariesWithMissingSources: List<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>>,
-  context: BuildContext,
-) {
-  spanBuilder("download missing sources")
-    .setAttribute(AttributeKey.stringArrayKey("librariesWithMissingSources"), librariesWithMissingSources.map { it.name })
-    .useWithoutActiveScope { span ->
-      val configuration = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(context.project)
-      val repositories = configuration?.repositories?.map { ArtifactRepositoryManager.createRemoteRepository(it.id, it.url) } ?: emptyList()
-      val repositoryManager = ArtifactRepositoryManager(getLocalArtifactRepositoryRoot(context.projectModel.global).toFile(), repositories,
-                                                        ProgressConsumer.DEAF)
-      for (library in librariesWithMissingSources) {
-        val descriptor = library.properties.data
-        span.addEvent("downloading sources for library", Attributes.of(
-          AttributeKey.stringKey("name"), library.name,
-          AttributeKey.stringKey("mavenId"), descriptor.mavenId,
-        ))
-        val downloaded = repositoryManager.resolveDependencyAsArtifact(descriptor.groupId, descriptor.artifactId,
-                                                                       descriptor.version, EnumSet.of(ArtifactKind.SOURCES),
-                                                                       descriptor.isIncludeTransitiveDependencies,
-                                                                       descriptor.excludedDependencies)
-        span.addEvent("downloaded sources for library", Attributes.of(
-          AttributeKey.stringArrayKey("artifacts"), downloaded.map { it.toString() },
-        ))
-      }
-    }
-}
-
-internal class DistributionForOsTaskResult(@JvmField val builder: OsSpecificDistributionBuilder,
-                                           @JvmField val arch: JvmArchitecture,
-                                           @JvmField val outDir: Path)
+internal class DistributionForOsTaskResult(
+  @JvmField val builder: OsSpecificDistributionBuilder,
+  @JvmField val arch: JvmArchitecture,
+  @JvmField val outDir: Path
+)
 
 private suspend fun buildOsSpecificDistributions(context: BuildContext): List<DistributionForOsTaskResult> {
   if (context.isStepSkipped(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)) {
@@ -420,129 +345,26 @@ private fun checkProjectLibraries(names: Collection<String>, fieldName: String, 
 private suspend fun buildSourcesArchive(entries: List<DistributionFileEntry>, context: BuildContext) {
   val productProperties = context.productProperties
   val archiveName = "${productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)}-sources.zip"
-  val modulesFromCommunity = entries.includedModules.filter { moduleName ->
+  val openSourceModules = entries.includedModules.filter { moduleName ->
     productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
   }.toList()
-  zipSourcesOfModules(modules = modulesFromCommunity,
-                      targetFile = context.paths.artifactDir.resolve(archiveName),
-                      includeLibraries = true,
-                      context = context)
+  zipSourcesOfModules(
+    modules = openSourceModules,
+    targetFile = context.paths.artifactDir.resolve(archiveName),
+    includeLibraries = true,
+    context = context
+  )
 }
 
-suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean, context: BuildContext) {
-  context.executeStep(spanBuilder("build module sources archives")
-                        .setAttribute("path", context.paths.buildOutputDir.toString())
-                        .setAttribute(AttributeKey.stringArrayKey("modules"), modules),
-                      BuildOptions.SOURCES_ARCHIVE_STEP) {
-    withContext(Dispatchers.IO) {
-      Files.createDirectories(targetFile.parent)
-      Files.deleteIfExists(targetFile)
-    }
-    val includedLibraries = LinkedHashSet<JpsLibrary>()
-    val span = Span.current()
-    if (includeLibraries) {
-      val debugMapping = mutableListOf<String>()
-      for (moduleName in modules) {
-        val module = context.findRequiredModule(moduleName)
-        // We pack sources of libraries which are included in compilation classpath for platform API modules.
-        // This way we'll get source files of all libraries useful for plugin developers, and the size of the archive will be reasonable.
-/* Android Studio: include sources for Kotlin dependencies too (especially the Kotlin compiler).
-        if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null) {
- */     if (moduleName.startsWith("intellij.platform.") && context.findModule("$moduleName.impl") != null ||
-            moduleName.startsWith("kotlin.")) {
-          val libraries = JpsJavaExtensionService.dependencies(module).productionOnly().compileOnly().recursivelyExportedOnly().libraries
-          includedLibraries.addAll(libraries)
-          libraries.mapTo(debugMapping) { "${it.name} for $moduleName" }
-        }
-      }
-      span.addEvent("collect libraries to include into archive",
-                    Attributes.of(AttributeKey.stringArrayKey("mapping"), debugMapping))
-      val librariesWithMissingSources = includedLibraries
-        .asSequence()
-        .map { it.asTyped(JpsRepositoryLibraryType.INSTANCE) }
-        .filterNotNull()
-        .filter { library -> library.getPaths(JpsOrderRootType.SOURCES).any { Files.notExists(it) } }
-        .toList()
-      if (!librariesWithMissingSources.isEmpty()) {
-        withContext(Dispatchers.IO) {
-          downloadMissingLibrarySources(librariesWithMissingSources, context)
-        }
-      }
-    }
-
-    val zipFileMap = LinkedHashMap<Path, String>()
-    for (moduleName in modules) {
-      val module = context.findRequiredModule(moduleName)
-      for (root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
-        if (root.file.absoluteFile.exists()) {
-          val sourceFiles = filterSourceFilesOnly(root.file.name, context) { FileUtil.copyDirContent(root.file.absoluteFile, it.toFile()) }
-          zipFileMap.put(sourceFiles, root.properties.packagePrefix.replace(".", "/"))
-        }
-      }
-      for (root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-        if (root.file.absoluteFile.exists()) {
-          val sourceFiles = filterSourceFilesOnly(root.file.name, context) { FileUtil.copyDirContent(root.file.absoluteFile, it.toFile()) }
-          zipFileMap.put(sourceFiles, root.properties.relativeOutputPath)
-        }
-      }
-    }
-
-    val libraryRootUrls = includedLibraries.flatMap { it.getRootUrls(JpsOrderRootType.SOURCES) }
-    span.addEvent("include ${libraryRootUrls.size} roots from ${includedLibraries.size} libraries")
-    for (url in libraryRootUrls) {
-      if (url.startsWith(JpsPathUtil.JAR_URL_PREFIX) && url.endsWith(JpsPathUtil.JAR_SEPARATOR)) {
-        val file = Path.of(JpsPathUtil.urlToPath(url))
-        if (Files.isRegularFile(file)) {
-          val size = Files.size(file)
-          span.addEvent(file.toString(), Attributes.of(AttributeKey.stringKey("formattedSize"), Formats.formatFileSize(size),
-                                                       AttributeKey.longKey("bytes"), size))
-          val sourceFiles = filterSourceFilesOnly(file.name, context) { tempDir ->
-            Decompressor.Zip(file).filter { isSourceFile(it) }.extract(tempDir)
-          }
-          zipFileMap.put(sourceFiles, "")
-        }
-        else {
-          span.addEvent("skip root: file doesn\'t exist", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
-        }
-      }
-      else {
-        span.addEvent("skip root: not a jar file", Attributes.of(AttributeKey.stringKey("url"), url))
-      }
-    }
-
-    spanBuilder("pack")
-      .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
-      .use {
-        zipWithCompression(targetFile = targetFile, dirs = zipFileMap)
-      }
-
-    context.notifyArtifactBuilt(targetFile)
-  }
-}
-
-@OptIn(ExperimentalPathApi::class)
-private inline fun filterSourceFilesOnly(name: String, context: BuildContext, configure: (Path) -> Unit): Path {
-  val sourceFiles = Files.createTempDirectory(context.paths.tempDir, name)
-  configure(sourceFiles)
-  sourceFiles.walk().forEach {
-    if (!Files.isDirectory(it) && !isSourceFile(it.toString())) {
-      Files.delete(it)
-    }
-  }
-  return sourceFiles
-}
-
-@Internal
-fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
-  val productProperties = context.productProperties
-  val productLayout = productProperties.productLayout
-
+internal fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<String> {
   val result = LinkedHashSet<String>()
-  collectModulesToCompile(context = context, result = result)
+  collectModulesToCompile(result = result, context = context)
   context.proprietaryBuildTools.scrambleTool?.let {
     result.addAll(it.additionalModulesToCompile)
   }
-  result.addAll(productLayout.mainModules)
+
+  val productProperties = context.productProperties
+  result.addAll(productProperties.productLayout.mainModules)
 
   val mavenArtifacts = productProperties.mavenArtifacts
   result.addAll(mavenArtifacts.additionalModules)
@@ -555,40 +377,35 @@ fun collectModulesToCompileForDistribution(context: BuildContext): MutableSet<St
 }
 
 private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
-  val productLayout = context.productProperties.productLayout
-
   val compilationTasks = CompilationTasks.create(context)
-  compilationTasks.compileModules(collectModulesToCompileForDistribution(context))
+  collectModulesToCompileForDistribution(context).let {
+    compilationTasks.compileModules(moduleNames = it)
+  }
 
+  val productLayout = context.productProperties.productLayout
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
-  filterPluginsToPublish(pluginsToPublish, context)
+  filterPluginsToPublish(plugins = pluginsToPublish, context = context)
 
-  var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
+  var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
-  val addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                            hasPlatformCoverage(productLayout = productLayout,
-                                                enabledPluginModules = enabledPluginModules,
-                                                context = context)
 
   if (context.shouldBuildDistributions()) {
-    if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-      Span.current().addEvent("skip collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
+    if (context.isStepSkipped(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+      Span.current().addEvent("skip collecting compatible plugins because ${BuildOptions.PROVIDED_MODULES_LIST_STEP} was skipped")
     }
     else {
       val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
-      val platform = createPlatformLayout(pluginsToPublish, context)
-      compilationTasks.compileModules(moduleNames = getModulesForPluginsToPublish(platform, pluginsToPublish))
-      val builtinModuleData = spanBuilder("build provided module list").useWithScope {
-        val ideClasspath = createIdeClassPath(platform = platform, context = context)
+      val platform = createPlatformLayout(context = context)
+      getModulesForPluginsToPublish(platform = platform, pluginsToPublish = pluginsToPublish).let {
+        compilationTasks.compileModules(moduleNames = it)
+      }
 
+      val builtinModuleData = spanBuilder("build provided module list").useWithScope {
         Files.deleteIfExists(providedModuleFile)
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-        runApplicationStarter(context = context,
-                              tempDir = context.paths.tempDir.resolve("builtinModules"),
-                              ideClasspath = ideClasspath,
-                              arguments = listOf("listBundledPlugins", providedModuleFile.toString()),
-                              timeout = 30.seconds)
+        context.createProductRunner().runProduct(args = listOf("listBundledPlugins", providedModuleFile.toString()))
+
         context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
         try {
           val builtinModuleData = readBuiltinModulesFile(file = providedModuleFile)
@@ -603,40 +420,29 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       context.notifyArtifactBuilt(artifactPath = providedModuleFile)
       if (!productLayout.buildAllCompatiblePlugins) {
         val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
-        buildProjectArtifacts(platform = distState.platform,
-                              enabledPluginModules = enabledPluginModules,
-                              compilationTasks = compilationTasks,
-                              context = context)
+        buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)
         return distState
       }
 
-      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, context = context, result = pluginsToPublish)
-      filterPluginsToPublish(pluginsToPublish, context)
+      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, result = pluginsToPublish, context = context)
+      filterPluginsToPublish(plugins = pluginsToPublish, context = context)
 
       // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
-      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
+      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
     }
   }
 
-  val platform = createPlatformLayout(
-    addPlatformCoverage = addPlatformCoverage,
-    projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins,
-    context = context,
-  )
+  val platform = createPlatformLayout(projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
-  compilationTasks.compileModules(distState.getModulesForPluginsToPublish())
+  distState.getModulesForPluginsToPublish().let {
+    compilationTasks.compileModules(moduleNames = it)
+  }
 
-  buildProjectArtifacts(platform = distState.platform,
-                        enabledPluginModules = enabledPluginModules,
-                        compilationTasks = compilationTasks,
-                        context = context)
+  buildProjectArtifacts(platform = distState.platform, enabledPluginModules = enabledPluginModules, compilationTasks = compilationTasks, context = context)
   return distState
 }
 
-private suspend fun buildProjectArtifacts(platform: PlatformLayout,
-                                          enabledPluginModules: Set<String>,
-                                          compilationTasks: CompilationTasks,
-                                          context: BuildContext) {
+private suspend fun buildProjectArtifacts(platform: PlatformLayout, enabledPluginModules: Set<String>, compilationTasks: CompilationTasks, context: BuildContext) {
   val artifactNames = LinkedHashSet<String>()
   artifactNames.addAll(platform.includedArtifacts.keys)
   getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules, productLayout = context.productProperties.productLayout)
@@ -646,47 +452,46 @@ private suspend fun buildProjectArtifacts(platform: PlatformLayout,
 }
 
 suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").useWithScope {
+  context.checkDistributionBuildNumber()
   checkProductProperties(context as BuildContextImpl)
   copyDependenciesFile(context)
   logFreeDiskSpace("before compilation", context)
-  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.pluginModulesToPublish,
-                                                          productLayout = context.productProperties.productLayout)
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
+    modules = context.productProperties.productLayout.pluginModulesToPublish,
+    productLayout = context.productProperties.productLayout,
+  )
   val distributionState = compileModulesForDistribution(context)
   logFreeDiskSpace("after compilation", context)
 
   coroutineScope {
     createMavenArtifactJob(context, distributionState)
 
-    val distEntries = spanBuilder("build platform and plugin JARs").useWithScope {
-      if (context.shouldBuildDistributions()) {
-        val entries = buildDistribution(state = distributionState, context)
-        if (context.productProperties.buildSourcesArchive) {
-          buildSourcesArchive(entries, context)
-        }
-        entries
-      }
-      else {
-        Span.current().addEvent("skip building product distributions because " +
-                                "'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'")
-        buildSearchableOptions(distributionState.platform, context)
-        buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
-                               compressPluginArchive = context.options.compressZipFiles,
-                               buildPlatformLibJob = null,
-                               state = distributionState,
-                               context = context)
-        emptyList()
-      }
+    if (!context.shouldBuildDistributions()) {
+      Span.current().addEvent("skip building product distributions because 'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'")
+      buildNonBundledPlugins(
+        pluginsToPublish = pluginsToPublish,
+        compressPluginArchive = context.options.compressZipFiles,
+        buildPlatformLibJob = null,
+        state = distributionState,
+        searchableOptionSet = buildSearchableOptions(context),
+        context = context
+      )
+      return@coroutineScope
     }
 
-    if (!context.shouldBuildDistributions()) {
-      return@coroutineScope
+    val distEntries = spanBuilder("build platform and plugin JARs").useWithScope {
+      val entries = buildDistribution(state = distributionState, context)
+      if (context.productProperties.buildSourcesArchive) {
+        buildSourcesArchive(entries, context)
+      }
+      entries
     }
 
     layoutShared(context)
     val distDirs = buildOsSpecificDistributions(context)
     launch(Dispatchers.IO) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
-        SoftwareBillOfMaterialsImpl(context, distDirs, distEntries).generate()
+        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = distEntries).generate()
       }
     }
     if (context.productProperties.buildCrossPlatformDistribution) {
@@ -714,24 +519,37 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
   }
 
   return createSkippableJob(spanBuilder("generate maven artifacts"), BuildOptions.MAVEN_ARTIFACTS_STEP, context) {
-    val moduleNames = HashSet<String>()
+    val platformModules = HashSet<String>()
     if (mavenArtifacts.forIdeModules) {
-      moduleNames.addAll(distributionState.platformModules)
+      platformModules.addAll(distributionState.platformModules)
       val productLayout = context.productProperties.productLayout
-      collectIncludedPluginModules(enabledPluginModules = productLayout.bundledPluginModules, product = productLayout, result = moduleNames)
+      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = platformModules, context = context)
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
-    moduleNames.addAll(mavenArtifacts.additionalModules)
-    if (!moduleNames.isEmpty()) {
-      mavenArtifactsBuilder.generateMavenArtifacts(moduleNamesToPublish = moduleNames,
-                                                   moduleNamesToSquashAndPublish = mavenArtifacts.squashedModules,
-                                                   outputDir = "maven-artifacts")
+    val builtArtifacts = mutableSetOf<MavenArtifactData>()
+    if (!platformModules.isEmpty()) {
+      mavenArtifactsBuilder.generateMavenArtifacts(
+        moduleNamesToPublish = platformModules,
+        outputDir = "maven-artifacts",
+        builtArtifacts = builtArtifacts,
+        ignoreNonMavenizable = true,
+      )
+    }
+    if (!mavenArtifacts.additionalModules.isEmpty()) {
+      mavenArtifactsBuilder.generateMavenArtifacts(
+        moduleNamesToPublish = mavenArtifacts.additionalModules,
+        moduleNamesToSquashAndPublish = mavenArtifacts.squashedModules,
+        builtArtifacts = builtArtifacts,
+        outputDir = "maven-artifacts"
+      )
     }
     if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-      mavenArtifactsBuilder.generateMavenArtifacts(moduleNamesToPublish = mavenArtifacts.proprietaryModules,
-                                                   moduleNamesToSquashAndPublish = emptyList(),
-                                                   outputDir = "proprietary-maven-artifacts")
+      mavenArtifactsBuilder.generateMavenArtifacts(
+        moduleNamesToPublish = mavenArtifacts.proprietaryModules,
+        builtArtifacts = builtArtifacts,
+        outputDir = "proprietary-maven-artifacts"
+      )
     }
   }
 }
@@ -748,8 +566,20 @@ private fun checkProductProperties(context: BuildContextImpl) {
   properties.embeddedJetBrainsClientMainModule?.let { embeddedJetBrainsClientMainModule ->
     checkModule(embeddedJetBrainsClientMainModule, "productProperties.embeddedJetBrainsClientMainModule", context)
     if (findProductModulesFile(context, embeddedJetBrainsClientMainModule) == null) {
-      context.messages.error("Cannot find product-modules.xml file in sources of '$embeddedJetBrainsClientMainModule' module specified as " +
-                             "'productProperties.embeddedJetBrainsClientMainModule'.")
+      context.messages.error(
+        "Cannot find product-modules.xml file in sources of '$embeddedJetBrainsClientMainModule' module specified as " +
+        "'productProperties.embeddedJetBrainsClientMainModule'."
+      )
+    }
+  }
+  properties.rootModuleForModularLoader?.let { rootModule ->
+    checkModule(rootModule, "productProperties.rootModuleForModularLoader", context)
+    if (properties.productLayout.bundledPluginModules.isNotEmpty()) {
+      context.messages.error("""
+        |'${properties.javaClass.name}' uses module-based loader, so the following bundled plugins must be specified in product-modules.xml file 
+        |located in '$rootModule', not via 'productLayout.bundledPluginModules' property: 
+        |${properties.productLayout.bundledPluginModules.joinToString("\n")}
+        |""".trimMargin())
     }
   }
 
@@ -771,8 +601,10 @@ private fun checkProductProperties(context: BuildContextImpl) {
     checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
-    checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIconForEAP),
-               "productProperties.macCustomizer.icnsPathForAlternativeIconForEAP")
+    checkPaths(
+      listOfNotNull(macCustomizer.icnsPathForAlternativeIconForEAP),
+      "productProperties.macCustomizer.icnsPathForAlternativeIconForEAP"
+    )
     if (!context.isStepSkipped(BuildOptions.MAC_DMG_STEP)) {
       checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
       checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
@@ -783,9 +615,7 @@ private fun checkProductProperties(context: BuildContextImpl) {
   checkModules(properties.mavenArtifacts.squashedModules, "productProperties.mavenArtifacts.squashedModules", context)
   if (context.productProperties.scrambleMainJar) {
     context.proprietaryBuildTools.scrambleTool?.let {
-      checkModules(modules = it.namesOfModulesRequiredToBeScrambled,
-                   fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled",
-                   context = context)
+      checkModules(modules = it.namesOfModulesRequiredToBeScrambled, fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled", context = context)
     }
   }
 }
@@ -796,26 +626,31 @@ private fun checkProductLayout(context: BuildContext) {
   val messages = context.messages
 
   val pluginLayouts = layout.pluginLayouts
-  checkScrambleClasspathPlugins(pluginLayouts)
   checkPluginDuplicates(pluginLayouts)
   checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", context)
   checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", context)
   checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", context)
   if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
-    messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
-                     "layout.compatiblePluginsToIgnore property will be ignored (${layout.compatiblePluginsToIgnore})")
+    messages.warning(
+      "layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
+      "layout.compatiblePluginsToIgnore property will be ignored (${layout.compatiblePluginsToIgnore})"
+    )
   }
   if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
     checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", context)
   }
   if (!context.shouldBuildDistributions() && layout.buildAllCompatiblePlugins) {
-    messages.warning("Distribution is not going to build. Hence all compatible plugins won't be built despite " +
-                     "layout.buildAllCompatiblePlugins option is enabled. layout.pluginModulesToPublish will be used (" +
-                     layout.pluginModulesToPublish + ")")
+    messages.warning(
+      "Distribution is not going to build. Hence all compatible plugins won't be built despite " +
+      "layout.buildAllCompatiblePlugins option is enabled. layout.pluginModulesToPublish will be used (" +
+      layout.pluginModulesToPublish + ")"
+    )
   }
-  check(!layout.prepareCustomPluginRepositoryForPublishedPlugins ||
-        !layout.pluginModulesToPublish.isEmpty() ||
-        layout.buildAllCompatiblePlugins) {
+  check(
+    !layout.prepareCustomPluginRepositoryForPublishedPlugins ||
+    !layout.pluginModulesToPublish.isEmpty() ||
+    layout.buildAllCompatiblePlugins
+  ) {
     "productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled" +
     " but no pluginModulesToPublish are specified"
   }
@@ -835,11 +670,7 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
   checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", context)
 
-  checkProjectLibraries(
-    names = layout.includedProjectLibraries.map { it.libraryName },
-    fieldName = "includedProjectLibraries in $description",
-    context = context,
-  )
+  checkProjectLibraries(names = layout.includedProjectLibraries.map { it.libraryName }, fieldName = "includedProjectLibraries in $description", context = context)
 
   for ((moduleName, libraryName) in layout.includedModuleLibraries) {
     checkModules(listOf(moduleName), "includedModuleLibraries in $description", context)
@@ -848,16 +679,13 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
     }
   }
 
-  checkModules(
-    modules = layout.excludedLibraries.keys,
-    fieldName = "excludedModuleLibraries in $description",
-    context = context,
-  )
+  checkModules(modules = layout.excludedLibraries.keys, fieldName = "excludedModuleLibraries in $description", context = context)
   for ((key, value) in layout.excludedLibraries.entries) {
     val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
     for (libraryName in value) {
       check(libraries.any { getLibraryFileName(it) == libraryName }) {
-        "Cannot find library \'$libraryName\' in \'$key\' (used in \'excludedModuleLibraries\' in $description)"
+        val where = key?.let { "module \'$it\'" } ?: "project"
+        "Cannot find library \'$libraryName\' in $where (used in \'excludedModuleLibraries\' in $description)"
       }
     }
   }
@@ -911,18 +739,6 @@ private fun checkArtifacts(names: Collection<String>, fieldName: String, context
   }
 }
 
-private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>) {
-  val pluginDirectories = pluginLayoutList.mapTo(HashSet()) { it.directoryName }
-  for (pluginLayout in pluginLayoutList) {
-    for ((pluginDirectoryName, _) in pluginLayout.scrambleClasspathPlugins) {
-      check(pluginDirectories.contains(pluginDirectoryName)) {
-        "Layout of plugin '${pluginLayout.mainModule}' declares an unresolved plugin directory name" +
-        " in ${pluginLayout.scrambleClasspathPlugins}: $pluginDirectoryName"
-      }
-    }
-  }
-}
-
 private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: String, context: BuildContext) {
   if (pluginModules == null) {
     return
@@ -968,24 +784,6 @@ private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
   }
 }
 
-suspend fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {
-  val updaterModule = context.findRequiredModule("intellij.platform.updater")
-  val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule), excludes = commonModuleExcludes)
-  val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
-    .productionOnly()
-    .runtimeOnly()
-    .libraries
-    .asSequence()
-    .flatMap { it.getRootUrls(JpsOrderRootType.COMPILED) }
-    .filter { !JpsPathUtil.isJrtUrl(it) }
-    .map {
-      ZipSource(file = Path.of(JpsPathUtil.urlToPath(it)), excludes = listOf(Regex("^META-INF/.*")), distributionFileEntryProducer = null)
-    }
-  val updaterJar = context.paths.artifactDir.resolve(artifactName)
-  buildJar(targetFile = updaterJar, sources = (sequenceOf(updaterModuleSource) + librarySources).toList(), compress = true)
-  context.notifyArtifactBuilt(updaterJar)
-}
-
 private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
   val executableName = context.productProperties.baseFileName
 
@@ -1002,7 +800,8 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
           vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch, isPortableDist = true),
-          mainClass = context.ideMainClassName),
+          mainClass = context.ideMainClassName
+        ),
         ProductInfoLaunchData(
           os = OsFamily.LINUX.osName,
           arch = arch.dirName,
@@ -1012,7 +811,8 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
           startupWmClass = getLinuxFrameClass(context),
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch, isPortableDist = true),
-          mainClass = context.ideMainClassName),
+          mainClass = context.ideMainClassName
+        ),
         ProductInfoLaunchData(
           os = OsFamily.MACOS.osName,
           arch = arch.dirName,
@@ -1021,7 +821,8 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
           vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch, isPortableDist = true),
-          mainClass = context.ideMainClassName)
+          mainClass = context.ideMainClassName
+        )
       )
     }.toList(),
     context = context,
@@ -1035,7 +836,7 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
   else {
     null
   }
-  
+
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
   val dependenciesFile = copyDependenciesFile(context)
@@ -1082,10 +883,7 @@ private suspend fun checkClassFiles(root: Path, context: BuildContext, isDistAll
   }
 
   if (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty()) {
-    checkClassFiles(versionCheckConfig = versionCheckerConfig,
-                    forbiddenSubPaths = forbiddenSubPaths,
-                    forbiddenSubPathExceptions = forbiddenSubPathExceptions,
-                    root = root)
+    checkClassFiles(versionCheckConfig = versionCheckerConfig, forbiddenSubPaths = forbiddenSubPaths, forbiddenSubPathExceptions = forbiddenSubPathExceptions, root = root)
   }
 
   if (forbiddenSubPaths.isNotEmpty()) {
@@ -1127,19 +925,20 @@ internal fun getLinuxFrameClass(context: BuildContext): String {
   return if (name.startsWith("jetbrains-")) name else "jetbrains-$name"
 }
 
-private fun crossPlatformZip(macX64DistDir: Path,
-                             macArm64DistDir: Path,
-                             linuxX64DistDir: Path,
-                             winX64DistDir: Path,
-                             targetFile: Path,
-                             executableName: String,
-                             productJson: ByteArray,
-                             executablePatterns: List<PathMatcher>,
-                             distFiles: Collection<DistFile>,
-                             extraFiles: Map<String, Path>,
-                             distAllDir: Path,
-                             compress: Boolean,
-                             runtimeModuleRepositoryPath: Path?,
+private fun crossPlatformZip(
+  macX64DistDir: Path,
+  macArm64DistDir: Path,
+  linuxX64DistDir: Path,
+  winX64DistDir: Path,
+  targetFile: Path,
+  executableName: String,
+  productJson: ByteArray,
+  executablePatterns: List<PathMatcher>,
+  distFiles: Collection<DistFile>,
+  extraFiles: Map<String, Path>,
+  distAllDir: Path,
+  compress: Boolean,
+  runtimeModuleRepositoryPath: Path?,
 ) {
   writeNewFile(targetFile) { outFileChannel ->
     NoDuplicateZipArchiveOutputStream(outFileChannel, compress = compress).use { out ->
@@ -1228,7 +1027,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
 
       val zipFileUniqueGuard = HashMap<String, DistFileContent>()
 
-      out.dir(distAllDir, "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
+      out.dir(startDir = distAllDir, prefix = "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
       if (runtimeModuleRepositoryPath != null) {
         out.entry(MODULE_DESCRIPTORS_JAR_PATH, runtimeModuleRepositoryPath)
       }
@@ -1270,9 +1069,9 @@ private fun crossPlatformZip(macX64DistDir: Path,
   }
 }
 
-fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
+fun collectModulesToCompile(result: MutableSet<String>, context: BuildContext) {
   val productLayout = context.productProperties.productLayout
-  collectIncludedPluginModules(enabledPluginModules = productLayout.bundledPluginModules, product = productLayout, result = result)
+  collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = result, context = context)
   collectPlatformModules(result)
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)
@@ -1289,19 +1088,17 @@ fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
 // Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
 // This is later used by Qodana and other tools.
 // Keymaps are extracted as an XML file and also used in authoring help.
-internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>, context: BuildContext) {
+internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijProductRunner, context: BuildContext) {
   context.executeStep(spanBuilder("build authoring asserts"), BuildOptions.DOC_AUTHORING_ASSETS_STEP) {
-    val commands = listOf(Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
-                          Pair("keymap", "keymap-${context.applicationInfo.productCode.lowercase()}"))
+    val commands = listOf(
+      Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
+      Pair("keymap", "keymap-${context.applicationInfo.productCode.lowercase()}")
+    )
     val temporaryBuildDirectory = context.paths.tempDir
     for (command in commands) {
       launch {
-        val temporaryStepDirectory = temporaryBuildDirectory.resolve(command.first)
-        val targetPath = temporaryStepDirectory.resolve(command.second)
-        runApplicationStarter(context = context,
-                              tempDir = temporaryStepDirectory,
-                              ideClasspath = ideClassPath,
-                              arguments = listOf(command.first, targetPath.toString()))
+        val targetPath = temporaryBuildDirectory.resolve(command.first).resolve(command.second)
+        productRunner.runProduct(args = listOf(command.first, targetPath.toString()), timeout = DEFAULT_TIMEOUT)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(
@@ -1329,9 +1126,7 @@ internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext)
 /**
  * @return list of all modules which output is included in the plugin's JARs
  */
-internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>,
-                                          product: ProductModulesLayout,
-                                          result: MutableSet<String>) {
+internal fun collectIncludedPluginModules(enabledPluginModules: Collection<String>, product: ProductModulesLayout, result: MutableSet<String>, context: BuildContext) {
   result.addAll(enabledPluginModules)
   val enabledPluginModuleSet = if (enabledPluginModules is Set<String> || enabledPluginModules.size < 2) {
     enabledPluginModules
@@ -1339,12 +1134,18 @@ internal fun collectIncludedPluginModules(enabledPluginModules: Collection<Strin
   else {
     enabledPluginModules.toHashSet()
   }
-  product.pluginLayouts.asSequence()
-    .filter { enabledPluginModuleSet.contains(it.mainModule) }
-    .flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
+
+  for (plugin in product.pluginLayouts) {
+    if (!enabledPluginModuleSet.contains(plugin.mainModule)) {
+      continue
+    }
+
+    plugin.includedModules.mapTo(result) { it.moduleName }
+    result.addAll((context as BuildContextImpl).jarPackagerDependencyHelper.readPluginIncompleteContentFromDescriptor(context.findRequiredModule(plugin.mainModule)))
+  }
 }
 
-fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
+internal fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
   for (item in context.getDistFiles(os, arch)) {
     val targetFile = newDir.resolve(item.relativePath)
     Files.createDirectories(targetFile.parent)

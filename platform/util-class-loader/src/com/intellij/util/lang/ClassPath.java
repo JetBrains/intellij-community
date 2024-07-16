@@ -106,7 +106,7 @@ public final class ClassPath {
     return Arrays.asList(files);
   }
 
-  synchronized void reset(Collection<Path> newClassPath) {
+  public synchronized void reset(Collection<Path> newClassPath) {
     reset();
     files = newClassPath.toArray(new Path[]{});
   }

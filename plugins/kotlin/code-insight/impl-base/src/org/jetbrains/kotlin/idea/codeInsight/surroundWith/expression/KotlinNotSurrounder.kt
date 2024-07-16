@@ -2,13 +2,12 @@
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.CodeInsightUtilBase
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
@@ -20,19 +19,20 @@ class KotlinNotSurrounder : KotlinExpressionSurrounder() {
         return CodeInsightBundle.message("surround.with.not.template")
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     public override fun isApplicable(expression: KtExpression): Boolean {
         if (!super.isApplicable(expression)) return false
         allowAnalysisOnEdt {
             return analyze(expression) {
-                val ktType = expression.getKtType()
+                val ktType = expression.expressionType
                 ktType != null && ktType.isBoolean
             }
         }
     }
 
-    public override fun surroundExpression(project: Project, editor: Editor, expression: KtExpression): TextRange? {
-        val prefixExpr = KtPsiFactory(expression.project).createExpression("!(a)") as KtPrefixExpression
+    override fun surroundExpression(context: ActionContext, expression: KtExpression, updater: ModPsiUpdater) {
+        val factory = KtPsiFactory(expression.project)
+        val prefixExpr = factory.createExpression("!(a)") as KtPrefixExpression
         val parenthesizedExpression = prefixExpr.baseExpression as KtParenthesizedExpression? ?: error(
             "KtParenthesizedExpression should exists for " + prefixExpr.text + " expression"
         )
@@ -41,8 +41,6 @@ class KotlinNotSurrounder : KotlinExpressionSurrounder() {
         )
         expressionWithoutParentheses.replace(expression)
         val expr = expression.replace(prefixExpr) as KtExpression
-        CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expr)
-        val offset = expr.textRange.endOffset
-        return TextRange(offset, offset)
+        updater.select(TextRange.from(expr.textRange.endOffset, 0))
     }
 }

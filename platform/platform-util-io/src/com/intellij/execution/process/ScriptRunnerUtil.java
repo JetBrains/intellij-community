@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.io.IdeUtilIoBundle;
-import com.intellij.util.io.keyStorage.AppendableStorageBackedByPagedStorageLockFree;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +131,7 @@ public final class ScriptRunnerUtil {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
     commandLine.setCharset(charset);
-    if (withPty && !ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode() ) {
+    if (withPty && !ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       if (!SystemInfo.isWindows) {
         commandLine = new PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS).withConsoleMode(false);
       }
@@ -152,6 +152,7 @@ public final class ScriptRunnerUtil {
     return processHandler;
   }
 
+  @ApiStatus.Internal
   public static boolean isExecutableInPath(@NotNull String exeName) {
     assert exeName.indexOf(File.pathSeparatorChar) == -1 : exeName;
 
@@ -164,6 +165,7 @@ public final class ScriptRunnerUtil {
     return !pathWithExt.equals(exeName);
   }
 
+  @ApiStatus.Internal
   public static ScriptOutput executeScriptInConsoleWithFullOutput(String exePathString,
                                                                   @Nullable VirtualFile scriptFile,
                                                                   @Nullable String workingDirectory,
@@ -184,6 +186,7 @@ public final class ScriptRunnerUtil {
     return output;
   }
 
+  @ApiStatus.Internal
   public static class ScriptOutput extends ProcessAdapter {
     private final Condition<? super Key> myScriptOutputType;
     public final StringBuilder myFilteredOutput;

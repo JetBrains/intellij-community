@@ -31,7 +31,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
+public final class AntDomFileDescription extends AntFileDescription<AntDomProject> {
   private static final String ROOT_TAG_NAME = "project";
 
   public AntDomFileDescription() {

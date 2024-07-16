@@ -16,10 +16,10 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class VariableAccessUtils {
 
@@ -275,8 +277,9 @@ public final class VariableAccessUtils {
    * @return a list of references, empty list if no references were found.
    */
   public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
-    PsiElement scope = variable instanceof PsiField ? variable.getContainingFile() : PsiUtil.getVariableCodeBlock(variable, null);
-    return getVariableReferences(variable, scope);
+    PsiFile file = variable.getContainingFile();
+    if (file == null) return List.of();
+    return LocalRefUseInfo.forFile(file).getVariableReferences(variable, null);
   }
 
   /**
@@ -287,6 +290,11 @@ public final class VariableAccessUtils {
    */
   public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) return Collections.emptyList();
+    PsiFile file = context.getContainingFile();
+    PsiFile variableFile = variable.getContainingFile();
+    if (variableFile != null && file == variableFile && file.isPhysical()) {
+      return LocalRefUseInfo.forFile(file).getVariableReferences(variable, context);
+    }
     List<PsiReferenceExpression> result = new ArrayList<>();
     PsiTreeUtil.processElements(context, e -> {
       if (e instanceof PsiReferenceExpression && ((PsiReferenceExpression)e).isReferenceTo(variable)) {
@@ -299,7 +307,13 @@ public final class VariableAccessUtils {
 
   @Contract("_, null -> false")
   public static boolean variableIsUsed(@NotNull PsiVariable variable, @Nullable PsiElement context) {
-    return context != null && VariableUsedVisitor.isVariableUsedIn(variable, context);
+    if (context == null) return false;
+    PsiFile file = context.getContainingFile();
+    PsiFile variableFile = variable.getContainingFile();
+    if (variableFile != null && file == variableFile && file.isPhysical()) {
+      return LocalRefUseInfo.forFile(file).isVariableUsed(variable, context);
+    }
+    return VariableUsedVisitor.isVariableUsedIn(variable, context);
   }
 
   public static boolean variableIsDecremented(@NotNull PsiVariable variable, @Nullable PsiStatement statement) {
@@ -460,7 +474,7 @@ public final class VariableAccessUtils {
       return false;
     }
     if (!(initialization instanceof PsiLocalVariable || initialization instanceof PsiParameter)) {
-      if (!isFinalChain(reference) || ReferencesSearch.search(variable).findAll().size() != 1) {
+      if (!isFinalChain(reference) || getVariableReferences(variable).size() != 1) {
         // only warn when variable is referenced once, to avoid warning when a field is cached in local variable
         // as in e.g. gnu.trove.TObjectHash#forEach()
         return false;
@@ -493,11 +507,18 @@ public final class VariableAccessUtils {
     final PsiType variableType = variable.getType();
     final PsiType initializationType = initialization.getType();
     final boolean sameType = Comparing.equal(variableType, initializationType);
-    for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(containingScope))) {
-      final PsiElement refElement = ref.getElement();
+    for (PsiReferenceExpression refElement : getVariableReferences(variable)) {
       if (finalVariableIntroduction || canCaptureThis) {
-        final PsiElement element = PsiTreeUtil.getParentOfType(refElement, PsiClass.class, PsiLambdaExpression.class);
+        PsiElement element = LambdaUtil.getContainingClassOrLambda(refElement);
         if (element != null && PsiTreeUtil.isAncestor(containingScope, element, true)) {
+          return false;
+        }
+
+        PsiSwitchLabelStatementBase switchLabel = PsiTreeUtil.getParentOfType(refElement, PsiSwitchLabelStatementBase.class);
+        if (switchLabel != null &&
+            switchLabel.getGuardExpression() != null &&
+            PsiTreeUtil.isAncestor(switchLabel.getGuardExpression(), refElement, true) &&
+            PsiTreeUtil.isAncestor(containingScope, switchLabel, true)) {
           return false;
         }
       }
@@ -506,15 +527,8 @@ public final class VariableAccessUtils {
         return false;
       }
 
-      if (!sameType) {
-        final PsiElement parent = refElement.getParent();
-        if (parent instanceof PsiReferenceExpression) {
-          final PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
-          if (resolve instanceof PsiMember &&
-              ((PsiMember)resolve).hasModifierProperty(PsiModifier.PRIVATE)) {
-            return false;
-          }
-        }
+      if (!sameType && !isVariableTypeChangeSafeForReference(initializationType, refElement)) {
+        return false;
       }
     }
 
@@ -576,9 +590,62 @@ public final class VariableAccessUtils {
     if (var == null) return false;
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     return block != null &&
-           getVariableReferences(var, block).stream()
+           getVariableReferences(var).stream()
              .map(ref -> PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiLambdaExpression.class))
              .allMatch(context -> context == null || PsiTreeUtil.isAncestor(context, block, false));
+  }
+
+  static boolean isVariableTypeChangeSafeForReference(@NotNull PsiType targetType, @NotNull PsiReferenceExpression reference) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(reference.getParent());
+    if (PsiUtil.isAccessedForWriting(reference)) {
+      PsiAssignmentExpression assignmentExpression = tryCast(parent, PsiAssignmentExpression.class);
+      if (assignmentExpression == null) return false;
+      PsiExpression rValue = assignmentExpression.getRExpression();
+      if (rValue == null) return false;
+      PsiType rValueType = rValue.getType();
+      return rValueType != null && targetType.isAssignableFrom(rValueType);
+    }
+    while (parent instanceof PsiConditionalExpression) {
+      parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+    }
+    if (parent instanceof PsiInstanceOfExpression instanceOf) {
+      PsiTypeElement checkTypeElement = instanceOf.getCheckType();
+      if (checkTypeElement == null) return false;
+      PsiType checkType = checkTypeElement.getType();
+      // Could be always false instanceof which will become compilation error after fix
+      return TypeConversionUtil.areTypesConvertible(targetType, checkType);
+    }
+    if (parent instanceof PsiTypeCastExpression parentCast) {
+      PsiTypeElement castTypeElement = parentCast.getCastType();
+      if (castTypeElement == null) return false;
+      PsiType castType = castTypeElement.getType();
+      // Another replacement could become invalid due to this change
+      return TypeConversionUtil.areTypesConvertible(targetType, castType);
+    }
+    // Some method call can be mis-resolved after update, check this
+    if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression call) {
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return false;
+      Object mark = new Object();
+      PsiTreeUtil.mark(reference, mark);
+      PsiCallExpression callCopy = (PsiCallExpression)call.copy();
+      PsiTreeUtil.releaseMark(reference, mark);
+      PsiElement refCopy = PsiTreeUtil.releaseMark(callCopy, mark);
+      if (refCopy == null) return false;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
+      PsiTypeCastExpression insertedCast = (PsiTypeCastExpression)refCopy.replace(
+        factory.createExpressionFromText("(a)"+reference.getReferenceName(), refCopy));
+      Objects.requireNonNull(insertedCast.getCastType()).replace(factory.createTypeElement(targetType));
+      return callCopy.resolveMethod() == method;
+    }
+    if (parent instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
+      // private member cannot be accessed on a subtype qualifier
+      if (resolve instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static class VariableCollectingVisitor extends JavaRecursiveElementWalkingVisitor {

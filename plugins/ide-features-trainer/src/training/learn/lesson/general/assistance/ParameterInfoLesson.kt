@@ -8,8 +8,9 @@ import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import kotlin.math.min
 
-class ParameterInfoLesson(private val sample: LessonSample) :
-  KLesson("CodeAssistance.ParameterInfo", LessonsBundle.message("parameter.info.lesson.name")) {
+class ParameterInfoLesson(private val sample: LessonSample,
+                          private val helpUrl: String = "viewing-reference-information.html#view-parameter-info")
+  : KLesson("CodeAssistance.ParameterInfo", LessonsBundle.message("parameter.info.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
@@ -17,7 +18,7 @@ class ParameterInfoLesson(private val sample: LessonSample) :
 
     actionTask("ParameterInfo") {
       restoreIfModifiedOrMoved(sample)
-      LessonsBundle.message("parameter.info.use.action", action(it))
+      LessonsBundle.message("parameter.info.use.action", strong(LessonsBundle.message("parameter.info.lesson.name")),action(it))
     }
 
     task {
@@ -44,8 +45,9 @@ class ParameterInfoLesson(private val sample: LessonSample) :
     return partOfSequence.matches(parametersRegex)
   }
 
-  override val helpLinks: Map<String, String> get() = mapOf(
-    Pair(LessonsBundle.message("parameter.info.help.link"),
-         LessonUtil.getHelpLink("viewing-reference-information.html#view-parameter-info")),
-  )
+  override val helpLinks: Map<String, String>
+    get() = mapOf(
+      Pair(LessonsBundle.message("parameter.info.help.link"),
+           LessonUtil.getHelpLink(helpUrl)),
+    )
 }

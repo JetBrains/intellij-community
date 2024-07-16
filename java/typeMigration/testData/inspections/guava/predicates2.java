@@ -1,6 +1,5 @@
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.sun.org.apache.xpath.internal.operations.String;
 
 class Main {
 

@@ -5,6 +5,19 @@ package com.intellij.codeInsight.hints.declarative
  * Collects inlays during construction.
  */
 interface InlayTreeSink {
+  @Deprecated("", ReplaceWith("Use addPresentation(InlayPosition, List<InlayPosition>?, String?, HintColorKind, () -> Unit) method"))
+  fun addPresentation(position: InlayPosition,
+                      payloads: List<InlayPayload>? = null,
+                      tooltip: String? = null,
+                      hasBackground: Boolean,
+                      builder: PresentationTreeBuilder.() -> Unit) {
+    addPresentation(position,
+                    payloads,
+                    tooltip,
+                    if (hasBackground) HintColorKind.Default else HintColorKind.TextWithoutBackground,
+                    builder)
+  }
+
   /**
    * Saves presentation for later application.
    * @param builder builder for a given inlay entry. It can be executed zero times or once.
@@ -12,7 +25,7 @@ interface InlayTreeSink {
   fun addPresentation(position: InlayPosition,
                       payloads: List<InlayPayload>? = null,
                       tooltip: String? = null,
-                      hasBackground: Boolean,
+                      hintColorKind: HintColorKind,
                       builder: PresentationTreeBuilder.() -> Unit)
 
   /**

@@ -37,8 +37,6 @@ object DocMarkdownToHtmlConverter {
   private const val FENCED_CODE_BLOCK = "```"
 
   private val HTML_DOC_SUBSTITUTIONS: Map<String, String> = mapOf(
-    "<pre><code>" to "<pre>",
-    "</code></pre>" to "</pre>",
     "<em>" to "<i>",
     "</em>" to "</i>",
     "<strong>" to "<b>",
@@ -64,11 +62,17 @@ object DocMarkdownToHtmlConverter {
     .apply {
       addAll(ACCEPTABLE_BLOCK_TAGS)
       addAll(listOf( // Content sectioning
-        "h1", "h2", "h3", "h4", "h5", "h6",  // Inline text semantic
-        "a", "b", "br", "code", "em", "i", "s", "span", "strong", "u", "wbr",  // Image and multimedia
-        "img",  // Svg and math
-        "svg",  // Obsolete
-        "tt"
+        "h1", "h2", "h3", "h4", "h5", "h6",
+        // Inline text semantic
+        "a", "b", "br", "code", "em", "i", "s", "span", "strong", "u", "wbr", "kbd", "samp",
+        // Image and multimedia
+        "img",
+        // Svg and math
+        "svg",
+        // Obsolete
+        "tt",
+        // special IJ tags
+        "shortcut", "icon"
       ))
     }
 

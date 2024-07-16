@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.RegistryManager;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ public class JBCefBrowserBuilder {
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
-  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
+  boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled") || JBCefApp.isRemoteEnabled();
   boolean myCreateImmediately;
   boolean myEnableOpenDevToolsMenuItem;
   boolean myMouseWheelEventEnable = true;
@@ -34,6 +35,13 @@ public class JBCefBrowserBuilder {
    * @see #setOSRHandlerFactory(JBCefOSRHandlerFactory)
    */
   public @NotNull JBCefBrowserBuilder setOffScreenRendering(boolean isOffScreenRendering) {
+    if (!isOffScreenRendering) {
+      if (JBCefApp.isRemoteEnabled()) {
+        Logger.getInstance(JBCefBrowserBuilder.class).warn("Trying to create windowed browser when remote-mode is enabled. Settings isOffScreenRendering=false will be ignored.");
+        myIsOffScreenRendering = true;
+        return this;
+      }
+    }
     myIsOffScreenRendering = isOffScreenRendering;
     return this;
   }

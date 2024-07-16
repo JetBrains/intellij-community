@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.util.containers.MultiMap
@@ -94,6 +96,7 @@ class CommitsBrowserComponentBuilder(private val project: Project,
       viewport.isOpaque = false
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     }
+    ScrollableContentBorder.setup(commitsScrollPane, Side.TOP)
 
     val commitsBrowserComponent = OnePixelSplitter(true, "Github.PullRequest.Commits.Browser", 0.7f).apply {
       firstComponent = commitsScrollPane
@@ -142,7 +145,11 @@ class CommitsBrowserComponentBuilder(private val project: Project,
               return myRawMessage
             }
 
-            return """<b>$subject</b><br/><br/>$description"""
+            return HtmlBuilder().append(HtmlChunk.raw(subject).bold()).apply {
+              if (description.isNotBlank()) {
+                br().br().appendRaw(description)
+              }
+            }.toString()
           }
         }
         commitDetailsPanel.setCommit(presentation)

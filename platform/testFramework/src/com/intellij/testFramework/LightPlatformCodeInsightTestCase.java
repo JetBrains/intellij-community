@@ -26,12 +26,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -42,11 +37,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,16 +49,12 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.runners.Parameterized;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Provides a framework for testing the behavior of the editor.
@@ -320,21 +311,26 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Before  // runs after (all overrides of) setUp()
   public void before() throws Throwable {
-    getIndexingMode().ensureIndexingStatus(getProject());
+    if (getProject() != null) {
+      getIndexingMode().ensureIndexingStatus(getProject());
+    }
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Project project = getProject();
-      if (myIndexingMode != null && project != null) {
+      if (myIndexingMode != null) {
+        @Nullable Project project = getProject();
         if (indexingModeShutdownToken != null) {
           myIndexingMode.tearDownTest(project, indexingModeShutdownToken);
+          indexingModeShutdownToken = null;
         }
 
-        FileEditorManager editorManager = FileEditorManager.getInstance(project);
-        for (VirtualFile openFile : editorManager.getOpenFiles()) {
-          editorManager.closeFile(openFile);
+        if (project != null) {
+          FileEditorManager editorManager = FileEditorManager.getInstance(project);
+          for (VirtualFile openFile : editorManager.getOpenFiles()) {
+            editorManager.closeFile(openFile);
+          }
         }
       }
       deleteVFile();
@@ -447,7 +443,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       String fileText1 = myFile.getText();
       String failMessage = getMessage("Text mismatch", message);
       if (filePath != null && !newFileText.equals(fileText1)) {
-        throw new FileComparisonFailure(failMessage, newFileText, fileText1, filePath);
+        throw new FileComparisonFailedError(failMessage, newFileText, fileText1, filePath);
       }
       assertEquals(failMessage, newFileText, fileText1);
 
@@ -473,7 +469,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       String fileText1 = editor.getDocument().getText();
       String failMessage = getMessage("Text mismatch", message);
       if (filePath != null && !newFileText.equals(fileText1)) {
-        throw new FileComparisonFailure(failMessage, newFileText, fileText1, filePath);
+        throw new FileComparisonFailedError(failMessage, newFileText, fileText1, filePath);
       }
       assertEquals(failMessage, newFileText, fileText1);
 

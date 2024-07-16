@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+@Internal
 public final class AdditionalIndexableFileSet implements IndexableFileSet {
   private final @Nullable Project myProject;
   private final Supplier<List<IndexableSetContributor>> myExtensions;

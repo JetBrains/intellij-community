@@ -81,7 +81,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (myProject.isDisposed()) {
       return false;
     }
-    if (isDumbMode() && !DumbService.isDumbAware(this)) {
+    if (!DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       return false;
     }
 
@@ -102,7 +102,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (!isValid()) {
       return; // the document has changed.
     }
-    if (!DumbService.getInstance(myProject).isDumb() || DumbService.isDumbAware(this)) {
+    if (DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       doApplyInformationToEditor();
     }
   }

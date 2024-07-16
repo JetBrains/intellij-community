@@ -9,14 +9,13 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.statistics.JavaStatisticsManager
 import com.intellij.refactoring.rename.NameSuggestionProvider
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.core.AbstractKotlinNameSuggester
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-abstract class KotlinNameSuggestionProvider<Validator : (String) -> Boolean> : NameSuggestionProvider {
-    abstract val nameSuggester: AbstractKotlinNameSuggester
+abstract class KotlinNameSuggestionProvider : NameSuggestionProvider {
 
     enum class ValidatorTarget {
         PROPERTY,
@@ -26,11 +25,20 @@ abstract class KotlinNameSuggestionProvider<Validator : (String) -> Boolean> : N
         CLASS
     }
 
-    override fun getSuggestedNames(element: PsiElement, nameSuggestionContext: PsiElement?, result: MutableSet<String>): SuggestedNameInfo? {
+    override fun getSuggestedNames(
+        element: PsiElement,
+        nameSuggestionContext: PsiElement?,
+        result: MutableSet<String>,
+    ): SuggestedNameInfo? {
         if (element is KtCallableDeclaration) {
-            val context = nameSuggestionContext ?: element.parent
-            val target = getValidatorTarget(element)
-            val validator = createNameValidator(context, element, target, listOf(element))
+            val validator = KotlinNameValidatorProvider.getInstance()
+                .createNameValidator(
+                    container = nameSuggestionContext ?: element.parent,
+                    target = getValidatorTarget(element),
+                    anchor = element,
+                    excludedDeclarations = listOf(element),
+                )
+
             val names = SmartList<String>().apply {
                 val name = element.name
                 if (!name.isNullOrBlank()) {
@@ -74,13 +82,10 @@ abstract class KotlinNameSuggestionProvider<Validator : (String) -> Boolean> : N
         }
     }
 
-    protected abstract fun createNameValidator(
-        container: PsiElement,
-        anchor: PsiElement?,
-        target: ValidatorTarget,
-        excludedDeclarations: List<KtDeclaration>
-    ): Validator
+    protected abstract fun getReturnTypeNames(
+        callable: KtCallableDeclaration,
+        validator: KotlinNameValidator,
+    ): List<@Nls String>
 
-    protected abstract fun getReturnTypeNames(callable: KtCallableDeclaration, validator: Validator): List<String>
     protected abstract fun getNameForArgument(argument: KtValueArgument): String?
 }

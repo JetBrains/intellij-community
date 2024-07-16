@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.deployment;
 
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
@@ -46,9 +46,8 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
     setPresentableName(presentableName);
   }
 
-  @NotNull
   @Override
-  public DeploymentTask<D> getDeploymentTask() {
+  public @NotNull DeploymentTask<D> getDeploymentTask() {
     return Objects.requireNonNull(super.getDeploymentTask());
   }
 
@@ -56,20 +55,17 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
     return myRemoteDeployment == null || super.getStatus().isTransition();
   }
 
-  @NotNull
   @Override
-  public DeploymentStatus getStatus() {
+  public @NotNull DeploymentStatus getStatus() {
     return isLocalState() ? super.getStatus() : myRemoteDeployment.getStatus();
   }
 
-  @NotNull
   @Override
-  public String getStatusText() {
+  public @NotNull String getStatusText() {
     return isLocalState() ? super.getStatusText() : myRemoteDeployment.getStatusText();
   }
 
-  @Nullable
-  public DeploymentRuntime getRemoteRuntime() {
+  public @Nullable DeploymentRuntime getRemoteRuntime() {
     return isLocalState() ? null : myRemoteDeployment.getRuntime();
   }
 

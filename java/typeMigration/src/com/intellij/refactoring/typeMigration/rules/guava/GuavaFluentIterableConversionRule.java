@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
@@ -33,7 +33,17 @@ import java.util.*;
  */
 public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
   private static final Logger LOG = Logger.getInstance(GuavaFluentIterableConversionRule.class);
-  private static final Map<@NonNls String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP = new HashMap<>();
+  private static final Map<@NonNls String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP = Map.of(
+    "skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true),
+    "limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true),
+    "first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false, true, false),
+    "transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true, true),
+
+    "allMatch", new TypeConversionDescriptorFactory("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)", true),
+    "anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true),
+    "firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false),
+    "size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false)
+  );
 
   public static final Set<@NonNls String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of", "fromNullable");
   public static final @NonNls String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
@@ -51,10 +61,10 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
     }
 
     TypeConversionDescriptorFactory(@NonNls final String stringToReplace,
-                                           @NonNls final String replaceByString,
-                                           boolean withLambdaParameter,
-                                           boolean chainedMethod,
-                                           boolean fluentIterableReturnType) {
+                                    @NonNls final String replaceByString,
+                                    boolean withLambdaParameter,
+                                    boolean chainedMethod,
+                                    boolean fluentIterableReturnType) {
       myStringToReplace = stringToReplace;
       myReplaceByString = replaceByString;
       myWithLambdaParameter = withLambdaParameter;
@@ -77,18 +87,6 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
     public boolean isFluentIterableReturnType() {
       return myFluentIterableReturnType;
     }
-  }
-
-  static {
-    DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true));
-    DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true));
-    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false, true, false));
-    DESCRIPTORS_MAP.put("transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true, true));
-
-    DESCRIPTORS_MAP.put("allMatch", new TypeConversionDescriptorFactory("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)", true));
-    DESCRIPTORS_MAP.put("anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true));
-    DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false));
-    DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false));
   }
 
   @Override
@@ -240,8 +238,11 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
     }
     if (needSpecifyType) {
       if (conversionType == null) {
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression) (context instanceof PsiMethodCallExpression ? context : context.getParent());
-        conversionType = GuavaConversionUtil.addTypeParameters(GuavaTypeConversionDescriptor.isIterable(methodCall) ? CommonClassNames.JAVA_LANG_ITERABLE : StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
+        PsiMethodCallExpression methodCall =
+          (PsiMethodCallExpression)(context instanceof PsiMethodCallExpression ? context : context.getParent());
+        conversionType = GuavaConversionUtil.addTypeParameters(GuavaTypeConversionDescriptor.isIterable(methodCall)
+                                                               ? CommonClassNames.JAVA_LANG_ITERABLE
+                                                               : StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
       }
       descriptorBase.withConversionType(conversionType);
     }
@@ -255,7 +256,8 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
     if (list.getParametersCount() != 1) return null;
     final PsiType parameterType = list.getParameters()[0].getType();
     if (parameterType instanceof PsiEllipsisType) {
-      return new TypeConversionDescriptor("$q$.append('_params*)", "java.util.stream.Stream.concat($q$, java.util.Arrays.asList($params$).stream())");
+      return new TypeConversionDescriptor("$q$.append('_params*)",
+                                          "java.util.stream.Stream.concat($q$, java.util.Arrays.asList($params$).stream())");
     }
     else if (parameterType instanceof PsiClassType) {
       final PsiClass psiClass = PsiTypesUtil.getPsiClass(parameterType);
@@ -274,8 +276,8 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
 
   @Nullable
   public static GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
-                                                                          PsiType to,
-                                                                          TypeMigrationLabeler labeler) {
+                                                                         PsiType to,
+                                                                         TypeMigrationLabeler labeler) {
     List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<>();
 
     NotNullLazyValue<TypeConversionRule> optionalDescriptor = NotNullLazyValue.createValue(() -> {
@@ -350,7 +352,8 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
                            GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(qClass.getQualifiedName()))) {
       labeler.migrateExpressionType(qualifier,
                                     GuavaConversionUtil.addTypeParameters(isFluentIterable ? StreamApiConstants.JAVA_UTIL_STREAM_STREAM :
-                                                                          GuavaOptionalConversionRule.JAVA_OPTIONAL, qualifier.getType(), qualifier),
+                                                                          GuavaOptionalConversionRule.JAVA_OPTIONAL, qualifier.getType(),
+                                                                          qualifier),
                                     qualifier.getParent(),
                                     false,
                                     false);
@@ -370,7 +373,7 @@ public final class GuavaFluentIterableConversionRule extends BaseGuavaTypeConver
     @Override
     public PsiExpression replace(@NotNull PsiExpression expression, @NotNull TypeEvaluator evaluator) {
       Stack<PsiMethodCallExpression> methodChainStack = new Stack<>();
-      PsiMethodCallExpression current = (PsiMethodCallExpression) expression;
+      PsiMethodCallExpression current = (PsiMethodCallExpression)expression;
       while (current != null) {
         methodChainStack.add(current);
         final PsiExpression qualifier = current.getMethodExpression().getQualifierExpression();

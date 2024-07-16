@@ -46,7 +46,7 @@ internal class MacNativeActionMenuItem(action: AnAction,
         setState(isToggled)
       }
       EventQueue.invokeLater {
-        if (actionRef.getAction().isEnabledInModalContext || context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
+        if (presentation.isEnabledInModalContext || context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
           (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
             performAction(actionRef.getAction(), place, presentation.clone(), context)
           }

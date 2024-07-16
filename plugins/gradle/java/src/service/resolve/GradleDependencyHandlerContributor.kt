@@ -81,7 +81,7 @@ class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
 
   private fun GradleConfiguration.getDescription(): String? {
     if (description == null && scriptClasspath && name == "classpath") {
-      return GradleBundle.message("gradle.codeInsigt.buildscript.classpath.description")
+      return GradleBundle.message("gradle.codeInsight.buildscript.classpath.description")
     }
     else {
       return description

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.impl.writer.classes.*
@@ -42,13 +42,15 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
 
     val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else ""
     lines {
-      sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
+      sectionNoBrackets("override var ${field.javaName}: $javaBuilderTypeWithGeneric$optionalSuffix") {
         section("get()") {
           line("val _diff = diff")
           line("return if (_diff != null) {")
-          line("    _diff.${getterSetterNames.getter}($connectionName, this) ?: this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaType")
+          line("    @OptIn($EntityStorageInstrumentationApi::class)")
+          line("    ((_diff as $MutableEntityStorageInstrumentation).${getterSetterNames.getterBuilder}($connectionName, this) as? $javaBuilderTypeWithGeneric)")
+          line("    ?: (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaBuilderTypeWithGeneric)")
           line("} else {")
-          line("    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaType")
+          line("    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})]$notNullAssertion as$optionalSuffix $javaBuilderTypeWithGeneric")
           line("}")
         }
         section("set(value)") {
@@ -56,7 +58,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
           line("val _diff = diff")
           `if`("_diff != null && value is ${ModifiableWorkspaceEntityBase}<*, *> && value.diff == null") {
             backrefSetup(field)
-            line("_diff.addEntity(value)")
+            line("_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
           }
           section("if (_diff != null && (value !is ${ModifiableWorkspaceEntityBase}<*, *> || value.diff != null))") {
             line("_diff.${getterSetterNames.setter}($connectionName, this, value)")
@@ -78,13 +80,15 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
       val notNullAssertion = if (optionalSuffix.isBlank()) "!!" else error("It's prohibited to have nullable reference list")
       if ((elementType as ValueType.ObjRef<*>).target.openness.extendable) {
         lines(level = 1) {
-          sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
+          sectionNoBrackets("override var ${field.javaName}: $javaBuilderTypeWithGeneric$optionalSuffix") {
             section("get()") {
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("    _diff.${EntityStorage.extractOneToAbstractManyChildren}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaType ?: emptyList())")
+              line("    @OptIn($EntityStorageInstrumentationApi::class)")
+              line("    ((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as $javaBuilderTypeWithGeneric) +")
+              line("    (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ?: emptyList())")
               line("} else {")
-              line("    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as $javaType ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
+              line("    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as $javaBuilderTypeWithGeneric ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
               line("}")
             }
             section("set(value)") {
@@ -98,7 +102,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                   }<*, *>)?.diff == null") {
                     lineComment("Backref setup before adding to store an abstract entity")
                     backrefSetup(field, "item_value")
-                    line("_diff.addEntity(item_value)")
+                    line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
                   }
                 }
                 line("_diff.${EntityStorage.updateOneToAbstractManyChildrenOfParent}($connectionName, this, value.asSequence())")
@@ -117,15 +121,17 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
         lines {
           lineComment("List of non-abstract referenced types")
           line("var _${field.javaName}: $javaType? = emptyList()")
-          sectionNoBrackets("override var ${field.javaName}: $javaType$optionalSuffix") {
+          sectionNoBrackets("override var ${field.javaName}: $javaBuilderTypeWithGeneric$optionalSuffix") {
             section("get()") {
               lineComment("Getter of the list of non-abstract referenced types")
               line("val _diff = diff")
               line("return if (_diff != null) {")
-              line("    _diff.${EntityStorage.extractOneToManyChildren}<${elementType.javaType}>($connectionName, this)$notNullAssertion.toList() + (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaType ?: emptyList())")
+              line("    @OptIn($EntityStorageInstrumentationApi::class)")
+              line("    ((_diff as $MutableEntityStorageInstrumentation).getManyChildrenBuilders($connectionName, this)$notNullAssertion.toList() as $javaBuilderTypeWithGeneric) +")
+              line("    (this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ?: emptyList())")
               line("} else {")
               line(
-                "    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaType ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
+                "    this.entityLinks[${EntityLink}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] as? $javaBuilderTypeWithGeneric ${if (notNullAssertion.isNotBlank()) "?: emptyList()" else ""}")
               line("}")
             }
             section("set(value)") {
@@ -138,7 +144,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                     lineComment("Backref setup before adding to store")
                     backrefSetup(field, "item_value")
                     line()
-                    line("_diff.addEntity(item_value)")
+                    line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
                   }
                 }
                 line("_diff.${EntityStorage.updateOneToManyChildrenOfParent}($connectionName, this, value)")

@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -141,7 +142,10 @@ public final class ActionHint {
     if(myShouldPresent) {
       if(result == null) {
         fail(exceptionHeader(lastStep) + " not found\nAvailable actions: " +
-             actions.stream().map(IntentionAction::getText).collect(Collectors.joining(", ", "[", "]\n")) +
+             commonActions.stream().map(ca -> {
+               return ca instanceof ModCommandAction mca && context != null ? Objects.requireNonNull(mca.getPresentation(context)).name() :
+                      ca.asIntention().getText();
+             }).collect(Collectors.joining(", ", "[", "]\n")) +
              infoSupplier.get());
       }
       else if(myHighlightType != null) {

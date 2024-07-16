@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.util.Pair;
@@ -19,7 +19,7 @@ final class CoreJarVirtualFile extends VirtualFile {
   private final long myLength;
   private final long myTimestamp;
   private final VirtualFile myParent;
-  private VirtualFile[] myChildren = VirtualFile.EMPTY_ARRAY;
+  private VirtualFile[] myChildren = EMPTY_ARRAY;
 
   CoreJarVirtualFile(@NotNull CoreJarHandler handler, @NotNull CharSequence name, long length, long timestamp, @Nullable CoreJarVirtualFile parent) {
     myHandler = handler;
@@ -91,7 +91,7 @@ final class CoreJarVirtualFile extends VirtualFile {
   }
 
   @Override
-  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException("JarFileSystem is read-only");
   }
 

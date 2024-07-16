@@ -5,7 +5,6 @@ import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -16,27 +15,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.impl.Utils.createAsyncDataContext;
 import static com.intellij.platform.ide.documentation.ActionsKt.DOCUMENTATION_TARGETS;
 
 public final class DocumentationTest extends LightJavaCodeInsightTestCase {
 
-  public void testDocumentationTargetsCanBeObtainedFromEdtContext() {
-    doTestDocumentationTargetsCanBeObtainedFromPreCachedContext(false);
-  }
-
-  public void testDocumentationTargetsCanBeObtainedFromPreCachedContext2() {
-    doTestDocumentationTargetsCanBeObtainedFromPreCachedContext(true);
-  }
-
-  private void doTestDocumentationTargetsCanBeObtainedFromPreCachedContext(boolean asyncDataContext) {
-    DataContext editorContext = configureJavaEditorAndGetItsContext(false, asyncDataContext, "class <caret>A {}");
+  public void testDocumentationTargets() {
+    DataContext editorContext = configureJavaEditorAndGetItsContext(false, "class <caret>A {}");
 
     getAndCheckTargets(editorContext);
   }
 
   public void testInjectedCachingIsNotHarmfulForObtainingTopLevelEditor() {
-    DataContext editorContext = configureJavaEditorAndGetItsContext(true, false, "class <caret>A {}");
+    DataContext editorContext = configureJavaEditorAndGetItsContext(true, "class <caret>A {}");
 
     Editor editor = CommonDataKeys.EDITOR.getData(editorContext);
     assertInstanceOf(editor, EditorImpl.class);
@@ -46,16 +36,8 @@ public final class DocumentationTest extends LightJavaCodeInsightTestCase {
     getAndCheckTargets(editorContext);
   }
 
-  public void testDocumentationTargetsCanBeObtainedFromEdtContextInInjected() {
-    doTestDocumentationTargetsCanBeObtainedFromPreCachedContextInInjected(false);
-  }
-
-  public void testDocumentationTargetsCanBeObtainedFromPreCachedContextInInjected2() {
-    doTestDocumentationTargetsCanBeObtainedFromPreCachedContextInInjected(true);
-  }
-
-  private void doTestDocumentationTargetsCanBeObtainedFromPreCachedContextInInjected(boolean asyncDataContext) {
-    DataContext editorContext = configureJavaEditorAndGetItsContext(true, asyncDataContext, """
+  public void testDocumentationTargetsInInjected() {
+    DataContext editorContext = configureJavaEditorAndGetItsContext(true, """
       public class A {
           public static void main(String... args) {
               //language=JAVA
@@ -75,17 +57,10 @@ public final class DocumentationTest extends LightJavaCodeInsightTestCase {
     return targets;
   }
 
-  private DataContext configureJavaEditorAndGetItsContext(
-    boolean makeContextInjected,
-    boolean makeContextAsync,
-    String fileText
-  ) {
+  private DataContext configureJavaEditorAndGetItsContext(boolean makeContextInjected, String fileText) {
     configureFromFileText("A.java", fileText);
     EditorEx editor = createPsiAwareEditorFromCurrentFile();
-    DataContext editorContext = new EdtDataContext(editor.getContentComponent());
-    if (makeContextAsync) {
-      editorContext = createAsyncDataContext(editorContext);
-    }
+    DataContext editorContext = editor.getDataContext();
     if (makeContextInjected) {
       editorContext = AnActionEvent.getInjectedDataContext(editorContext);
     }

@@ -40,13 +40,12 @@ public class CompatibilityPrintCallQuickFix extends ModCommandBatchQuickFix {
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull List<ProblemDescriptor> descriptors) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     return ModCommand.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
-      List<PsiElement> extractedElements = ContainerUtil.map(descriptors, d -> d.getStartElement());
-      MultiMap<String, PsiElement> groupedElements =
-        ContainerUtil.groupBy(extractedElements, element -> element.getContainingFile().getVirtualFile().getPresentableUrl());
-      for (Map.Entry<String, Collection<PsiElement>> entry : groupedElements.entrySet()) {
-        List<PsiElement> writableElements = ContainerUtil.map(entry.getValue(), element -> updater.getWritable(element));
-        PsiFile file = writableElements.get(0).getContainingFile();
-        for (PsiElement element : writableElements) {
+      List<PsiElement> writableElements = ContainerUtil.map(descriptors, d -> updater.getWritable(d.getStartElement()));
+      MultiMap<PsiFile, PsiElement> groupedElements =
+        ContainerUtil.groupBy(writableElements, element -> element.getContainingFile());
+      for (Map.Entry<PsiFile, Collection<PsiElement>> entry : groupedElements.entrySet()) {
+        PsiFile file = entry.getKey();
+        for (PsiElement element : entry.getValue()) {
           if (element.isValid()) {
             replace(element, elementGenerator);
           }

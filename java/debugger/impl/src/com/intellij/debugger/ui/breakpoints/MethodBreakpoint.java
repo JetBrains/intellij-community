@@ -27,8 +27,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -152,13 +154,18 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     };
 
     debugProcess.getProject().getMessageBus().connect(indicator).subscribe(XBreakpointListener.TOPIC, listener);
-    ProgressManager.getInstance().executeProcessUnderProgress(
-      () -> processPreparedSubTypes(baseType,
-                                    (subType, classesByName) ->
-                                      createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, classesByName, false),
-                                    indicator),
-      indicator);
-    if (indicator.isCanceled() && !changed.get()) {
+    try {
+      ProgressManager.getInstance().executeProcessUnderProgress(
+        () -> processPreparedSubTypes(baseType,
+                                      (subType, classesByName) ->
+                                        createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, classesByName, false),
+                                      indicator),
+        indicator);
+      if (indicator.isCanceled() && !changed.get()) {
+        breakpoint.disableEmulation();
+      }
+    }
+    catch (ProcessCanceledException e) {
       breakpoint.disableEmulation();
     }
   }
@@ -198,20 +205,19 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                                ? StreamEx.of(lambdaMethod)
                                : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
     boolean found = false;
-    for (Method method : methods) {
+    for (Method original : methods) {
       found = true;
+
+      Method bridgeTarget = MethodBytecodeUtil.getBridgeTargetMethod(original, classesByName);
+      Method method = bridgeTarget != null ? bridgeTarget : original;
+
       if (method.isNative()) {
         LOG.info("Breakpoint emulation was disabled because " + method + " is native");
         breakpoint.disableEmulation();
         return;
       }
-      else if (method.isAbstract()) {
+      if (method.isAbstract()) {
         continue;
-      }
-
-      Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
-      if (target != null) {
-        method = target;
       }
 
       if (breakpoint.isWatchEntry()) {
@@ -221,7 +227,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       if (breakpoint.isWatchExit()) {
-        final Method finalMethod = method;
         class BytecodeVisitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
           private int bytecodeOffset = -1;
 
@@ -238,7 +243,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
           public void visitInsn(int opcode) {
             if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
               assert bytecodeOffset >= 0;
-              Location location = new LocationCodeIndexOnly(finalMethod, bytecodeOffset);
+              Location location = new LocationCodeIndexOnly(method, bytecodeOffset);
               createLocationBreakpointRequest(breakpoint, location, debugProcess, false);
             }
           }
@@ -352,9 +357,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return "";
   }
 
-  private static @Nls String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
+  private static @Nls String getEventMessage(boolean entry, Method method, Location location, @NotNull String defaultFileName) {
     String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
-    String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
+    String locationFileName = DebuggerUtilsEx.getSourceName(location, defaultFileName);
     int locationLine = location.lineNumber();
     return JavaDebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
                                       method.declaringType().name() + "." + method.name() + "()",
@@ -560,9 +565,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       List<CompletableFuture> futures = new ArrayList<>();
       AtomicInteger processed = new AtomicInteger();
       for (ReferenceType type : allTypes) {
-        if (progressIndicator.isCanceled()) {
-          return;
-        }
+        progressIndicator.checkCanceled();
         if (type.isPrepared()) {
           futures.add(DebuggerUtilsAsync.supertypes(type)
                         .thenAccept(supertypes -> supertypes.forEach(st -> inheritance.putValue(st, type)))
@@ -576,7 +579,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                         .thenRun(() -> updateProgress(progressIndicator, processed.incrementAndGet(), allSize)));
         }
       }
-      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+      ProgressIndicatorUtils.awaitWithCheckCanceled(CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])), progressIndicator);
       List<ReferenceType> types = StreamEx.ofTree(classType, t -> StreamEx.of(inheritance.get(t))).skip(1).toList();
 
       if (LOG.isDebugEnabled()) {
@@ -591,9 +594,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
       int typesSize = types.size();
       for (int i = 0; i < typesSize; i++) {
-        if (progressIndicator.isCanceled()) {
-          return;
-        }
+        progressIndicator.checkCanceled();
         consumer.accept(types.get(i), classesByName);
         updateProgress(progressIndicator, i, typesSize);
       }

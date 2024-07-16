@@ -29,7 +29,7 @@ import java.util.List;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.findInstance;
 
-public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTool {
+public final class MavenPropertyInParentInspection extends XmlSuppressableInspectionTool {
 
   @Override
   @NotNull

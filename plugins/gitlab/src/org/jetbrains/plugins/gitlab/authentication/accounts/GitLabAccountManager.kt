@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.toHttpsNormalizedURI
 import org.jetbrains.plugins.gitlab.util.GitLabUtil
 
 internal interface GitLabAccountManager : AccountManager<GitLabAccount, String>, Disposable {
@@ -31,7 +32,7 @@ class PersistentGitLabAccountManager :
 
   override fun isAccountUnique(server: GitLabServerPath, accountName: String): Boolean {
     return accountsState.value.none { account: GitLabAccount ->
-      account.server == server && account.name == accountName
+      account.server.toHttpsNormalizedURI() == server.toHttpsNormalizedURI() && account.name == accountName
     }
   }
 }

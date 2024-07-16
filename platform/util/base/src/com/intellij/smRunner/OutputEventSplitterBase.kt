@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.smRunner
 
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.min
 
@@ -28,15 +29,16 @@ import kotlin.math.min
  *
  * If [cutNewLineBeforeServiceMessage] is set, each service message must have "\n" prefix which is cut.
  */
+data class OutputType<T>(val data: T, val streamType: OutputStreamType)
+
+enum class OutputStreamType {
+  STDOUT, STDERR, SYSTEM
+}
+
+@Internal
 abstract class OutputEventSplitterBase<T>(private val serviceMessagePrefix: String,
                                           private val bufferTextUntilNewLine: Boolean,
                                           private val cutNewLineBeforeServiceMessage: Boolean) {
-
-  data class OutputType<T>(val data: T, val streamType: OutputStreamType)
-
-  enum class OutputStreamType {
-    STDOUT, STDERR, SYSTEM
-  }
 
   private data class Output<T>(val text: String, val outputType: OutputType<T>)
 

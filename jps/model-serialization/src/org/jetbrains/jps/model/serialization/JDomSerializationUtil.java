@@ -5,12 +5,16 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.Constants;
 import org.jdom.Content;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class JDomSerializationUtil {
   @NonNls public static final String COMPONENT_ELEMENT = "component";
+
+  private JDomSerializationUtil() {
+  }
 
   @Nullable
   public static Element findComponent(@Nullable Element root, @NonNls String componentName) {
@@ -22,16 +26,19 @@ public final class JDomSerializationUtil {
     return null;
   }
 
+  @ApiStatus.Internal
   public static boolean isComponent(@NotNull String componentName, @NotNull Element element) {
     return componentName.equals(element.getAttributeValue(Constants.NAME));
   }
 
+  @ApiStatus.Internal
   public static Element createComponentElement(final String componentName) {
     final Element element = new Element(COMPONENT_ELEMENT);
     element.setAttribute(Constants.NAME, componentName);
     return element;
   }
 
+  @ApiStatus.Internal
   @NotNull
   public static Element findOrCreateComponentElement(@NotNull Element root, @NotNull String componentName) {
     Element component = findComponent(root, componentName);
@@ -42,6 +49,7 @@ public final class JDomSerializationUtil {
     return component;
   }
 
+  @ApiStatus.Internal
   public static void addComponent(@NotNull Element root, @NotNull Element component) {
     String componentName = component.getAttributeValue(Constants.NAME);
     Element old = findComponent(root, componentName);

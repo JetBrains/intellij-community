@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -13,7 +13,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 
 public class AddAnnotationTargetFix extends PsiBasedModCommandAction<PsiAnnotation> {
-  @NotNull private final PsiAnnotation.TargetType myTarget;
+  private final @NotNull PsiAnnotation.TargetType myTarget;
 
   public AddAnnotationTargetFix(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType target) {
     super(annotation);

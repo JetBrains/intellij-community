@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -33,13 +33,11 @@ public abstract class DomService {
    * @return files containing given root element
    * @see #getFileElements(Class, Project, GlobalSearchScope)
    */
-  @NotNull
-  public abstract Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
+  public abstract @NotNull Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
                                                                @NotNull GlobalSearchScope scope);
 
   // used externally
-  @NotNull
-  public Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
+  public @NotNull Collection<VirtualFile> getDomFileCandidates(@NotNull Class<? extends DomElement> rootElementClass,
                                                                Project project,
                                                                @NotNull GlobalSearchScope scope) {
     return getDomFileCandidates(rootElementClass, scope);
@@ -51,29 +49,23 @@ public abstract class DomService {
    * @param scope            search scope
    * @return DOM file elements containing given root element
    */
-  @NotNull
-  public abstract <T extends DomElement> List<DomFileElement<T>> getFileElements(@NotNull Class<T> rootElementClass,
+  public abstract @NotNull <T extends DomElement> List<DomFileElement<T>> getFileElements(@NotNull Class<T> rootElementClass,
                                                                                  @NotNull Project project,
                                                                                  @Nullable GlobalSearchScope scope);
 
-  @NotNull
-  public abstract ModelMerger createModelMerger();
+  public abstract @NotNull ModelMerger createModelMerger();
 
   public abstract <T extends DomElement> DomAnchor<T> createAnchor(T domElement);
 
-  @NotNull
-  public abstract XmlFile getContainingFile(@NotNull DomElement domElement);
+  public abstract @NotNull XmlFile getContainingFile(@NotNull DomElement domElement);
 
-  @NotNull
-  public abstract EvaluatedXmlName getEvaluatedXmlName(@NotNull DomElement element);
+  public abstract @NotNull EvaluatedXmlName getEvaluatedXmlName(@NotNull DomElement element);
 
-  @NotNull
-  public abstract XmlFileHeader getXmlFileHeader(@NotNull XmlFile file);
+  public abstract @NotNull XmlFileHeader getXmlFileHeader(@NotNull XmlFile file);
 
   public enum StructureViewMode {
     SHOW, SHOW_CHILDREN, SKIP
   }
 
-  @NotNull
-  public abstract StructureViewBuilder createSimpleStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement, StructureViewMode> modeProvider);
+  public abstract @NotNull StructureViewBuilder createSimpleStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement, StructureViewMode> modeProvider);
 }

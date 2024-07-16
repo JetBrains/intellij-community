@@ -45,13 +45,13 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         // Use stable 1.6.21 for outdated compiler versions in order to work with old LV settings
         @JvmStatic
-        val fallbackVersionForOutdatedCompiler: String get() = "1.6.21"
+        val fallbackVersionForOutdatedCompiler: String get() = "1.7.22"
 
         @JvmStatic
         val bundledVersion: IdeKotlinVersion get() = KotlinPluginLayout.standaloneCompilerVersion
 
         @JvmStatic
-        val jpsMinimumSupportedVersion: KotlinVersion = IdeKotlinVersion.get("1.6.0").kotlinVersion
+        val jpsMinimumSupportedVersion: KotlinVersion = IdeKotlinVersion.get("1.7.0").kotlinVersion
 
         @JvmStatic
         val jpsMaximumSupportedVersion: KotlinVersion = LanguageVersion.values().last().toKotlinVersion()

@@ -13,6 +13,6 @@
     <line>1</line>
     <entry_point TYPE="class" FQNAME="A" />
     <problem_class id="unused" severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
-    <description>Class has one instantiation, but it is not reachable from entry points.</description>
+    <description>Class has one instantiation, but the instantiation is not reachable from the entry points.</description>
   </problem>
 </problems>

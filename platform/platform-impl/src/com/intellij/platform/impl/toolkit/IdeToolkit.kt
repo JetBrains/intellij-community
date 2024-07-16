@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.platform.impl.toolkit
 
@@ -47,6 +47,9 @@ class IdeToolkit : SunToolkit() {
   override fun createFrame(target: Frame): FramePeer = clientInstance().createFrame(target)
   override fun getSystemClipboard(): Clipboard = clipboard
 
+  override fun createRobot(screen: GraphicsDevice?): RobotPeer? = clientInstance().createRobot(screen)
+  override fun getMouseInfoPeer(): IdeMouseInfoPeer = IdeMouseInfoPeer
+
   override fun getScreenResolution(): Int = 96
   override fun prepareImage(img: Image, w: Int, h: Int, o: ImageObserver?): Boolean {
     //TODO: probably can be used for caching
@@ -54,7 +57,6 @@ class IdeToolkit : SunToolkit() {
   }
 
   override fun createDesktopPeer(target: Desktop): DesktopPeer = IdeDesktopPeer()
-  override fun getMouseInfoPeer(): IdeMouseInfoPeer = IdeMouseInfoPeer
   override fun getKeyboardFocusManagerPeer(): IdeKeyboardFocusManagerPeer = IdeKeyboardFocusManagerPeer
 
   // Toolkit interface which shouldn't be used

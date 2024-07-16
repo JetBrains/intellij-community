@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyAnnotation
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
 
 /**
@@ -19,6 +20,7 @@ class PyHideTypeAnnotationsIntention : PyBaseIntentionAction() {
   }
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    if (file !is PyFile) return false
     val offset = TargetElementUtilBase.adjustOffset(file, editor?.document ?: return false, editor.caretModel.offset)
     val element = PyUtil.findNonWhitespaceAtOffset(file, offset)
     val annotation = PsiTreeUtil.getParentOfType(element, PyAnnotation::class.java)

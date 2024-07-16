@@ -3,9 +3,11 @@ package com.intellij.openapi.module
 
 import com.intellij.openapi.module.impl.createGrouper
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.nio.file.Path
 
+@ApiStatus.Internal
 class EmptyModuleManager(private val project: Project) : ModuleManager() {
   override fun hasModuleGroups(): Boolean = false
 

@@ -1,4 +1,4 @@
-// "Replace with 'stream.findAny().isEmpty()'" "true"
+// "Replace with 'stream.findAny().isEmpty()'" "true-preview"
 
 import java.util.stream.Stream;
 

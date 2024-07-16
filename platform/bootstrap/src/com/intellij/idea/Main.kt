@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
 @file:JvmName("Main")
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-
 package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
@@ -13,6 +12,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.project.impl.P3SupportInstaller
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
@@ -26,9 +26,8 @@ import com.intellij.platform.impl.toolkit.IdeToolkit
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
-import sun.font.FontManagerFactory
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Toolkit
-import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
@@ -45,21 +44,19 @@ fun main(rawArgs: Array<String>) {
   val startTimeUnixNano = System.currentTimeMillis() * 1000000
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs = rawArgs, startupTimings = startupTimings, startTimeUnixNano = startTimeUnixNano)
+  mainImpl(rawArgs, startupTimings, startTimeUnixNano, changeClassPath = null)
 }
 
-internal fun mainImpl(rawArgs: Array<String>,
-                      startupTimings: ArrayList<Any>,
-                      startTimeUnixNano: Long,
-                      changeClassPath: Consumer<ClassLoader>? = null) {
+internal fun mainImpl(rawArgs: Array<String>, startupTimings: ArrayList<Any>, startTimeUnixNano: Long, changeClassPath: Consumer<ClassLoader>?) {
   val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
   addBootstrapTiming("AppMode.setFlags", startupTimings)
   try {
     PathManager.loadProperties()
     addBootstrapTiming("properties loading", startupTimings)
-    PathManager.customizePaths()
+    PathManager.customizePaths(args)
     addBootstrapTiming("customizePaths", startupTimings)
+    P3SupportInstaller.seal()
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
@@ -69,14 +66,14 @@ internal fun mainImpl(rawArgs: Array<String>,
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
-        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
+        startApp(args, mainScope = this@runBlocking, busyThread, changeClassPath)
       }
 
       awaitCancellation()
     }
   }
-  catch (e: Throwable) {
-    StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
+  catch (t: Throwable) {
+    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), t)
     exitProcess(AppExitCodes.STARTUP_EXCEPTION)
   }
 }
@@ -87,10 +84,8 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       CoroutineTracerShim.coroutineTracer = object : CoroutineTracerShim {
         override suspend fun getTraceActivity() = com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity()
         override fun rootTrace() = rootTask()
-
-        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
-          return com.intellij.platform.diagnostic.telemetry.impl.span(name = name, context = context, action = action)
-        }
+        override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T =
+          com.intellij.platform.diagnostic.telemetry.impl.span(name, context, action)
       }
     }
 
@@ -157,13 +152,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       }
     }
 
-    startApplication(args = args,
-                     configImportNeededDeferred = configImportNeededDeferred,
-                     targetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-                     mainClassLoaderDeferred = mainClassLoaderDeferred,
-                     appStarterDeferred = appStarterDeferred,
-                     mainScope = mainScope,
-                     busyThread = busyThread)
+    startApplication(args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred, appStarterDeferred, mainScope, busyThread)
   }
 }
 
@@ -175,11 +164,10 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 @JvmField
 internal var customTargetDirectoryToImportConfig: Path? = null
 
-internal fun isConfigImportNeeded(configPath: Path): Boolean {
-  return !Files.exists(configPath) ||
-         Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
-         customTargetDirectoryToImportConfig != null
-}
+internal fun isConfigImportNeeded(configPath: Path): Boolean =
+  !Files.exists(configPath) ||
+  Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
+  customTargetDirectoryToImportConfig != null
 
 private fun initRemoteDev(args: List<String>) {
   if (!JBR.isGraphicsUtilsSupported()) {
@@ -191,7 +179,7 @@ private fun initRemoteDev(args: List<String>) {
   }
   if (SystemInfo.isMac) { // avoid icon jumping in dock for the backend process
     System.setProperty("apple.awt.BackgroundOnly", "true") // this makes sure that the following call doesn't create an icon in Dock
-    Toolkit.getDefaultToolkit() // this will tell the operating system, that app initialization is finished
+    Toolkit.getDefaultToolkit() // this tells the OS that app initialization is finished
   }
   initRemoteDevGraphicsEnvironment()
   initLux()
@@ -216,6 +204,7 @@ private fun initLux() {
   System.setProperty("keymap.current.os.only", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
+  System.setProperty("swing.ignoreDoubleBufferingDisable", true.toString())
   // disables AntiFlickeringPanel that slows down Lux rendering,
   // see RDCT-1076 Debugger tree is rendered slowly under Lux
   System.setProperty("debugger.anti.flickering.delay", 0.toString())
@@ -223,7 +212,8 @@ private fun initLux() {
   setStaticField(Toolkit::class.java, "toolkit", IdeToolkit())
   System.setProperty("awt.toolkit", IdeToolkit::class.java.canonicalName)
 
-  setStaticField(FontManagerFactory::class.java, "instance", IdeFontManager())
+  @Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+  setStaticField(sun.font.FontManagerFactory::class.java, "instance", IdeFontManager())
   @Suppress("SpellCheckingInspection")
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
 
@@ -280,29 +270,17 @@ private fun preprocessArgs(args: Array<String>): List<String> {
   return otherArgs
 }
 
-@Suppress("HardCodedStringLiteral")
 private fun installPluginUpdates() {
   try {
-    // referencing `StartupActionScriptManager` is OK - a string constant will be inlined
+    // load `StartupActionScriptManager` and other related classes (`ObjectInputStream`, etc.) only when there is a script to run
+    // (referencing a string constant is OK - it is inlined by the compiler)
     val scriptFile = PathManager.getStartupScriptDir().resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE)
     if (Files.isRegularFile(scriptFile)) {
-      // load StartupActionScriptManager and all other related class (ObjectInputStream and so on loaded as part of class define)
-      // only if there is an action script to execute
       StartupActionScriptManager.executeActionScript()
     }
   }
-  catch (e: IOException) {
-    StartupErrorReporter.showMessage(
-      "Plugin Installation Error",
-      """
-       The IDE failed to install or update some plugins.
-       Please try again, and if the problem persists, please report it
-       to https://jb.gg/ide/critical-startup-errors
-       
-       The cause: $e
-     """.trimIndent(),
-      false
-    )
+  catch (t: Throwable) {
+    StartupErrorReporter.pluginInstallationProblem(t)
   }
 }
 

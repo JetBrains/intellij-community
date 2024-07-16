@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
@@ -13,9 +12,7 @@ class KtWrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldOrPropertyIn
 
   override fun getFileExtension(): String = "kt"
 
-
-  private val fixName = DevKitBundle.message("inspections.wrap.application.service.in.supplier.quick.fix.message")
-
+  private val fixName = "Wrap application service in 'java.util.function.Supplier'"
 
   fun testWrapTopLevelPropertyInSupplier() {
     doFixTest(fixName)

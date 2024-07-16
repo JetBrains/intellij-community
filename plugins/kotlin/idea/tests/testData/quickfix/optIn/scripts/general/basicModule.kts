@@ -1,7 +1,6 @@
-// "Add '-opt-in=test.BasicModule.MyExperimentalAPI' to module light_idea_test_case compiler arguments" "true"
-// PRIORITY: LOW
-// ACTION: Add '-opt-in=test.BasicModule.MyExperimentalAPI' to module light_idea_test_case compiler arguments
+// "Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'" "true"
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'basicModule.kts'
+// ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
 // ACTION: Opt in for 'MyExperimentalAPI' on containing class 'Bar'
 // ACTION: Opt in for 'MyExperimentalAPI' on statement
@@ -28,4 +27,4 @@ class Bar {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFileLevelFixesFactory$LowPriorityMakeModuleOptInFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeModuleOptInFix

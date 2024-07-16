@@ -81,9 +81,9 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
                                 String newName = SchemeNameGenerator.getUniqueName(name != null ? name : "Unnamed",
                                                                                    candidate -> getSchemesPanel().getModel()
                                                                                      .containsScheme(candidate, false));
-                                AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
+                                AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.getEmptyScheme());
                                 newScheme.setName(newName);
-                                newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE);
+                                newScheme.setDefaultMetaInfo(EmptyColorScheme.getEmptyScheme());
                                 return newScheme;
                               });
       if (imported != null) {

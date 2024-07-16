@@ -68,32 +68,12 @@ public abstract class TextProblem {
   }
 
   /**
-   * @return the range in {@link #getText()} to be replaced with {@link #getCorrections()}
-   * @deprecated use {@link #getSuggestions()} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  public @NotNull TextRange getReplacementRange() {
-    return getHighlightRanges().get(0);
-  }
-
-  /**
    * @return the range in {@link #getText()} used by the rule to perform the check.
    * By default, it's {@code null}, and then the whole sentence is considered to affect the rule results.
    * This information can be used to suppress or ignore certain problems.
    */
   public @Nullable TextRange getPatternRange() {
     return null;
-  }
-
-  /**
-   * @return a list of suggested corrections for this problem, all applied to {@link #getReplacementRange()}.
-   * @deprecated use {@link #getSuggestions()} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  public @NotNull List<String> getCorrections() {
-    return List.of();
   }
 
   /**
@@ -107,14 +87,10 @@ public abstract class TextProblem {
 
   /** @return a list of correction suggestions for this problem */
   public @NotNull List<Suggestion> getSuggestions() {
-    List<String> corrections = getCorrections();
-    if (corrections.isEmpty()) return List.of();
-
-    TextRange range = getReplacementRange();
-    return ContainerUtil.map(corrections, replacement -> Suggestion.replace(range, replacement));
+    return List.of();
   }
 
-  /** Return a list of quick fixes to display under {@link #getCorrections} suggestions */
+  /** Return a list of quick fixes to display under {@link #getSuggestions()} suggestions */
   public @NotNull List<LocalQuickFix> getCustomFixes() {
     return Collections.emptyList();
   }

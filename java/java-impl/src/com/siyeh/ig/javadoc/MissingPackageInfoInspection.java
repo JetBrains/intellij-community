@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -32,9 +32,8 @@ import javax.swing.*;
  */
 public final class MissingPackageInfoInspection extends PackageGlobalInspection {
 
-  @Nullable
   @Override
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalMissingPackageInfoInspection(this);
   }
 
@@ -68,13 +67,11 @@ public final class MissingPackageInfoInspection extends PackageGlobalInspection 
       super(settingsDelegate);
     }
 
-    @Nullable
     @Override
-    protected InspectionGadgetsFix buildFix(Object... infos) {
+    protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
       return new InspectionGadgetsFix() {
-        @NotNull
         @Override
-        public String getFamilyName() {
+        public @NotNull String getFamilyName() {
           return InspectionGadgetsBundle.message("create.package.info.java.family.name");
         }
 
@@ -102,9 +99,8 @@ public final class MissingPackageInfoInspection extends PackageGlobalInspection 
       };
     }
 
-    @NotNull
     @Override
-    protected String buildErrorString(Object... infos) {
+    protected @NotNull String buildErrorString(Object... infos) {
       final PsiPackageStatement packageStatement = (PsiPackageStatement)infos[0];
       if (PsiUtil.isLanguageLevel5OrHigher(packageStatement)) {
         return InspectionGadgetsBundle.message("missing.package.info.problem.descriptor", packageStatement.getPackageName());

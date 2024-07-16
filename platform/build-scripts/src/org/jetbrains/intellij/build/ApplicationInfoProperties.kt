@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 interface ApplicationInfoProperties {
@@ -27,7 +28,10 @@ interface ApplicationInfoProperties {
   val shortCompanyName: String
   val svgRelativePath: String?
   val svgProductIcons: List<String>
+
   @Deprecated("Use ProductProperties::baseDownloadUrl instead")
+  @get:ApiStatus.ScheduledForRemoval
+  @get:Deprecated("Use ProductProperties::baseDownloadUrl instead")
   val patchesUrl: String?
   val fullVersion: String
   val productNameWithEdition: String

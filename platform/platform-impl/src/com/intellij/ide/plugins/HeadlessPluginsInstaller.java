@@ -20,14 +20,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
-public final class HeadlessPluginsInstaller implements ApplicationStarter {
+public class HeadlessPluginsInstaller implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(HeadlessPluginsInstaller.class);
-
-  @Override
-  @SuppressWarnings("deprecation")
-  public @NotNull String getCommandName() {
-    return "installPlugins";
-  }
 
   @Override
   public int getRequiredModality() {
@@ -36,6 +30,11 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
 
   @Override
   public void main(@NotNull List<String> args) {
+    if (args.size() == 1) {
+      printUsageHint();
+      System.exit(0);
+    }
+
     try {
       var pluginIds = new LinkedHashSet<PluginId>();
       var customRepositories = new LinkedHashSet<String>();
@@ -44,12 +43,7 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
       for (int i = 1; i < args.size(); i++) {
         var arg = args.get(i);
         if ("-h".equals(arg) || "--help".equals(arg)) {
-          System.out.println(
-            """
-              Usage: installPlugins pluginId* repository* (--for-project=<project-path>)*
-
-              Installs plugins with `pluginId` from the Marketplace or provided `repository`-es.
-              If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.""");
+          printUsageHint();
         }
         else if (arg.startsWith("--for-project=")) {
           projectPaths.add(Path.of(arg.replace("--for-project=", "")));
@@ -66,10 +60,9 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
 
       if (!customRepositories.isEmpty()) {
         RepositoryHelper.amendPluginHostsProperty(customRepositories);
-        LOG.info("plugin hosts: " + System.getProperty("idea.plugin.hosts"));
       }
+      logInfo("plugin repositories: " + RepositoryHelper.getPluginHosts());
 
-      LOG.info("installing: " + pluginIds);
       var installed = installPlugins(pluginIds);
       System.exit(installed.size() == pluginIds.size() ? 0 : 1);
     }
@@ -77,6 +70,15 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
       LOG.error(t);
       System.exit(1);
     }
+  }
+
+  protected void printUsageHint() {
+    System.out.println(
+      """
+        Usage: installPlugins pluginId* repository* (--for-project=<project-path>)*
+
+        Installs plugins with `pluginId` from the Marketplace or provided `repository`-es.
+        If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.""");
   }
 
   private static void collectProjectRequiredPlugins(Collection<PluginId> collector, List<Path> projectPaths) {
@@ -99,31 +101,32 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
   }
 
   public static @NotNull Collection<PluginNode> installPlugins(@NotNull Set<PluginId> pluginIds) {
+    logInfo("looking up plugins: " + pluginIds);
     var plugins = RepositoryHelper.loadPlugins(pluginIds);
 
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(plugins)) {
-      LOG.info("3rd-party plugins rejected");
+      logInfo("3rd-party plugins rejected");
       return Collections.emptyList();
     }
 
     if (plugins.size() < pluginIds.size()) {
       var unknown = new HashSet<>(pluginIds);
       for (var plugin : plugins) unknown.remove(plugin.getPluginId());
-      LOG.info("unknown plugins: " + unknown);
+      logInfo("unknown plugins: " + unknown);
     }
 
-    var indicator = new EmptyProgressIndicator();
+    @SuppressWarnings("UsagesOfObsoleteApi") var indicator = new EmptyProgressIndicator();
     var policy = PluginManagementPolicy.getInstance();
     var installed = new ArrayList<PluginNode>();
 
     for (var plugin : plugins) {
       if (PluginManagerCore.getPlugin(plugin.getPluginId()) != null) {
-        LOG.info("already installed: " + plugin.getPluginId());
+        logInfo("already installed: " + plugin.getPluginId());
         installed.add(plugin);
         continue;
       }
       if (!policy.canInstallPlugin(plugin)) {
-        LOG.info("rejected by policy: " + plugin.getPluginId());
+        logInfo("rejected by policy: " + plugin.getPluginId());
         continue;
       }
       try {
@@ -131,6 +134,7 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
         if (downloader.prepareToInstall(indicator)) {
           PluginInstaller.unpackPlugin(downloader.getFilePath(), PathManager.getPluginsDir());
           installed.add(plugin);
+          logInfo("installed plugin: " + plugin);
         }
       }
       catch (Exception e) {
@@ -141,5 +145,11 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
     PluginEnabler.HEADLESS.enable(installed);
 
     return new ArrayList<>(installed);
+  }
+
+  private static void logInfo(String message) {
+    // info level logs are not printed to stdout/stderr by default and toolbox does not include stdout/stderr in its log
+    System.out.println(message);
+    LOG.info(message);
   }
 }

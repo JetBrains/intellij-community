@@ -1,6 +1,6 @@
 import lombok.Getter;
 
-public class GetterLazyInvocationProduceNPE {
+public class <warning descr="Class 'GetterLazyInvocationProduceNPE' is never used">GetterLazyInvocationProduceNPE</warning> {
     private static class Bar {
       public String sayHello() {
         return "Bar{}";
@@ -17,7 +17,7 @@ public class GetterLazyInvocationProduceNPE {
     private Bar <warning descr="Private field 'bar2' is never assigned">bar2</warning>;
     private Car car;
 
-    public GetterLazyInvocationProduceNPE(Bar bar, Car car) {
+    public <warning descr="Constructor 'GetterLazyInvocationProduceNPE(GetterLazyInvocationProduceNPE.Bar, GetterLazyInvocationProduceNPE.Car)' is never used">GetterLazyInvocationProduceNPE</warning>(Bar bar, Car car) {
       this.bar = bar;
       this.car = car;
     }

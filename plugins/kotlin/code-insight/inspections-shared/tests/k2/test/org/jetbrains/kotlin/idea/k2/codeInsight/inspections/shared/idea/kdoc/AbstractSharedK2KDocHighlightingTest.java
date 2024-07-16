@@ -14,11 +14,6 @@ public abstract class AbstractSharedK2KDocHighlightingTest extends AbstractHighl
         myFixture.enableInspections(KDocUnresolvedReferenceInspection.class);
     }
 
-    @Override
-    protected boolean isFirPlugin() {
-        return true;
-    }
-
     @NotNull
     @Override
     protected KotlinLightProjectDescriptor getDefaultProjectDescriptor() {

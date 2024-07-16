@@ -8,6 +8,11 @@ import org.junit.Assert
 import java.io.File
 
 object JUnit4Assertions : Assertions() {
+    override fun doesEqualToFile(expectedFile: File, actual: String, sanitizer: (String) -> String): Boolean {
+        val expectedPath = expectedFile.toPath()
+        return KotlinTestHelpers.doesEqualsToPath(expectedPath, actual, sanitizer).yes
+    }
+
     override fun assertEqualsToFile(expectedFile: File, actual: String, sanitizer: (String) -> String, message: () -> String) {
         val expectedPath = expectedFile.toPath()
         KotlinTestHelpers.assertEqualsToPath(expectedPath, actual, sanitizer, message)

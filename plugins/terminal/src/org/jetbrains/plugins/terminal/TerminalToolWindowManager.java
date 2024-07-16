@@ -16,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,7 @@ import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
-import org.jetbrains.plugins.terminal.exp.BlockTerminalPromotionService;
+import org.jetbrains.plugins.terminal.block.BlockTerminalPromotionService;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
@@ -387,8 +388,9 @@ public final class TerminalToolWindowManager implements Disposable {
         boolean shouldShowPromotion = runner instanceof LocalBlockTerminalRunner blockRunner && blockRunner.shouldShowPromotion();
         boolean blockTerminalSupported = terminalWidget instanceof ShellTerminalWidget shellWidget &&
                                          isBlockTerminalSupported(shellWidget.getStartupOptions());
-        // show the promotion only if the current runner allows it and block terminal can be used with the shell started now
-        if (shouldShowPromotion && blockTerminalSupported) {
+        // Show the promotion only if the current runner allows it and block terminal can be used with the shell started now.
+        // And it is not the first launch of the IDE by the user.
+        if (shouldShowPromotion && blockTerminalSupported && !ConfigImportHelper.isNewUser()) {
           BlockTerminalPromotionService.INSTANCE.showPromotionOnce(myProject, widget);
         }
       }

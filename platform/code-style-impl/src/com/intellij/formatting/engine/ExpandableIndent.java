@@ -2,8 +2,10 @@
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.IndentImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ExpandableIndent extends IndentImpl {
   private boolean myEnforceIndent;
 

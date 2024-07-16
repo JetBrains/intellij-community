@@ -47,9 +47,16 @@ interface ExternalSystemExecutionAware {
     @JvmStatic
     fun getExtensions(systemId: ProjectSystemId): List<ExternalSystemExecutionAware> = EP_COLLECTOR.forKey(systemId)
 
+    @JvmStatic
+    fun ExternalSystemExecutionSettings.hasTargetEnvironmentConfiguration(): Boolean {
+      return getEnvironmentConfigurationProvider() != null
+    }
+
+    @JvmStatic
     fun ExternalSystemExecutionSettings.getEnvironmentConfigurationProvider() = getUserData(TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER)
 
     @ApiStatus.Internal
+    @JvmStatic
     fun ExternalSystemExecutionSettings.setEnvironmentConfigurationProvider(configuration: TargetEnvironmentConfigurationProvider?) {
       putUserData(TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER, configuration)
     }

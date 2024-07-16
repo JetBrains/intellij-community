@@ -2,6 +2,7 @@
 package org.jetbrains.uast.test.kotlin.org.jetbrains.uast.test.kotlin.comparison
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.test.common.kotlin.UastApiFixtureTestBase
@@ -10,7 +11,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFixtureTestBase {
-    override val isFirUastPlugin: Boolean = false
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -21,6 +24,14 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
 
     fun testArgumentForParameter_smartcast() {
         checkArgumentForParameter_smartcast(myFixture)
+    }
+
+    fun testCallableReferenceWithGeneric() {
+        checkCallableReferenceWithGeneric(myFixture)
+    }
+
+    fun testCallableReferenceWithGeneric_convertedToSAM() {
+        checkCallableReferenceWithGeneric_convertedToSAM(myFixture, isK2 = false)
     }
 
     fun testDivByZero() {
@@ -59,12 +70,20 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkReifiedTypeNullability(myFixture)
     }
 
+    fun testReifiedTypeNullability_generic() {
+        checkReifiedTypeNullability_generic(myFixture)
+    }
+
     fun testInheritedGenericTypeNullability() {
         checkInheritedGenericTypeNullability(myFixture)
     }
 
     fun testInheritedGenericTypeNullability_propertyAndAccessor() {
         checkInheritedGenericTypeNullability_propertyAndAccessor(myFixture)
+    }
+
+    fun testGenericTypeNullability_reified() {
+        checkGenericTypeNullability_reified(myFixture)
     }
 
     fun testImplicitReceiverType() {
@@ -117,5 +136,17 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
 
     fun testReceiverTypeOfExtensionFunction() {
         checkReceiverTypeOfExtensionFunction(myFixture)
+    }
+
+    fun testTextRangeOfLocalVariable() {
+        checkTextRangeOfLocalVariable(myFixture)
+    }
+
+    fun testNameReferenceVisitInConstructorCall() {
+        checkNameReferenceVisitInConstructorCall(myFixture)
+    }
+
+    fun testNullLiteral() {
+        checkNullLiteral(myFixture)
     }
 }

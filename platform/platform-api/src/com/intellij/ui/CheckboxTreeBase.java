@@ -227,15 +227,6 @@ public class CheckboxTreeBase extends Tree {
     }
   }
 
-  /**
-   * @see State
-   * @deprecated Don't use this enum. Left for API compatibility.
-   */
-  @Deprecated(forRemoval = true)
-  public enum NodeState {
-    FULL, CLEAR, PARTIAL
-  }
-
   public static class CheckPolicy {
     final boolean checkChildrenWithCheckedParent;
     final boolean uncheckChildrenWithUncheckedParent;

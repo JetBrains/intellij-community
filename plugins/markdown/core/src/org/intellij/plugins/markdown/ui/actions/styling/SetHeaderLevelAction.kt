@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -101,21 +102,11 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
     }
 
     override fun createAndShowActionGroupPopup(actionGroup: ActionGroup, event: AnActionEvent): JBPopup {
-      val popup = object: PopupFactoryImpl.ActionGroupPopup(
-        null,
-        actionGroup,
-        event.dataContext,
-        false,
-        false,
-        true,
-        false,
-        null,
-        -1,
-        null,
-        ActionPlaces.getActionGroupPopupPlace(event.place),
-        MenuItemPresentationFactory(),
-        false
-      ) {
+      val popup = object : PopupFactoryImpl.ActionGroupPopup(
+        null, null, actionGroup, event.dataContext,
+        ActionPlaces.getActionGroupPopupPlace(event.place), MenuItemPresentationFactory(),
+        ActionPopupOptions.showDisabled(), null) {
+
         override fun getListElementRenderer(): ListCellRenderer<*> {
           return object: PopupListElementRenderer<Any>(this) {
             private lateinit var secondaryLabel: SimpleColoredComponent

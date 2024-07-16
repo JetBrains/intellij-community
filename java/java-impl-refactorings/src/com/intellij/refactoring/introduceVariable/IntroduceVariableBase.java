@@ -341,8 +341,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
 
     try {
-      JavaPsiFacade.getElementFactory(project).createTypeElementFromText(
-        GenericsUtil.getVariableTypeByExpressionType(originalType).getCanonicalText(), expr);
+      PsiType type = DumbService.getInstance(project)
+        .computeWithAlternativeResolveEnabled(() -> GenericsUtil.getVariableTypeByExpressionType(originalType));
+      JavaPsiFacade.getElementFactory(project).createTypeElementFromText(type.getCanonicalText(), expr);
     }
     catch (IncorrectOperationException ignore) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
@@ -351,7 +352,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
 
     for (PsiPatternVariable variable : JavaPsiPatternUtil.getExposedPatternVariables(expr)) {
-      if (ContainerUtil.exists(VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope()),
+      if (ContainerUtil.exists(VariableAccessUtils.getVariableReferences(variable),
                                ref -> !PsiTreeUtil.isAncestor(expr, ref, true))) {
         String message = RefactoringBundle.getCannotRefactorMessage(
           JavaRefactoringBundle.message("selected.expression.introduces.pattern.variable", variable.getName()));

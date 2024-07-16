@@ -82,7 +82,10 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
 
-    if (mavenVersionIsOrMoreThan("3.9.3")) {
+    if (mavenVersionIsOrMoreThan("3.9.7")) {
+      assertCompletionVariants(projectPom, "2.0.2", "3.1", "3.10.1", "3.11.0", "3.13.0")
+    }
+    else if (mavenVersionIsOrMoreThan("3.9.3")) {
       assertCompletionVariants(projectPom, "2.0.2", "3.1", "3.10.1", "3.11.0")
     }
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
@@ -195,7 +198,10 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    if (mavenVersionIsOrMoreThan("3.9.3")) {
+    if (mavenVersionIsOrMoreThan("3.9.7")) {
+      assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0", "3.13.0")
+    }
+    else if (mavenVersionIsOrMoreThan("3.9.3")) {
       assertCompletionVariants(projectPom, RENDERING_TEXT, "2.0.2", "3.1", "3.10.1", "3.11.0")
     }
     else if (mavenVersionIsOrMoreThan("3.9.0")) {
@@ -993,7 +999,22 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </build>
                        """.trimIndent())
 
-    if (mavenVersionIsOrMoreThan("3.9.3")) {
+    if (mavenVersionIsOrMoreThan("3.9.7")) {
+      assertDocumentation("""
+          Type: <b>java.lang.String</b><br>Default Value: <b>1.8</b><br>Expression: <b>${'$'}{maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.
+
+          NOTE: 
+
+          Since 3.8.0 the default value has changed from 1.5 to 1.6
+
+          Since 3.9.0 the default value has changed from 1.6 to 1.7
+          
+          Since 3.11.0 the default value has changed from 1.7 to 1.8
+          
+          See also: javac -source <https://docs.oracle.com/en/java/javase/17/docs/specs/man/javac.html#option-source></i>
+          """.trimIndent())
+    }
+    else if (mavenVersionIsOrMoreThan("3.9.3")) {
       assertDocumentation("""
           Type: <b>java.lang.String</b><br>Default Value: <b>1.8</b><br>Expression: <b>${'$'}{maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.
 

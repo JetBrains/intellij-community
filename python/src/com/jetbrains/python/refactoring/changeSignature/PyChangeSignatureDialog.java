@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.lang.LanguageNamesValidation;
@@ -70,9 +70,8 @@ public class PyChangeSignatureDialog extends
     return PythonFileType.INSTANCE;
   }
 
-  @NotNull
   @Override
-  protected PyParameterTableModel createParametersInfoModel(@NotNull PyMethodDescriptor method) {
+  protected @NotNull PyParameterTableModel createParametersInfoModel(@NotNull PyMethodDescriptor method) {
     final PyParameterList parameterList = PsiTreeUtil.getChildOfType(method.getMethod(), PyParameterList.class);
     return new PyParameterTableModel(parameterList, myDefaultValueContext, myProject);
   }
@@ -84,15 +83,13 @@ public class PyChangeSignatureDialog extends
                                           parameters.toArray(new PyParameterInfo[0]));
   }
 
-  @Nullable
   @Override
-  protected PsiCodeFragment createReturnTypeCodeFragment() {
+  protected @Nullable PsiCodeFragment createReturnTypeCodeFragment() {
     return null;
   }
 
-  @Nullable
   @Override
-  protected CallerChooserBase<PyFunction> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PyFunction>> callback) {
+  protected @Nullable CallerChooserBase<PyFunction> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PyFunction>> callback) {
     return null;
   }
 
@@ -101,9 +98,8 @@ public class PyChangeSignatureDialog extends
     return name != null && validator.isIdentifier(name, project) && !validator.isKeyword(name, project);
   }
 
-  @Nullable
   @Override
-  protected String validateAndCommitData() {
+  protected @Nullable String validateAndCommitData() {
     final String functionName = myNameField.getText().trim();
     if (!functionName.equals(myMethod.getName())) {
       final boolean defined = IntroduceValidator.isDefinedInScope(functionName, myMethod.getMethod());
@@ -289,9 +285,8 @@ public class PyChangeSignatureDialog extends
         };
       }
 
-      @NotNull
       @Override
-      protected JBTableRowEditor getRowEditor(ParameterTableModelItemBase<PyParameterInfo> item) {
+      protected @NotNull JBTableRowEditor getRowEditor(ParameterTableModelItemBase<PyParameterInfo> item) {
         return new JBTableRowEditor() {
           private EditorTextField myNameEditor;
           private EditorTextField myDefaultValueEditor;

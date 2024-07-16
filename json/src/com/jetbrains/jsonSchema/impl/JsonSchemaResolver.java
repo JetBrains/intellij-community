@@ -15,6 +15,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.tree.JsonSchemaNodeExpansionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,30 +24,50 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchemaTypesCompatible;
+import static com.jetbrains.jsonSchema.impl.JsonSchemaValidityCacheKt.getOrComputeAdapterValidityAgainstGivenSchema;
 import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
 
 public final class JsonSchemaResolver {
   private final @NotNull Project myProject;
   private final @NotNull JsonSchemaObject mySchema;
   private final @NotNull JsonPointerPosition myPosition;
+  private final @NotNull JsonSchemaNodeExpansionRequest myExpansionRequest;
 
+
+  /**
+   * @deprecated Use com.jetbrains.jsonSchema.impl.JsonSchemaResolver#JsonSchemaResolver(
+   *  com.intellij.openapi.project.Project,
+   *  com.jetbrains.jsonSchema.impl.JsonSchemaObject,
+   *  com.intellij.json.pointer.JsonPointerPosition,
+   *  com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
+   * )
+   */
+  @Deprecated(forRemoval = true)
   public JsonSchemaResolver(@NotNull Project project,
                             @NotNull JsonSchemaObject schema,
                             @NotNull JsonPointerPosition position) {
+    this(project, schema, position, new JsonSchemaNodeExpansionRequest(null, true));
+  }
+
+  public JsonSchemaResolver(@NotNull Project project,
+                            @NotNull JsonSchemaObject schema,
+                            @NotNull JsonPointerPosition position,
+                            @Nullable JsonValueAdapter inspectedValueAdapter) {
+    this(project, schema, position, new JsonSchemaNodeExpansionRequest(inspectedValueAdapter, true));
+  }
+
+  public JsonSchemaResolver(@NotNull Project project,
+                            @NotNull JsonSchemaObject schema,
+                            @NotNull JsonPointerPosition position,
+                            @NotNull JsonSchemaNodeExpansionRequest expansionRequest) {
     myProject = project;
     mySchema = schema;
     myPosition = position;
-  }
-
-  public JsonSchemaResolver(@NotNull Project project, @NotNull JsonSchemaObject schema) {
-    myProject = project;
-    mySchema = schema;
-    myPosition = new JsonPointerPosition();
+    myExpansionRequest = expansionRequest;
   }
 
   public MatchResult detailedResolve() {
-    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(myProject, mySchema, myPosition, false);
+    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder.buildTree(myProject, myExpansionRequest, mySchema, myPosition, false);
     return MatchResult.create(node);
   }
 
@@ -62,7 +83,7 @@ public final class JsonSchemaResolver {
 
   public @Nullable PsiElement findNavigationTarget(final @Nullable PsiElement element) {
     final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder
-      .buildTree(myProject, mySchema, myPosition, true);
+      .buildTree(myProject, myExpansionRequest, mySchema, myPosition, true);
     final JsonSchemaObject schema = selectSchema(node, element, myPosition.isEmpty());
     if (schema == null) return null;
     VirtualFile file = JsonSchemaService.Impl.get(myProject).resolveSchemaFile(schema);
@@ -73,7 +94,7 @@ public final class JsonSchemaResolver {
     return walker == null ? null : resolvePosition(walker, psiFile, JsonPointerPosition.parsePointer(schema.getPointer()));
   }
 
-  private static @Nullable PsiElement resolvePosition(@NotNull JsonLikePsiWalker walker,
+  public static @Nullable PsiElement resolvePosition(@NotNull JsonLikePsiWalker walker,
                                                       @Nullable PsiElement element,
                                                       @NotNull JsonPointerPosition position) {
     PsiElement psiElement = element instanceof PsiFile ? ContainerUtil.getFirstItem(walker.getRoots((PsiFile)element)) : element;
@@ -188,12 +209,7 @@ public final class JsonSchemaResolver {
     return schemas.stream().findFirst().orElse(null);
   }
 
-  private static boolean isCorrect(final @NotNull JsonValueAdapter value, final @NotNull JsonSchemaObject schema) {
-    final JsonSchemaType type = JsonSchemaType.getType(value);
-    if (type == null) return true;
-    if (!areSchemaTypesCompatible(schema, type)) return false;
-    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(value.getDelegate().getProject(), JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
-    checker.checkByScheme(value, schema);
-    return checker.isCorrect();
+  public static boolean isCorrect(final @NotNull JsonValueAdapter value, final @NotNull JsonSchemaObject schema) {
+    return getOrComputeAdapterValidityAgainstGivenSchema(value, schema);
   }
 }

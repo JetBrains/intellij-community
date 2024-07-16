@@ -104,7 +104,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
                         addPluginRepository(DEFAULT_GRADLE_PLUGIN_REPOSITORY)
                     }
                 }
-                buildScriptData.addRepositoriesDefinition("mavenCentral()")
+                buildScriptData.withMavenCentral()
                 buildScriptData.addRepositoriesDefinition(oneLineRepository)
             }
 
@@ -116,17 +116,17 @@ abstract class GradleKotlinFrameworkSupportProvider(
                 val oneLineRepository = additionalRepository.toGroovyRepositorySnippet().replace('\n', ' ')
                 buildScriptData.addBuildscriptRepositoriesDefinition(oneLineRepository)
 
-                buildScriptData.addRepositoriesDefinition("mavenCentral()")
+                buildScriptData.withMavenCentral()
                 buildScriptData.addRepositoriesDefinition(oneLineRepository)
             }
 
             buildScriptData
                 .addPluginDefinition(KotlinWithGradleConfigurator.getGroovyApplyPluginDirective(getPluginId()))
-                .addBuildscriptRepositoriesDefinition("mavenCentral()")
+                .withBuildScriptMavenCentral()
                 .addBuildscriptPropertyDefinition("ext.kotlin_version = '${kotlinVersion.artifactVersion}'")
         }
 
-        buildScriptData.addRepositoriesDefinition("mavenCentral()")
+        buildScriptData.withMavenCentral()
 
         for (dependency in getDependencies(sdk)) {
             buildScriptData.addDependencyNotation(

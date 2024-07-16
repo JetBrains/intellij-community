@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
+import com.intellij.DynamicBundle.LanguageBundleEP
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -80,7 +81,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
-import net.sf.cglib.core.ClassNameReader
 import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.nio.channels.FileChannel
@@ -358,7 +358,7 @@ object DynamicPlugins {
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
     val extensions = (module.epNameToExtensions.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
-    if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name }) {
+    if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name || it.key == LanguageBundleEP.EP_NAME.name}) {
       return false
     }
     return checkNoComponentsOrServiceOverrides(module) == null && module.actions.isEmpty()
@@ -556,7 +556,6 @@ object DynamicPlugins {
       ThrowableInterner.clearInternedBacktraces()
       IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
       clearTemporaryLostComponent()
-      clearCglibStopBacktrace()
 
       if (app.isUnitTestMode && pluginDescriptor.pluginClassLoader !is PluginClassLoader) {
         classLoaderUnloaded = true
@@ -945,18 +944,6 @@ private fun hideTooltip() {
   }
   catch (e: Throwable) {
     LOG.info("Failed to hide tooltip", e)
-  }
-}
-
-private fun clearCglibStopBacktrace() {
-  val field = ReflectionUtil.getDeclaredField(ClassNameReader::class.java, "EARLY_EXIT")
-  if (field != null) {
-    try {
-      ThrowableInterner.clearBacktrace((field[null] as Throwable))
-    }
-    catch (e: Throwable) {
-      LOG.info(e)
-    }
   }
 }
 

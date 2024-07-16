@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.CodeStyleBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
@@ -61,7 +62,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private final CustomCodeStyleSettingsManager myCustomCodeStyleSettingsManager = new CustomCodeStyleSettingsManager(this);
 
   private static class DefaultsHolder {
-    private static final CodeStyleSettings myDefaults = new CodeStyleSettings(true, false);
+    private static final CodeStyleSettings myDefaults = Cancellation.forceNonCancellableSectionInClassInitializer(
+      () -> new CodeStyleSettings(true, false)
+    );
   }
 
   private final SoftMargins mySoftMargins = new SoftMargins();
@@ -82,14 +85,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Deprecated
   public CodeStyleSettings() {
     this(true, true);
-  }
-
-  /**
-   * @deprecated See {@link #CodeStyleSettings()}
-   */
-  @Deprecated(forRemoval = true)
-  public CodeStyleSettings(boolean loadExtensions) {
-    this(loadExtensions, true);
   }
 
   /**

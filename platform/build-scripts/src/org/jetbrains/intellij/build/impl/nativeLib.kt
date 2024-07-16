@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.lang.HashMapZipFile
+import com.intellij.util.lang.ZipFile
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
 import kotlinx.coroutines.Dispatchers
@@ -127,7 +127,7 @@ private suspend fun unpackNativeLibraries(
   }
 
   val nativeFileMatcher = NativeFilesMatcher(paths, targetOs, targetArch)
-  HashMapZipFile.load(sourceFile).use { zipFile ->
+  ZipFile.load(sourceFile).use { zipFile ->
     val tempDir = context.paths.tempDir.resolve(libName)
     Files.createDirectories(tempDir)
     while (true) {
@@ -187,7 +187,7 @@ private suspend fun unpackNativeLibraries(
   }
 }
 
-private fun extractFileToDisk(file: Path, zipFile: HashMapZipFile, pathWithPackage: String) {
+private fun extractFileToDisk(file: Path, zipFile: ZipFile, pathWithPackage: String) {
   Files.createDirectories(file.parent)
   when {
     // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)

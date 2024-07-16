@@ -22,7 +22,15 @@ class JTableTextFixture(robot: Robot, component: JTable) : JTableFixture(robot, 
     }
   }
 
-  fun clickCell(row: Int, column: Int) = cell(row(row).column(column)).click()
-  fun rightClickCell(row: Int, column: Int) = cell(row(row).column(column)).rightClick()
-  fun doubleClickCell(row: Int, column: Int) = cell(row(row).column(column)).doubleClick()
+  fun clickCell(row: Int, column: Int) {
+    cell(row(row).column(column)).click()
+  }
+
+  fun rightClickCell(row: Int, column: Int) {
+    cell(row(row).column(column)).rightClick()
+  }
+
+  fun doubleClickCell(row: Int, column: Int) {
+    cell(row(row).column(column)).doubleClick()
+  }
 }

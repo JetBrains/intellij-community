@@ -19,9 +19,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -60,8 +60,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "TooBroadScope";
   }
 
@@ -73,8 +72,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("too.broad.scope.problem.descriptor");
   }
 
@@ -214,7 +212,7 @@ public final class TooBroadScopeInspection extends BaseInspection {
     if (aClass == null) {
       return false;
     }
-    @NonNls final String qualifiedName = aClass.getQualifiedName();
+    final @NonNls String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null || !qualifiedName.startsWith("java.") || qualifiedName.equals("java.lang.Thread") ||
         qualifiedName.equals("java.lang.System") || qualifiedName.equals("java.lang.Runtime")) {
       return false;
@@ -369,14 +367,12 @@ public final class TooBroadScopeInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("too.broad.scope.narrow.quickfix", variableName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("too.broad.scope.inspection.fix.family.name");
     }
 

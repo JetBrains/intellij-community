@@ -11,7 +11,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.WatermarkIcon
-import training.FeaturesTrainerIcons
 import training.dsl.TaskTextProperties
 import training.learn.lesson.LessonManager
 import java.awt.*
@@ -250,7 +249,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
         continue
       }
       val icon = if (lessonMessage.state == MessageState.PASSED) {
-        FeaturesTrainerIcons.GreenCheckmark
+        AllIcons.General.GreenCheckmark
       }
       else if (!LessonManager.instance.lessonIsRunning()) {
         AllIcons.General.Information

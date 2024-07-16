@@ -7,23 +7,15 @@ End of files
 Compiling files:
   src/Enum.kt
 End of files
-After build round. Marked as dirty by Kotlin:
-  src/getRandomEnumEntry.kt
-  src/use.kt
-  src/useEnumImplicitly.kt
-Exit code: ADDITIONAL_PASS_REQUIRED
+Exit code: OK
 ------------------------------------------
 Cleaning output files:
-  out/production/module/GetRandomEnumEntryKt.class
   out/production/module/META-INF/module.kotlin_module
-  out/production/module/UseEnumImplicitlyKt.class
   out/production/module/UseKt$WhenMappings.class
   out/production/module/UseKt.class
 End of files
 Compiling files:
-  src/getRandomEnumEntry.kt
   src/use.kt
-  src/useEnumImplicitly.kt
 End of files
 Exit code: ABORT
 ------------------------------------------
@@ -37,9 +29,7 @@ Cleaning output files:
 End of files
 Compiling files:
   src/Enum.kt
-  src/getRandomEnumEntry.kt
   src/use.kt
-  src/useEnumImplicitly.kt
 End of files
 Exit code: OK
 ------------------------------------------

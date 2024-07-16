@@ -57,7 +57,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProviderE
     AnAction groupByModuleTypeAction = supportsModuleRule() ? actionManager.getAction("UsageGrouping.Module") : null;
     AnAction flattenModulesAction = supportsModuleRule() ? actionManager.getAction("UsageGrouping.FlattenModules") : null;
 
-    AnAction groupByFileStructureAction = actionManager.getAction("UsageGrouping.FileStructure");;
+    AnAction groupByFileStructureAction = actionManager.getAction("UsageGrouping.FileStructure");
     AnAction groupByDirectoryStructureAction = ActionManager.getInstance().getAction("UsageGrouping.DirectoryStructure");
 
     AnAction groupByScopeAction = supportsScopesRule() ? actionManager.getAction("UsageGrouping.Scope") : null;
@@ -91,8 +91,8 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProviderE
    * @deprecated Get the action from ActionManager directly.
    */
   @Deprecated
-  public static @NotNull GroupByFileStructureAction createGroupByFileStructureAction(UsageViewImpl impl) {
-    return (GroupByFileStructureAction) ActionManager.getInstance().getAction("UsageGrouping.FileStructure");
+  public static @NotNull AnAction createGroupByFileStructureAction(UsageViewImpl impl) {
+    return ActionManager.getInstance().getAction("UsageGrouping.FileStructure");
   }
 
   @ApiStatus.Internal

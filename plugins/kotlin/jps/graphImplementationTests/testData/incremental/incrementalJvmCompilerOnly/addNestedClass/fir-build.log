@@ -13,10 +13,9 @@ Cleaning output files:
   out/production/module/UsageKt.class
 End of files
 Compiling files:
-  src/notUsage.kt
   src/usage.kt
 End of files
 Exit code: ABORT
 ------------------------------------------
 COMPILATION FAILED
-Unresolved reference: Nested
+Overload resolution ambiguity between candidates: [class Nested : Any, class Nested : Any]

@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -14,6 +15,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.javac.Iterators;
@@ -69,7 +71,7 @@ public final class Containers {
   }
 
   private static final class PersistentMapletFactory implements MapletFactory, Closeable {
-    private static final int BASE_CACHE_SIZE = 128;
+    private static final int BASE_CACHE_SIZE = 512 * (SystemProperties.getBooleanProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, false)? 2 : 1);
     private final String myRootDirPath;
     private final PersistentStringEnumerator myStringTable;
     private final List<BaseMaplet<?>> myMaps = new ArrayList<>();

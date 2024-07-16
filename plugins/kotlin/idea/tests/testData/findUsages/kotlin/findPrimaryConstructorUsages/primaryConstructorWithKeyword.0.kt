@@ -16,4 +16,5 @@ fun test() {
     A(1)
 }
 
+// ISSUE: KTIJ-29704
 

@@ -12,10 +12,6 @@ public class FieldDefaultsTest extends AbstractLombokConfigSystemTestCase {
     return super.getBasePath() + "/configsystem/fieldDefaults";
   }
 
-  //region DefaultFinal
-  public void testDefaultFinal$DefaultFinalFieldTest() throws IOException {
-    doTest();
-  }
 
   public void testDefaultFinal$DefaultFinalFieldWithFieldDefaultsTest() throws IOException {
     doTest();
@@ -31,10 +27,6 @@ public class FieldDefaultsTest extends AbstractLombokConfigSystemTestCase {
   //endregion
 
   //region DefaultPrivate
-  public void testDefaultPrivate$DefaultPrivateFieldTest() throws IOException {
-    doTest();
-  }
-
   public void testDefaultPrivate$DefaultPrivateFieldWithFieldDefaultsTest() throws IOException {
     doTest();
   }

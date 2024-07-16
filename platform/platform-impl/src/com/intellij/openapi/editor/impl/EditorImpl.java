@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -38,7 +38,10 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLinesPanel;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
+import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -69,7 +72,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -158,7 +160,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull MyScrollPane myScrollPane;
   private final @NotNull EditorComponentImpl myEditorComponent;
   private final @NotNull EditorGutterComponentImpl myGutterComponent;
-  private final @Nullable StickyLinesPanel myStickyLinesPanel;
+  private final @Nullable StickyLinesManager myStickyLinesManager;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
   private final FocusModeModel myFocusModeModel;
   private volatile long myLastTypedActionTimestamp = -1;
@@ -169,6 +171,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final Map<Object, Cursor> myCustomCursors = new LinkedHashMap<>();
   private Cursor myDefaultCursor;
   boolean myCursorSetExternally;
+
+  private static final Integer SCROLL_PANE_LAYER = 0;
+  private static final Integer STICKY_PANEL_LAYER = 200;
+  private static final Integer VERTICAL_SCROLLBAR_LAYER = 250;
+  private static final Integer FLOATING_TOOLBAR_LAYER = 300;
+  private static final Integer STATUS_COMPONENT_LAYER = 300;
 
   static {
     Cursor emptyCursor = null;
@@ -263,8 +271,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int mySavedCaretOffsetForDNDUndoHack;
   private final List<FocusChangeListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private MyInputMethodHandler myInputMethodRequestsHandler;
-  private InputMethodRequests myInputMethodRequestsSwingWrapper;
+  private InputMethodRequestsHolder myInputMethodRequestsHolder;
   private final MouseDragSelectionEventHandler mouseDragHandler = new MouseDragSelectionEventHandler(e -> {
     processMouseDragged(e);
     return Unit.INSTANCE;
@@ -277,7 +284,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
+  private boolean myMouseDragStarted;
   private boolean myDragStarted;
+  private boolean myDragSelectionStarted;
 
   private final @NotNull JPanel myHeaderPanel;
 
@@ -300,6 +309,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   LogicalPosition myLastMousePressedLocation;
 
   Point myLastMousePressedPoint;
+  private boolean myLastPressedOnGutter;
   private boolean myLastPressedOnGutterIcon;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
@@ -310,6 +320,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // Reset on mouse press event.
   private boolean myCurrentDragIsSubstantial;
   private boolean myForcePushHappened;
+
+  private @Nullable VisualPosition mySuppressedByBreakpointsLastPressPosition;
 
   private CaretImpl myPrimaryCaret;
 
@@ -439,8 +451,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.putClientProperty(ColorKey.FUNCTION_KEY, (Function<ColorKey, Color>)key -> getColorsScheme().getColor(key));
     initComponent();
 
-    myStickyLinesPanel = createStickyLinesPanel();
-    if (myStickyLinesPanel != null) {
+    myStickyLinesManager = createStickyLinesPanel();
+    if (myStickyLinesManager != null) {
       // remove the status component from the scroll pane and place it on the layered pane where the sticky panel lives,
       // otherwise the sticky panel would overlap the status
       myScrollPane.placeStatusOnTopOfStickyPanel();
@@ -464,9 +476,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myFocusModeModel);
 
     myPopupHandlers.add(new DefaultPopupHandler());
-    PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null, () -> {
-      return ContextMenuPopupHandler.getGroupForId(myState.getContextMenuGroupId());
-    });
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
@@ -1048,6 +1057,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
+
+    if (myStickyLinesManager != null) {
+      myStickyLinesManager.reinitSettings();
+    }
   }
 
   @Contract("_->fail")
@@ -1069,8 +1082,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   // EditorFactory.releaseEditor should be used to release editor
+  @RequiresEdt
   void release() {
-    assertIsDispatchThread();
     executeNonCancelableBlock(() -> {
       if (isReleased) {
         throwDisposalError("Double release of editor:");
@@ -1138,10 +1151,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
     this.myLayeredPane = new PanelWithFloatingToolbar();
-    myLayeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
+    myLayeredPane.add(myScrollPane, SCROLL_PANE_LAYER);
     UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
       if (mayShowToolbar()) {
-        myLayeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER);
+        myLayeredPane.add(new EditorFloatingToolbar(this), FLOATING_TOOLBAR_LAYER);
       }
     }, getDisposable());
     myPanel.add(myLayeredPane, BorderLayout.CENTER);
@@ -1699,8 +1712,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStart, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStart, myGutterComponent.getWidth(), height);
-    if (myStickyLinesPanel != null) {
-      myStickyLinesPanel.repaintLinesInRange(startVisualLine, endVisualLine);
+    if (myStickyLinesManager != null) {
+      myStickyLinesManager.repaintLines(startVisualLine, endVisualLine);
     }
   }
 
@@ -1984,8 +1997,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
     if (rect.isEmpty()) return;
-    if (myStickyLinesPanel != null) {
-      myStickyLinesPanel.startDumb();
+    if (myStickyLinesManager != null) {
+      myStickyLinesManager.startDumb();
     }
     // The LCD text loop is enabled only for opaque images
     BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
@@ -2199,14 +2212,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public @Nullable TextRange getComposedTextRange() {
-    return myInputMethodRequestsHandler == null ? null : myInputMethodRequestsHandler.getRange();
+    MyInputMethodHandler handler = getMyInputMethodHandler();
+    return handler != null ? handler.getRange() : null;
   }
 
   private boolean composedTextExists() {
-    return myInputMethodRequestsHandler != null &&
-           (myInputMethodRequestsHandler.composedRangeMarker != null ||
-            myInputMethodRequestsHandler.inlayLeft != null ||
-            myInputMethodRequestsHandler.inlayRight != null);
+    MyInputMethodHandler handler = getMyInputMethodHandler();
+    return handler != null && handler.isComposedTextShown();
+  }
+
+  private @Nullable MyInputMethodHandler getMyInputMethodHandler() {
+    InputMethodRequestsHolder holder = myInputMethodRequestsHolder;
+    return holder != null ? holder.asMyHandler() : null;
   }
 
   @Override
@@ -2535,7 +2552,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void resetMousePointer() {
-    UIUtil.setCursor(myEditorComponent, NamedColorUtil.getTextCursor(getBackgroundColor()));
+    UIUtil.setCursor(myEditorComponent, Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
   }
 
   private void validateMousePointer(@NotNull MouseEvent e, @Nullable EditorMouseEvent editorMouseEvent) {
@@ -2555,8 +2572,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Cursor cursor = myEditorComponent.getCursor();
       if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) &&
           cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
-          cursor != EMPTY_CURSOR &&
-          (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
+          cursor != EMPTY_CURSOR) {
         // someone else has set cursor, don't touch it
         return;
       }
@@ -2581,7 +2597,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         result = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
       }
     }
-    return result == null ? NamedColorUtil.getTextCursor(getBackgroundColor()) : result;
+    return result == null ? Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) : result;
   }
 
   private void runMouseDraggedCommand(@NotNull MouseEvent e) {
@@ -2596,6 +2612,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!SwingUtilities.isLeftMouseButton(e) && !SwingUtilities.isMiddleMouseButton(e)
         || (Registry.is("editor.disable.drag.with.right.button") && SwingUtilities.isRightMouseButton(e))) {
       return;
+    }
+
+    if (!myMouseDragStarted) {
+      var point = convertPoint(e.getComponent(), e.getPoint(), myEditorComponent);
+      var sensitivity = Registry.intValue("editor.drag.sensitivity", 5, 0, 25);
+      myMouseDragStarted = myLastMousePressedPoint == null
+                           || !myLastPressedOnGutter // Small drags aren't a problem in the editor, only on the gutter.
+                           || Math.abs(myLastMousePressedPoint.x - point.x) >= sensitivity
+                           || Math.abs(myLastMousePressedPoint.y - point.y) >= sensitivity;
+      if (!myMouseDragStarted) {
+        return;
+      }
+
+      if (mySuppressedByBreakpointsLastPressPosition != null) {
+        getCaretModel().removeSecondaryCarets();
+        getCaretModel().moveToVisualPosition(mySuppressedByBreakpointsLastPressPosition);
+        mySuppressedByBreakpointsLastPressPosition = null;
+      }
     }
 
     EditorMouseEventArea eventArea = getMouseEventArea(e);
@@ -2618,9 +2652,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         NewUI.isEnabled() && EditorUtil.isBreakPointsOnLineNumbers() &&
         getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED &&
         //IDEA-295653 We should not select a line if we are dragging an object. For example, a breakpoint
-        !myLastPressedOnGutterIcon) {
+        !myLastPressedOnGutterIcon && !myDragSelectionStarted) {
       selectLineAtCaret(true); //IDEA-305975
       getGutterComponentEx().putClientProperty("active.line.number", null); //clear hovered breakpoint
+      myDragSelectionStarted = true;
     }
 
     boolean columnSelectionDragEvent = isColumnSelectionDragEvent(e);
@@ -2693,12 +2728,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myMousePressedEvent != null && getMouseEventArea(myMousePressedEvent) != EditorMouseEventArea.EDITING_AREA &&
           getMouseEventArea(myMousePressedEvent) != EditorMouseEventArea.LINE_NUMBERS_AREA) {
         selectionModel.setSelection(oldSelectionStart, newCaretOffset);
+        myDragSelectionStarted = true;
       }
       else {
         if (multiCaretSelection) {
           if (myLastMousePressedLocation != null && (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation))) {
             createSelectionTill(newLogicalCaret);
             blockActionsIfNeeded(e, myLastMousePressedLocation, newLogicalCaret);
+            myDragSelectionStarted = true;
           }
         }
         else {
@@ -2742,6 +2779,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
             setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
             cancelAutoResetForMouseSelectionState();
+            myDragSelectionStarted = true;
           }
           else {
             if (caretShift != 0) {
@@ -2772,6 +2810,33 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
     }
+  }
+
+  private static @NotNull Point convertPoint(@NotNull Component from, @NotNull Point point, @NotNull Component to) {
+    // Can't just use RelativePoint or SwingUtilities.convertPoint because some tests create just the editor without a root pane.
+    var result = new Point(point);
+    var fromTopParent = from;
+    for (var c = from.getParent(); c != null; c = c.getParent()) {
+      fromTopParent = c;
+      if (c.getParent() == null) {
+        break;
+      }
+      result.translate(c.getX(), c.getY());
+    }
+    var toTopParent = to;
+    var toOffset = new Point(0, 0);
+    for (var c = to.getParent(); c != null; c = c.getParent()) {
+      toTopParent = c;
+      if (c.getParent() == null) {
+        break;
+      }
+      toOffset.translate(c.getX(), c.getY());
+    }
+    if (fromTopParent != toTopParent) {
+      throw new IllegalArgumentException("Components don't have a common parent: " + from + " and " + to);
+    }
+    result.translate(-toOffset.x, -toOffset.y);
+    return result;
   }
 
   @NotNull
@@ -2901,7 +2966,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCurrentDragIsSubstantial = true;
   }
 
-  private static final class RepaintCursorCommand implements Runnable {
+  private static final class RepaintCursorCommand implements ContextAwareRunnable {
     private long mySleepTime = 500;
     private boolean myIsBlinkCaret = true;
     private @Nullable EditorImpl myEditor;
@@ -3647,23 +3712,35 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void replaceInputMethodText(@NotNull InputMethodEvent e) {
     if (isReleased) return;
-    getInputMethodRequests();
-    myInputMethodRequestsHandler.replaceInputMethodText(e);
+    MyInputMethodHandler handler = getOrInitInputMethodRequestsHolder().asMyHandler();
+    if (handler != null) {
+      handler.replaceInputMethodText(e);
+    }
   }
 
   void inputMethodCaretPositionChanged(@NotNull InputMethodEvent e) {
     if (isReleased) return;
-    getInputMethodRequests();
-    myInputMethodRequestsHandler.setInputMethodCaretPosition(e);
+    MyInputMethodHandler handler = getOrInitInputMethodRequestsHolder().asMyHandler();
+    if (handler != null) {
+      handler.setInputMethodCaretPosition(e);
+    }
   }
 
-  @NotNull
-  InputMethodRequests getInputMethodRequests() {
-    if (myInputMethodRequestsHandler == null) {
-      myInputMethodRequestsHandler = new MyInputMethodHandler();
-      myInputMethodRequestsSwingWrapper = new MyInputMethodHandleSwingThreadWrapper(myInputMethodRequestsHandler);
+  @Nullable InputMethodRequests getInputMethodRequests() {
+    return getOrInitInputMethodRequestsHolder().myInputMethodRequestsSwingWrapper;
+  }
+
+  private @NotNull InputMethodRequestsHolder getOrInitInputMethodRequestsHolder() {
+    if (myInputMethodRequestsHolder == null) {
+      myInputMethodRequestsHolder = new InputMethodRequestsHolder(new MyInputMethodHandler());
     }
-    return myInputMethodRequestsSwingWrapper;
+    return myInputMethodRequestsHolder;
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt(generateAssertion = false)
+  public void setInputMethodRequests(@Nullable InputMethodRequests inputMethodRequests) {
+    myInputMethodRequestsHolder = new InputMethodRequestsHolder(inputMethodRequests);
   }
 
   @Override
@@ -3795,8 +3872,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return execute(() -> myDelegate.getSelectedText(attributes));
     }
 
-    private static <T> T execute(@NotNull Computable<T> computable) {
-      return UIUtil.invokeAndWaitIfNeeded(computable);
+    private static <T> T execute(@NotNull ThrowableComputable<T, RuntimeException> computable) {
+      return UIUtil.invokeAndWaitIfNeeded(() -> ReadAction.compute(computable));
+    }
+  }
+
+  private static final class InputMethodRequestsHolder {
+    private final @Nullable InputMethodRequests myInputMethodRequests;
+    private final @Nullable InputMethodRequests myInputMethodRequestsSwingWrapper;
+
+    private InputMethodRequestsHolder(@Nullable InputMethodRequests imRequests) {
+      myInputMethodRequests = imRequests;
+      myInputMethodRequestsSwingWrapper = imRequests != null ? new MyInputMethodHandleSwingThreadWrapper(imRequests) : null;
+    }
+
+    private @Nullable MyInputMethodHandler asMyHandler() {
+      return myInputMethodRequests instanceof MyInputMethodHandler handler ? handler : null;
     }
   }
 
@@ -3838,6 +3929,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
       return null;
+    }
+
+    private boolean isComposedTextShown() {
+      return composedRangeMarker != null || inlayLeft != null || inlayRight != null;
     }
 
     private static @NotNull Point getLocationOnScreen(@NotNull Component component) {
@@ -3900,15 +3995,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String committed;
       if (beginIndex < composedStartIndex) {
         if (endIndex <= composedStartIndex) {
-          committed = getText(beginIndex, endIndex - beginIndex);
+          committed = getText(beginIndex, endIndex);
         }
         else {
           int firstPartLength = composedStartIndex - beginIndex;
-          committed = getText(beginIndex, firstPartLength) + getText(composedEndIndex, endIndex - beginIndex - firstPartLength);
+          committed = getText(beginIndex, beginIndex + firstPartLength) + getText(composedEndIndex, endIndex - firstPartLength);
         }
       }
       else {
-        committed = getText(beginIndex + composedEndIndex - composedStartIndex, endIndex - beginIndex);
+        committed = getText(beginIndex + composedEndIndex - composedStartIndex, endIndex);
       }
 
       return new AttributedString(committed).getIterator();
@@ -4136,12 +4231,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = createEditorMouseEvent(e);
       myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = event.getLogicalPosition();
-      myLastMousePressedPoint = new RelativePoint(event.getMouseEvent()).getPoint(myEditorComponent);
-      var lastPressedPointOnGutter = SwingUtilities.convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
+      myLastMousePressedPoint = convertPoint(e.getComponent(), e.getPoint(), myEditorComponent);
+      myLastPressedOnGutter = e.getSource() == myGutterComponent;
+      var lastPressedPointOnGutter = convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
       myLastPressedOnGutterIcon = myGutterComponent.getGutterRenderer(lastPressedPointOnGutter) != null;
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
+      myMouseDragStarted = false;
       myDragStarted = false;
+      myDragSelectionStarted = false;
       myForcePushHappened = false;
       clearDnDContext();
 
@@ -4329,19 +4427,32 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (e.getClickCount() == 1) {
         myLastPressCreatedCaret = false;
       }
-      myLastPressWasAtBlockInlay = eventArea == EditorMouseEventArea.EDITING_AREA && hasBlockInlay(e.getPoint());
+      myLastPressWasAtBlockInlay =
+        eventArea == EditorMouseEventArea.EDITING_AREA && hasBlockInlay(e.getPoint());
+      boolean clickOnBreakpointOverLineNumbers =
+        eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && ExperimentalUI.isNewUI() && EditorUtil.isBreakPointsOnLineNumbers();
       // Don't move the caret when the mouse is pressed in the gutter line markers area
       // (a place where breakpoints, 'override'/'implements' and other icons are drawn) or in the "annotations" area.
       //
       // For example, we don't want to change the caret position
       // when the user sets a new breakpoint by clicking at the 'line markers' area.
       // Also, don't move the caret when the context menu for an inlay is invoked.
-      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) ||
+      //
+      // Also, don't move the caret too early if mouse pressed over line numbers area,
+      // the user might just set a new breakpoint and not selecting lines.
+      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && !clickOnBreakpointOverLineNumbers) ||
                           isInsideGutterWhitespaceArea(e) ||
                           eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
-      if (moveCaret) {
-        // We don't know which caret we want to work with yet
-        VisualPosition visualPosition = getTargetPosition(x, y, true, null);
+      assert !(moveCaret && clickOnBreakpointOverLineNumbers);
+      // We don't know which caret we want to work with yet
+      VisualPosition visualPosition = getTargetPosition(x, y, true, null);
+      if (clickOnBreakpointOverLineNumbers) {
+        // However, we should save the information about the first position to correctly initiate drag,
+        // if the user needs it instead of breakpoint setting.
+        mySuppressedByBreakpointsLastPressPosition = visualPosition;
+      }
+      else if (moveCaret) {
+        mySuppressedByBreakpointsLastPressPosition = null;
         LogicalPosition pos = visualToLogicalPosition(visualPosition);
         if (toggleCaret) {
           Caret caret = getCaretModel().getCaretAt(visualPosition);
@@ -4399,8 +4510,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                      SwingUtilities.isRightMouseButton(e));
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
-      if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        if (ExperimentalUI.isNewUI() && EditorUtil.isBreakPointsOnLineNumbers()) {
+      if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
+        if (clickOnBreakpointOverLineNumbers) {
           //do nothing here and set/unset a breakpoint if possible in XLineBreakpointManager
           return false;
         }
@@ -4823,7 +4934,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
-      myOwnAttributes.put(key, attributes);
+      if (TextAttributesKey.isTemp(key))
+        getDelegate().setAttributes(key, attributes);
+      else
+        myOwnAttributes.put(key, attributes);
     }
 
     @Override
@@ -5475,11 +5589,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (size >= MIN_FONT_SIZE) {
             if (isWheelFontChangePersistent) {
               setFontSize(UISettingsUtils.getInstance().scaleFontSize(size),
-                          SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
+                          convertPoint(this, e.getPoint(), getViewport()));
               adjustGlobalFontSize(size);
             }
             else {
-              setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
+              setFontSize(size, convertPoint(this, e.getPoint(), getViewport()));
             }
           }
           return;
@@ -5511,7 +5625,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public JComponent getStatusComponent() {
-      if (myStickyLinesPanel == null) {
+      if (myStickyLinesManager == null) {
         return super.getStatusComponent();
       }
       else {
@@ -5521,7 +5635,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setStatusComponent(JComponent statusComponent) {
-      if (myStickyLinesPanel == null) {
+      if (myStickyLinesManager == null) {
         super.setStatusComponent(statusComponent);
       }
       else {
@@ -5530,7 +5644,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           super.setStatusComponent(null);
         }
         if (statusComponent != null) {
-          myLayeredPane.add(statusComponent, Integer.valueOf(300));
+          myLayeredPane.add(statusComponent, STATUS_COMPONENT_LAYER);
         } else if (myStatusComponent != null) {
           myLayeredPane.remove(myStatusComponent);
         }
@@ -5701,8 +5815,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myMouseListener;
   }
 
-  @Nullable StickyLinesPanel getStickyLinesPanel() {
-    return myStickyLinesPanel;
+  @ApiStatus.Internal
+  @Override
+  public int getStickyLinesPanelHeight() {
+    if (myStickyLinesManager == null || !getSettings().areStickyLinesShown()) {
+      return 0;
+    }
+    return myStickyLinesManager.panelHeight();
   }
 
   /**
@@ -5714,8 +5833,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!ClientId.isCurrentlyUnderLocalId()) {
       return true;
     }
-    if (myStickyLinesPanel != null) {
-      return myStickyLinesPanel.suppressHintForLine(hintStartLogicalLine);
+    if (myStickyLinesManager != null) {
+      return myStickyLinesManager.suppressHintForLine(hintStartLogicalLine);
     }
     return false;
   }
@@ -5734,13 +5853,49 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myIsStickyLinePainting = stickyLinePainting;
   }
 
-  private @Nullable StickyLinesPanel createStickyLinesPanel() {
+  @ApiStatus.Internal
+  public void stickyLinesForLangChanged(@NotNull ObservableStateListener.PropertyChangeEvent event) {
+    if (myStickyLinesManager != null) {
+      Ref<Object> oldValRef = event.getOldValueRef();
+      if (oldValRef != null &&
+          oldValRef.get() instanceof Boolean oldVal &&
+          event.getNewValue() instanceof Boolean newVal) {
+        if (oldVal && !newVal) {
+          /*
+          Sticky model should be cleared in the following scenario:
+            1) editor is initialized
+            2) editor.language == null
+            3) areStickyLinesShown == true
+            4) sticky model is not empty from previous session
+            5) sticky lines are shown on the panel
+            6) updated editor.language != null
+            7) areStickyLinesShown == false for the particular language
+            8) sticky lines are hidden
+            9) clearing sticky model to avoid showing lines on next editor opening
+           */
+          myStickyLinesManager.clearStickyModel();
+        }
+      }
+    }
+  }
+
+  private @Nullable StickyLinesManager createStickyLinesPanel() {
     if (myProject != null && myKind == EditorKind.MAIN_EDITOR && !isMirrored()) {
-      StickyLinesManager stickyManager = new StickyLinesManager(this, myDocumentMarkupModel.getDelegate(), myDisposable);
-      myLayeredPane.add(stickyManager.getStickyPanel(), Integer.valueOf(200));
-      myLayeredPane.add(myVerticalScrollBar, Integer.valueOf(250));
+      StickyLinesModel stickyModel = StickyLinesModel.getModel(myDocumentMarkupModel.getDelegate());
+      VisualStickyLines visualStickyLines = new VisualStickyLines(this, stickyModel);
+      StickyLineShadowPainter shadowPainter = new StickyLineShadowPainter();
+      StickyLinesPanel stickyPanel = new StickyLinesPanel(this, shadowPainter, visualStickyLines);
+      StickyLinesManager stickyManager = new StickyLinesManager(
+        this, stickyModel,
+        stickyPanel,
+        shadowPainter,
+        visualStickyLines,
+        myDisposable
+      );
+      myLayeredPane.add(stickyPanel, STICKY_PANEL_LAYER);
+      myLayeredPane.add(myVerticalScrollBar, VERTICAL_SCROLLBAR_LAYER);
       ((MyScrollPaneLayout) myScrollPane.getLayout()).setVerticalScrollBar(myVerticalScrollBar);
-      return stickyManager.getStickyPanel();
+      return stickyManager;
     } else {
       return null;
     }

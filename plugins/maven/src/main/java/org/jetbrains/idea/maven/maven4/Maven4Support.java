@@ -5,6 +5,7 @@ import com.intellij.maven.server.telemetry.MavenServerTelemetryClasspathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
@@ -29,6 +30,8 @@ import java.util.function.Predicate;
 
 
 final class Maven4Support implements MavenVersionAwareSupportExtension {
+  private static final @NonNls String MAIN_CLASS40 = "com.intellij.maven.server.m40.RemoteMavenServer40";
+
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
     String version = MavenUtil.getMavenVersion(mavenHome);
@@ -119,5 +122,10 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
         classpath.add(jar);
       }
     }
+  }
+
+  @Override
+  public String getMainClass(MavenDistribution distribution) {
+    return MAIN_CLASS40;
   }
 }

@@ -16,6 +16,10 @@ import java.util.Comparator;
 public interface Sorter extends TreeAction {
   Sorter[] EMPTY_ARRAY = new Sorter[0];
 
+  static @NonNls @NotNull String getAlphaSorterId() {
+    return "ALPHA_COMPARATOR";
+  }
+
   /**
    * Returns the comparator used for comparing nodes in the tree.
    *
@@ -24,8 +28,6 @@ public interface Sorter extends TreeAction {
   Comparator getComparator();
 
   boolean isVisible();
-
-  @NonNls String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";
 
   /**
    * The default sorter which sorts the tree nodes alphabetically.
@@ -58,7 +60,7 @@ public interface Sorter extends TreeAction {
 
     @Override
     public @NotNull String getName() {
-      return ALPHA_SORTER_ID;
+      return getAlphaSorterId();
     }
   };
 }

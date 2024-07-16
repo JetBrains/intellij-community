@@ -72,3 +72,5 @@ fun foo5(x: Int): Int {
         val u = p - x
     }
 }
+
+// IGNORE_K2

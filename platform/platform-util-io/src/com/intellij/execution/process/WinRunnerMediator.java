@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.nio.file.Path;
  * @deprecated processes are killed softly on Windows be default now, see {@link KillableProcessHandler#canTerminateGracefullyWithWinP()}
  */
 @Deprecated
+@ApiStatus.Internal
 public final class WinRunnerMediator {
   private static final Logger LOG = Logger.getInstance(WinRunnerMediator.class);
 

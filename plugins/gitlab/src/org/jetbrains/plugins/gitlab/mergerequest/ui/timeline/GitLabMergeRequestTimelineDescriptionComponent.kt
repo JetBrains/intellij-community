@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
@@ -27,12 +28,14 @@ internal object GitLabMergeRequestTimelineDescriptionComponent {
   }
 
   fun createComponent(
+    project: Project,
     cs: CoroutineScope,
     vm: GitLabMergeRequestTimelineViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
   ): JComponent {
     val titlePanel = CodeReviewTimelineUIUtil.createTitleTextPane(vm.author.name, vm.author.webUrl, date = null)
-    val descriptionTextComponent = createTextPanel(cs, vm.descriptionHtml.map { it.ifBlank { noDescriptionHtmlText } }, vm.serverUrl)
+    val descriptionTextComponent = createTextPanel(project, cs, vm.descriptionHtml.map { it.ifBlank { noDescriptionHtmlText } },
+                                                   vm.serverUrl)
 
 
     return CodeReviewChatItemUIUtil.buildDynamic(CodeReviewChatItemUIUtil.ComponentType.FULL,

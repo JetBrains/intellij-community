@@ -42,6 +42,7 @@ var traceManagerInitializer: () -> Pair<Tracer, BatchSpanProcessor> = {
 object TraceManager {
   private val tracer: Tracer
   private val batchSpanProcessor: BatchSpanProcessor
+  private val isEnabled = System.getProperty("intellij.build.export.opentelemetry.spans")?.toBoolean() ?: false
 
   init {
     val config = traceManagerInitializer()
@@ -60,7 +61,9 @@ object TraceManager {
   }
 
   suspend fun exportPendingSpans() {
-    batchSpanProcessor.doFlush(exportOnly = true)
+    if (isEnabled) {
+      batchSpanProcessor.doFlush(exportOnly = true)
+    }
   }
 }
 

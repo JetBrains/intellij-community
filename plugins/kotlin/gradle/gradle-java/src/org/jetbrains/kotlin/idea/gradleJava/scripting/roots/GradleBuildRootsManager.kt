@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -15,6 +16,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -27,15 +29,15 @@ import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
-import org.jetbrains.kotlin.idea.gradleJava.scripting.*
+import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleVersion
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslGradleBuildSync
+import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot.ImportingStatus.*
+import org.jetbrains.kotlin.idea.gradleJava.scripting.scriptConfigurationsNeedToBeUpdated
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -184,7 +186,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
         val newRoot = tryCreateImportedRoot(sync.workingDir, LastModifiedFiles()) { mergedData } ?: return null
         val buildRootDir = newRoot.dir ?: return null
 
-        GradleBuildRootDataSerializer.write(buildRootDir, mergedData)
+        GradleBuildRootDataSerializer.getInstance().write(buildRootDir, mergedData)
         newRoot.saveLastModifiedFiles()
 
         return newRoot
@@ -298,15 +300,16 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
         val supported = kotlinDslScriptsModelImportSupported(version)
 
-        return when {
-            supported -> tryLoadFromFsCache(settings, version) ?: New(settings)
-            else -> Legacy(settings)
+        return if (supported) {
+            tryLoadFromFsCache(settings, version) ?: New(settings)
+        } else {
+            Legacy(settings)
         }
     }
 
     private fun tryLoadFromFsCache(settings: GradleProjectSettings, version: String): Imported? {
         return tryCreateImportedRoot(settings.externalProjectPath) {
-            GradleBuildRootDataSerializer.read(it)?.let { data ->
+            GradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
                 val gradleHome = data.gradleHome
                 if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(gradleHome) != version) return@let null
 
@@ -331,7 +334,10 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
 
             return Imported(externalProjectPath, data, lastModifiedFiles)
         } catch (e: Exception) {
-            scriptingErrorLog("Cannot load script configurations from file attributes for $externalProjectPath", e)
+            when (e) {
+                is ControlFlowException -> throw e
+                else -> scriptingErrorLog("Cannot load script configurations from file attributes for $externalProjectPath", e)
+            }
             return null
         }
     }
@@ -361,7 +367,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     private fun removeData(rootPath: String) {
         val buildRoot = LocalFileSystem.getInstance().findFileByPath(rootPath)
         if (buildRoot != null) {
-            GradleBuildRootDataSerializer.remove(buildRoot)
+            GradleBuildRootDataSerializer.getInstance().remove(buildRoot)
             LastModifiedFiles.remove(buildRoot)
         }
     }
@@ -395,7 +401,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
                     DefaultScriptingSupport.getInstance(project).ensureNotificationsRemoved(it)
                 }
 
-                if (restartAnalyzer) {
+                if (KotlinPluginModeProvider.isK1Mode() && restartAnalyzer) {
                     KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
                     // this required only for "pause" state
                     PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
@@ -412,8 +418,6 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     private fun updateFloatingAction(file: VirtualFile) {
         if (isConfigurationOutOfDate(file)) {
             scriptConfigurationsNeedToBeUpdated(project, file)
-        } else {
-            scriptConfigurationsAreUpToDate(project)
         }
     }
 

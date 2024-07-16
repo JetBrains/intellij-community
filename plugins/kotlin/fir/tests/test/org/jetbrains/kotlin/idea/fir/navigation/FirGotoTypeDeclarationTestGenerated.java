@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.navigation;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/navigation/gotoTypeDeclaration")
 public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDeclarationTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K2;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -36,6 +43,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
     @TestMetadata("explicitParameterInLambda.test")
     public void testExplicitParameterInLambda() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/explicitParameterInLambda.test");
+    }
+
+    @TestMetadata("flexibleType.test")
+    public void testFlexibleType() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/flexibleType.test");
     }
 
     @TestMetadata("fromFunctionDeclarationName.test")
@@ -66,6 +78,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
     @TestMetadata("itParameterInLambda.test")
     public void testItParameterInLambda() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/itParameterInLambda.test");
+    }
+
+    @TestMetadata("listFlexibleType.test")
+    public void testListFlexibleType() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/listFlexibleType.test");
     }
 
     @TestMetadata("noParametersLambda.test")

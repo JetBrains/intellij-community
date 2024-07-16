@@ -69,16 +69,36 @@ public class TextRange implements Segment, Serializable {
     return myStartOffset + myEndOffset;
   }
 
+  /**
+   * Checks if the specified text range is fully contained within this TextRange.
+   *
+   * @param range the text range to check for containment
+   * @return {@code true} if the specified text range is contained within this object, 
+   *         {@code false} otherwise
+   */
   @Contract(pure = true)
   public boolean contains(@NotNull TextRange range) {
     return contains((Segment)range);
   }
 
+  /**
+   * Checks if the given segment is fully contained within this TextRange.
+   *
+   * @param segment the segment to be checked for containment
+   * @return true if the given range is contained within this segment, false otherwise
+   */
   @Contract(pure = true)
-  public boolean contains(@NotNull Segment range) {
-    return containsRange(range.getStartOffset(), range.getEndOffset());
+  public boolean contains(@NotNull Segment segment) {
+    return containsRange(segment.getStartOffset(), segment.getEndOffset());
   }
 
+  /**
+   * Checks if the given range is fully contained within this TextRange.
+   *
+   * @param startOffset the start offset of the range to check
+   * @param endOffset the end offset of the range to check
+   * @return true if the given range is contained within this TextRange, false otherwise
+   */
   @Contract(pure = true)
   public boolean containsRange(int startOffset, int endOffset) {
     return getStartOffset() <= startOffset && endOffset <= getEndOffset();
@@ -89,6 +109,14 @@ public class TextRange implements Segment, Serializable {
     return outer.getStartOffset() <= inner.getStartOffset() && inner.getEndOffset() <= outer.getEndOffset();
   }
 
+  /**
+   * Checks if the given offset is contained within the range 
+   * (unlike {@link #contains(int)}, offset at the end of the range is considered to be inside).
+   *
+   * @param offset the offset to check
+   * @return true if the given offset is within the range, false otherwise
+   * @see #contains(int) 
+   */
   @Contract(pure = true)
   public boolean containsOffset(int offset) {
     return myStartOffset <= offset && offset <= myEndOffset;
@@ -99,11 +127,25 @@ public class TextRange implements Segment, Serializable {
     return "(" + myStartOffset + "," + myEndOffset + ")";
   }
 
+  /**
+   * Checks if the given offset is contained within the range 
+   * (unlike {@link #containsOffset(int)}, offset at the end of the range is considered to be outside).
+   *
+   * @param offset the offset to check
+   * @return true if the given offset is within the range, false otherwise
+   * @see #containsOffset(int) 
+   */
   @Contract(pure = true)
   public boolean contains(int offset) {
     return myStartOffset <= offset && offset < myEndOffset;
   }
 
+  /**
+   * Returns a substring of the given string that is covered by this TextRange.
+   *
+   * @param str the string from which the substring will be extracted
+   * @return the substring
+   */
   @Contract(pure = true)
   public @NotNull String substring(@NotNull String str) {
     return str.substring(myStartOffset, myEndOffset);

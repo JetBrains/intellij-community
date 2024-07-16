@@ -451,7 +451,7 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
     });
 
     dumbService.completeJustSubmittedTasks();
-    CopyFilesOrDirectoriesHandler.updateAddedFiles(createdFiles);
+    CopyFilesOrDirectoriesHandler.updateAddedFiles(createdFiles, filesToProcess);
 
     runWriteAction(project, RefactoringBundle.message("copy.update.references"), progress -> {
       final Set<PsiElement> rebindExpressions = new HashSet<>();

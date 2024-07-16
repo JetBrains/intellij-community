@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider;
@@ -22,7 +22,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
@@ -34,18 +33,16 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor, PossiblyDumbAware {
-  @Nullable
   @Override
-  public String getQualifiedName(@NotNull NavigationItem item) {
+  public @Nullable String getQualifiedName(@NotNull NavigationItem item) {
     if (item instanceof PsiClass) {
       return DefaultClassNavigationContributor.getQualifiedNameForClass((PsiClass)item);
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public String getQualifiedNameSeparator() {
+  public @Nullable String getQualifiedNameSeparator() {
     return "$";
   }
 
@@ -118,8 +115,8 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull final Processor<? super NavigationItem> processor,
-                                      @NotNull final FindSymbolParameters parameters) {
+                                      final @NotNull Processor<? super NavigationItem> processor,
+                                      final @NotNull FindSymbolParameters parameters) {
 
     GlobalSearchScope scope = parameters.getSearchScope();
     Project project = scope.getProject();
@@ -172,19 +169,17 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   @Override
   public boolean isDumbAware() {
-    return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
+    return true;
   }
 
   public static final class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {
-    @Nullable
     @Override
-    public String getQualifiedName(@NotNull NavigationItem item) {
+    public @Nullable String getQualifiedName(@NotNull NavigationItem item) {
       return null;
     }
 
-    @Nullable
     @Override
-    public String getQualifiedNameSeparator() {
+    public @Nullable String getQualifiedNameSeparator() {
       return "#";
     }
 

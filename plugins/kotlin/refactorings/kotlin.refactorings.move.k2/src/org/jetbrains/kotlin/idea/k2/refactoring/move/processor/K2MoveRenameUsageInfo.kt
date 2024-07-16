@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler
@@ -14,70 +13,47 @@ import com.intellij.refactoring.move.moveMembers.MoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.psi.imports.addImport
-import org.jetbrains.kotlin.idea.k2.refactoring.computeWithoutAddingRedundantImports
+import org.jetbrains.kotlin.idea.base.psi.canBeUsedInImport
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
+import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
+import org.jetbrains.kotlin.idea.references.KtConstructorDelegationReference
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
 /**
- * A usage from the K2 move refactoring. Move refactoring usages can be split into two types of usages; internal and external usages.
- * Internal usages are the usages that will be moved during the refactoring (see [K2MoveRenameUsageInfo.isInternal]). These usages are
- * always Kotlin usages but can reference non-Kotlin declarations.
- *
- * External usages are the usages from references to moved declarations. These usages can both be Kotlin and non-Kotlin usages but always
- * reference Kotlin declarations.
- *
- * A reference can both be internal and external when the reference is moved but the referenced declarations is moved at the same time.
+ * A usage from the K2 move refactoring. Not all usages need to be updated, some are only used for conflict checking.
+ * Moving, for example, an instance method can result in the method losing visibility to a usage, but just this method doesn't need updating.
  */
 sealed class K2MoveRenameUsageInfo(
-  element: PsiElement,
-  reference: PsiReference,
-  referencedElement: PsiNamedElement
+    element: PsiElement,
+    reference: PsiReference,
+    referencedElement: PsiNamedElement
 ) : MoveRenameUsageInfo(element, reference, referencedElement) {
-    protected fun PsiNamedElement.correctTarget() = when {
-        this is KtConstructor<*> -> containingClass() ?: error("Constructor had no containing class")
-        this is PsiMethod && isConstructor -> containingClass ?: error("Constructor had no containing class")
-        else -> this
-    }
-
     /**
-     * Internal usages are usages that are inside the moved declaration.
-     * On the contrary, external usages are usages to the moved declaration.
-     * Example, when moving `fooBar`
-     * ```
-     * fun bar() {
-     *   fooBar() // this usage of fooBar is external
-     * }
-     *
-     * fun fooBar() {
-     *   foo() // this usage of foo an internal usage of fooBar
-     * }
-     * ```
+     * Returns whether this usage info is actually required for updating.
+     * Sometimes it can depend on the language of the usage whether the usage info is updatable.
+     * In Kotlin, for example, object members can be imported and might require updating, but in Java these are regular instance methods and
+     * references to these methods can't be updated.
      */
-    abstract val isInternal: Boolean
-
-    open fun refresh(referenceElement: PsiElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo = this
+    abstract fun isUpdatable(movedElements: List<KtNamedDeclaration>): Boolean
 
     abstract fun retarget(to: PsiNamedElement): PsiElement?
 
+    /**
+     * A usage described in a foreign language like Java or Groovy.
+     */
     class Light(
         element: PsiElement,
         reference: PsiReference,
@@ -86,12 +62,15 @@ sealed class K2MoveRenameUsageInfo(
         private val oldContainingFqn: String?,
         private val lightElementIndex: Int,
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
-        override val isInternal: Boolean = false // internal usages are always Kotlin usages
+        override fun isUpdatable(movedElements: List<KtNamedDeclaration>): Boolean {
+            return true // TODO write better updatable check for light references
+        }
 
         override fun retarget(to: PsiNamedElement): PsiElement? {
-            if (to !is KtNamedDeclaration) error("Light usages must reference a Kotlin element")
+            if (to !is KtNamedDeclaration) error("Usage must reference a Kotlin element")
             val element = element ?: return element
             val newLightElement = to.toLightElements()[lightElementIndex]
+            if (element.reference?.isReferenceTo(newLightElement) == true) return element
             if (element is PsiReferenceExpression
                 && wasMember
                 && newLightElement is PsiMember
@@ -138,69 +117,109 @@ sealed class K2MoveRenameUsageInfo(
         }
     }
 
-
     /**
-     * A usage that can be represented in qualified form like for example a type reference.
+     * A Kotlin usage, Kotlin usages can either be internal and external.
+     * Internal usages are usages that are moved, external usages are usages that reference a moved declaration.
+     * A reference can be both an internal and external usage; this would mean that both the reference and the referenced declarations are
+     * moved in this move operation.
      */
-    class Qualifiable(
-      element: KtElement,
-      reference: KtSimpleNameReference,
-      referencedElement: PsiNamedElement,
-      override val isInternal: Boolean
+    class Source(
+        element: KtReferenceExpression,
+        reference: KtReference,
+        referencedElement: PsiNamedElement,
+        val isInternal: Boolean
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
-        override fun refresh(referenceElement: PsiElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
-            if (referenceElement !is KtElement) return this
-            val reference = (referenceElement.mainReference as? KtSimpleNameReference) ?: return this
-           return Qualifiable(referenceElement, reference, referencedElement, isInternal)
-        }
-
-        override fun retarget(to: PsiNamedElement): PsiElement? {
-            val reference = element?.reference as? KtSimpleNameReference ?: return null
-            val target = to.correctTarget()
-            return reference.bindToElement(target, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
-        }
-    }
-
-    /**
-     * A usage that can't be represented in qualified form like for example a call to an extension function or callable reference like
-     * `::foo`.
-     */
-    class Unqualifiable(
-      element: KtElement,
-      reference: KtReference,
-      referencedElement: PsiNamedElement,
-      override val isInternal: Boolean
-    ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
-        override fun refresh(referenceElement: PsiElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
-            if (referenceElement !is KtElement) return this
-            val reference = referenceElement.mainReference ?: return this
-            return Unqualifiable(referenceElement, reference, referencedElement, isInternal)
-        }
-
-        override fun retarget(to: PsiNamedElement): PsiElement? {
-            val fqn = when (val target = to.correctTarget()) {
-                is KtNamedDeclaration -> target.fqName?.asString()
-                is PsiQualifiedNamedElement -> target.qualifiedName
-                is PsiMember -> PsiUtil.getMemberQualifiedName(target)
-                else -> null
-            } ?: return null
-            val containingFile = (element as? KtElement)?.containingKtFile ?: return null
-            computeWithoutAddingRedundantImports(containingFile) {
-                containingFile.addImport(FqName(fqn))
+        @OptIn(KaAllowAnalysisOnEdt::class)
+        override fun isUpdatable(movedElements: List<KtNamedDeclaration>): Boolean = allowAnalysisOnEdt {
+            val refExpr = element as KtSimpleNameExpression
+            if (!refExpr.canBeUsedInImport()) return false
+            if (refExpr.parentOfType<KtImportDirective>(withSelf = false) != null) return true
+            if (refExpr.isUnqualifiable()) return true
+            val refChain = (refExpr.getTopmostParentQualifiedExpressionForReceiver() ?: refExpr)
+                .collectDescendantsOfType<KtSimpleNameExpression>()
+                .filter { it.canBeUsedInImport() }
+            return if (isInternal) {
+                // for internal usages, update the first name determinant in the call chain
+                refChain.firstOrNull { simpleNameExpr -> simpleNameExpr.isNameDeterminantInQualifiedChain() } == refExpr
+            } else {
+                // for external usages, update the first reference to a moved element
+                refChain.firstOrNull { simpleNameExpr -> simpleNameExpr.mainReference.resolve() in movedElements } == refExpr
             }
-            return element
+        }
+
+        private fun KtSimpleNameExpression.getTopmostParentQualifiedExpressionForReceiver(): KtExpression? {
+            return generateSequence<KtExpression>(this) {
+                it.parent as? KtQualifiedExpression ?: it.parent as? KtCallExpression
+            }.lastOrNull()
+        }
+
+        @OptIn(KaAllowAnalysisOnEdt::class)
+        private fun KtSimpleNameExpression.isNameDeterminantInQualifiedChain(): Boolean = allowAnalysisOnEdt {
+            analyze(this) {
+                val resolvedSymbol = mainReference.resolveToSymbol()
+                if (resolvedSymbol is KaClassSymbol && resolvedSymbol.classKind == KaClassKind.COMPANION_OBJECT) return true
+                if (resolvedSymbol is KaConstructorSymbol) return true
+                val containingSymbol = resolvedSymbol?.containingDeclaration
+                if (resolvedSymbol is KaPackageSymbol) return false // ignore packages
+                if (containingSymbol == null) return true // top levels are static
+                if (containingSymbol is KaClassSymbol) {
+                    when (containingSymbol.classKind) {
+                        KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.ENUM_CLASS -> return true
+                        else -> {}
+                    }
+                }
+                if (containingSymbol is KaSymbolWithMembers) {
+                    if (resolvedSymbol in containingSymbol.staticMemberScope.getAllSymbols()) return true
+                }
+                return false
+            }
+        }
+
+        private fun KtSimpleNameExpression.isUnqualifiable(): Boolean {
+            // example: a.foo() where foo is an extension function
+            fun KtSimpleNameExpression.isExtensionReference(): Boolean {
+                return analyze(this) {
+                    val callable = mainReference.resolveToSymbol() as? KaCallableSymbol
+                    if (callable?.isExtension == true) return true
+                    if (callable is KaPropertySymbol) {
+                        val returnType = callable.returnType
+                        returnType is KaFunctionType && returnType.receiverType != null
+                    } else false
+                }
+            }
+
+            // example: ::foo
+            fun KtSimpleNameExpression.isCallableReferenceExpressionWithoutQualifier(): Boolean {
+                val parent = parent
+                return parent is KtCallableReferenceExpression && parent.receiverExpression == null
+            }
+            return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
+        }
+
+        fun refresh(refExpr: KtReferenceExpression, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
+            val reference = (refExpr.mainReference as? KtReference) ?: return this
+            return Source(refExpr, reference, referencedElement, isInternal)
+        }
+
+        override fun retarget(to: PsiNamedElement): PsiElement? {
+            val reference = element?.reference as? KtReference ?: return null
+            if (reference is KtSimpleNameReference) {
+                // shortening will be done later when all references are updated and the code isn't broken anymore
+                return reference.bindToElement(to, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
+            } else {
+                return reference.bindToElement(to)
+            }
         }
     }
 
     companion object {
-        private val LOG = Logger.getInstance(K2MoveRenameUsageInfo::class.java)
-
         fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
-            return preProcessUsages(findInternalUsages(declaration) + findExternalUsages(declaration))
+            markInternalUsages(declaration)
+            return preProcessUsages(declaration.collectDescendantsOfType<KtNamedDeclaration>().flatMap { findExternalUsages(it) })
         }
 
         /**
-         * Removes unwanted usages, like for example usages through import aliases.
+         * Removes unwanted usages, like, for example, usages through import aliases.
          */
         private fun preProcessUsages(usages: List<UsageInfo>): List<UsageInfo> {
             MoveClassHandler.EP_NAME.extensionList.forEach { handler -> handler.preprocessUsages(usages) }
@@ -210,54 +229,52 @@ sealed class K2MoveRenameUsageInfo(
         /**
          * Used to store usage info for an internal reference so that after the move the referenced can be restored.
          * @see restoreInternalUsages
-         * @see K2MoveRenameUsageInfo.refresh
+         * @see K2MoveRenameUsageInfo.Source.refresh
          */
-        private var KtSimpleNameExpression.internalUsageInfo: K2MoveRenameUsageInfo? by CopyablePsiUserDataProperty(Key.create("INTERNAL_USAGE_INFO"))
+        internal var KtReferenceExpression.internalUsageInfo: K2MoveRenameUsageInfo? by CopyablePsiUserDataProperty(Key.create("INTERNAL_USAGE_INFO"))
 
         /**
-         * Finds any usage inside [containingDecl]. We need these usages because when moving [containingDecl] to a different package references
+         * Finds any usage inside [containing]. We need these usages because when moving [containing] to a different package references
          * that where previously imported by default might now require an explicit import.
          */
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
-        private fun findInternalUsages(containingDecl: KtNamedDeclaration): List<K2MoveRenameUsageInfo> = allowAnalysisFromWriteAction {
-            val usages = mutableListOf<K2MoveRenameUsageInfo>()
-            containingDecl.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
+        fun markInternalUsages(containing: KtElement) {
+            containing.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
                 if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
-                if (refExpr.parent is KtThisExpression || refExpr.parent is KtSuperExpression) return@forEachDescendantOfType
-                if (!refExpr.isImportable()) return@forEachDescendantOfType
-                val resolved = analyze(refExpr) {
-                    refExpr.mainReference.resolveToSymbol()?.psi
-                } as? PsiNamedElement ?: return@forEachDescendantOfType
-                val usageInfo = refExpr.mainReference.createKotlinUsageInfo(resolved, isInternal = true)
-                usages.add(usageInfo)
-                refExpr.internalUsageInfo = usageInfo
+                val mainReference= refExpr.mainReference
+                if (mainReference is KtConstructorDelegationReference) return@forEachDescendantOfType
+                val resolved = mainReference.resolve() as? PsiNamedElement ?: return@forEachDescendantOfType
+                refExpr.internalUsageInfo = Source(refExpr, mainReference, resolved, true)
             }
-          return usages
         }
 
-        private fun KtSimpleNameExpression.isImportable(): Boolean = analyze(this) {
-            val refExpr = this@isImportable
-            if (refExpr.isUnqualifiable()) return true
-            val resolvedSymbol = refExpr.mainReference.resolveToSymbol()
-            if (resolvedSymbol is KtConstructorSymbol) return true
-            val containingSymbol = resolvedSymbol?.getContainingSymbol()
-            if (containingSymbol == null) return true // top levels are static
-            if (containingSymbol is KtSymbolWithMembers) {
-                val staticScope = containingSymbol.getStaticMemberScope()
-                return resolvedSymbol in staticScope.getAllSymbols()
+        fun unMarkAllUsages(containing: KtElement) = containing.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
+            refExpr.internalUsageInfo = null
+        }
+
+
+        /**
+         * Removes any internal usage infos that don't need to be updated.
+         * In [markInternalUsages] we marked all internal usages, but some of these usages don't need to be updated.
+         * Like, for example, instance methods.
+         */
+        fun unMarkNonUpdatableUsages(movedElements: List<KtNamedDeclaration>) {
+            for (declaration in movedElements) {
+                declaration.forEachDescendantOfType<KtSimpleNameExpression> { refExpr ->
+                    val usageInfo = refExpr.internalUsageInfo ?: return@forEachDescendantOfType
+                    if (!usageInfo.isUpdatable(movedElements)) refExpr.internalUsageInfo = null
+                }
             }
-            return false
         }
 
         /**
          * Finds usages to [declaration] excluding the usages inside [declaration].
          */
         private fun findExternalUsages(declaration: KtNamedDeclaration): List<MoveRenameUsageInfo> {
-            return ReferencesSearch.search(declaration, declaration.resolveScope).findAll()
+            return ReferencesSearch.search(declaration, declaration.useScope).findAll()
                 .filter { !declaration.isAncestor(it.element) } // exclude internal usages
                 .mapNotNull { ref ->
                     if (ref is KtSimpleNameReference) {
-                        ref.createKotlinUsageInfo(declaration, isInternal = false)
+                        Source(ref.element, ref, declaration.nameDeterminant(), false)
                     } else {
                         val lightElements = declaration.toLightElements()
                         val lightElement = if (lightElements.size == 1) {
@@ -271,40 +288,7 @@ sealed class K2MoveRenameUsageInfo(
                 }
         }
 
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
-        fun KtSimpleNameExpression.isUnqualifiable(): Boolean {
-            // example: a.foo() where foo is an extension function
-            fun KtSimpleNameExpression.isExtensionReference(): Boolean = allowAnalysisFromWriteAction {
-                analyze(this) {
-                    val callable = mainReference.resolveToSymbol() as? KtCallableSymbol
-                    if (callable?.isExtension == true) return true
-                    if (callable is KtPropertySymbol) {
-                        val returnType = callable.returnType
-                        return returnType is KtFunctionalType && returnType.receiverType != null
-                    }
-                    return false
-                }
-            }
-
-            // example: ::foo
-            fun KtSimpleNameExpression.isCallableReferenceExpressionWithoutQualifier(): Boolean = allowAnalysisFromWriteAction {
-                val parent = parent
-                return parent is KtCallableReferenceExpression && parent.receiverExpression == null
-            }
-            if (parentOfType<KtImportDirective>() != null) return false
-            return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
-        }
-
-        private fun KtSimpleNameReference.createKotlinUsageInfo(declaration: PsiNamedElement, isInternal: Boolean): K2MoveRenameUsageInfo {
-            val refExpr = element
-            return if (refExpr.isUnqualifiable()) {
-                Unqualifiable(refExpr, this, declaration, isInternal)
-            } else {
-                Qualifiable(refExpr, this, declaration, isInternal)
-            }
-        }
-
-        internal fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
+        internal fun retargetUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
             retargetInternalUsages(oldToNewMap)
             retargetExternalUsages(usages, oldToNewMap)
         }
@@ -313,72 +297,92 @@ sealed class K2MoveRenameUsageInfo(
          * After moving, internal usages might have become invalid, this method restores these usage infos.
          * @see internalUsageInfo
          */
-        private fun restoreInternalUsages(containingDecl: KtNamedDeclaration, oldToNewMap: Map<PsiElement, PsiElement>): List<UsageInfo> {
-            return containingDecl.collectDescendantsOfType<KtSimpleNameExpression>().mapNotNull { refExpr ->
+        private fun restoreInternalUsages(
+            containingDecl: KtNamedDeclaration,
+            oldToNewMap: Map<PsiElement, PsiElement>,
+            fromCopy: Boolean
+        ): List<UsageInfo> {
+            return containingDecl.collectDescendantsOfType<KtReferenceExpression>().mapNotNull { refExpr ->
                 val usageInfo = refExpr.internalUsageInfo
-                if (usageInfo?.element != null) return@mapNotNull usageInfo
-                val referencedElement = (usageInfo as? MoveRenameUsageInfo)?.referencedElement ?: return@mapNotNull null
+                if (!fromCopy && usageInfo?.element != null) return@mapNotNull usageInfo
+                val referencedElement = (usageInfo as? Source)?.referencedElement ?: return@mapNotNull null
                 val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
                 if (!newReferencedElement.isValid || newReferencedElement !is PsiNamedElement) return@mapNotNull null
                 usageInfo.refresh(refExpr, newReferencedElement)
             }
         }
 
-        private fun retargetInternalUsages(oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-            val newDeclarations = oldToNewMap.values.filterIsInstance<KtNamedDeclaration>()
-            val internalUsages = newDeclarations
-                .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap) }
-                .filterIsInstance<K2MoveRenameUsageInfo>()
-                .sortedByFile()
-            retargetMoveUsages(internalUsages, oldToNewMap)
-        }
-
-        private fun retargetExternalUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-            val externalUsages = usages
-                .filterIsInstance<K2MoveRenameUsageInfo>()
-                .filter { !it.isInternal && it.element != null } // if element is null, it means the this external usage was moved
-                .sortedByFile()
-            retargetMoveUsages(externalUsages, oldToNewMap)
-        }
-
-        private fun List<K2MoveRenameUsageInfo>.sortedByFile(): Map<PsiFile, List<K2MoveRenameUsageInfo>> {
-            return buildMap {
-                for (usageInfo in this@sortedByFile) {
-                    val element = usageInfo.element
-                    if (element == null) {
-                        LOG.error("Could not update usage because element is invalid")
-                        continue
-                    }
-                    val containingFile = element.containingFile
-                    if (containingFile == null) {
-                        LOG.error("Could not update usage because element has no containing file")
-                        continue
-                    }
-                    val usageInfos: MutableList<K2MoveRenameUsageInfo> = getOrPut(containingFile) { mutableListOf() }
-                    usageInfos.add(usageInfo)
+        /**
+         * If file copy was done through vfs, then copyable user data is not preserved.
+         * For this case, let's rely on the fact that in the same write action,
+         * copy and original files are identical and retrieve original resolve targets from initial user data.
+         */
+        fun retargetInternalUsagesForCopyFile(
+            originalFile: KtFile,
+            fileCopy: KtFile,
+        ) {
+            val skipPackageStmt: (KtSimpleNameExpression) -> Boolean = { PsiTreeUtil.getParentOfType(it, KtPackageDirective::class.java) == null }
+            val inCopy = fileCopy.collectDescendantsOfType<KtSimpleNameExpression>().filter(skipPackageStmt)
+            val original = originalFile.collectDescendantsOfType<KtSimpleNameExpression>().filter(skipPackageStmt)
+            val internalUsages = original.zip(inCopy).mapNotNull { (o, c) ->
+                val usageInfo = o.internalUsageInfo
+                val referencedElement = (usageInfo as? Source)?.referencedElement ?: return@mapNotNull null
+                if (!referencedElement.isValid ||
+                    referencedElement !is PsiNamedElement ||
+                    PsiTreeUtil.isAncestor(originalFile, referencedElement, true)
+                ) {
+                    return@mapNotNull null
                 }
-            }.mapValues { (_, value) -> value.sortedBy { it.element?.textOffset } }
+                usageInfo.refresh(c, referencedElement)
+            }
+
+            shortenUsages(retargetMoveUsages(mapOf(fileCopy to internalUsages), emptyMap()))
         }
 
-        @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+        fun retargetInternalUsages(oldToNewMap: Map<PsiElement, PsiElement>, fromCopy: Boolean = false) {
+            val newDeclarations = oldToNewMap.values.toList().filterIsInstance<KtNamedDeclaration>()
+            val internalUsages = newDeclarations
+                .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap, fromCopy) }
+                .filterIsInstance<K2MoveRenameUsageInfo>()
+                .groupByFile()
+                .sortedByOffset()
+            shortenUsages(retargetMoveUsages(internalUsages, oldToNewMap))
+        }
+
+        private fun retargetExternalUsages(usages: List<K2MoveRenameUsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
+            val externalUsages = usages
+                .filter { it.element != null } // if the element is null, it means that this external usage was moved
+                .groupByFile()
+                .sortedByOffset()
+            shortenUsages(retargetMoveUsages(externalUsages, oldToNewMap))
+        }
+
         private fun retargetMoveUsages(
             usageInfosByFile: Map<PsiFile, List<K2MoveRenameUsageInfo>>,
-            oldToNewMap: MutableMap<PsiElement, PsiElement>
-        ) = allowAnalysisFromWriteAction {
-            allowAnalysisOnEdt {
-                usageInfosByFile.forEach { (file, usageInfos) ->
-                    // TODO instead of manually handling of qualifiable/non-qualifiable references we should invoke `bindToElement` in bulk
-                    val qualifiedElements = usageInfos.mapNotNull { usageInfo ->
-                        val newDeclaration = (oldToNewMap[usageInfo.referencedElement] ?: usageInfo.referencedElement) as? PsiNamedElement
-                            ?: return@mapNotNull null
-                        val qualifiedReference = usageInfo.retarget(newDeclaration)
-                        if (usageInfo is Qualifiable && qualifiedReference != null) {
-                            qualifiedReference to newDeclaration
-                        } else null
-                    }.filter { it.first.isValid }.toMap()  // imports can become invalid because they are removed when binding element
-                    if (file is KtFile) {
-                        shortenReferences(qualifiedElements.keys.filterIsInstance<KtElement>())
-                    }
+            oldToNewMap: Map<PsiElement, PsiElement>
+        ): Map<PsiFile, Map<PsiElement, PsiNamedElement>> {
+            return usageInfosByFile.map { (file, usageInfos) ->
+                file to usageInfos.mapNotNull { usageInfo ->
+                    val newDeclaration = (oldToNewMap[usageInfo.referencedElement] ?: usageInfo.referencedElement) as? PsiNamedElement
+                        ?: return@mapNotNull null
+                    val retargetedReference = usageInfo.retarget(newDeclaration)
+                    val qualifiedReference = if (retargetedReference is KtSimpleNameExpression) {
+                        // get top most qualified for shortening if we don't have it already
+                        generateSequence<KtElement>(retargetedReference) {
+                            it.parent as? KtQualifiedExpression ?: it.parent as? KtCallExpression ?: it.parent as? KtUserType
+                        }.last()
+                    } else retargetedReference
+                    if (usageInfo is Source && qualifiedReference != null) {
+                        qualifiedReference to newDeclaration
+                    } else null
+                }.filter { it.first.isValid }.toMap()  // imports can become invalid because they are removed when binding element
+            }.toMap()
+        }
+
+        private fun shortenUsages(qualifiedUsages: Map<PsiFile, Map<PsiElement, PsiNamedElement>>) {
+            qualifiedUsages.forEach { (file, usageMap) ->
+                if (file is KtFile) {
+                    shortenReferences(usageMap.keys.filterIsInstance<KtElement>())
                 }
             }
         }

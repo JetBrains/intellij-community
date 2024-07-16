@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.instrumentation
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.asString
 import org.jetbrains.annotations.ApiStatus
@@ -94,7 +93,6 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    * The old children of the parent will be removed from the storage if they have a not-null reference to the parent
    *
    *   If the reference to the parent is nullable, they'll remain in the storage but with null as parent.
-   *   ^^^ This behaviour is questionable. See IDEA-307409
    *
    * If any of child already has a parent, the link to this child will be removed from the old parent and added to the new one.
    *
@@ -104,7 +102,7 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    * @param parent The parent WorkspaceEntity whose children will be replaced.
    * @param newChildren The new list of WorkspaceEntities to replace the children with.
    */
-  public fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity, newChildren: List<WorkspaceEntity>)
+  public fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>, newChildren: List<WorkspaceEntity.Builder<out WorkspaceEntity>>)
 
   /**
    * Adds a child to the list of children of parent.
@@ -122,7 +120,12 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    * @param parent The parent WorkspaceEntity.
    * @param child The WorkspaceEntity to be added as a child.
    */
-  public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
+  public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>?, child: WorkspaceEntity.Builder<out WorkspaceEntity>)
+
+  public fun getOneChildBuilder(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): WorkspaceEntity.Builder<*>?
+  public fun getManyChildrenBuilders(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): Sequence<WorkspaceEntity.Builder<*>>
+
+  public fun getParentBuilder(connectionId: ConnectionId, child: WorkspaceEntity.Builder<*>): WorkspaceEntity.Builder<*>?
 }
 
 /**

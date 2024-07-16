@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.concurrency.ContextAwareRunnable;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -166,12 +167,15 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality) {
+    // Immediate check is buggy.
+    // JVM can run "postponed" code on other thread before this thread set `immediate` to `false`
     AtomicBoolean immediate = new AtomicBoolean(true);
     IdeEventQueue.getInstance().executeWhenAllFocusEventsLeftTheQueue((ContextAwareRunnable) () -> {
       if (immediate.get()) {
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
-          runnable.run();
+          // Even immediate code need explicit write-safe context, not implicit one
+          WriteIntentReadAction.run(runnable);
         }
       }
       else {

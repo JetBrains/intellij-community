@@ -3,9 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.ClippingRoundedPanel
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -30,6 +32,7 @@ import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -39,7 +42,7 @@ private const val EMPTY_GAP = 4
 
 internal object GHPRReviewSuggestedChangeComponentFactory {
   fun createIn(cs: CoroutineScope, vm: GHPRReviewCommentBodyViewModel, block: GHPRCommentBodyBlock.SuggestedChange): JComponent =
-    RoundedPanel(BorderLayout(), 8).apply {
+    ClippingRoundedPanel(8, CodeReviewCommentUIUtil.COMMENT_BUBBLE_BORDER_COLOR, BorderLayout()).apply {
       border = JBUI.Borders.compound(JBUI.Borders.empty(EMPTY_GAP, 0), border)
 
       val titleLabel = JBLabel(GithubBundle.message("pull.request.timeline.comment.suggested.changes")).apply {
@@ -82,7 +85,10 @@ internal object GHPRReviewSuggestedChangeComponentFactory {
       }
 
       add(topPanel, BorderLayout.NORTH)
-      add(SimpleHtmlPane(block.bodyHtml), BorderLayout.CENTER)
+      add(SimpleHtmlPane(addBrowserListener = false).apply {
+        addGithubHyperlinkListener(vm::openPullRequestInfoAndTimeline)
+        setHtmlBody(block.bodyHtml)
+      }, BorderLayout.CENTER)
     }
 
   private fun JBOptionButton.applyApplicability(applicability: GHPRCommentBodyBlock.SuggestionsApplicability) {

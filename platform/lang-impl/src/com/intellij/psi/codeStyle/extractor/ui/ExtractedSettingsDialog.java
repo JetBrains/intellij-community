@@ -37,12 +37,13 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Enumeration;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 public final class ExtractedSettingsDialog extends DialogWrapper {
-  private CodeStyleSettingsNameProvider myNameProvider;
-  private List<Value> myValues;
+  private final CodeStyleSettingsNameProvider myNameProvider;
+  private final List<Value> myValues;
   private DefaultMutableTreeNode myRoot;
 
   public ExtractedSettingsDialog(@Nullable Project project,
@@ -57,7 +58,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
   }
 
   @Override
-  protected @Nullable JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     return buildExtractedSettingsTree();
   }
 
@@ -82,12 +83,12 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
   }
 
   public static final class SettingsTreeNode extends DefaultMutableTreeNode {
-    private CodeStyleSettingPresentation myRepresentation;
+    private final CodeStyleSettingPresentation myRepresentation;
     private boolean accepted = true;
     private final @Nls String valueString;
     private final boolean isGroupNode;
     private final @Nls String customTitle;
-    private Value myValue;
+    private final Value myValue;
 
     public SettingsTreeNode(@Nls String valueString, CodeStyleSettingPresentation representation, boolean isGroupNode, Value value) {
       this(valueString, representation, isGroupNode, null, value);
@@ -132,7 +133,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
       }
 
       @Override
-      public Class getColumnClass() {
+      public Class<?> getColumnClass() {
         return TreeTableModel.class;
       }
     };
@@ -207,9 +208,9 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
           //propagate disabled settings upwards
           updateAncestorsUi(false, settingsParent);
         } else {
-          for (Enumeration children = parent.children(); children.hasMoreElements(); ) {
-            Object child = children.nextElement();
-            if ((child instanceof SettingsTreeNode) && !((SettingsTreeNode) child).accepted) return;
+          for (Enumeration<? extends TreeNode> children = parent.children(); children.hasMoreElements(); ) {
+            TreeNode child = children.nextElement();
+            if ((child instanceof SettingsTreeNode settingsTreeNode) && !settingsTreeNode.accepted) return;
           }
           settingsParent.accepted = true;
           updateAncestorsUi(true, settingsParent);
@@ -218,8 +219,8 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
     }
 
     private static void updateChildrenUi(SettingsTreeNode node) {
-      for (Enumeration children = node.children(); children.hasMoreElements(); ) {
-        Object child = children.nextElement();
+      for (Enumeration<TreeNode> children = node.children(); children.hasMoreElements(); ) {
+        TreeNode child = children.nextElement();
         if (child instanceof SettingsTreeNode settingsChild) {
           settingsChild.accepted = node.accepted;
           updateChildrenUi(settingsChild);
@@ -281,8 +282,6 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
   }
 
   private JComponent buildExtractedSettingsTree() {
-
-    Collection<Value> unusedValues = new HashSet<>(myValues);
     myRoot = new DefaultMutableTreeNode();
     for (Map.Entry<LanguageCodeStyleSettingsProvider.SettingsType,
       Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>>> typeEntry : myNameProvider.mySettings.entrySet()) {
@@ -299,13 +298,9 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
           }
           CodeStyleSettingPresentation headRep = representations.get(0);
           Value myValue = CodeStyleSettingsNameProvider.getValue(headRep, myValues);
-          if (myValue == null) {
-            //value was not found (was not selected)
-            groupNode = new SettingsTreeNode(headRep.getUiName());
-          } else {
-            groupNode = new SettingsTreeNode(headRep.getUiName());
+          groupNode = new SettingsTreeNode(headRep.getUiName());
+          if (myValue != null) {
             groupNode.add(new SettingsTreeNode(headRep.getValueUiName(myValue.value), headRep, true, myValue));
-            unusedValues.remove(myValue);
           }
         } else {
           children = representations;
@@ -317,7 +312,6 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
               groupNode = new SettingsTreeNode(group.name);
             }
             groupNode.add(new SettingsTreeNode(representation.getValueUiName(myValue.value), representation, false, myValue));
-            unusedValues.remove(myValue);
           }
         }
         if (groupNode != null && !groupNode.isLeaf()) {
@@ -332,59 +326,7 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
       }
     }
 
-    //TODO: for now, settings without UI presentation are not displayed. Do something about it.
-    //unusedValues = ContainerUtil.filter(unusedValues, new Condition<Value>(){
-    //  @Override
-    //  public boolean value(Value value) {
-    //    return value.state == Value.STATE.SELECTED;
-    //  }
-    //});
-    //
-    //DefaultMutableTreeNode unnamedNode = null;
-    //for (Value value: unusedValues) {
-    //  if (unnamedNode == null) {
-    //    unnamedNode = new SettingsTreeNode("Settings without UI representation");
-    //  }
-    //  unnamedNode.add(new SettingsTreeNode(value.value.toString(), null, false, value.name, value));
-    //}
-    //
-    //if (unnamedNode != null) {
-    //  myRoot.add(unnamedNode);
-    //}
-
-    final ColumnInfo[] COLUMNS = new ColumnInfo[]{getTitleColumnInfo(), getValueColumnInfo()};
-
-    ListTreeTableModel model = new ListTreeTableModel(myRoot, COLUMNS);
-    final TreeTable treeTable = new TreeTable(model) {
-      @Override
-      public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
-        TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
-        tableRenderer.setRootVisible(false);
-        tableRenderer.setShowsRootHandles(true);
-        return tableRenderer;
-      }
-
-      @Override
-      public TableCellRenderer getCellRenderer(int row, int column) {
-        TreePath treePath = getTree().getPathForRow(row);
-        if (treePath == null) return super.getCellRenderer(row, column);
-
-        Object node = treePath.getLastPathComponent();
-
-        TableCellRenderer renderer = COLUMNS[column].getRenderer(node);
-        return renderer == null ? super.getCellRenderer(row, column) : renderer;
-      }
-
-      @Override
-      public TableCellEditor getCellEditor(int row, int column) {
-        TreePath treePath = getTree().getPathForRow(row);
-        if (treePath == null) return super.getCellEditor(row, column);
-
-        Object node = treePath.getLastPathComponent();
-        TableCellEditor editor = COLUMNS[column].getEditor(node);
-        return editor == null ? super.getCellEditor(row, column) : editor;
-      }
-    };
+    final TreeTable treeTable = createTreeName();
     TreeTableSpeedSearch.installOn(treeTable).setComparator(new SpeedSearchComparator(false));
 
     treeTable.setRootVisible(false);
@@ -423,6 +365,42 @@ public final class ExtractedSettingsDialog extends DialogWrapper {
                                                   Math.min(screenSize.height / 2, treeTable.getPreferredSize().height));
     getRootPane().setPreferredSize(preferredSize);
     return scroller;
+  }
+
+  private @NotNull TreeTable createTreeName() {
+    final ColumnInfo[] COLUMNS = new ColumnInfo[]{getTitleColumnInfo(), getValueColumnInfo()};
+
+    ListTreeTableModel model = new ListTreeTableModel(myRoot, COLUMNS);
+    return new TreeTable(model) {
+      @Override
+      public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
+        TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
+        tableRenderer.setRootVisible(false);
+        tableRenderer.setShowsRootHandles(true);
+        return tableRenderer;
+      }
+
+      @Override
+      public TableCellRenderer getCellRenderer(int row, int column) {
+        TreePath treePath = getTree().getPathForRow(row);
+        if (treePath == null) return super.getCellRenderer(row, column);
+
+        Object node = treePath.getLastPathComponent();
+
+        TableCellRenderer renderer = COLUMNS[column].getRenderer(node);
+        return renderer == null ? super.getCellRenderer(row, column) : renderer;
+      }
+
+      @Override
+      public TableCellEditor getCellEditor(int row, int column) {
+        TreePath treePath = getTree().getPathForRow(row);
+        if (treePath == null) return super.getCellEditor(row, column);
+
+        Object node = treePath.getLastPathComponent();
+        TableCellEditor editor = COLUMNS[column].getEditor(node);
+        return editor == null ? super.getCellEditor(row, column) : editor;
+      }
+    };
   }
 
   final TreeCellRenderer myTitleRenderer = new CellRenderer();

@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class ConvertStringToMultilineIntention extends Intention {
+public final class ConvertStringToMultilineIntention extends Intention {
   private static final Logger LOG = Logger.getInstance(ConvertStringToMultilineIntention.class);
 
   @Override

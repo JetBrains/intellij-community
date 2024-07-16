@@ -15,10 +15,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -331,7 +328,8 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     }
   }
 
-  private static @Nls String getDefaultSearchScope() {
+  @ApiStatus.Internal
+  public static @Nls String getDefaultSearchScope() {
     return FindBundle.message("find.scope.all.project.classes");
   }
 }

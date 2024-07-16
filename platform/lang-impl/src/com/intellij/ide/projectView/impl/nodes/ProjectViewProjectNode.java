@@ -26,6 +26,11 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
+
+  @Override
   public boolean canRepresent(Object element) {
     Project project = getValue();
     return project == element || project != null && element instanceof VirtualFile && element.equals(project.getBaseDir());

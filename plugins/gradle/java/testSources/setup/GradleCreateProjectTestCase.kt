@@ -32,11 +32,13 @@ import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.ui.UIBundle
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -175,6 +177,23 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
       addVersion(version)
       withJavaPlugin()
       withJUnit()
+    }
+  }
+
+  override fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
+    filesConfiguration.withBuildFile(
+      useKotlinDsl = useKotlinDsl,
+      content = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl).apply(configure).generate()
+    )
+  }
+
+  fun assertBuildFiles(projectInfo: ProjectInfo) {
+    for (compositeInfo in projectInfo.composites) {
+      assertBuildFiles(compositeInfo)
+    }
+    for (moduleInfo in projectInfo.modules) {
+      val moduleRoot = testRoot.getDirectory(moduleInfo.relativePath)
+      moduleInfo.filesConfiguration.assertContentsAreEqual(moduleRoot)
     }
   }
 

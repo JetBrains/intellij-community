@@ -209,9 +209,8 @@ public class BuildView extends CompositeView<ExecutionConsole>
     }
 
     BuildProcessHandler processHandler = myBuildDescriptor.getProcessHandler();
-    if (myExecutionConsole instanceof ConsoleView) {
-      ConsoleView consoleView = (ConsoleView)myExecutionConsole;
-      if (consoleView != null && !(consoleView instanceof BuildTextConsoleView)) {
+    if (myExecutionConsole instanceof ConsoleView consoleView) {
+      if (!(consoleView instanceof BuildTextConsoleView)) {
         myBuildDescriptor.getExecutionFilters().forEach(consoleView::addMessageFilter);
       }
 
@@ -490,13 +489,13 @@ public class BuildView extends CompositeView<ExecutionConsole>
 
   @NotNull
   @Override
-  public AnAction[] getActions() {
+  public AnAction @NotNull[] getActions() {
     return myExecutionConsole instanceof RunContentActionsContributor c ? c.getActions() : AnAction.EMPTY_ARRAY;
   }
 
   @NotNull
   @Override
-  public AnAction[] getAdditionalActions() {
+  public AnAction @NotNull[] getAdditionalActions() {
     return myExecutionConsole instanceof RunContentActionsContributor c ? c.getAdditionalActions() : AnAction.EMPTY_ARRAY;
   }
 

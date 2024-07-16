@@ -48,24 +48,24 @@ internal class CommonPluginMapping : VSCodePluginMapping {
   // Note that the later files will override the data from the former.
   @Suppress("DEPRECATION")
   private fun getResourceMappings(): List<String> = when {
-    PlatformUtils.isAqua() -> listOf("general.json", "aq.json")
-    PlatformUtils.isCLion() -> listOf("general.json", "cl.json")
-    PlatformUtils.isDataGrip() -> listOf("general.json", "dg.json")
-    PlatformUtils.isDataSpell() -> listOf("general.json", "ds.json")
-    PlatformUtils.isGoIde() -> listOf("general.json", "go.json")
-    PlatformUtils.isPhpStorm() -> listOf("general.json", "ps.json")
-    PlatformUtils.isRider() -> listOf("general.json", "rd.json")
-    PlatformUtils.isRubyMine() -> listOf("general.json", "rm.json")
-    PlatformUtils.isRustRover() -> listOf("general.json", "rr.json")
-    PlatformUtils.isWebStorm() -> listOf("general.json", "ws.json")
+    PlatformUtils.isAqua() -> listOf("aq.json")
+    PlatformUtils.isCLion() -> listOf("cl.json")
+    PlatformUtils.isDataGrip() -> listOf("dg.json")
+    PlatformUtils.isDataSpell() -> listOf("ds.json")
+    PlatformUtils.isGoIde() -> listOf("go.json")
+    PlatformUtils.isPhpStorm() -> listOf("ps.json")
+    PlatformUtils.isRider() -> listOf("rd.json")
+    PlatformUtils.isRubyMine() -> listOf("rm.json")
+    PlatformUtils.isRustRover() -> listOf("rr.json")
+    PlatformUtils.isWebStorm() -> listOf("ws.json")
 
     // NOTE: order is important in this subsection
-    PlatformUtils.isIdeaUltimate() -> listOf("general.json", "ic.json", "iu.json")
-    PlatformUtils.isIntelliJ() -> listOf("general.json", "ic.json")
-    PlatformUtils.isPyCharmPro() -> listOf("general.json", "pc.json", "pp.json")
-    PlatformUtils.isPyCharm() -> listOf("general.json", "pc.json")
+    PlatformUtils.isIdeaUltimate() -> listOf("ic.json", "iu.json")
+    PlatformUtils.isIntelliJ() -> listOf("ic.json")
+    PlatformUtils.isPyCharmPro() -> listOf("pc.json", "pp.json")
+    PlatformUtils.isPyCharm() -> listOf("pc.json")
 
-    else -> listOf("general.json")
+    else -> listOf()
   }
 
   private val allPlugins by lazy {

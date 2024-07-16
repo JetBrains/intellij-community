@@ -2,12 +2,14 @@
 package org.jetbrains.jps.model.impl;
 
 import com.intellij.util.containers.FilteringIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
   private final List<E> myElements;
   private final Map<E, E> myCopyToOriginal;

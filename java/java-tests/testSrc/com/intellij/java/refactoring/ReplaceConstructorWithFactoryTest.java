@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -10,8 +10,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.modcommand.*;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21_ANNOTATED;
 
 public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase {
@@ -53,6 +51,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     LookupElement newMain = ContainerUtil.find(lookup.getItems(), l -> l.getLookupString().equals("newMain"));
     assertNotNull(newMain);
     ((LookupImpl)lookup).finishLookup('\n', newMain);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/refactoring/replaceConstructorWithFactory/afterWithSelection.java");
   }
 
@@ -60,12 +59,15 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
 
   public void testDefaultConstructor() { runTest("03", null); }
   public void testDefaultConstructorWithTypeParams() { runTest("TypeParams", null); }
+  public void testPreserveComments() { runTest(getTestName(false), null); }
 
   public void testInnerClass() { runTest("04", null); }
   
   public void testNestedClass() { runTest("NestedClass", "OuterClass"); }
   
   public void testNestedClass2() { runTest("NestedClass2", "InnerClass"); }
+  
+  public void testAnonymousInheritor() { runTest("AnonymousInheritor", "Inner"); }
 
   public void testSubclassVisibility() { runTest("05", null); }
 
@@ -123,6 +125,10 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
       return;
     }
     assertSize(1, modChooseAction.actions());
+  }
+  
+  public void testAnonymousUsage() {
+    
   }
 
   private void runTest(final String testIndex, @NonNls String targetClassName) {

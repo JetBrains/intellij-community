@@ -1,9 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+
+import java.util.Set;
+
 public class GenericTest extends IncrementalTestCase {
+  private static final Set<String> GRAPH_ONLY_TESTS = Set.of("implicitOverrideMethodSignatureChanged");
+
   public GenericTest() {
     super("generics");
+  }
+
+  @Override
+  protected boolean shouldRunTest() {
+    if (JavaBuilderUtil.isDepGraphEnabled()) {
+      return super.shouldRunTest();
+    }
+    return !GRAPH_ONLY_TESTS.contains(getTestName(true));
   }
 
   public void testAddMethodToBase() {
@@ -140,5 +154,9 @@ public class GenericTest extends IncrementalTestCase {
 
   public void testArgumentContainment3() {
     doTest();
+  }
+
+  public void testImplicitOverrideMethodSignatureChanged() {
+    doTest().assertFailed();
   }
 }

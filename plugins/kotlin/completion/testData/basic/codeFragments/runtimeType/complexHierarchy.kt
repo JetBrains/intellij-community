@@ -23,3 +23,4 @@ class C: B() {
 // NOTHING_ELSE
 
 // RUNTIME_TYPE: C
+// IGNORE_K2

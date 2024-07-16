@@ -85,7 +85,7 @@ class JBCefOsrComponent extends JPanel {
 
   public void setRenderHandler(@NotNull JBCefOsrHandler renderHandler) {
     myRenderHandler = renderHandler;
-    myRenderHandler.addCarriageListener(myInputMethodAdapter);
+    myRenderHandler.addCaretListener(myInputMethodAdapter);
   }
 
   @Override
@@ -95,7 +95,7 @@ class JBCefOsrComponent extends JPanel {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     myWheelEventsAccumulator = new MouseWheelEventsAccumulator(myDisposable);
 
-    if (!JBCefBrowserBase.isCefBrowserCreated(myBrowser)) {
+    if (!JBCefBrowserBase.isCefBrowserCreationStarted(myBrowser)) {
       myBrowser.createImmediately();
     }
   }
@@ -337,7 +337,7 @@ class JBCefOsrComponent extends JPanel {
       return e1.getComponent() == e2.getComponent() &&
              e1.getID() == e2.getID() &&
              e1.getModifiersEx() == e2.getModifiersEx() &&
-             e1.isPopupTrigger() == e1.isPopupTrigger() &&
+             e1.isPopupTrigger() == e2.isPopupTrigger() &&
              e1.getScrollType() == e2.getScrollType() &&
              distance < TOLERANCE;
     }

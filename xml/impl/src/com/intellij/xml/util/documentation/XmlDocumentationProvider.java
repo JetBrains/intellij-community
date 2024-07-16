@@ -371,9 +371,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
         // The very special case of xml file
         final PsiFile containingFile = xmlTag.getContainingFile();
-        final XmlFile xmlFile = XmlUtil.getContainingFile(xmlTag);
-        if (xmlFile != containingFile) {
-          final XmlTag rootTag = xmlFile.getDocument().getRootTag();
+        @Nullable XmlFile xmlFile = XmlUtil.getContainingFile(xmlTag);
+        if (xmlFile != null && xmlFile != containingFile) {
+          final XmlTag rootTag = xmlFile.getRootTag();
           if (rootTag != null) {
             final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(rootTag.getNamespaceByPrefix(namespacePrefix), true);
             elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(tagFromText) : null;
@@ -424,14 +424,12 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         new PsiElementProcessor() {
           @Override
           public boolean execute(final @NotNull PsiElement element) {
-            if (element instanceof XmlEntityDecl) {
-              final XmlEntityDecl entityDecl = (XmlEntityDecl)element;
+            if (element instanceof XmlEntityDecl entityDecl) {
               if (entityDecl.isInternalReference() && name.equals(entityDecl.getName())) {
                 result[0] = entityDecl;
                 return false;
               }
-            } else if (element instanceof XmlElementDecl) {
-              final XmlElementDecl entityDecl = (XmlElementDecl)element;
+            } else if (element instanceof XmlElementDecl entityDecl) {
               if (name.equals(entityDecl.getName())) {
                 result[0] = entityDecl;
                 return false;
@@ -459,7 +457,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     @Override
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof XmlTag tag &&
-          ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
+          tag.getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
       ) {
         result = tag.getValue().getText().trim();
         boolean withCData = false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.smartstepinto;
 
 import com.google.common.collect.ImmutableSet;
@@ -10,7 +10,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
-import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,14 +19,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
-  @NotNull @NonNls private static final ImmutableSet<String> BUILTINS_MODULES = ImmutableSet.of("builtins.py", "__builtin__.py");
+  private static final @NotNull @NonNls ImmutableSet<String> BUILTINS_MODULES = ImmutableSet.of("builtins.py", "__builtin__.py");
 
   int myVariantIndex = -1;
-  @NotNull private final List<PySmartStepIntoVariant> myCollector;
-  @NotNull private final List<Pair<String, Boolean>> myVariantsFromPython;
-  @NotNull private final PySmartStepIntoContext myContext;
-  @NotNull private final Map<String, Integer> mySeenVariants = Maps.newHashMap();
-  @NotNull private final Set<PsiElement> alreadyVisited = new HashSet<>();
+  private final @NotNull List<PySmartStepIntoVariant> myCollector;
+  private final @NotNull List<Pair<String, Boolean>> myVariantsFromPython;
+  private final @NotNull PySmartStepIntoContext myContext;
+  private final @NotNull Map<String, Integer> mySeenVariants = Maps.newHashMap();
+  private final @NotNull Set<PsiElement> alreadyVisited = new HashSet<>();
 
   public PySmartStepIntoVariantVisitor(@NotNull List<PySmartStepIntoVariant> collector,
                                        @NotNull List<Pair<String, Boolean>> variantsFromPython,

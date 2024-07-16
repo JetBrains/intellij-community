@@ -72,7 +72,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isWhiteSpaceO
 /**
  * @author Maxim.Medvedev
  */
-public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProcessor {
+public final class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProcessor {
   private static final Logger LOG =
     Logger.getInstance(GrChangeSignatureUsageProcessor.class);
 
@@ -696,7 +696,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return !StringUtil.isEmpty(value) ? factory.createExpressionFromText(value, list) : null;
   }
 
-  protected static boolean forceOptional(JavaParameterInfo parameter) {
+  private static boolean forceOptional(JavaParameterInfo parameter) {
     return parameter instanceof GrParameterInfo && ((GrParameterInfo)parameter).forceOptional();
   }
 

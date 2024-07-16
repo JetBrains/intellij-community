@@ -13,6 +13,12 @@ import com.intellij.ui.EditorNotifications
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
+/**
+ * Provides a suggestion to install a plugin in the editor based on the file properties and content, usually required in cases when standard
+ * file type and dependency support mappings cannot be applied.
+ *
+ * Implemented only by bundled IDE plugins, must not be used outside of distribution.
+ */
 @ApiStatus.Internal
 interface PluginSuggestionProvider {
   fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion?
@@ -60,9 +66,11 @@ fun buildSuggestionIfNeeded(project: Project,
                             suggestionDismissKey: String): PluginSuggestion? {
   if (PropertiesComponent.getInstance().isTrueValue(suggestionDismissKey)) return null
 
+  val enabledPlugins = PluginManager.getLoadedPlugins()
   val requiredPluginIds = pluginIds.filter { id ->
     val requiredPluginId = PluginId.getId(id)
-    !PluginManager.isPluginInstalled(requiredPluginId)
+    val isEnabled = enabledPlugins.any { it.pluginId == requiredPluginId }
+    !isEnabled
   }
 
   if (requiredPluginIds.isEmpty()) return null

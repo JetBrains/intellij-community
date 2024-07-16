@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -16,19 +17,19 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -38,7 +39,6 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.impl.CustomComponentEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -50,6 +50,7 @@ import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopup;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -59,7 +60,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -109,7 +109,7 @@ public final class DebuggerUIUtil {
       popup.addListener(new JBPopupListener() {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
-          Window window = popup.isDisposed()  ? null : ComponentUtil.getWindow(popup.getContent());
+          Window window = popup.isDisposed() ? null : ComponentUtil.getWindow(popup.getContent());
           if (window != null) {
             Point expected = point.getScreenPoint();
             Rectangle screen = ScreenUtil.getScreenRectangle(expected);
@@ -135,49 +135,17 @@ public final class DebuggerUIUtil {
                                     @NotNull MouseEvent event,
                                     @NotNull Project project,
                                     @Nullable Editor editor) {
-    if (evaluator instanceof CustomComponentEvaluator customComponentEvaluator) {
-      customComponentEvaluator.show(event, project, editor);
-    }
-    else {
-      EditorTextField textArea = createTextViewer(XDebuggerUIConstants.getEvaluatingExpressionMessage(), project);
-      final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
-      showValuePopup(event, project, editor, textArea, callback::setObsolete);
-      evaluator.startEvaluation(callback); /*to make it really cancellable*/
-    }
-  }
-
-   static void showValuePopup(@NotNull MouseEvent event,
-                                    @NotNull Project project,
-                                    @Nullable Editor editor,
-                                    JComponent component,
-                                    @Nullable Runnable cancelCallback) {
-
-    Dimension size = DimensionService.getInstance().getSize(FULL_VALUE_POPUP_DIMENSION_KEY, project);
-    if (size == null) {
-      Dimension frameSize = Objects.requireNonNull(WindowManager.getInstance().getFrame(project)).getSize();
-      size = new Dimension(frameSize.width / 2, frameSize.height / 2);
-    }
-
-    component.setPreferredSize(size);
-
-    JBPopup popup = createValuePopup(project, component, cancelCallback);
-    if (editor == null) {
-      Rectangle bounds = new Rectangle(event.getLocationOnScreen(), size);
-      ScreenUtil.fitToScreenVertical(bounds, 5, 5, true);
-      if (size.width != bounds.width || size.height != bounds.height) {
-        size = bounds.getSize();
-        component.setPreferredSize(size);
-      }
-      popup.showInScreenCoordinates(event.getComponent(), bounds.getLocation());
-    }
-    else {
-      popup.showInBestPositionFor(editor);
-    }
+    VisualizedTextPopup.INSTANCE.evaluateAndShowValuePopup(evaluator, event, project, editor);
   }
 
   @ApiStatus.Experimental
   public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project) {
-    TextViewer textArea = new TextViewer(initialText, project);
+    return createTextViewer(initialText, project, FileTypes.PLAIN_TEXT);
+  }
+
+  @ApiStatus.Experimental
+  public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project, FileType fileType) {
+    TextViewer textArea = new TextViewer(initialText, project, fileType);
     textArea.setBackground(HintUtil.getInformationColor());
 
     textArea.addSettingsProvider(e -> {
@@ -188,25 +156,6 @@ public final class DebuggerUIUtil {
     return textArea;
   }
 
-  @NotNull
-  private static FullValueEvaluationCallbackImpl startEvaluation(@NotNull TextViewer textViewer,
-                                                                 @NotNull XFullValueEvaluator evaluator,
-                                                                 @Nullable Runnable afterFullValueEvaluation) {
-    FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textViewer) {
-      @Override
-      public void evaluated(@NotNull String fullValue) {
-        super.evaluated(fullValue);
-        AppUIUtil.invokeOnEdt(() -> {
-          if (afterFullValueEvaluation != null) {
-            afterFullValueEvaluation.run();
-          }
-        });
-      }
-    };
-    evaluator.startEvaluation(callback);
-    return callback;
-  }
-
   @ApiStatus.Experimental
   public static ComponentPopupBuilder createTextViewerPopupBuilder(@NotNull JComponent popupContent,
                                                                    @NotNull TextViewer textViewer,
@@ -214,15 +163,44 @@ public final class DebuggerUIUtil {
                                                                    @NotNull Project project,
                                                                    @Nullable Runnable afterFullValueEvaluation,
                                                                    @Nullable Runnable hideRunnable) {
-    final @NotNull FullValueEvaluationCallbackImpl callback = startEvaluation(textViewer, evaluator, afterFullValueEvaluation);
+
+    AtomicBoolean evaluationObsolete = new AtomicBoolean(false);
+    var callback = new XFullValueEvaluator.XFullValueEvaluationCallback() {
+      @Override
+      public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
+        AppUIUtil.invokeOnEdt(() -> {
+          textViewer.setText(fullValue);
+          if (font != null) {
+            textViewer.setFont(font);
+          }
+          if (afterFullValueEvaluation != null) {
+            afterFullValueEvaluation.run();
+          }
+        });
+      }
+
+      @Override
+      public void errorOccurred(@NotNull final String errorMessage) {
+        AppUIUtil.invokeOnEdt(() -> {
+          textViewer.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
+          textViewer.setText(errorMessage);
+        });
+      }
+
+      @Override
+      public boolean isObsolete() {
+        return evaluationObsolete.get();
+      }
+    };
 
     Runnable cancelCallback = () -> {
-      callback.setObsolete();
+      evaluationObsolete.set(true);
       if (hideRunnable != null) {
         hideRunnable.run();
       }
     };
 
+    evaluator.startEvaluation(callback);
     return createCancelablePopupBuilder(project, popupContent, textViewer, cancelCallback, null);
   }
 
@@ -233,10 +211,10 @@ public final class DebuggerUIUtil {
   }
 
   private static ComponentPopupBuilder createCancelablePopupBuilder(Project project,
-                                               JComponent component,
-                                               JComponent preferableFocusComponent,
-                                               @Nullable Runnable cancelCallback,
-                                               @Nullable String dimensionKey) {
+                                                                    JComponent component,
+                                                                    JComponent preferableFocusComponent,
+                                                                    @Nullable Runnable cancelCallback,
+                                                                    @Nullable String dimensionKey) {
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, preferableFocusComponent);
     builder.setResizable(true)
       .setMovable(true)
@@ -337,7 +315,7 @@ public final class DebuggerUIUtil {
       .setBlockClicksThroughBalloon(true);
 
     Color borderColor = UIManager.getColor("DebuggerPopup.borderColor");
-    if (borderColor != null ) {
+    if (borderColor != null) {
       builder.setBorderColor(borderColor);
     }
 
@@ -404,47 +382,6 @@ public final class DebuggerUIUtil {
   @NotNull
   public static EditorColorsScheme getColorScheme(@Nullable JComponent component) {
     return EditorColorsUtil.getColorSchemeForComponent(component);
-  }
-
-  private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {
-    private final AtomicBoolean myObsolete = new AtomicBoolean(false);
-    private final EditorTextField myTextArea;
-
-    FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
-      myTextArea = textArea;
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue) {
-      evaluated(fullValue, null);
-    }
-
-    @Override
-    public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
-      AppUIUtil.invokeOnEdt(() -> {
-        myTextArea.setText(fullValue);
-        if (font != null) {
-          myTextArea.setFont(font);
-        }
-      });
-    }
-
-    @Override
-    public void errorOccurred(@NotNull final String errorMessage) {
-      AppUIUtil.invokeOnEdt(() -> {
-        myTextArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
-        myTextArea.setText(errorMessage);
-      });
-    }
-
-    private void setObsolete() {
-      myObsolete.set(true);
-    }
-
-    @Override
-    public boolean isObsolete() {
-      return myObsolete.get();
-    }
   }
 
   @Nullable
@@ -599,5 +536,20 @@ public final class DebuggerUIUtil {
     else {
       e.getPresentation().setVisible(enable);
     }
+  }
+
+  public static boolean shouldUseAntiFlickeringPanel() {
+    return !ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0;
+  }
+
+  public static boolean freezePaintingToReduceFlickering(@Nullable Component component) {
+    if (component instanceof AntiFlickeringPanel antiFlickeringPanel) {
+      int delay = Registry.intValue("debugger.anti.flickering.delay", 0);
+      if (delay > 0) {
+        antiFlickeringPanel.freezePainting(delay);
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -27,8 +27,7 @@ public final class Util {
 
   @Nullable
   public static PsiElement normalizeElement(final PsiElement element) {
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    if (element instanceof PsiMethod method) {
       final PsiType initialMethodReturnType = method.getReturnType();
       if (initialMethodReturnType == null) {
         return null;

@@ -1,5 +1,5 @@
 // "Surround with null check" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (x!!) call
 // ACTION: Convert property getter to initializer
 // ACTION: Convert to block body
 // ACTION: Introduce local variable

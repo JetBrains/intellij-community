@@ -1,21 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentPosixApi
+import com.intellij.platform.ijent.bindToScope
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
-import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 @VisibleForTesting
 class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentManager {
-  private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
+  private val myCache: MutableMap<String, SuspendingLazy<IjentPosixApi>> = ConcurrentHashMap()
 
   override val isIjentAvailable: Boolean
     get() = WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()
@@ -23,7 +24,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   @DelicateCoroutinesApi
   override val processAdapterScope: CoroutineScope = scope
 
-  override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
+  override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
     return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
       val validOldHolder = when (oldHolder?.isInitialized()) {
         true -> {
@@ -44,7 +45,9 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
       }
 
       validOldHolder ?: scope.suspendingLazy(CoroutineName("IJent on WSL $wslDistribution")) {
-        deployAndLaunchIjent(project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
+        val ijent = deployAndLaunchIjent(project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
+        ijent.bindToScope(scope)
+        ijent
       }
     }!!.getValue()
   }

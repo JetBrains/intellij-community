@@ -19,10 +19,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -149,6 +150,7 @@ class KtScratchExecutionSession(
         backgroundProcessIndicator?.cancel()
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun compileFileToTempDir(psiFile: KtFile, expressions: List<ScratchExpression>): File? {
         if (!executor.checkForErrors(psiFile, expressions)) return null
 
@@ -166,8 +168,8 @@ class KtScratchExecutionSession(
             }
 
             try {
-                val compilerTarget = KtCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
-                val allowedErrorFilter: (KtDiagnostic) -> Boolean = { false }
+                val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
+                val allowedErrorFilter: (KaDiagnostic) -> Boolean = { false }
 
                 compileToDirectory(psiFile, configuration, compilerTarget, allowedErrorFilter, tmpDir)
             } catch (e: ProcessCanceledException) {
@@ -179,11 +181,11 @@ class KtScratchExecutionSession(
         }
 
         when (result) {
-            is KtCompilationResult.Failure -> {
+            is KaCompilationResult.Failure -> {
                 LOG.warn("Errors found on analyzing the scratch file. Compilation aborted")
                 return null
             }
-            is KtCompilationResult.Success -> {
+            is KaCompilationResult.Success -> {
                 return tmpDir
             }
         }

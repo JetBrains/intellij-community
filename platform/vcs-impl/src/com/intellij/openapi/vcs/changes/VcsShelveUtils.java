@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,8 +56,7 @@ public final class VcsShelveUtils {
     // Refresh files that might be affected by unshelve
     refreshFilesBeforeUnshelve(projectPath, changes, binaryFiles);
 
-    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
-    // we pass null as target change list for Patch Applier to do NOTHING with change lists
+    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList + " into " + targetChangeList);
     ApplyPatchStatus status = shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
                                                                true, leftConflictTitle, rightConflictTitle, true,
                                                                reportLocalHistoryActivity);

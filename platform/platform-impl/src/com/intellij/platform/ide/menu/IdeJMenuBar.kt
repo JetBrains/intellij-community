@@ -116,6 +116,13 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
     return if (uiSettings.showMainToolbar || uiSettings.showNavigationBar) super.getBorder() else null
   }
 
+  /**
+   * We override [paint] and [paintChildren] in [IdeMenuBarState.COLLAPSED] state
+   */
+  override fun isPaintingOrigin(): Boolean {
+    return true
+  }
+
   override fun paint(g: Graphics) {
     // otherwise, there will be a 1px line on top
     if (menuBarHelper.flavor.state != IdeMenuBarState.COLLAPSED) {

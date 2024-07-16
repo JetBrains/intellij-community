@@ -30,7 +30,7 @@ import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.BUILTIN_MODULE_DATA_SERVICE_ORDER + 1)
-public class GradleSourceSetDataService extends AbstractModuleDataService<GradleSourceSetData> {
+public final class GradleSourceSetDataService extends AbstractModuleDataService<GradleSourceSetData> {
 
   @NotNull
   @Override

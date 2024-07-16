@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
+
 package com.intellij.vcs.log.data.index
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -21,6 +23,7 @@ import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickCommits
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickIndexedCommits
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.TimeUnit
 
 internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,

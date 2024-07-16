@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
+import org.jetbrains.annotations.ApiStatus
 
 class InsertInlineCompletionAction : EditorAction(InsertInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
   class InsertInlineCompletionHandler : EditorWriteActionHandler() {
@@ -91,6 +92,45 @@ class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), 
 
       val listener = InlineCompletion.getHandlerOrNull(editor) ?: return
       listener.invoke(InlineCompletionEvent.DirectCall(editor, curCaret, dataContext))
+    }
+  }
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+class InsertInlineCompletionWordAction : EditorAction(Handler()), HintManagerImpl.ActionToIgnore {
+  private class Handler : EditorWriteActionHandler() {
+    override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+      // TODO call insert if possible
+      if (InlineCompletionSession.getOrNull(editor) != null) {
+        val event = InlineCompletionEvent.InsertNextWord(editor)
+        InlineCompletion.getHandlerOrNull(editor)?.invokeEvent(event)
+      }
+    }
+
+    override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+      return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
+    }
+  }
+}
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+class InsertInlineCompletionLineAction : EditorAction(Handler()), HintManagerImpl.ActionToIgnore {
+  private class Handler : EditorWriteActionHandler() {
+    override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+      val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
+      val session = InlineCompletionSession.getOrNull(editor) ?: return
+      if (!session.context.textToInsert().any { it == '\n' }) {
+        handler.insert()
+      }
+      else {
+        handler.invokeEvent(InlineCompletionEvent.InsertNextLine(editor))
+      }
+    }
+
+    override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+      return InlineCompletionContext.getOrNull(editor)?.startOffset() == caret.offset
     }
   }
 }

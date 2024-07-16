@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -21,6 +21,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class ReplaceConstructorWithFactoryAction implements ModCommandAction {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method");
   }
 
@@ -75,8 +75,9 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     performRefactoring(constructorOrClass, cls, usages, updater);
   }
 
-  private static @PsiModifier.ModifierConstant String getMinimalAccessLevel(@NotNull PsiMember member,
-                                                                            @NotNull List<@NotNull PsiElement> places) {
+  @PsiModifier.ModifierConstant
+  private static String getMinimalAccessLevel(@NotNull PsiMember member,
+                                              @NotNull List<@NotNull PsiElement> places) {
     String[] levels = {PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED};
     PsiClass containingClass = member.getContainingClass();
     for (String level : levels) {
@@ -115,9 +116,11 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
 
     for (PsiNewExpression newExpression : writableUsages) {
       var factoryCall = (PsiMethodCallExpression)factory.createExpressionFromText(factoryName + "()", newExpression);
-      factoryCall.getArgumentList().replace(Objects.requireNonNull(newExpression.getArgumentList()));
+      CommentTracker ct = new CommentTracker();
+      
+      factoryCall.getArgumentList().replace(Objects.requireNonNull(ct.markUnchanged(newExpression.getArgumentList())));
 
-      PsiExpression newQualifier = newExpression.getQualifier();
+      PsiExpression newQualifier = ct.markUnchanged(newExpression.getQualifier());
 
       PsiReferenceExpression factoryCallRef = factoryCall.getMethodExpression();
       PsiElement resolvedFactoryMethod = factoryCallRef.resolve();
@@ -127,7 +130,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
         Objects.requireNonNull(factoryCallRef.getQualifierExpression()).replace(qualifier);
       }
 
-      newExpression.replace(factoryCall);
+      ct.replaceAndRestoreComments(newExpression, factoryCall);
     }
     updater.rename(factoryMethod, names);
   }
@@ -209,13 +212,10 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       if (element.getParent() instanceof PsiNewExpression newExpression) {
         newUsages.add(newExpression);
       }
-      else if ("super".equals(element.getText()) || "this".equals(element.getText())) {
-        otherUsages.add(element);
-      }
-      else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-        otherUsages.add(element);
-      }
-      else if (element instanceof PsiClass) {
+      else if (element.getParent() instanceof PsiAnonymousClass || 
+               "super".equals(element.getText()) || "this".equals(element.getText()) ||
+               element instanceof PsiMethod method && method.isConstructor() ||
+               element instanceof PsiClass) {
         otherUsages.add(element);
       }
     }
@@ -226,8 +226,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method.title");
   }
 
-  @Nullable
-  private static PsiMember getConstructorOrClass(@Nullable PsiElement element) {
+  private static @Nullable PsiMember getConstructorOrClass(@Nullable PsiElement element) {
     if (element == null) return null;
     PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null) {

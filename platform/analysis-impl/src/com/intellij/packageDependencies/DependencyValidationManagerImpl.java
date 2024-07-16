@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -8,12 +8,10 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.*;
-import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -30,9 +28,6 @@ import java.util.*;
   storages = @Storage(value = "scopes", stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)
 )
 public final class DependencyValidationManagerImpl extends DependencyValidationManager {
-  private static final Icon ourSharedScopeIcon = IconLoader.createLazy(() -> {
-    return IconManager.getInstance().createLayered(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
-  });
 
   private static final class State {
     private final List<DependencyRule> rules = new ArrayList<>();
@@ -166,7 +161,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
 
   @Override
   public Icon getIcon() {
-    return ourSharedScopeIcon;
+    return AllIcons.Ide.SharedScope;
   }
 
   @Override

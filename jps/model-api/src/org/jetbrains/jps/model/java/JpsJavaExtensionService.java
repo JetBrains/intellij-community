@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -50,27 +51,32 @@ public abstract class JpsJavaExtensionService {
 
   protected abstract JpsJavaDependenciesEnumerator enumerateDependencies(JpsModule module);
 
+  @ApiStatus.Internal
   @NotNull
   public abstract JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project);
 
   @Nullable
   public abstract JpsJavaProjectExtension getProjectExtension(@NotNull JpsProject project);
 
+  @ApiStatus.Internal
   @NotNull
   public abstract JpsJavaModuleExtension getOrCreateModuleExtension(@NotNull JpsModule module);
 
   @Nullable
   public abstract JpsJavaModuleExtension getModuleExtension(@NotNull JpsModule module);
 
+  @ApiStatus.Internal
   @NotNull
   public abstract JpsJavaDependencyExtension getOrCreateDependencyExtension(@NotNull JpsDependencyElement dependency);
 
   @Nullable
   public abstract JpsJavaDependencyExtension getDependencyExtension(@NotNull JpsDependencyElement dependency);
 
+  @ApiStatus.Internal
   @Nullable
   public abstract ExplodedDirectoryModuleExtension getExplodedDirectoryExtension(@NotNull JpsModule module);
 
+  @ApiStatus.Internal
   @NotNull
   public abstract ExplodedDirectoryModuleExtension getOrCreateExplodedDirectoryExtension(@NotNull JpsModule module);
 
@@ -86,6 +92,7 @@ public abstract class JpsJavaExtensionService {
   @Nullable
   public abstract File getOutputDirectory(JpsModule module, boolean forTests);
 
+  @ApiStatus.Internal
   public abstract JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath);
 
   @NotNull
@@ -94,8 +101,10 @@ public abstract class JpsJavaExtensionService {
   @Nullable
   public abstract JpsTestModuleProperties getTestModuleProperties(@NotNull JpsModule module);
 
+  @ApiStatus.Internal
   public abstract void setTestModuleProperties(@NotNull JpsModule module, @NotNull JpsModuleReference productionModuleReference);
 
+  @ApiStatus.Internal
   @NotNull
   public abstract JpsSdkReference<JpsDummyElement> createWrappedJavaSdkReference(@NotNull JpsJavaSdkTypeWrapper sdkType,
                                                                                  @NotNull JpsSdkReference<?> wrapperReference);

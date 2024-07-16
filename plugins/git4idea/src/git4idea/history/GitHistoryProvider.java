@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -14,17 +14,19 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
+import com.intellij.vcs.log.ui.actions.ShowCommitInLogAction;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitObjectType;
-import git4idea.log.GitShowCommitInLogAction;
+import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +55,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
 
   @Override
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
-    return new VcsDependentHistoryComponents(ColumnInfo.EMPTY_ARRAY, null, null,
-                                             GitHistoryNotificationPanel.create(myProject, session));
+    return VcsDependentHistoryComponents.createOnlyColumns(ColumnInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -62,7 +63,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     return new AnAction[]{
       ShowAllAffectedGenericAction.getInstance(),
       ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER),
-      new GitShowCommitInLogAction()};
+      new ShowCommitInLogAction()};
   }
 
   @Override
@@ -102,17 +103,30 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
-  public boolean getBaseVersionContent(FilePath filePath, Processor<? super String> processor, String beforeVersionId) throws VcsException {
+  public boolean getBaseVersionContent(@NotNull FilePath filePath,
+                                       @NotNull Processor<? super @NotNull String> processor,
+                                       @NotNull String beforeVersionId) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
+    if (!GitUtil.isHashString(beforeVersionId, false)) return false;
+
     // apply if base revision id matches revision
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(filePath);
     if (repository == null) return false;
 
     GitObjectType objectType = Git.getInstance().getObjectTypeEnum(repository, beforeVersionId);
-    if (!GitObjectType.COMMIT.equals(objectType)) return false;
-
-    final ContentRevision content = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
-    return !processor.process(content.getContent());
+    if (GitObjectType.COMMIT.equals(objectType)) {
+      ContentRevision contentRevision = GitContentRevision.createRevision(filePath, new GitRevisionNumber(beforeVersionId), myProject);
+      String content = contentRevision.getContent();
+      return content != null && !processor.process(content);
+    }
+    else if (GitObjectType.BLOB.equals(objectType)) {
+      byte[] bytes = GitIndexUtil.read(repository, beforeVersionId);
+      String content = ContentRevisionCache.getAsString(bytes, filePath, null);
+      return !processor.process(content);
+    }
+    else {
+      return false;
+    }
   }
 
   @Override
@@ -132,6 +146,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     GitFileHistory.loadHistory(myProject, path, startingRevision,
                                fileRevision -> partner.acceptRevision(fileRevision),
                                exception -> partner.reportException(exception),
+                               rename -> { },
                                additionalArgs);
   }
 

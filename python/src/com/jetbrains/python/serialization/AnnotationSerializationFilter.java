@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class AnnotationSerializationFilter extends SerializationFilterBase {
   @Override
-  protected boolean accepts(@NotNull final Accessor accessor, @NotNull final Object bean, @Nullable final Object beanValue) {
+  protected boolean accepts(final @NotNull Accessor accessor, final @NotNull Object bean, final @Nullable Object beanValue) {
     return accessor.getAnnotation(Property.class) != null
            || accessor.getAnnotation(Tag.class) != null
            || accessor.getAnnotation(Attribute.class) != null;

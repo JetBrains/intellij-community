@@ -37,7 +37,7 @@ fun FlowOrPhrasingContent.toCorrectHtml(example: IncorrectExample) {
   toHtml(example) { mistake ->
     if (example.corrections.isNotEmpty()) {
       strong {
-        +example.corrections.first()
+        +example.corrections.joinToString(separator = " / ")
       }
     }
   }

@@ -60,13 +60,13 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     val importingSettings = manager.importingSettings
     usages.add(LOOK_FOR_NESTED.metric(importingSettings.isLookForNested))
 
-    usages.add(USE_WORKSPACE_IMPORT.metric(importingSettings.isWorkspaceImportEnabled))
-    usages.add(DEDICATED_MODULE_DIR.metric(importingSettings.dedicatedModuleDir.isNotBlank()))
+    usages.add(USE_WORKSPACE_IMPORT.metric(true))
+    usages.add(DEDICATED_MODULE_DIR.metric(false))
     usages.add(STORE_PROJECT_FILES_EXTERNALLY.metric(ExternalStorageConfigurationManager.getInstance(project).isEnabled))
     usages.add(IS_DIRECTORY_BASED_PROJECT.metric(project.isDirectoryBased))
     usages.add(AUTO_DETECT_COMPILER.metric(importingSettings.isAutoDetectCompiler))
-    usages.add(CREATE_MODULES_FOR_AGGREGATORS.metric(importingSettings.isCreateModulesForAggregators))
-    usages.add(KEEP_SOURCE_FOLDERS.metric(importingSettings.isKeepSourceFolders))
+    usages.add(CREATE_MODULES_FOR_AGGREGATORS.metric(true))
+    usages.add(KEEP_SOURCE_FOLDERS.metric(true))
     usages.add(EXCLUDE_TARGET_FOLDER.metric(importingSettings.isExcludeTargetFolder))
     usages.add(USE_MAVEN_OUTPUT.metric(importingSettings.isUseMavenOutput))
 

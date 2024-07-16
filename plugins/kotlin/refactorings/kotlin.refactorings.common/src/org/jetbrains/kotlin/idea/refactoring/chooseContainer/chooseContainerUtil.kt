@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.base.util.collapseSpaces
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.*
 import javax.swing.Icon
 
@@ -38,23 +37,26 @@ fun <T> chooseContainerElementIfNecessary(
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     toPsi: (T) -> PsiElement,
     onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, toPsi, onSelect)
+): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, selection, toPsi, onSelect)
 
 fun <T : PsiElement> chooseContainerElementIfNecessary(
     containers: List<T>,
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     onSelect: (T) -> Unit
-): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, null, onSelect)
+): Unit = chooseContainerElementIfNecessaryImpl(containers, editor, title, highlightSelection, selection, null, onSelect)
 
 private fun <T> chooseContainerElementIfNecessaryImpl(
     containers: List<T>,
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     toPsi: ((T) -> PsiElement)?,
     onSelect: (T) -> Unit
 ) {
@@ -64,7 +66,7 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
         toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
         else -> {
             @Suppress("UNCHECKED_CAST")
-            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, onSelect as (PsiElement) -> Unit)
+            chooseContainerElement(containers as List<PsiElement>, editor, title, highlightSelection, selection as PsiElement?, onSelect = onSelect as (PsiElement)->Unit)
         }
     }
 }
@@ -93,12 +95,14 @@ private fun <T : PsiElement> chooseContainerElement(
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: T? = null,
     onSelect: (T) -> Unit
 ): Unit = choosePsiContainerElement(
     elements = elements,
     editor = editor,
     title = title,
     highlightSelection = highlightSelection,
+    selection = selection,
     psi2Container = { it },
     onSelect = onSelect,
 )
@@ -108,6 +112,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
     editor: Editor,
     @NlsContexts.PopupTitle title: String,
     highlightSelection: Boolean,
+    selection: E? = null,
     psi2Container: (E) -> T,
     onSelect: (T) -> Unit,
 ) {
@@ -117,6 +122,7 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
         popupPresentationProvider(),
         title,
         highlightSelection,
+        selection,
     ) { psiElement ->
         @Suppress("UNCHECKED_CAST")
         onSelect(psi2Container(psiElement as E))
@@ -134,12 +140,14 @@ private fun <T : PsiElement> getPsiElementPopup(
     presentationProvider: TargetPresentationProvider<T>,
     @NlsContexts.PopupTitle title: String?,
     highlightSelection: Boolean,
+    selection: T? = null,
     processor: (T) -> Boolean
 ): JBPopup {
     val project = elements.firstOrNull()?.project ?: throw IllegalArgumentException("Can't create popup because no elements are provided")
     val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
     return PsiTargetNavigator(elements)
         .presentationProvider(presentationProvider)
+        .selection(selection)
         .builderConsumer { builder ->
             builder
                 .setItemSelectedCallback { presentation ->
@@ -162,37 +170,6 @@ private fun <T : PsiElement> getPsiElementPopup(
 }
 
 private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer<PsiElement>() {
-    @NlsSafe
-    private fun PsiElement.renderName(): String = when {
-        this is KtPropertyAccessor -> property.renderName() + if (isGetter) ".get" else ".set"
-        this is KtObjectDeclaration && isCompanion() -> {
-            val name = getStrictParentOfType<KtClassOrObject>()?.renderName() ?: "<anonymous>"
-            "Companion object of $name"
-        }
-
-        else -> (this as? PsiNamedElement)?.name ?: "<anonymous>"
-    }
-
-    @NlsSafe
-    private fun PsiElement.renderDeclaration(): String? {
-        return null
-        //if (this is KtFunctionLiteral || isFunctionalExpression()) return renderText()
-        //val descriptor = when (this) {
-        //    is KtFile -> name
-        //    is KtElement -> analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
-        //    is PsiMember -> getJavaMemberDescriptor()
-        //    else -> null
-        //} ?: return null
-        //
-        //val name = renderName()
-        //val params = (descriptor as? FunctionDescriptor)?.valueParameters?.joinToString(
-        //    ", ",
-        //    "(",
-        //    ")"
-        //) { DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(it.type) } ?: ""
-        //
-        //return "$name$params"
-    }
 
     @NlsSafe
     private fun PsiElement.renderText(): String = when (this) {
@@ -234,7 +211,7 @@ private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer
 
     override fun getElementText(element: PsiElement): String {
         val representativeElement = element.getRepresentativeElement()
-        return representativeElement.renderDeclaration() ?: representativeElement.renderText()
+        return representativeElement.renderText()
     }
 
     override fun getContainerText(element: PsiElement): String? = null
@@ -277,5 +254,5 @@ private class SelectionAwareScopeHighlighter(val editor: Editor) {
 }
 
 class SeparateFileWrapper(manager: PsiManager) : LightElement(manager, KotlinLanguage.INSTANCE) {
-    override fun toString() = ""
+    override fun toString(): String = ""
 }

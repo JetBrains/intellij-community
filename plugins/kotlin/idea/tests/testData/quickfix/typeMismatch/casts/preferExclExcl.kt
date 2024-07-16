@@ -1,7 +1,7 @@
 // "Cast expression 's' to 'String'" "false"
 // ACTION: Add 's =' to argument
 // ACTION: Add 'toString()' call
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (s!!) call
 // ACTION: Change parameter 's' type of function 'bar' to 'String?'
 // ACTION: Create function 'bar'
 // ACTION: Surround with null check

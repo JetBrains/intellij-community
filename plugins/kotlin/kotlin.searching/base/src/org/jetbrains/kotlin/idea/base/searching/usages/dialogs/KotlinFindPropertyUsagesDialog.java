@@ -98,7 +98,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
     }
 
     @Override
-    protected void addUsagesOptions(JPanel optionsPanel) {
+    protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
         super.addUsagesOptions(optionsPanel);
 
         KtNamedDeclaration property = (KtNamedDeclaration) getPsiElement();

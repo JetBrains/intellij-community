@@ -62,8 +62,7 @@ public final class StringConcatenationInspection extends BaseInspection {
   public boolean ignoreInToString = false;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("string.concatenation.problem.descriptor");
   }
 
@@ -130,8 +129,7 @@ public final class StringConcatenationInspection extends BaseInspection {
     return new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, listOwner);
   }
 
-  @Nullable
-  public static PsiModifierListOwner getAnnotatableElement(PsiExpression expression) {
+  public static @Nullable PsiModifierListOwner getAnnotatableElement(PsiExpression expression) {
     if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
       return null;
     }
@@ -193,8 +191,7 @@ public final class StringConcatenationInspection extends BaseInspection {
           PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
         if (methodCallExpression != null) {
           final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-          @NonNls
-          final String canonicalText = methodExpression.getCanonicalText();
+          final @NonNls String canonicalText = methodExpression.getCanonicalText();
           if (ignoreSystemOuts && "System.out.println".equals(canonicalText) || "System.out.print".equals(canonicalText)) {
             return;
           }

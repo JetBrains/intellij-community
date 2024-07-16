@@ -3,12 +3,14 @@ package com.intellij.psi.stubs;
 
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+@ApiStatus.Internal
 public final class StubIdExternalizer implements DataExternalizer<StubIdList> {
   public static final StubIdExternalizer INSTANCE = new StubIdExternalizer();
 

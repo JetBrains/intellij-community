@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -140,7 +141,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
 
     List<String> paths = MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement");
 
-    if (paths.size() > 0) {
+    if (!paths.isEmpty()) {
       for (String pathLine : paths) {
         for (String path : pathLine.split(",")) {
           javaParameters.getClassPath().add(resolvePluginProperties(plugin, path.trim(), domModel));
@@ -148,15 +149,22 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       }
     }
 
-    List<String> excludes = getExcludedArtifacts(config);
+    List<String> excludes = getExcludedCoordinates(config);
     String scopeExclude = MavenJDOMUtil.findChildValueByPath(config, "classpathDependencyScopeExclude");
 
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(module.getProject());
     if (scopeExclude != null || !excludes.isEmpty()) {
       for (MavenArtifact dependency : mavenProject.getDependencies()) {
         if (scopeExclude!=null && SCOPE_FILTER.getOrDefault(scopeExclude, Collections.emptyList()).contains(dependency.getScope()) ||
             excludes.contains(dependency.getGroupId() + ":" + dependency.getArtifactId())) {
           File file = dependency.getFile();
           javaParameters.getClassPath().remove(file.getAbsolutePath());
+
+          Optional.ofNullable(mavenProjectsManager.findProject(dependency.getMavenId()))
+            .map(mavenProjectsManager::findModule)
+            .map(CompilerModuleExtension::getInstance)
+            .map(CompilerModuleExtension::getCompilerOutputPath)
+            .ifPresent(compilerOutputPath -> javaParameters.getClassPath().remove(compilerOutputPath));
         }
       }
     }
@@ -238,7 +246,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
   }
 
   @NotNull
-  private static List<String> getExcludedArtifacts(@NotNull Element config) {
+  private static List<String> getExcludedCoordinates(@NotNull Element config) {
     Element excludesElement = config.getChild("classpathDependencyExcludes");
     if (excludesElement == null) {
       return Collections.emptyList();

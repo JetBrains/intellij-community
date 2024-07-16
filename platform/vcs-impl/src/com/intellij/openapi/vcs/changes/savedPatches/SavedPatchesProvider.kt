@@ -3,14 +3,17 @@ package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.Tag
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
-import java.util.stream.Stream
 import javax.swing.JComponent
 
 interface SavedPatchesProvider<S> {
@@ -23,7 +26,8 @@ interface SavedPatchesProvider<S> {
   fun subscribeToPatchesListChanges(disposable: Disposable, listener: () -> Unit)
   fun isEmpty(): Boolean
   fun buildPatchesTree(modelBuilder: TreeModelBuilder, showRootNode: Boolean)
-  fun getData(dataId: String, selectedObjects: Stream<PatchObject<*>>): Any?
+
+  fun uiDataSnapshot(sink: DataSink, selectedObjects: Iterable<PatchObject<*>>)
 
   interface PatchObject<S> {
     val data: S

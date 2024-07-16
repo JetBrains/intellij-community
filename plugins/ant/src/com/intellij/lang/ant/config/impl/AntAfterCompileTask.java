@@ -5,7 +5,7 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.openapi.compiler.CompileContext;
 import org.jetbrains.annotations.NotNull;
 
-class AntAfterCompileTask extends AntCompileTask{
+final class AntAfterCompileTask extends AntCompileTask{
   @Override
   public boolean execute(@NotNull CompileContext context) {
     return AntConfigurationBase.getInstance(context.getProject()).executeTargetAfterCompile(context, createDataContext(context));

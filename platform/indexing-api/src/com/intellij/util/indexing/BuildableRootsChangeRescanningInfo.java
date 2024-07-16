@@ -5,12 +5,18 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus.NonExtendable;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.NonExtendable
-@ApiStatus.Experimental
-public abstract class BuildableRootsChangeRescanningInfo {
+@NonExtendable
+@Experimental
+public abstract class BuildableRootsChangeRescanningInfo implements RootsChangeRescanningInfo {
+
+  @Internal
+  public BuildableRootsChangeRescanningInfo() {
+  }
 
   @NotNull
   public static BuildableRootsChangeRescanningInfo newInstance() {

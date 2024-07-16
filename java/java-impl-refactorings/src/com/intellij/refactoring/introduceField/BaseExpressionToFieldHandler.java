@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -688,11 +688,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myOutOfCodeBlockExtraction = selectedExpr.getUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK);
       myDeleteSelf = myOutOfCodeBlockExtraction != null;
       myElement = getPhysicalElement(selectedExpr);
-      if (myElement.getParent() instanceof PsiExpressionStatement && getNormalizedAnchor(myAnchorElement).equals(myAnchorElement) && selectedExpr.isPhysical()) {
-        PsiStatement statement = (PsiStatement)myElement.getParent();
-        if (statement.getParent() instanceof PsiCodeBlock) {
-          myDeleteSelf = true;
-        }
+      if (myElement.getParent() instanceof PsiExpressionStatement statement &&
+          getNormalizedAnchor(myAnchorElement).equals(myAnchorElement) &&
+          selectedExpr.isPhysical() &&
+          statement.getParent() instanceof PsiCodeBlock) {
+        myDeleteSelf = true;
       }
 
       myEditor = editor;
@@ -970,6 +970,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {
         myElementReference = classMemberReference;
       }
+    }
+
+    @Override
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
+      myElementReference = expression;
     }
 
     @Override

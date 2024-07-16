@@ -18,9 +18,9 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.resolve.FileContextUtil
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.tail
@@ -87,7 +87,7 @@ internal class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor
           else firstLineWhiteSpaces + preprocessed
         }
 
-      val indent = affectedMarker.host?.getUserData(InjectionMeta.INJECTION_INDENT)
+      val indent = affectedMarker.host?.getUserData(InjectionMeta.getInjectionIndent())
       val newText = indentHeuristically(indent, newText0, newText0 != markerText)
       LOG.debug { "newTextIndentAware:'${newText.esclbr()}' markerText:'${markerText.esclbr()}'" }
 
@@ -115,7 +115,7 @@ internal class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor
 
     if (distributeTextToMarkers.none { (marker, text) -> marker.isValid() && text.isNotEmpty() }) {
       affectedMarkers.asSequence().mapNotNull { it.host }.firstOrNull()?.let { host ->
-        val indent = host.getUserData(InjectionMeta.INJECTION_INDENT)
+        val indent = host.getUserData(InjectionMeta.getInjectionIndent())
         val indented = indentHeuristically(indent, myFragmentDocument.text, false)
         workingRange = workingRange union ElementManipulators.handleContentChange(host, indented)?.textRange
       }

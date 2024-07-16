@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package com.intellij.ui
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.RowIcon
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.lang.invoke.MethodHandles
@@ -48,6 +49,7 @@ interface IconManager {
     }
   }
 
+  @Internal
   fun getPlatformIcon(id: PlatformIcons): Icon
 
   @Deprecated("Use getIcon(path, classLoader)")
@@ -58,8 +60,11 @@ interface IconManager {
   /**
    * Path must be specified without a leading slash, in a format for [ClassLoader.getResourceAsStream]
    */
-  @ApiStatus.Internal
+  @Internal
   fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
+
+  @Internal
+  fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
 
   fun createEmptyIcon(icon: Icon): Icon = icon
 
@@ -96,7 +101,7 @@ interface IconManager {
   @ApiStatus.Experimental
   fun colorizedIcon(baseIcon: Icon, colorProvider: () -> Color): Icon = baseIcon
 
-  @ApiStatus.Internal
+  @Internal
   fun hashClass(aClass: Class<*>): Long = aClass.hashCode().toLong()
 
   fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> = "com.intellij" to null
@@ -114,6 +119,9 @@ private object DummyIconManager : IconManager {
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon = DummyIconImpl(path)
 
+  override fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
+    = DummyIconImpl(path, expUIPath)
+
   override fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon {
     val icons = arrayOfNulls<Icon>(2)
     icons[0] = icon
@@ -125,7 +133,7 @@ private object DummyIconManager : IconManager {
 
   override fun tooltipOnlyIfComposite(icon: Icon): Icon = icon
 
-  override fun <T : Any> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon = base!!
+  override fun <T : Any> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon = iconProducer(param) ?: base!!
 
   override fun createRowIcon(iconCount: Int, alignment: RowIcon.Alignment): RowIcon = DummyRowIcon(iconCount)
 
@@ -190,21 +198,23 @@ private class DummyRowIcon : DummyIconImpl, RowIcon {
   override fun replaceBy(replacer: IconReplacer): Icon = this
 }
 
-private open class DummyIconImpl(private val path: String) : ScalableIcon, DummyIcon {
+private open class DummyIconImpl(override val originalPath: String, override val expUIPath: String? = null) : ScalableIcon, DummyIcon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
   }
+
+  constructor(path: String) : this(path, null)
 
   override fun getIconWidth(): Int = 16
 
   override fun getIconHeight(): Int = 16
 
-  override fun hashCode(): Int = path.hashCode()
+  override fun hashCode(): Int = originalPath.hashCode()
 
   override fun equals(other: Any?): Boolean {
-    return this === other || other is DummyIconImpl && other.path == path
+    return this === other || other is DummyIconImpl && other.originalPath == originalPath
   }
 
-  override fun toString(): String = path
+  override fun toString(): String = originalPath
 
   override fun getScale(): Float = 1f
 

@@ -7,7 +7,13 @@ import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.ide.util.PropertiesComponent
 
-class TabEnterUsageDetector : LookupManagerListener {
+private const val TAB_SELECTION_COUNT_KEY = "tab_selection_count"
+private const val ENTER_SELECTION_COUNT_KEY = "enter_selection_count"
+
+private const val SELECTION_COUNT_THRESHOLD = 5
+private const val TAB_RATIO_THRESHOLD = 0.1
+
+private class TabEnterUsageDetector : LookupManagerListener {
   private val properties = PropertiesComponent.getInstance()
 
   private var tabCount
@@ -39,13 +45,5 @@ class TabEnterUsageDetector : LookupManagerListener {
     return if (tabRatio > TAB_RATIO_THRESHOLD) '\t' else '\n'
   }
 
-  fun detectionFinished() = totalCount >= SELECTION_COUNT_THRESHOLD
-
-  companion object {
-    const val TAB_SELECTION_COUNT_KEY = "tab_selection_count"
-    const val ENTER_SELECTION_COUNT_KEY = "enter_selection_count"
-
-    const val SELECTION_COUNT_THRESHOLD = 5
-    const val TAB_RATIO_THRESHOLD = 0.1
-  }
+  fun detectionFinished(): Boolean = totalCount >= SELECTION_COUNT_THRESHOLD
 }

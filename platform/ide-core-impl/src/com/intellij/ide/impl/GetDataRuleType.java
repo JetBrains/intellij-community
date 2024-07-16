@@ -21,11 +21,14 @@ public enum GetDataRuleType {
    */
   PROVIDER,
   /**
-   * same as {@link #PROVIDER} but can also be invoked on the UI thread
-   */
-  FAST,
-  /**
    * a rule that operates on the full data-context level
    */
-  CONTEXT
+  CONTEXT,
+
+  /**
+   * same as {@link #PROVIDER} but can also be invoked on the UI thread
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
+   */
+  @Deprecated(forRemoval = true)
+  FAST
 }

@@ -8,15 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.junit5.TestApplication
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 
-@TestApplication
+@GradleTestApplication
 abstract class GradleBaseTestCase {
 
   private lateinit var testDisposable: Disposable
@@ -29,11 +30,11 @@ abstract class GradleBaseTestCase {
 
   @BeforeEach
   fun setUpGradleBaseTestCase(testInfo: TestInfo) {
-    gradleTestFixture = GradleTestFixtureFactory.getFixtureFactory()
-      .createGradleTestFixture(
+    gradleTestFixture = GradleTestFixtureImpl(
         className = testInfo.testClass.get().simpleName,
         methodName = testInfo.testMethod.get().name,
-        gradleVersion = GradleVersion.current()
+        gradleVersion = GradleVersion.current(),
+        javaVersionRestriction = JavaVersionRestriction.NO
       )
     gradleTestFixture.setUp()
 

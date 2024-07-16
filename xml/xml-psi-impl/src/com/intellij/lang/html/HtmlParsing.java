@@ -596,6 +596,9 @@ public class HtmlParsing {
         else if (tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
           parseReference();
         }
+        else if (hasCustomAttributeValueContent()) {
+          parseCustomAttributeValueContent();
+        }
         else {
           maybeRemapCurrentToken(tt);
           advance();
@@ -632,6 +635,16 @@ public class HtmlParsing {
   }
 
   protected void parseCustomAttributeValue() {
+
+  }
+
+  @ApiStatus.Experimental
+  protected boolean hasCustomAttributeValueContent() {
+    return false;
+  }
+
+  @ApiStatus.Experimental
+  protected void parseCustomAttributeValueContent() {
 
   }
 
@@ -737,17 +750,19 @@ public class HtmlParsing {
     /**
      * Make all of associated with the item markers dropped or done.
      *
-     * @param builder current PsiBuilder
+     * @param builder      current PsiBuilder
      * @param beforeMarker an optional marker before, which the item should be done
-     * @param incomplete whether the item is missing the closing tag, token, etc.
+     * @param incomplete   whether the item is missing the closing tag, token, etc.
      */
     void done(@NotNull PsiBuilder builder, @Nullable PsiBuilder.Marker beforeMarker, boolean incomplete);
   }
 
   public interface HtmlTagInfo extends HtmlParserStackItem {
-    @NotNull String getNormalizedName();
+    @NotNull
+    String getNormalizedName();
 
-    @NotNull String getOriginalName();
+    @NotNull
+    String getOriginalName();
   }
 
   protected class HtmlTagInfoImpl implements HtmlTagInfo {
@@ -783,7 +798,8 @@ public class HtmlParsing {
           builder.error(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", getOriginalName()));
         }
         startMarker.done(myElementType);
-      } else {
+      }
+      else {
         if (incomplete && isEndTagRequired(this)) {
           beforeMarker.precede()
             .errorBefore(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", getOriginalName()), beforeMarker);

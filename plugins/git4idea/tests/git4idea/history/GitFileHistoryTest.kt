@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
@@ -379,6 +380,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   private fun collectFileHistory(file: File, startingRevisions: List<String>, full: Boolean): List<VcsFileRevision> {
+    ChangeListManagerImpl.getInstanceImpl(project).waitEverythingDoneInTestMode()
+
     val path = VcsUtil.getFilePath(file, false)
     return buildList {
       GitFileHistory(myProject, repo.root, path, startingRevisions, full).load(::add)

@@ -200,7 +200,12 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           if (parentRefElement instanceof PsiClass) { // reference to inner class inside our inner
             PsiImportStatementBase insertedImport = PsiTreeUtil.getParentOfType(parentRef, PsiImportStatementBase.class);
             if (insertedImport != null) {
-              insertedImport.delete();
+              if (insertedImport instanceof PsiImportStaticStatement) {
+                ref.bindToElement(newClass);
+              }
+              else {
+                insertedImport.delete();
+              }
               continue;
             }
             final PsiReferenceList referenceList = PsiTreeUtil.getTopmostParentOfType(parentRef, PsiReferenceList.class);
@@ -226,6 +231,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+      referencesToRebind.sort(Comparator.comparing(ref -> !(ref instanceof PsiImportStaticReferenceElement)));
 
       myInnerClass.delete();
 

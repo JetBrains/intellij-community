@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
@@ -9,6 +10,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 private fun EntityStorage.singleParent() = entities(XParentEntity::class.java).single()
 
@@ -25,7 +27,7 @@ class ReferencesInStorageTest {
   @Test
   fun `add entity`() {
     val builder = createEmptyBuilder()
-    val child = XChildEntity("child", MySource) {
+    val child = builder addEntity XChildEntity("child", MySource) {
       dataClass = null
       parentEntity = XParentEntity("foo", MySource) {
         this.optionalChildren = emptyList()
@@ -33,7 +35,6 @@ class ReferencesInStorageTest {
       }
       this.childChild = emptyList()
     }
-    builder.addEntity(child)
     builder.assertConsistency()
     assertEquals("foo", child.parentEntity.parentProperty)
     assertEquals(child, builder.singleChild())
@@ -71,25 +72,24 @@ class ReferencesInStorageTest {
   @Test
   fun `add remove reference inside data class`() {
     val builder = createEmptyBuilder()
-    val parent1 = XParentEntity("parent1", MySource) {
+    val parent1 = builder addEntity XParentEntity("parent1", MySource) {
       children = emptyList()
       this.optionalChildren = emptyList()
       this.childChild = emptyList()
     }
-    val parent2 = XParentEntity("parent2", MySource) {
+    val parent2 = builder addEntity XParentEntity("parent2", MySource) {
       children = emptyList()
       this.optionalChildren = emptyList()
       this.childChild = emptyList()
     }
-    builder.addEntity(parent1)
-    builder.addEntity(parent2)
     builder.assertConsistency()
-    val child = XChildEntity("child", MySource) {
-      dataClass = DataClassX("data", parent2.createPointer())
-      this.parentEntity = parent1
-      this.childChild = emptyList()
+    val child = builder addEntity XChildEntity("child", MySource) child@{
+      builder.modifyXParentEntity(parent1) parent1@{
+        this@child.dataClass = DataClassX("data", parent2.createPointer())
+        this@child.parentEntity = this@parent1
+        this@child.childChild = emptyList()
+      }
     }
-    builder.addEntity(child)
     builder.assertConsistency()
     assertEquals(child, parent1.children.single())
     assertEquals(emptyList(), parent2.children.toList())
@@ -97,7 +97,7 @@ class ReferencesInStorageTest {
     assertEquals("parent2", child.dataClass!!.parent.resolve(builder)?.parentProperty)
     assertEquals(setOf(parent1, parent2), builder.entities(XParentEntity::class.java).toSet())
 
-    builder.modifyEntity(child) {
+    builder.modifyXChildEntity(child) {
       dataClass = null
     }
     builder.assertConsistency()
@@ -110,7 +110,7 @@ class ReferencesInStorageTest {
     val parent = builder addEntity XParentEntity("parent", MySource)
     builder.assertConsistency()
     val child = builder addEntity XChildEntity("child", MySource) {
-      parentEntity = parent
+      parentEntity = parent.builderFrom(builder)
     }
     builder.assertConsistency()
     builder.removeEntity(child)
@@ -124,7 +124,7 @@ class ReferencesInStorageTest {
   fun `remove parent entity`() {
     val builder = createEmptyBuilder()
     val child = builder addEntity XChildEntity("child", MySource) {
-      parentEntity = builder addEntity XParentEntity("parent", MySource)
+      parentEntity = XParentEntity("parent", MySource)
     }
     builder.removeEntity(child.parentEntity)
     builder.assertConsistency()
@@ -137,12 +137,12 @@ class ReferencesInStorageTest {
     val builder = createEmptyBuilder()
     val oldParent = builder addEntity XParentEntity("oldParent", MySource)
     val oldChild = builder addEntity XChildEntity("oldChild", MySource) {
-      parentEntity = oldParent
+      parentEntity = oldParent.builderFrom(builder)
     }
     val diff = createEmptyBuilder()
     val parent = diff addEntity XParentEntity("newParent", MySource)
     diff addEntity XChildEntity("newChild", MySource) {
-      parentEntity = parent
+      parentEntity = parent.builderFrom(diff)
     }
     diff.removeEntity(parent)
     diff.assertConsistency()
@@ -156,12 +156,12 @@ class ReferencesInStorageTest {
   fun `remove parent entity with two children`() {
     val builder = createEmptyBuilder()
     val child1 = builder addEntity XChildEntity("child", MySource) {
-      parentEntity = builder addEntity XParentEntity("parent", MySource)
+      parentEntity = XParentEntity("parent", MySource)
       dataClass = null
       childChild = emptyList()
     }
     builder addEntity XChildEntity("child", MySource) {
-      parentEntity = child1.parentEntity
+      parentEntity = child1.parentEntity.builderFrom(builder)
     }
     builder.removeEntity(child1.parentEntity)
     builder.assertConsistency()
@@ -174,15 +174,153 @@ class ReferencesInStorageTest {
     val builder = createEmptyBuilder()
     val parent = builder addEntity XParentEntity("parent", MySource)
     val child = builder addEntity XChildEntity("child", MySource) {
-      parentEntity = parent
+      parentEntity = parent.builderFrom(builder)
     }
     builder addEntity XChildChildEntity(MySource) {
-      parent1 = parent
-      parent2 = child
+      parent1 = parent.builderFrom(builder)
+      parent2 = child.builderFrom(builder)
     }
     builder.removeEntity(parent)
     builder.assertConsistency()
     assertEquals(emptyList(), builder.entities(XChildEntity::class.java).toList())
     assertEquals(emptyList(), builder.entities(XParentEntity::class.java).toList())
+  }
+
+  @Test
+  fun `removing a parent with a child that has optional parent`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity XParentEntity("Parent", MySource) {
+      this.optionalChildren = listOf(
+        XChildWithOptionalParentEntity("child", MySource),
+      )
+    }
+
+    target.removeEntity(parent)
+
+    // Child entity is cascade removed
+    val optionalChildren = target.entities<XChildWithOptionalParentEntity>().toList()
+    assertEquals(0, optionalChildren.size)
+  }
+
+  @Test
+  fun `removing a parent with a child that has optional parent but preserve the child`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity XParentEntity("Parent", MySource) {
+      this.optionalChildren = listOf(
+        XChildWithOptionalParentEntity("child", MySource),
+      )
+    }
+
+    target.modifyXChildWithOptionalParentEntity(parent.optionalChildren.single()) {
+      this.optionalParent = null
+    }
+    target.removeEntity(parent)
+
+    // Child entity is cascade removed
+    val optionalChildren = target.entities<XChildWithOptionalParentEntity>().toList()
+    assertEquals(1, optionalChildren.size)
+  }
+
+  @Test
+  fun `modify parent by setting empty list to children with not null parent field`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity XParentEntity("Parent", MySource) {
+      this.children = listOf(
+        XChildEntity("child", MySource),
+      )
+    }
+
+    target.modifyXParentEntity(parent) {
+      this.children = emptyList()
+    }
+
+    // Child entity is removed from the storage because it has not nullable parent field
+    val optionalChildren = target.entities<XChildEntity>().toList()
+    assertEquals(0, optionalChildren.size)
+  }
+
+  @Test
+  fun `modify parent by setting empty list to children with nullable parent field`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity XParentEntity("Parent", MySource) {
+      this.optionalChildren = listOf(
+        XChildWithOptionalParentEntity("child", MySource),
+      )
+    }
+
+    target.modifyXParentEntity(parent) {
+      this.optionalChildren = emptyList()
+    }
+
+    // Child entity is NOT removed from the storage because it has a nullable parent field
+    val optionalChildren = target.entities<XChildWithOptionalParentEntity>().toList()
+    assertEquals(1, optionalChildren.size)
+    assertNull(optionalChildren.single().optionalParent)
+  }
+
+  @Test
+  fun `modify parent by setting null to child with not nullable parent field`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity OoParentEntity("Parent", MySource) {
+      this.child = OoChildEntity("child", MySource)
+    }
+
+    target.modifyOoParentEntity(parent) {
+      this.child = null
+    }
+
+    // Child entity is removed from the storage because it has a not nullable parent field
+    val optionalChildren = target.entities<XChildWithOptionalParentEntity>().toList()
+    assertEquals(0, optionalChildren.size)
+  }
+
+  @Test
+  fun `modify parent by setting new child with not nullable parent field`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity OoParentEntity("Parent", MySource) {
+      this.child = OoChildEntity("child", MySource)
+    }
+
+    target.modifyOoParentEntity(parent) {
+      this.child = OoChildEntity("new child", MySource)
+    }
+
+    // Child entity is removed from the storage because it has a not nullable parent field
+    val optionalChildren = target.entities<OoChildEntity>().toList()
+    assertEquals(1, optionalChildren.size)
+    assertEquals("new child", optionalChildren.single().childProperty)
+  }
+
+  @Test
+  fun `modify parent by setting null to child with nullable parent field`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity OptionalOneToOneParentEntity(MySource) {
+      this.child = OptionalOneToOneChildEntity("data", MySource)
+    }
+
+    target.modifyOptionalOneToOneParentEntity(parent) {
+      this.child = null
+    }
+
+    // Child entity is NOT removed from the storage because it has a nullable parent field
+    val optionalChildren = target.entities<OptionalOneToOneChildEntity>().toList()
+    assertEquals(1, optionalChildren.size)
+    assertNull(optionalChildren.single().parent)
+  }
+
+  @Test
+  fun `modify parent by setting new child with nullable parent field`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity OptionalOneToOneParentEntity(MySource) {
+      this.child = OptionalOneToOneChildEntity("data", MySource)
+    }
+
+    target.modifyOptionalOneToOneParentEntity(parent) {
+      this.child = OptionalOneToOneChildEntity("new data", MySource)
+    }
+
+    // Child entity is NOT removed from the storage because it has a nullable parent field
+    val optionalChildren = target.entities<OptionalOneToOneChildEntity>().toList()
+    assertEquals(2, optionalChildren.size)
   }
 }

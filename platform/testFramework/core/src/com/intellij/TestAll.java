@@ -101,6 +101,7 @@ public class TestAll implements Test {
 
   private static final List<Throwable> ourClassLoadingProblems = new ArrayList<>();
   private static JUnit4TestAdapterCache ourUnit4TestAdapterCache;
+  private static final String ourCollectTestsFile = System.getProperty("intellij.build.test.list.classes", null);
 
   public TestAll(String rootPackage) throws Throwable {
     this(rootPackage, getClassRoots());
@@ -274,8 +275,9 @@ public class TestAll implements Test {
     System.out.println("------");
 
     int totalTests = classes.size();
+    final List<String> collectedTests = ourCollectTestsFile != null ? new ArrayList<>(totalTests) : null;
     for (Class<?> aClass : testsToRun) {
-      runNextTest(testResult, totalTests, aClass);
+      runOrCollectNextTest(testResult, totalTests, aClass, collectedTests);
       if (testResult.shouldStop()) break;
     }
 
@@ -292,6 +294,20 @@ public class TestAll implements Test {
         outOfProcessRetryListener.save();
       }
       catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    if (collectedTests != null) {
+      Path path = Path.of(ourCollectTestsFile);
+      try {
+        collectedTests.remove("_FirstInSuiteTest");
+        collectedTests.remove("_LastInSuiteTest");
+        Files.createDirectories(path.getParent());
+        Files.write(path, collectedTests);
+      }
+      catch (IOException e) {
+        System.err.printf("Cannot save list of test classes to '%s': %s%n", path.toAbsolutePath(), e);
         e.printStackTrace();
       }
     }
@@ -351,7 +367,10 @@ public class TestAll implements Test {
     return !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
   }
 
-  private void runNextTest(final TestResult testResult, int totalTests, Class<?> testCaseClass) {
+  private void runOrCollectNextTest(@NotNull final TestResult testResult,
+                                    int totalTests,
+                                    @NotNull Class<?> testCaseClass,
+                                    @Nullable List<String> collectedTests) {
     myRunTests++;
 
     int errorCount = testResult.errorCount();
@@ -363,9 +382,18 @@ public class TestAll implements Test {
       return;
     }
 
-    log("\nRunning " + testCaseClass.getName());
+    String caseClassName = testCaseClass.getName();
     Test test = getTest(testCaseClass);
-    if (test == null) return;
+    if (test == null) {
+      log("\nSkipping " + caseClassName + ": no Test detected");
+      return;
+    }
+    log("\nRunning " + caseClassName);
+
+    if (collectedTests != null) {
+      collectedTests.add(caseClassName);
+      return;
+    }
 
     try {
       test.run(testResult);

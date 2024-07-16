@@ -207,11 +207,10 @@ public final class SafeLockInspection extends BaseInspection { // todo extend Re
       }
       final PsiExpression qualifier =
         methodExpression.getQualifierExpression();
-      if (qualifier instanceof PsiReferenceExpression) {
+      if (qualifier instanceof PsiReferenceExpression reference) {
         if (type != LockType.REGULAR) {
           return;
         }
-        final PsiReference reference = (PsiReference)qualifier;
         final PsiElement target = reference.resolve();
         if (variable.equals(target)) {
           containsUnlock = true;

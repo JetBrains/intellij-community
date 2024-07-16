@@ -1,12 +1,12 @@
-LineBreakpoint created at suspendFunStackTraceHidden.kt:11
+LineBreakpoint created at suspendFunStackTraceHidden.kt:12
 Run Java
 Connected to the target VM
-suspendFunStackTraceHidden.kt:11
+suspendFunStackTraceHidden.kt:12
 Thread stack trace:
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt$main$1 (continuation)
 		($result, this)
 CoroutineInfo: 1 coroutine RUNNING
-	CoroutineStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt (continuation)
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt (continuation)
 		()
 Coroutine Creation Stack Trace
 	CreationCoroutineStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceHiddenKt (continuation)

@@ -79,8 +79,22 @@ mod tests {
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(vm_options_file.canonicalize().unwrap(), path.canonicalize().unwrap());
 
+        // hardcoded VM options
+        assert_vm_option_presence(&dump, "-Dide.native.launcher=true");
+
         dump.vmOptions.iter().find(|s| s.starts_with("-XX:ErrorFile="))
             .unwrap_or_else(|| panic!("'-XX:ErrorFile=' is not in {:?}", dump.vmOptions));
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn cef_sandbox_vm_options_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={}", env!("CEF_VERSION")).as_ref());
+        dump.vmOptions.iter().find(|s| s.starts_with("-Djcef.sandbox.ptr="))
+            .unwrap_or_else(|| panic!("'-Djcef.sandbox.ptr=' is not in {:?}", dump.vmOptions));
     }
 
     #[test]
@@ -114,18 +128,16 @@ mod tests {
     #[test]
     fn product_env_vm_options_loading_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
-        let temp_file = test.create_temp_file("_product_env.vm_options", "-Xmx256m\n-Done.user.option=whatever\n");
+        let temp_file = test.create_temp_file("_product_env.vm_options", "-Done.user.option=whatever\n");
         let env = HashMap::from([("XPLAT_VM_OPTIONS", temp_file.to_str().unwrap())]);
 
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
 
-        assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
+        assert_vm_option_presence(&dump, "-XX:+UseG1GC");
+        assert_vm_option_presence(&dump, "-Dsun.io.useCanonCaches=false");
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
         assert_vm_option_presence(&dump, &jvm_property!("jb.vmOptionsFile", temp_file.to_str().unwrap()));
-
-        assert_vm_option_absence(&dump, "-XX:+UseG1GC");
-        assert_vm_option_absence(&dump, "-Dsun.io.useCanonCaches=false");
     }
 
     #[test]
@@ -169,7 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn vm_options_overriding_test() {
+    fn vm_options_gc_overriding_test() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-Xmx512m\n-XX:+UseZGC\n-Dsun.io.useCanonCaches=true\n");
 
@@ -178,6 +190,30 @@ mod tests {
         assert_eq!(dump.systemProperties["__MAX_HEAP"], "512");
         assert_eq!(dump.systemProperties["__GC"], "ZGC");
         assert_eq!(dump.systemProperties["sun.io.useCanonCaches"], "true");
+    }
+
+    #[test]
+    fn vm_options_mx_overriding_test() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-XX:MaxRAMPercentage=50\n");
+
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        assert_ne!(dump.systemProperties["__MAX_HEAP"], "256");
+    }
+
+    #[test]
+    fn corrupted_vm_options_test() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("\0\0\0\0-Xmx512m\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+
+        let nul_message = "Invalid character ('\\0') found in VM options file";
+        let nul_message_present = result.stderr.find(nul_message);
+        assert!(nul_message_present.is_some(), "Error message ('{}') is missing: {:?}", nul_message, result);
     }
 
     #[test]
@@ -260,13 +296,14 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn reporting_vm_creation_failures() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-XX:+UseG1GC\n-XX:+UseZGC\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
 
-        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
 
         let header = "Cannot start the IDE";
         let header_present = result.stderr.find(header);
@@ -280,13 +317,14 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn reporting_vm_creation_panics() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
 
-        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
 
         let header = "Cannot start the IDE";
         let header_present = result.stderr.find(header);
@@ -300,6 +338,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn crash_log_creation() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         let crash_log_path = test.project_dir.join("_jvm_error.log");

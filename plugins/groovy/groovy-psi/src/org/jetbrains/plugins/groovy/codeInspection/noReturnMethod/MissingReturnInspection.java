@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class MissingReturnInspection extends GroovyLocalInspectionTool {
+public final class MissingReturnInspection extends GroovyLocalInspectionTool {
 
   public enum ReturnStatus {
     mustReturnValue, shouldReturnValue, shouldNotReturnValue;

@@ -10,9 +10,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 
 @SkipSlowTestLocally
 open class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestBase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     fun `test sub and super types`() {
         val m1 = createModule("m1")
         myFixture.addFileToProject("m1/k.kt", "package one\nopen class K")

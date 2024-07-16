@@ -316,6 +316,12 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 }
             }
 
+            if (compilation.platform == KotlinPlatform.WASM) {
+                compilation.wasmExtensions?.wasmTarget?.let { wasmTarget ->
+                    compilationData.wasmTargets = setOf(wasmTarget)
+                }
+            }
+
             for (sourceSet in compilation.declaredSourceSets) {
                 sourceSetToCompilationData.getOrPut(sourceSet.name) { LinkedHashSet() } += compilationData
                 for (dependentSourceSetName in sourceSet.allDependsOnSourceSets) {
@@ -389,6 +395,12 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                         .flatMap { compilationData -> compilationData.konanTargets }
                         .toSet()
                 }
+
+                if (sourceSet.actualPlatforms.singleOrNull() == KotlinPlatform.WASM) {
+                    it.wasmTargets = compilationDataRecords
+                        .flatMap { compilationData -> compilationData.wasmTargets }
+                        .toSet()
+                }
             }
         }
 
@@ -427,7 +439,7 @@ private fun createExternalSourceSet(
                 dirSet.outputDir = effectiveClassesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.sourceDirs }
                 dirSet.gradleOutputDirs = compilation.output.classesDirs
-                dirSet.setInheritedCompilerOutput(false)
+                dirSet.isCompilerOutputPathInherited = false
             }
         }
         if (resourcesDir != null) {
@@ -435,7 +447,7 @@ private fun createExternalSourceSet(
                 dirSet.outputDir = resourcesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.resourceDirs }
                 dirSet.gradleOutputDirs = listOf(resourcesDir)
-                dirSet.setInheritedCompilerOutput(false)
+                dirSet.isCompilerOutputPathInherited = false
             }
         }
 

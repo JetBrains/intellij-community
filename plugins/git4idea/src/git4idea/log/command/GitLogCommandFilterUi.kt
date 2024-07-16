@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -15,6 +16,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterField
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.i18n.GitBundle
 import javax.swing.JComponent
 
 class GitLogCommandFilterUi(filters: VcsLogFilterCollection?, filterConsumer: (VcsLogFilterCollection) -> Unit) : VcsLogFilterUiEx {
@@ -25,6 +27,8 @@ class GitLogCommandFilterUi(filters: VcsLogFilterCollection?, filterConsumer: (V
       filterConsumer(getFilters())
       eventDispatcher.multicaster.onFiltersChanged()
     }
+    emptyText.text = GitBundle.message("log.command.empty.text")
+    TextComponentEmptyText.setupPlaceholderVisibility(this)
   }
   private val commandComponent = simplePanel(2, 0)
     .addToLeft(JBLabel(GIT_LOG_LABEL))
@@ -62,6 +66,18 @@ class GitLogCommandFilter(val command: @NlsSafe String) : VcsLogFilter {
   override fun getKey(): VcsLogFilterCollection.FilterKey<*> = KEY
   override fun getDisplayText(): String = command
   override fun toString(): String = "$GIT_LOG_LABEL $command"
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as GitLogCommandFilter
+
+    return command == other.command
+  }
+
+  override fun hashCode(): Int {
+    return command.hashCode()
+  }
 
   companion object {
     val KEY: VcsLogFilterCollection.FilterKey<GitLogCommandFilter> = VcsLogFilterCollection.FilterKey.create("command")

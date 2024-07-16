@@ -477,6 +477,7 @@ private data class PendingJdkRequest(
     }
     finally {
       progressIndicator = null
+      isRunning.set(false)
     }
   }
 

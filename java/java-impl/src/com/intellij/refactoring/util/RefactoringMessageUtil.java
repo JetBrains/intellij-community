@@ -1,5 +1,5 @@
 
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -12,7 +12,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -22,8 +21,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class RefactoringMessageUtil {
 
-  @Nls
-  public static String getIncorrectIdentifierMessage(String identifierName) {
+  public static @Nls String getIncorrectIdentifierMessage(String identifierName) {
     return JavaRefactoringBundle.message("0.is.not.a.legal.java.identifier", identifierName);
   }
 

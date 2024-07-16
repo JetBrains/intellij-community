@@ -78,8 +78,7 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
     return getTextBlockFragmentContent(fragment);
   }
 
-  @Nullable
-  private static String getTextBlockFragmentContent(PsiFragment fragment) {
+  private static @Nullable String getTextBlockFragmentContent(PsiFragment fragment) {
     final IElementType tokenType = fragment.getTokenType();
     final String text = fragment.getText();
     String content;
@@ -144,6 +143,10 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
         strip = -1;
       }
       result.append(c);
+    }
+    if (strip == indent) {
+      int end = result.length();
+      result.delete(end - indent, end);
     }
     return result.toString();
   }

@@ -53,7 +53,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         assert editorEx != null;
 
         if (fileType != null) {
-          EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType);
+          EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType);
           final EditorHighlighter highlighter = provider.getEditorHighlighter(project, fileType, null, editorEx.getColorsScheme());
           editorEx.setHighlighter(highlighter);
         }

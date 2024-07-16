@@ -16,5 +16,7 @@ class Foo {
     this.<String>xyz<error descr="'xyz(java.lang.String)' in 'Foo' cannot be applied to '(java.lang.Integer)'">(Integer.valueOf("27"))</error>;
     ArrayList list = new <error descr="Method 'ArrayList()' does not have type parameters"><String></error>ArrayList<String>();
   }
-}
 
+  public <E> void doo(Bar<<error descr="Type parameter 'E' is not within its bound; should extend 'java.util.List'">E</error>> foo) {}
+}
+interface Bar<T extends List> {}

@@ -15,10 +15,12 @@
  */
 package org.jetbrains.jps.model.java;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 
+@ApiStatus.Internal
 public interface JpsJavaSdkTypeWrapper {
   @Nullable
   String getJavaSdkName(@NotNull JpsElement properties);

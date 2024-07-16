@@ -4,7 +4,7 @@ package com.intellij.ide.startup.importSettings.providers
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser
 
 interface TransferSettingsProvider { // ex. AbstractTransferSettingsProvider

@@ -1,15 +1,16 @@
 // RUNTIME_WITH_SOURCES
 // CHECK_BOX
 // SEARCH_TEXT: joinToString
-// REF: (for Array<out T> in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence)?)
-// REF: (for BooleanArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Boolean) -> CharSequence)?)
-// REF: (for ByteArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Byte) -> CharSequence)?)
-// REF: (for CharArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Char) -> CharSequence)?)
-// REF: (for DoubleArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Double) -> CharSequence)?)
-// REF: (for FloatArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Float) -> CharSequence)?)
-// REF: (for IntArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Int) -> CharSequence)?)
-// REF: (for Iterable<T> in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence)?)
-// REF: (for LongArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Long) -> CharSequence)?)
-// REF: (for Sequence<T> in kotlin.sequences).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence)?)
-// REF: (for ShortArray in kotlin.collections).joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Short) -> CharSequence)?)
+// REF: (kotlin.collections).Array<out T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence)?)
+// REF: (kotlin.collections).BooleanArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Boolean) -> CharSequence)?)
+// REF: (kotlin.collections).ByteArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Byte) -> CharSequence)?)
+// REF: (kotlin.collections).CharArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Char) -> CharSequence)?)
+// REF: (kotlin.collections).DoubleArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Double) -> CharSequence)?)
+// REF: (kotlin.collections).FloatArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Float) -> CharSequence)?)
+// REF: (kotlin.collections).IntArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Int) -> CharSequence)?)
+// REF: (kotlin.collections).Iterable<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence)?)
+// REF: (kotlin.collections).LongArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Long) -> CharSequence)?)
+// REF: (kotlin.collections).ShortArray.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((Short) -> CharSequence)?)
+// REF: (kotlin.sequences).Sequence<T>.joinToString(CharSequence, CharSequence, CharSequence, Int, CharSequence, ((T) -> CharSequence?))
+
 // IGNORE_K2

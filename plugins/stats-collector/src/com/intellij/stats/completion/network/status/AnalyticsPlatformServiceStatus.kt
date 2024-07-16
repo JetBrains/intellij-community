@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.network.status
 
 import com.intellij.openapi.application.ApplicationInfo
@@ -21,8 +21,6 @@ class AnalyticsPlatformServiceStatus(private val statusUrl: String) : WebService
   @Volatile
   private var dataServerUrl = ""
 
-  private val requestService: RequestService = service()
-
   override val id: String = "AnalyticsPlatform"
 
   override fun isServerOk(): Boolean = isServerOk
@@ -34,7 +32,7 @@ class AnalyticsPlatformServiceStatus(private val statusUrl: String) : WebService
     dataServerUrl = ""
 
     assertNotEDT()
-    val response = requestService.get(statusUrl)
+    val response = service<RequestService>().get(statusUrl)
     if (response != null && response.isOK()) {
       val settings = AnalyticsPlatformSettingsDeserializer.deserialize(response.text) ?: return
 

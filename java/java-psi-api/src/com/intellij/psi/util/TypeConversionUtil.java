@@ -637,7 +637,7 @@ public final class TypeConversionUtil {
     return isBinaryOperatorApplicable(tokenType, ltype, rtype, strict);
   }
 
-  @Contract(pure = true)
+  @Contract(pure = true, value = "_, null, _, _ -> true; _, _, null, _ -> true")
   public static boolean isBinaryOperatorApplicable(@NotNull IElementType tokenType, final PsiType ltype, final PsiType rtype, final boolean strict) {
     if (ltype == null || rtype == null) return true;
     int resultTypeRank = BOOL_RANK;

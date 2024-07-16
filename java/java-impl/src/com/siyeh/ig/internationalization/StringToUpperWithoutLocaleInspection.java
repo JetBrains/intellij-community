@@ -41,14 +41,12 @@ public final class StringToUpperWithoutLocaleInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "StringToUpperCaseOrToLowerCaseWithoutLocale";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "string.touppercase.tolowercase.without.locale.problem.descriptor");
   }

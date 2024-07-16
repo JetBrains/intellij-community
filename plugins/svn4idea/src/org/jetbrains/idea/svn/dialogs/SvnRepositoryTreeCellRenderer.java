@@ -19,8 +19,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     setIcon(null);
-    if (value instanceof RepositoryTreeNode) {
-      RepositoryTreeNode node = (RepositoryTreeNode) value;
+    if (value instanceof RepositoryTreeNode node) {
       if (node.getSVNDirEntry() == null) {
         append(node.getURL().toDecodedString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(PlatformIcons.FOLDER_ICON);
@@ -42,8 +41,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
                 : PlatformIcons.FOLDER_ICON);
       }
     }
-    else if (value instanceof SimpleTextNode) {
-      SimpleTextNode node = (SimpleTextNode)value;
+    else if (value instanceof SimpleTextNode node) {
 
       append(node.getText(), node.isError() ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }

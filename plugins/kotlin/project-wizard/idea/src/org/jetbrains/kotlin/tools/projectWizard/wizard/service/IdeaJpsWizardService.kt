@@ -9,7 +9,6 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModifiableModuleModel
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -17,6 +16,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -177,7 +177,7 @@ private class ProjectImporter(
     private fun convertModule(moduleIr: ModuleIR): TaskResult<IdeaModule> {
         val module = modulesModel.newModule(
             (moduleIr.path / "${moduleIr.name}.iml").toString(),
-            ModuleTypeId.JAVA_MODULE
+            JAVA_MODULE_ENTITY_TYPE_ID_NAME
         )
         val rootModel = ModuleRootManager.getInstance(module).modifiableModel
         val contentRoot = rootModel.addContentEntry(moduleIr.path.url)

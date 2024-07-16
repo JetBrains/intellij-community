@@ -121,33 +121,28 @@ abstract class GitStageTree(project: Project,
     }
   }
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      GitStageDataKeys.GIT_STAGE_TREE.`is`(dataId) -> this
-      GitStageDataKeys.GIT_STAGE_UI_SETTINGS.`is`(dataId) -> settings
-      GitStageDataKeys.GIT_FILE_STATUS_NODES.`is`(dataId) -> selectedStatusNodes()
-      VcsDataKeys.FILE_PATHS.`is`(dataId) -> {
-        selectedStatusNodes().map { it.filePath } + selectedChanges().map { ChangesUtil.getFilePath(it) }
-      }
-      VcsDataKeys.CHANGES.`is`(dataId) -> selectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY)
-      PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
-      PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
-        val superProvider = super.getData(dataId) as DataProvider?
-        val selectedNodes = selectedStatusNodes()
-        val selectedChanges = selectedChanges()
-        return CompositeDataProvider.compose({ slowId -> getSlowData(selectedNodes, selectedChanges, slowId) }, superProvider)
-      }
-      else -> super.getData(dataId)
-    }
-  }
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[GitStageDataKeys.GIT_STAGE_TREE] = this
+    sink[GitStageDataKeys.GIT_STAGE_UI_SETTINGS] = settings
+    sink[GitStageDataKeys.GIT_FILE_STATUS_NODES] = selectedStatusNodes()
+    sink[VcsDataKeys.FILE_PATHS] =
+      selectedStatusNodes().map { it.filePath } +
+      selectedChanges().map { ChangesUtil.getFilePath(it) }
+    sink[VcsDataKeys.CHANGES] = selectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY)
+    sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
 
-  private fun getSlowData(selectedNodes: JBIterable<GitFileStatusNode>, selectedChanges: JBIterable<Change>, slowId: String): Any? {
-    return when {
-      VcsDataKeys.VIRTUAL_FILES.`is`(slowId) -> selectedVirtualFiles(selectedNodes, selectedChanges)
-      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(slowId) -> selectedVirtualFiles(selectedNodes, selectedChanges).toList().toTypedArray()
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(slowId) -> selectedVirtualFiles(selectedNodes, selectedChanges)
+    val selectedNodes = selectedStatusNodes()
+    val selectedChanges = selectedChanges()
+    sink.lazy(VcsDataKeys.VIRTUAL_FILES) {
+      selectedVirtualFiles(selectedNodes, selectedChanges)
+    }
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY) {
+      selectedVirtualFiles(selectedNodes, selectedChanges).toList().toTypedArray()
+    }
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY) {
+      selectedVirtualFiles(selectedNodes, selectedChanges)
         .map { OpenFileDescriptor(project, it) }.toList().toTypedArray()
-      else -> null
     }
   }
 

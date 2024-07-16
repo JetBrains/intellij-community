@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -87,8 +87,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return null;
   }
 
-  @Nullable
-  private ReflectiveClass getOwnerClass() {
+  private @Nullable ReflectiveClass getOwnerClass() {
     return getReflectiveClass(myContext);
   }
 
@@ -142,8 +141,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return member != null && (member.getContainingClass() == psiClass.getPsiClass() || isPublic(member));
   }
 
-  @Nullable
-  private PsiElement findOverloadedMethod(PsiMethod[] methods) {
+  private @Nullable PsiElement findOverloadedMethod(PsiMethod[] methods) {
     final PsiMethodCallExpression definitionCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
     if (definitionCall != null) {
       final List<PsiExpression> arguments = getReflectionMethodArguments(definitionCall, 1);
@@ -165,8 +163,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   }
 
 
-  @Nullable
-  public static PsiMethod matchMethod(PsiMethod @NotNull [] methods, @NotNull List<ReflectiveType> argumentTypes) {
+  public static @Nullable PsiMethod matchMethod(PsiMethod @NotNull [] methods, @NotNull List<ReflectiveType> argumentTypes) {
     int mismatchCount = Integer.MAX_VALUE;
     PsiMethod bestGuess = null;
     for (PsiMethod method : methods) {
@@ -204,8 +201,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return mismatchCount;
   }
 
-  @Nullable
-  public static List<PsiExpression> getReflectionMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
+  public static @Nullable List<PsiExpression> getReflectionMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
     final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
 
     if (arguments.length == argumentOffset + 1) {

@@ -1,7 +1,7 @@
 public final class NonTrivialIdentifiersKt {
     public static final fun main(@org.jetbrains.annotations.Nullable a: A) : void {
         invoke()
-        var p: A = <init>()
+        var p: A = A()
         invoke({
             return invoke({
                 return invoke()

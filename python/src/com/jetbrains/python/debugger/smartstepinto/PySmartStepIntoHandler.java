@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.smartstepinto;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,10 +33,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepIntoVariant> {
-  @NotNull private final XDebugSession mySession;
-  @NotNull private final PyDebugProcess myProcess;
+  private final @NotNull XDebugSession mySession;
+  private final @NotNull PyDebugProcess myProcess;
 
-  public PySmartStepIntoHandler(@NotNull final PyDebugProcess process) {
+  public PySmartStepIntoHandler(final @NotNull PyDebugProcess process) {
     mySession = process.getSession();
     myProcess = process;
   }
@@ -104,8 +104,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
    * <p>
    * Note, that expressions can span multiple lines, e.g. for parenthesized expressions or argument lists.
    */
-  @Nullable
-  private PsiElement findSmartStepIntoBaseExpression(@NotNull Document document, int line) {
+  private @Nullable PsiElement findSmartStepIntoBaseExpression(@NotNull Document document, int line) {
     PsiFile file = PsiDocumentManager.getInstance(mySession.getProject()).getPsiFile(document);
     if (file == null) return null;
 
@@ -173,9 +172,8 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     return psiElementRef.get();
   }
 
-  @NotNull
   @Override
-  public Promise<List<PySmartStepIntoVariant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
+  public @NotNull Promise<List<PySmartStepIntoVariant>> computeStepIntoVariants(@NotNull XSourcePosition position) {
     if (PyDebuggerSettings.getInstance().isAlwaysDoSmartStepInto()) {
       return computeSmartStepVariantsAsync(position);
     }
@@ -185,8 +183,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
   /**
    * Creates and stores a smart step into context for the given frame.
    */
-  @Nullable
-  public PySmartStepIntoContext createSmartStepIntoContext(@NotNull PyStackFrame frame) {
+  public @Nullable PySmartStepIntoContext createSmartStepIntoContext(@NotNull PyStackFrame frame) {
     XSourcePosition position = frame.getSourcePosition();
     if (position == null) return null;
 

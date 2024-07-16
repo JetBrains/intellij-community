@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.booleanIsAlwaysInverted;
 
 import com.intellij.analysis.AnalysisScope;
@@ -28,8 +28,7 @@ import java.util.Collection;
 public final class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInspectionTool {
   private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_METHOD");
 
-  @NotNull
-  private LocalQuickFix getInvertBooleanFix(boolean onTheFly) {
+  private @NotNull LocalQuickFix getInvertBooleanFix(boolean onTheFly) {
     return new InvertBooleanFix(InspectionGadgetsBundle.message("invert.method.quickfix")) {
       @Override
       public void doFix(@NotNull PsiElement element) {
@@ -46,21 +45,17 @@ public final class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBat
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.data.flow.issues");
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "BooleanMethodIsAlwaysInverted";
   }
 
   @Override
-  @Nullable
-  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+  public @Nullable RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
     return new BooleanInvertedAnnotator();
   }
 

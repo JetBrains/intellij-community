@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
 import static com.intellij.find.findUsages.similarity.ExportClusteringResultActionLink.*;
 
 
-public class ImportClusteringResultActionLink extends ActionLink {
+class ImportClusteringResultActionLink extends ActionLink {
   private static final Logger LOG = Logger.getLogger(ImportClusteringResultActionLink.class.getName());
 
-  public ImportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session,
+  ImportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session,
                                           @NotNull AnAction refreshAction) {
     super(UsageViewBundle.message("similar.usages.internal.import.clustering.data"),
           (event) -> {

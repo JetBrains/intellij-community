@@ -48,7 +48,8 @@ public final class IndexNotReadyException extends RuntimeException implements Ex
 
   // constructor is private to not let ForkJoinTask.getThrowableException() clone this by reflection causing invalid nesting etc
   private IndexNotReadyException(@Nullable Throwable startTrace) {
-    super("Please change caller according to " + IndexNotReadyException.class.getName() + " documentation");
+    super("Please change caller according to " + IndexNotReadyException.class.getName() + " documentation. " +
+          "Dumb mode start trace is in the cause.", startTrace);
     myStartTrace = startTrace;
   }
 

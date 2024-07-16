@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,7 +23,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByString(String str, @NotNull final PsiElement position, int offsetInPosition){
+  public PsiReference @NotNull [] getReferencesByString(String str, final @NotNull PsiElement position, int offsetInPosition){
     if (position instanceof XmlTag && ((XmlTag)position).getValue().getTextElements().length == 0) {
       return PsiReference.EMPTY_ARRAY;
     }

@@ -37,6 +37,7 @@ public final class FileSystemUtil {
 
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
 
+  // Used in IJPL-841
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
 
   @ApiStatus.Internal
@@ -74,6 +75,8 @@ public final class FileSystemUtil {
 
   private FileSystemUtil() { }
 
+  /** Please use NIO API instead ({@link Files}, etc.) */
+  @ApiStatus.Obsolete
   public static @Nullable FileAttributes getAttributes(@NotNull String path) {
     try {
       if (LOG.isTraceEnabled()) {
@@ -93,30 +96,34 @@ public final class FileSystemUtil {
     return null;
   }
 
+  /** Please use NIO API instead ({@link Files}, etc.) */
+  @ApiStatus.Obsolete
   public static @Nullable FileAttributes getAttributes(@NotNull File file) {
     return getAttributes(file.getPath());
   }
 
+  /** Please use NIO API instead ({@link Files}, etc.) */
+  @ApiStatus.Obsolete
   public static long lastModified(@NotNull File file) {
     FileAttributes attributes = getAttributes(file);
     return attributes != null ? attributes.lastModified : 0;
   }
 
-  /**
-   * Checks if the last element in the path is a symlink.
-   */
+  /** Please use NIO API instead ({@link Files}, etc.) */
+  @ApiStatus.Obsolete
   public static boolean isSymLink(@NotNull String path) {
     FileAttributes attributes = getAttributes(path);
     return attributes != null && attributes.isSymLink();
   }
 
-  /**
-   * Checks if the last element in the path is a symlink.
-   */
+  /** Please use NIO API instead ({@link Files}, etc.) */
+  @ApiStatus.Obsolete
   public static boolean isSymLink(@NotNull File file) {
     return isSymLink(file.getAbsolutePath());
   }
 
+  /** Please use NIO API instead ({@link Files}, etc.) */
+  @ApiStatus.Obsolete
   public static @Nullable String resolveSymLink(@NotNull String path) {
     try {
       String realPath;
@@ -139,6 +146,8 @@ public final class FileSystemUtil {
     return null;
   }
 
+  /** Please use NIO API instead ({@link Files}, etc.) */
+  @ApiStatus.Obsolete
   public static @Nullable String resolveSymLink(@NotNull File file) {
     return resolveSymLink(file.getAbsolutePath());
   }
@@ -314,6 +323,7 @@ public final class FileSystemUtil {
    * a file system root) - first by calling platform-specific APIs if possible, then falling back to querying its attributes
    * via different names.
    */
+  @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull File anyChild) {
     FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
     if (detected != FileAttributes.CaseSensitivity.UNKNOWN) return detected;
@@ -423,6 +433,7 @@ public final class FileSystemUtil {
    * @return {@code true} when the {@code name} contains case-toggleable characters (for which toLowerCase() != toUpperCase()).
    * E.g. "Child.txt" is case-toggleable because "CHILD.TXT" != "child.txt", but "122.45" is not.
    */
+  @ApiStatus.Internal
   public static boolean isCaseToggleable(@NotNull String name) {
     return !toggleCase(name).equals(name);
   }

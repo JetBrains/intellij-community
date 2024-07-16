@@ -5,6 +5,7 @@ package com.intellij.collaboration.api.page
  * Loads the list of data in a sequential manner - one batch after the other
  * Processes only one request at a time
  */
+@Deprecated("Unused internally")
 interface SequentialListLoader<T> {
   /**
    * Loads the next batch of data

@@ -557,7 +557,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private @NotNull Border getActionButtonBorder() {
-    return myActionButtonBorder != null ? myActionButtonBorder : new ActionButtonBorder(2, 1);
+    return myActionButtonBorder != null ? myActionButtonBorder : new ActionButtonBorder(() -> 2, () -> 1);
   }
 
   protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
@@ -772,8 +772,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myActionButtonBorder = actionButtonBorder;
   }
 
+  @ApiStatus.Internal
+  public final void setActionButtonBorder(
+    @NotNull Supplier<Integer> directionalGapUnscaledSupplier,
+    @NotNull Supplier<Integer> orthogonalGapUnscaledSupplier
+  ) {
+    setActionButtonBorder(new ActionButtonBorder(directionalGapUnscaledSupplier, orthogonalGapUnscaledSupplier));
+  }
+
   public final void setActionButtonBorder(int directionalGap, int orthogonalGap) {
-    setActionButtonBorder(new ActionButtonBorder(directionalGap, orthogonalGap));
+    setActionButtonBorder(new ActionButtonBorder(() -> directionalGap, () ->orthogonalGap));
   }
 
   public final void setSeparatorCreator(@NotNull Function<? super String, ? extends Component> separatorCreator) {
@@ -1245,7 +1253,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Component target = myTargetComponent != null ? myTargetComponent : IJSwingUtilities.getFocusedComponentInWindowOrSelf(this);
     DataContext context = DataManager.getInstance().getDataContext(target);
     if (myAdditionalDataProvider != null) {
-      return CustomizedDataContext.create(context, myAdditionalDataProvider);
+      return CustomizedDataContext.withProvider(context, myAdditionalDataProvider);
     }
     else {
       return context;
@@ -1509,10 +1517,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public @NotNull List<AnAction> getActions() {
     List<AnAction> result = new ArrayList<>();
-
     List<AnAction> secondary = new ArrayList<>();
-    AnAction[] kids = myActionGroup.getChildren(null);
-    for (AnAction each : kids) {
+    for (AnAction each : myVisibleActions) {
       if (myActionGroup.isPrimary(each)) {
         result.add(each);
       }
@@ -1522,7 +1528,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     result.add(new Separator());
     result.addAll(secondary);
-
     return result;
   }
 
@@ -1612,30 +1617,30 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private final class ActionButtonBorder extends JBEmptyBorder {
-    private final int myDirectionalGap;
-    private final int myOrthogonalGap;
-
-    ActionButtonBorder(int directionalGap, int orthogonalGap) {
-      super(0);
-      myDirectionalGap = directionalGap;
-      myOrthogonalGap = orthogonalGap;
+    ActionButtonBorder(
+      @NotNull Supplier<Integer> directionalGapUnscaledSupplier,
+      @NotNull Supplier<Integer> orthogonalGapUnscaledSupplier
+    ) {
+      this(insetsSupplier(directionalGapUnscaledSupplier, orthogonalGapUnscaledSupplier));
     }
 
-    @Override
-    public Insets getBorderInsets(Component c, Insets insets) {
-      Insets x = getBorderInsets();
-      insets.left = x.left;
-      insets.top = x.top;
-      insets.right = x.right;
-      insets.bottom = x.bottom;
-      return insets;
+    private ActionButtonBorder(@NotNull Supplier<@NotNull Insets> supplier) {
+      super(JBInsets.create(supplier, supplier.get()));
     }
+  }
 
-    @Override
-    public Insets getBorderInsets() {
-      return myOrientation == SwingConstants.VERTICAL ?
-             JBUI.insets(myDirectionalGap, myOrthogonalGap) : JBUI.insets(myOrthogonalGap, myDirectionalGap);
-    }
+  private @NotNull Supplier<@NotNull Insets> insetsSupplier(
+    @NotNull Supplier<Integer> directionalGapUnscaledSupplier,
+    @NotNull Supplier<Integer> orthogonalGapUnscaledSupplier
+  ) {
+    return () -> {
+      var directionalGap = directionalGapUnscaledSupplier.get();
+      var orthogonalGap = orthogonalGapUnscaledSupplier.get();
+      //noinspection UseDPIAwareInsets
+      return myOrientation == SwingConstants.VERTICAL
+             ? new Insets(directionalGap, orthogonalGap, directionalGap, orthogonalGap)
+             :  new Insets(orthogonalGap, directionalGap, orthogonalGap, directionalGap);
+    };
   }
 
   @Override

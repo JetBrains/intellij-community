@@ -9,8 +9,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
+@ApiStatus.Internal
 class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
   companion object {
     val instance by lazy {
@@ -24,11 +26,13 @@ class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
       instance
     }
 
+    @Deprecated("Use Dispatchers.IO or another dispatcher appropriate for your purposes")
     val processIODispatcher: ExecutorCoroutineDispatcher = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
   }
 
   override val defaultContext: CoroutineContext = coroutineScope.coroutineContext
 
+  @Deprecated("Use Dispatchers.EDT", ReplaceWith("Dispatchers.EDT", "kotlinx.coroutines.Dispatchers", "com.intellij.openapi.application.EDT"))
   val uiDispatcher: CoroutineContext
     get() = Dispatchers.EDT
 

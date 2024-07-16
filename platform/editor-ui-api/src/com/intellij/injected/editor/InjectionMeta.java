@@ -7,6 +7,12 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Experimental
 public final class InjectionMeta {
 
-  public static final Key<String> INJECTION_INDENT = Key.create("INJECTION_INDENT");
+  private static final Key<String> INJECTION_INDENT = Key.create("INJECTION_INDENT");
 
+  public static Key<String> getInjectionIndent() {
+    return INJECTION_INDENT;
+  }
+
+  private InjectionMeta() {
+  }
 }

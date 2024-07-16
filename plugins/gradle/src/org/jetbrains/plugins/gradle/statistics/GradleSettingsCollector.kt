@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Paths
@@ -58,7 +59,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(HAS_CUSTOM_GRADLE_VM_OPTIONS.metric(!gradleSettings.gradleVmOptions.isNullOrBlank()))
     usages.add(SHOW_SELECTIVE_IMPORT_DIALOG_ON_INITIAL_IMPORT.metric(gradleSettings.showSelectiveImportDialogOnInitialImport()))
     usages.add(STORE_PROJECT_FILES_EXTERNALLY.metric(gradleSettings.storeProjectFilesExternally))
-    usages.add(GRADLE_DOWNLOAD_DEPENDENCY_SOURCES.metric(gradleSettings.isDownloadSources))
+    usages.add(GRADLE_DOWNLOAD_DEPENDENCY_SOURCES.metric(GradleSystemSettings.getInstance().isDownloadSources))
     usages.add(GRADLE_PARALLEL_MODEL_FETCH.metric(gradleSettings.isParallelModelFetch))
   }
 
@@ -108,13 +109,18 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     if (parallel != null) {
       usages.add(GRADLE_PROPERTY_PARALLEL.metric(parallel.value))
     }
+
+    val isolatedProjects = gradleProperties.isolatedProjects
+    if (isolatedProjects != null) {
+      usages.add(GRADLE_ISOLATED_PROJECTS_PARALLEL.metric(isolatedProjects.value))
+    }
   }
 
   private fun anonymizeGradleVersion(version: GradleVersion): String {
     return Version.parseVersion(version.version)?.toCompactString() ?: "unknown"
   }
 
-  private val GROUP = EventLogGroup("build.gradle.state", 7)
+  private val GROUP = EventLogGroup("build.gradle.state", 8)
   private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
   private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
   private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)
@@ -142,4 +148,5 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
   private val GRADLE_PARALLEL_MODEL_FETCH = GROUP.registerEvent("gradleParallelModelFetch", EventFields.Enabled)
 
   private val GRADLE_PROPERTY_PARALLEL = GROUP.registerEvent("org.gradle.parallel", EventFields.Enabled)
+  private val GRADLE_ISOLATED_PROJECTS_PARALLEL = GROUP.registerEvent("org.gradle.isolated-projects", EventFields.Enabled)
 }

@@ -26,6 +26,8 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
   private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()
 
+  private val PLUGIN_EXCEPTIONS = setOf("com.intellij.ja", "com.intellij.ko", "com.intellij.zh")
+
   internal var state = SettingsSyncPluginsState(emptyMap())
     private set
 
@@ -70,11 +72,13 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
 
       for (plugin in currentIdePlugins) {
         val id = plugin.pluginId
-        if (PluginManagerProxy.getInstance().isEssential(id)
-            || PluginManagerProxy.getInstance().isIncompatible(plugin)) {
+        if (!isPluginSynceable(id) || PluginManagerProxy.getInstance().isIncompatible(plugin)) {
           // don't change state of essential plugin (it will be enabled in the current IDE anyway)
           // also, don't take into account incompatible plugins (makes no sense to deal with them)
           // other IDEs will manage such plugins themselves
+
+          // also don't touch localization plugins as they become bundled in 242 and might cause issues:
+          // see https://youtrack.jetbrains.com/issue/IJPL-157227/IDE-is-localized-after-Settings-Sync-between-2024.1-and-2024.2-if-language-plugins-had-updates
         }
         else if (shouldSaveState(plugin)) {
           newPlugins[id] = getPluginData(plugin)
@@ -89,6 +93,9 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
       return state
     }
   }
+
+  private fun isPluginSynceable(pluginId: PluginId): Boolean =
+    !(PluginManagerProxy.getInstance().isEssential(pluginId) || PLUGIN_EXCEPTIONS.contains(pluginId.idString))
 
   private fun firePluginsStateChangeEvent(pluginsState: SettingsSyncPluginsState) {
     val snapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()),
@@ -257,13 +264,13 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
     isPluginSyncEnabled(plugin.pluginId, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))
 
   private fun isPluginSyncEnabled(id: PluginId, isBundled: Boolean, category: SettingsCategory): Boolean {
-    if (PluginManagerProxy.getInstance().isEssential(id))
+    if (!isPluginSynceable(id))
       return false
     val settings = SettingsSyncSettings.getInstance()
     return settings.isCategoryEnabled(category) &&
            (category != SettingsCategory.PLUGINS ||
-            isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID) ||
-            settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, id.idString))
+            (isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, BUNDLED_PLUGINS_ID)) ||
+            (!isBundled && settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, id.idString)))
   }
 
   override fun dispose() {
@@ -320,13 +327,17 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
               LOG.warn("got ${ed(enable)} info about non-existing plugin ${pluginDescriptor.pluginId}")
               continue
             }
+            if (!isPluginSyncEnabled(plugin)) {
+              LOG.info("Sync of state of ${plugin.pluginId} is disabled. Won't touch its info in ${SettingsSnapshotZipSerializer.PLUGINS}")
+              continue
+            }
             if (plugin.isEnabled != enable) {
               LOG.info("State of plugin ${pluginDescriptor.pluginId} is inconsistent: received ${ed(enable)} event, " +
                        "but plugin is ${ed(plugin.isEnabled)}d. Probably, a restart is required.")
             }
             if (plugin.isBundled && enable) {
               newPlugins.remove(pluginDescriptor.pluginId)
-              LOG.info("Bundled plugin ${pluginDescriptor.pluginId} is ${ed(enable)}d. Will remove its info from plugins.json")
+              LOG.info("Bundled plugin ${pluginDescriptor.pluginId} is ${ed(enable)}d. Will remove its info from ${com.intellij.settingsSync.SettingsSnapshotZipSerializer.PLUGINS}")
             }
             else {
               newPlugins[pluginDescriptor.pluginId] = getPluginData(pluginDescriptor, enable)

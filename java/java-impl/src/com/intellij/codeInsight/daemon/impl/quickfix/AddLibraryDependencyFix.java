@@ -55,8 +55,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     if (myLibraries.size() == 1) {
       return QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", getLibraryName(ContainerUtil.getFirstItem(myLibraries.keySet())));
     }
@@ -64,8 +63,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("orderEntry.fix.family.add.library.to.classpath");
   }
 
@@ -86,7 +84,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
           @Override
           public void customize(@NotNull JList<? extends Library> list, Library lib, int index, boolean selected, boolean hasFocus) {
             if (lib != null) {
-              setText(getLibraryName(lib));
+              setText(lib.getPresentableName());
               setIcon(AllIcons.Nodes.PpLib);
             }
           }
@@ -141,8 +139,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     return new IntentionPreviewInfo.Html(HtmlChunk.text(message));
   }
 
-  @NlsSafe
-  private String getLibraryName(@NotNull Library library) {
+  private @NlsSafe String getLibraryName(@NotNull Library library) {
     final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByLibrary(library, myCurrentModule.getProject());
     if (javaModule != null && PsiNameHelper.isValidModuleName(javaModule.getName(), javaModule)) {
       return javaModule.getName();

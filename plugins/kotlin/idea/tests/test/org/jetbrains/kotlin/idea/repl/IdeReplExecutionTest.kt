@@ -106,8 +106,9 @@ class IdeReplExecutionTest : LightPlatformTestCase() {
         testRunPossibility()
     }
 
-    @Test
-    fun testOnePlusOne() = testSimpleCommand("1 + 1", "2")
+    //muted, see KTIJ-28970
+    //@Test
+    //fun onePlusOne() = testSimpleCommand("1 + 1", "2")
 
     @Test
     fun testPrintlnText() = "Hello, console world!".let { testSimpleCommand("println(\"$it\")", it) }

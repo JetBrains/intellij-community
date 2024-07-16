@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class InvalidPropertyKeyFormInspection extends StringDescriptorInspection {
+public final class InvalidPropertyKeyFormInspection extends StringDescriptorInspection {
   public InvalidPropertyKeyFormInspection() {
     super("InvalidPropertyKeyForm");
   }

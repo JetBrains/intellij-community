@@ -69,7 +69,7 @@ import java.util.*;
 /**
  * The action-handler that does the code generation.
  */
-public class GenerateToStringActionHandlerImpl implements GenerateToStringActionHandler, CodeInsightActionHandler {
+public final class GenerateToStringActionHandlerImpl implements GenerateToStringActionHandler, CodeInsightActionHandler {
     private static final Logger LOG = Logger.getInstance(GenerateToStringActionHandlerImpl.class);
 
     @Override
@@ -91,7 +91,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         doExecuteAction(project, clazz, null);
     }
 
-    private static void doExecuteAction(@NotNull final Project project, @NotNull final PsiClass clazz, final Editor editor) {
+    private static void doExecuteAction(final @NotNull Project project, final @NotNull PsiClass clazz, final Editor editor) {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
             return;
         }
@@ -158,9 +158,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         LOG.debug("+++ doExecuteAction - END +++");
     }
 
-  @Nullable
-  private static List<PsiElementClassMember<?>> sortedSelection(PsiElementClassMember<?>[] dialogMembers,
-                                                                MemberChooser<PsiElementClassMember<?>> chooser) {
+  private static @Nullable List<PsiElementClassMember<?>> sortedSelection(PsiElementClassMember<?>[] dialogMembers,
+                                                                          MemberChooser<PsiElementClassMember<?>> chooser) {
     List<PsiElementClassMember<?>> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null) {
       return null;
@@ -198,8 +197,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         return GenerationUtil.combineToClassMemberList(filteredFields, filteredMethods);
     }
 
-    @Nullable
-    private static PsiClass getSubjectClass(Editor editor, final PsiFile file) {
+    private static @Nullable PsiClass getSubjectClass(Editor editor, final PsiFile file) {
         if (file == null) return null;
 
         int offset = editor.getCaretModel().getOffset();
@@ -277,8 +275,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                   final TemplatesPanel ui = new TemplatesPanel(project);
                   Configurable composite = new TabbedConfigurable() {
                         @Override
-                        @NotNull
-                        protected List<Configurable> createConfigurables() {
+                        protected @NotNull List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<>();
                             res.add(new GenerateToStringConfigurable(project));
                             res.add(ui);

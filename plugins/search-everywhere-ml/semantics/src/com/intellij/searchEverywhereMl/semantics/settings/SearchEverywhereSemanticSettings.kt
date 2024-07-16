@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributo
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.openapi.components.service
+import kotlinx.coroutines.flow.StateFlow
 
 interface SearchEverywhereSemanticSettings {
   var enabledInActionsTab: Boolean
@@ -16,6 +17,9 @@ interface SearchEverywhereSemanticSettings {
 
   fun getUseRemoteActionsServer(): Boolean
   fun getActionsAPIToken(): String
+
+  fun getEnabledInClassesTabState(): StateFlow<Boolean>
+  fun getEnabledInSymbolsTabState(): StateFlow<Boolean>
 
   fun isEnabledInTab(providerId: String): Boolean = when (providerId) {
     ActionSearchEverywhereContributor::class.java.simpleName -> enabledInActionsTab

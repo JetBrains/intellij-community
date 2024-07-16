@@ -8,6 +8,6 @@ import org.jetbrains.kotlin.psi.KtExpression
 
 internal class ConvertToConcatenatedStringIntention : ConvertToConcatenatedStringIntentionBase() {
     override fun isExpressionOfStringType(expression: KtExpression): Boolean = analyze(expression) {
-        expression.getKtType()?.isString == true
+      expression.expressionType?.isString == true
     }
 }

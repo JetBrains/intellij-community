@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ui.docking.impl
@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.*
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.DockableEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
@@ -37,10 +36,11 @@ import com.intellij.util.IconUtil
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.drawImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import java.awt.Component
 import java.awt.Graphics
@@ -50,6 +50,7 @@ import java.awt.event.MouseEvent
 import java.util.function.Predicate
 import javax.swing.*
 
+@ApiStatus.Internal
 @State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
 class DockManagerImpl(@JvmField internal val project: Project, private val coroutineScope: CoroutineScope)
   : DockManager(), PersistentStateComponent<Element> {
@@ -73,11 +74,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     @JvmField
     val ALLOW_DOCK_TOOL_WINDOWS: Key<Boolean> = Key.create("ALLOW_DOCK_TOOL_WINDOWS")
 
-    @JvmStatic
-    fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
-      return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) || EditorWindow.HIDE_TABS.get(it, false) }
-    }
-
     private fun getWindowDimensionKey(content: DockableContent<*>): String? {
       return if (content is DockableEditor) getWindowDimensionKey(content.file) else null
     }
@@ -85,9 +81,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     private fun getWindowDimensionKey(file: VirtualFile): String? = WINDOW_DIMENSION_KEY.get(file)
 
     @JvmStatic
-    fun isNorthPanelVisible(uiSettings: UISettings): Boolean {
-      return uiSettings.showNavigationBar && !uiSettings.presentationMode
-    }
+    fun isNorthPanelVisible(uiSettings: UISettings): Boolean = uiSettings.showNavigationBar && !uiSettings.presentationMode
 
     @JvmStatic
     fun isNorthPanelAvailable(editors: List<FileEditor>): Boolean {
@@ -168,8 +162,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
         containerToWindow.get(container)?.setTransparent(true)
       }
     }
-    currentDragSession = MyDragSession(mouseEvent, content)
-    return currentDragSession!!
+    return MyDragSession(mouseEvent, content).also { currentDragSession = it }
   }
 
   fun stopCurrentDragSession() {
@@ -180,10 +173,9 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     currentDragSession!!.cancelSession()
     currentDragSession = null
     busyObject.onReady()
-    for (each in getAllContainers()) {
-      if (!each.isEmpty) {
-        val window = containerToWindow.get(each)
-        window?.setTransparent(false)
+    for (container in getAllContainers()) {
+      if (!container.isEmpty) {
+        containerToWindow.get(container)?.setTransparent(false)
       }
     }
   }
@@ -192,7 +184,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     get() = busyObject.getReady(this)
 
   private inner class MyDragSession(mouseEvent: MouseEvent, content: DockableContent<*>) : DragSession {
-    private val window: JDialog
+    private val window: JDialog = JDialog(ComponentUtil.getWindow(mouseEvent.component))
     private var dragImage: Image?
     private val defaultDragImage: Image
     private val content: DockableContent<*>
@@ -201,7 +193,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     private val imageContainer: JLabel
 
     init {
-      window = JDialog(ComponentUtil.getWindow(mouseEvent.component))
       window.isUndecorated = true
       this.content = content
       startDragContainer = getContainerFor(mouseEvent.component) { true }
@@ -219,7 +210,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
         @Synchronized
         override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-          StartupUiUtil.drawImage(g, defaultDragImage, x, y, window)
+          drawImage(g = g, image = defaultDragImage, x = x, y = y, sourceBounds = null, op = null, observer = window)
         }
       })
       window.contentPane = imageContainer
@@ -288,7 +279,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       else if (e.id == MouseEvent.MOUSE_RELEASED) {
         val currentOverContainer = currentOverContainer
         if (currentOverContainer == null) {
-          // This relative point might be relative to a component that's on a different screen, with a different DPI scaling factor than
+          // This relative point might be relative to a component on a different screen, with a different DPI scaling factor than
           // the target location. Ideally, we should pass the DevicePoint to createNewDockContainerFor, but that will change the API. We'll
           // fix it up inside createNewDockContainerFor
           val point = RelativePoint(e)
@@ -349,13 +340,14 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     return null
   }
 
-  private fun getFactory(type: String): DockContainerFactory? {
-    assert(factories.containsKey(type)) { "No factory for content type=$type" }
-    return factories.get(type)
+  private fun getFactory(type: String): DockContainerFactory {
+    return requireNotNull(factories.get(type)) {
+      "No factory for content type=$type"
+    }
   }
 
   fun createNewDockContainerFor(content: DockableContent<*>, point: RelativePoint) {
-    val container = getFactory(content.dockContainerType)!!.createContainer(content)
+    val container = getFactory(content.dockContainerType).createContainer(content)
     val canReopenWindow = content.presentation.getClientProperty(REOPEN_WINDOW)
     val reopenWindow = canReopenWindow == null || canReopenWindow
     val window = createWindowFor(dimensionKey = getWindowDimensionKey(content = content),
@@ -389,7 +381,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   }
 
   internal fun createNewDockContainerFor(file: VirtualFile, openFile: (EditorWindow) -> FileEditorComposite): FileEditorComposite {
-    val container = getFactory(DockableEditorContainerFactory.TYPE)!!.createContainer(null)
+    val container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null)
 
     // Order is important here.
     // Create the dock window, then create the editor window.
@@ -404,7 +396,8 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
     val editorWindow = (container as DockableEditorTabbedContainer).splitters.getOrCreateCurrentWindow(file)
     val result = openFile(editorWindow)
-    if (!isSingletonEditorInWindow(result.allEditors)) {
+    val isSingletonEditorInWindow = isSingletonEditorInWindow(result.allEditors)
+    if (!isSingletonEditorInWindow) {
       window.setupToolWindowPane()
     }
     val isNorthPanelAvailable = isNorthPanelAvailable(result.allEditors)
@@ -412,11 +405,15 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       window.setupNorthPanel()
     }
     container.add(
-      EditorTabbedContainer.createDockableEditor(image = null,
-                                                 file = file,
-                                                 presentation = Presentation(file.name),
-                                                 window = editorWindow,
-                                                 isNorthPanelAvailable = isNorthPanelAvailable),
+      DockableEditor(
+        img = null,
+        file = file,
+        presentation = Presentation(file.name),
+        preferredSize = editorWindow.size,
+        isPinned = editorWindow.isFilePinned(file = file),
+        isSingletonEditorInWindow = isSingletonEditorInWindow,
+        isNorthPanelAvailable = isNorthPanelAvailable,
+      ),
       null
     )
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
@@ -424,11 +421,12 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   }
 
   private fun createWindowFor(dimensionKey: String?, id: String?, container: DockContainer, canReopenWindow: Boolean): DockWindow {
-    val coroutineScope = coroutineScope.childScope()
+    val windowId = id ?: (windowIdCounter++).toString()
+    val coroutineScope = coroutineScope.childScope("DockWindow #$windowId")
     val window = DockWindow(dockManager = this,
                             coroutineScope = coroutineScope,
                             dimensionKey = dimensionKey,
-                            id = id ?: (windowIdCounter++).toString(),
+                            id = windowId,
                             container = container,
                             isDialog = container is DockContainer.Dialog,
                             supportReopen = canReopenWindow)
@@ -480,10 +478,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   }
 
   private fun getFileManagerContainer(): DockContainer? {
-    if (project.isDefault) {
-      return null
-    }
-    return FileEditorManagerEx.getInstanceEx(project).dockContainer
+    return if (project.isDefault) null else FileEditorManagerEx.getInstanceEx(project).dockContainer
   }
 
   override fun loadState(state: Element) {

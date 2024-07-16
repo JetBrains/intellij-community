@@ -79,4 +79,9 @@ public class HighlightInfoHolder {
   public @NotNull TextAttributesScheme getColorsScheme() {
     return key -> key.getDefaultAttributes();
   }
+
+  @Override
+  public String toString() {
+    return "HighlightInfoHolder{" + size()+ " results}";
+  }
 }

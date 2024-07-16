@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,9 +20,8 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   private final Map<RemoteServer<?>, ServerConnection<?>> myConnections = new ConcurrentHashMap<>();
   private final ServerConnectionEventDispatcher myEventDispatcher = new ServerConnectionEventDispatcher();
 
-  @NotNull
   @Override
-  public <C extends ServerConfiguration> ServerConnection<?> getOrCreateConnection(@NotNull RemoteServer<C> server) {
+  public @NotNull <C extends ServerConfiguration> ServerConnection<?> getOrCreateConnection(@NotNull RemoteServer<C> server) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     ServerConnection<?> connection = myConnections.get(server);
     if (connection == null) {
@@ -32,9 +32,8 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     return connection;
   }
 
-  @NotNull
   @Override
-  public <C extends ServerConfiguration> ServerConnection<?> createTemporaryConnection(@NotNull RemoteServer<C> server) {
+  public @NotNull <C extends ServerConfiguration> ServerConnection<?> createTemporaryConnection(@NotNull RemoteServer<C> server) {
     return doCreateConnection(server, null);
   }
 
@@ -44,9 +43,8 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     return new ServerConnectionImpl<>(server, server.getType().createConnector(server, executor), manager, getEventDispatcher());
   }
 
-  @Nullable
   @Override
-  public <C extends ServerConfiguration> ServerConnection<?> getConnection(@NotNull RemoteServer<C> server) {
+  public @Nullable <C extends ServerConfiguration> ServerConnection<?> getConnection(@NotNull RemoteServer<C> server) {
     return myConnections.get(server);
   }
 
@@ -59,9 +57,8 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     return myEventDispatcher;
   }
 
-  @NotNull
   @Override
-  public Collection<ServerConnection<?>> getConnections() {
+  public @NotNull Collection<ServerConnection<?>> getConnections() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     return Collections.unmodifiableCollection(myConnections.values());
   }

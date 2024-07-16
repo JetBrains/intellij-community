@@ -4,17 +4,15 @@ package com.intellij.formatting.commandLine
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ArgumentsException
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ShowUsageException
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader
+import com.intellij.util.application
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
-import kotlin.system.exitProcess
 
 private val LOG = Logger.getInstance(FormatterStarter::class.java)
 
@@ -23,9 +21,6 @@ private val LOG = Logger.getInstance(FormatterStarter::class.java)
  */
 internal class FormatterStarter : ApplicationStarter {
   private val messageOutput = StdIoMessageOutput
-
-  override val commandName: String
-    get() = "format"
 
   override fun main(args: List<String>) {
     messageOutput.info("$appInfo Formatter\n")
@@ -36,11 +31,13 @@ internal class FormatterStarter : ApplicationStarter {
     }
     catch (e: ShowUsageException) {
       messageOutput.info(usageInfo)
-      exitProcess(0)
+      exit(0)
+      return
     }
     catch (e: ArgumentsException) {
       messageOutput.error("ERROR: ${e.message}\n")
-      exitProcess(1)
+      exit(1)
+      return
     }
 
     try {
@@ -48,16 +45,18 @@ internal class FormatterStarter : ApplicationStarter {
         it.processFiles()
         it.printReport()
         if (!it.isResultSuccessful()) {
-          exitProcess(1)
+          exit(1)
+          return
         }
       }
     }
     catch (e: IOException) {
       messageOutput.error("ERROR: ${e.localizedMessage}\n")
-      exitProcess(1)
+      exit(1)
+      return
     }
 
-    (ApplicationManager.getApplication() as ApplicationEx).exit(true, true)
+    exit(0)
   }
 
 }
@@ -134,8 +133,8 @@ fun readSettings(settingsFile: File): CodeStyleSettings? {
 
 private fun readSettings(settingsPath: String): CodeStyleSettings? = readSettings(File(settingsPath))
 
-private val appInfo: String =
-  ApplicationInfo.getInstance()
+private val appInfo: String
+  get() = ApplicationInfo.getInstance()
     .let { "${it.fullApplicationName}, build ${it.build.asString()}" }
 
 sealed class CodeStyleProcessorBuildException : RuntimeException {
@@ -157,4 +156,8 @@ private class Skipper(private var skip: Boolean = false) {
       action()
     }
   }
+}
+
+private fun exit(code: Int) {
+  application.exit(true, true, false, code)
 }

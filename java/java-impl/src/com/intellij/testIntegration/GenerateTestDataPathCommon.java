@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -27,20 +27,16 @@ import java.util.List;
 
 class GenerateTestDataPathCommon extends BaseGenerateAction {
 
-  @NonNls
-  private static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
-  @NonNls
-  private static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
-  @NonNls
-  protected static final String ANNOTATION_FQN = "com.intellij.testFramework.TestDataPath";
+  private static final @NonNls String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
+  private static final @NonNls String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
+  protected static final @NonNls String ANNOTATION_FQN = "com.intellij.testFramework.TestDataPath";
   protected static final Logger LOG = Logger.getInstance(GenerateTestDataPathCommon.class);
 
   GenerateTestDataPathCommon(CodeInsightActionHandler handler) {
     super(handler);
   }
 
-  @Nullable
-  protected static String annotationValue(@NotNull PsiModifierListOwner owner, String annotationFqName) {
+  protected static @Nullable String annotationValue(@NotNull PsiModifierListOwner owner, String annotationFqName) {
     var annotationNames = Collections.singleton(annotationFqName);
     var nestedClass = owner instanceof PsiClass && ((PsiClass)owner).getContainingClass() != null;
     var element = nestedClass
@@ -80,7 +76,7 @@ class GenerateTestDataPathCommon extends BaseGenerateAction {
       return AnnotationUtil.findAnnotation(targetClass, "com.intellij.testFramework.TestDataPath") != null;
   }
 
-  protected static abstract class TestDataPathDialog extends DialogWrapper {
+  protected abstract static class TestDataPathDialog extends DialogWrapper {
     protected TestDataPathDialog(@Nullable Project project, @NlsSafe @NotNull String titleText, boolean canBeParent) {
       super(project, canBeParent);
       setTitle(titleText);
@@ -95,7 +91,7 @@ class GenerateTestDataPathCommon extends BaseGenerateAction {
       return mainPanel;
     }
 
-    abstract protected List<Component> getPanelContent();
+    protected abstract List<Component> getPanelContent();
 
     protected JBPanel createMainPanel() {
       var mainPanel = new JBPanel<>().withPreferredWidth(250);

@@ -11,5 +11,7 @@ class SimpleTree<T> {
   ) {
 
     val children: MutableList<Node<T>> = ArrayList()
+
+    override fun toString(): String = name
   }
 }

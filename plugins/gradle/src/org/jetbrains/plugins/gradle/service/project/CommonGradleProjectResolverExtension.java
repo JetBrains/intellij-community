@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -10,7 +10,6 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSour
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension;
 import com.intellij.openapi.externalSystem.model.ConfigurationDataImpl;
@@ -55,6 +54,7 @@ import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestSourceMapping;
 import org.jetbrains.plugins.gradle.model.tests.ExternalTestsModel;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -91,24 +91,24 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
-    final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
+    final ExternalProject externalProject = resolverCtx.getRootModel(ExternalProject.class);
     if (externalProject != null) {
       ideProject.createChild(ExternalProjectDataCache.KEY, externalProject);
       ideProject.getData().setDescription(externalProject.getDescription());
     }
 
-    final IntelliJSettings intellijSettings = resolverCtx.getExtraProject(IntelliJProjectSettings.class);
+    final IntelliJSettings intellijSettings = resolverCtx.getRootModel(IntelliJProjectSettings.class);
     if (intellijSettings != null) {
       ideProject.createChild(ProjectKeys.CONFIGURATION,
                              new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
-    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(DependencyAccessorsModel.class);
+    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getRootModel(DependencyAccessorsModel.class);
     if (dependencyAccessorsModel != null && Registry.is(GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
       ideProject.createChild(BuildScriptClasspathData.ACCESSORS, dependencyAccessorsModel);
     }
 
-    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getExtraProject(VersionCatalogsModel.class);
+    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getRootModel(VersionCatalogsModel.class);
     if (versionCatalogsModel != null) {
       ideProject.createChild(BuildScriptClasspathData.VERSION_CATALOGS, versionCatalogsModel);
     }
@@ -264,8 +264,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
                             new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
-    ProjectImportAction.AllModels models = resolverCtx.getModels();
-    ExternalTestsModel externalTestsModel = models.getModel(gradleModule, ExternalTestsModel.class);
+    ExternalTestsModel externalTestsModel = resolverCtx.getProjectModel(gradleModule, ExternalTestsModel.class);
     if (externalTestsModel != null) {
       for (ExternalTestSourceMapping testSourceMapping : externalTestsModel.getTestSourceMappings()) {
         String testName = testSourceMapping.getTestName();
@@ -793,25 +792,30 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   }
 
   @Override
-  public void enhanceTaskProcessing(@NotNull List<String> taskNames,
+  public void enhanceTaskProcessing(@Nullable Project project,
+                                    @NotNull List<String> taskNames,
                                     @NotNull Consumer<String> initScriptConsumer,
                                     @NotNull Map<String, String> parameters) {
-    String dispatchPort = parameters.get(GradleProjectResolverExtension.DEBUG_DISPATCH_PORT_KEY);
+    initScriptConsumer.consume(GradleInitScriptUtil.loadCommonTasksUtilsScript());
+
+    String dispatchPort = parameters.get(DEBUG_DISPATCH_PORT_KEY);
     if (dispatchPort == null) {
       return;
     }
 
-    String debugOptions = parameters.get(GradleProjectResolverExtension.DEBUG_OPTIONS_KEY);
+    String debugOptions = parameters.get(DEBUG_OPTIONS_KEY);
     if (debugOptions == null) {
       debugOptions = "";
     }
     List<String> lines = new ArrayList<>();
 
-    String esRtJarPath = FileUtil.toCanonicalPath(PathManager.getJarPathForClass(ExternalSystemSourceType.class));
-    lines.add("initscript { dependencies { classpath files(mapPath(\"" + esRtJarPath + "\")) } }"); // bring external-system-rt.jar
+    String classPathInitScript = GradleInitScriptUtil.loadToolingExtensionProvidingInitScript(
+      Collections.singleton(ExternalSystemSourceType.class)
+    );
+    lines.add(classPathInitScript);
 
     for (DebuggerBackendExtension extension : DebuggerBackendExtension.EP_NAME.getExtensionList()) {
-      lines.addAll(extension.initializationCode(dispatchPort, debugOptions));
+      lines.addAll(extension.initializationCode(project, dispatchPort, debugOptions));
     }
 
     final String script = join(lines, System.lineSeparator());

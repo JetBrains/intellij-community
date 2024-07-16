@@ -537,7 +537,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   private JComponent createSignaturePanel() {
     mySignatureArea = createSignaturePreviewComponent();
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), null), BorderLayout.NORTH);
+    panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("signature.preview.border.title"), mySignatureArea), BorderLayout.NORTH);
     panel.add(mySignatureArea, BorderLayout.CENTER);
     mySignatureArea.setPreferredSize(new Dimension(-1, 130));
     mySignatureArea.setMinimumSize(new Dimension(-1, 130));

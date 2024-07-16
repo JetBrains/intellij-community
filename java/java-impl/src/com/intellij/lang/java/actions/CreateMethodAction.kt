@@ -84,6 +84,7 @@ private class JavaMethodRenderer(
     method = insertMethod(method)
     method = forcePsiPostprocessAndRestoreElement(method) ?: return
     val builder = setupTemplate(method)
+    builder.setScrollToTemplate(request.isStartTemplate)
     method = forcePsiPostprocessAndRestoreElement(method) ?: return
     val template = builder.buildInlineTemplate()
     startTemplate(method, template)
@@ -107,12 +108,19 @@ private class JavaMethodRenderer(
       setModifierProperty(method, modifier.toPsiModifier(), true)
     }
 
+    val factory = PsiElementFactory.getInstance(project)
+
     for (annotation in request.annotations) {
-      method.modifierList.addAnnotation(annotation.qualifiedName)
+      val psiAnotation = method.modifierList.addAnnotation(annotation.qualifiedName)
+
+      annotation.attributes.forEach {
+        val value = CreateAnnotationActionUtil.attributeRequestToValue(it.value, factory, null)
+        psiAnotation.setDeclaredAttributeValue(it.name, value)
+      }
     }
 
-    val withoutBody = abstract || targetClass.isInterface && JvmModifier.STATIC !in requestedModifiers
-    if (withoutBody) method.body?.delete()
+    val shouldHaveBody = !abstract && (!targetClass.isInterface || JvmModifier.STATIC in requestedModifiers)
+    if (!shouldHaveBody) method.body?.delete()
 
     return method
   }
@@ -145,6 +153,7 @@ private class JavaMethodRenderer(
     else {
       builder.setEndVariableAfter(method.body ?: method)
     }
+    builder.setScrollToTemplate(request.isStartTemplate)
     return builder
   }
 

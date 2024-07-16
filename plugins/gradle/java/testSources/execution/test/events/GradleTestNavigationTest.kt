@@ -99,7 +99,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
           assertNode("successful_test") {
             assertPsiLocation("TestCase", "successful_test")
           }
-          assertNode("parametrized_test") {
+          assertNode("parametrized_test(int, String)") {
             assertPsiLocation("TestCase", "parametrized_test")
             assertNode("[1] 1, first") {
               assertPsiLocation("TestCase", "parametrized_test", "[1]")
@@ -129,7 +129,7 @@ class GradleTestNavigationTest : GradleExecutionTestCase() {
           assertNode("pretty test") {
             assertPsiLocation("DisplayNameTestCase", "ugly_test")
           }
-          assertNode("parametrized test") {
+          assertNode("parametrized test (int, String)") {
             if (isBuiltInTestEventsUsed()) {
               // Known bug. See DefaultGradleTestEventConverter.getConvertedMethodName
               assertPsiLocation("DisplayNameTestCase", "parametrized_test")

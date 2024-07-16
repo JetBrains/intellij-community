@@ -33,8 +33,7 @@ public final class ConstantSubexpressionIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new ConstantSubexpressionPredicate();
   }
 
@@ -60,7 +59,7 @@ public final class ConstantSubexpressionIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;
@@ -80,7 +79,7 @@ public final class ConstantSubexpressionIntention extends MCIntention {
       return;
     }
     final Object value = ExpressionUtils.computeConstantExpression(subexpression);
-    @NonNls final StringBuilder newExpressionText = new StringBuilder();
+    final @NonNls StringBuilder newExpressionText = new StringBuilder();
     final PsiExpression[] operands = polyadicExpression.getOperands();
     PsiExpression prevOperand = null;
     PsiJavaToken prevToken = null;

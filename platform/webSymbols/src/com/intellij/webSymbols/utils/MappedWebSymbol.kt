@@ -24,12 +24,18 @@ class MappedWebSymbol private constructor(
   override val priority: WebSymbol.Priority? = null,
 ) : WebSymbol {
 
-  constructor(qualifiedKind: WebSymbolQualifiedKind,
-              name: String,
-              origin: WebSymbolOrigin,
-              vararg mappingPath: WebSymbolQualifiedName,
-              priority: WebSymbol.Priority? = null)
-    : this(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *mappingPath, priority = priority)
+  companion object {
+    @JvmOverloads
+    @JvmStatic
+    fun create(
+      qualifiedKind: WebSymbolQualifiedKind,
+      name: String,
+      origin: WebSymbolOrigin,
+      vararg mappingPath: WebSymbolQualifiedName,
+      priority: WebSymbol.Priority? = null
+    ): MappedWebSymbol =
+      MappedWebSymbol(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *mappingPath, priority = priority)
+  }
 
   override val pattern: WebSymbolsPattern =
     WebSymbolsPatternFactory.createSingleSymbolReferencePattern(mappingPath.toList())

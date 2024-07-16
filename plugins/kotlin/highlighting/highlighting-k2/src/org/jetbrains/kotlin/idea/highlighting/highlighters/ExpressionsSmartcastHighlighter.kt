@@ -3,24 +3,24 @@ package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtImplicitReceiverSmartCastKind
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiverSmartCastKind
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.*
 
-context(KtAnalysisSession)
+context(KaSession)
 internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
     override fun visitExpression(expression: KtExpression) {
         highlightExpression(expression)
     }
 
     private fun highlightExpression(expression: KtExpression) {
-        expression.getImplicitReceiverSmartCast().forEach {
+        expression.implicitReceiverSmartCasts.forEach {
             val receiverName = when (it.kind) {
-                KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
-                KtImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
+                KaImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
+                KaImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
             }
 
             val builder = HighlightingFactory.highlightName(
@@ -29,20 +29,20 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
               KotlinBaseHighlightingBundle.message(
                 "0.smart.cast.to.1",
                 receiverName,
-                it.type.asStringForDebugging()
+                it.type.toString()
               )
             )
             if (builder != null) {
                 holder.add(builder.create())
             }
         }
-        expression.getSmartCastInfo()?.let { info ->
+        expression.smartCastInfo?.takeIf { it.isStable }?.let { info ->
             val builder = HighlightingFactory.highlightName(
               getSmartCastTarget(expression),
               KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
               KotlinBaseHighlightingBundle.message(
                 "smart.cast.to.0",
-                info.smartCastType.asStringForDebugging()
+                info.smartCastType.toString()
               )
             )
             if (builder != null) {

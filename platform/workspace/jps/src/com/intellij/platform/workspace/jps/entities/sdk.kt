@@ -12,7 +12,10 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 import java.io.Serializable
 
-interface SdkEntity: WorkspaceEntityWithSymbolicId {
+interface SdkEntity : WorkspaceEntityWithSymbolicId {
+  override val symbolicId: SdkId
+    get() = SdkId(name, type)
+
   val name: String
   val type: String
   val version: String?
@@ -20,26 +23,30 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
   val roots: List<SdkRoot>
   val additionalData: String
 
-  override val symbolicId: SdkId
-    get() = SdkId(name, type)
-
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SdkEntity, WorkspaceEntity.Builder<SdkEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SdkEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var type: String
-    override var version: String?
-    override var homePath: VirtualFileUrl?
-    override var roots: MutableList<SdkRoot>
-    override var additionalData: String
+    var name: String
+    var type: String
+    var version: String?
+    var homePath: VirtualFileUrl?
+    var roots: MutableList<SdkRoot>
+    var additionalData: String
   }
 
   companion object : EntityType<SdkEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String, type: String, roots: List<SdkRoot>, additionalData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SdkEntity {
+    operator fun invoke(
+      name: String,
+      type: String,
+      roots: List<SdkRoot>,
+      additionalData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.type = type
@@ -54,7 +61,12 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity.Builder.() -> Unit): SdkEntity = modifyEntity(SdkEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifySdkEntity(
+  entity: SdkEntity,
+  modification: SdkEntity.Builder.() -> Unit,
+): SdkEntity {
+  return modifyEntity(SdkEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 

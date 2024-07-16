@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -85,8 +85,8 @@ public abstract class LocalToFieldHandler {
       final boolean isStatic = tempIsStatic;
       final PsiClass firstClass = classes.get(0);
       final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
-      String title = myIsConstant ? JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.constant")
-                                  : JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.field");
+      String title = myIsConstant ? JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.constant")
+                                  : JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.field");
       new PsiTargetNavigator<>(classes.toArray(PsiClass.EMPTY_ARRAY)).selection(preselection).createPopup(myProject,
                                                 title, new PsiElementProcessor<>() {
           @Override

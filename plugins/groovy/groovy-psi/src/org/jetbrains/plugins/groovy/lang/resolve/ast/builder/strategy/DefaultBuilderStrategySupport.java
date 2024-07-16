@@ -20,7 +20,7 @@ import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
-public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor {
+public final class DefaultBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String DEFAULT_STRATEGY_NAME = "DefaultStrategy";
 

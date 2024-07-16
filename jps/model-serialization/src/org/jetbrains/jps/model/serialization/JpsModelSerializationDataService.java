@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsGlobal;
@@ -17,6 +18,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class JpsModelSerializationDataService {
+  private JpsModelSerializationDataService() {
+  }
 
   public static Map<String, String> computeAllPathVariables(JpsGlobal global) {
     Map<String, String> pathVariables = new HashMap<>(PathMacroUtil.getGlobalSystemMacros(false));
@@ -30,11 +33,13 @@ public final class JpsModelSerializationDataService {
     return pathVariables;
   }
 
+  @ApiStatus.Internal
   @Nullable
   public static JpsPathVariablesConfiguration getPathVariablesConfiguration(JpsGlobal global) {
     return global.getContainer().getChild(JpsGlobalLoader.PATH_VARIABLES_ROLE);
   }
 
+  @ApiStatus.Internal
   @NotNull
   public static JpsPathVariablesConfiguration getOrCreatePathVariablesConfiguration(JpsGlobal global) {
     JpsPathVariablesConfiguration child = global.getContainer().getChild(JpsGlobalLoader.PATH_VARIABLES_ROLE);
@@ -44,7 +49,7 @@ public final class JpsModelSerializationDataService {
     return child;
   }
 
-
+  @ApiStatus.Internal
   @Nullable
   public static JpsProjectSerializationDataExtension getProjectExtension(@NotNull JpsProject project) {
     return project.getContainer().getChild(JpsProjectSerializationDataExtensionImpl.ROLE);
@@ -56,6 +61,7 @@ public final class JpsModelSerializationDataService {
     return extension != null ? extension.getBaseDirectory() : null;
   }
 
+  @ApiStatus.Internal
   @Nullable
   public static JpsModuleSerializationDataExtension getModuleExtension(@NotNull JpsModule project) {
     return project.getContainer().getChild(JpsModuleSerializationDataExtensionImpl.ROLE);

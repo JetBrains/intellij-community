@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.embedding;
 
 import com.intellij.lang.*;
@@ -20,8 +20,7 @@ public class EmbeddedLazyParseableElementType extends ILazyParseableElementType 
   }
 
   public Lexer createLexer(@NotNull ASTNode chameleon,
-                              @NotNull Project project,
-                              @NotNull Language parentLanguage) {
+                           @NotNull Project project) {
     final Language language = chameleon.getElementType().getLanguage();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     return parserDefinition.createLexer(project);
@@ -44,7 +43,7 @@ public class EmbeddedLazyParseableElementType extends ILazyParseableElementType 
     final Project project = file.getProject();
     final Language language = chameleon.getElementType().getLanguage();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    final Lexer lexer = createLexer(chameleon, project, psi.getLanguage());
+    final Lexer lexer = createLexer(chameleon, project);
 
     final PsiBuilder builder = getBuilder(chameleon, project, parserDefinition, lexer, chameleon.getChars());
     var startTime = System.nanoTime();

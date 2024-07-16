@@ -12,11 +12,13 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) : OrderRootsCache(parentDisposable) {
   private val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   private val myRootUrls = AtomicReference<ConcurrentMap<CacheKey, Array<String>>>()
@@ -42,12 +44,12 @@ class OrderRootsCacheBridge(val project: Project, parentDisposable: Disposable) 
     val key = CacheKey(rootType, flags)
     var virtualFileUrls: List<VirtualFileUrlBridge>? = null
     if (myRootUrls.get()?.get(key) == null) {
-      virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUri(it) as VirtualFileUrlBridge }
+      virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUrl(it) as VirtualFileUrlBridge }
       ConcurrencyUtil.cacheOrGet(myRootUrls, ConcurrentHashMap()).computeIfAbsent(key) { ArrayUtil.toStringArray(virtualFileUrls!!.map { it.url }) }
     }
     if (myRootVirtualFiles.get()?.get(key) == null) {
       if (virtualFileUrls == null) {
-        virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUri(it) as VirtualFileUrlBridge }
+        virtualFileUrls = rootUrlsComputer.get().map { virtualFileUrlManager.getOrCreateFromUrl(it) as VirtualFileUrlBridge }
       }
       ConcurrencyUtil.cacheOrGet(myRootVirtualFiles, ConcurrentHashMap()).computeIfAbsent(key) {
         VfsUtilCore.toVirtualFileArray(virtualFileUrls.mapNotNull { it.file })

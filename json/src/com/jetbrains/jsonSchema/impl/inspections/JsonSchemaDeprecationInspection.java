@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
@@ -40,7 +41,8 @@ public final class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspec
         JsonPointerPosition position = walker.findPosition(o, true);
         if (position == null) return;
 
-        final MatchResult result = new JsonSchemaResolver(project, schema, position).detailedResolve();
+        JsonPropertyAdapter parentPropertyAdapter = walker.getParentPropertyAdapter(o);
+        final MatchResult result = new JsonSchemaResolver(project, schema, position, parentPropertyAdapter == null ? null : parentPropertyAdapter.getNameValueAdapter()).detailedResolve();
         Iterable<JsonSchemaObject> iterable;
         if (result.myExcludingSchemas.size() == 1) {
           iterable = ContainerUtil.concat(result.mySchemas, result.myExcludingSchemas.get(0));

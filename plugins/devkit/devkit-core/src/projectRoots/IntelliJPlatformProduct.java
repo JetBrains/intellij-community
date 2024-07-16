@@ -90,8 +90,7 @@ public enum IntelliJPlatformProduct {
   }
 
   public static @Nullable IntelliJPlatformProduct fromMavenCoordinates(String groupId, String artifactId) {
-    String coordinates = groupId + ":" + artifactId;
-    return ContainerUtil.find(values(), product -> Objects.equals(product.getMavenCoordinates(), coordinates));
+    return ContainerUtil.find(values(), product -> Objects.equals(product.getMavenCoordinates(), groupId + ":" + artifactId));
   }
 
   public static @Nullable IntelliJPlatformProduct fromCdnCoordinates(String groupId, String artifactId) {

@@ -7,13 +7,17 @@ import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +25,9 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
+
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 /**
  * Allows adding an editor gutter icon associated with a PSI element that can be run
@@ -44,18 +51,24 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
 
     public final Function<? super PsiElement, String> tooltipProvider;
 
+    public Info(Icon icon, AnAction @NotNull [] actions) {
+      this(icon, actions, defaultTooltipProvider(actions));
+    }
+
     public Info(Icon icon, AnAction @NotNull [] actions, @Nullable Function<? super PsiElement, String> tooltipProvider) {
       this.icon = icon;
       this.actions = actions;
       this.tooltipProvider = tooltipProvider;
     }
 
+    /** @deprecated Use other constructors instead */
+    @Deprecated(forRemoval = true)
     public Info(Icon icon, @Nullable com.intellij.util.Function<? super PsiElement, String> tooltipProvider, AnAction @NotNull ... actions) {
       this(icon, actions, tooltipProvider == null ? null : it -> tooltipProvider.fun(it));
     }
 
     public Info(@NotNull AnAction action) {
-      this(action.getTemplatePresentation().getIcon(), new AnAction[]{action}, element -> getText(action, element));
+      this(action.getTemplatePresentation().getIcon(), ContainerUtil.ar(action));
     }
 
     /**
@@ -102,13 +115,15 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
     return true;
   }
 
-  /** @deprecated Prefer {@link #getText(AnAction, AnActionEvent)} instead */
-  @Deprecated
-  protected static @Nullable("null means disabled") String getText(@NotNull AnAction action, @NotNull PsiElement element) {
-    return getText(action, createActionEvent(element));
+  /** @deprecated Use {@link Info#Info(Icon, AnAction...)} and avoid manual {@link #getText} completely */
+  @Deprecated(forRemoval = true)
+  protected static @Nullable String getText(@NotNull AnAction action, @NotNull PsiElement element) {
+    return defaultTooltipProvider(ContainerUtil.ar(action)).apply(element);
   }
 
-  protected static @Nullable("null means disabled") String getText(@NotNull AnAction action, @NotNull AnActionEvent event) {
+  /** @deprecated Use {@link Info#Info(Icon, AnAction[])} and avoid manual {@link #getText} completely */
+  @Deprecated(forRemoval = true)
+  protected static @Nullable String getText(@NotNull AnAction action, @NotNull AnActionEvent event) {
     if (!(action instanceof ExecutorAction)) return null;
     event.getPresentation().copyFrom(action.getTemplatePresentation());
     event.getPresentation().setEnabledAndVisible(true);
@@ -119,12 +134,14 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
     return event.getPresentation().getText();
   }
 
+  /** @deprecated  Use {@link #defaultTooltipProvider} instead */
+  @Deprecated(forRemoval = true)
   protected static @NotNull AnActionEvent createActionEvent(@NotNull PsiElement element) {
     DataContext dataContext = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, element.getProject())
       .add(CommonDataKeys.PSI_ELEMENT, element)
       .build();
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+    AnActionEvent event = AnActionEvent.createFromDataContext("RunLineMarkerContributor.Tooltip", null, dataContext);
     Utils.initUpdateSession(event);
     return event;
   }
@@ -150,5 +167,28 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
       }
     }
     return isClass ? AllIcons.RunConfigurations.TestState.Run_run : AllIcons.RunConfigurations.TestState.Run;
+  }
+
+  private static @NotNull Function<? super PsiElement, String> defaultTooltipProvider(@NotNull AnAction @NotNull [] actions) {
+    return new TooltipProvider(actions);
+  }
+
+  private record TooltipProvider(@NotNull AnAction @NotNull [] actions) implements Function<PsiElement, String> {
+    @Override
+    public String apply(@NotNull PsiElement element) {
+      // we could have run parallel action group expand here if it was EDT
+      AnActionEvent event = createActionEvent(element);
+      return join(mapNotNull(actions, action -> getText(action, event)), "\n");
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(actions);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof TooltipProvider other && Arrays.equals(actions, other.actions);
+    }
   }
 }

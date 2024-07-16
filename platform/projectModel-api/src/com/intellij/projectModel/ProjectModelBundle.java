@@ -2,13 +2,11 @@
 package com.intellij.projectModel;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class ProjectModelBundle {
   private static final @NonNls String BUNDLE = "messages.ProjectModelBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(ProjectModelBundle.class, BUNDLE);

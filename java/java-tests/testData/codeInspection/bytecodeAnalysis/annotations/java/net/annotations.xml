@@ -722,7 +722,7 @@
     </item>
     <item name='java.net.URI java.lang.String normalize(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_-&gt;!null;_-&gt;null&quot;"/>
+            <val val="&quot;_-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='java.net.URI java.lang.String normalize(java.lang.String) 0'>

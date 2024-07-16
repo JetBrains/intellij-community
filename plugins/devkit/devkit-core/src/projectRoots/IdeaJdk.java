@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.icons.AllIcons;
@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.run.ProductInfo;
+import org.jetbrains.idea.devkit.run.ProductInfoKt;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModel;
@@ -158,7 +160,18 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static VirtualFile[] getIdeaLibrary(String home) {
     List<VirtualFile> result = new ArrayList<>();
-    appendIdeaLibrary(home, result, "junit.jar");
+    appendIdeaLibrary(home, result, "junit.jar", "junit4.jar");
+
+    ProductInfo productInfo = ProductInfoKt.loadProductInfo(home);
+    if (productInfo != null) {
+      final JarFileSystem jfs = JarFileSystem.getInstance();
+      for (String productModuleJarPath : productInfo.getProductModuleJarPaths()) {
+        VirtualFile vf = jfs.findFileByPath(home + File.separator + productModuleJarPath + JarFileSystem.JAR_SEPARATOR);
+        LOG.assertTrue(vf != null, productModuleJarPath + " not found in " + home);
+        result.add(vf);
+      }
+    }
+
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
     appendIdeaLibrary(plugins + "java", result);
     appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-javax-console.jar", "jpa-jakarta-console.jar",
@@ -228,12 +241,15 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       }
 
       @NlsSafe String firstSdkName = javaSdks.get(0);
-      int choice = Messages.showChooseDialog(
-        DevKitBundle.message("sdk.select.java.sdk"),
-        DevKitBundle.message("sdk.select.java.sdk.title"),
-        ArrayUtilRt.toStringArray(javaSdks), firstSdkName, Messages.getQuestionIcon());
-      if (choice != -1) {
-        String name = javaSdks.get(choice);
+      Ref<Integer> choice = Ref.create();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        choice.set(Messages.showChooseDialog(
+          DevKitBundle.message("sdk.select.java.sdk"),
+          DevKitBundle.message("sdk.select.java.sdk.title"),
+          ArrayUtilRt.toStringArray(javaSdks), firstSdkName, Messages.getQuestionIcon()));
+      });
+      if (choice.get() != -1) {
+        String name = javaSdks.get(choice.get());
         Sdk internalJava = Objects.requireNonNull(sdkModel.findSdk(name));
         //roots from internal jre
         setInternalJdk(sdk, sdkModificator, internalJava);
@@ -312,7 +328,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         return false;
       }
     }
-    else  {
+    else {
       VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
       for (VirtualFile aIdeaLib : ideaLib) {
         sdkModificator.addRoot(aIdeaLib, OrderRootType.CLASSES);
@@ -332,7 +348,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       setInternalJdk(sdk, sdkModificator, internalJava);
     }
 
-    Map<String, JpsModule> moduleByName = model.getProject().getModules().stream().collect(Collectors.toMap(JpsModule::getName, Function.identity()));
+    Map<String, JpsModule> moduleByName =
+      model.getProject().getModules().stream().collect(Collectors.toMap(JpsModule::getName, Function.identity()));
     @NonNls String[] mainModuleCandidates = {
       "intellij.idea.ultimate.main",
       "intellij.idea.community.main",
@@ -440,7 +457,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static void addSources(SdkModificator sdkModificator, final Sdk javaSdk) {
     if (javaSdk != null) {
-      if (!addOrderEntries(OrderRootType.SOURCES, javaSdk, sdkModificator)){
+      if (!addOrderEntries(OrderRootType.SOURCES, javaSdk, sdkModificator)) {
         if (SystemInfo.isMac) {
           Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
           for (Sdk jdk : jdks) {
@@ -468,7 +485,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
   }
 
-  private static boolean addOrderEntries(@NotNull OrderRootType orderRootType, @NotNull Sdk sdk, @NotNull SdkModificator toModificator){
+  private static boolean addOrderEntries(@NotNull OrderRootType orderRootType, @NotNull Sdk sdk, @NotNull SdkModificator toModificator) {
     boolean wasSmthAdded = false;
     final String[] entries = sdk.getRootProvider().getUrls(orderRootType);
     for (String entry : entries) {
@@ -482,7 +499,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Override
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel, @NotNull SdkModificator sdkModificator) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel,
+                                                                     @NotNull SdkModificator sdkModificator) {
     return new IdeaJdkConfigurable(sdkModel, sdkModificator);
   }
 
@@ -497,7 +515,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @Nullable
   public String getToolsPath(@NotNull Sdk sdk) {
     final Sdk jdk = getInternalJavaSdk(sdk);
-    if (jdk != null && jdk.getVersionString() != null){
+    if (jdk != null && jdk.getVersionString() != null) {
       return JavaSdk.getInstance().getToolsPath(jdk);
     }
     return null;

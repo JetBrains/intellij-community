@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.testIntegration;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -23,18 +23,16 @@ import java.util.List;
 import java.util.Vector;
 
 public final class CreateTestDialog extends DialogWrapper {
-  @NotNull
-  private final PyTestCreationModel myModel;
+  private final @NotNull PyTestCreationModel myModel;
   private final boolean myClassRequired;
   private TextFieldWithBrowseButton myTargetDir;
   private JTextField myClassName;
   private JPanel myMainPanel;
   private JTextField myFileName;
   private JTable myMethodsTable;
-  @NotNull
-  private final DefaultTableModel myTableModel;
+  private final @NotNull DefaultTableModel myTableModel;
 
-  private CreateTestDialog(@NotNull final Project project, @NotNull final PyTestCreationModel model) {
+  private CreateTestDialog(final @NotNull Project project, final @NotNull PyTestCreationModel model) {
     super(project);
     init();
     myClassRequired = StringUtil.isNotEmpty(model.getClassName());
@@ -105,7 +103,7 @@ public final class CreateTestDialog extends DialogWrapper {
     getOKAction().setEnabled(isValid());
   }
 
-  static boolean userAcceptsTestCreation(@NotNull final Project project, @NotNull final PyTestCreationModel model) {
+  static boolean userAcceptsTestCreation(final @NotNull Project project, final @NotNull PyTestCreationModel model) {
     final CreateTestDialog dialog = new CreateTestDialog(project, model);
     if (!dialog.showAndGet()) {
       return false;

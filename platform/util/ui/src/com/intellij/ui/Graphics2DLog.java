@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UnusedDeclaration")
+@ApiStatus.Internal
 public final class Graphics2DLog extends Graphics2D {
   private final Graphics2D myPeer;
 

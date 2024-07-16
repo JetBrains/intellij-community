@@ -10,9 +10,12 @@ import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.gradle.tooling.internal.consumer.Distribution
 import org.gradle.tooling.internal.consumer.ProjectConnectionCloseListener
 
-class TargetConnectionFactory(private val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider,
-                              private val taskId: ExternalSystemTaskId?,
-                              private val taskListener: ExternalSystemTaskNotificationListener?) : ConnectionFactory(null, null, null) {
+class TargetConnectionFactory(
+  private val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider,
+  private val taskId: ExternalSystemTaskId?,
+  private val taskListener: ExternalSystemTaskNotificationListener?
+) : ConnectionFactory(null, null, null) {
+
   override fun create(distribution: Distribution,
                       parameters: ConnectionParameters,
                       connectionCloseListener: ProjectConnectionCloseListener): ProjectConnection {

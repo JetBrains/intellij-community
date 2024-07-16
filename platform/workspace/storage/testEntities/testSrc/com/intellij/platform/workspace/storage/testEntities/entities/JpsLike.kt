@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
@@ -10,23 +15,27 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
   val contentRoots: List<@Child ContentRootTestEntity>
   val facets: List<@Child FacetTestEntity>
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+  override val symbolicId: ModuleTestEntitySymbolicId
     get() = ModuleTestEntitySymbolicId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleTestEntity, WorkspaceEntity.Builder<ModuleTestEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ModuleTestEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var contentRoots: List<ContentRootTestEntity>
-    override var facets: List<FacetTestEntity>
+    var name: String
+    var contentRoots: List<ContentRootTestEntity.Builder>
+    var facets: List<FacetTestEntity.Builder>
   }
 
   companion object : EntityType<ModuleTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleTestEntity {
+    operator fun invoke(
+      name: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.entitySource = entitySource
@@ -38,9 +47,12 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleTestEntity,
-                                      modification: ModuleTestEntity.Builder.() -> Unit): ModuleTestEntity = modifyEntity(
-  ModuleTestEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyModuleTestEntity(
+  entity: ModuleTestEntity,
+  modification: ModuleTestEntity.Builder.() -> Unit,
+): ModuleTestEntity {
+  return modifyEntity(ModuleTestEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ContentRootTestEntity : WorkspaceEntity {
@@ -49,19 +61,22 @@ interface ContentRootTestEntity : WorkspaceEntity {
   val sourceRoots: List<@Child SourceRootTestEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ContentRootTestEntity, WorkspaceEntity.Builder<ContentRootTestEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ContentRootTestEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleTestEntity
-    override var sourceRootOrder: SourceRootTestOrderEntity?
-    override var sourceRoots: List<SourceRootTestEntity>
+    var module: ModuleTestEntity.Builder
+    var sourceRootOrder: SourceRootTestOrderEntity.Builder?
+    var sourceRoots: List<SourceRootTestEntity.Builder>
   }
 
   companion object : EntityType<ContentRootTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ContentRootTestEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -72,12 +87,15 @@ interface ContentRootTestEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ContentRootTestEntity,
-                                      modification: ContentRootTestEntity.Builder.() -> Unit): ContentRootTestEntity = modifyEntity(
-  ContentRootTestEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyContentRootTestEntity(
+  entity: ContentRootTestEntity,
+  modification: ContentRootTestEntity.Builder.() -> Unit,
+): ContentRootTestEntity {
+  return modifyEntity(ContentRootTestEntity.Builder::class.java, entity, modification)
+}
 
-var ContentRootTestEntity.Builder.projectModelTestEntity: ProjectModelTestEntity?
-  by WorkspaceEntity.extension()
+var ContentRootTestEntity.Builder.projectModelTestEntity: ProjectModelTestEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(ProjectModelTestEntity::class.java)
 //endregion
 
 interface SourceRootTestOrderEntity : WorkspaceEntity {
@@ -85,18 +103,22 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
   val contentRoot: ContentRootTestEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SourceRootTestOrderEntity, WorkspaceEntity.Builder<SourceRootTestOrderEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SourceRootTestOrderEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var contentRoot: ContentRootTestEntity
+    var data: String
+    var contentRoot: ContentRootTestEntity.Builder
   }
 
   companion object : EntityType<SourceRootTestOrderEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceRootTestOrderEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -108,9 +130,12 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceRootTestOrderEntity,
-                                      modification: SourceRootTestOrderEntity.Builder.() -> Unit): SourceRootTestOrderEntity = modifyEntity(
-  SourceRootTestOrderEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifySourceRootTestOrderEntity(
+  entity: SourceRootTestOrderEntity,
+  modification: SourceRootTestOrderEntity.Builder.() -> Unit,
+): SourceRootTestOrderEntity {
+  return modifyEntity(SourceRootTestOrderEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface SourceRootTestEntity : WorkspaceEntity {
@@ -118,18 +143,22 @@ interface SourceRootTestEntity : WorkspaceEntity {
   val contentRoot: ContentRootTestEntity
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SourceRootTestEntity, WorkspaceEntity.Builder<SourceRootTestEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SourceRootTestEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var contentRoot: ContentRootTestEntity
+    var data: String
+    var contentRoot: ContentRootTestEntity.Builder
   }
 
   companion object : EntityType<SourceRootTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceRootTestEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -141,9 +170,12 @@ interface SourceRootTestEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceRootTestEntity,
-                                      modification: SourceRootTestEntity.Builder.() -> Unit): SourceRootTestEntity = modifyEntity(
-  SourceRootTestEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifySourceRootTestEntity(
+  entity: SourceRootTestEntity,
+  modification: SourceRootTestEntity.Builder.() -> Unit,
+): SourceRootTestEntity {
+  return modifyEntity(SourceRootTestEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class ModuleTestEntitySymbolicId(val name: String) : SymbolicEntityId<ModuleTestEntity> {
@@ -161,23 +193,28 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
   val moreData: String
   val module: ModuleTestEntity
 
-  override val symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>
+  override val symbolicId: FacetTestEntitySymbolicId
     get() = FacetTestEntitySymbolicId(data)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : FacetTestEntity, WorkspaceEntity.Builder<FacetTestEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<FacetTestEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var moreData: String
-    override var module: ModuleTestEntity
+    var data: String
+    var moreData: String
+    var module: ModuleTestEntity.Builder
   }
 
   companion object : EntityType<FacetTestEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, moreData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetTestEntity {
+    operator fun invoke(
+      data: String,
+      moreData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.moreData = moreData
@@ -190,7 +227,10 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetTestEntity,
-                                      modification: FacetTestEntity.Builder.() -> Unit): FacetTestEntity = modifyEntity(
-  FacetTestEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyFacetTestEntity(
+  entity: FacetTestEntity,
+  modification: FacetTestEntity.Builder.() -> Unit,
+): FacetTestEntity {
+  return modifyEntity(FacetTestEntity.Builder::class.java, entity, modification)
+}
 //endregion

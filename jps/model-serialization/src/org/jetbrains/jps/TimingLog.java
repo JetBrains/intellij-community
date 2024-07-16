@@ -3,9 +3,11 @@ package org.jetbrains.jps;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.EmptyRunnable;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.concurrent.TimeUnit;
 
+@ApiStatus.Internal
 public final class TimingLog {
   public static final Logger LOG = Logger.getInstance(TimingLog.class);
 

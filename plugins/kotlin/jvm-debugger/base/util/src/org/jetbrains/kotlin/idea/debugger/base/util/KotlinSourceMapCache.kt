@@ -142,7 +142,7 @@ class KotlinSourceMapCache(private val project: Project) {
     // There might be classes with dollars in names (e.g. `class Foo$Bar {}`)
     private fun composeTopLevelClassNameVariants(jvmName: JvmClassName): List<String> {
         return buildList {
-            val jdiName = jvmName.internalName.replace('/', '.')
+            val jdiName = jvmName.internalName.internalNameToFqn()
             var index = jdiName.indexOf('$', startIndex = 1)
             while (index >= 0) {
                 add(jdiName.take(index))

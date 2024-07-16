@@ -6,10 +6,7 @@ import com.intellij.openapi.vfs.isFile
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.AbstractMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 
-abstract class AbstractFirMultiModuleSafeDeleteTest: AbstractMultiModuleSafeDeleteTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
+abstract class AbstractFirMultiModuleSafeDeleteTest : AbstractMultiModuleSafeDeleteTest() {
 
     override fun getAlternativeConflictsFile(): String? {
         return "conflicts.k2.txt"

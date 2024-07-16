@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.pom.java.JavaFeature;
@@ -35,6 +35,19 @@ public final class ModifierChooser {
     {PsiKeyword.STRICTFP},
     {PsiKeyword.VOLATILE},
     {PsiKeyword.TRANSIENT}
+  };
+
+  private static final String[][] FILE_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.STRICTFP},
+  };
+
+  private static final String[][] FILE_MEMBER_MODIFIERS_WITH_SEALED = {
+    {PsiKeyword.PUBLIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.SEALED, PsiKeyword.NON_SEALED},
+    {PsiKeyword.STRICTFP},
   };
 
   private static final String[][] CLASS_MEMBER_MODIFIERS_WITH_SEALED = {
@@ -82,7 +95,7 @@ public final class ModifierChooser {
     PsiElement scope = position.getParent();
     while (scope != null) {
       if (scope instanceof PsiJavaFile) {
-        return addMemberModifiers(list, false, position);
+        return addJavaFileMemberModifiers(list, position);
       }
       if (scope instanceof PsiClass) {
         return addMemberModifiers(list, ((PsiClass)scope).isInterface(), scope);
@@ -131,6 +144,16 @@ public final class ModifierChooser {
     }
   }
 
+  private static String[] addJavaFileMemberModifiers(@Nullable PsiModifierList list, @NotNull PsiElement position) {
+    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, position) &&
+        (position.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null)) {
+      return addMemberModifiers(list, false, position);
+    }
+    return addKeywords(list,
+                       PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, position) ?
+                       FILE_MEMBER_MODIFIERS_WITH_SEALED : FILE_MEMBER_MODIFIERS);
+  }
+
   public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface, @NotNull PsiElement position) {
     return addKeywords(list, inInterface ? getInterfaceMemberModifiers(position) : getClassMemberModifiers(position));
   }
@@ -139,7 +162,7 @@ public final class ModifierChooser {
     if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_SEALED;
     }
-    if (PsiUtil.isLanguageLevel9OrHigher(list)) {
+    if (PsiUtil.isAvailable(JavaFeature.PRIVATE_INTERFACE_METHODS, list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE;
     }
     if (PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, list)) {
@@ -175,8 +198,7 @@ public final class ModifierChooser {
     return ArrayUtilRt.toStringArray(ret);
   }
 
-  @Nullable
-  public static PsiModifierList findModifierList(@NotNull PsiElement element) {
+  public static @Nullable PsiModifierList findModifierList(@NotNull PsiElement element) {
     if(element.getParent() instanceof PsiModifierList) {
       return (PsiModifierList)element.getParent();
     }

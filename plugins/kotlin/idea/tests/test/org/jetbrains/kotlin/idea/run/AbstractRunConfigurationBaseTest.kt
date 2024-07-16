@@ -18,20 +18,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.KotlinCodeInsightTestCase
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import java.io.File
 
-abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase() {
+abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
+                                                  ExpectedPluginModeProvider {
+
     private companion object {
         const val DEFAULT_MODULE_NAME = "module"
     }
@@ -83,14 +81,16 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase() {
         error("Configured module with name $name not found")
     }
 
-    protected open fun isFirPlugin(): Boolean = false
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { unconfigureDefaultModule() },
-            ThrowableRunnable { unconfigureOtherModules() },
-            ThrowableRunnable { configuredModules = emptyList() },
-            ThrowableRunnable { super.tearDown() }
+            { unconfigureDefaultModule() },
+            { unconfigureOtherModules() },
+            { configuredModules = emptyList() },
+            { super.tearDown() },
         )
     }
 
@@ -130,7 +130,6 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase() {
 
             platform.addJdk(testRootDisposable)
             configuredModules = configureModules(projectDir, projectBaseDir, platform)
-            checkPluginIsCorrect(isFirPlugin())
         }
     }
 

@@ -27,6 +27,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +76,13 @@ public final class PyDeprecationInspection extends PyInspection {
       @NlsSafe String deprecationMessage = null;
       if (resolveResult instanceof PyDeprecatable deprecatable) {
         deprecationMessage = deprecatable.getDeprecationMessage();
+
+        if (deprecationMessage == null && !(resolveResult.getContainingFile() instanceof PyiFile)) {
+          PsiElement stub = PyiUtil.getPythonStub((PyElement)deprecatable);
+          if (stub instanceof PyDeprecatable stubDeprecatable) {
+            deprecationMessage = stubDeprecatable.getDeprecationMessage();
+          }
+        }
       }
       else if (resolveResult instanceof PyFile) {
         deprecationMessage = ((PyFile)resolveResult).getDeprecationMessage();

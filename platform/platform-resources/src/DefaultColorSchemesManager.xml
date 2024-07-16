@@ -87,6 +87,8 @@
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="C9CCD6"/>
       <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="ED99A1"/>
       <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="EBECF0"/>
+      <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PLACEHOLDER_FOREGROUND" value="BFA1F8"/>
+      <option name="BLOCK_TERMINAL_GENERATE_COMMAND_CARET_COLOR" value="834DF0"/>
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
@@ -277,6 +279,13 @@
           <option name="EFFECT_COLOR" value="808080"/>
           <option name="EFFECT_TYPE" value="1"/>
           <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="DOC_TIPS_SHORTCUT">
+        <value>
+          <option name="FOREGROUND" value="6e6e6e"/>
+          <option name="EFFECT_COLOR" value="A8ADBD" />
+          <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEFAULT_DOC_COMMENT_TAG_VALUE">
@@ -1204,6 +1213,11 @@
             <option name="BACKGROUND" value="FF941A"/>
           </value>
         </option>
+        <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PROMPT_TEXT">
+          <value>
+            <option name="FOREGROUND" value="7444D4"/>
+          </value>
+        </option>
         <option name="BLOCK_TERMINAL_BLACK">
           <value>
             <option name="FOREGROUND" value="0" />
@@ -1558,6 +1572,8 @@
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="5A5D63"/>
       <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="9C4E4E"/>
       <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="393B40"/>
+      <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PLACEHOLDER_FOREGROUND" value="6C469C"/>
+      <option name="BLOCK_TERMINAL_GENERATE_COMMAND_CARET_COLOR" value="955AE0"/>
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
@@ -1794,6 +1810,11 @@
           <option name="BACKGROUND" value="FF941A"/>
         </value>
       </option>
+      <option name="BLOCK_TERMINAL_GENERATE_COMMAND_PROMPT_TEXT">
+        <value>
+          <option name="FOREGROUND" value="B589EC"/>
+        </value>
+      </option>
       <option name="BLOCK_TERMINAL_BLACK">
         <value>
           <option name="FOREGROUND" value="0" />
@@ -2014,6 +2035,13 @@
           <option name="FONT_TYPE" value="3" />
           <option name="EFFECT_COLOR" value="629755" deuteranopia="7a7a7a" protanopia="7a7a7a"/>
           <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="DOC_TIPS_SHORTCUT">
+        <value>
+          <option name="FOREGROUND" value="afb1b3"/>
+          <option name="EFFECT_COLOR" value="6F737A" />
+          <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEFAULT_DOC_MARKUP">
@@ -2854,7 +2882,7 @@
           <option name="FOREGROUND" value="9d527c" />
         </value>
       </option>
-      
+
       <option name="BREADCRUMBS_DEFAULT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>

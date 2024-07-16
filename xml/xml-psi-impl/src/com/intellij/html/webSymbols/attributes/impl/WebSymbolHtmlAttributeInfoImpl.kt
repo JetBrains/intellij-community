@@ -3,6 +3,7 @@ package com.intellij.html.webSymbols.attributes.impl
 
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeValueTypeSupport
+import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -24,10 +25,69 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
   override val priority: WebSymbol.Priority
 ) : WebSymbolHtmlAttributeInfo {
 
+  override fun withName(name: String): WebSymbolHtmlAttributeInfo =
+    copy(name = name)
+
+  override fun withSymbol(symbol: WebSymbol): WebSymbolHtmlAttributeInfo =
+    copy(symbol = symbol)
+
+  override fun withAcceptsNoValue(acceptsNoValue: Boolean): WebSymbolHtmlAttributeInfo =
+    copy(acceptsNoValue = acceptsNoValue)
+
+  override fun withAcceptsValue(acceptsValue: Boolean): WebSymbolHtmlAttributeInfo =
+    copy(acceptsValue = acceptsValue)
+
+  override fun withEnumValues(enumValues: List<WebSymbolCodeCompletionItem>?): WebSymbolHtmlAttributeInfo =
+    copy(enumValues = enumValues)
+
+  override fun withStrictEnumValues(strictEnumValues: Boolean): WebSymbolHtmlAttributeInfo =
+    copy(strictEnumValues = strictEnumValues)
+
+  override fun withType(type: Any?): WebSymbolHtmlAttributeInfo =
+    copy(type = type)
+
+  override fun withIcon(icon: Icon?): WebSymbolHtmlAttributeInfo =
+    copy(icon = icon)
+
+  override fun withRequired(required: Boolean): WebSymbolHtmlAttributeInfo =
+    copy(required = required)
+
+  override fun withDefaultValue(defaultValue: String?): WebSymbolHtmlAttributeInfo =
+    copy(defaultValue = defaultValue)
+
+  override fun withPriority(priority: WebSymbol.Priority): WebSymbolHtmlAttributeInfo =
+    copy(priority = priority)
+
+  override fun with(name: String,
+                    symbol: WebSymbol,
+                    acceptsNoValue: Boolean,
+                    acceptsValue: Boolean,
+                    enumValues: List<WebSymbolCodeCompletionItem>?,
+                    strictEnumValues: Boolean,
+                    type: Any?,
+                    icon: Icon?,
+                    required: Boolean,
+                    defaultValue: String?,
+                    priority: WebSymbol.Priority): WebSymbolHtmlAttributeInfo =
+    copy(name = name,
+         symbol = symbol,
+         acceptsNoValue = acceptsNoValue,
+         acceptsValue = acceptsValue,
+         enumValues = enumValues,
+         strictEnumValues = strictEnumValues,
+         type = type,
+         icon = icon,
+         required = required,
+         defaultValue = defaultValue,
+         priority = priority)
+
   companion object {
-    fun create(name: String,
-               queryExecutor: WebSymbolsQueryExecutor,
-               symbol: WebSymbol): WebSymbolHtmlAttributeInfo {
+    fun create(
+      name: String,
+      queryExecutor: WebSymbolsQueryExecutor,
+      symbol: WebSymbol,
+      context: PsiElement,
+    ): WebSymbolHtmlAttributeInfo {
       val typeSupport = symbol.origin.typeSupport as? WebSymbolHtmlAttributeValueTypeSupport
       val attrValue = symbol.attributeValue
       val kind = attrValue?.kind ?: WebSymbolHtmlAttributeValue.Kind.PLAIN
@@ -44,20 +104,20 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
           WebSymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
           WebSymbolHtmlAttributeValue.Type.ENUM -> {
             val valuesSymbols = queryExecutor.runCodeCompletionQuery(
-              WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, scope = listOf(symbol))
+              WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, additionalScope = listOf(symbol))
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
           WebSymbolHtmlAttributeValue.Type.SYMBOL -> null
           WebSymbolHtmlAttributeValue.Type.OF_MATCH -> symbol.type
           WebSymbolHtmlAttributeValue.Type.COMPLEX -> attrValue?.langType
-        }?.let { typeSupport.resolve(symbol, it) }
+        }
       else null
 
       val isHtmlBoolean = if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN)
         if (type == WebSymbolHtmlAttributeValue.Type.BOOLEAN)
           ThreeState.YES
         else
-          typeSupport?.isBoolean(symbol, langType) ?: ThreeState.YES
+          typeSupport?.isBoolean(symbol, langType, context) ?: ThreeState.YES
       else
         ThreeState.NO
       val valueRequired = attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
@@ -72,7 +132,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
           when (type) {
             WebSymbolHtmlAttributeValue.Type.ENUM -> {
               queryExecutor.runCodeCompletionQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0,
-                                                   scope = listOf(symbol))
+                                                   additionalScope = listOf(symbol))
                 .filter { !it.completeAfterInsert }
             }
             WebSymbolHtmlAttributeValue.Type.COMPLEX,

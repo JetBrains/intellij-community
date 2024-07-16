@@ -18,4 +18,7 @@ public class OnXAnnotationTest extends AbstractLombokParsingTestCase {
     doTest(false);
   }
 
+  public void testTestOnXSimple() {
+    doTest(false);
+  }
 }

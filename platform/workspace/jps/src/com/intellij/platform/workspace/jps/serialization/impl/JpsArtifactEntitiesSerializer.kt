@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.*
@@ -37,7 +37,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
   override fun createSerializer(fileUrl: String,
                                 entitySource: JpsProjectFileEntitySource.FileInDirectory,
                                 virtualFileManager: VirtualFileUrlManager): JpsArtifactEntitiesSerializer {
-    return JpsArtifactEntitiesSerializer(virtualFileManager.getOrCreateFromUri(fileUrl), entitySource, false, virtualFileManager)
+    return JpsArtifactEntitiesSerializer(virtualFileManager.getOrCreateFromUrl(fileUrl), entitySource, false, virtualFileManager)
   }
 
   override fun getDefaultFileName(entity: ArtifactEntity): String {
@@ -52,7 +52,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
     builder.entities(ArtifactEntity::class.java).forEach {
       // Convert artifact to the new source
       val artifactSource = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(configLocation)
-      builder.modifyEntity(it) {
+      builder.modifyArtifactEntity(it) {
         this.entitySource = artifactSource
       }
 
@@ -66,7 +66,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
 
     // Convert properties
     builder.entities(ArtifactPropertiesEntity::class.java).forEach {
-      builder.modifyEntity(it) {
+      builder.modifyArtifactPropertiesEntity(it) {
         this.entitySource = it.artifact.entitySource
       }
     }
@@ -154,7 +154,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     reader: JpsFileContentReader,
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager
-  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTime {
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> = loadEntitiesTimeMs.addMeasuredTime {
     val artifactListElement = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME) }
       .onFailure { return@addMeasuredTime LoadingResult(emptyMap(), it) }
       .getOrThrow()
@@ -170,14 +170,14 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
           val state = XmlSerializer.deserialize(artifactElement, ArtifactState::class.java)
           val outputUrl = state.outputPath?.let { path ->
             if (path.isNotEmpty()) {
-              virtualFileManager.getOrCreateFromUri(path.toPathWithScheme())
+              virtualFileManager.getOrCreateFromUrl(path.toPathWithScheme())
             }
             else null
           }
           val rootElement = loadPackagingElement(state.rootElement, entitySource)
           val artifactEntity = ArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, entitySource) {
             this.outputUrl = outputUrl
-            this.rootElement = rootElement as CompositePackagingElementEntity
+            this.rootElement = rootElement as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
           }
           for (propertiesState in state.propertiesList) {
             ArtifactPropertiesEntity(propertiesState.id, entitySource) {
@@ -200,13 +200,13 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
                                     orphanage: MutableEntityStorage,
-                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
     if (preserveOrder) {
-      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntity
+      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntity.Builder
       if (order != null) {
         val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
         if (entity != null) {
-          builder.modifyEntity(entity) {
+          builder.modifyArtifactsOrderEntity(entity) {
             orderOfArtifacts.addAll(order.orderOfArtifacts)
           }
         }
@@ -228,11 +228,11 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   }
 
   private fun loadPackagingElement(element: Element,
-                                   source: EntitySource): PackagingElementEntity {
+                                   source: EntitySource): PackagingElementEntity.Builder<out PackagingElementEntity> {
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
-    fun getPathAttribute(name: String) = element.getAttributeValue(name)!!.let { virtualFileManager.getOrCreateFromUri(it.toPathWithScheme()) }
+    fun getPathAttribute(name: String) = element.getAttributeValue(name)!!.let { virtualFileManager.getOrCreateFromUrl(it.toPathWithScheme()) }
     return when (val typeId = getAttribute("id")) {
       "root" -> ArtifactRootElementEntity(source) {
         this.children = loadElementChildren()

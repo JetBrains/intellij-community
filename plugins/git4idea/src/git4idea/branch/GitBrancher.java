@@ -206,7 +206,23 @@ public interface GitBrancher {
              @NotNull List<? extends @NotNull GitRepository> repositories);
 
   /**
-   * @deprecated use {@link #merge(GitReference, DeleteOnMergeOption, List)}
+   * <p>Merges the given branch to the HEAD.</p>
+   * <p>{@code git merge <name>}</p>
+   * <p>If local changes prevent merging, proposes the "Smart merge" procedure (stash-merge-unstash).</p>
+   * <p>If untracked files prevent merging, shows them in an error dialog.</p>
+   *
+   * @param reference     local/remote branch or tag to be merged into HEAD.
+   * @param deleteOnMerge specify whether the branch should be automatically deleted or proposed to be deleted after merge.
+   * @param repositories  repositories to operate on.
+   * @param allowRollback whether to prompt the user to rollback on conflicts. Useful to set to `false` when prompting is not necessary.
+   */
+  void merge(@NotNull GitReference reference,
+             @NotNull DeleteOnMergeOption deleteOnMerge,
+             @NotNull List<? extends @NotNull GitRepository> repositories,
+             @NotNull Boolean allowRollback);
+
+  /**
+   * @deprecated use {@link #merge(GitReference, DeleteOnMergeOption, List, Boolean)}
    * @param branchName
    * @param deleteOnMerge
    * @param repositories

@@ -100,9 +100,9 @@ public final class EqualsAndHashCodeToStringHandler {
     final Collection<String> excludeProperty;
     if (!explicitOf) {
       ofProperty = Collections.emptyList();
-      excludeProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class));
+      excludeProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class, List.of()));
     } else {
-      ofProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class));
+      ofProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class, List.of()));
       excludeProperty = Collections.emptyList();
     }
 

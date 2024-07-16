@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -46,15 +47,13 @@ class StorageIndexesTest {
   @Test
   fun `check virtual file index`() {
     val virtualFileUrlManager = VirtualFileUrlManagerImpl()
-    val sourceUrl = virtualFileUrlManager.getOrCreateFromUri("/source".toPathWithScheme())
-    val directory = virtualFileUrlManager.getOrCreateFromUri("/tmp/example".toPathWithScheme())
-    val firstRoot = virtualFileUrlManager.getOrCreateFromUri("/m2/root/one".toPathWithScheme())
-    val secondRoot = virtualFileUrlManager.getOrCreateFromUri("/m2/root/second".toPathWithScheme())
-
-    val entity = VFUEntity2("VFUEntityData", directory, listOf(firstRoot, secondRoot), VFUEntitySource(sourceUrl))
+    val sourceUrl = virtualFileUrlManager.getOrCreateFromUrl("/source".toPathWithScheme())
+    val directory = virtualFileUrlManager.getOrCreateFromUrl("/tmp/example".toPathWithScheme())
+    val firstRoot = virtualFileUrlManager.getOrCreateFromUrl("/m2/root/one".toPathWithScheme())
+    val secondRoot = virtualFileUrlManager.getOrCreateFromUrl("/m2/root/second".toPathWithScheme())
 
     val builder = MutableEntityStorage.create()
-    builder.addEntity(entity)
+    val entity = builder addEntity VFUEntity2("VFUEntityData", directory, listOf(firstRoot, secondRoot), VFUEntitySource(sourceUrl))
 
     compareEntityByProperty(builder, entity, "entitySource", sourceUrl) { it.entitySource.virtualFileUrl!! }
     compareEntityByProperty(builder, entity, "directoryPath", directory) { it.directoryPath }
@@ -64,11 +63,10 @@ class StorageIndexesTest {
 
   @Test
   fun `check persistent id index`() {
-    val entity = FirstEntityWithPId("FirstEntityData", MySource)
-
     val builder = MutableEntityStorage.create()
     builder as MutableEntityStorageImpl
-    builder.addEntity(entity)
+    val entity = builder addEntity FirstEntityWithPId("FirstEntityData", MySource)
+
     val entityIds = builder.indexes.symbolicIdIndex.getIdsByEntry(entity.symbolicId)
     assertNotNull(entityIds)
   }
@@ -92,7 +90,8 @@ class StorageIndexesTest {
   private fun compareEntityByProperty(builder: MutableEntityStorage, originEntity: VFUEntity2,
                                       propertyName: String, virtualFileUrl: VirtualFileUrl,
                                       propertyExtractor: (VFUEntity2) -> VirtualFileUrl) {
-    val entities = builder.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).toList()
+    val virtualFileUrlIndex = builder.getVirtualFileUrlIndex() as VirtualFileIndex
+    val entities = virtualFileUrlIndex.findEntitiesToPropertyNameByUrl(virtualFileUrl).toList()
     assertEquals(1, entities.size)
     val entity = entities[0]
     assertEquals(propertyName, entity.second)

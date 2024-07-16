@@ -9,15 +9,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.platform.lvcs.impl.ActivityScope;
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.platform.lvcs.impl.ui.ActivityView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class RecentChangesAction extends LocalHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     if (ActivityView.isViewEnabled()) {
-      ActivityView.show(p, gw, ActivityScope.Recent.INSTANCE);
+      ActivityView.showInToolWindow(p, gw, ActivityScope.Recent.INSTANCE);
     }
     else {
       LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.Recent);

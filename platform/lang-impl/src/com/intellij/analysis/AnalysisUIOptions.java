@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -10,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
@@ -143,7 +143,7 @@ public final class AnalysisUIOptions implements PersistentStateComponent<Analysi
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  private abstract static class InspectionResultsViewToggleAction extends ToggleAction {
+  private abstract static class InspectionResultsViewToggleAction extends ToggleAction implements DumbAware {
     @NotNull private final InspectionResultsView myView;
 
     InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,

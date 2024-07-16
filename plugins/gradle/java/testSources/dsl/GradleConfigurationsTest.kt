@@ -14,7 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradleConfigurationsTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configurations closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { <caret> }") {
@@ -24,7 +24,7 @@ class GradleConfigurationsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configuration via unqualified property reference`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { <caret>foo }") {
@@ -36,7 +36,7 @@ class GradleConfigurationsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configuration via unqualified method call`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { <caret>foo {} }") {
@@ -48,7 +48,7 @@ class GradleConfigurationsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configuration closure delegate in unqualified method call`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { foo { <caret> } }") {
@@ -58,7 +58,7 @@ class GradleConfigurationsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configuration member via unqualified method call closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { foo { <caret>extendsFrom() } }") {
@@ -70,7 +70,7 @@ class GradleConfigurationsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configuration via qualified property reference`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { foo }; configurations.<caret>foo") {
@@ -82,7 +82,7 @@ class GradleConfigurationsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configuration via qualified method call`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { foo }; configurations.<caret>foo {}") {
@@ -94,7 +94,7 @@ class GradleConfigurationsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configuration closure delegate in qualified method call`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { foo }; configurations.foo { <caret> }") {
@@ -104,7 +104,7 @@ class GradleConfigurationsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test configuration member via qualified method call closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "configurations { foo }; configurations.foo { <caret>extendsFrom() }") {

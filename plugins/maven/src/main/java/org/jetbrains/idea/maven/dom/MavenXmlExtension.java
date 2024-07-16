@@ -30,7 +30,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 /**
  * @author Vladislav.Soroka
  */
-public class MavenXmlExtension extends DefaultXmlExtension {
+public final class MavenXmlExtension extends DefaultXmlExtension {
   @Override
   public boolean isAvailable(PsiFile file) {
     return file instanceof XmlFile && MavenDomUtil.isMavenFile(file);

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import static com.intellij.openapi.editor.colors.EditorColorsScheme.DEFAULT_SCHEME_NAME;
+import static com.intellij.openapi.editor.colors.EditorColorsScheme.getDefaultSchemeName;
 
 /**
  * Defines the order in which editor color schemes are displayed.
@@ -41,7 +41,7 @@ public final class EditorColorSchemesComparator implements Comparator<EditorColo
     if (scheme instanceof AbstractColorsScheme) {
       EditorColorsScheme original = ((AbstractColorsScheme)scheme).getOriginal();
       if (!groupNumberOnly && original instanceof DefaultColorsScheme) {
-        return DEFAULT_SCHEME_NAME.equals(original.getName()) ? DEFAULT_SCHEME : ONE_OF_DEFAULT_SCHEMES;
+        return getDefaultSchemeName().equals(original.getName()) ? DEFAULT_SCHEME : ONE_OF_DEFAULT_SCHEMES;
       }
       if (original != null && original.isReadOnly()) {
         if (ExperimentalUI.isNewUI()) {

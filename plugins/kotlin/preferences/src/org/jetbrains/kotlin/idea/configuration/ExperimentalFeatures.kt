@@ -19,9 +19,14 @@ object ExperimentalFeatures {
         enabledByDefault = true
     )
 
-    val allFeatures: List<ExperimentalFeature> = listOf(
-        NewJ2k,
-    ) + ExperimentalFeature.EP_NAME.extensionList
+    val K2J2K = RegistryExperimentalFeature(
+        title = "K2 Java to Kotlin Converter (experimental)",
+        registryKey = "kotlin.k2.j2k.enabled",
+        enabledByDefault = false
+    )
+
+    val allFeatures: List<ExperimentalFeature> =
+        listOf(NewJ2k, K2J2K) + ExperimentalFeature.EP_NAME.extensionList
 }
 
 abstract class ExperimentalFeature {

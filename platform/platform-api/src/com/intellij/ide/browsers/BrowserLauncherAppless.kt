@@ -22,24 +22,24 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Desktop
 import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Path
 
+@ApiStatus.Internal
 open class BrowserLauncherAppless : BrowserLauncher() {
   companion object {
     private val LOG = logger<BrowserLauncherAppless>()
 
     @JvmStatic
-    fun canUseSystemDefaultBrowserPolicy(): Boolean {
-      return isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isMac || SystemInfo.isWindows || SystemInfo.hasXdgOpen()
-    }
+    fun canUseSystemDefaultBrowserPolicy(): Boolean =
+      isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.hasXdgOpen()
 
-    private fun isDesktopActionSupported(action: Desktop.Action): Boolean {
-      return Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
-    }
+    private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
+      Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
   }
 
   override fun open(url: String) {
@@ -50,7 +50,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       val file = File(url)
       if (isDesktopActionSupported(Desktop.Action.OPEN)) {
         if (!file.exists()) {
-          showError(IdeBundle.message("error.file.does.not.exist", file.path))
+          showError(IdeBundle.message("error.file.does.not.exist", file.path), project = null)
           return
         }
         openWithDesktopApi(url, file)
@@ -61,7 +61,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  private fun BrowserLauncherAppless.openWithDesktopApi(url: String, file: File) {
+  private fun openWithDesktopApi(url: String, file: File) {
     getScope(null).launch {
       try {
         LOG.debug { "trying Desktop#open on [${url}]" }
@@ -179,7 +179,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       catch (e: Exception) {
         LOG.warn("[${uri}]", e)
         if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
-          // if "No application knows how to open" the URL, there is no sense in retrying with 'open' command
+          // if "No application knows how to open" the URL, there is no sense in retrying with the 'open' command
           return@launch
         }
         openWithDefaultBrowserCommand(uri.toString(), project)
@@ -193,7 +193,6 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       showError(IdeBundle.message("browser.default.not.supported"), project)
       return
     }
-
     spawn(GeneralCommandLine(command).withParameters(url), project)
   }
 
@@ -218,8 +217,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       try {
         val output = CapturingProcessHandler.Silent(command).runProcess(10000, false)
         if (!output.checkSuccess(LOG) && output.exitCode == 1) {
-          @NlsSafe
-          val error = output.stderrLines.firstOrNull()
+          @NlsSafe val error = output.stderrLines.firstOrNull()
           showError(error, project, browser, retry)
         }
       }
@@ -238,11 +236,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   protected open fun substituteBrowser(browserPath: String): WebBrowser? = null
 
-  protected open fun showError(message: @NotificationContent String?,
-                               project: Project? = null,
-                               browser: WebBrowser? = null,
-                               retry: (() -> Unit)? = null) {
-    // not started yet; unable to show a message (may happen in the License panel on Linux)
+  protected open fun showError(message: @NotificationContent String?, project: Project?, browser: WebBrowser? = null, retry: (() -> Unit)? = null) {
+    // the app is not started yet; unable to show a message
     LOG.warn(message)
   }
 
@@ -257,7 +252,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       else -> null
     }
 
-  private fun getScope(project: Project?): CoroutineScope {
-    return (((project ?: ApplicationManager.getApplication()) as? ComponentManagerEx)?.getCoroutineScope() ?: MainScope()) + Dispatchers.IO
-  }
+  private fun getScope(project: Project?): CoroutineScope =
+    @Suppress("UsagesOfObsoleteApi")
+    (((project ?: ApplicationManager.getApplication()) as? ComponentManagerEx)?.getCoroutineScope() ?: MainScope()) + Dispatchers.IO
 }

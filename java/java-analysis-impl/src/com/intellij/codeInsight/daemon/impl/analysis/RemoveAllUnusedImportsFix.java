@@ -9,7 +9,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
 import com.intellij.psi.PsiImportList;
-import com.intellij.psi.PsiImportStatement;
+import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,12 +36,12 @@ public class RemoveAllUnusedImportsFix implements ModCommandAction {
     if (!(context.file() instanceof PsiJavaFile javaFile)) return ModCommand.nop();
     PsiImportList importList = javaFile.getImportList();
     if (importList == null) return ModCommand.nop();
-    List<PsiImportStatement> importStatements = new ArrayList<>();
+    List<PsiImportStatementBase> importStatements = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(javaFile.getViewProvider().getDocument(), context.project(), HighlightSeverity.INFORMATION, 
                                            importList.getTextRange().getStartOffset(), 
                                            importList.getTextRange().getEndOffset(), info -> {
-      if (PostHighlightingVisitor.isUnusedImportHighlightInfo(javaFile, info)) {
-        PsiImportStatement importStatement = PsiTreeUtil.findElementOfClassAtOffset(javaFile, info.getActualStartOffset(), PsiImportStatement.class, false);
+      if (UnusedImportsVisitor.isUnusedImportHighlightInfo(javaFile, info)) {
+        PsiImportStatementBase importStatement = PsiTreeUtil.findElementOfClassAtOffset(javaFile, info.getActualStartOffset(), PsiImportStatementBase.class, false);
         if (importStatement != null) {
           importStatements.add(importStatement);
         }
@@ -51,7 +51,7 @@ public class RemoveAllUnusedImportsFix implements ModCommandAction {
 
     if (importStatements.isEmpty()) return ModCommand.nop();
     return ModCommand.psiUpdate(context, updater -> {
-      for (PsiImportStatement statement : ContainerUtil.map(importStatements, updater::getWritable)) {
+      for (PsiImportStatementBase statement : ContainerUtil.map(importStatements, updater::getWritable)) {
         new CommentTracker().deleteAndRestoreComments(statement);
       }
     });

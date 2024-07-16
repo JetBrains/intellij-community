@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -7,7 +7,6 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -20,11 +19,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
+
   private final static Comparator<PsiMethod> mainCandidateComparator = (o1, o2) -> {
 
     boolean isO1Static = o1.hasModifierProperty(PsiModifier.STATIC);
@@ -47,6 +45,11 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
       return 1;
     }
   };
+
+  @Override
+  public boolean isDumbAware() {
+    return this.getClass().isAssignableFrom(ApplicationRunLineMarkerProvider.class);
+  }
 
   @Override
   public final @Nullable Info getInfo(@NotNull final PsiElement element) {
@@ -87,28 +90,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
-    return new Info(AllIcons.RunConfigurations.TestState.Run, actions, new ActionsTooltipProvider(actions));
-  }
-
-  private record ActionsTooltipProvider(@NotNull AnAction @NotNull [] myActions) implements Function<PsiElement, String> {
-    @Override
-    public String apply(PsiElement element) {
-      AnActionEvent event = createActionEvent(element);
-      return Arrays.stream(myActions)
-            .map(action -> getText(action, event))
-            .filter(Objects::nonNull)
-            .collect(Collectors.joining("\n"));
-    }
-
-    @Override
-    public int hashCode() {
-      return Arrays.hashCode(myActions);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof ActionsTooltipProvider other && Arrays.equals(myActions, other.myActions);
-    }
+    return new Info(AllIcons.RunConfigurations.TestState.Run, actions);
   }
 
   protected boolean isIdentifier(@NotNull PsiElement e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -475,8 +475,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         }
 
         private static @Nullable PluginNode toPluginNode(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicator indicator) {
-          if (descriptor instanceof PluginNode) {
-            PluginNode pluginNode = (PluginNode)descriptor;
+          if (descriptor instanceof PluginNode pluginNode) {
             return pluginNode.detailsLoaded() ?
                    pluginNode :
                    MarketplaceRequests.getInstance().loadPluginDetails(pluginNode, indicator);
@@ -961,9 +960,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     enableRows(descriptors, action);
     updateAfterEnableDisable();
     runInvalidFixCallback();
-    if (myPluginUpdatesService != null) {
-      myPluginUpdatesService.reapplyFilter();
-    }
+    PluginUpdatesService.reapplyFilter();
     return true;
   }
 
@@ -993,8 +990,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     for (PluginId pluginId : requiredPluginIds) {
       IdeaPluginDescriptor result = ContainerUtil.find(view, d -> pluginId.equals(d.getPluginId()));
       if (result == null && PluginManagerCore.isModuleDependency(pluginId)) {
-        result = ContainerUtil.find(view,
-                                    d -> d instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)d).modules.contains(pluginId));
+        result = ContainerUtil.find(view, d -> {
+          return d instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)d).pluginAliases.contains(pluginId);
+        });
         if (result != null) {
           setEnabled(pluginId, PluginEnabledState.ENABLED); // todo
         }
@@ -1157,7 +1155,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     if (PluginManagerCore.isUpdatedBundledPlugin(descriptor)) {
       return true;
     }
-    if (PluginEnabler.HEADLESS.isDisabled(descriptor.getPluginId())) {
+    if (HEADLESS.isDisabled(descriptor.getPluginId())) {
       Path path = descriptor.getPluginPath();
       if (path == null) {
         return false;
@@ -1175,7 +1173,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     boolean needRestartForUninstall = true;
     try {
       if (!isBundledUpdate(descriptorImpl)) {
-        PluginEnabler enabler = PluginEnabler.HEADLESS;
+        PluginEnabler enabler = HEADLESS;
         if (enabler.isDisabled(descriptorImpl.getPluginId())) {
           enabler.enable(Collections.singletonList(descriptorImpl));
         }

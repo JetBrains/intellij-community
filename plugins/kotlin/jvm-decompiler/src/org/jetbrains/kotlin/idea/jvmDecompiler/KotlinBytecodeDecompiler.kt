@@ -11,8 +11,9 @@ import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -69,6 +70,7 @@ object KotlinBytecodeDecompiler {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun bytecodeMapForSourceFile(file: KtFile): Map<File, () -> ByteArray> {
         val configuration = CompilerConfiguration().apply {
             languageVersionSettings = file.languageVersionSettings
@@ -79,7 +81,7 @@ object KotlinBytecodeDecompiler {
                 val result = compileSingleFile(file, configuration)?.first ?: return emptyMap()
 
                 return when (result) {
-                    is KtCompilationResult.Success -> buildMap {
+                    is KaCompilationResult.Success -> buildMap {
                         for (outputFile in result.output) {
                             if (outputFile.isClassFile) {
                                 put(File("/" + outputFile.path).absoluteFile) { outputFile.content }
@@ -87,7 +89,7 @@ object KotlinBytecodeDecompiler {
                         }
                     }
 
-                    is KtCompilationResult.Failure -> emptyMap()
+                    is KaCompilationResult.Failure -> emptyMap()
                 }
             }
         }

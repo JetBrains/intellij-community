@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class GenerateCoverageReportAction extends AnAction {
+class GenerateCoverageReportAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

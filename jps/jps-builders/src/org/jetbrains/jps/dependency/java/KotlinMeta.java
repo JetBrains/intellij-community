@@ -12,11 +12,11 @@ import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.impl.RW;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * A set of data needed to create a kotlin.Metadata annotation instance parsed from bytecode.
@@ -148,6 +148,37 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container != null? container.getFunctions() : Collections.emptyList();
   }
 
+  public Iterable<KmTypeAlias> getKmTypeAliases() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container != null? container.getTypeAliases() : Collections.emptyList();
+  }
+
+  public Iterable<KmConstructor> getKmConstructors() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? ((KmClass)container).getConstructors() : Collections.emptyList();
+  }
+
+  public Iterable<KmTypeParameter> getTypeParameters() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? ((KmClass)container).getTypeParameters() : Collections.emptyList();
+  }
+
+  public Iterable<String> getSealedSubclasses() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? ((KmClass)container).getSealedSubclasses() : Collections.emptyList();
+  }
+
+  public Visibility getContainerVisibility() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? Attributes.getVisibility((KmClass)container) : Visibility.PUBLIC;
+  }
+
+  @Nullable
+  public Modality getContainerModality() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? Attributes.getModality((KmClass)container) : null;
+  }
+
   @Nullable
   public KmDeclarationContainer getDeclarationContainer() {
     KotlinClassMetadata clsMeta = getClassMetadata();
@@ -163,17 +194,73 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return null;
   }
 
+  private static boolean kmTypeProjectionEquals(KmTypeProjection p1, KmTypeProjection p2) {
+    if (p1 == null) {
+      return p2 == null;
+    }
+    return p2 != null && Objects.equals(p1.getVariance(), p2.getVariance()) && kmTypesEqual(p1.getType(), p2.getType());
+  }
+
+  private static boolean kmTypesEqual(KmType t1, KmType t2) {
+    // todo: can be removed when KmType properly defines equals() and hashCode()
+    if (t1 == null) { 
+      return t2 == null;
+    }
+    return t2 != null
+      && Attributes.isNullable(t1) == Attributes.isNullable(t2)
+      && Objects.equals(t1.getClassifier(), t2.getClassifier())
+      && kmTypesEqual(t1.getOuterType(), t2.getOuterType())
+      && Iterators.equals(t1.getArguments(), t2.getArguments(), KotlinMeta::kmTypeProjectionEquals);
+  }
+
   public final class Diff implements Difference {
 
     private final KotlinMeta myPast;
+    private final Supplier<Specifier<KmFunction, KmFunctionsDiff>> myFunctionsDiff;
+    private final Supplier<Specifier<KmConstructor, KmConstructorsDiff>> myConstructorsDiff;
+    private final Supplier<Specifier<KmProperty, KmPropertiesDiff>> myPropertiesDiff;
+    private final Supplier<Specifier<KmTypeAlias, KmTypeAliasDiff>> myAliasesDiff;
+    private final Supplier<Specifier<String, ?>> mySealedSubclassesDiff;
 
     Diff(KotlinMeta past) {
       myPast = past;
+
+      myFunctionsDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmFunctions(), getKmFunctions(),
+        (f1, f2) -> Objects.equals(JvmExtensionsKt.getSignature(f1),JvmExtensionsKt.getSignature(f2)),
+        f -> Objects.hashCode(JvmExtensionsKt.getSignature(f)),
+        KmFunctionsDiff::new
+      ));
+
+      myConstructorsDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmConstructors(), getKmConstructors(),
+        (c1, c2) -> Objects.equals(JvmExtensionsKt.getSignature(c1), JvmExtensionsKt.getSignature(c2)),
+        c -> Objects.hashCode(JvmExtensionsKt.getSignature(c)),
+        KmConstructorsDiff::new
+      ));
+
+      myPropertiesDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmProperties(), getKmProperties(),
+        (p1, p2) -> Objects.equals(p1.getName(), p2.getName()),
+        p -> Objects.hashCode(p.getName()),
+        KmPropertiesDiff::new
+      ));
+
+      myAliasesDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmTypeAliases(), getKmTypeAliases(),
+        (a1, a2) -> Objects.equals(a1.getName(), a2.getName()),
+        a -> Objects.hashCode(a.getName()),
+        KmTypeAliasDiff::new
+      ));
+
+      mySealedSubclassesDiff = Utils.lazyValue(() -> Difference.diff(myPast.getSealedSubclasses(), getSealedSubclasses()));
     }
 
     @Override
     public boolean unchanged() {
-      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !functions().unchanged() && !properties().unchanged()/*&& !dataChanged()*/;
+      return
+        !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && !containerVisibilityChanged() && !containerModalityChanged() && 
+        sealedSubclasses().unchanged() && functions().unchanged() && properties().unchanged() && constructors().unchanged() && typeAliases().unchanged()/*&& !dataChanged()*/;
     }
 
     public boolean kindChanged() {
@@ -192,24 +279,44 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return !Objects.equals(myPast.myPackageName, myPackageName);
     }
 
+    public boolean containerModalityChanged() {
+      return myPast.getContainerModality() != getContainerModality();
+    }
+
+    public boolean containerVisibilityChanged() {
+      return myPast.getContainerVisibility() != getContainerVisibility();
+    }
+
+    public boolean containerAccessRestricted() {
+      return getVisibilityLevel(getContainerVisibility()) < getVisibilityLevel(myPast.getContainerVisibility());
+    }
+
     public boolean extraChanged() {
       return myPast.myExtraInt != myExtraInt || !Objects.equals(myPast.myExtraString, myExtraString);
     }
 
+    public boolean typeParametersVarianceChanged() {
+      return !Iterators.equals(myPast.getTypeParameters(), getTypeParameters(), (p1, p2) -> p1.getVariance() == p2.getVariance());
+    }
+
+    public Specifier<String, ?> sealedSubclasses() {
+      return mySealedSubclassesDiff.get();
+    }
+
     public Specifier<KmFunction, KmFunctionsDiff> functions() {
-      return Difference.deepDiff(myPast.getKmFunctions(), getKmFunctions(),
-        (f1, f2) -> Objects.equals(JvmExtensionsKt.getSignature(f1), JvmExtensionsKt.getSignature(f2)),
-        f -> Objects.hashCode(JvmExtensionsKt.getSignature(f)),
-        KmFunctionsDiff::new
-      );
+      return myFunctionsDiff.get();
+    }
+
+    public Specifier<KmConstructor, KmConstructorsDiff> constructors() {
+      return myConstructorsDiff.get();
     }
 
     public Specifier<KmProperty, KmPropertiesDiff> properties() {
-      return Difference.deepDiff(myPast.getKmProperties(), getKmProperties(),
-        (p1, p2) -> Objects.equals(p1.getName(), p2.getName()),
-        p -> Objects.hashCode(p.getName()),
-        KmPropertiesDiff::new
-      );
+      return myPropertiesDiff.get();
+    }
+
+    public Specifier<KmTypeAlias, KmTypeAliasDiff> typeAliases() {
+      return myAliasesDiff.get();
     }
   }
 
@@ -224,22 +331,139 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !becameNullable() && !argsBecameNotNull();
+      return !becameNullable() && !argsBecameNotNull() && !visibilityChanged() && !receiverParameterChanged() && !hasDefaultDeclarationChanges() && !parameterArgumentsChanged();
     }
 
     public boolean becameNullable() {
       return !Attributes.isNullable(past.getReturnType()) && Attributes.isNullable(now.getReturnType());
     }
 
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+    }
+
     public boolean argsBecameNotNull() {
-      var nowIt = now.getValueParameters().iterator();
-      for (KmValueParameter pastParam : past.getValueParameters()) {
-        KmValueParameter nowParam = nowIt.next();
-        if (Attributes.isNullable(pastParam.getType()) && !Attributes.isNullable(nowParam.getType())) {
+      var nowIt = getParameterTypes(now).iterator();
+      for (KmType pastParam : getParameterTypes(past)) {
+        if (!nowIt.hasNext()) {
+          // should not happen normally if getParameterTypes correctly collects all KmFunction properties that make up a jvm signature.
+          // This check make code resistant to possible future changes in kotlinc
+          break;
+        }
+        KmType nowParam = nowIt.next();
+        if (Attributes.isNullable(pastParam) && !Attributes.isNullable(nowParam)) {
           return true;
         }
       }
       return false;
+    }
+
+    public boolean receiverParameterChanged() {
+      // for example 'fun foo(param: Bar): Any'  => 'fun Bar.foo(): Any'
+      // both declarations will have the same JvmSignature in bytecode so functions will be considered the same by this criterion
+      return !kmTypesEqual(past.getReceiverParameterType(), now.getReceiverParameterType());
+    }
+
+    public boolean hasDefaultDeclarationChanges() {
+      int before = Iterators.count(Iterators.filter(past.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      int after = Iterators.count(Iterators.filter(now.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      if (before == 0) {
+        return after > 0; // there were no default declarations, but some parameters now define default values
+      }
+      return after < before; // default definitions may still exist, but some parameters do not define default values anymore
+    }
+
+    public boolean parameterArgumentsChanged() {
+      return !Iterators.equals(getParameterTypes(past), getParameterTypes(now), (pastType, nowType) -> Iterators.equals(pastType.getArguments(), nowType.getArguments(), KotlinMeta::kmTypeProjectionEquals));
+    }
+
+    private static Iterable<KmType> getParameterTypes(KmFunction f) {
+      // return all types that can make up a jvm signature
+      return Iterators.filter(Iterators.flat(List.of(f.getContextReceiverTypes(), Iterators.asIterable(f.getReceiverParameterType()), Iterators.map(f.getValueParameters(), KmValueParameter::getType))), Objects::nonNull);
+    }
+  }
+  
+  public static final class KmTypeAliasDiff implements Difference {
+    private final KmTypeAlias past;
+    private final KmTypeAlias now;
+
+    public KmTypeAliasDiff(KmTypeAlias past, KmTypeAlias now) {
+      this.past = past;
+      this.now = now;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return !visibilityChanged() && !underlyingTypeChanged();
+    }
+
+
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+    }
+
+    public boolean underlyingTypeChanged() {
+      return !kmTypesEqual(past.getUnderlyingType(), now.getUnderlyingType());
+    }
+  }
+
+  public static final class KmConstructorsDiff implements Difference {
+    private final KmConstructor past;
+    private final KmConstructor now;
+
+    public KmConstructorsDiff(KmConstructor past, KmConstructor now) {
+      this.past = past;
+      this.now = now;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return !argsBecameNotNull() && !visibilityChanged() && !hasDefaultDeclarationChanges();
+    }
+
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+    }
+
+    public boolean argsBecameNotNull() {
+      var nowIt = getParameterTypes(now).iterator();
+      for (KmType pastParam : getParameterTypes(past)) {
+        if (!nowIt.hasNext()) {
+          // should not happen normally if getParameterTypes correctly collects all KmFunction properties that make up a jvm signature.
+          // This check make code resistant to possible future changes in kotlinc
+          break;
+        }
+        KmType nowParam = nowIt.next();
+        if (Attributes.isNullable(pastParam) && !Attributes.isNullable(nowParam)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public boolean hasDefaultDeclarationChanges() {
+      int before = Iterators.count(Iterators.filter(past.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      int after = Iterators.count(Iterators.filter(now.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      if (before == 0) {
+        return after > 0; // there were no default declarations, but some parameters now define default values
+      }
+      return after < before; // default definitions still exist, but some parameters do not define default values anymore
+    }
+
+    private static Iterable<KmType> getParameterTypes(KmConstructor f) {
+      return Iterators.map(f.getValueParameters(), KmValueParameter::getType);
     }
   }
 
@@ -254,11 +478,11 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !nullabilityChanged();
+      return !typeChanged() && !visibilityChanged() && !customAccessorAdded();
     }
 
-    public boolean nullabilityChanged() {
-      return !Objects.equals(past.getReturnType(), now.getReturnType());
+    public boolean typeChanged() {
+      return !kmTypesEqual(past.getReturnType(), now.getReturnType());
     }
 
     public boolean becameNullable() {
@@ -269,5 +493,56 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return Attributes.isNullable(past.getReturnType()) && !Attributes.isNullable(now.getReturnType());
     }
 
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now) || getGetterVisibility(past) != getGetterVisibility(now) || getSetterVisibility(past) != getSetterVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+    }
+
+    public boolean getterAccessRestricted() {
+      return getVisibilityLevel(getGetterVisibility(now)) < getVisibilityLevel(getGetterVisibility(past));
+    }
+
+    public boolean setterAccessRestricted() {
+      return getVisibilityLevel(getSetterVisibility(now)) < getVisibilityLevel(getSetterVisibility(past));
+    }
+
+    public boolean customAccessorAdded() {
+      return (!hasCustomGetter(past) && hasCustomGetter(now)) || (!hasCustomSetter(past) && hasCustomSetter(now));
+    }
+
+    private static Visibility getGetterVisibility(KmProperty prop) {
+      return Attributes.getVisibility(prop.getGetter());
+    }
+
+    private static Visibility getSetterVisibility(KmProperty prop) {
+      KmPropertyAccessorAttributes setter = prop.getSetter();
+      return setter != null? Attributes.getVisibility(setter) : Visibility.PUBLIC /*use default visibility if setter is not defined*/;
+    }
+
+    private static boolean hasCustomGetter(KmProperty prop) {
+      return Attributes.isNotDefault(prop.getGetter());
+    }
+
+    private static boolean hasCustomSetter(KmProperty prop) {
+      KmPropertyAccessorAttributes setter = prop.getSetter();
+      return setter != null && Attributes.isNotDefault(setter);
+    }
+  }
+
+  private static final Map<Visibility, Integer> VISIBILITY_LEVEL = Map.of(
+    Visibility.LOCAL, 1,
+    Visibility.PRIVATE_TO_THIS, 2,
+    Visibility.PRIVATE, 3,
+    Visibility.PROTECTED, 4,
+    Visibility.INTERNAL, 5,
+    Visibility.PUBLIC, 6
+  );
+
+  private static int getVisibilityLevel(Visibility v) {
+    Integer level = VISIBILITY_LEVEL.get(v);
+    return level != null? level : 0;
   }
 }

@@ -164,6 +164,7 @@ public class SingleClassesTest {
   @Test public void testComplexInstanceOfRecordPatternJavac() { doTest("pkg/TestComplexInstanceOfRecordPatternJavac"); }
   @Test public void testSwitchWithDeconstructionsWithoutNestedJavac() { doTest("pkg/TestSwitchWithDeconstructionsWithoutNestedJavac"); }
   @Test public void testSwitchNestedDeconstructionJavac() { doTest("pkg/TestSwitchNestedDeconstructionsJavac"); }
+  @Test public void testSwitchWrapReturnJavac() { doTest("pkg/TestSwitchWrapReturnJavac"); }
 
   // TODO: fix all below
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
@@ -241,6 +242,11 @@ public class SingleClassesTest {
   @Test public void testInstanceofWithPattern() {
     doTest("patterns/TestInstanceofWithPattern");
   }
+  //it is not actual expressions, but convert expressions into statements
+  @Test public void testSwitchPatternWithExpression() {
+    doTest("patterns/TestSwitchPatternWithExpression");
+  }
+
   @Test public void testInstanceofVarNotSupported() {
     // the bytecode version of this test data doesn't support patterns in `instanceof`, so no modifications regarding that are applied
     doTest("patterns/TestInstanceofPatternNotSupported");
@@ -248,6 +254,13 @@ public class SingleClassesTest {
 
   @Test(expected = ClassFormatException.class)
   public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
+
+  @Test public void testSwitchOnStatic() { doTest("pkg/SwitchOnStatic"); }
+
+  @Test public void testTryToPreserveCast() { doTest("pkg/TryToPreserveCast"); }
+
+  @Test public void testPreserveAssignmentToRecord() { doTest("pkg/PreserveAssignmentToRecord"); }
+  @Test public void testPreserveAssignmentToRecord2() { doTest("pkg/PreserveAssignmentToRecord2"); }
 
   private void doTest(String testFile, String... companionFiles) {
     var decompiler = fixture.getDecompiler();

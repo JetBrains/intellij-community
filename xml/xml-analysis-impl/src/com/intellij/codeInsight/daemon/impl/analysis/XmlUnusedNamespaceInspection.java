@@ -39,7 +39,8 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
 
         XmlRefCountHolder refCountHolder = XmlRefCountHolder.getRefCountHolder((XmlFile)file);
         if (refCountHolder == null) return;
-        XmlTag parent = attribute.getParent();
+        @Nullable XmlTag parent = attribute.getParent();
+        if (parent == null) return;
         if (!attribute.isNamespaceDeclaration()) {
           if (getDefaultLocation(parent) == attribute) {
              // check the parent has attribute with namespace decl
@@ -83,7 +84,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
     };
   }
 
-  private boolean isUsedImplicitly(@NotNull XmlAttribute attribute) {
+  private static boolean isUsedImplicitly(@NotNull XmlAttribute attribute) {
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       if (provider.isImplicitUsage(attribute)) return true;
     }
@@ -160,7 +161,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
   }
 
   @Nullable
-  private static XmlAttribute getDefaultLocation(XmlTag parent) {
+  private static XmlAttribute getDefaultLocation(@NotNull XmlTag parent) {
     return parent.getAttribute(XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
   }
 

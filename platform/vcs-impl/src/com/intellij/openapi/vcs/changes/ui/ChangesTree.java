@@ -11,7 +11,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -68,7 +67,7 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
 /**
  * Consider implementing {@link AsyncChangesTree} instead.
  */
-public abstract class ChangesTree extends Tree implements DataProvider {
+public abstract class ChangesTree extends Tree implements UiCompatibleDataProvider {
   private static final Logger LOG = Logger.getInstance(ChangesTree.class);
 
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
@@ -545,9 +544,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull
   public InclusionModel getInclusionModel() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      LOG.error(new Throwable("Access is allowed from Event Dispatch Thread (EDT) only"));
-    }
     return myInclusionModel;
   }
 
@@ -644,7 +640,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myTreeExpander = expander;
   }
 
+  /**
+   * @deprecated Prefer using {@link IdeActions#ACTION_EXPAND_ALL}
+   */
   @NotNull
+  @Deprecated
   public AnAction createExpandAllAction(boolean headerAction) {
     if (headerAction) {
       return CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, this);
@@ -654,7 +654,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
   }
 
+  /**
+   * @deprecated Prefer using {@link IdeActions#ACTION_COLLAPSE_ALL}
+   */
   @NotNull
+  @Deprecated
   public AnAction createCollapseAllAction(boolean headerAction) {
     if (headerAction) {
       return CommonActionsManager.getInstance().createCollapseAllHeaderAction(myTreeExpander, this);
@@ -803,19 +807,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myScrollToSelection = scrollToSelection;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myTreeCopyProvider;
-    }
-    if (ChangesGroupingSupport.KEY.is(dataId)) {
-      return myGroupingSupport;
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myTreeExpander;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myTreeCopyProvider);
+    sink.set(ChangesGroupingSupport.KEY, myGroupingSupport);
+    sink.set(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
   }
 
   @Override

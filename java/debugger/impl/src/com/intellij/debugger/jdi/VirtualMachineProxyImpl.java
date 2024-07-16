@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -19,9 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.request.EventRequestManager;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -33,7 +31,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private final DebugProcessImpl myDebugProcess;
   private final VirtualMachine myVirtualMachine;
   private int myTimeStamp = 0;
-  private int myPausePressedCount = 0;
+  private int myModelSuspendCount = 0;
 
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
@@ -170,6 +168,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return new ArrayList<>(myAllThreads.values());
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull Collection<ThreadReferenceProxyImpl> getEvenDirtyAllThreads() {
+    return myAllThreads.values();
+  }
+
   public CompletableFuture<Collection<ThreadReferenceProxyImpl>> allThreadsAsync() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myAllThreadsDirty) {
@@ -199,7 +203,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       return;
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myPausePressedCount++;
+    myModelSuspendCount++;
     myVirtualMachine.suspend();
     clearCaches();
   }
@@ -209,14 +213,17 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       return;
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myPausePressedCount > 0) {
-      myPausePressedCount--;
+    if (myModelSuspendCount <= 0) {
+      myDebugProcess.logError("Negative global suspend count number!");
+    }
+    if (myModelSuspendCount > 0) {
+      myModelSuspendCount--;
     }
     clearCaches();
     LOG.debug("before resume VM");
     DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((unused, throwable) -> {
       if (throwable != null && !(DebuggerUtilsAsync.unwrap(throwable) instanceof RejectedExecutionException)) {
-        LOG.error(throwable);
+        myDebugProcess.logError("Error on resume", throwable);
       }
       LOG.debug("VM resumed");
     });
@@ -291,6 +298,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.mirrorOf(v);
   }
 
+  /**
+   * Avoid using directly - use {@link com.intellij.debugger.impl.DebuggerUtilsImpl#mirrorOfString} instead
+   */
   public StringReference mirrorOf(String s) {
     return myVirtualMachine.mirrorOf(s);
   }
@@ -390,6 +400,10 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVersionHigher_15 && myVirtualMachine.canGetMethodReturnValues();
   }
 
+  public boolean canUseSourceNameFilters() {
+    return myVirtualMachine.canUseSourceNameFilters();
+  }
+
   public String description() {
     return myVirtualMachine.description();
   }
@@ -485,7 +499,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public boolean isPausePressed() {
-    return myPausePressedCount > 0;
+    return myModelSuspendCount > 0;
   }
 
   public boolean isSuspended() {
@@ -500,5 +514,20 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         }
       }
     }
+  }
+
+  public int getModelSuspendCount() {
+    return myModelSuspendCount;
+  }
+
+  public void addedSuspendAllContext() {
+    myModelSuspendCount++;
+  }
+
+  public void resumedSuspendAllContext() {
+    if (myModelSuspendCount <= 0) {
+      myDebugProcess.logError("Negative global suspend count number!");
+    }
+    myModelSuspendCount--;
   }
 }

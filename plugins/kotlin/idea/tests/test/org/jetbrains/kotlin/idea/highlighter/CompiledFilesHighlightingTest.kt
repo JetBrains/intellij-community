@@ -11,8 +11,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiManager
-import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -38,8 +38,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     fun testKotlinCollectionsGroupingKtKotlinMetadata() {
         doTestWithLibraryFile(
             TestKotlinArtifacts.kotlinStdlibCommon,
-            FileHighlightingSetting.SKIP_INSPECTION,
-            expectedDuplicatedHighlighting = true
+            FileHighlightingSetting.SKIP_INSPECTION
         )
     }
 
@@ -47,8 +46,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     fun testKotlinTimeTimeSourceClass() {
         doTestWithLibraryFile(
             TestKotlinArtifacts.kotlinStdlib,
-            FileHighlightingSetting.SKIP_INSPECTION,
-            expectedDuplicatedHighlighting = true
+            FileHighlightingSetting.SKIP_INSPECTION
         )
     }
 
@@ -56,8 +54,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     fun testKotlinNativeLinkdataPackageKotlinIO0ioKnm() {
         doTestWithLibraryFile(
             TestKotlinArtifacts.kotlinStdlibNative,
-            FileHighlightingSetting.SKIP_INSPECTION,
-            expectedDuplicatedHighlighting = true
+            FileHighlightingSetting.SKIP_INSPECTION
         )
     }
 
@@ -133,13 +130,11 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
                     check()
                 }
             }
-        } catch (e: AssertionError) {
-            if (e is FileComparisonData) {
-                val highlights =
-                    DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject())
-                val text = myFixture.getFile().getText()
-                println(TagsTestDataUtil.insertInfoTags(highlights, text))
-            }
+        } catch (e: FileComparisonFailedError) {
+            val highlights =
+                DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject())
+            val text = myFixture.getFile().getText()
+            println(TagsTestDataUtil.insertInfoTags(highlights, text))
             throw e
         }
     }

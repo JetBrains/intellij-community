@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.CompilerTestUtil;
@@ -7,6 +7,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -25,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,7 +40,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.gradle.StartParameter;
 import org.gradle.util.GradleVersion;
@@ -59,6 +60,8 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction;
+import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -72,7 +75,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -88,6 +94,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @Rule public TestName name = new TestName();
 
   public VersionMatcherRule versionMatcherRule = asOuterRule(new VersionMatcherRule());
+  public TargetJavaVersionWatcher myTargetJavaVersionWatcher = asOuterRule(new TargetJavaVersionWatcher());
+
   @Parameterized.Parameter
   public @NotNull String gradleVersion;
   private GradleProjectSettings myProjectSettings;
@@ -100,8 +108,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private final StringBuilder deprecationTextBuilder = new StringBuilder();
   private int deprecationTextLineCount = 0;
 
+  private @Nullable Disposable myTestDisposable = null;
+
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
     myProjectSettings = new GradleProjectSettings().withQualifiedModuleNames();
 
@@ -110,11 +120,24 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     WriteAction.runAndWait(this::configureJdkTable);
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
 
-    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(UnknownSdkResolver.EP_NAME, List.of(TestUnknownSdkResolver.INSTANCE), getTestDisposable());
     setRegistryPropertyForTest("unknown.sdk.auto", "false");
     TestUnknownSdkResolver.INSTANCE.setUnknownSdkFixMode(TestUnknownSdkResolver.TestUnknownSdkFixMode.REAL_LOCAL_FIX);
 
     cleanScriptsCacheIfNeeded();
+
+    installGradleJvmConfigurator();
+  }
+
+  protected void installGradleJvmConfigurator() {
+    ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListener<GradleProjectSettings>() {
+      @Override
+      public void onProjectsLinked(@NotNull Collection<GradleProjectSettings> settings) {
+        for (var projectSettings : settings) {
+          projectSettings.setGradleJvm(GRADLE_JDK_NAME);
+        }
+      }
+    }, getTestDisposable());
   }
 
   protected void configureJdkTable() {
@@ -235,16 +258,22 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
-    if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current())) {
+    return requireJdkHome(gradleVersion, JavaVersionRestriction.NO);
+  }
+
+  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion,
+                                               @NotNull JavaVersionRestriction javaVersionRestriction) {
+    if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current()) &&
+        !javaVersionRestriction.isRestricted(gradleVersion, JavaVersion.current())) {
       return IdeaTestUtil.requireRealJdkHome();
     }
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion);
+    return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion, javaVersionRestriction);
   }
 
   public String findJdkPath() {
-    return requireJdkHome(getCurrentGradleVersion());
+    return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
@@ -253,10 +282,17 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @Override
   public void tearDown() throws Exception {
     if (myJdkHome == null) {
-      //super.setUp() wasn't called
+      //super.setUpInWriteAction() wasn't called
+
+      RunAll.runAll(
+        () -> Disposer.dispose(getTestDisposable()),
+        () -> super.tearDown()
+      );
+
       return;
     }
-    new RunAll(
+
+    RunAll.runAll(
       () -> {
         WriteAction.runAndWait(() -> {
           Arrays.stream(ProjectJdkTable.getInstance().getAllJdks()).forEach(ProjectJdkTable.getInstance()::removeJdk);
@@ -276,8 +312,16 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
           GradleSystemSettings.getInstance().setGradleVmOptions("");
         }
       },
-      super::tearDown
-    ).run();
+      () -> Disposer.dispose(getTestDisposable()),
+      () -> super.tearDown()
+    );
+  }
+
+  private @NotNull Disposable getTestDisposable() {
+    if (myTestDisposable == null) {
+      myTestDisposable = Disposer.newDisposable();
+    }
+    return myTestDisposable;
   }
 
   @Override
@@ -314,24 +358,6 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     importProject();
   }
 
-  protected void importProject() {
-    importProject((Boolean)null);
-  }
-
-  @Override
-  protected void importProject(Boolean skipIndexing) {
-    ExternalSystemApiUtil.subscribe(myProject, GradleConstants.SYSTEM_ID, new ExternalSystemSettingsListener<>() {
-      @Override
-      public void onProjectsLinked(@NotNull Collection settings) {
-        final Object item = ContainerUtil.getFirstItem(settings);
-        if (item instanceof GradleProjectSettings) {
-          ((GradleProjectSettings)item).setGradleJvm(GRADLE_JDK_NAME);
-        }
-      }
-    });
-    super.importProject(skipIndexing);
-  }
-
   protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config, Boolean skipIndexing)
     throws IOException {
     getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
@@ -343,11 +369,11 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   @Override
-  protected void importProject(@NonNls String config, Boolean skipIndexing) throws IOException {
+  protected void importProject(@NotNull String config, @Nullable Boolean skipIndexing) throws IOException {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       config = injectRepo(config);
     }
-    if (isGradleAtLeast("7.0")) {
+    if (isGradleAtLeast("7.0") && !isWarningsAllowed()) {
       String failOnWarning = "-Dorg.gradle.warning.mode=fail";
       String originalVmOptions = GradleSystemSettings.getInstance().getGradleVmOptions();
       if (StringUtil.isEmpty(originalVmOptions)) {
@@ -368,8 +394,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   @Override
   protected void printOutput(@NotNull String text, boolean stdOut) {
-    if (text.contains("This is scheduled to be removed in Gradle")) {
-      deprecationTextLineCount = 15;
+    if (text.contains("This is scheduled to be removed in Gradle")
+    || text.contains("Deprecated Gradle features were used in this build")) {
+      deprecationTextLineCount = 30;
     }
     if (deprecationTextLineCount > 0) {
       deprecationTextBuilder.append(text);
@@ -462,6 +489,20 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return createProjectSubFile("settings.gradle", content);
   }
 
+  /**
+   * Produces settings content and creates necessary directories.
+   * @param projects list of sub-project to create
+   * @return a block of `include 'project-name'` lines for settings.gradle
+   */
+  protected String including(@NonNls String... projects) {
+    return including(myProjectRoot, projects);
+  }
+
+  protected String including(VirtualFile root, @NonNls String... projects) {
+    return new TestGradleSettingsScriptHelper(root.toNioPath(), projects).build();
+  }
+
+
   private PathAssembler.LocalDistribution configureWrapper() {
 
     myProjectSettings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
@@ -504,30 +545,16 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return GradleVersionUtil.isGradleOlderThan(getCurrentGradleBaseVersion(), ver);
   }
 
-  /**
-   * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected boolean isGradleOlderOrSameAs(@NotNull String ver) {
-    return GradleVersionUtil.isGradleOlderOrSameAs(getCurrentGradleBaseVersion(), ver);
-  }
-
   protected boolean isGradleAtLeast(@NotNull String ver) {
     return GradleVersionUtil.isGradleAtLeast(getCurrentGradleBaseVersion(), ver);
   }
 
-  /**
-   * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected boolean isGradleNewerThan(@NotNull String ver) {
-    return GradleVersionUtil.isGradleNewerThan(getCurrentGradleBaseVersion(), ver);
-  }
-
   protected void enableGradleDebugWithSuspend() {
     GradleSystemSettings.getInstance().setGradleVmOptions("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
+  }
+
+  protected Boolean isWarningsAllowed() {
+    return false;
   }
 
   protected void overrideGradleUserHome(@NotNull String relativeUserHomePath) throws IOException {

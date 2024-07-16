@@ -2,7 +2,7 @@ package test.pkg
 
 public final class SuspendKt {
     public static final fun top(@org.jetbrains.annotations.NotNull $completion: kotlin.coroutines.Continuation<? super java.lang.Integer>) : java.lang.Object {
-        return <init>().inner()
+        return Context().inner()
     }
 }
 

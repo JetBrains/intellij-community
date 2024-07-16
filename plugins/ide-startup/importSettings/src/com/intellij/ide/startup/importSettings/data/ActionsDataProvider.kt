@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.ActionsDataProvider.Companion.toRelativeFormat
 import com.intellij.ide.startup.importSettings.jb.JbProductInfo
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
+import com.intellij.ide.startup.importSettings.transfer.ExternalProductInfo
+import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.Nls
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -18,19 +20,25 @@ interface ActionsDataProvider<T : BaseService> {
 
   companion object {
 
-    fun prepareMap(service: JbService): Map<popUpPlace, List<Product>> {
+    fun prepareMap(service: JbService): Map<popUpPlace, List<Product>>? {
       val fresh = service.products()
       val old = service.getOldProducts()
 
       if (fresh.isEmpty()) {
-        return mutableMapOf<popUpPlace, List<Product>>().apply {
-          this[popUpPlace.MAIN] = old
-        }
+        return if (old.isEmpty()) {
+          null
+        } else
+          mutableMapOf<popUpPlace, List<Product>>().apply {
+            this[popUpPlace.MAIN] = old }
       }
 
       return mutableMapOf<popUpPlace, List<Product>>().apply {
-        this[popUpPlace.MAIN] = fresh
-        this[popUpPlace.OTHER] = old
+        if (fresh.isNotEmpty()) {
+          this[popUpPlace.MAIN] = fresh
+        }
+        if (old.isNotEmpty()) {
+          this[popUpPlace.OTHER] = old
+        }
       }
     }
 
@@ -147,22 +155,29 @@ class JBrActionsDataProvider private constructor() : ActionsDataProvider<JbServi
   }
 }
 
-class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncService> {
+class SyncActionsDataProvider private constructor(lifetime: Lifetime) : ActionsDataProvider<SyncService> {
   companion object {
-    private val provider = SyncActionsDataProvider()
-    fun getInstance() = provider
+    private var provider: SyncActionsDataProvider? = null
+    fun createProvider(lifetime: Lifetime): SyncActionsDataProvider {
+      val inst = provider ?: SyncActionsDataProvider(lifetime)
+      provider = inst
+      return inst
+    }
   }
 
   override val productService = settingsService.getSyncService()
   private var map: Map<ActionsDataProvider.popUpPlace, List<Product>?>? = null
 
   init {
+    productService.syncState.advise(lifetime) {
+      updateSyncMap()
+    }
     updateSyncMap()
   }
 
   private fun updateSyncMap() {
     val service = settingsService.getSyncService()
-    if (!settingsService.isLoggedIn()) {
+    if (!settingsService.isSyncEnabled || !settingsService.hasDataToSync.value) {
       map = null
       return
     }
@@ -201,14 +216,14 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
 
   override val main: List<Product>?
     get() {
-      if (map == null) {
+      if (map.isNullOrEmpty()) {
         updateSyncMap()
       }
       return map?.get(ActionsDataProvider.popUpPlace.MAIN)
     }
   override val other: List<Product>?
     get() {
-      if (map == null) {
+      if (map.isNullOrEmpty()) {
         updateSyncMap()
       }
       return map?.get(ActionsDataProvider.popUpPlace.OTHER)
@@ -219,13 +234,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
   }
 }
 
-class ExtActionsDataProvider private constructor() : ActionsDataProvider<ExternalService> {
-  companion object {
-    private val provider = ExtActionsDataProvider()
-    fun getInstance() = provider
-  }
-
-  override val productService = settingsService.getExternalService()
+class ExtActionsDataProvider(override val productService: ExternalProductService) : ActionsDataProvider<ExternalProductService> {
 
   override fun getProductIcon(productId: String, size: IconProductSize): Icon? {
     return productService.getProductIcon(productId, size)
@@ -235,16 +244,14 @@ class ExtActionsDataProvider private constructor() : ActionsDataProvider<Externa
     return contributor.name
   }
 
-  override fun getComment(contributor: SettingsContributor): String? {
-    return null
-  }
+  override fun getComment(contributor: SettingsContributor): String? =
+    (contributor as? ExternalProductInfo)?.comment
 
   override val title: String
-    get() = ""
-  override val main: List<Product>?
+    get() = productService.productTitle
+  override val main: List<Product>
     get() = productService.products()
-  override val other: List<Product>?
-    get() = null
+  override val other: List<Product>? = null
   override fun productSelected(contributor: SettingsContributor) {
     ImportSettingsEventsCollector.externalSelected((contributor as Product).id)
   }

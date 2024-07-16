@@ -19,6 +19,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +162,7 @@ public abstract class PsiDiamondType extends PsiType {
   }
 
   public static PsiDiamondType getDiamondType(PsiNewExpression expression) {
-    if (PsiUtil.isLanguageLevel7OrHigher(expression)) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, expression)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -18,13 +18,15 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import junit.framework.Assert.*
+import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertFalse
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertContains
+import kotlin.test.assertTrue
 
 class WorkspaceModelTest {
   companion object {
@@ -54,26 +56,27 @@ class WorkspaceModelTest {
 
   @Test
   fun `async model update`() {
-    val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = model.internal.getBuilderSnapshot()
-    builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
+    // Run write action on root to prevent parallel tests to affect the workspace model
+    runWriteActionAndWait {
+      val model = WorkspaceModel.getInstance(projectModel.project)
+      val builderSnapshot = (model as WorkspaceModelInternal).getBuilderSnapshot()
+      builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
-    val replacement = builderSnapshot.getStorageReplacement()
+      val replacement = builderSnapshot.getStorageReplacement()
 
-    val updated = runWriteActionAndWait {
-      model.internal.replaceProjectModel(replacement)
+      val updated = model.replaceProjectModel(replacement)
+
+      assertTrue(updated)
+
+      val moduleEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).single()
+      assertEquals("MyModule", moduleEntity.name)
     }
-
-    assertTrue(updated)
-
-    val moduleEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).single()
-    assertEquals("MyModule", moduleEntity.name)
   }
 
   @Test
   fun `async model update with fail`() {
     val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = model.internal.getBuilderSnapshot()
+    val builderSnapshot = (model as WorkspaceModelInternal).getBuilderSnapshot()
     builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
     val replacement = builderSnapshot.getStorageReplacement()
@@ -85,7 +88,7 @@ class WorkspaceModelTest {
     }
 
     val updated = runWriteActionAndWait {
-      WorkspaceModel.getInstance(projectModel.project).internal.replaceProjectModel(replacement)
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceProjectModel(replacement)
     }
 
     assertFalse(updated)

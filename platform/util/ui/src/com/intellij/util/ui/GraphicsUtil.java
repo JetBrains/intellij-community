@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -86,9 +86,11 @@ public final class GraphicsUtil {
   }
 
   public static void paintWithAlpha(Graphics g, float alpha, @NotNull Runnable paint) {
-    GraphicsConfig config = paintWithAlpha(g, alpha);
+    Graphics2D g2 = (Graphics2D)g;
+    Composite oldComposite = g2.getComposite();
+    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     paint.run();
-    config.restore();
+    g2.setComposite(oldComposite);
   }
 
   /**
@@ -120,7 +122,7 @@ public final class GraphicsUtil {
   }
 
   /**
-   * Put context hint that instructs using specified aliasing for a given component.
+   * Put a context hint that instructs using specified aliasing for a given component.
    * It's preferred over using {@link #setupAntialiasing(Graphics)}, as it will allow to compute {@link JComponent#getPreferredSize()}
    * without using {@link JComponent#getGraphics()} (see {@link #safelyGetGraphics(Component)} on why it shall be avoided).
    * <p>

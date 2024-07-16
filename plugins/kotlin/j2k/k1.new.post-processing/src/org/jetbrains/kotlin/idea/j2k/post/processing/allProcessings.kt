@@ -4,10 +4,9 @@ package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.IndentRawStringIntention
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
-import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
-import org.jetbrains.kotlin.idea.inspections.*
+import org.jetbrains.kotlin.idea.inspections.FoldInitializerAndIfToElvisInspection
+import org.jetbrains.kotlin.idea.inspections.NullChecksToSafeCallInspection
+import org.jetbrains.kotlin.idea.inspections.ReplacePutWithAssignmentInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
@@ -16,32 +15,28 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTran
 import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix.ReturnTypeMismatchOnOverrideFactory
-import org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix.SetExplicitVisibilityFactory
+import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup
+import org.jetbrains.kotlin.j2k.NamedPostProcessingGroup
+import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPostProcessingGroup(
     diagnosticBasedProcessing(MissingIteratorExclExclFixFactory, Errors.ITERATOR_ON_NULLABLE),
     diagnosticBasedProcessing(SmartCastImpossibleExclExclFixFactory, Errors.SMARTCAST_IMPOSSIBLE),
-    diagnosticBasedProcessing(ReplacePrimitiveCastWithNumberConversionFix, Errors.CAST_NEVER_SUCCEEDS),
     diagnosticBasedProcessing(ReturnTypeMismatchOnOverrideFactory, Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE),
     diagnosticBasedProcessing(AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD), Errors.VIRTUAL_MEMBER_HIDDEN),
     invisibleMemberDiagnosticBasedProcessing(MakeVisibleFactory, Errors.INVISIBLE_MEMBER),
 
-    diagnosticBasedProcessing(Errors.PLATFORM_CLASS_MAPPED_TO_KOTLIN) { element: KtDotQualifiedExpression, _ ->
-        val parent = element.parent as? KtImportDirective ?: return@diagnosticBasedProcessing
-        parent.delete()
-    },
     diagnosticBasedProcessing(
         UnsafeCallExclExclFixFactory,
         Errors.UNSAFE_CALL,
         Errors.UNSAFE_INFIX_CALL,
         Errors.UNSAFE_OPERATOR_CALL
-    ),
-    diagnosticBasedProcessing(
-        RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
-        Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS, Errors.NON_FINAL_MEMBER_IN_OBJECT
     ),
     exposedVisibilityDiagnosticBasedProcessing(
         ChangeVisibilityOnExposureFactory,
@@ -56,11 +51,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.EXPOSED_TYPE_PARAMETER_BOUND
     ),
     diagnosticBasedProcessing(
-        SetExplicitVisibilityFactory,
-        Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE,
-        Errors.NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING,
-    ),
-    diagnosticBasedProcessing(
         ConvertToIsArrayOfCallFix,
         Errors.CANNOT_CHECK_FOR_ERASED,
     ),
@@ -70,6 +60,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
 private val addOrRemoveModifiersProcessingGroup = InspectionLikeProcessingGroup(
     runSingleTime = true,
     processings = listOf(
+        // This is left for copy-paste conversion.
+        // On regular conversion, redundant modifiers are removed during JK tree processing.
         RemoveRedundantVisibilityModifierProcessing(),
     )
 )
@@ -98,30 +90,21 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     RemoveExplicitPropertyTypeProcessing(),
     RemoveRedundantNullabilityProcessing(),
     inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
-    inspectionBasedProcessing(JavaMapForEachInspection()),
     inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false) {
         it.shouldBeTransformed()
     },
     inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false) {
         it.shouldBeTransformed()
     },
-    inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression) {
-        it.canBeSimplifiedWithoutChangingSemantics()
-    },
-    inspectionBasedProcessing(ReplaceGetOrSetInspection()),
+    // ReplaceGetOrSetInspection should always be applied, because as a side effect
+    // it fixes red code of the form `array.get(0) = 42`
+    inspectionBasedProcessing(ReplaceGetOrSetInspection(), checkInspectionIsEnabled = false),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
-    intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()) {
-        // skip parentheses that were originally present in Java code
-        it.getExplicitLabelComment() == null
-    },
     DestructureForLoopParameterProcessing(),
     LiftReturnInspectionBasedProcessing(),
     LiftAssignmentInspectionBasedProcessing(),
-    intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),
     MayBeConstantInspectionBasedProcessing(),
     RemoveForExpressionLoopParameterTypeProcessing(),
-    inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
-    inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
     intentionBasedProcessing(ConvertToRawStringTemplateIntention(), additionalChecker = ::shouldConvertToRawString),
     intentionBasedProcessing(IndentRawStringIntention()),
     intentionBasedProcessing(JoinDeclarationAndAssignmentIntention()),
@@ -139,7 +122,7 @@ private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
     listOf(
         InspectionLikeProcessingGroup(
             processings = listOf(
-                PrivateVarToValProcessing(),
+                VarToValProcessing(),
                 LocalVarToValInspectionBasedProcessing()
             ),
             runSingleTime = true

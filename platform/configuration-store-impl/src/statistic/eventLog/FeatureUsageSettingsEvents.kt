@@ -21,6 +21,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -114,6 +115,7 @@ internal class FeatureUsageSettingsEvents private constructor(private val projec
 
 private val counter = AtomicInteger(0)
 
+@ApiStatus.Internal
 open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) {
   private val valuesExtractor = ConfigurationStateExtractor(recordDefault)
 

@@ -1,3 +1,5 @@
+typealias Foo = String
+
 // "Move typealias to top level" "true"
 fun bar() {
 
@@ -5,7 +7,6 @@ fun bar() {
     }
 }
 
-typealias Foo = String
-
 fun qux() {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix

@@ -138,7 +138,7 @@ public final class IdeaSpecificSettings {
 
       Element element = new Element("lib");
 
-      String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
+      String libraryName = libraryEntry.getLibraryName();
       if (libraryName == null) {
         final String[] urls = libraryEntry.getRootUrls(OrderRootType.CLASSES);
         if (urls.length > 0) {

@@ -3,44 +3,50 @@ package com.intellij.platform.ml.embeddings.search.indices
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import kotlinx.coroutines.flow.Flow
 
 interface EmbeddingSearchIndex {
-  val size: Int
   var limit: Int?
 
-  operator fun contains(id: String): Boolean
-  fun clear()
+  suspend fun getSize(): Int
+  suspend fun setLimit(value: Int?)
 
-  fun onIndexingStart()
-  fun onIndexingFinish()
+  suspend fun contains(id: EntityId): Boolean
+  suspend fun lookup(id: EntityId): FloatTextEmbedding?
+  suspend fun clear()
+  suspend fun clearBySourceType(sourceType: EntitySourceType) = Unit
 
-  suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>, shouldCount: Boolean = false)
+  suspend fun onIndexingStart()
+  suspend fun onIndexingFinish()
+
+  suspend fun addEntries(values: Iterable<Pair<EntityId, FloatTextEmbedding>>, shouldCount: Boolean = false)
 
   suspend fun saveToDisk()
   suspend fun loadFromDisk()
+  suspend fun offload()
 
-  fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
-  fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double? = null): Sequence<ScoredText>
+  suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
+  suspend fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double? = null): Flow<ScoredText>
 
-  fun estimateMemoryUsage(): Long
+  suspend fun estimateMemoryUsage(): Long
   fun estimateLimitByMemory(memory: Long): Int
-  fun checkCanAddEntry(): Boolean
+  suspend fun checkCanAddEntry(): Boolean
 }
 
-internal fun Map<String, FloatTextEmbedding>.findClosest(searchEmbedding: FloatTextEmbedding,
+internal fun Map<EntityId, FloatTextEmbedding>.findClosest(searchEmbedding: FloatTextEmbedding,
                                                          topK: Int, similarityThreshold: Double?): List<ScoredText> {
   return asSequence()
     .map { it.key to searchEmbedding.times(it.value) }
     .filter { (_, similarity) -> if (similarityThreshold != null) similarity > similarityThreshold else true }
     .sortedByDescending { (_, similarity) -> similarity }
     .take(topK)
-    .map { (id, similarity) -> ScoredText(id, similarity.toDouble()) }
+    .map { (id, similarity) -> ScoredText(id.id, similarity.toDouble()) }
     .toList()
 }
 
-internal fun Sequence<Pair<String, FloatTextEmbedding>>.streamFindClose(queryEmbedding: FloatTextEmbedding,
+internal fun Sequence<Pair<EntityId, FloatTextEmbedding>>.streamFindClose(queryEmbedding: FloatTextEmbedding,
                                                                         similarityThreshold: Double?): Sequence<ScoredText> {
   return map { (id, embedding) -> id to queryEmbedding.times(embedding) }
     .filter { similarityThreshold == null || it.second > similarityThreshold }
-    .map { (id, similarity) -> ScoredText(id, similarity.toDouble()) }
+    .map { (id, similarity) -> ScoredText(id.id, similarity.toDouble()) }
 }

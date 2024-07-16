@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
@@ -33,6 +34,7 @@ import org.jetbrains.jps.model.module.impl.JpsModuleImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl;
 
+@ApiStatus.Internal
 public final class JpsElementFactoryImpl extends JpsElementFactory {
   @Override
   public JpsModel createModel() {

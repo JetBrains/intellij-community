@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("OVERRIDE_DEPRECATION")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("OVERRIDE_DEPRECATION", "ReplacePutWithAssignment")
 
 package com.intellij.ide.startup.impl
 
@@ -10,10 +10,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.startup.StartupManagerEx
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -30,6 +27,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.ProjectActivity
@@ -43,6 +41,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -50,8 +49,10 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.InvocationEvent
 import java.util.*
-import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<StartupManagerImpl>()
@@ -104,6 +105,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   private val lock = Any()
   private val initProjectStartupActivities = ArrayDeque<Runnable>()
   private val postStartupActivities = ArrayDeque<Runnable>()
+  private val runningProjectActivities = ConcurrentHashMap<Class<*>, Job>()
 
   @Volatile
   private var freezePostStartupActivities = false
@@ -176,11 +178,11 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         waitAndProcessInvocationEventsInIdeEventQueue(this)
       }
       else {
-        runPostStartupActivities(async = false)
+        runPostStartupActivities(async = true)
       }
     }
     else {
-      coroutineScope.launch(tracer.span("project post-startup activities running")) {
+      coroutineScope.async(tracer.span("project post-startup activities running")) {
         if (System.getProperty("idea.delayed.project.post.startup.activities", "true").toBoolean()) {
           withContext(tracer.span("fully opened editors waiting")) {
             (project.serviceAsync<FileEditorManager>() as? FileEditorManagerEx)?.waitForTextEditors()
@@ -219,14 +221,11 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       }
 
       val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
-      val startTime = System.nanoTime()
-      withContext(tracer.span("run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))) {
-        if (project !is LightEditCompatible || activity is LightEditCompatible) {
+      if (project !is LightEditCompatible || activity is LightEditCompatible) {
+        withContext(tracer.span("run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))) {
           activity.run(project)
         }
       }
-
-      addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
     }
   }
 
@@ -242,7 +241,6 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       val counter = AtomicInteger()
       val dumbService = project.serviceAsync<DumbService>()
       val isProjectLightEditCompatible = project is LightEditCompatible
-      project as ComponentManagerImpl
       for (item in StartupActivity.POST_STARTUP_ACTIVITY.filterableLazySequence()) {
         val activity = item.instance ?: continue
         if (isProjectLightEditCompatible && activity !is LightEditCompatible) {
@@ -253,7 +251,29 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
         if (activity is ProjectActivity) {
           if (async) {
-            launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
+            val job = if (ApplicationManager.getApplication().isUnitTestMode) {
+              blockingContext {
+                // We propagate modality only in unit tests
+                // because in unit tests, activities are often started in a modal context (see TestProjectManager).
+                // Thus, any "invokeAndWait" will hang without modality propagation.
+                // In the future, we aim to avoid .joinAll in runPostStartupActivities altogether.
+                @Suppress("DEPRECATION")
+                val modalityContext = currentThreadContextModality()?.asContextElement() ?: EmptyCoroutineContext
+                launchActivity(
+                  activity = activity,
+                  project = project,
+                  pluginId = pluginDescriptor.pluginId,
+                  additionalContext = modalityContext,
+                )
+              }
+            }
+            else {
+              launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
+            }
+            if (ApplicationManager.getApplication().isUnitTestMode) {
+              runningProjectActivities.put(activity.javaClass, job)
+              job.invokeOnCompletion { runningProjectActivities.remove(activity.javaClass) }
+            }
           }
           else {
             activity.execute(project)
@@ -382,6 +402,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       initProjectStartupActivities.clear()
       postStartupActivities.clear()
       freezePostStartupActivities = false
+      runningProjectActivities.clear()
     }
   }
 
@@ -390,14 +411,18 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   fun checkCleared() {
     try {
       synchronized(lock) {
-        assert(initProjectStartupActivities.isEmpty()) { "Activities: $initProjectStartupActivities" }
+        assert(initProjectStartupActivities.isEmpty()) { "InitProject Activities: $initProjectStartupActivities" }
         assert(postStartupActivities.isEmpty()) { "DumbAware Post Activities: $postStartupActivities" }
+        assert(runningProjectActivities.isEmpty()) { "ProjectActivities: $runningProjectActivities" }
       }
     }
     finally {
       prepareForNextTest()
     }
   }
+
+  @TestOnly
+  fun getRunningProjectActivities(): Map<Class<*>, Job> = runningProjectActivities.toImmutableMap()
 }
 
 private fun scheduleBackgroundPostStartupActivities(project: Project, coroutineScope: CoroutineScope) {
@@ -434,11 +459,11 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
   }
 
   if (activity is ProjectActivity) {
-    launchActivity(activity, project, pluginId)
+    launchActivity(activity = activity, project = project as ProjectImpl, pluginId = pluginId)
     return
   }
 
-  ((project as ComponentManagerImpl).instanceCoroutineScope(activity.javaClass)).launch {
+  ((project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader)).launch {
     try {
       blockingContext {
         @Suppress("UsagesOfObsoleteApi")
@@ -457,21 +482,25 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
   }
 }
 
-private fun addCompletedActivity(startTime: Long, runnableClass: Class<*>, pluginId: PluginId): Long {
-  return StartUpMeasurer.addCompletedActivity(
-    startTime,
-    runnableClass,
-    ActivityCategory.POST_STARTUP_ACTIVITY,
-    pluginId.idString,
-    StartUpMeasurer.MEASURE_THRESHOLD,
-  )
-}
-
-private fun launchActivity(activity: ProjectActivity, project: Project, pluginId: PluginId) {
-  (project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader).launch(
-    tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))
+private fun launchActivity(
+  activity: ProjectActivity,
+  project: Project,
+  pluginId: PluginId,
+  additionalContext: CoroutineContext = EmptyCoroutineContext,
+): Job {
+  return (project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader).launch(
+    additionalContext +
+    tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString)),
   ) {
-    activity.execute(project)
+    try {
+      activity.execute(project = project)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(PluginException(e, pluginId))
+    }
   }
 }
 

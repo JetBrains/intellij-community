@@ -6,8 +6,10 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.ErrorDiffRequest
 import com.intellij.diff.requests.MessageDiffRequest
 import com.intellij.diff.tools.combined.*
+import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.impl.patch.*
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -17,6 +19,8 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
+import com.intellij.openapi.fileEditor.impl.JComponentFileEditor
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
@@ -26,23 +30,33 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Companion.prepareCombinedDiffModelRequestsFromProducers
+import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromProducers
 import com.intellij.openapi.vcs.changes.patch.PatchFileType
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
 
 internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFileEditorProvider, DumbAware {
+  /**
+   * See [com.intellij.openapi.fileEditor.impl.text.TextEditorProvider.accept]
+   */
   override fun accept(project: Project, file: VirtualFile): Boolean {
     if (!Registry.`is`("enable.patch.file.diff.viewer")) return false
-    return PatchFileType.isPatchFile(file) && FileDocumentManager.getInstance().getDocument(file) != null
+    return PatchFileType.isPatchFile(file) &&
+           TextEditorProvider.isTextFile(file) &&
+           !SingleRootFileViewProvider.isTooLargeForContentLoading(file)
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val document = FileDocumentManager.getInstance().getDocument(file)!!
+    val document = FileDocumentManager.getInstance().getDocument(file)
+    if (document == null) {
+      val label = DiffUtil.createMessagePanel(VcsBundle.message("patch.parse.no.document.error"))
+      return JComponentFileEditor(file, label, DiffBundle.message("diff.file.editor.name"))
+    }
 
     if (CombinedDiffRegistry.isEnabled()) {
       val processor = CombinedDiffManager.getInstance(project).createProcessor()
@@ -79,7 +93,7 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
 
 private fun buildCombinedDiffModel(document: Document): List<CombinedBlockProducer> {
   val producers = createDiffRequestProducers(document)
-  val diffModel = prepareCombinedDiffModelRequestsFromProducers(producers)
+  val diffModel = prepareCombinedBlocksFromProducers(producers)
   return diffModel
 }
 

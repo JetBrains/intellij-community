@@ -87,10 +87,10 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
         
       """.trimIndent(),
       """
-        aa:
-        ee:
         something:
           else:
+        aa:
+        ee:
         
       """.trimIndent()
     )
@@ -108,7 +108,7 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
           bb:
             something:
             cc:
-            dd: 0 
+            dd: 0
       """.trimIndent()
     )
   }
@@ -136,9 +136,9 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
       """.trimIndent(),
       """
         ee:
+          something:
           ff:
             gg: 12345
-          something:
       """.trimIndent()
     )
   }

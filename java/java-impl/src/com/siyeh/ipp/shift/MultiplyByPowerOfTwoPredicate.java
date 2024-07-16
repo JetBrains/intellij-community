@@ -24,13 +24,10 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (element instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression expression = (PsiBinaryExpression)element;
+    if (element instanceof PsiBinaryExpression expression) {
       return binaryExpressionIsMultiplyByPowerOfTwo(expression);
     }
-    else if (element instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression expression =
-        (PsiAssignmentExpression)element;
+    else if (element instanceof PsiAssignmentExpression expression) {
       return assignmentExpressionIsMultiplyByPowerOfTwo(expression);
     }
     else {

@@ -2,8 +2,8 @@
   <!--Customization code for Community Pycharm only. Promotes PyCharm Prof-->
 
   <dependencies>
+    <plugin id="PythonCore"/>
     <module name="intellij.pycharm.community.ide.impl"/>
-    <module name="intellij.python.community.impl"/>
   </dependencies>
 
 

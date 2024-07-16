@@ -15,28 +15,28 @@ class LombokLoggerCompletionTest : LightFixtureCompletionTestCase() {
   fun testSlf4j() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
 
-    doTest(LombokLoggingUtils.SLF4J_ANNOTATION, "long", "log", "log", "clone")
+    doTest(LombokLoggingUtils.ID_LOMBOK_SLF_4_J, "long", "log", "log", "clone")
   }
 
   @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testLog4j2() {
     JvmLoggerTestSetupUtil.setupLog4j2(myFixture)
 
-    doTest(LombokLoggingUtils.LOG4J2_ANNOTATION, "long", "log", "log", "clone")
+    doTest(LombokLoggingUtils.ID_LOMBOK_LOG_4_J_2, "long", "log", "log", "clone")
   }
 
   @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testLog4j() {
     JvmLoggerTestSetupUtil.setupLog4j(myFixture)
 
-    doTest(LombokLoggingUtils.LOG4J_ANNOTATION, "long", "log", "log", "clone")
+    doTest(LombokLoggingUtils.ID_LOMBOK_LOG_4_J, "long", "log", "log", "clone")
   }
 
   @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testApacheCommons() {
     JvmLoggerTestSetupUtil.setupApacheCommons(myFixture)
 
-    doTest(LombokLoggingUtils.COMMONS_ANNOTATION, "long", "log", "log", "clone")
+    doTest(LombokLoggingUtils.ID_LOMBOK_APACHE_COMMONS_LOGGING, "long", "log", "log", "clone")
   }
 
   override fun getBasePath(): String = "community/plugins/lombok/testData/completion/logger"
@@ -48,7 +48,7 @@ class LombokLoggerCompletionTest : LightFixtureCompletionTestCase() {
     configureByFile("before$name.java")
     assertStringItems(*names)
 
-    val item = lookup.items.find { it is JvmLoggerLookupElement && it.typeName == typeName }
+    val item = lookup.items.find { it is JvmLoggerLookupElement && it.typeId == typeName }
     TestCase.assertNotNull(item)
     selectItem(item)
     checkResultByFile("after$name.java")

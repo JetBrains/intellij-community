@@ -5,12 +5,13 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractShared
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 
 
 internal fun MutableTWorkspace.generateK2IntentionTests() {
     val idea = "idea/tests/testData/"
 
-    testGroup("code-insight/intentions-k2/tests", testDataPath = "../../..") {
+    testGroup("code-insight/intentions-k2/tests", category = INTENTIONS, testDataPath = "../../..") {
         testClass<AbstractK2IntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("${idea}intentions/addFullQualifier", pattern = pattern)
@@ -25,6 +26,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/importMember", pattern = pattern)
             model("${idea}intentions/chop", pattern = pattern)
             model("${idea}intentions/convertConcatenationToBuildString", pattern = pattern)
+            model("${idea}intentions/convertLambdaToReference", pattern = pattern)
             model("${idea}intentions/convertStringTemplateToBuildString", pattern = pattern)
             model("${idea}intentions/convertToBlockBody", pattern = pattern)
             model("${idea}intentions/addWhenRemainingBranches", pattern = pattern)
@@ -53,6 +55,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern)
             model("${idea}intentions/removeExplicitTypeArguments", pattern = pattern)
             model("${idea}intentions/specifyExplicitLambdaSignature", pattern = pattern)
+            model("${idea}intentions/changeVisibility", pattern = pattern)
 
             //
             model("${idea}intentions/addJvmOverloads", pattern = pattern, isIgnored = true)
@@ -125,6 +128,8 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertFilteringFunctionWithDemorgansLaw", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeExplicitSuperQualifier", pattern = pattern, isIgnored = true)
             model("${idea}intentions/mergeElseIf", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/branched/ifWhen/ifToWhen", pattern = pattern)
+            model("${idea}intentions/branched/when/flatten", pattern = pattern)
 
             //model("${idea}intentions/loopToCallChain", pattern = pattern, isIgnored = true)
             //model("${idea}intentions/loopToCallChain/forEach", pattern = pattern, isIgnored = true)
@@ -146,14 +151,13 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/anonymousFunctionToLambda", pattern = pattern, isIgnored = true)
             model("${idea}intentions/copyConcatenatedStringToClipboard", pattern = pattern, isIgnored = true)
             model("${idea}intentions/inlayHints", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertToScope", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertToScope", pattern = pattern)
             model("${idea}intentions/implementAbstractMember", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceSizeZeroCheckWithIsEmpty", pattern = pattern, isIgnored = true)
             model("${idea}intentions/movePropertyToClassBody", pattern = pattern, isIgnored = true)
             model("${idea}intentions/indentRawString", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceAddWithPlusAssign", pattern = pattern, isIgnored = true)
             model("${idea}intentions/reconstructTypeInCastOrIs", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/removeLabeledReturnInLambda", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertParameterToReceiver", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertCollectionConstructorToFunction", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceMapGetOrDefault", pattern = pattern, isIgnored = true)
@@ -163,7 +167,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/moveToCompanion", pattern = pattern, isIgnored = true)
             model("${idea}intentions/destructuringInLambda", pattern = pattern, isIgnored = true)
             model("${idea}intentions/addThrowsAnnotation", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/replaceItWithExplicitFunctionLiteralParam", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/replaceItWithExplicitFunctionLiteralParam", pattern = pattern)
             model("${idea}intentions/iterationOverMap", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertPropertyToFunction", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertReceiverToParameter", pattern = pattern, isIgnored = true)
@@ -173,7 +177,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertBlockCommentToLineComment", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeSingleExpressionStringTemplate", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertLambdaToMultiLine", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertLambdaToReference", pattern = pattern, isIgnored = true)
             model("${idea}intentions/introduceVariable", pattern = pattern, isIgnored = true)
         }
 
@@ -182,7 +185,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
         }
     }
 
-    testGroup("code-insight/intentions-shared/tests/k2", testDataPath = "../testData") {
+    testGroup("code-insight/intentions-shared/tests/k2", category = INTENTIONS, testDataPath = "../testData") {
         testClass<AbstractSharedK2IntentionTest> {
             model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -15,25 +15,21 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public final class BoxingBoxedValueInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls
-  static final Map<String, String> boxedPrimitiveMap =
-    new HashMap<>(8);
-
-  static {
-    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_INTEGER, "int");
-    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_SHORT, "short");
-    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
-    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_LONG, "long");
-    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_BYTE, "byte");
-    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_FLOAT, "float");
-    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_DOUBLE, "double");
-    boxedPrimitiveMap.put(CommonClassNames.JAVA_LANG_CHARACTER, "char");
-  }
+  static final Map<String, String> boxedPrimitiveMap = Map.of(
+    CommonClassNames.JAVA_LANG_INTEGER, "int",
+    CommonClassNames.JAVA_LANG_SHORT, "short",
+    CommonClassNames.JAVA_LANG_BOOLEAN, "boolean",
+    CommonClassNames.JAVA_LANG_LONG, "long",
+    CommonClassNames.JAVA_LANG_BYTE, "byte",
+    CommonClassNames.JAVA_LANG_FLOAT, "float",
+    CommonClassNames.JAVA_LANG_DOUBLE, "double",
+    CommonClassNames.JAVA_LANG_CHARACTER, "char"
+  );
 
   @Override
   public boolean isEnabledByDefault() {
@@ -139,8 +135,7 @@ public final class BoxingBoxedValueInspection extends BaseInspection implements 
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      @NonNls
-      final String referenceName = methodExpression.getReferenceName();
+      @NonNls final String referenceName = methodExpression.getReferenceName();
       if (!"valueOf".equals(referenceName)) {
         return;
       }

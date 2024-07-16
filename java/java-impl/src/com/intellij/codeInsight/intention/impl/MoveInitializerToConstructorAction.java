@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -15,8 +15,7 @@ import java.util.*;
 
 public final class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return JavaBundle.message("intention.move.initializer.to.constructor");
   }
 
@@ -40,15 +39,13 @@ public final class MoveInitializerToConstructorAction extends BaseMoveInitialize
     return true;
   }
 
-  @NotNull
   @Override
-  protected Collection<String> getUnsuitableModifiers() {
+  protected @NotNull Collection<String> getUnsuitableModifiers() {
     return Collections.singletonList(PsiModifier.STATIC);
   }
 
-  @NotNull
   @Override
-  protected Collection<PsiMethod> getOrCreateMethods(@NotNull PsiClass aClass) {
+  protected @NotNull Collection<PsiMethod> getOrCreateMethods(@NotNull PsiClass aClass) {
     final Collection<PsiMethod> constructors = Arrays.asList(aClass.getConstructors());
     if (constructors.isEmpty()) {
       return createConstructor(aClass);
@@ -57,15 +54,13 @@ public final class MoveInitializerToConstructorAction extends BaseMoveInitialize
     return removeChainedConstructors(constructors);
   }
 
-  @NotNull
-  private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<? extends PsiMethod> constructors) {
+  private static @NotNull Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<? extends PsiMethod> constructors) {
     final List<PsiMethod> result = new ArrayList<>(constructors);
     result.removeIf(constructor -> !JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
     return result;
   }
 
-  @NotNull
-  private static Collection<PsiMethod> createConstructor(@NotNull PsiClass aClass) {
+  private static @NotNull Collection<PsiMethod> createConstructor(@NotNull PsiClass aClass) {
     AddDefaultConstructorFix.addDefaultConstructor(aClass);
     return Arrays.asList(aClass.getConstructors());
   }

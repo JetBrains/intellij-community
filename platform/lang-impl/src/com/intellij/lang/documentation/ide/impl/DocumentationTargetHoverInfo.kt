@@ -45,7 +45,7 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
     }
     if (!LightEdit.owns(project)) {
       val preview = withContext(Dispatchers.EDT) {
-        DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(requests.first())
+        DocumentationToolWindowManager.getInstance(project).updateVisibleAutoUpdatingTab(requests.first())
       }
       if (preview) {
         return@runBlockingCancellable null

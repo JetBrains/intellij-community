@@ -16,6 +16,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.PathStringDescriptor;
 import org.jetbrains.jps.javac.Iterators;
@@ -53,6 +54,9 @@ public class Mappings {
   private final boolean myIsDelta;
   private boolean myIsDifferentiated = false;
   private boolean myIsRebuild = false;
+  private long myTotalDifferentiateTime;
+  private long myTotalIntegrateTime;
+
 
   private final IntSet myChangedClasses;
   private final Set<File> myChangedFiles;
@@ -2364,6 +2368,8 @@ public class Mappings {
           return true;
         }
 
+        long start = System.currentTimeMillis();
+
         debug("Begin of Differentiate:");
         debug("Easy mode: ", myEasyMode);
 
@@ -2470,6 +2476,7 @@ public class Mappings {
             // some of them may not have been compiled in this round, so such files should be considered unchanged
             myDelta.myChangedFiles.retainAll(myFilesToCompile);
           }
+          myTotalDifferentiateTime += (System.currentTimeMillis() - start);
         }
       }
     }
@@ -2654,6 +2661,7 @@ public class Mappings {
 
   public void integrate(final Mappings delta) {
     synchronized (myLock) {
+      long start = System.currentTimeMillis();
       try {
         assert (delta.isDifferentiated());
 
@@ -2840,6 +2848,7 @@ public class Mappings {
       }
       finally {
         delta.close();
+        myTotalIntegrateTime += (System.currentTimeMillis() - start);
       }
     }
   }
@@ -3010,6 +3019,9 @@ public class Mappings {
           }
           myContext = null;
         }
+
+        LOG.info("Mappings total differentiate linear time " + Utils.formatDuration(myTotalDifferentiateTime));
+        LOG.info("Mappings total integrate     linear time " + Utils.formatDuration(myTotalIntegrateTime));
       }
     }
     if (error != null) {

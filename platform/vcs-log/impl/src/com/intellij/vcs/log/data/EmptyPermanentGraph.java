@@ -24,7 +24,7 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
   }
 
   @Override
-  public @NotNull VisibleGraph<Integer> createVisibleGraph(@NotNull SortType sortType,
+  public @NotNull VisibleGraph<Integer> createVisibleGraph(@NotNull Options options,
                                                            @Nullable Set<? extends Integer> headsOfVisibleBranches,
                                                            @Nullable Set<? extends Integer> filter) {
     return EmptyVisibleGraph.getInstance();

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentEntry
@@ -15,6 +14,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import java.nio.file.Path
 
 class KotlinJvmLightProjectDescriptor(
@@ -31,7 +31,7 @@ class KotlinJvmLightProjectDescriptor(
     }
 
     override fun getModuleTypeId(): String {
-        return ModuleTypeId.JAVA_MODULE
+        return JAVA_MODULE_ENTITY_TYPE_ID_NAME
     }
 
     override fun getSdk(): Sdk {

@@ -15,7 +15,7 @@ import com.intellij.util.containers.toArray
 import com.intellij.util.io.URLUtil
 import java.util.*
 
-class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDirectories: List<JarDirectoryDescription>) {
+internal class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDirectories: List<JarDirectoryDescription>) {
   private val virtualFilePointersList = mutableSetOf<VirtualFilePointer>()
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
 
@@ -111,4 +111,4 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDi
   }
 }
 
-data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)
+internal data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)

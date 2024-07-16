@@ -12,7 +12,7 @@ import com.intellij.util.asSafely
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
+import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -74,7 +74,7 @@ object WorkspaceFileSetRecognizer {
    * which may be due to uninstalling corresponding plugin
    */
   fun getRootTypeForSourceRoot(fileSet: WorkspaceFileSet): JpsModuleSourceRootType<out JpsElement>? {
-    return ((fileSet as? WorkspaceFileSetImpl)?.data as? ModuleSourceRootData)?.rootType?.let { rootType ->
+    return ((fileSet as? WorkspaceFileSetImpl)?.data as? ModuleSourceRootData)?.rootTypeId?.let { rootType ->
       SourceRootTypeRegistry.getInstance().findTypeById(rootType)
     }
   }

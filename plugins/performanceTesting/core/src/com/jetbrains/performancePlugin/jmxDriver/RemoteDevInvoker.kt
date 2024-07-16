@@ -1,20 +1,38 @@
 package com.jetbrains.performancePlugin.jmxDriver
 
+import com.intellij.driver.client.Driver
+import com.intellij.driver.client.impl.DriverImpl
 import com.intellij.driver.client.impl.Invoker
-import com.intellij.driver.client.impl.JmxCallHandler
 import com.intellij.driver.client.impl.JmxHost
 import com.intellij.driver.impl.InvokerMBean
 import com.intellij.driver.model.ProductVersion
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.transport.Ref
 import com.intellij.driver.model.transport.RemoteCall
 import com.intellij.driver.model.transport.RemoteCallResult
-import kotlin.jvm.java
 
 
-interface RemoteDevInvokerMBean : InvokerMBean
+interface RemoteDevInvokerMBean : InvokerMBean {
+  val driver: Driver
+}
 
 internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJmxAddress: String) : RemoteDevInvokerMBean {
-  private val remoteInvoker = JmxCallHandler.jmx(Invoker::class.java, JmxHost(null, null, remoteJmxAddress))
+
+  override val driver: DriverImpl
+
+  init {
+    val originalClassLoader = Thread.currentThread().getContextClassLoader()
+    try {
+      Thread.currentThread().setContextClassLoader(this::class.java.getClassLoader())
+      driver = Driver.create(JmxHost(null, null, remoteJmxAddress)) as DriverImpl
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(originalClassLoader)
+    }
+  }
+
+  private val remoteInvoker: Invoker
+    get() = driver.getInvoker()
 
   override fun getProductVersion(): ProductVersion {
     return localInvoker.productVersion
@@ -29,13 +47,21 @@ internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJm
   }
 
   override fun invoke(call: RemoteCall): RemoteCallResult {
-
-    try {
-      return localInvoker.invoke(call)
+    when (call.rdTarget) {
+      RdTarget.FRONTEND -> return localInvoker.invoke(call)
+      RdTarget.BACKEND -> return invokeRemote(call)
+      RdTarget.DEFAULT -> throw IllegalArgumentException("RdTarget should be resolved on the caller side")
     }
-    // replace with ReferenceNotFoundException later
-    catch (e: Throwable) {
+  }
+
+  private fun invokeRemote(call: RemoteCall): RemoteCallResult {
+    val originalClassLoader = Thread.currentThread().getContextClassLoader()
+    try {
+      Thread.currentThread().setContextClassLoader(this::class.java.getClassLoader())
       return remoteInvoker.invoke(call)
+    }
+    finally {
+      Thread.currentThread().setContextClassLoader(originalClassLoader)
     }
   }
 
@@ -54,7 +80,7 @@ internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJm
     remoteInvoker.cleanup(sessionId)
   }
 
-  override fun takeScreenshot(outFolder: String?) {
+  override fun takeScreenshot(outFolder: String?): String? {
     return localInvoker.takeScreenshot(outFolder)
   }
 

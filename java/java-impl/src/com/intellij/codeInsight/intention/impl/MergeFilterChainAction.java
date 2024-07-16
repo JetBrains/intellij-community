@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -18,6 +17,7 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +38,7 @@ public final class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiI
     return Presentation.of(JavaBundle.message("intention.merge.filter.text"));
   }
 
-  @Nullable
-  private static PsiMethodCallExpression getFilterToMerge(PsiMethodCallExpression methodCallExpression) {
+  private static @Nullable PsiMethodCallExpression getFilterToMerge(PsiMethodCallExpression methodCallExpression) {
     final PsiMethodCallExpression prevCall = MethodCallUtils.getQualifierMethodCall(methodCallExpression);
     if (prevCall != null && isFilterCall(prevCall)) {
       return prevCall;
@@ -72,13 +71,11 @@ public final class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiI
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.merge.filter.family");
   }
 
-  @Nullable
-  private static PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
+  private static @Nullable PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
     PsiExpression[] expressions = call.getArgumentList().getExpressions();
     if(expressions.length != 1) return null;
     PsiExpression expression = expressions[0];
@@ -114,11 +111,8 @@ public final class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiI
     if (name != null) {
       final PsiParameter[] sourceLambdaParams = sourceLambda.getParameterList().getParameters();
       if (sourceLambdaParams.length > 0 && !name.equals(sourceLambdaParams[0].getName())) {
-        for (PsiReference reference : ReferencesSearch.search(sourceLambdaParams[0]).findAll()) {
-          final PsiElement referenceElement = reference.getElement();
-          if (referenceElement instanceof PsiReferenceExpression) {
-            ExpressionUtils.bindReferenceTo((PsiReferenceExpression)referenceElement, name);
-          }
+        for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(sourceLambdaParams[0])) {
+          ExpressionUtils.bindReferenceTo(reference, name);
         }
       }
     }

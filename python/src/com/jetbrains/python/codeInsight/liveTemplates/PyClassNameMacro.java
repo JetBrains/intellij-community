@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.template.*;
@@ -15,9 +15,8 @@ public final class PyClassNameMacro extends Macro {
     return "pyClassName";
   }
 
-  @Nullable
   @Override
-  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
+  public @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     PsiElement place = context.getPsiElementAtStartOffset();
     PyClass pyClass = PsiTreeUtil.getParentOfType(place, PyClass.class);
     if (pyClass == null) {

@@ -19,12 +19,13 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       return if (end == -1) "" else path.substring(0, end)
     }
 
-    internal fun toLoadPath(relativePath: String, base: String?): String {
+    fun toLoadPath(relativePath: String, base: String? = null): String {
       return when {
         relativePath[0] == '/' -> relativePath.substring(1)
-        relativePath.startsWith("intellij.") -> relativePath
-        base == null -> "META-INF/$relativePath"
-        else -> "$base/$relativePath"
+        relativePath.startsWith("intellij.")
+        // TODO to be removed after KTIJ-29799
+        || relativePath.startsWith("kotlin.") -> relativePath
+        else -> (base ?: "META-INF") + '/' + relativePath
       }
     }
 
@@ -39,13 +40,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     }
   }
 
-  override fun loadXIncludeReference(
-    readInto: RawPluginDescriptor,
-    readContext: ReadModuleContext,
-    dataLoader: DataLoader,
-    base: String?,
-    relativePath: String,
-  ): Boolean {
+  override fun loadXIncludeReference(readInto: RawPluginDescriptor, readContext: ReadModuleContext, dataLoader: DataLoader, base: String?, relativePath: String): Boolean {
     val path = toLoadPath(relativePath, base)
     try {
       dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
@@ -75,15 +70,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
       if (path.startsWith("META-INF/")) {
         PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
-          readModuleDescriptor(
-            input = it,
-            readContext = readContext,
-            pathResolver = this,
-            dataLoader = dataLoader,
-            includeBase = null,
-            readInto = readInto,
-            locationSource = null,
-          )
+          readModuleDescriptor(input = it, readContext = readContext, pathResolver = this, dataLoader = dataLoader, includeBase = null, readInto = readInto, locationSource = null)
           return true
         }
       }
@@ -94,13 +81,8 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     return false
   }
 
-  override fun resolvePath(
-    readContext: ReadModuleContext,
-    dataLoader: DataLoader,
-    relativePath: String,
-    readInto: RawPluginDescriptor?,
-  ): RawPluginDescriptor? {
-    val path = toLoadPath(relativePath = relativePath, base = null)
+  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
+    val path = toLoadPath(relativePath)
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let {
       return readModuleDescriptor(
         input = it,
@@ -114,14 +96,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     }
 
     val result = readInto ?: RawPluginDescriptor()
-    if (pool != null && findInJarFiles(
-        readInto = result,
-        dataLoader = dataLoader,
-        readContext = readContext,
-        relativePath = path,
-        includeBase = null,
-        pool = pool,
-      )) {
+    if (pool != null && findInJarFiles(readInto = result, dataLoader = dataLoader, readContext = readContext, relativePath = path, includeBase = null, pool = pool)) {
       return result
     }
 
@@ -148,7 +123,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
 
-    return readModuleDescriptor(
+    val descriptor = readModuleDescriptor(
       input = input,
       readContext = readContext,
       pathResolver = this,
@@ -157,6 +132,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       readInto = readInto,
       locationSource = null,
     )
+    return descriptor
   }
 
   private fun findInJarFiles(

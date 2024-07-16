@@ -77,6 +77,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   }
 
   fun findOuterLocals(sourceClassMember: PsiElement, targetClassMember: PsiElement): List<ExternalReference>? {
+    if (sourceClassMember == targetClassMember) return emptyList()
     val outerVariables = mutableListOf<PsiVariable>()
     val canBeExtracted = elements
       .all { element -> ControlFlowUtil.collectOuterLocals(outerVariables, element, sourceClassMember, targetClassMember) }

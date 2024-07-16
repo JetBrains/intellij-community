@@ -33,7 +33,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11_ANNOTATED;
+    return JAVA_21_ANNOTATED;
   }
 
   @Override

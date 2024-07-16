@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_TYPE_KEY;
 
-public class JsonDelegateContributor extends BuilderMethodsContributor {
+public final class JsonDelegateContributor extends BuilderMethodsContributor {
 
   static final String DELEGATE_FQN = "groovy.json.JsonDelegate";
 

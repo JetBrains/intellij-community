@@ -21,26 +21,34 @@ __jetbrains_intellij_encode() {
 __jetbrains_intellij_encode_large() {
   builtin local value="$1"
   if builtin whence od > /dev/null && builtin whence sed > /dev/null && builtin whence tr > /dev/null; then
-    builtin printf "%s" "$value" | od -v -A n -t x1 | sed 's/ *//g' | tr -d '\n'
+    builtin printf "%s" "$value" | builtin command od -v -A n -t x1 | builtin command sed 's/ *//g' | builtin command tr -d '\n'
   else
     __jetbrains_intellij_encode "$value"
   fi
 }
 
 __jetbrains_intellij_is_generator_command() {
-  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* || "$1" == *"__jetbrains_intellij_get_environment"* ]]
+  [[ "$1" == *"__jetbrains_intellij_run_generator"* ]]
+}
+
+__jetbrains_intellij_run_generator() {
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin local request_id="$1"
+  builtin local command="$2"
+  # Can't be joined with an assignment, otherwise we will fail to capture the exit code of eval.
+  builtin local result
+  result="$(eval "$command" 2>&1)"
+  builtin local exit_code=$?
+  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s;exit_code=%s\a' "$request_id" \
+    "$(__jetbrains_intellij_encode_large "$result")" \
+    "$exit_code"
 }
 
 __jetbrains_intellij_get_directory_files() {
-  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
-  builtin local request_id="$1"
-  builtin local result="$(ls -1ap "$2")"
-  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
+  command ls -1ap "$1"
 }
 
 __jetbrains_intellij_get_environment() {
-  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
-  builtin local request_id="$1"
   builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)parameters[(R)*export*]})")"
   builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)reswords})")"
   builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)builtins})")"
@@ -49,28 +57,17 @@ __jetbrains_intellij_get_environment() {
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
 
   builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\", \"aliases\": \"$aliases_mapping\"}"
-  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
+  builtin printf '%s' "$result"
 }
 
 __jetbrains_intellij_escape_json() {
-  sed -e 's/\\/\\\\/g'\
+  builtin command sed -e 's/\\/\\\\/g'\
       -e 's/"/\\"/g'\
       <<< "$1"
 }
 
 __jetbrains_intellij_zshaddhistory() {
 	! __jetbrains_intellij_is_generator_command "$1"
-}
-
-__jetbrains_intellij_prompt_shown() {
-  builtin printf '\e]1341;prompt_shown\a'
-}
-
-__jetbrains_intellij_configure_prompt() {
-  PS1="%{$(__jetbrains_intellij_prompt_shown)%}"
-  # do not show right prompt
-  builtin unset RPS1
-  builtin unset RPROMPT
 }
 
 __jetbrains_intellij_command_preexec() {
@@ -100,17 +97,18 @@ __jetbrains_intellij_command_precmd() {
   __jetbrains_intellij_report_prompt_state
   builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
   builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
-  __jetbrains_intellij_configure_prompt
 }
 
 __jetbrains_intellij_report_prompt_state() {
   builtin local current_directory="$PWD"
+  builtin local user_name="${USER:-}"
+  builtin local user_home="${HOME:-}"
   builtin local git_branch=""
   builtin local virtual_env=""
   builtin local conda_env=""
   if builtin whence git > /dev/null
   then
-    git_branch="$(git symbolic-ref --short HEAD 2> /dev/null || git rev-parse --short HEAD 2> /dev/null)"
+    git_branch="$(builtin command git symbolic-ref --short HEAD 2> /dev/null || builtin command git rev-parse --short HEAD 2> /dev/null)"
   fi
   if [[ -n $VIRTUAL_ENV ]]
   then
@@ -120,11 +118,17 @@ __jetbrains_intellij_report_prompt_state() {
   then
     conda_env="$CONDA_DEFAULT_ENV"
   fi
-  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s\a' \
+  builtin local original_prompt="$(builtin print -rP $PS1 2>/dev/null)"
+  builtin local original_right_prompt="$(builtin print -rP $RPROMPT 2>/dev/null)"
+  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;user_name=%s;user_home=%s;git_branch=%s;virtual_env=%s;conda_env=%s;original_prompt=%s;original_right_prompt=%s\a' \
     "$(__jetbrains_intellij_encode "${current_directory}")" \
+    "$(__jetbrains_intellij_encode "${user_name}")" \
+    "$(__jetbrains_intellij_encode "${user_home}")" \
     "$(__jetbrains_intellij_encode "${git_branch}")" \
     "$(__jetbrains_intellij_encode "${virtual_env}")" \
-    "$(__jetbrains_intellij_encode "${conda_env}")"
+    "$(__jetbrains_intellij_encode "${conda_env}")" \
+    "$(__jetbrains_intellij_encode "${original_prompt}")" \
+    "$(__jetbrains_intellij_encode "${original_right_prompt}")"
 }
 
 __jetbrains_intellij_collect_shell_info() {
@@ -171,16 +175,28 @@ __jetbrains_intellij_collect_shell_info() {
   builtin printf '%s' $content_json
 }
 
-# override clear behaviour to handle it on IDE side and remove the blocks
-clear() {
+# Avoid conflict with user defined alias
+unalias clear 2>/dev/null
+# Override clear behaviour to handle it on IDE side and remove the blocks
+function clear() {
   builtin printf '\e]1341;clear_invoked\a'
 }
+
+# This function will be triggered by a key bindings as ZLE widget.
+function __jetbrains_intellij_report_shell_editor_buffer () {
+  builtin printf '\e]1341;shell_editor_buffer_reported;shell_editor_buffer=%s\a' "$(__jetbrains_intellij_encode "${BUFFER:-}")"
+}
+# `bindkey` is a part of ZLE, therefore all ZLE widgets need to be registered with `zle -N`
+# See https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Zle-Widgets
+zle -N __jetbrains_intellij_report_shell_editor_buffer
+# Remove binding if exists.
+builtin bindkey -r '\eo'
+# Bind [Esc, o] key sequence to report prompt buffer.
+builtin bindkey '\eo' __jetbrains_intellij_report_shell_editor_buffer
 
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
-
-__jetbrains_intellij_configure_prompt
 
 __jetbrains_intellij_report_prompt_state
 

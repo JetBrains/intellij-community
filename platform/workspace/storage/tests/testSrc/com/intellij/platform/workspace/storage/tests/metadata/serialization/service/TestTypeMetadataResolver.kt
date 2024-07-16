@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.tests.metadata.serialization.service
 
 import com.intellij.platform.workspace.storage.EntityTypesResolver
+import com.intellij.platform.workspace.storage.impl.serialization.ModuleId
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
 import com.intellij.platform.workspace.storage.metadata.MetadataHash
 import com.intellij.platform.workspace.storage.metadata.MetadataStorage
@@ -25,8 +26,8 @@ internal class TestTypeMetadataResolver(
   override fun resolveTypeMetadataHashOrNull(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash? =
     typeMetadataResolver.resolveTypeMetadataHashOrNull(metadataStorage, processTypeFqn(typeFqn))
 
-  override fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage =
-    typeMetadataResolver.resolveMetadataStorage(typesResolver, processTypeFqn(typeFqn), pluginId)
+  override fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId, moduleId: ModuleId): MetadataStorage =
+    typeMetadataResolver.resolveMetadataStorage(typesResolver, processTypeFqn(typeFqn), pluginId, moduleId)
 
   private fun processTypeFqn(typeFqn: String): String = if (deserialization) typeFqn.replaceCacheVersion() else typeFqn
 }

@@ -8,6 +8,7 @@ import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
@@ -18,9 +19,7 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsC
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCache
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.jetbrains.python.psi.PyTargetExpression
-
 
 internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement) : DocumentationTarget {
 
@@ -49,6 +48,7 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
     val entityDataApiContent = when (entityKind) {
       HuggingFaceEntityKind.MODEL -> HuggingFaceModelsCache.getBasicData(entityId)
       HuggingFaceEntityKind.DATASET -> HuggingFaceDatasetsCache.getBasicData(entityId)
+      HuggingFaceEntityKind.SPACE -> return@asyncDocumentation DocumentationResult.documentation(PyHuggingFaceBundle.message("python.hugging.face.spaces.documentation.not.supported"))
     }
 
     if (entityDataApiContent == null) return@asyncDocumentation DocumentationResult.documentation(PyHuggingFaceBundle.message("python.hugging.face.could.not.fetch"))
@@ -58,6 +58,7 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
     val pipelineTag = when (entityKind) {
       HuggingFaceEntityKind.MODEL -> HuggingFaceModelsCache.getPipelineTagForEntity(entityId) ?: HuggingFaceConstants.UNDEFINED_PIPELINE_TAG
       HuggingFaceEntityKind.DATASET -> HuggingFaceConstants.DATASET_FAKE_PIPELINE_TAG
+      HuggingFaceEntityKind.SPACE -> HuggingFaceConstants.SPACE_FAKE_PIPELINE_TAG
     }
 
     HuggingFaceCardsUsageCollector.CARD_SHOWN_ON_HOVER.log(pipelineTag)

@@ -14,18 +14,16 @@ import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.namedChildScope
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.dsl.builder.*
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.uiDesigner.core.Spacer
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import java.awt.Dimension
 import javax.swing.DefaultComboBoxModel
@@ -35,7 +33,7 @@ import javax.swing.DefaultComboBoxModel
 internal class KotlinVersionChooserService(
     private val coroutineScope: CoroutineScope
 ) {
-    fun childScope(name: String): CoroutineScope = coroutineScope.namedChildScope(name)
+    fun childScope(name: String): CoroutineScope = coroutineScope.childScope(name)
 }
 
 internal class KotlinVersionChooser(

@@ -6,6 +6,8 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.OptionAction
@@ -18,6 +20,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTIONS
 import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -28,7 +31,6 @@ import com.intellij.util.ui.JBUI.scale
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
-import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.AbstractButton.*
 import javax.swing.JComponent.TOOL_TIP_TEXT_KEY
@@ -292,11 +294,15 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun createPopup(toSelect: Action?, ensureSelection: Boolean): ListPopup {
     val (actionGroup, mapping) = createActionMapping()
-    val dataContext = createActionDataContext()
+    val dataContext = Utils.createAsyncDataContext(createActionDataContext())
     val place = ActionPlaces.getPopupPlace(optionButton.getClientProperty(JBOptionButton.PLACE) as? String)
-    val actionItems = ActionPopupStep.createActionItems(actionGroup, dataContext, false, false, true, true, place, null)
+    val presentationFactory = PresentationFactory()
+    val actionItems = ActionPopupStep.createActionItems(
+      actionGroup, dataContext, place, presentationFactory,
+      ActionPopupOptions.mnemonicsAndDisabled())
     val defaultSelection = if (toSelect != null) Condition<AnAction> { mapping[it] == toSelect } else null
-    return OptionButtonPopup(OptionButtonPopupStep(actionItems, place, defaultSelection), dataContext, toSelect != null || ensureSelection)
+    val step = OptionButtonPopupStep(actionItems, place, defaultSelection, dataContext, presentationFactory)
+    return OptionButtonPopup(step, dataContext, toSelect != null || ensureSelection)
   }
 
   protected open fun createActionDataContext(): DataContext = DataManager.getInstance().getDataContext(optionButton)
@@ -357,8 +363,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   }
 
   inner class OptionButtonPopup(step: ActionPopupStep,
-                                     dataContext: DataContext,
-                                     private val ensureSelection: Boolean)
+                                dataContext: DataContext,
+                                private val ensureSelection: Boolean)
     : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, -1) {
     init {
       list.background = background
@@ -394,10 +400,11 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
   }
 
-  open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>, place: String, private val defaultSelection: Condition<AnAction>?)
-    : ActionPopupStep(actions, null,
-                      Supplier<DataContext> { DataManager.getInstance().getDataContext(optionButton) },
-                      place, true, defaultSelection, false, true, null) {
+  open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>,
+                                         place: String, private val defaultSelection: Condition<AnAction>?,
+                                         dataContext: DataContext, presentationFactory: PresentationFactory)
+    : ActionPopupStep(actions, null, { dataContext }, place, presentationFactory,
+                      ActionPopupOptions.forStep(true, true, false, defaultSelection)) {
     // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
     // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
     override fun getDefaultOptionIndex(): Int = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1

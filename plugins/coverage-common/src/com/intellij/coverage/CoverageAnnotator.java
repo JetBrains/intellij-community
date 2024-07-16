@@ -1,10 +1,12 @@
 package com.intellij.coverage;
 
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,4 +78,10 @@ public interface CoverageAnnotator {
   void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite);
 
   void renewCoverageData(@NotNull CoverageSuitesBundle suite, @NotNull CoverageDataManager dataManager);
+
+  @ApiStatus.Internal
+  @Nullable
+  default ModifiedFilesFilter getModifiedFilesFilter() {
+    return null;
+  }
 }

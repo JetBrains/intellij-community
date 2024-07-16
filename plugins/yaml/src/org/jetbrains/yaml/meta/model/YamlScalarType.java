@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -34,27 +34,23 @@ public abstract class YamlScalarType extends YamlMetaType {
     super(typeName, displayName);
   }
 
-  @Nullable
   @Override
-  public Field findFeatureByName(@NotNull String name) {
+  public @Nullable Field findFeatureByName(@NotNull String name) {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<String> computeMissingFields(@NotNull Set<String> existingFields) {
+  public @NotNull List<String> computeMissingFields(@NotNull Set<String> existingFields) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
+  public @NotNull List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return PlatformIcons.PROPERTY_ICON;
   }
 

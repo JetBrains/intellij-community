@@ -19,29 +19,13 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
   private final FilePatternSetImpl patterns;
   private @NotNull List<DefaultExternalFilter> filters;
 
-  private boolean inheritedCompilerOutput;
+  private boolean isCompilerOutputInherited;
 
   public DefaultExternalSourceDirectorySet() {
     srcDirs = new HashSet<>(0);
     filters = new ArrayList<>(0);
     gradleOutputDirs = new ArrayList<>(0);
     patterns = new FilePatternSetImpl();
-  }
-
-  public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
-    name = sourceDirectorySet.getName();
-    srcDirs = new HashSet<>(sourceDirectorySet.getSrcDirs());
-    outputDir = sourceDirectorySet.getOutputDir();
-    gradleOutputDirs = new ArrayList<>(sourceDirectorySet.getGradleOutputDirs());
-
-    patterns = new FilePatternSetImpl(sourceDirectorySet.getIncludes(),
-                                      sourceDirectorySet.getExcludes());
-
-    filters = new ArrayList<>(sourceDirectorySet.getFilters().size());
-    for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
-      filters.add(new DefaultExternalFilter(filter));
-    }
-    inheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited();
   }
 
   @NotNull
@@ -86,7 +70,11 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
 
   @Override
   public boolean isCompilerOutputPathInherited() {
-    return inheritedCompilerOutput;
+    return isCompilerOutputInherited;
+  }
+
+  public void setCompilerOutputPathInherited(boolean isCompilerOutputInherited) {
+    this.isCompilerOutputInherited = isCompilerOutputInherited;
   }
 
   @NotNull
@@ -115,13 +103,14 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     return patterns;
   }
 
-  public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
-    this.inheritedCompilerOutput = inheritedCompilerOutput;
+  public void setPatterns(@NotNull FilePatternSet patterns) {
+    this.patterns.setIncludes(patterns.getIncludes());
+    this.patterns.setExcludes(patterns.getExcludes());
   }
 
   @NotNull
   @Override
-  public List<? extends ExternalFilter> getFilters() {
+  public List<DefaultExternalFilter> getFilters() {
     return filters;
   }
 

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -35,8 +33,7 @@ public class Field {
   private boolean myIsRequired;
   private boolean myEditable = true;
   private boolean myDeprecated = false;
-  @Nullable
-  private Pattern myNamePattern;
+  private @Nullable Pattern myNamePattern;
   private boolean myEmptyValueAllowed;
   private boolean myIsMany;
   private Relation myOverriddenDefaultRelation;
@@ -74,8 +71,7 @@ public class Field {
     myMetaTypeSupplier = supplier;
   }
 
-  @NotNull
-  public Field withDefaultRelation(@NotNull Relation relation) {
+  public @NotNull Field withDefaultRelation(@NotNull Relation relation) {
     myOverriddenDefaultRelation = relation;
     return this;
   }
@@ -85,13 +81,11 @@ public class Field {
     return this;
   }
 
-  @NotNull
-  public Field withMultiplicityMany() {
+  public @NotNull Field withMultiplicityMany() {
     return withMultiplicityManyNotOne(true);
   }
 
-  @NotNull
-  public Field withMultiplicityManyNotOne(boolean manyNotOne) {
+  public @NotNull Field withMultiplicityManyNotOne(boolean manyNotOne) {
     myIsMany = manyNotOne;
     return this;
   }
@@ -101,14 +95,12 @@ public class Field {
     return myIsMany;
   }
 
-  @NotNull
-  public Field setRequired() {
+  public @NotNull Field setRequired() {
     myIsRequired = true;
     return this;
   }
 
-  @NotNull
-  public Field setDeprecated() {
+  public @NotNull Field setDeprecated() {
     myDeprecated = true;
     return this;
   }
@@ -119,8 +111,7 @@ public class Field {
    * (This is very common for Kubernetes resource files, for example.)
    * Non-editable fields aren't included in completion lists. Also there is an inspection for highlighting such data.
    */
-  @NotNull
-  public Field setNonEditable() {
+  public @NotNull Field setNonEditable() {
     myEditable = false;
     return this;
   }
@@ -156,14 +147,12 @@ public class Field {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public YamlMetaType getType(@NotNull Relation relation) {
+  public @NotNull YamlMetaType getType(@NotNull Relation relation) {
     return myPerRelationTypes.getOrDefault(relation, getMainType());
   }
 
   @Contract(pure = true)
-  @NotNull
-  public YamlMetaType getDefaultType() {
+  public @NotNull YamlMetaType getDefaultType() {
     return getType(getDefaultRelation());
   }
 
@@ -171,8 +160,7 @@ public class Field {
    * Returns the default relation between the field and its value. For most normal fields it can be computed based on type and multiplicity
    * but for polymorphic fields the main relation should be assigned explicitly.
    */
-  @NotNull
-  public Relation getDefaultRelation() {
+  public @NotNull Relation getDefaultRelation() {
     if (myOverriddenDefaultRelation != null) {
       return myOverriddenDefaultRelation;
     }
@@ -182,25 +170,21 @@ public class Field {
     return getMainType() instanceof YamlScalarType ? Relation.SCALAR_VALUE : Relation.OBJECT_CONTENTS;
   }
 
-  @NotNull
-  public Field withEmptyValueAllowed(boolean allow) {
+  public @NotNull Field withEmptyValueAllowed(boolean allow) {
     myEmptyValueAllowed = allow;
     return this;
   }
 
-  @NotNull
-  public final Field withAnyName() {
+  public final @NotNull Field withAnyName() {
     return withAnyName(true);
   }
 
-  @NotNull
-  public Field withAnyName(boolean allowAnyName) {
+  public @NotNull Field withAnyName(boolean allowAnyName) {
     myNamePattern = allowAnyName ? PATTERN_ANYTHING : null;
     return this;
   }
 
-  @NotNull
-  public Field withNamePattern(@NotNull Pattern pattern) {
+  public @NotNull Field withNamePattern(@NotNull Pattern pattern) {
     myNamePattern = pattern.pattern().equals(PATTERN_ANYTHING.pattern()) ? PATTERN_ANYTHING : pattern;
     return this;
   }
@@ -246,9 +230,8 @@ public class Field {
     return result.toString();
   }
 
-  @NotNull
-  public List<LookupElementBuilder> getKeyLookups(@NotNull YamlMetaType ownerClass,
-                                                  @NotNull PsiElement insertedScalar) {
+  public @NotNull List<LookupElementBuilder> getKeyLookups(@NotNull YamlMetaType ownerClass,
+                                                           @NotNull PsiElement insertedScalar) {
     if (isByPattern()) {
       return Collections.emptyList();
     }
@@ -265,8 +248,7 @@ public class Field {
     return Collections.singletonList(lookup);
   }
 
-  @Nullable
-  public PsiReference getReferenceFromKey(@NotNull YAMLKeyValue keyValue) {
+  public @Nullable PsiReference getReferenceFromKey(@NotNull YAMLKeyValue keyValue) {
     return null;
   }
 
@@ -280,13 +262,11 @@ public class Field {
     return relation == getDefaultRelation() || myPerRelationTypes.containsKey(relation);
   }
 
-  @Nullable
-  public Icon getLookupIcon() {
+  public @Nullable Icon getLookupIcon() {
     return myIsMany ? AllIcons.Json.Array : getMainType().getIcon();
   }
 
-  @NotNull
-  public Field resolveToSpecializedField(@NotNull YAMLValue element) {
+  public @NotNull Field resolveToSpecializedField(@NotNull YAMLValue element) {
     if(myMetaTypeSupplier == null)
       return this;
 
@@ -312,13 +292,11 @@ public class Field {
     return result;
   }
 
-  @NotNull
-  protected Field newField(@NotNull YamlMetaType type) {
+  protected @NotNull Field newField(@NotNull YamlMetaType type) {
     return new Field(this.myName, type);
   }
 
-  @NotNull
-  private YamlMetaType getMainType() {
+  private @NotNull YamlMetaType getMainType() {
     if(myMainType != null)
       return myMainType;
 

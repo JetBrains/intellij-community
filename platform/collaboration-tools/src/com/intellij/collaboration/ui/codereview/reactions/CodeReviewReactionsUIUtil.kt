@@ -5,7 +5,6 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.ui.GraphicsUtil
@@ -14,7 +13,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.font.TextLayout
-import java.awt.geom.Point2D
 import javax.swing.Icon
 
 object CodeReviewReactionsUIUtil {
@@ -46,7 +44,6 @@ object CodeReviewReactionsUIUtil {
   const val HORIZONTAL_GAP: Int = 8
 
   const val ICON_SIZE: Int = 20
-  const val EMOJI_FONT_SIZE: Float = 16f
   const val COUNTER_FONT_SIZE: Float = 11f
 
   object Picker {
@@ -75,7 +72,6 @@ object CodeReviewReactionsUIUtil {
 
 /**
  * Similar in principle to [com.intellij.ui.TextIcon], but also always limits the size to [size]
- * and sets font size to [CodeReviewReactionsUIUtil.EMOJI_FONT_SIZE]
  * Uses label font to draw the emoji by default, but will perform font fallback lookup if necessary
  */
 private class UnicodeEmojiIcon(text: String, private val size: Int) : Icon {
@@ -96,15 +92,17 @@ private class UnicodeEmojiIcon(text: String, private val size: Int) : Icon {
       GraphicsUtil.setupAntialiasing(g2d)
 
       g2d.font = paintData.font
-      val frc = g2d.fontMetrics.fontRenderContext
-      val layout = TextLayout(text, g2d.font, frc)
-      val textBounds = layout.bounds
-      val offsetX = (paintData.size - textBounds.width).coerceAtLeast(0.0) / 2
-      val offsetY = (paintData.size - textBounds.height).coerceAtLeast(0.0) / 2
-      val baseline = Point2D.Double(offsetX - textBounds.x, offsetY - textBounds.y)
-
       g2d.color = UIUtil.getLabelForeground()
-      layout.draw(g2d, baseline.x.toFloat(), baseline.y.toFloat())
+
+      val frc = g2d.fontRenderContext
+      val layout = TextLayout(text, g2d.font, frc)
+
+      val baselineX = (paintData.size - layout.visibleAdvance).coerceAtLeast(0f) / 2f
+
+      val height = layout.ascent + layout.descent
+      val baselineY = layout.ascent + (paintData.size - height).coerceAtLeast(0f) / 2f
+
+      layout.draw(g2d, baselineX, baselineY)
     }
     finally {
       g2d.dispose()
@@ -116,8 +114,8 @@ private class UnicodeEmojiIcon(text: String, private val size: Int) : Icon {
 
   private val paintDataCache = ScaleContextCache {
     // we don't use font scale here, bc it's not a text, but icon
-    val fontSize = JBUIScale.scale(CodeReviewReactionsUIUtil.EMOJI_FONT_SIZE)
-    val font = (CodeReviewReactionsUIUtil.EMOJI_FONT ?: UIUtil.getLabelFont()).deriveFont(fontSize)
+    val labelFont = UIUtil.getLabelFont()
+    val font = CodeReviewReactionsUIUtil.EMOJI_FONT?.deriveFont(labelFont.size2D) ?: labelFont
     PaintData(JBUI.scale(size), font)
   }
 

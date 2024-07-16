@@ -27,7 +27,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformations.TRANSFORMATIONS;
 
-public class ChangeToOperatorInspection extends BaseInspection {
+public final class ChangeToOperatorInspection extends BaseInspection {
   public boolean useDoubleNegation = true;
   public boolean shouldChangeCompareToEqualityToEquals = true;
   public boolean withoutAdditionalParentheses = false;

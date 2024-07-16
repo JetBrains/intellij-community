@@ -22,7 +22,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 
-public class NoButtonGroupInspection extends BaseFormInspection {
+public final class NoButtonGroupInspection extends BaseFormInspection {
   private static final Logger LOG = Logger.getInstance(NoButtonGroupInspection.class);
 
   public NoButtonGroupInspection() {

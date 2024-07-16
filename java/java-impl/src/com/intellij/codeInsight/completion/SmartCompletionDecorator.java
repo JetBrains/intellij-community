@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -19,15 +19,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SmartCompletionDecorator extends LookupElementDecorator<LookupElement> {
-  @NotNull private final Collection<? extends ExpectedTypeInfo> myExpectedTypeInfos;
+  private final @NotNull Collection<? extends ExpectedTypeInfo> myExpectedTypeInfos;
 
   SmartCompletionDecorator(LookupElement item, @NotNull Collection<? extends ExpectedTypeInfo> expectedTypeInfos) {
     super(item);
     myExpectedTypeInfos = expectedTypeInfos;
   }
 
-  @Nullable
-  private TailType computeTailType(InsertionContext context) {
+  private @Nullable TailType computeTailType(InsertionContext context) {
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       return TailTypes.noneType();
     }
@@ -143,7 +142,7 @@ public class SmartCompletionDecorator extends LookupElementDecorator<LookupEleme
     return false;
   }
 
-  public static PsiSubstitutor calculateMethodReturnTypeSubstitutor(@NotNull PsiMethod method, @NotNull final PsiType expected) {
+  public static PsiSubstitutor calculateMethodReturnTypeSubstitutor(@NotNull PsiMethod method, final @NotNull PsiType expected) {
     PsiType returnType = method.getReturnType();
     if (returnType == null) return PsiSubstitutor.EMPTY;
 

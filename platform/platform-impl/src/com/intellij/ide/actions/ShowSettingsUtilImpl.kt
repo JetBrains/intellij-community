@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.ui.search.SearchUtil
@@ -62,11 +62,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
       return sequence {
         for (configurable in ConfigurableExtensionPointUtil.getConfigurables(
           if (withIdeSettings) project else currentOrDefaultProject(project),
-          withIdeSettings, checkNonDefaultProject
+          withIdeSettings,
+          checkNonDefaultProject,
         )) {
           yield(configurable)
           if (configurable is Configurable.Composite) {
-            collect((configurable as Configurable.Composite).configurables)
+            collect(configurable.configurables)
           }
         }
       }
@@ -74,17 +75,9 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 
     @JvmStatic
     fun showSettingsDialog(project: Project?, idToSelect: String?, filter: String?) {
-      var group: ConfigurableGroup? = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
-      if (group!!.configurables.isEmpty()) {
-        group = null
-      }
-
-      val configurableToSelect = if (idToSelect == null) {
-        null
-      }
-      else {
-        ConfigurableVisitor.findById(idToSelect, listOf(group))
-      }
+      val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
+        .takeIf { !it.configurables.isEmpty() }
+      val configurableToSelect = if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, listOf(group))
       SettingsDialogFactory.getInstance().create(
         project = currentOrDefaultProject(project),
         groups = listOf(group!!),

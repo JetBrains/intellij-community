@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.vfilefinder
 
@@ -7,10 +7,9 @@ import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import org.jetbrains.kotlin.idea.KotlinModuleFileType
-import org.jetbrains.kotlin.load.kotlin.loadModuleMapping
+import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.ModuleMapping
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.serialization.deserialization.DeserializationConfiguration
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -46,7 +45,14 @@ class KotlinJvmModuleAnnotationsIndex internal constructor() : FileBasedIndexExt
     override fun getIndexer(): DataIndexer<String, List<ClassId>, FileContent> = DataIndexer { inputData ->
         val file = inputData.file
         try {
-            val moduleMapping = ModuleMapping.loadModuleMapping(inputData.content, file.toString(), DeserializationConfiguration.Default) {}
+            val moduleMapping = ModuleMapping.loadModuleMapping(
+                bytes = inputData.content,
+                debugName = file.toString(),
+                skipMetadataVersionCheck = false,
+                isJvmPackageNameSupported = true,
+                metadataVersionFromLanguageVersion = JvmMetadataVersion.INSTANCE,
+            ) {}
+
             if (moduleMapping !== ModuleMapping.EMPTY) {
                 return@DataIndexer mapOf(file.nameWithoutExtension to moduleMapping.moduleData.annotations.map(ClassId::fromString))
             }

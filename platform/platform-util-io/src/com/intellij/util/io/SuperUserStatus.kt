@@ -8,7 +8,9 @@ import com.sun.jna.Structure
 import com.sun.jna.platform.unix.LibC
 import com.sun.jna.platform.win32.*
 import com.sun.jna.ptr.IntByReference
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object SuperUserStatus {
   @JvmStatic
   val isSuperUser: Boolean by lazy {

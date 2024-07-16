@@ -22,7 +22,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public class MavenOrderEnumeratorHandler extends OrderEnumerationHandler {
 
-  public static class FactoryImpl extends OrderEnumerationHandler.Factory {
+  public static final class FactoryImpl extends OrderEnumerationHandler.Factory {
     @Override
     public boolean isApplicable(@NotNull Module module) {
       return MavenUtil.isMavenizedModule(module);

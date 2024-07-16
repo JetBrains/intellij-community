@@ -81,11 +81,12 @@ class TextInlayPresentationEntry(
         graphics.font = font
         graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
         graphics.color = foreground
-        graphics.drawString(text, 0, max(editor.ascent, (rectHeight + metrics.ascent - metrics.descent) / 2) - 1)
+        val baseline = max(editor.ascent, (rectHeight + metrics.ascent - metrics.descent) / 2) - 1
+        graphics.drawString(text, 0, baseline)
         val effectColor = attributes.effectColor ?: foreground
         if (isDisabled) {
           graphics.color = effectColor
-          EffectPainter.STRIKE_THROUGH.paint(graphics, 0, metrics.fontBaseline + yOffset, width, height, font)
+          EffectPainter.STRIKE_THROUGH.paint(graphics, 0, baseline + yOffset, width, height, font)
         }
       }
     }

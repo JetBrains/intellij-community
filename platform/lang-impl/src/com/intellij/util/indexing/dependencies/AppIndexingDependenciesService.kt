@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependencies
 
 import com.intellij.openapi.Disposable
@@ -11,6 +11,7 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint.Companion.NULL_FINGERPRINT
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.deleteIfExists
 import kotlin.math.max
 
+@Experimental
 @Service(Service.Level.APP)
 class AppIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(storagePath: Path) : Disposable {
   companion object {
@@ -35,6 +37,7 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
         return AppIndexingDependenciesStorage.openOrInit(storagePath)
       }
       catch (e: IOException) {
+        //FIXME [AK/LK]: don't invalidate VFS if something wrong with indexingStamp -- invalidate indexingStamp itself
         requestVfsRebuildDueToError(e)
         storagePath.deleteIfExists()
         throw e
@@ -98,7 +101,7 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
   }
 
   @RequiresBackgroundThread
-  internal fun getCurrent(): AppIndexingDependenciesToken {
+  fun getCurrent(): AppIndexingDependenciesToken {
     val fingerprint = application.service<IndexingDependenciesFingerprint>().getFingerprint()
     if (latestFingerprint.get() == NULL_FINGERPRINT) {
       latestFingerprint.compareAndSet(NULL_FINGERPRINT, storage.readAppFingerprint())

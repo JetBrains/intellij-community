@@ -22,6 +22,8 @@
     <extensionPoint name="xdebugger.dialog.process.view.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachToProcessViewProvider" dynamic="true"/>
 
     <extensionPoint name="xdebugger.inlineBreakpointsDisabler" interface="com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler" dynamic="true"/>
+
+    <extensionPoint name="xdebugger.textValueVisualizer" interface="com.intellij.xdebugger.ui.TextValueVisualizer" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -78,6 +80,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.XDebugThreadsFramesViewChangeCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.ui.visualizedtext.TextVisualizerStatisticsCollector"/>
 
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
                          id="smart-step-into-up"/>
@@ -125,6 +128,12 @@
                         serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
 
     <gutterMarkPreprocessor implementation="com.intellij.xdebugger.impl.breakpoints.XBreakpointBase$BreakpointGutterIconMerge"/>
+
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.HtmlTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.XmlTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JsonTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.JWTTextVisualizer"/>
+    <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
   </extensions>
 
   <actions>
@@ -190,4 +199,9 @@
     <group id="XDebugger.RunToCursorInlayExtraActions">
     </group>
   </actions>
+
+  <projectListeners>
+    <listener class="com.intellij.xdebugger.impl.breakpoints.BreakpointVariantPriorityTracker"
+              topic="com.intellij.xdebugger.breakpoints.XBreakpointListener"/>
+  </projectListeners>
 </idea-plugin>

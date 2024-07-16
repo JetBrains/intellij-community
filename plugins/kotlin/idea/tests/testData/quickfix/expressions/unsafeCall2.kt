@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (a!!) call" "true"
 fun foo(a: Int?) {
     a<caret>.plus(1)
 }

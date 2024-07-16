@@ -23,6 +23,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
@@ -77,6 +78,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     String newFilePath = root.getPresentableUrl() + File.separatorChar + "New.java";
     FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject); // wait for indexes after VFS refresh
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -172,6 +174,7 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     LOG.assertTrue(new File(newFilePath).getParentFile().mkdir());
     FileUtil.writeToFile(new File(newFilePath), "class A{ Object o;}".getBytes(StandardCharsets.UTF_8));
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(newFilePath.replace(File.separatorChar, '/'));
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject); // wait for indexes after VFS refresh
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 

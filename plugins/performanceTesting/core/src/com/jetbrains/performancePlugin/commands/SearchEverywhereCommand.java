@@ -57,6 +57,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
     getArgs();
   }
 
+  private Boolean isWarmupMode() {
+    return extractCommandArgument(CMD_PREFIX).contains("WARMUP");
+  }
+
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
   @Override
   protected @NotNull Promise<Object> _execute(final @NotNull PlaybackContext context) {
@@ -66,6 +70,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
     String[] args = getArgs();
     final String tab = myOptions.tab;
     final String insertText = args.length > 1 ? args[1] : "";
+
+    boolean warmup = isWarmupMode();
 
     Ref<String> tabId = new Ref<>();
     switch (tab) {
@@ -80,42 +86,47 @@ public class SearchEverywhereCommand extends AbstractCommand {
     LOG.info(tabId.get());
 
     int numberOfPermits;
-    if(insertText.isEmpty() && myOptions.typingText.isEmpty()){
+    if (insertText.isEmpty() && myOptions.typingText.isEmpty()) {
       numberOfPermits = 1; //we don't wait for any text insertion
-    } else if(!insertText.isEmpty() && !myOptions.typingText.isEmpty()){
+    }
+    else if (!insertText.isEmpty() && !myOptions.typingText.isEmpty()) {
       numberOfPermits = -1; //we wait till both operations are finished
-    } else {
+    }
+    else {
       numberOfPermits = 0; //we wait till one operation is finished
     }
     Semaphore typingSemaphore = new Semaphore(numberOfPermits);
-    TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere", globalSpan -> {
+    TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere", globalSpan -> {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
           TypingTarget target = findTarget(context);
           Component component;
-          if(!(target instanceof EditorComponentImpl)){
+          if (!(target instanceof EditorComponentImpl)) {
             LOG.info("Editor is not opened, focus owner will be used.");
             component = IdeFocusManager.getInstance(project).getFocusOwner();
-          } else{
-            component =  (EditorComponentImpl) target;
+          }
+          else {
+            component = (EditorComponentImpl)target;
           }
           DataContext dataContext = DataManager.getInstance().getDataContext(component);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-          TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", dialogSpan -> {
+          TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere_dialog_shown", dialogSpan -> {
             var manager = SearchEverywhereManager.getInstance(project);
-            manager.show(tabId.get(), "", new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(), 0) {
-              @Override
-              public Project getProject() {
-                return context.getProject();
-              }
-            });
+            manager.show(tabId.get(), "",
+                         new AnActionEvent(null, dataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(),
+                                           0) {
+                           @Override
+                           public Project getProject() {
+                             return context.getProject();
+                           }
+                         });
             attachSearchListeners(manager.getCurrentlyShownUI());
           });
           if (!insertText.isEmpty()) {
-            insertText(context.getProject(), insertText, typingSemaphore);
+            insertText(context.getProject(), insertText, typingSemaphore, warmup);
           }
           if (!myOptions.typingText.isEmpty()) {
-            typeText(context.getProject(), myOptions.typingText, typingSemaphore);
+            typeText(context.getProject(), myOptions.typingText, typingSemaphore, warmup);
           }
         }
         catch (Exception e) {
@@ -159,11 +170,11 @@ public class SearchEverywhereCommand extends AbstractCommand {
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
-  private static void insertText(Project project, String insertText, Semaphore typingSemaphore) {
+  private void insertText(Project project, String insertText, Semaphore typingSemaphore, boolean warmup) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
-    Span insertSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan();
-    Span firstBatchAddedSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_first_elements_added").startSpan();
-    ui.addSearchListener(new SearchAdapter(){
+    Span insertSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan();
+    Span firstBatchAddedSpan = PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan();
+    ui.addSearchListener(new SearchAdapter() {
       @Override
       public void elementsAdded(@NotNull List<? extends SearchEverywhereFoundElementInfo> list) {
         super.elementsAdded(list);
@@ -184,7 +195,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
-  private static void typeText(Project project, String typingText, Semaphore typingSemaphore) {
+  private void typeText(Project project, String typingText, Semaphore typingSemaphore, boolean warmup) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Document document = ui.getSearchField().getDocument();
     Semaphore oneLetterLock = new Semaphore(1);
@@ -203,8 +214,10 @@ public class SearchEverywhereCommand extends AbstractCommand {
       public void searchFinished(@NotNull List<Object> items) {
         super.searchFinished(items);
         oneLetterLock.release();
-        oneLetterSpan.get().setAttribute("number", items.size());
-        oneLetterSpan.get().end();
+        if (!oneLetterSpan.isNull()) {
+          oneLetterSpan.get().setAttribute("number", items.size());
+          oneLetterSpan.get().end();
+        }
         if (isTypingFinished.get()) {
           typingSemaphore.release();
           typing.shutdown();
@@ -224,9 +237,9 @@ public class SearchEverywhereCommand extends AbstractCommand {
           try {
             char currentChar = typingText.charAt(index);
             oneLetterSpan.set(
-              PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan()
+              PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_items_loaded").startSpan()
                 .setAttribute("text", String.valueOf(currentChar)));
-            firstBatchAddedSpan.set(PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_first_elements_added").startSpan());
+            firstBatchAddedSpan.set(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_first_elements_added").startSpan());
             document.insertString(document.getLength(), String.valueOf(currentChar), null);
             if (index == typingText.length() - 1) {
               isTypingFinished.set(true);
@@ -240,7 +253,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     }
   }
 
-  protected void attachSearchListeners(@NotNull SearchEverywhereUI ui){}
+  protected void attachSearchListeners(@NotNull SearchEverywhereUI ui) { }
 
   static class Options {
     @Argument

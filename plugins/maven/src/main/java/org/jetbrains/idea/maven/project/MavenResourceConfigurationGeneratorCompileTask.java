@@ -54,7 +54,7 @@ import static org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX;
 import static org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX;
 
 @ApiStatus.Internal
-public class MavenResourceConfigurationGeneratorCompileTask implements CompileTask {
+public final class MavenResourceConfigurationGeneratorCompileTask implements CompileTask {
 
   private static final Logger LOG = Logger.getInstance(MavenResourceConfigurationGeneratorCompileTask.class);
 

@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class RenameGroovyScriptProcessor extends RenamePsiFileProcessor {
+public final class RenameGroovyScriptProcessor extends RenamePsiFileProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof GroovyFile && ((GroovyFile)element).isScript() && GroovyScriptUtil.isPlainGroovyScript((GroovyFile)element);

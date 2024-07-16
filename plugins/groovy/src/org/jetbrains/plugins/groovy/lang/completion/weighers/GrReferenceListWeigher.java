@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-public class GrReferenceListWeigher extends ReferenceListWeigher {
+public final class GrReferenceListWeigher extends ReferenceListWeigher {
   private static final PsiElementPattern.Capture<PsiElement> INSIDE_REFERENCE_LIST =
     PlatformPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrReferenceList.class);
 

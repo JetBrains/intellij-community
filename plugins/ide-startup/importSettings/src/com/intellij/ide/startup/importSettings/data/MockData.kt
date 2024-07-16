@@ -2,10 +2,10 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IProperty
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.threading.coroutines.launch
@@ -200,7 +200,7 @@ class TestJbService private constructor(): JbService {
     private val map = mutableMapOf<String, List<Icon>>()
 
     fun getProductIcon(itemId: String, size: IconProductSize): Icon {
-      val icons = map.getOrPut(itemId, { list.get(Random.nextInt(list.size - 1)) })
+      val icons = map.getOrPut(itemId) { list[Random.nextInt(list.size - 1)] }
 
       return when (size) {
         IconProductSize.SMALL -> icons.get(0)
@@ -250,18 +250,32 @@ class TestJbService private constructor(): JbService {
 }
 
 class TestExternalService : ExternalService {
-  companion object {
-    private val LOG = logger<TestExternalService>()
+  companion object{
+    private val service = TestExternalService()
+    fun getInstance() = service
   }
 
   override suspend fun hasDataToImport() = true
 
   override fun warmUp(scope: CoroutineScope) {}
 
+  override val productServices: List<ExternalProductService> = listOf(TestExternalProductService())
+}
+
+class TestExternalProductService : ExternalProductService {
+
+  companion object {
+    private val LOG = logger<TestExternalService>()
+  }
+
+  override val productId: TransferableIdeId
+    get() = TransferableIdeId.VSCode
+  override val productTitle: String
+    get() = ""
+
   override fun products(): List<Product> {
     return listOf(TestJbService.main2)
   }
-
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return TestJbService.getProductIcon(itemId, size)
@@ -280,7 +294,19 @@ class TestExternalService : ExternalService {
 class TestSyncService : SyncService {
   companion object {
     private val LOG = logger<TestSyncService>()
+    private val service = TestSyncService()
+    fun getInstance() = service
   }
+
+  enum class TestState {
+    EMPTY,
+    NOT_EMPTY
+  }
+
+  var mainProductState = TestState.EMPTY
+  var freshProductState = TestState.EMPTY
+  var oldProductState = TestState.EMPTY
+
 
   override suspend fun hasDataToImport() = true
   override suspend fun warmUp() {
@@ -288,14 +314,13 @@ class TestSyncService : SyncService {
   }
 
   override fun baseProduct(id: String): Boolean {
-    return id == TestJbService.main.id
+    return id == getMainProduct()?.id
   }
 
-  override val syncState: IProperty<SyncService.SYNC_STATE> = Property(SyncService.SYNC_STATE.LOGGED)
+  override val syncState: Property<SyncService.SYNC_STATE> = Property(SyncService.SYNC_STATE.UNLOGGED)
 
-  override fun tryToLogin(): String? {
+  override fun tryToLogin() {
     LOG.info("${IMPORT_SERVICE} tryToLogin")
-    return null
   }
 
   override fun syncSettings(): DialogImportData {
@@ -313,20 +338,25 @@ class TestSyncService : SyncService {
     return TestJbService.importFromProduct
   }
 
-  override fun generalSync() {
-    LOG.info("${IMPORT_SERVICE} generalSync")
-  }
-
-  override fun getMainProduct(): Product {
-    return TestJbService.main
+  override fun getMainProduct(): Product? {
+    return when(mainProductState) {
+      TestState.EMPTY -> null
+      TestState.NOT_EMPTY -> TestJbService.main
+    }
   }
 
   override fun products(): List<Product> {
-    return TestJbService.fresh
+    return when(freshProductState) {
+      TestState.EMPTY -> emptyList()
+      TestState.NOT_EMPTY -> TestJbService.fresh
+    }
   }
 
   override fun getOldProducts(): List<Product> {
-    return TestJbService.old
+    return when(oldProductState) {
+      TestState.EMPTY -> emptyList()
+      TestState.NOT_EMPTY -> TestJbService.old
+    }
   }
 
   override fun importFromCustomFolder(folderPath: Path) {

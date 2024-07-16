@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -30,8 +30,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     myIterator = iterator;
   }
 
-  @NotNull
-  public PsiLocalVariable getIterator() {
+  public @NotNull PsiLocalVariable getIterator() {
     return myIterator;
   }
 
@@ -39,8 +38,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     return isIteratorMethodCall(condition, "hasNext");
   }
 
-  @Nullable
-  public PsiElement findOnlyIteratorRef(PsiExpression parent) {
+  public @Nullable PsiElement findOnlyIteratorRef(PsiExpression parent) {
     PsiElement element = PsiUtil.getVariableCodeBlock(myIterator, null);
     PsiCodeBlock block =
       element instanceof PsiCodeBlock ? (PsiCodeBlock)element : PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
@@ -71,8 +69,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     return var;
   }
 
-  @Nullable
-  public static PsiLocalVariable getDeclaredVariable(PsiStatement statement) {
+  public static @Nullable PsiLocalVariable getDeclaredVariable(PsiStatement statement) {
     if (!(statement instanceof PsiDeclarationStatement declaration)) return null;
     PsiElement[] elements = declaration.getDeclaredElements();
     if (elements.length != 1) return null;
@@ -103,8 +100,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     return new IteratorDeclaration(variable, methodExpression.getQualifierExpression(), isCollection);
   }
 
-  @Nullable
-  private static IteratorDeclaration fromForLoop(PsiForStatement statement) {
+  private static @Nullable IteratorDeclaration fromForLoop(PsiForStatement statement) {
     if (statement.getUpdate() != null) return null;
     PsiStatement initialization = statement.getInitialization();
     IteratorDeclaration declaration = extract(initialization);
@@ -112,8 +108,7 @@ public final class IteratorDeclaration extends IterableTraversal {
     return declaration;
   }
 
-  @Nullable
-  private static IteratorDeclaration fromWhileLoop(PsiWhileStatement statement) {
+  private static @Nullable IteratorDeclaration fromWhileLoop(PsiWhileStatement statement) {
     PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
     if (!(previous instanceof PsiDeclarationStatement)) return null;
     IteratorDeclaration declaration = extract((PsiStatement)previous);

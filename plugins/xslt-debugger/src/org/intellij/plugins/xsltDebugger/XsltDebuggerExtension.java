@@ -254,13 +254,14 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
   private static void addXalan(SimpleJavaParameters parameters, Path xsltDebuggerClassesRoot) {
     if (!Files.isDirectory(xsltDebuggerClassesRoot)) {
       Path rtDir = xsltDebuggerClassesRoot.getParent().resolve("rt");
-      addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.2.jar"));
+      addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.3.jar"));
+      addPathToClasspath(parameters, rtDir.resolve("serializer-2.7.3.jar"));
     }
     else {
       //running from sources
       Path xalanInM2 = Paths.get(SystemProperties.getUserHome(), ".m2", "repository", "xalan");
-      addPathToClasspath(parameters, xalanInM2.resolve("xalan/2.7.2/xalan-2.7.2.jar"));
-      addPathToClasspath(parameters, xalanInM2.resolve("serializer/2.7.2/serializer-2.7.2.jar"));
+      addPathToClasspath(parameters, xalanInM2.resolve("xalan/2.7.3/xalan-2.7.3.jar"));
+      addPathToClasspath(parameters, xalanInM2.resolve("serializer/2.7.3/serializer-2.7.3.jar"));
     }
   }
 

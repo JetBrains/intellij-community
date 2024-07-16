@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.hints.declarative.InlayActionPayload
-import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.InlayHintsSettings
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.Disposable
@@ -13,10 +13,7 @@ import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -27,13 +24,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal class DeclarativeHintsEditorInitializer : TextEditorInitializer {
+private class DeclarativeHintsEditorInitializer : TextEditorInitializer {
   override suspend fun initializeEditor(
     project: Project,
     file: VirtualFile,
@@ -41,24 +37,35 @@ internal class DeclarativeHintsEditorInitializer : TextEditorInitializer {
     editorSupplier: suspend () -> EditorEx,
     highlighterReady: suspend () -> Unit,
   ) {
-    val grave = project.serviceAsync<DeclarativeHintsGrave>()
-    val inlayDataList = grave.raise(file, document) ?: return
-    val psiManager = project.serviceAsync<PsiManager>()
-    val psiFile = readActionBlocking {
-      psiManager.findFile(file)
-    } ?: return
-    val editor = editorSupplier()
-    withContext(Dispatchers.EDT) {
-      DeclarativeInlayHintsPass.applyInlayData(editor, psiFile, inlayDataList)
+    if (isDeclarativeEnabled() && isCacheEnabled()) {
+      val grave = project.serviceAsync<DeclarativeHintsGrave>()
+      val settings = DeclarativeInlayHintsSettings.getInstance()
+      val inlayDataList = grave.raise(file, document)
+      if (inlayDataList.isNullOrEmpty()) {
+        return
+      }
+      val inlayDataMap = readActionBlocking {
+        inlayDataList.filter {
+          settings.isProviderEnabled(it.providerId) ?: true
+        }
+      }.groupBy { it.sourceId }
+      if (inlayDataMap.isEmpty()) {
+        return
+      }
+      val editor = editorSupplier()
+      withContext(Dispatchers.EDT) {
+        inlayDataMap.forEach { (sourceId, inlayDataList) ->
+          DeclarativeInlayHintsPass.applyInlayData(editor, project, inlayDataList, sourceId)
+        }
+        DeclarativeInlayHintsPassFactory.resetModificationStamp(editor)
+      }
     }
   }
 }
 
 @Service(Level.PROJECT)
 internal class DeclarativeHintsGrave(private val project: Project, private val scope: CoroutineScope)
-  : TextEditorCache<DeclarativeHintsState>(project, scope),
-    Disposable {
-
+  : TextEditorCache<DeclarativeHintsState>(project, scope), Disposable {
   override fun namePrefix(): String = "persistent-declarative-hints"
   override fun valueExternalizer(): DeclarativeHintsState.Externalizer = DeclarativeHintsState.Externalizer()
   override fun useHeapCache(): Boolean = true
@@ -68,11 +75,11 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
   }
 
   fun raise(file: VirtualFile, document: Document): List<InlayData>? {
-    if (!isEnabled() || file !is VirtualFileWithId) {
+    if (file !is VirtualFileWithId) {
       return null
     }
-    val state: DeclarativeHintsState? = cache[file.id]
-    if (state == null || state.contentHash != document.contentHash()) {
+    val state = cache.get(file.id)
+    if (state == null || state.contentHash != contentHash(document)) {
       return null
     }
     for (inlayData in state.inlayDataList) {
@@ -83,7 +90,7 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
 
   private fun bury(editor: Editor) {
     val file = editor.virtualFile
-    if (!isEnabled() || editor.editorKind != EditorKind.MAIN_EDITOR || file !is VirtualFileWithId) {
+    if (editor.editorKind != EditorKind.MAIN_EDITOR || file !is VirtualFileWithId) {
       return
     }
     val declarativeHints = editor.getInlayModel().getInlineElementsInRange(
@@ -91,13 +98,9 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
       editor.getDocument().textLength,
       DeclarativeInlayRenderer::class.java
     )
-    if (declarativeHints.isEmpty()) {
-      return
-    }
-    val contentHash = editor.document.contentHash()
-    val inlayDataList = declarativeHints.map { inlay -> inlay.renderer.toInlayData() }.toList()
+    val state = DeclarativeHintsState(contentHash(editor.document), inlayDataList(declarativeHints))
     scope.launch(Dispatchers.IO) {
-      cache[file.id] = DeclarativeHintsState(contentHash, inlayDataList)
+      cache[file.id] = state
     }
   }
 
@@ -108,7 +111,9 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
     EditorFactory.getInstance().addEditorFactoryListener(
       object : EditorFactoryListener {
         override fun editorReleased(event: EditorFactoryEvent) {
-          bury(event.editor)
+          if (isDeclarativeEnabled() && isCacheEnabled()) {
+            bury(event.editor)
+          }
         }
       },
       this
@@ -133,10 +138,27 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
     }
   }
 
-  private fun isEnabled() = Registry.`is`("cache.inlay.hints.on.disk")
+  private fun inlayDataList(declarativeHints: List<Inlay<out DeclarativeInlayRenderer>>): List<InlayData> {
+    val inlayDataList = declarativeHints.map { inlay -> inlay.renderer.toInlayData() }
+    if (isDebugEnabled()) {
+      // transform inlayData -> byteArray -> inlayData to add '?' char at inlay presentation by PresentationTreeExternalizer
+      val state = DeclarativeHintsState(0, inlayDataList).toByteArray()
+      return DeclarativeHintsState.fromByteArray(state).inlayDataList
+    }
+    return inlayDataList
+  }
+
+  private fun isDebugEnabled() = Registry.`is`("cache.markup.debug", false)
 }
 
-class ZombieInlayHintsProvider : InlayHintsProvider {
+private fun isCacheEnabled() = Registry.`is`("cache.inlay.hints.on.disk", true)
+
+private fun isDeclarativeEnabled(): Boolean {
+  val enabledGlobally = InlayHintsSettings.instance().hintsEnabledGlobally()
+  return enabledGlobally && Registry.`is`("inlays.declarative.hints", true)
+}
+
+internal class ZombieInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
     throw UnsupportedOperationException("Zombie provider does not support inlay collecting")
   }

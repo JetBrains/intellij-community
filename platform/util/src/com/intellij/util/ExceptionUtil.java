@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,8 +13,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public final class ExceptionUtil extends ExceptionUtilRt {
+public final class ExceptionUtil {
   private ExceptionUtil() { }
 
   public static @NotNull Throwable getRootCause(@NotNull Throwable e) {
@@ -172,10 +171,10 @@ public final class ExceptionUtil extends ExceptionUtilRt {
    * are added to main exception's 'suppressed' list.
    * <p/>
    * More formally:
-   * If the first exception caught is lof type E -> the first exception is rethrown with
+   * If the first exception caught is of type E -> the first exception is rethrown with
    * the following exceptions, if any, attached as 'suppressed'.
-   * If the first exception caught is of type E -> the example exception is thrown, with
-   * the first and following exceptions attached as 'suppressed'.
+   * If the first exception caught is NOT of type E -> the 'example' exception is created
+   * and thrown, with the first and following exceptions attached as 'suppressed'.
    */
   @SafeVarargs
   public static <E extends Exception>
@@ -227,5 +226,12 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     if (exceptions != null) {
       throw exceptionsCombiner.apply(exceptions);
     }
+  }
+
+  /**
+   * @see ExceptionUtilRt#unwrapException(Throwable, Class)
+   */
+  public static @NotNull Throwable unwrapException(@NotNull Throwable throwable, @NotNull Class<? extends Throwable> classToUnwrap) {
+    return ExceptionUtilRt.unwrapException(throwable, classToUnwrap);
   }
 }

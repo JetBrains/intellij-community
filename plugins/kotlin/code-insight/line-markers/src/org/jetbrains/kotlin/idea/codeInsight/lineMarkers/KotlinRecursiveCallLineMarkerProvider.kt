@@ -9,11 +9,11 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.refactoring.suggested.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtSmartCastedReceiverValue
+import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
@@ -33,17 +33,17 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
             val symbol = target.symbol
             val targetDeclaration = target.symbol.psi as? KtDeclaration ?: return@process
 
-            if (symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED || !targetDeclaration.isAncestor(target.caller)) {
+            if (symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED || !targetDeclaration.isAncestor(target.caller)) {
                 return@process
             }
 
             if (isRecursiveCall(target, targetDeclaration)) {
                 @NlsSafe val declarationName = when (symbol) {
-                    is KtVariableLikeSymbol -> symbol.name.asString()
-                    is KtFunctionSymbol -> symbol.name.asString() + "()"
-                    is KtPropertyGetterSymbol -> "get()"
-                    is KtPropertySetterSymbol -> "set()"
-                    is KtConstructorSymbol -> "constructor()"
+                  is KaVariableSymbol -> symbol.name.asString()
+                    is KaNamedFunctionSymbol -> symbol.name.asString() + "()"
+                    is KaPropertyGetterSymbol -> "get()"
+                    is KaPropertySetterSymbol -> "set()"
+                    is KaConstructorSymbol -> "constructor()"
                     else -> return@process
                 }
 
@@ -53,7 +53,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun isRecursiveCall(target: CallTarget, targetDeclaration: PsiElement): Boolean {
         for (parent in target.caller.parents) {
             when (parent) {
@@ -71,16 +71,16 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         return false
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
 private fun checkDispatchReceiver(target: CallTarget): Boolean {
         var dispatchReceiver = target.partiallyAppliedSymbol.dispatchReceiver ?: return true
-        while (dispatchReceiver is KtSmartCastedReceiverValue) {
+        while (dispatchReceiver is KaSmartCastedReceiverValue) {
             dispatchReceiver = dispatchReceiver.original
         }
 
-        val containingClass = target.symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return true
+        val containingClass = target.symbol.containingDeclaration as? KaClassSymbol ?: return true
 
-        if (dispatchReceiver is KtExplicitReceiverValue) {
+        if (dispatchReceiver is KaExplicitReceiverValue) {
             if (dispatchReceiver.isSafeNavigation) {
                 return false
             }
@@ -88,13 +88,13 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             return when (val expression = KtPsiUtil.deparenthesize(dispatchReceiver.expression)) {
                 is KtThisExpression -> expression.instanceReference.mainReference.resolveToSymbol() == containingClass
                 is KtExpression -> when (val receiverSymbol = expression.mainReference?.resolveToSymbol()) {
-                    is KtFunctionSymbol -> {
+                    is KaNamedFunctionSymbol -> {
                         receiverSymbol.isOperator
                                 && receiverSymbol.name.asString() == "invoke"
                                 && containingClass.classKind.isObject
-                                && receiverSymbol.getContainingSymbol() == containingClass
+                                && receiverSymbol.containingDeclaration == containingClass
                     }
-                    is KtClassOrObjectSymbol -> {
+                    is KaClassSymbol -> {
                         receiverSymbol.classKind.isObject
                                 && receiverSymbol == containingClass
                     }
@@ -104,7 +104,7 @@ private fun checkDispatchReceiver(target: CallTarget): Boolean {
             }
         }
 
-        if (dispatchReceiver is KtImplicitReceiverValue) {
+        if (dispatchReceiver is KaImplicitReceiverValue) {
             return dispatchReceiver.symbol == containingClass
         }
 

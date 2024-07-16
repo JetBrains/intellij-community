@@ -1,4 +1,6 @@
 #  Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+import threading
+
 from _pydevd_bundle.pydevd_constants import RETURN_VALUES_DICT, dict_iter_items, \
     GET_FRAME_NORMAL_GROUP, GET_FRAME_SPECIAL_GROUP
 
@@ -172,19 +174,36 @@ THRIFT_COMMUNICATION_VARS_HANDLER = 1
 
 
 class VarsHandlerContainer:
-    _instance_xml_handler = None
-    _instance_thrift_handler = None
+    instance_xml_handler = None
+    instance_thrift_handler = None
+
+
+_vars_handler_initialization_lock = threading.RLock()
+
+
+def _init_xml_communication_vars_handler(func, handler_type):
+    with _vars_handler_initialization_lock:
+        if VarsHandlerContainer.instance_xml_handler is None:
+            VarsHandlerContainer.instance_xml_handler = \
+                VarsHandler(func, handler_type)
+
+
+def _init_thrift_communication_var_handler(func, handler_type):
+    with _vars_handler_initialization_lock:
+        if VarsHandlerContainer.instance_thrift_handler is None:
+            VarsHandlerContainer.instance_thrift_handler = \
+                VarsHandler(func, handler_type)
 
 
 def get_vars_handler(func, handler_type, group_type):
     if handler_type == XML_COMMUNICATION_VARS_HANDLER:
-        if VarsHandlerContainer._instance_xml_handler is None:
-            VarsHandlerContainer._instance_xml_handler = VarsHandler(func, handler_type)
-        return VarsHandlerContainer._instance_xml_handler.get_instance(group_type)
+        if VarsHandlerContainer.instance_xml_handler is None:
+            _init_xml_communication_vars_handler(func, handler_type)
+        return VarsHandlerContainer.instance_xml_handler.get_instance(group_type)
     elif handler_type == THRIFT_COMMUNICATION_VARS_HANDLER:
-        if VarsHandlerContainer._instance_thrift_handler is None:
-            VarsHandlerContainer._instance_thrift_handler = VarsHandler(func, handler_type)
-        return VarsHandlerContainer._instance_thrift_handler.get_instance(group_type)
+        if VarsHandlerContainer.instance_thrift_handler is None:
+            _init_thrift_communication_var_handler(func, handler_type)
+        return VarsHandlerContainer.instance_thrift_handler.get_instance(group_type)
 
 
 class VarsHandler:
@@ -194,23 +213,26 @@ class VarsHandler:
         self._instance_special = None
         self._instance_return = None
         self.handler_type = handler_type
+        self._lock = threading.RLock()
 
     def get_instance(self, group_type):
-        if group_type == GET_FRAME_NORMAL_GROUP:
-            if self._instance_normal is None:
-                self._init_normal()
-            instance = self._instance_normal
-        elif group_type == GET_FRAME_SPECIAL_GROUP:
-            if self._instance_special is None:
-                self._init_special()
-            instance = self._instance_special
-        else:
-            if self._instance_return is None:
-                self._init_return()
-            instance = self._instance_return
+        with self._lock:
+            if group_type == GET_FRAME_NORMAL_GROUP:
+                if self._instance_normal is None:
+                    self._init_normal()
+                instance = self._instance_normal
+            elif group_type == GET_FRAME_SPECIAL_GROUP:
+                if self._instance_special is None:
+                    self._init_special()
+                instance = self._instance_special
+            else:
+                if self._instance_return is None:
+                    self._init_return()
+                instance = self._instance_return
 
-        instance.update_handlers()
-        return instance
+            instance.update_handlers()
+
+            return instance
 
     def _init_normal(self):
         self._instance_normal = DummyVarHandler(

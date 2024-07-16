@@ -252,7 +252,7 @@ final class UndoableGroup implements Dumpable {
     if (finishMark != null) {
       boolean global = false;
       String commandName = null;
-      LinkedList<UndoableGroup> stack = holder.getStack(finishMark.getAffectedDocument());
+      UndoRedoList<UndoableGroup> stack = holder.getStack(finishMark.getAffectedDocument());
       for (Iterator<UndoableGroup> iterator = stack.descendingIterator(); iterator.hasNext(); ) {
         UndoableGroup group = iterator.next();
         if (group.isGlobal()) {
@@ -365,10 +365,10 @@ final class UndoableGroup implements Dumpable {
     return Math.min(myActions.get(0).getPerformedNanoTime(), myActions.get(myActions.size() - 1).getPerformedNanoTime());
   }
 
-  void invalidateChangeRanges() {
+  void invalidateChangeRanges(SharedAdjustableUndoableActionsHolder adjustableUndoableActionsHolder) {
     for (UndoableAction action : myActions) {
-      if (action instanceof AdjustableUndoableAction) {
-        ((AdjustableUndoableAction)action).invalidateChangeRanges();
+      if (action instanceof AdjustableUndoableAction adjustableAction) {
+        adjustableUndoableActionsHolder.remove(adjustableAction);
       }
     }
   }

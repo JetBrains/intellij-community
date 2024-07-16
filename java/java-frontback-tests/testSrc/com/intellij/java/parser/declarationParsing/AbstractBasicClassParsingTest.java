@@ -139,4 +139,7 @@ public abstract class AbstractBasicClassParsingTest extends AbstractBasicJavaPar
   public void testImplicitClass5() {
     doTest(true);
   }
+  public void testImplicitClassJavaDoc() {
+    doTest(true);
+  }
 }

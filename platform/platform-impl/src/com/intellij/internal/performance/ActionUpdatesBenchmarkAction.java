@@ -169,7 +169,6 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
                                             @NotNull Component component,
                                             @NotNull MyRunner activityRunner) {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
-    boolean isDumb = DumbService.isDumb(project);
     List<Pair<Integer, String>> results = new ArrayList<>();
 
     DataContext rawContext = DataManager.getInstance().getDataContext(component);
@@ -210,7 +209,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     long startActions = System.nanoTime();
     for (Iterator<AnAction> it = actionManager.actions(false).iterator(); it.hasNext(); ) {
       AnAction action = it.next();
-      if (action.getClass() == DefaultActionGroup.class || isDumb && !DumbService.isDumbAware(action)) {
+      if (action.getClass() == DefaultActionGroup.class || !DumbService.getInstance(project).isUsableInCurrentContext(action)) {
         continue;
       }
 

@@ -3,18 +3,28 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager.DEFAULT_EXT
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
+// This annotation is needed only for support of the "export settings" action
+@State(name = "ProjectJdkTable", storages = [Storage(value = JpsGlobalEntitiesSerializers.SDK_FILE_NAME + DEFAULT_EXT)], presentableName = ProjectJdkTableImpl.PresentableNameGetter::class)
 open class ProjectJdkTableImpl: ProjectJdkTable() {
 
   private val delegate: SdkTableImplementationDelegate
@@ -23,13 +33,8 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
 
   init {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
-    if (!GlobalSdkTableBridge.isEnabled()) {
-      componentManager.registerService(SdkTableImplementationDelegate::class.java, LegacyProjectJdkTableDelegate::class.java,
-                                       ComponentManagerImpl.fakeCorePluginDescriptor, false)
-    } else {
-      componentManager.registerService(SdkTableImplementationDelegate::class.java, SdkTableBridgeImpl::class.java,
-                                       ComponentManagerImpl.fakeCorePluginDescriptor, false)
-    }
+    componentManager.registerService(SdkTableImplementationDelegate::class.java, SdkTableBridgeImpl::class.java,
+                                     ComponentManagerImpl.fakeCorePluginDescriptor, false)
     delegate = SdkTableImplementationDelegate.getInstance()
 
     SdkType.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<SdkType> {
@@ -133,8 +138,17 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
   private fun saveSdkAdditionalData(sdk: Sdk): Element? {
     val additionalData = sdk.sdkAdditionalData
     if (additionalData == null) return null
-    val additionalDataElement = Element(LegacyProjectJdkDelegate.ELEMENT_ADDITIONAL)
+    val additionalDataElement = Element(ELEMENT_ADDITIONAL)
     sdk.sdkType.saveAdditionalData(additionalData, additionalDataElement)
     return additionalDataElement
+  }
+
+  internal class PresentableNameGetter : State.NameGetter() {
+    override fun get(): String = ProjectBundle.message("sdk.table.settings")
+  }
+
+  companion object {
+    @NonNls
+    private const val ELEMENT_ADDITIONAL: String = "additional"
   }
 }

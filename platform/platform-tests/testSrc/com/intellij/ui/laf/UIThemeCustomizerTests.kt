@@ -33,7 +33,7 @@ class UIThemeCustomizerTests {
         "icons": {
           "/test/icon.svg": "/test/new-icon.svg",
           "ColorPalette": {
-            "Checkbox.Background.Default": "Grey14"
+            "Checkbox.Background.Default": "Gray14"
           }
         }
       }
@@ -110,7 +110,7 @@ class UIThemeCustomizerTests {
         "icons": {
           "/test/icon.svg": "/test/new-icon.svg",
           "ColorPalette": {
-            "Checkbox.Background.Default": "Grey14"
+            "Checkbox.Background.Default": "Gray14"
           }
         }
       }

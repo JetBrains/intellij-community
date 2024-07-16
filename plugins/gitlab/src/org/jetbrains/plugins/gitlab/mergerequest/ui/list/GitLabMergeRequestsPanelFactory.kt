@@ -4,7 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.list.ReviewListUtil.wrapWithLazyVerticalScroll
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.CompositeShortcutSet
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.PopupHandler
@@ -63,16 +66,8 @@ internal class GitLabMergeRequestsPanelFactory {
                                    listVm: GitLabMergeRequestsListViewModel): CollectionListModel<GitLabMergeRequestDetails> {
     val listModel = CollectionListModel<GitLabMergeRequestDetails>()
     scope.launch {
-      var firstEvent = true
       listVm.listDataFlow.collect {
-        when (it) {
-          is GitLabMergeRequestsListViewModel.ListDataUpdate.NewBatch -> {
-            if (firstEvent) listModel.add(it.newList)
-            else listModel.add(it.batch)
-          }
-          GitLabMergeRequestsListViewModel.ListDataUpdate.Clear -> listModel.removeAll()
-        }
-        firstEvent = false
+        listModel.replaceAll(it)
       }
     }
 

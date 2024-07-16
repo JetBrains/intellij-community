@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +32,7 @@ public final class CompletionElement{
     myEqualityObject = getUniqueId();
   }
 
-  @NotNull
-  public String getQualifierText() {
+  public @NotNull String getQualifierText() {
     return myQualifierText;
   }
 
@@ -46,8 +44,7 @@ public final class CompletionElement{
     return myElement;
   }
 
-  @Nullable
-  private Object getUniqueId(){
+  private @Nullable Object getUniqueId(){
     if(myElement instanceof PsiClass){
       String qName = ((PsiClass)myElement).getQualifiedName();
       return qName == null ? ((PsiClass)myElement).getName() : qName;
@@ -92,9 +89,8 @@ public final class CompletionElement{
     return myEqualityObject != null ? myEqualityObject.hashCode() : 0;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public PsiType getMethodRefType() {
+  public @Nullable PsiType getMethodRefType() {
     return myMethodRefType;
   }
 

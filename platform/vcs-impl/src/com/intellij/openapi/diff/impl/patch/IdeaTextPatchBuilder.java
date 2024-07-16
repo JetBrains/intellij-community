@@ -6,9 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -171,7 +173,7 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() {
+    public @NotNull String getContentAsString() {
       throw new IllegalStateException();
     }
 
@@ -213,8 +215,15 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() throws VcsException {
-      return myRevision.getContent();
+    public @NotNull String getContentAsString() throws VcsException {
+      String content = myRevision.getContent();
+      if (content == null) {
+        VcsRevisionNumber revisionNumber = myRevision.getRevisionNumber();
+        String revisionText = revisionNumber != VcsRevisionNumber.NULL ? revisionNumber.asString() : myRevision.toString();
+        throw new VcsException(VcsBundle.message("patch.failed.to.fetch.old.content.for.file.name.in.revision",
+                                                 myFilePath.getPath(), revisionText));
+      }
+      return content;
     }
 
     @Override
@@ -263,7 +272,7 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() {
+    public @NotNull String getContentAsString() {
       return myContent;
     }
 

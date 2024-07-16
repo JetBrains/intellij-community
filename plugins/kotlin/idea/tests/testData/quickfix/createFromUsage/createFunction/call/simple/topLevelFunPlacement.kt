@@ -1,5 +1,6 @@
 // "Create function 'foo'" "true"
-
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 val baz = 1
 
 fun test() {
@@ -9,6 +10,3 @@ fun test() {
 fun bar() {
 
 }
-
-
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

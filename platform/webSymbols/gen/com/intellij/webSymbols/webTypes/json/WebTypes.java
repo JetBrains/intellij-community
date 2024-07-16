@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 @JsonPropertyOrder({
     "$schema",
     "framework",
+    "required-context",
     "context",
     "name",
     "version",
@@ -42,8 +43,10 @@ public class WebTypes {
     @JsonProperty("framework")
     @JsonPropertyDescription("Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.")
     private String framework;
+    @JsonProperty("required-context")
+    private RequiredContextBase requiredContext;
     @JsonProperty("context")
-    private ContextBase context;
+    private RequiredContextBase context;
     /**
      * Name of the library.
      * (Required)
@@ -131,13 +134,23 @@ public class WebTypes {
         this.framework = framework;
     }
 
+    @JsonProperty("required-context")
+    public RequiredContextBase getRequiredContext() {
+        return requiredContext;
+    }
+
+    @JsonProperty("required-context")
+    public void setRequiredContext(RequiredContextBase requiredContext) {
+        this.requiredContext = requiredContext;
+    }
+
     @JsonProperty("context")
-    public ContextBase getContext() {
+    public RequiredContextBase getContext() {
         return context;
     }
 
     @JsonProperty("context")
-    public void setContext(ContextBase context) {
+    public void setContext(RequiredContextBase context) {
         this.context = context;
     }
 

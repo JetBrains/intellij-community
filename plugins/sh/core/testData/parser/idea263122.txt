@@ -31,59 +31,61 @@ SHELL_SCRIPT
                   SUBSHELL_COMMAND
                     PsiElement(()('(')
                     COMPOUND_LIST
-                      SUBSHELL_COMMAND
-                        PsiElement(()('(')
-                        COMPOUND_LIST
-                          SIMPLE_COMMAND
-                            GENERIC_COMMAND_DIRECTIVE
-                              LITERAL
-                                PsiElement(word)('echo')
-                            PsiWhiteSpace(' ')
-                            STRING
-                              PsiElement(OPEN_QUOTE)('"')
-                              VARIABLE
-                                PsiElement(var)('$actual')
-                              PsiElement(CLOSE_QUOTE)('"')
-                          PsiWhiteSpace(' ')
-                          PsiElement(|)('|')
-                          PsiWhiteSpace(' ')
-                          EVAL_COMMAND
-                            PsiElement(eval)('eval')
-                            PsiWhiteSpace(' ')
-                            STRING
-                              PsiElement(OPEN_QUOTE)('"')
-                              PsiElement(STRING_CONTENT)('awk '{print $')
-                              PsiElement(CLOSE_QUOTE)('"')
-                            SIMPLE_COMMAND_ELEMENT
-                              PsiElement($)('$')
-                              SHELL_PARAMETER_EXPANSION
-                                PsiElement({)('{')
-                                PsiElement(word)('argIndex')
-                                PsiElement(})('}')
-                            STRING
-                              PsiElement(OPEN_QUOTE)('"')
-                              PsiElement(STRING_CONTENT)('}'')
-                              PsiElement(CLOSE_QUOTE)('"')
-                          PsiWhiteSpace(' ')
-                          PsiElement(|)('|')
-                          PsiWhiteSpace(' ')
-                          SIMPLE_COMMAND
-                            GENERIC_COMMAND_DIRECTIVE
-                              LITERAL
-                                PsiElement(word)('grep')
-                            PsiWhiteSpace(' ')
-                            STRING
-                              PsiElement(OPEN_QUOTE)('"')
-                              VARIABLE
-                                PsiElement(var)('$expected')
-                              PsiElement(CLOSE_QUOTE)('"')
-                        PsiElement())(')')
-                      PsiWhiteSpace(' ')
-                      PsiElement(||)('||')
-                      PsiWhiteSpace(' ')
-                      GENERIC_COMMAND_DIRECTIVE
-                        LITERAL
-                          PsiElement(word)('true')
+                      PIPELINE_COMMAND_LIST
+                        SUBSHELL_COMMAND
+                          PsiElement(()('(')
+                          COMPOUND_LIST
+                            PIPELINE_COMMAND_LIST
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('echo')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(OPEN_QUOTE)('"')
+                                  VARIABLE
+                                    PsiElement(var)('$actual')
+                                  PsiElement(CLOSE_QUOTE)('"')
+                              PsiWhiteSpace(' ')
+                              PsiElement(|)('|')
+                              PsiWhiteSpace(' ')
+                              EVAL_COMMAND
+                                PsiElement(eval)('eval')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(OPEN_QUOTE)('"')
+                                  PsiElement(STRING_CONTENT)('awk '{print $')
+                                  PsiElement(CLOSE_QUOTE)('"')
+                                SIMPLE_COMMAND_ELEMENT
+                                  PsiElement($)('$')
+                                  SHELL_PARAMETER_EXPANSION
+                                    PsiElement({)('{')
+                                    PsiElement(word)('argIndex')
+                                    PsiElement(})('}')
+                                STRING
+                                  PsiElement(OPEN_QUOTE)('"')
+                                  PsiElement(STRING_CONTENT)('}'')
+                                  PsiElement(CLOSE_QUOTE)('"')
+                              PsiWhiteSpace(' ')
+                              PsiElement(|)('|')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('grep')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(OPEN_QUOTE)('"')
+                                  VARIABLE
+                                    PsiElement(var)('$expected')
+                                  PsiElement(CLOSE_QUOTE)('"')
+                          PsiElement())(')')
+                        PsiWhiteSpace(' ')
+                        PsiElement(||)('||')
+                        PsiWhiteSpace(' ')
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('true')
                     PsiElement())(')')
                   PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')

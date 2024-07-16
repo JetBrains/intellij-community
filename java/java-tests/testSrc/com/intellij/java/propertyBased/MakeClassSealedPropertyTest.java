@@ -1,23 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.SealClassAction;
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.propertyBased.InvokeIntention;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +32,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    WriteAction.run(() -> LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_17));
+    WriteAction.run(() -> IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_17));
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
     MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE);
   }
@@ -51,7 +49,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
     Generator<PsiJavaFile> javaFiles = psiJavaFiles();
     PsiJavaFile psiFile = env.generateValue(javaFiles, "Open %s in editor");
 
-    IntentionAction makeSealedAction = new SealClassAction().asIntention();
+    ModCommandAction makeSealedAction = new SealClassAction();
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     Editor editor = editorManager.openTextEditor(new OpenFileDescriptor(myProject, psiFile.getVirtualFile()), true);
 
@@ -92,25 +90,26 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
   }
 
   private static boolean convertToSealedClass(@NotNull Editor editor,
-                                              @NotNull IntentionAction makeSealedAction,
+                                              @NotNull ModCommandAction makeSealedAction,
                                               @NotNull PsiIdentifier classIdentifier) {
-    try {
-      PsiFile containingFile = classIdentifier.getContainingFile();
-      ShowIntentionActionsHandler.chooseActionAndInvoke(containingFile, editor, makeSealedAction, makeSealedAction.getText());
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      return true;
-    }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+    PsiFile containingFile = classIdentifier.getContainingFile();
+    ActionContext context = ActionContext.from(editor, containingFile);
+    ModCommand command = makeSealedAction.perform(context);
+    if (command instanceof ModDisplayMessage) {
+      // Cannot seal (inheritors in other packages, anonymous, local inheritors, etc. - skip)
       return false;
     }
+    CommandProcessor.getInstance().executeCommand(
+      context.project(), () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor), null, null);
+    return true;
   }
 
   private static boolean canConvertToSealedClass(@NotNull Editor editor,
-                                                 @NotNull IntentionAction makeSealedAction,
+                                                 @NotNull ModCommandAction makeSealedAction,
                                                  @NotNull PsiClass psiClass) {
     PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
     if (nameIdentifier == null) return false;
     editor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
-    return makeSealedAction.isAvailable(psiClass.getProject(), editor, nameIdentifier.getContainingFile());
+    return makeSealedAction.getPresentation(ActionContext.from(editor, psiClass.getContainingFile())) != null;
   }
 }

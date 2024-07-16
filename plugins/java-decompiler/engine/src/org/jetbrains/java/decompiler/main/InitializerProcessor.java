@@ -17,6 +17,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class InitializerProcessor {
   public static void extractInitializers(ClassWrapper wrapper) {
@@ -168,6 +171,12 @@ public final class InitializerProcessor {
       return;
     }
 
+    Set<String> recordComponents = Optional.ofNullable(cl.getRecordComponents())
+      .stream()
+      .flatMap(l -> l.stream())
+      .map(c -> InterpreterUtil.makeUniqueKey(c.getName(), c.getDescriptor()))
+      .collect(Collectors.toSet());
+
     while (true) {
       String fieldWithDescr = null;
       Exprent value = null;
@@ -187,11 +196,12 @@ public final class InitializerProcessor {
           AssignmentExprent assignExpr = (AssignmentExprent)exprent;
           if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
             FieldExprent fExpr = (FieldExprent)assignExpr.getLeft();
+            String fieldKey = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
             if (!fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
-                cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
-
+                cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString) &&
+                //record fields can't be described like usual fields
+                !recordComponents.contains(fieldKey)) { // check for the physical existence of the field. Could be defined in a superclass.
               if (isExprentIndependent(assignExpr.getRight(), lstMethodWrappers.get(i))) {
-                String fieldKey = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
                 if (fieldWithDescr == null) {
                   fieldWithDescr = fieldKey;
                   value = assignExpr.getRight();

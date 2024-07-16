@@ -1,48 +1,48 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.types.Variance
 
-
 object ChangeParameterTypeFixFactory {
-    val typeMismatchFactory = diagnosticFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
+
+    val typeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
         val psi = diagnostic.psi
         val targetType = diagnostic.actualType
         createTypeMismatchFixes(psi, targetType)
     }
 
-    val nullForNotNullTypeFactory = diagnosticFixFactory(KtFirDiagnostic.NullForNonnullType::class) { diagnostic ->
-       createTypeMismatchFixes(diagnostic.psi, diagnostic.expectedType.withNullability(KtTypeNullability.NULLABLE))
+    val nullForNotNullTypeFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
+       createTypeMismatchFixes(diagnostic.psi, diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE))
     }
 
-    context(KtAnalysisSession)
-    private fun createTypeMismatchFixes(psi: PsiElement, targetType: KtType): List<KotlinQuickFixAction<*>> {
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun createTypeMismatchFixes(psi: PsiElement, targetType: KaType): List<KotlinQuickFixAction<*>> {
         val valueArgument = psi.parent as? KtValueArgument ?: return emptyList()
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
-        val memberCall = (callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtFunctionCall<*>
+        val memberCall = (callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaFunctionCall<*>
         val functionLikeSymbol = memberCall?.symbol ?: return emptyList()
 
         val paramSymbol = memberCall.argumentMapping[valueArgument.getArgumentExpression()]
@@ -50,26 +50,28 @@ object ChangeParameterTypeFixFactory {
 
         val functionName = getDeclarationName(functionLikeSymbol) ?: return emptyList()
 
+        val approximatedType = targetType.approximateToSuperPublicDenotableOrSelf(true)
+
+        val typePresentation = approximatedType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
+        val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
+
         return listOf(ChangeParameterTypeFix(
             parameter,
-            targetType,
-            functionLikeSymbol is KtConstructorSymbol && functionLikeSymbol.isPrimary,
+            typePresentation,
+            typeFQNPresentation,
+            functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary,
             functionName
         ))
     }
 }
 
-context(KtAnalysisSession)
 internal class ChangeParameterTypeFix(
     element: KtParameter,
-    type: KtType,
+    val typePresentation: String,
+    val typeFQNPresentation: String,
     private val isPrimaryConstructorParameter: Boolean,
     private val functionName: String
 ) : KotlinQuickFixAction<KtParameter>(element) {
-    private val approximatedType = type.approximateToSuperPublicDenotableOrSelf(true)
-
-    private val typePresentation = approximatedType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
-    private val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
 
     override fun startInWriteAction(): Boolean = false
 

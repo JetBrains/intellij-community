@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GroovyInspectionSuppressor implements InspectionSuppressor {
+public final class GroovyInspectionSuppressor implements InspectionSuppressor {
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String name) {
     return GroovySuppressableInspectionTool.getElementToolSuppressedIn(element, name) != null;

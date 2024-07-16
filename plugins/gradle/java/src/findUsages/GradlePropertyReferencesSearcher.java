@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Kirill Marchuk
  */
-public class GradlePropertyReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class GradlePropertyReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
   private final static String[] GRADLE_PROPERTY_FILES = {"gradle.properties"};
   private final static String GRADLE_DSL_EXTENSION = "gradle";

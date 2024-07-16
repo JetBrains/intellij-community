@@ -9,7 +9,12 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -25,9 +30,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
-import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.idea.j2k.post.processing.JKInMemoryFilesSearcher
-import org.jetbrains.kotlin.idea.j2k.post.processing.PostProcessingOptions
 import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
@@ -39,6 +42,9 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.j2k.PostProcessingApplier
+import org.jetbrains.kotlin.j2k.PostProcessingOptions
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
@@ -77,6 +83,7 @@ internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostP
             disablePostprocessingFormatting = false // without it comment saver will make the file invalid :(
         )
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
         val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return }
         val psiFactory = KtPsiFactory(converterContext.project)
@@ -87,19 +94,34 @@ internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostP
 
         val collector = PropertiesDataCollector(resolutionFacade, searcher)
         val filter = PropertiesDataFilter(resolutionFacade, ktElements, searcher, psiFactory)
-        val converter = ClassConverter(converterContext.externalCodeProcessor, searcher, psiFactory)
+        val externalProcessingUpdater = ExternalProcessingUpdater(converterContext.externalCodeProcessor)
+        val converter = ClassConverter(searcher, psiFactory)
 
         val classesWithPropertiesData: List<Pair<KtClassOrObject, List<PropertyData>>> = runReadAction {
             val classes = ktElements.descendantsOfType<KtClassOrObject>().sortedByInheritance(resolutionFacade)
             classes.map { klass -> klass to collector.collectPropertiesData(klass) }
         }.ifEmpty { return }
 
-        runUndoTransparentActionInEdt(inWriteAction = true) {
-            for ((klass, propertiesData) in classesWithPropertiesData) {
-                val propertiesWithAccessors = filter.filter(klass, propertiesData)
+        for ((klass, propertiesData) in classesWithPropertiesData) {
+            val propertiesWithAccessors = runReadAction { filter.filter(klass, propertiesData) }
+
+            allowAnalysisOnEdt {
+                runReadAction {
+                    analyze(klass) {
+                        externalProcessingUpdater.update(klass, propertiesWithAccessors)
+                    }
+                }
+            }
+
+            runUndoTransparentActionInEdt(inWriteAction = true) {
                 converter.convertClass(klass, propertiesWithAccessors)
             }
         }
+    }
+
+    context(KaSession)
+    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+        error("Not supported in K1 J2K")
     }
 
     private fun List<KtClassOrObject>.sortedByInheritance(resolutionFacade: ResolutionFacade): List<KtClassOrObject> {
@@ -461,11 +483,50 @@ private val redundantGetterModifiers: Set<KtModifierKeywordToken> = redundantSet
     PUBLIC_KEYWORD, INTERNAL_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD
 )
 
+private class ExternalProcessingUpdater(private val processing: NewExternalCodeProcessing) {
+    context(KaSession)
+    fun update(klass: KtClassOrObject, propertiesWithAccessors: List<PropertyWithAccessors>) {
+        for (propertyWithAccessors in propertiesWithAccessors) {
+            updateExternalProcessingInfo(klass, propertyWithAccessors)
+        }
+    }
+
+    context(KaSession)
+    private fun updateExternalProcessingInfo(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
+        val (property, getter, setter) = propertyWithAccessors
+
+        // convenience variables
+        val realGetter = getter as? RealGetter
+        val realSetter = setter as? RealSetter
+
+        fun KtNamedFunction.setPropertyForExternalProcessing(fieldData: JKFieldData) {
+            val physicalMethodData = (processing.getMember(element = this) as? JKPhysicalMethodData) ?: return
+            physicalMethodData.usedAsAccessorOfProperty = fieldData
+        }
+
+        val jkFieldData = when (property) {
+            is RealProperty -> processing.getMember(property.property)
+            is MergedProperty -> processing.getMember(property.mergeTo)
+            is FakeProperty -> JKFakeFieldData(
+                isStatic = klass is KtObjectDeclaration,
+                kotlinElementPointer = null,
+                fqName = klass.fqNameWithoutCompanions.child(Name.identifier(property.name)),
+                name = property.name
+            ).also { processing.addMember(it) }
+        } as? JKFieldData
+
+        if (jkFieldData != null) {
+            jkFieldData.name = property.name
+            realGetter?.function?.setPropertyForExternalProcessing(jkFieldData)
+            realSetter?.function?.setPropertyForExternalProcessing(jkFieldData)
+        }
+    }
+}
+
 /**
  * Converts accessors to properties in a single class
  */
 private class ClassConverter(
-    private val externalCodeUpdater: NewExternalCodeProcessing,
     private val searcher: JKInMemoryFilesSearcher,
     private val psiFactory: KtPsiFactory
 ) {
@@ -481,30 +542,6 @@ private class ClassConverter(
         // convenience variables
         val realGetter = getter as? RealGetter
         val realSetter = setter as? RealSetter
-
-        fun updateExternalProcessingInfo() {
-            fun KtNamedFunction.setPropertyForExternalProcessing(fieldData: JKFieldData) {
-                val physicalMethodData = (externalCodeUpdater.getMember(element = this) as? JKPhysicalMethodData) ?: return
-                physicalMethodData.usedAsAccessorOfProperty = fieldData
-            }
-
-            val jkFieldData = when (property) {
-                is RealProperty -> externalCodeUpdater.getMember(property.property)
-                is MergedProperty -> externalCodeUpdater.getMember(property.mergeTo)
-                is FakeProperty -> JKFakeFieldData(
-                    isStatic = klass is KtObjectDeclaration,
-                    kotlinElementPointer = null,
-                    fqName = klass.fqNameWithoutCompanions.child(Name.identifier(property.name)),
-                    name = property.name
-                ).also { externalCodeUpdater.addMember(it) }
-            } as? JKFieldData
-
-            if (jkFieldData != null) {
-                jkFieldData.name = property.name
-                realGetter?.function?.setPropertyForExternalProcessing(jkFieldData)
-                realSetter?.function?.setPropertyForExternalProcessing(jkFieldData)
-            }
-        }
 
         fun getKtProperty(): KtProperty = when (property) {
             is RealProperty -> {
@@ -524,8 +561,6 @@ private class ClassConverter(
             is MergedProperty -> property.mergeTo
         }
 
-        updateExternalProcessingInfo()
-
         val ktProperty = getKtProperty()
         val ktGetter = addGetter(getter, ktProperty, property.isFake)
         val ktSetter = setter?.let { addSetter(it, ktProperty, property.isFake) }
@@ -540,6 +575,7 @@ private class ClassConverter(
             if (realGetter != null) {
                 if (realGetter.function.isAbstract() && !klass.isInterfaceClass()) {
                     ktProperty.addModifier(ABSTRACT_KEYWORD)
+                    ktGetter.removeModifier(ABSTRACT_KEYWORD)
                 }
                 if (ktGetter.isRedundantGetter()) {
                     realGetter.function.deleteExplicitLabelComments()
@@ -667,6 +703,11 @@ private class ClassConverter(
         val ktSetter = psiFactory.createSetter(setter.body, setter.parameterName, modifiers)
         for (modifier in redundantSetterModifiers) {
             ktSetter.removeModifier(modifier)
+        }
+
+        val classVisibility = ktProperty.parentOfType<KtClassOrObject>()?.visibilityModifierTypeOrDefault()
+        if (classVisibility == INTERNAL_KEYWORD || classVisibility == PUBLIC_KEYWORD) {
+            ktSetter.removeModifier(PUBLIC_KEYWORD)
         }
 
         if (setter is RealSetter) {

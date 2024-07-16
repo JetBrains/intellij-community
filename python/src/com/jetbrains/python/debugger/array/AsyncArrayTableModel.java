@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.array;
 
 import com.google.common.cache.CacheBuilder;
@@ -48,7 +48,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   private final LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
     new CacheLoader<>() {
       @Override
-      public ListenableFuture<ArrayChunk> load(@NotNull final Pair<Integer, Integer> key) throws Exception {
+      public ListenableFuture<ArrayChunk> load(final @NotNull Pair<Integer, Integer> key) throws Exception {
 
         return ListenableFutureTask.create(() -> {
           ArrayChunk chunk = myDebugValue.getFrameAccessor()

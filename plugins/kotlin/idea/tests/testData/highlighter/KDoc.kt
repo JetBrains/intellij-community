@@ -1,4 +1,3 @@
-// EXPECTED_DUPLICATED_HIGHLIGHTING
 /**
  * @param <symbolName descr="null" textAttributesKey="KDOC_LINK">x</symbolName> foo and <symbolName descr="null" textAttributesKey="KDOC_LINK">[baz]</symbolName>
  * @param <symbolName descr="null" textAttributesKey="KDOC_LINK">y</symbolName> bar

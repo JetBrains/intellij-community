@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.ide.impl.ProjectUtilCore
@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
@@ -30,7 +31,7 @@ open class RecentProjectListActionProvider {
       allRecentProjectPaths.remove(recentProjectManager.getProjectPath(projectToFilterOut))
     }
 
-    val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths, recentProjectManager)
+    val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths)
     val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
     val projectGroups = groups.asSequence().map { projectGroup ->
       val projects = projectGroup.projects.toSet()
@@ -61,7 +62,7 @@ open class RecentProjectListActionProvider {
     }
 
     val actions = mutableListOf<AnAction>()
-    val duplicates = getDuplicateProjectNames(openedPaths, paths, recentProjectManager)
+    val duplicates = getDuplicateProjectNames(openedPaths, paths)
     val groups = recentProjectManager.groups.toMutableList()
     if (useGroups) {
       groups.sortWith(ProjectGroupComparator(paths))
@@ -86,14 +87,14 @@ open class RecentProjectListActionProvider {
   }
 
   private fun addGroups(groups: List<ProjectGroup>,
-                        duplicates: Set<String>,
+                        duplicates: Set<ProjectNameOnlyByPath>,
                         addClearListItem: Boolean,
                         actions: MutableList<AnAction>,
                         bottom: Boolean) {
     for (group in groups.asSequence().filter { it.isBottomGroup == bottom }) {
       val children = mutableListOf<AnAction>()
       for (path in group.projects) {
-        val action = createOpenAction(path ?: continue, duplicates)
+        val action = createOpenAction(path = path ?: continue, duplicates = duplicates)
         action.setProjectGroup(group)
         children.add(action)
         if (addClearListItem && children.size >= RecentProjectsManagerBase.MAX_PROJECTS_IN_MAIN_MENU) {
@@ -107,45 +108,57 @@ open class RecentProjectListActionProvider {
     }
   }
 
-  protected open fun createOpenAction(path: String, duplicates: Set<String>): ReopenProjectAction {
+  protected open fun createOpenAction(path: String, duplicates: Set<ProjectNameOnlyByPath>): ReopenProjectAction {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     var displayName = recentProjectManager.getDisplayName(path)
     val projectName = recentProjectManager.getProjectName(path)
 
+    var branch: String? = null
+
     if (displayName.isNullOrBlank()) {
-      displayName = if (duplicates.contains(projectName)) FileUtil.toSystemDependentName(path) else projectName
+      displayName = if (duplicates.contains(getProjectNameOnlyByPath(path))) {
+        if (Registry.`is`("ide.welcome.screen.branch.name", false)) {
+          branch = recentProjectManager.getCurrentBranchName(path)
+        }
+        FileUtil.toSystemDependentName(path)
+      }
+      else {
+        projectName
+      }
     }
 
-    // It's better don't to remove non-existent projects. Sometimes projects stored
-    // on USB-sticks or flash-cards, and it will be nice to have them in the list
-    // when USB device or SD-card is mounted
-    return ReopenProjectAction(path, projectName, displayName)
+    // It's better don't to remove non-existent projects.
+    // Sometimes projects are stored on USB-sticks or flash-cards, and it will be nice to have them in the list
+    // when a USB device or SD-card is mounted
+    return ReopenProjectAction(projectPath = path, projectName = projectName, displayName = displayName, branchName = branch)
   }
 
-  private fun createRecentProject(path: String, duplicates: Set<String>, projectGroup: ProjectGroup?): RecentProjectItem {
+  private fun createRecentProject(path: String, duplicates: Set<ProjectNameOnlyByPath>, projectGroup: ProjectGroup?): RecentProjectItem {
     val reopenProjectAction = createOpenAction(path, duplicates)
     return RecentProjectItem(
       projectPath = reopenProjectAction.projectPath,
-      projectName = reopenProjectAction.projectName,
+      projectName = reopenProjectAction.projectName ?: "",
       displayName = reopenProjectAction.projectNameToDisplay ?: "",
+      branchName = reopenProjectAction.branchName,
       projectGroup = projectGroup
     )
   }
 
   /**
-   * Returns true if action corresponds to specified project
+   * Returns true if action corresponds to a specified project
    */
   open fun isCurrentProjectAction(project: Project, action: ReopenProjectAction): Boolean = action.projectPath == project.basePath
 }
 
-private fun getDuplicateProjectNames(openedPaths: Set<String>,
-                                     recentPaths: Set<String>,
-                                     recentProjectManager: RecentProjectsManagerBase): Set<String> {
-  val names = HashSet<String>()
-  val duplicates = HashSet<String>()
+private fun getDuplicateProjectNames(
+  openedPaths: Set<String>,
+  recentPaths: Set<String>,
+): Set<ProjectNameOnlyByPath> {
+  val names = HashSet<ProjectNameOnlyByPath>()
+  val duplicates = HashSet<ProjectNameOnlyByPath>()
   // a project name should not be considered duplicate if a project is both in recent projects and open projects (IDEA-211955)
   for (path in (openedPaths + recentPaths)) {
-    val name = recentProjectManager.getProjectName(path)
+    val name = getProjectNameOnlyByPath(path)
     if (!names.add(name)) {
       duplicates.add(name)
     }

@@ -2,14 +2,13 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
 
 @TestDataPath("/inspections/moveProhibitedDeclarationsToTopLevelFix")
 class KtMoveProhibitedDeclarationsToTopLevelFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
-  private val fixName = DevKitKotlinBundle.message("inspections.move.prohibited.declarations.to.top.level.fix.text")
+  private val fixName = "Move prohibited declarations to top level"
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/moveProhibitedDeclarationsToTopLevelFix"
 

@@ -1,46 +1,47 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl
 
-import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
-import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform.ExtensionController
-import com.intellij.platform.ml.impl.logger.MLEvent
-import com.intellij.platform.ml.impl.monitoring.MLApiStartupListener
-import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.platform.ml.MLApiPlatform
+import com.intellij.platform.ml.SystemLogger
+import com.intellij.platform.ml.SystemLoggerBuilder
+import com.intellij.platform.ml.monitoring.MLTaskGroupListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 
 abstract class TestApiPlatform : MLApiPlatform() {
   private val dynamicTaskListeners: MutableList<MLTaskGroupListener> = mutableListOf()
-  private val dynamicStartupListeners: MutableList<MLApiStartupListener> = mutableListOf()
-  private val dynamicEvents: MutableList<MLEvent> = mutableListOf()
 
   abstract val initialTaskListeners: List<MLTaskGroupListener>
-
-  abstract val initialStartupListeners: List<MLApiStartupListener>
-
-  abstract val initialEvents: List<MLEvent>
-
-  final override val events: List<MLEvent>
-    get() = initialEvents + dynamicEvents
 
   final override val taskListeners: List<MLTaskGroupListener>
     get() = initialTaskListeners + dynamicTaskListeners
 
-  final override val startupListeners: List<MLApiStartupListener>
-    get() = initialStartupListeners + dynamicStartupListeners
-
   override fun addTaskListener(taskListener: MLTaskGroupListener): ExtensionController {
-    return extend(taskListener, dynamicTaskListeners)
+    dynamicTaskListeners.add(taskListener)
+    return object : ExtensionController {
+      override fun remove() {
+        require(dynamicTaskListeners.remove(taskListener))
+      }
+    }
   }
 
-  override fun addEvent(event: MLEvent): ExtensionController {
-    return extend(event, dynamicEvents)
-  }
+  @OptIn(DelicateCoroutinesApi::class)
+  override val coroutineScope: CoroutineScope = GlobalScope
 
-  override fun addStartupListener(listener: MLApiStartupListener): ExtensionController {
-    return extend(listener, dynamicStartupListeners)
-  }
+  override val systemLoggerBuilder: SystemLoggerBuilder = object : SystemLoggerBuilder {
+    override fun build(clazz: Class<*>): SystemLogger {
+      return object : SystemLogger {
+        override fun info(data: () -> String) {
+          Logger.getInstance(clazz).info(data())
+        }
 
-  private fun <T> extend(obj: T, collection: MutableCollection<T>): ExtensionController {
-    collection.add(obj)
-    return ExtensionController { collection.remove(obj) }
+        override fun debug(data: () -> String) {
+          Logger.getInstance(clazz).debug { data() }
+        }
+      }
+    }
   }
 }

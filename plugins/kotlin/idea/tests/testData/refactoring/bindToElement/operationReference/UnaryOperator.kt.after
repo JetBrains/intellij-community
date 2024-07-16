@@ -1,0 +1,11 @@
+// FILE: test/UnaryOperator.kt
+// BIND_TO test.bar.not
+package test
+
+import test.bar.not
+import test.foo.not
+
+fun foo(x: String): Boolean {
+    return <caret>!x
+}
+

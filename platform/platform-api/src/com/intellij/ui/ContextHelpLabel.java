@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.net.URL;
 
 public class ContextHelpLabel extends JBLabel {
   private final HelpTooltip tooltip;
@@ -69,6 +70,16 @@ public class ContextHelpLabel extends JBLabel {
                                                          @NotNull Runnable linkAction) {
     ContextHelpLabel label =
       new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title).setLink(linkText, linkAction, linkIsExternal));
+    label.initTooltip();
+    return label;
+  }
+
+  public static @NotNull ContextHelpLabel createWithBrowserLink(@TooltipTitle @Nullable String title,
+                                                                @Tooltip @NotNull String description,
+                                                                @LinkLabel @NotNull String linkText,
+                                                                @NotNull URL url) {
+    ContextHelpLabel label =
+      new ContextHelpLabel(new HelpTooltip().setDescription(description).setTitle(title).setBrowserLink(linkText, url));
     label.initTooltip();
     return label;
   }

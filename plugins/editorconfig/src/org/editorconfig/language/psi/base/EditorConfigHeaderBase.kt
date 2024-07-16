@@ -20,7 +20,7 @@ abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElement
     if (nextSibling is PsiErrorElement) return false
     if (header.isEmptyHeader()) return false
     if (header.hasNumerousWildcards()) return false
-    if (PsiTreeUtil.findChildrenOfAnyType(header, EditorConfigEnumerationPattern::class.java).any({ it.hasRedundancy() })) return false
+    if (PsiTreeUtil.findChildrenOfAnyType(header, EditorConfigEnumerationPattern::class.java).any { it.hasRedundancy() }) return false
     return true
   }
 

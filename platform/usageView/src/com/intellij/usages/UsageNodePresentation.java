@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
+import com.intellij.openapi.progress.Cancellation;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,7 +11,9 @@ import java.awt.*;
 
 @Internal
 public final class UsageNodePresentation {
-  public static final UsageNodePresentation EMPTY = new UsageNodePresentation(null, TextChunk.EMPTY_ARRAY, null);
+  public static final UsageNodePresentation EMPTY = Cancellation.forceNonCancellableSectionInClassInitializer(
+    () -> new UsageNodePresentation(null, TextChunk.EMPTY_ARRAY, null)
+  );
 
   private final @Nullable Icon myIcon;
   private final @Nullable Color myBackgroundColor;

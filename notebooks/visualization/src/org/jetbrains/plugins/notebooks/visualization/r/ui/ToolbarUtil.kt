@@ -82,10 +82,9 @@ object ToolbarUtil {
     return createActionHolder(id, { true }, onClick)
   }
 
-  fun createEllipsisToolbar(place: String, actions: List<AnAction>): JComponent {
+  fun createEllipsisToolbar(place: String, actions: List<AnAction>): ActionToolbar {
     val ellipsis = createEllipsisActionGroup(actions)
-    val toolbar = ActionManager.getInstance().createActionToolbar(place, DefaultActionGroup(ellipsis), false)
-    return toolbar.component
+    return ActionManager.getInstance().createActionToolbar(place, DefaultActionGroup(ellipsis), false)
   }
 
   private fun createEllipsisActionGroup(actions: List<AnAction>): ActionGroup {

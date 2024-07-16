@@ -81,8 +81,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         .append(describeFunction(function, context, true))
         .toString();
     }
-    else if (element instanceof PyClass) {
-      final PyClass cls = (PyClass)element;
+    else if (element instanceof PyClass cls) {
       final HtmlBuilder result = new HtmlBuilder();
       return result
         .append(describeDecorators(cls, HtmlChunk.text(", ")))

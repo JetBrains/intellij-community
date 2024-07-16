@@ -543,6 +543,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       ?.let { formatFormalCssSyntax(it) }
 
   private fun formatFormalCssSyntax(str: String): String {
+    if (str.startsWith("\n```css")) {
+      return str.removePrefix("\n```css\n").removeSuffix("\n```\n")
+        .replace(Regex(" +"), " ")
+    }
     val result = StringBuilder()
     val firstEquals = str.indexOf('=')
     val firstLine = str.indexOf('\n')
@@ -805,8 +809,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val code = tag.findSubTag("code")
       ?.let { extractText(it) }
       ?.let { StringUtil.unescapeXmlEntities(it) }
-    tag.replace(XmlElementFactory.getInstance(tag.project).createTagFromText(
-      "<div>\n```$language\n$code\n```\n</div>", HTMLLanguage.INSTANCE))
+    val toReplace = if (tag.parent.let { it is XmlTag && it.getAttributeValue("class") == "code-example" })
+      tag.parent
+    else
+      tag
+    val parent = toReplace.parent
+    parent.addBefore(XmlElementFactory.getInstance(tag.project).createTagFromText(
+      "<div>\n```$language\n$code\n```\n</div>", HTMLLanguage.INSTANCE), toReplace)
+    toReplace.delete()
   }
 
   private fun extractText(tag: XmlTag): String {
@@ -863,8 +873,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .filter { it.isNotEmpty() }
       .firstOrNull()
       ?.mapValues { (_, doc) ->
-        doc.replace("\n", " ")
-          .replace(Regex("<p>\\s*(.*?)\\s*</p>"), "$1<br>")
+        doc.replace(Regex("\n{2,}"), "<br>")
           .removeSuffix("<br>")
           .patchProse()
       }

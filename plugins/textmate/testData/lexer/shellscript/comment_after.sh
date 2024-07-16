@@ -1,6 +1,5 @@
 source.shell;comment.line.number-sign.shell;punctuation.definition.comment.shell: [0, 1], {#}
-source.shell;comment.line.number-sign.shell: [1, 6], { test}
-source.shell: [6, 7], {
+source.shell;comment.line.number-sign.shell: [1, 7], { test
 }
 source.shell;meta.function.shell;storage.type.function.shell: [7, 15], {function}
 source.shell;meta.function.shell: [15, 16], { }

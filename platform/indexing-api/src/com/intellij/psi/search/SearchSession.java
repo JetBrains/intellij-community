@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SearchSession extends UserDataHolderBase {
+public final class SearchSession extends UserDataHolderBase {
   private final PsiElement[] myElements;
 
   public SearchSession() {

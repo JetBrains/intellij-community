@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
@@ -47,7 +48,7 @@ abstract class WindowsDistributionCustomizer {
   var installerImagesPath: String? = null
 
   /**
-   * List of file extensions (without leading dot) which the installer will suggest to associate with the product.
+   * List of file extensions (without a leading dot) which the installer will suggest to associate with the product.
    */
   var fileAssociations: List<String> = emptyList()
 
@@ -55,6 +56,11 @@ abstract class WindowsDistributionCustomizer {
    * Paths to files which will be used to overwrite the standard *.nsi files.
    */
   var customNsiConfigurationFiles: PersistentList<String> = persistentListOf()
+
+  /**
+   * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of the embedded resource table).
+   */
+  var useXPlatLauncher = true
 
   /**
    * Name of the root directory in Windows .zip archive
@@ -65,8 +71,9 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Name of the Windows installation directory and Desktop shortcut.
    */
-  open fun getNameForInstallDirAndDesktopShortcut(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${getFullNameIncludingEdition(appInfo)} ${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+  open fun getNameForInstallDirAndDesktopShortcut(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "${getFullNameIncludingEdition(appInfo)} ${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+  }
 
   /**
    * Override this method to copy additional files to the Windows distribution of the product.
@@ -78,6 +85,7 @@ abstract class WindowsDistributionCustomizer {
     copyAdditionalFilesBlocking(context, targetDir, arch)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
   open fun copyAdditionalFilesBlocking(context: BuildContext, targetDir: Path, arch: JvmArchitecture) { }
 
@@ -89,8 +97,9 @@ abstract class WindowsDistributionCustomizer {
   /**
    * The returned name will be used to create links on Desktop.
    */
-  open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String =
-    appInfo.shortCompanyName + ' ' + getFullNameIncludingEdition(appInfo)
+  open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String {
+    return appInfo.shortCompanyName + ' ' + getFullNameIncludingEdition(appInfo)
+  }
 
   open fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String? = null
 

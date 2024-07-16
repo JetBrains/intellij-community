@@ -7,14 +7,13 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -33,8 +32,8 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
         val argumentIndex = arguments.indexOf(argument).takeIf { it >= 0 } ?: return
 
         analyze(argument) {
-            val argumentConstantValue = argumentExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
-            val call = callElement.resolveCall()?.successfulFunctionCallOrNull() ?: return
+            val argumentConstantValue = argumentExpression.evaluate() ?: return
+            val call = callElement.resolveToCall()?.successfulFunctionCallOrNull() ?: return
             val parameterSymbol = findTargetParameter(argumentExpression, call) ?: return
 
             if (parameterSymbol.hasDefaultValue) {
@@ -59,7 +58,7 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
                 }
 
                 val defaultValueExpression = parameter.defaultValue ?: return
-                val defaultConstantValue = defaultValueExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
+                val defaultConstantValue = defaultValueExpression.evaluate() ?: return
 
                 if (argumentConstantValue.value == defaultConstantValue.value) {
                     val description = KotlinBundle.message("inspection.redundant.value.argument.annotation", parameterSymbol.name)
@@ -70,14 +69,14 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
         }
     })
 
-    context(KtAnalysisSession)
-    private fun findTargetParameter(argumentExpression: KtExpression, call: KtFunctionCall<*>): KtValueParameterSymbol? {
+    context(KaSession)
+    private fun findTargetParameter(argumentExpression: KtExpression, call: KaFunctionCall<*>): KaValueParameterSymbol? {
         val targetParameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return null
 
         val targetFunctionSymbol = call.partiallyAppliedSymbol.symbol
-        if (targetFunctionSymbol is KtFunctionSymbol && targetFunctionSymbol.isOverride) {
-            for (baseFunctionSymbol in targetFunctionSymbol.getAllOverriddenSymbols()) {
-                if (baseFunctionSymbol is KtFunctionSymbol && !baseFunctionSymbol.isOverride) {
+        if (targetFunctionSymbol is KaNamedFunctionSymbol && targetFunctionSymbol.isOverride) {
+            for (baseFunctionSymbol in targetFunctionSymbol.allOverriddenSymbols) {
+                if (baseFunctionSymbol is KaNamedFunctionSymbol && !baseFunctionSymbol.isOverride) {
                     return baseFunctionSymbol.valueParameters.singleOrNull { it.name == targetParameterSymbol.name }
                 }
             }

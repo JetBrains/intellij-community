@@ -383,6 +383,10 @@ internal class RecentProjectFilteringTree(
       private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = NamedColorUtil.getInactiveTextColor()
       }
+      private val projectBranchNameLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
+        foreground = NamedColorUtil.getInactiveTextColor()
+        icon = AllIcons.Vcs.Branch
+      }
       private val projectIconLabel = JLabel()
       private val projectActions = ActionsButton().apply {
         setState(AllIcons.Ide.Notification.Gear, false)
@@ -392,6 +396,7 @@ internal class RecentProjectFilteringTree(
 
         add(projectNameLabel)
         add(projectPathLabel)
+        add(projectBranchNameLabel)
       }
       private val updateScaleHelper = UpdateScaleHelper()
 
@@ -419,6 +424,12 @@ internal class RecentProjectFilteringTree(
           icon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = true)
           disabledIcon = recentProjectsManager.getProjectIcon(item.projectPath, isProjectValid = false)
           isEnabled = isPathValid
+        }
+        projectBranchNameLabel.apply {
+          isVisible = item.branchName != null
+          if(isVisible) {
+            text = item.branchName
+          }
         }
         if (isPathValid) {
           buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear,

@@ -2,43 +2,43 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 
 internal object FirClassifierProvider {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getAvailableClassifiersCurrentScope(
         originalKtFile: KtFile,
         position: KtElement,
-        scopeNameFilter: KtScopeNameFilter,
+        scopeNameFilter: (Name) -> Boolean,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtClassifierSymbolWithContainingScopeKind> =
-        originalKtFile.getScopeContextForPosition(position).scopes.asSequence().flatMap { scopeWithKind ->
+    ): Sequence<KaClassifierSymbolWithContainingScopeKind> =
+        originalKtFile.scopeContext(position).scopes.asSequence().flatMap { scopeWithKind ->
             val classifiers = scopeWithKind.scope.getClassifierSymbols(scopeNameFilter)
                 .filter { visibilityChecker.isVisible(it) }
-                .map { KtClassifierSymbolWithContainingScopeKind(it, scopeWithKind.kind) }
+                .map { KaClassifierSymbolWithContainingScopeKind(it, scopeWithKind.kind) }
             classifiers
         }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun getAvailableClassifiersFromIndex(
         symbolProvider: KtSymbolFromIndexProvider,
-        scopeNameFilter: KtScopeNameFilter,
+        scopeNameFilter: (Name) -> Boolean,
         visibilityChecker: CompletionVisibilityChecker
-    ): Sequence<KtClassifierSymbol> {
+    ): Sequence<KaClassifierSymbol> {
         val kotlinDeclarations = symbolProvider.getKotlinClassesByNameFilter(
             scopeNameFilter,
             psiFilter = { ktClass -> ktClass !is KtEnumEntry }
         )
         val javaDeclarations = symbolProvider.getJavaClassesByNameFilter(scopeNameFilter)
         return (kotlinDeclarations + javaDeclarations)
-            .filter { visibilityChecker.isVisible(it as KtSymbolWithVisibility) }
+            .filter { visibilityChecker.isVisible(it as KaSymbolWithVisibility) }
     }
 }

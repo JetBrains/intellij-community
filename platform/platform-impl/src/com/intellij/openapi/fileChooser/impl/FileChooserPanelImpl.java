@@ -134,6 +134,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     toolBar.setTargetComponent(this);
 
     myPath = new ComboBox<>(Stream.of(recentPaths).map(PathWrapper::new).toArray(PathWrapper[]::new));
+    myPath.setUsePreferredSizeAsMinimum(false);
     setupPathBar();
 
     var nameColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.name"), 0, FsItem.COMPARATOR) {

@@ -424,8 +424,7 @@ public class LibraryOptionsPanel implements Disposable {
           message = JavaUiBundle.message("library.options.panel.update.state.error.library.is.not.specified");
           myConfigureButton.setVisible(false);
         }
-        else if (item instanceof NewLibraryEditor) {
-          final LibraryEditor libraryEditor = (LibraryEditor)item;
+        else if (item instanceof NewLibraryEditor libraryEditor) {
           message = JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
                                          libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }

@@ -1,4 +1,6 @@
 // "Create extension function 'A.foo'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 fun bar(b: Boolean) {
 
 }
@@ -8,4 +10,3 @@ class A(val n: Int)
 fun A.test() {
     bar(<caret>foo(n))
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

@@ -16,7 +16,7 @@ import org.jdom.input.JDOMParseException;
 import org.jetbrains.annotations.NotNull;
 
 
-public class FormWordsScanner extends SimpleWordsScanner {
+public final class FormWordsScanner extends SimpleWordsScanner {
   private static final Logger LOG = Logger.getInstance(FormWordsScanner.class);
 
   @Override

@@ -1,1 +1,2 @@
-src/com/intellij/remoteDev/tests/modelGenerated/.rdgen
+/build
+.rdgen

@@ -13,7 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradlePublishingTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test publishing closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "publishing { <caret> }") {
@@ -23,7 +23,7 @@ class GradlePublishingTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test publishing repositories maven url`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "publishing { repositories { maven { url<caret> '' } } }") {

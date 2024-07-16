@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -27,8 +27,7 @@ public abstract class PyCallHierarchyTreeStructureBase extends HierarchyTreeStru
     myScopeType = currentScopeType;
   }
 
-  @NotNull
-  protected abstract Map<PsiElement, Collection<PsiElement>> getChildren(@NotNull PyElement element);
+  protected abstract @NotNull Map<PsiElement, Collection<PsiElement>> getChildren(@NotNull PyElement element);
 
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {

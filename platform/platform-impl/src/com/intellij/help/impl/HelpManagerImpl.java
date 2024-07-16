@@ -25,7 +25,7 @@ public class HelpManagerImpl extends HelpManager {
     }
   }
 
-  public @Nullable String getHelpUrl(@Nullable String id) {
+  public static @Nullable String getHelpUrl(@Nullable String id) {
     id = StringUtil.notNullize(id, "top");
 
     for (WebHelpProvider provider : WEB_HELP_PROVIDER_EP_NAME.getExtensions()) {

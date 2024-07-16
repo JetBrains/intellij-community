@@ -6,10 +6,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LightResolveTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -121,5 +120,40 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     PsiClass aClass = ((PsiMethod)target).getContainingClass();
     PsiMethod[] methods = aClass.getMethods();
     assertEquals(3, methods.length);
+  }
+
+  public void testMethodsDumbMode() {
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      myFixture.configureByText("CustomAnnotation.java", """
+        package org.example.a;
+        
+        public interface @CustomAnnotation {
+        }
+      
+        """);
+      PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("DumbRecord.java",
+            """
+              package org.example.b;
+              
+              import org.example.a.CustomAnnotation;
+              import java.util.List;
+              
+              public record DumbRecord(String a, String b, @CustomAnnotation List<@CustomAnnotation String> c) {}
+              """);
+      PsiClass psiClass = file.getClasses()[0];
+      //3 fields + 1 canonical constructor
+      PsiMethod[] methods = psiClass.getMethods();
+      assertEquals(4, methods.length);
+      for (PsiMethod method : methods) {
+        if (!method.isConstructor()) {
+          assertNotNull(method.getReturnType());
+        }
+        else {
+          for (PsiParameter parameter : method.getParameterList().getParameters()) {
+            assertNotNull(parameter.getType());
+          }
+        }
+      }
+    });
   }
 }

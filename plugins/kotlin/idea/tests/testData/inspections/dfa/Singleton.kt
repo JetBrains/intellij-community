@@ -10,8 +10,8 @@ fun test(t: MySealed) {
     }
 }
 
-fun testUnit(<warning descr="[UNUSED_PARAMETER] Parameter 'x' is never used">x</warning>: Int) {
-
+fun testUnit(x: Int) {
+    println(x)
 }
 
 fun check(a1: MySingleton, a2: MySingleton, a3: MySingleton?) {

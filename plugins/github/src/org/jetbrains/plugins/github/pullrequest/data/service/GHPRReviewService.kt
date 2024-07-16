@@ -2,79 +2,44 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.diff.util.Side
-import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.pullrequest.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import java.util.concurrent.CompletableFuture
 
 interface GHPRReviewService {
-
   fun canComment(): Boolean
 
-  @CalledInAny
-  fun loadPendingReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier)
-    : CompletableFuture<GHPullRequestPendingReviewDTO?>
+  suspend fun loadPendingReview(pullRequestId: GHPRIdentifier): GHPullRequestPendingReviewDTO?
 
-  @CalledInAny
-  fun loadReviewThreads(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier)
-    : CompletableFuture<List<GHPullRequestReviewThread>>
+  suspend fun loadReviewThreads(pullRequestId: GHPRIdentifier): List<GHPullRequestReviewThread>
 
-  @CalledInAny
-  fun createReview(progressIndicator: ProgressIndicator,
-                   pullRequestId: GHPRIdentifier,
-                   event: GHPullRequestReviewEvent? = null,
-                   body: String? = null,
-                   commitSha: String? = null,
-                   threads: List<GHPullRequestDraftReviewThread>? = null): CompletableFuture<GHPullRequestPendingReviewDTO>
+  suspend fun createReview(pullRequestId: GHPRIdentifier,
+                           event: GHPullRequestReviewEvent? = null,
+                           body: String? = null,
+                           commitSha: String? = null,
+                           threads: List<GHPullRequestDraftReviewThread>? = null): GHPullRequestPendingReviewDTO
 
-  @CalledInAny
-  fun submitReview(progressIndicator: ProgressIndicator,
-                   pullRequestId: GHPRIdentifier,
-                   reviewId: String,
-                   event: GHPullRequestReviewEvent,
-                   body: String?): CompletableFuture<out Any?>
+  suspend fun submitReview(pullRequestId: GHPRIdentifier, reviewId: String, event: GHPullRequestReviewEvent, body: String?)
 
-  @CalledInAny
-  fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<GHPullRequestReview>
+  suspend fun updateReviewBody(reviewId: String, newText: String): GHPullRequestReview
 
-  @CalledInAny
-  fun deleteReview(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, reviewId: String): CompletableFuture<out Any?>
+  suspend fun deleteReview(pullRequestId: GHPRIdentifier, reviewId: String)
 
-  @CalledInAny
-  fun addComment(progressIndicator: ProgressIndicator,
-                 pullRequestId: GHPRIdentifier,
-                 reviewId: String,
-                 replyToCommentId: String,
-                 body: String)
-    : CompletableFuture<GHPullRequestReviewComment>
+  suspend fun addComment(pullRequestId: GHPRIdentifier, reviewId: String, replyToCommentId: String, body: String): GHPullRequestReviewComment
 
-  @CalledInAny
-  fun addComment(progressIndicator: ProgressIndicator, reviewId: String,
-                 body: String, commitSha: String, fileName: String, diffLine: Int)
-    : CompletableFuture<GHPullRequestReviewComment>
+  suspend fun addComment(reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int): GHPullRequestReviewComment
 
-  @CalledInAny
-  fun addThread(progressIndicator: ProgressIndicator, reviewId: String,
-                body: String, line: Int, side: Side, startLine: Int, fileName: String)
-    : CompletableFuture<GHPullRequestReviewThread>
+  suspend fun addThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String): GHPullRequestReviewThread
 
-  @CalledInAny
-  fun deleteComment(progressIndicator: ProgressIndicator,
-                    pullRequestId: GHPRIdentifier,
-                    commentId: String): CompletableFuture<GHPullRequestPendingReviewDTO>
+  suspend fun deleteComment(pullRequestId: GHPRIdentifier, commentId: String): GHPullRequestPendingReviewDTO
 
-  @CalledInAny
-  fun updateComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String, newText: String)
-    : CompletableFuture<GHPullRequestReviewComment>
+  suspend fun updateComment(pullRequestId: GHPRIdentifier, commentId: String, newText: String): GHPullRequestReviewComment
 
-  @CalledInAny
-  fun resolveThread(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, id: String)
-    : CompletableFuture<GHPullRequestReviewThread>
+  suspend fun resolveThread(pullRequestId: GHPRIdentifier, id: String): GHPullRequestReviewThread
 
-  @CalledInAny
-  fun unresolveThread(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, id: String)
-    : CompletableFuture<GHPullRequestReviewThread>
+  suspend fun unresolveThread(pullRequestId: GHPRIdentifier, id: String): GHPullRequestReviewThread
 }

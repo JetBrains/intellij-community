@@ -2,9 +2,11 @@
 package com.intellij.openapi.application;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Provides an ability to customize the paths where configuration and caches of IDE will be stored.
@@ -12,7 +14,7 @@ import java.nio.file.Path;
  */
 @ApiStatus.Internal
 public interface PathCustomizer {
-  @Nullable CustomPaths customizePaths();
+  @Nullable CustomPaths customizePaths(@NotNull List<String> args);
 
   final class CustomPaths {
     public CustomPaths(@Nullable String configPath, @Nullable String systemPath, @Nullable String pluginsPath, @Nullable String logDirPath,

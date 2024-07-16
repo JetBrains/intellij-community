@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.*
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
@@ -35,6 +36,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUt
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
+private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
+
 internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
@@ -46,7 +49,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 ) : GitLabMergeRequestReviewViewModelBase(
-  parentCs.childScope(CoroutineName("GitLab Merge Request Editor Review VM")),
+  parentCs.childScope("GitLab Merge Request Editor Review VM"),
   currentUser, mergeRequest
 ), CodeReviewInEditorViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
@@ -152,8 +155,12 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
           emit(null)
           return@transform
         }
+        val diffData = parsedChanges.patchesByChange[change] ?: run {
+          LOG.info("Diff data not found for change $change")
+          emit(null)
+          return@transform
+        }
         val changeSelection = ChangesSelection.Precise(parsedChanges.changes, change)
-        val diffData = parsedChanges.patchesByChange[change]!!
         emit(changeSelection to diffData)
       }.mapNullableScoped { (change, diffData) ->
         createChangeVm(change, diffData)

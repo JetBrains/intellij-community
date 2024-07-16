@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -75,6 +75,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -89,6 +90,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * listen for any daemon-related activities and restart the daemon if needed
+ */
 public final class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance(DaemonListeners.class);
   private final Project myProject;
@@ -178,7 +182,7 @@ public final class DaemonListeners implements Disposable {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333913, EA-765304")) {
         for (Editor editor : activeEditors) {
-          PsiFile file = psiDocumentManager.getCachedPsiFile(editor.getDocument());
+          PsiFile file = ReadAction.compute(() -> psiDocumentManager.getCachedPsiFile(editor.getDocument()));
           errorStripeUpdateManager.repaintErrorStripePanel(editor, file);
         }
       }
@@ -227,7 +231,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
-        // re-initialize TrafficLightRenderer in each editor since root change event could change highlightability
+        // re-initialize TrafficLightRenderer in each editor since root change event could change highlight-ability
         reInitTrafficLightRendererForAllEditors();
       }
     });
@@ -248,9 +252,12 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(PowerSaveMode.TOPIC, () -> {
       stopDaemonAndRestartAllFiles("Power save mode changed to " + PowerSaveMode.isEnabled());
       if (PowerSaveMode.isEnabled()) {
-        clearAllHighlightersInAllEditors();
+        clearHighlightingRelatedHighlightersInAllEditors();
         reInitTrafficLightRendererForAllEditors();
         repaintTrafficLightIconForAllEditors();
+      }
+      else {
+        daemonCodeAnalyzer.restart();
       }
     });
     connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
@@ -330,6 +337,7 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
+    //noinspection rawtypes
     connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {
@@ -352,9 +360,9 @@ public final class DaemonListeners implements Disposable {
       }
     });
 
-    restartOnExtensionChange(LanguageAnnotators.EP_NAME, "annotators list changed");
-    restartOnExtensionChange(LineMarkerProviders.EP_NAME, "line marker providers list changed");
-    restartOnExtensionChange(ExternalLanguageAnnotators.EP_NAME, "external annotators list changed");
+    listenForExtensionChange(LanguageAnnotators.EP_NAME, "annotators list changed");
+    listenForExtensionChange(LineMarkerProviders.EP_NAME, "line marker providers list changed");
+    listenForExtensionChange(ExternalLanguageAnnotators.EP_NAME, "external annotators list changed");
 
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -426,25 +434,32 @@ public final class DaemonListeners implements Disposable {
     }
   }
 
-  private void clearAllHighlightersInAllEditors() {
+  private void clearHighlightingRelatedHighlightersInAllEditors() {
     for (Editor editor : myActiveEditors) {
       editor.getMarkupModel().removeAllHighlighters();
       MarkupModel documentMarkupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
-      if (documentMarkupModel != null) {
-        documentMarkupModel.removeAllHighlighters();
+      List<RangeHighlighter> toRemove = documentMarkupModel == null ? List.of() : ContainerUtil.filter(documentMarkupModel.getAllHighlighters(), highlighter -> {
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        return info != null && (info.isFromInspection() || info.isFromAnnotator() || info.isFromHighlightVisitor());
+      });
+      for (RangeHighlighter highlighter : toRemove) {
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (info != null) {
+          UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, myProject, info);
+        }
       }
     }
   }
 
   private Project guessProject(@NotNull VirtualFile virtualFile) {
-    if (FileEditorManager.getInstance(myProject).getAllEditors(virtualFile).length != 0) {
+    if (!FileEditorManager.getInstance(myProject).getAllEditorList(virtualFile).isEmpty()) {
       // if at least one editor in myProject frame has opened this file, then we can assume this file does belong to the myProject
       return myProject;
     }
     return ProjectUtil.guessProjectForFile(virtualFile);
   }
 
-  private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {
+  private <T, U extends KeyedLazyInstance<T>> void listenForExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {
     name.addChangeListener(() -> stopDaemonAndRestartAllFiles(message), this);
   }
 
@@ -508,7 +523,7 @@ public final class DaemonListeners implements Disposable {
   /**
    * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean, ThreeState)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
     PluginException.reportDeprecatedUsage("this method", "");
     return canChangeFileSilently(file, true, ThreeState.UNSURE);

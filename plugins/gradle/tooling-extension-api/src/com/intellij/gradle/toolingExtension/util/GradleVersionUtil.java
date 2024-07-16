@@ -60,7 +60,7 @@ public final class GradleVersionUtil {
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isGradleNewerThan(@NotNull String actualVersion, @NotNull String version) {
-    return isGradleAtLeast(GradleVersion.version(actualVersion), version);
+    return isGradleNewerThan(GradleVersion.version(actualVersion), version);
   }
 
   /**

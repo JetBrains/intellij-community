@@ -117,7 +117,7 @@ public class ExtendSealedClassFix extends PsiBasedModCommandAction<PsiClass> {
       Query<PsiClass> subclassInheritors = DirectClassInheritorsSearch.search(subclass);
       if (PsiModifier.FINAL.equals(myModifier) && subclassInheritors.findFirst() != null ||
           PsiModifier.SEALED.equals(myModifier) && subclassInheritors.anyMatch(child -> !hasSealedClassSubclassModifier(child))) {
-        subclass.navigate(true);
+        updater.moveCaretTo(subclass);
       }
     }
   }

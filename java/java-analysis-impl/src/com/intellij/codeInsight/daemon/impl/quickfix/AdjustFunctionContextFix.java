@@ -16,7 +16,6 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +81,8 @@ public class AdjustFunctionContextFix extends PsiUpdateModCommandAction<PsiMetho
     return QuickFixBundle.message("adjust.method.accepting.functional.expression.fix.family.name");
   }
 
-  @Contract("null -> null")
   @Nullable
-  public static IntentionAction createFix(PsiElement context) {
+  public static IntentionAction createFix(@NotNull PsiElement context) {
     if (!(context instanceof PsiExpression expression)) return null;
     PsiFunctionalExpression fn = PsiTreeUtil.getParentOfType(context, PsiFunctionalExpression.class, false);
     if (fn == null) return null;

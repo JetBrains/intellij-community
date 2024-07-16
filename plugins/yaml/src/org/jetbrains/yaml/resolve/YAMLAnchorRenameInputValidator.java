@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.resolve;
 
 import com.intellij.patterns.ElementPattern;
@@ -11,9 +11,8 @@ import org.jetbrains.yaml.psi.YAMLAnchor;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class YAMLAnchorRenameInputValidator implements RenameInputValidator {
-  @NotNull
   @Override
-  public ElementPattern<? extends PsiElement> getPattern() {
+  public @NotNull ElementPattern<? extends PsiElement> getPattern() {
     return psiElement(YAMLAnchor.class);
   }
 

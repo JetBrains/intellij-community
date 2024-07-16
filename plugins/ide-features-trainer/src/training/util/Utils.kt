@@ -142,6 +142,8 @@ fun getFeedbackLink(langName: String, ownRegistry: Boolean): String? {
   return if (needToShow) "https://surveys.jetbrains.com/s3/features-trainer-feedback-$langName" else null
 }
 
+val useShortOnboardingLesson: Boolean get() = Registry.`is`("ift.short.onboarding.lesson", false)
+
 val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
 

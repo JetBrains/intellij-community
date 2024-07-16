@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
+public final class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   /**
    * @noinspection PublicField, WeakerAccess
    */

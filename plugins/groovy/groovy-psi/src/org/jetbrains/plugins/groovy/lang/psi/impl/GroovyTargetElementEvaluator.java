@@ -31,7 +31,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.CollapsingKt.collapseRef
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
+public final class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
 
   public static final Key<Object> NAVIGATION_ELEMENT_IS_NOT_TARGET = Key.create("GroovyTargetElementEvaluator.DONT_FOLLOW_NAVIGATION_ELEMENT");
 

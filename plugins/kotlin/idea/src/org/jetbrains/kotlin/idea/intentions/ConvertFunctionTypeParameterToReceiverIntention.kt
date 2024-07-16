@@ -10,10 +10,13 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
@@ -33,7 +36,6 @@ import org.jetbrains.kotlin.idea.refactoring.getAffectedCallables
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
-import org.jetbrains.kotlin.idea.search.usagesSearch.searchReferencesOrMethodReferences
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -387,5 +389,13 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
     override fun applyTo(element: KtTypeReference, editor: Editor?) {
         element.getConversionData()?.let { Converter(it, editor).run() }
+    }
+}
+fun PsiElement.searchReferencesOrMethodReferences(): Collection<PsiReference> {
+    val lightMethods = toLightMethods()
+    return if (lightMethods.isNotEmpty()) {
+        lightMethods.flatMapTo(LinkedHashSet()) { MethodReferencesSearch.search(it) }
+    } else {
+        ReferencesSearch.search(this).findAll()
     }
 }

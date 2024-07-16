@@ -1,5 +1,5 @@
 // FILE: test.before.kt
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (bar()!!) call" "true"
 // WITH_STDLIB
 package p;
 
@@ -39,7 +39,7 @@ public class Foo {
 }
 
 // FILE: test.after.kt
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (bar()!!) call" "true"
 // WITH_STDLIB
 package p;
 

@@ -19,6 +19,7 @@ import java.util.function.Supplier
 /**
  * Collection of utilities to use CompletableFuture and not care about CF and platform quirks
  */
+@Deprecated("Deprecated with migration to coroutines")
 object CompletableFutureUtil {
 
   /**
@@ -45,6 +46,7 @@ object CompletableFutureUtil {
   /**
    * Submit a [task] to IO thread pool under correct [ProgressIndicator]
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T> ProgressManager.submitIOTask(progressIndicator: ProgressIndicator,
                                        task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> =
     submitIOTask(progressIndicator, false, task)
@@ -52,6 +54,7 @@ object CompletableFutureUtil {
   /**
    * Submit a [task] to IO thread pool under correct [ProgressIndicator]
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T> ProgressManager.submitIOTask(progressIndicator: ProgressIndicator,
                                        cancelIndicatorOnFutureCancel: Boolean = false,
                                        task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> =
@@ -66,6 +69,7 @@ object CompletableFutureUtil {
   /**
    * Submit a [task] to IO thread pool under correct [ProgressIndicator] acquired from [indicatorProvider] and release the indicator when task is completed
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T> ProgressManager.submitIOTask(indicatorProvider: ProgressIndicatorsProvider,
                                        task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> =
     submitIOTask(indicatorProvider, false, task)
@@ -73,6 +77,7 @@ object CompletableFutureUtil {
   /**
    * Submit a [task] to IO thread pool under correct [ProgressIndicator] acquired from [indicatorProvider] and release the indicator when task is completed
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T> ProgressManager.submitIOTask(indicatorProvider: ProgressIndicatorsProvider,
                                        cancelIndicatorOnFutureCancel: Boolean = false,
                                        task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> {
@@ -89,6 +94,7 @@ object CompletableFutureUtil {
    *
    * @param handler invoked when computation completes
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T> CompletableFuture<T>.handleOnEdt(disposable: Disposable,
                                            handler: (T?, Throwable?) -> Unit): CompletableFuture<Unit> {
     val handlerReference = AtomicReference(handler)
@@ -108,6 +114,7 @@ object CompletableFutureUtil {
    * @see [CompletableFuture.handle]
    * @param handler invoked when computation completes
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T, R> CompletableFuture<T>.handleOnEdt(modalityState: ModalityState? = null,
                                               handler: (T?, Throwable?) -> R): CompletableFuture<R> =
     handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
@@ -120,21 +127,12 @@ object CompletableFutureUtil {
    * @see [CompletableFuture.thenApply]
    * @param handler invoked when computation completes without exception
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T, R> CompletableFuture<T>.successOnEdt(modalityState: ModalityState? = null, handler: (T) -> R): CompletableFuture<R> =
     handleOnEdt(modalityState) { result, error ->
       @Suppress("UNCHECKED_CAST")
       if (error != null) throw extractError(error) else handler(result as T)
     }
-
-  /**
-   * Compose the result of async computation on EDT
-   *
-   * @see [CompletableFuture.thenApply]
-   * @param handler invoked when computation completes without exception
-   */
-  fun <T, R> CompletableFuture<T>.composeOnEdt(modalityState: ModalityState? = null,
-                                               handler: (T) -> CompletableFuture<R>): CompletableFuture<R> =
-    thenComposeAsync({ handler(it) }, getEDTExecutor(modalityState))
 
   /**
    * Handle the error on EDT
@@ -144,6 +142,7 @@ object CompletableFutureUtil {
    * @see [CompletableFuture.exceptionally]
    * @param handler invoked when computation throws an exception which IS NOT [isCancellation]
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T> CompletableFuture<T>.errorOnEdt(modalityState: ModalityState? = null,
                                           handler: (Throwable) -> Unit): CompletableFuture<T> =
     handleOnEdt(modalityState) { result, error ->
@@ -163,6 +162,7 @@ object CompletableFutureUtil {
    * @see [CompletableFuture.exceptionally]
    * @param handler invoked when computation throws an exception which IS [isCancellation]
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T> CompletableFuture<T>.cancellationOnEdt(modalityState: ModalityState? = null,
                                                  handler: (ProcessCanceledException) -> Unit): CompletableFuture<T> =
     handleOnEdt(modalityState) { result, error ->
@@ -181,6 +181,7 @@ object CompletableFutureUtil {
    * @see [CompletableFuture.whenComplete]
    * @param handler invoked when computation completes successfully or throws an exception which IS NOT [isCancellation]
    */
+  @Deprecated("Deprecated with migration to coroutines")
   fun <T> CompletableFuture<T>.completionOnEdt(modalityState: ModalityState? = null,
                                                handler: () -> Unit): CompletableFuture<T> =
     handleOnEdt(modalityState) { result, error ->
@@ -195,5 +196,5 @@ object CompletableFutureUtil {
       }
     }
 
-  fun getEDTExecutor(modalityState: ModalityState? = null) = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }
+  private fun getEDTExecutor(modalityState: ModalityState? = null) = Executor { runnable -> runInEdt(modalityState) { runnable.run() } }
 }

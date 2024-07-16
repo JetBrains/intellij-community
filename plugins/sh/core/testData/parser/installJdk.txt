@@ -1375,45 +1375,46 @@ SHELL_SCRIPT
             PsiElement(if)('if')
             PsiWhiteSpace(' ')
             COMPOUND_LIST
-              CONDITIONAL_COMMAND
-                PsiElement([[)('[[')
-                PsiWhiteSpace(' ')
-                EQUALITY_CONDITION
-                  LITERAL_CONDITION
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('feature')
-                      PsiElement(})('}')
+              PIPELINE_COMMAND_LIST
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('feature')
+                        PsiElement(})('}')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(RAW_STRING)(''?'')
                   PsiWhiteSpace(' ')
-                  LITERAL_CONDITION
-                    STRING
-                      PsiElement(RAW_STRING)(''?'')
+                  PsiElement(]])(']]')
                 PsiWhiteSpace(' ')
-                PsiElement(]])(']]')
-              PsiWhiteSpace(' ')
-              PsiElement(||)('||')
-              PsiWhiteSpace(' ')
-              CONDITIONAL_COMMAND
-                PsiElement([[)('[[')
+                PsiElement(||)('||')
                 PsiWhiteSpace(' ')
-                EQUALITY_CONDITION
-                  LITERAL_CONDITION
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('feature')
-                      PsiElement(})('}')
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
                   PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('feature')
+                        PsiElement(})('}')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      STRING
+                        PsiElement(RAW_STRING)(''ea'')
                   PsiWhiteSpace(' ')
-                  LITERAL_CONDITION
-                    STRING
-                      PsiElement(RAW_STRING)(''ea'')
-                PsiWhiteSpace(' ')
-                PsiElement(]])(']]')
+                  PsiElement(]])(']]')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             THEN_CLAUSE
@@ -1439,48 +1440,49 @@ SHELL_SCRIPT
             PsiElement(if)('if')
             PsiWhiteSpace(' ')
             COMPOUND_LIST
-              CONDITIONAL_COMMAND
-                PsiElement([[)('[[')
+              PIPELINE_COMMAND_LIST
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(word)('feature')
+                      PsiElement(})('}')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-lt')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    NUMBER
+                      PsiElement(int)('9')
+                  PsiWhiteSpace(' ')
+                  PsiElement(]])(']]')
                 PsiWhiteSpace(' ')
-                LITERAL_CONDITION
-                  PsiElement($)('$')
-                  SHELL_PARAMETER_EXPANSION
-                    PsiElement({)('{')
-                    PsiElement(word)('feature')
-                    PsiElement(})('}')
+                PsiElement(||)('||')
                 PsiWhiteSpace(' ')
-                LITERAL_CONDITION
-                  PsiElement(word)('-lt')
-                PsiWhiteSpace(' ')
-                LITERAL_CONDITION
-                  NUMBER
-                    PsiElement(int)('9')
-                PsiWhiteSpace(' ')
-                PsiElement(]])(']]')
-              PsiWhiteSpace(' ')
-              PsiElement(||)('||')
-              PsiWhiteSpace(' ')
-              CONDITIONAL_COMMAND
-                PsiElement([[)('[[')
-                PsiWhiteSpace(' ')
-                LITERAL_CONDITION
-                  PsiElement($)('$')
-                  SHELL_PARAMETER_EXPANSION
-                    PsiElement({)('{')
-                    PsiElement(word)('feature')
-                    PsiElement(})('}')
-                PsiWhiteSpace(' ')
-                LITERAL_CONDITION
-                  PsiElement(word)('-gt')
-                PsiWhiteSpace(' ')
-                LITERAL_CONDITION
-                  PsiElement($)('$')
-                  SHELL_PARAMETER_EXPANSION
-                    PsiElement({)('{')
-                    PsiElement(word)('latest_jdk')
-                    PsiElement(})('}')
-                PsiWhiteSpace(' ')
-                PsiElement(]])(']]')
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(word)('feature')
+                      PsiElement(})('}')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement(word)('-gt')
+                  PsiWhiteSpace(' ')
+                  LITERAL_CONDITION
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(word)('latest_jdk')
+                      PsiElement(})('}')
+                  PsiWhiteSpace(' ')
+                  PsiElement(]])(']]')
               PsiElement(;)(';')
             PsiWhiteSpace(' ')
             THEN_CLAUSE
@@ -1648,30 +1650,31 @@ SHELL_SCRIPT
               PsiElement())(')')
               PsiWhiteSpace(' ')
               COMPOUND_LIST
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('url')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('DOWNLOAD')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/GA/jdk9/9.0.4/binaries/openjdk-9.0.4_')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('os')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('_bin.tar.gz')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('return')
+                PIPELINE_COMMAND_LIST
+                  ASSIGNMENT_COMMAND
+                    LITERAL
+                      PsiElement(word)('url')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('DOWNLOAD')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/GA/jdk9/9.0.4/binaries/openjdk-9.0.4_')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('os')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('_bin.tar.gz')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
+                  PsiWhiteSpace(' ')
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('return')
             PsiElement(;;)(';;')
             CASE_CLAUSE
               PsiElement(\n)('\n')
@@ -1681,30 +1684,31 @@ SHELL_SCRIPT
               PsiElement())(')')
               PsiWhiteSpace(' ')
               COMPOUND_LIST
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('url')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('DOWNLOAD')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/GA/jdk10/10.0.2/19aef61b38124481863b1413dce1855f/13/openjdk-10.0.2_')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('os')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('_bin.tar.gz')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('return')
+                PIPELINE_COMMAND_LIST
+                  ASSIGNMENT_COMMAND
+                    LITERAL
+                      PsiElement(word)('url')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('DOWNLOAD')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/GA/jdk10/10.0.2/19aef61b38124481863b1413dce1855f/13/openjdk-10.0.2_')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('os')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('_bin.tar.gz')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
+                  PsiWhiteSpace(' ')
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('return')
             PsiElement(;;)(';;')
             CASE_CLAUSE
               PsiElement(\n)('\n')
@@ -1714,30 +1718,31 @@ SHELL_SCRIPT
               PsiElement())(')')
               PsiWhiteSpace(' ')
               COMPOUND_LIST
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('url')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('DOWNLOAD')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/GA/jdk11/9/GPL/openjdk-11.0.2_')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('os')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('_bin.tar.gz')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('return')
+                PIPELINE_COMMAND_LIST
+                  ASSIGNMENT_COMMAND
+                    LITERAL
+                      PsiElement(word)('url')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('DOWNLOAD')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/GA/jdk11/9/GPL/openjdk-11.0.2_')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('os')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('_bin.tar.gz')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
+                  PsiWhiteSpace(' ')
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('return')
             PsiElement(;;)(';;')
             CASE_CLAUSE
               PsiElement(\n)('\n')
@@ -1747,30 +1752,31 @@ SHELL_SCRIPT
               PsiElement())(')')
               PsiWhiteSpace(' ')
               COMPOUND_LIST
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('url')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('DOWNLOAD')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/GA/jdk12.0.2/e482c34c86bd4bf8b56c0b35558996b9/10/GPL/openjdk-12.0.2_')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('os')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('_bin.tar.gz')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('return')
+                PIPELINE_COMMAND_LIST
+                  ASSIGNMENT_COMMAND
+                    LITERAL
+                      PsiElement(word)('url')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('DOWNLOAD')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/GA/jdk12.0.2/e482c34c86bd4bf8b56c0b35558996b9/10/GPL/openjdk-12.0.2_')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('os')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('_bin.tar.gz')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
+                  PsiWhiteSpace(' ')
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('return')
             PsiElement(;;)(';;')
             CASE_CLAUSE
               PsiElement(\n)('\n')
@@ -1780,30 +1786,31 @@ SHELL_SCRIPT
               PsiElement())(')')
               PsiWhiteSpace(' ')
               COMPOUND_LIST
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('url')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('DOWNLOAD')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/GA/jdk13.0.1/cec27d702aa74d5a8630c65ae61e4305/9/GPL/openjdk-13.0.1_')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('os')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('_bin.tar.gz')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('return')
+                PIPELINE_COMMAND_LIST
+                  ASSIGNMENT_COMMAND
+                    LITERAL
+                      PsiElement(word)('url')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('DOWNLOAD')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/GA/jdk13.0.1/cec27d702aa74d5a8630c65ae61e4305/9/GPL/openjdk-13.0.1_')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('os')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('_bin.tar.gz')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
+                  PsiWhiteSpace(' ')
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('return')
             PsiElement(;;)(';;')
             PsiElement(\n)('\n')
             PsiWhiteSpace('    ')
@@ -1828,52 +1835,53 @@ SHELL_SCRIPT
                 SUBSHELL_COMMAND
                   PsiElement(()('(')
                   COMPOUND_LIST
-                    SIMPLE_COMMAND
-                      GENERIC_COMMAND_DIRECTIVE
+                    PIPELINE_COMMAND_LIST
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('wget')
+                        PsiWhiteSpace(' ')
                         LITERAL
-                          PsiElement(word)('wget')
-                      PsiWhiteSpace(' ')
-                      LITERAL
-                        PsiElement(word)('--quiet')
-                      PsiWhiteSpace(' ')
-                      LITERAL
-                        PsiElement(word)('--output-document')
-                      PsiWhiteSpace(' ')
-                      LITERAL
-                        PsiElement(word)('-')
-                      PsiWhiteSpace(' ')
-                      SIMPLE_COMMAND_ELEMENT
-                        PsiElement($)('$')
-                        SHELL_PARAMETER_EXPANSION
-                          PsiElement({)('{')
-                          PsiElement(word)('JAVA_NET')
-                          PsiElement(})('}')
-                    PsiWhiteSpace(' ')
-                    PsiElement(|)('|')
-                    PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND
-                      GENERIC_COMMAND_DIRECTIVE
+                          PsiElement(word)('--quiet')
+                        PsiWhiteSpace(' ')
                         LITERAL
-                          PsiElement(word)('grep')
-                      PsiWhiteSpace(' ')
-                      LITERAL
-                        PsiElement(word)('-Eo')
-                      PsiWhiteSpace(' ')
-                      STRING
-                        PsiElement(RAW_STRING)(''href[[:space:]]*=[[:space:]]*"[^\"]+"'')
-                    PsiWhiteSpace(' ')
-                    PsiElement(|)('|')
-                    PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND
-                      GENERIC_COMMAND_DIRECTIVE
+                          PsiElement(word)('--output-document')
+                        PsiWhiteSpace(' ')
                         LITERAL
-                          PsiElement(word)('grep')
+                          PsiElement(word)('-')
+                        PsiWhiteSpace(' ')
+                        SIMPLE_COMMAND_ELEMENT
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(word)('JAVA_NET')
+                            PsiElement(})('}')
                       PsiWhiteSpace(' ')
-                      LITERAL
-                        PsiElement(word)('-Eo')
+                      PsiElement(|)('|')
                       PsiWhiteSpace(' ')
-                      STRING
-                        PsiElement(RAW_STRING)(''(http|https)://[^"]+'')
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('grep')
+                        PsiWhiteSpace(' ')
+                        LITERAL
+                          PsiElement(word)('-Eo')
+                        PsiWhiteSpace(' ')
+                        STRING
+                          PsiElement(RAW_STRING)(''href[[:space:]]*=[[:space:]]*"[^\"]+"'')
+                      PsiWhiteSpace(' ')
+                      PsiElement(|)('|')
+                      PsiWhiteSpace(' ')
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('grep')
+                        PsiWhiteSpace(' ')
+                        LITERAL
+                          PsiElement(word)('-Eo')
+                        PsiWhiteSpace(' ')
+                        STRING
+                          PsiElement(RAW_STRING)(''(http|https)://[^"]+'')
                   PsiElement())(')')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
@@ -1885,69 +1893,70 @@ SHELL_SCRIPT
             SUBSHELL_COMMAND
               PsiElement(()('(')
               COMPOUND_LIST
-                SIMPLE_COMMAND
+                PIPELINE_COMMAND_LIST
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('candidates')
+                        PsiElement(})('}')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(|)('|')
+                  PsiWhiteSpace(' ')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('grep')
+                    PsiWhiteSpace(' ')
+                    LITERAL
+                      PsiElement(word)('-Eo')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('DOWNLOAD')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/.+/jdk')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('feature')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/.*')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('license')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/.*jdk-')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('feature')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('.+')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('os')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('_bin(.tar.gz|.zip)$')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiWhiteSpace(' ')
+                  PsiElement(||)('||')
+                  PsiWhiteSpace(' ')
                   GENERIC_COMMAND_DIRECTIVE
                     LITERAL
-                      PsiElement(word)('echo')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('candidates')
-                      PsiElement(})('}')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiWhiteSpace(' ')
-                PsiElement(|)('|')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('grep')
-                  PsiWhiteSpace(' ')
-                  LITERAL
-                    PsiElement(word)('-Eo')
-                  PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('DOWNLOAD')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/.+/jdk')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('feature')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/.*')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('license')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/.*jdk-')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('feature')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('.+')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('os')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('_bin(.tar.gz|.zip)$')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiWhiteSpace(' ')
-                PsiElement(||)('||')
-                PsiWhiteSpace(' ')
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('true')
+                      PsiElement(word)('true')
               PsiElement())(')')
           PsiElement(\n)('\n')
           PsiElement(\n)('\n')
@@ -2280,56 +2289,57 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('local')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              ASSIGNMENT_COMMAND
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
                 LITERAL
-                  PsiElement(word)('quiet')
-                PsiElement(=)('=')
-                STRING
-                  PsiElement(RAW_STRING)(''--quiet'')
-          PsiElement(;)(';')
-          PsiWhiteSpace(' ')
-          IF_COMMAND
-            PsiElement(if)('if')
-            PsiWhiteSpace(' ')
-            COMPOUND_LIST
-              CONDITIONAL_COMMAND
-                PsiElement([[)('[[')
-                PsiWhiteSpace(' ')
-                EQUALITY_CONDITION
-                  LITERAL_CONDITION
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('verbose')
-                      PsiElement(})('}')
-                  PsiWhiteSpace(' ')
-                  PsiElement(==)('==')
-                  PsiWhiteSpace(' ')
-                  LITERAL_CONDITION
-                    PsiElement(word)('true')
-                PsiWhiteSpace(' ')
-                PsiElement(]])(']]')
-              PsiElement(;)(';')
-            PsiWhiteSpace(' ')
-            THEN_CLAUSE
-              PsiElement(then)('then')
+                  PsiElement(word)('local')
               PsiWhiteSpace(' ')
-              COMPOUND_LIST
+              SIMPLE_COMMAND_ELEMENT
                 ASSIGNMENT_COMMAND
                   LITERAL
                     PsiElement(word)('quiet')
                   PsiElement(=)('=')
                   STRING
-                    PsiElement(RAW_STRING)('''')
-                PsiElement(;)(';')
+                    PsiElement(RAW_STRING)(''--quiet'')
+            PsiElement(;)(';')
             PsiWhiteSpace(' ')
-            PsiElement(fi)('fi')
+            IF_COMMAND
+              PsiElement(if)('if')
+              PsiWhiteSpace(' ')
+              COMPOUND_LIST
+                CONDITIONAL_COMMAND
+                  PsiElement([[)('[[')
+                  PsiWhiteSpace(' ')
+                  EQUALITY_CONDITION
+                    LITERAL_CONDITION
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('verbose')
+                        PsiElement(})('}')
+                    PsiWhiteSpace(' ')
+                    PsiElement(==)('==')
+                    PsiWhiteSpace(' ')
+                    LITERAL_CONDITION
+                      PsiElement(word)('true')
+                  PsiWhiteSpace(' ')
+                  PsiElement(]])(']]')
+                PsiElement(;)(';')
+              PsiWhiteSpace(' ')
+              THEN_CLAUSE
+                PsiElement(then)('then')
+                PsiWhiteSpace(' ')
+                COMPOUND_LIST
+                  ASSIGNMENT_COMMAND
+                    LITERAL
+                      PsiElement(word)('quiet')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(RAW_STRING)('''')
+                  PsiElement(;)(';')
+              PsiWhiteSpace(' ')
+              PsiElement(fi)('fi')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
           SIMPLE_COMMAND
@@ -2642,63 +2652,64 @@ SHELL_SCRIPT
                         SUBSHELL_COMMAND
                           PsiElement(()('(')
                           COMPOUND_LIST
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
+                            PIPELINE_COMMAND_LIST
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('tar')
+                                PsiWhiteSpace(' ')
                                 LITERAL
-                                  PsiElement(word)('tar')
+                                  PsiElement(word)('--list')
+                                PsiWhiteSpace(' ')
+                                SIMPLE_COMMAND_ELEMENT
+                                  PsiElement($)('$')
+                                  SHELL_PARAMETER_EXPANSION
+                                    PsiElement({)('{')
+                                    PsiElement(word)('tar_options')
+                                    PsiElement(})('}')
                               PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('--list')
+                              PsiElement(|)('|')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                PsiElement($)('$')
-                                SHELL_PARAMETER_EXPANSION
-                                  PsiElement({)('{')
-                                  PsiElement(word)('tar_options')
-                                  PsiElement(})('}')
-                            PsiWhiteSpace(' ')
-                            PsiElement(|)('|')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('grep')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(RAW_STRING)(''bin/javac'')
+                              PsiWhiteSpace(' ')
+                              PsiElement(|)('|')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('tr')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(RAW_STRING)(''/'')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(RAW_STRING)(''\n'')
+                              PsiWhiteSpace(' ')
+                              PsiElement(|)('|')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('tail')
+                                PsiWhiteSpace(' ')
                                 LITERAL
-                                  PsiElement(word)('grep')
+                                  PsiElement(word)('-3')
                               PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(RAW_STRING)(''bin/javac'')
-                            PsiWhiteSpace(' ')
-                            PsiElement(|)('|')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
+                              PsiElement(|)('|')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('head')
+                                PsiWhiteSpace(' ')
                                 LITERAL
-                                  PsiElement(word)('tr')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(RAW_STRING)(''/'')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(RAW_STRING)(''\n'')
-                            PsiWhiteSpace(' ')
-                            PsiElement(|)('|')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
-                                LITERAL
-                                  PsiElement(word)('tail')
-                              PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('-3')
-                            PsiWhiteSpace(' ')
-                            PsiElement(|)('|')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
-                                LITERAL
-                                  PsiElement(word)('head')
-                              PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('-1')
+                                  PsiElement(word)('-1')
                           PsiElement())(')')
                       PsiElement(\n)('\n')
                   PsiWhiteSpace('        ')
@@ -2725,62 +2736,63 @@ SHELL_SCRIPT
                         SUBSHELL_COMMAND
                           PsiElement(()('(')
                           COMPOUND_LIST
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
+                            PIPELINE_COMMAND_LIST
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('tar')
+                                PsiWhiteSpace(' ')
                                 LITERAL
-                                  PsiElement(word)('tar')
+                                  PsiElement(word)('--list')
+                                PsiWhiteSpace(' ')
+                                SIMPLE_COMMAND_ELEMENT
+                                  PsiElement($)('$')
+                                  SHELL_PARAMETER_EXPANSION
+                                    PsiElement({)('{')
+                                    PsiElement(word)('tar_options')
+                                    PsiElement(})('}')
                               PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('--list')
+                              PsiElement(|)('|')
                               PsiWhiteSpace(' ')
-                              SIMPLE_COMMAND_ELEMENT
-                                PsiElement($)('$')
-                                SHELL_PARAMETER_EXPANSION
-                                  PsiElement({)('{')
-                                  PsiElement(word)('tar_options')
-                                  PsiElement(})('}')
-                            PsiWhiteSpace(' ')
-                            PsiElement(|)('|')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('head')
+                                PsiWhiteSpace(' ')
                                 LITERAL
-                                  PsiElement(word)('head')
+                                  PsiElement(word)('-2')
                               PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('-2')
-                            PsiWhiteSpace(' ')
-                            PsiElement(|)('|')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
+                              PsiElement(|)('|')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('tail')
+                                PsiWhiteSpace(' ')
                                 LITERAL
-                                  PsiElement(word)('tail')
+                                  PsiElement(word)('-1')
                               PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('-1')
-                            PsiWhiteSpace(' ')
-                            PsiElement(|)('|')
-                            PsiWhiteSpace(' ')
-                            SIMPLE_COMMAND
-                              GENERIC_COMMAND_DIRECTIVE
+                              PsiElement(|)('|')
+                              PsiWhiteSpace(' ')
+                              SIMPLE_COMMAND
+                                GENERIC_COMMAND_DIRECTIVE
+                                  LITERAL
+                                    PsiElement(word)('cut')
+                                PsiWhiteSpace(' ')
                                 LITERAL
-                                  PsiElement(word)('cut')
-                              PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('-f')
-                              PsiWhiteSpace(' ')
-                              NUMBER
-                                PsiElement(int)('2')
-                              PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('-d')
-                              PsiWhiteSpace(' ')
-                              STRING
-                                PsiElement(RAW_STRING)(''/'')
-                              PsiWhiteSpace(' ')
-                              LITERAL
-                                PsiElement(word)('-')
+                                  PsiElement(word)('-f')
+                                PsiWhiteSpace(' ')
+                                NUMBER
+                                  PsiElement(int)('2')
+                                PsiWhiteSpace(' ')
+                                LITERAL
+                                  PsiElement(word)('-d')
+                                PsiWhiteSpace(' ')
+                                STRING
+                                  PsiElement(RAW_STRING)(''/'')
+                                PsiWhiteSpace(' ')
+                                LITERAL
+                                  PsiElement(word)('-')
                           PsiElement())(')')
                         LITERAL
                           PsiElement(word)('/Contents/Home')
@@ -3044,45 +3056,46 @@ SHELL_SCRIPT
                     PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(\n)('\n')
                 PsiWhiteSpace('        ')
-                CONDITIONAL_COMMAND
-                  PsiElement([[)('[[')
-                  PsiWhiteSpace(' ')
-                  LOGICAL_BITWISE_CONDITION
-                    PsiElement(!)('!')
+                PIPELINE_COMMAND_LIST
+                  CONDITIONAL_COMMAND
+                    PsiElement([[)('[[')
                     PsiWhiteSpace(' ')
-                    SIMPLE_COMMAND
-                      GENERIC_COMMAND_DIRECTIVE
-                        LITERAL
-                          PsiElement(word)('-f')
+                    LOGICAL_BITWISE_CONDITION
+                      PsiElement(!)('!')
                       PsiWhiteSpace(' ')
-                      STRING
-                        PsiElement(OPEN_QUOTE)('"')
-                        PsiElement($)('$')
-                        SHELL_PARAMETER_EXPANSION
-                          PsiElement({)('{')
-                          PsiElement(word)('target')
-                          PsiElement(})('}')
-                        PsiElement(STRING_CONTENT)('/release')
-                        PsiElement(CLOSE_QUOTE)('"')
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('-f')
+                        PsiWhiteSpace(' ')
+                        STRING
+                          PsiElement(OPEN_QUOTE)('"')
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(word)('target')
+                            PsiElement(})('}')
+                          PsiElement(STRING_CONTENT)('/release')
+                          PsiElement(CLOSE_QUOTE)('"')
+                    PsiWhiteSpace(' ')
+                    PsiElement(]])(']]')
                   PsiWhiteSpace(' ')
-                  PsiElement(]])(']]')
-                PsiWhiteSpace(' ')
-                PsiElement(||)('||')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('cat')
+                  PsiElement(||)('||')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
-                      PsiElement(word)('target')
-                      PsiElement(})('}')
-                    PsiElement(STRING_CONTENT)('/release')
-                    PsiElement(CLOSE_QUOTE)('"')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('cat')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('target')
+                        PsiElement(})('}')
+                      PsiElement(STRING_CONTENT)('/release')
+                      PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(\n)('\n')
             PsiWhiteSpace('    ')
             PsiElement(fi)('fi')
@@ -3398,24 +3411,25 @@ SHELL_SCRIPT
                 SUBSHELL_COMMAND
                   PsiElement(()('(')
                   COMPOUND_LIST
-                    SIMPLE_COMMAND
+                    PIPELINE_COMMAND_LIST
+                      SIMPLE_COMMAND
+                        GENERIC_COMMAND_DIRECTIVE
+                          LITERAL
+                            PsiElement(word)('cd')
+                        PsiWhiteSpace(' ')
+                        STRING
+                          PsiElement(OPEN_QUOTE)('"')
+                          PsiElement($)('$')
+                          SHELL_PARAMETER_EXPANSION
+                            PsiElement({)('{')
+                            PsiElement(word)('target')
+                            PsiElement(})('}')
+                          PsiElement(CLOSE_QUOTE)('"')
+                      PsiElement(;)(';')
+                      PsiWhiteSpace(' ')
                       GENERIC_COMMAND_DIRECTIVE
                         LITERAL
-                          PsiElement(word)('cd')
-                      PsiWhiteSpace(' ')
-                      STRING
-                        PsiElement(OPEN_QUOTE)('"')
-                        PsiElement($)('$')
-                        SHELL_PARAMETER_EXPANSION
-                          PsiElement({)('{')
-                          PsiElement(word)('target')
-                          PsiElement(})('}')
-                        PsiElement(CLOSE_QUOTE)('"')
-                    PsiElement(;)(';')
-                    PsiWhiteSpace(' ')
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('pwd')
+                          PsiElement(word)('pwd')
                   PsiElement())(')')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')

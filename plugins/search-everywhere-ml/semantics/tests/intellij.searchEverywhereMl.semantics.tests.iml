@@ -12,10 +12,10 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.kotlin" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="TEST" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ml.embeddings" />
     <orderEntry type="module" module-name="intellij.platform.ml.embeddings.tests" scope="TEST" />

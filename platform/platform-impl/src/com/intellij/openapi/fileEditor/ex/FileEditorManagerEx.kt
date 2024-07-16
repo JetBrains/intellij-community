@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.ide.impl.DataValidators
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -22,6 +23,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -84,8 +86,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
    */
   abstract fun closeFileWithChecks(file: VirtualFile, window: EditorWindow): Boolean
 
-  abstract fun unsplitWindow()
-
   abstract fun unsplitAllWindow()
 
   abstract val windowSplitCount: Int
@@ -111,10 +111,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   @RequiresBlockingContext
   open fun canOpenFile(file: VirtualFile): Boolean {
     return FileEditorProviderManager.getInstance().getProviderList(project, file).isNotEmpty()
-  }
-
-  open suspend fun canOpenFileAsync(file: VirtualFile): Boolean {
-    return FileEditorProviderManager.getInstance().getProvidersAsync(project, file).isNotEmpty()
   }
 
   abstract val currentFile: VirtualFile?
@@ -151,14 +147,20 @@ abstract class FileEditorManagerEx : FileEditorManager() {
       .toTypedArray()
   }
 
+  final override fun requestOpenFile(file: VirtualFile) {
+    openFile(file = file, window = null, options = FileEditorOpenOptions(waitForCompositeOpen = false))
+  }
+
   final override fun openFile(file: VirtualFile): List<FileEditor> {
     return openFile(file = file, window = null, options = FileEditorOpenOptions(requestFocus = false)).allEditors
   }
 
-  override fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor> {
-    return openFile(file = file,
-                    window = null,
-                    options = FileEditorOpenOptions(requestFocus = focusEditor, reuseOpen = searchForOpen))
+  final override fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor> {
+    return openFile(
+      file = file,
+      window = null,
+      options = FileEditorOpenOptions(requestFocus = focusEditor, reuseOpen = searchForOpen),
+    )
       .allEditors
       .toTypedArray()
   }
@@ -206,6 +208,20 @@ abstract class FileEditorManagerEx : FileEditorManager() {
     }
   }
 
+  @Deprecated("Drop together with [registerExtraEditorDataProvider]")
+  internal class DataRule : UiDataRule {
+    override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+      val project = snapshot[PlatformDataKeys.PROJECT] ?: return
+      val caret = snapshot[PlatformDataKeys.CARET] ?: return
+      getInstanceEx(project).dataProviders.forEach { provider ->
+        DataSink.uiDataSnapshot(sink, object : DataProvider, DataValidators.SourceWrapper {
+          override fun getData(dataId: @NonNls String): Any? = provider.getData(dataId, caret.editor, caret)
+          override fun unwrapSource(): Any = provider
+        })
+      }
+    }
+  }
+
   open fun refreshIcons() {}
 
   abstract fun getSplittersFor(component: Component): EditorsSplitters?
@@ -215,8 +231,6 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   override fun runWhenLoaded(editor: Editor, runnable: Runnable) {
     performWhenLoaded(editor, runnable)
   }
-
-  open fun addSelectionRecord(file: VirtualFile, window: EditorWindow) {}
 
   @Internal
   @Experimental

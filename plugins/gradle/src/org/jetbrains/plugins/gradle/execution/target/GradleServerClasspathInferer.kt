@@ -13,7 +13,7 @@ import org.gradle.internal.impldep.org.objectweb.asm.ClassReader
 import org.gradle.internal.impldep.org.objectweb.asm.Type
 import org.gradle.tooling.BuildAction
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import java.net.JarURLConnection
 import java.net.URL
 import java.util.concurrent.ConcurrentMap
@@ -23,7 +23,7 @@ internal class GradleServerClasspathInferer {
   private val classesUsedInBuildAction = LinkedHashSet<Class<*>>()
   private val classesUsedByGradleProxyApp = LinkedHashSet<Class<*>>()
   fun add(buildAction: BuildAction<*>) {
-    if (buildAction is ProjectImportAction) {
+    if (buildAction is GradleModelFetchAction) {
       classesUsedInBuildAction.addAll(buildAction.modelProvidersClasses)
     }
   }

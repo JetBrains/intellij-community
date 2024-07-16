@@ -7,9 +7,9 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider.getCallableMetadata
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
@@ -64,16 +64,16 @@ internal object CallableWeigher {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun addWeight(
         context: WeighingContext,
         lookupElement: LookupElement,
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
     ) {
         if (context.isPositionInsideImportOrPackageDirective) return
 
-        val isFunctionalVariableCall = signature.symbol is KtVariableLikeSymbol && lookupElement.`object` is FunctionCallLookupObject
+        val isFunctionalVariableCall = signature.symbol is KaVariableSymbol && lookupElement.`object` is FunctionCallLookupObject
         lookupElement.callableWeight = getCallableMetadata(context, signature, symbolOrigin, isFunctionalVariableCall)
     }
 

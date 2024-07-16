@@ -13,5 +13,7 @@
     <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>
+
+    <highlightRangeExtension implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
   </extensions>
 </idea-plugin>

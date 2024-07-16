@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -206,12 +206,10 @@ public final class PythonUiServiceImpl extends PythonUiService {
     }
 
     @Override
-    @NotNull
-    public UsagePresentation getPresentation() {
+    public @NotNull UsagePresentation getPresentation() {
       return new UsagePresentation() {
         @Override
-        @Nullable
-        public Icon getIcon() {
+        public @Nullable Icon getIcon() {
           PyPsiUtils.assertValid(myElement);
           return myElement.isValid() ? myElement.getIcon(0) : null;
         }
@@ -240,8 +238,7 @@ public final class PythonUiServiceImpl extends PythonUiService {
         }
 
         @Override
-        @NotNull
-        public String getPlainText() {
+        public @NotNull String getPlainText() {
           return myElement.getText();
         }
 

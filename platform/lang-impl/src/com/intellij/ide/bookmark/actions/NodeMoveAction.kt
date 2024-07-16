@@ -18,40 +18,45 @@ internal abstract class NodeMoveAction(val next: Boolean) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(event: AnActionEvent): Unit = with(event.presentation) {
-    isEnabledAndVisible = process(event, false)
-    if (!isVisible) isVisible = !ActionPlaces.isPopupPlace(event.place)
+    isEnabled = process(event, next, false)
+    isVisible = isEnabled ||
+                !ActionPlaces.isPopupPlace(event.place) ||
+                process(event, !next, false)
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    process(event, true)
+    process(event, next, true)
   }
 
-  private fun process(event: AnActionEvent, perform: Boolean): Boolean {
-    val manager = event.bookmarksManager as? BookmarksManagerImpl ?: return false
-    val tree = event.bookmarksView?.tree ?: return false
-    val path = TreeUtil.getSelectedPathIfOne(tree)
-    val node1 = TreeUtil.getAbstractTreeNode(path)
-    val node2 = TreeUtil.getAbstractTreeNode(when {
-      next -> TreeUtil.nextVisibleSibling(tree, path)
-      else -> TreeUtil.previousVisibleSibling(tree, path)
-    })
-    return when {
-      node1 is GroupNode && node2 is GroupNode -> {
-        val group1 = node1.value ?: return false
-        val group2 = node2.value ?: return false
-        if (group1.isDefault || group2.isDefault) return false
-        if (perform) manager.move(group1, group2)
-        true
+  companion object {
+    private fun process(event: AnActionEvent, next: Boolean, perform: Boolean): Boolean {
+      val manager = event.bookmarksManager as? BookmarksManagerImpl ?: return false
+      val tree = event.bookmarksView?.tree ?: return false
+      val path1 = TreeUtil.getSelectedPathIfOne(tree)
+      val path2 = when {
+        next -> TreeUtil.nextVisibleSibling(tree, path1)
+        else -> TreeUtil.previousVisibleSibling(tree, path1)
       }
-      node1 is BookmarkNode && node2 is BookmarkNode -> {
-        val group = node1.bookmarkGroup ?: return false
-        if (group != node2.bookmarkGroup) return false
-        val bookmark1 = node1.value ?: return false
-        val bookmark2 = node2.value ?: return false
-        if (perform) manager.move(group, bookmark1, bookmark2)
-        true
+      val node1 = TreeUtil.getAbstractTreeNode(path1)
+      val node2 = TreeUtil.getAbstractTreeNode(path2)
+      return when {
+        node1 is GroupNode && node2 is GroupNode -> {
+          val group1 = node1.value ?: return false
+          val group2 = node2.value ?: return false
+          if (group1.isDefault || group2.isDefault) return false
+          if (perform) manager.move(group1, group2)
+          true
+        }
+        node1 is BookmarkNode && node2 is BookmarkNode -> {
+          val group = node1.bookmarkGroup ?: return false
+          if (group != node2.bookmarkGroup) return false
+          val bookmark1 = node1.value ?: return false
+          val bookmark2 = node2.value ?: return false
+          if (perform) manager.move(group, bookmark1, bookmark2)
+          true
+        }
+        else -> false
       }
-      else -> false
     }
   }
 }

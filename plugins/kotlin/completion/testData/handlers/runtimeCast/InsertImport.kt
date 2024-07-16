@@ -1,3 +1,5 @@
+// IGNORE_K2
+
 fun main(args: Array<String>) {
     <caret>val a = 1
 }

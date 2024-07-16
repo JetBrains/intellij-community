@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +20,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public final class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager {
   private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
   private static final boolean isWindows = _OS_NAME.startsWith("windows");
@@ -334,6 +333,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     return buf.toString();
   }
 
+  @ApiStatus.Internal
   public interface Context {
     @Nullable
     String getExplodedAutomaticModuleName(File pathElement);
@@ -348,7 +348,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     void reportMessage(final Diagnostic.Kind kind, @Nls String message);
   }
 
-  public Context getContext() {
+  Context getContext() {
     return myContext;
   }
 

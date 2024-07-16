@@ -38,11 +38,11 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp
                                                                                                                                             "arrayFilter") {
   init {
     if (thisType != null) {
-      myExpressionEditor.setDocumentProcessor({ d ->
-                                                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(d)
-                                                if (psiFile is JavaCodeFragment) psiFile.thisType = thisType
-                                                d
-                                              })
+      myExpressionEditor.setDocumentProcessor { d ->
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(d)
+        if (psiFile is JavaCodeFragment) psiFile.thisType = thisType
+        d
+      }
     }
     val arrayRenderer = ArrayAction.getArrayRenderer((myNode.parent as XValueNodeImpl).valueContainer)
     myExpressionEditor.expression = if (arrayRenderer is ArrayRenderer.Filtered) arrayRenderer.expression else null
@@ -124,11 +124,11 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp
               val pair = ReadAction.compute<Pair<PsiElement, PsiType>, Exception> {
                 DebuggerUtilsImpl.getPsiClassAndType(type, javaValue.project)
               }
-              DebuggerUIUtil.invokeLater({ ArrayFilterInplaceEditor(node, temp, pair.second).show() })
+              DebuggerUIUtil.invokeLater { ArrayFilterInplaceEditor(node, temp, pair.second).show() }
             }
 
             override fun commandCancelled() {
-              DebuggerUIUtil.invokeLater({ ArrayFilterInplaceEditor(node, temp, null).show() })
+              DebuggerUIUtil.invokeLater { ArrayFilterInplaceEditor(node, temp, null).show() }
             }
           })
       }

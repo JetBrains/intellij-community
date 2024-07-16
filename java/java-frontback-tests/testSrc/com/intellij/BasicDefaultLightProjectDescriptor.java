@@ -15,9 +15,10 @@
  */
 package com.intellij;
 
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
 
 public class BasicDefaultLightProjectDescriptor extends LightProjectDescriptor {
 
@@ -26,8 +27,6 @@ public class BasicDefaultLightProjectDescriptor extends LightProjectDescriptor {
 
   @Override
   public @NotNull String getModuleTypeId() {
-    return ModuleTypeId.JAVA_MODULE;
+    return JAVA_MODULE_ENTITY_TYPE_ID_NAME;
   }
-
-
 }

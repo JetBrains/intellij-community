@@ -5,18 +5,21 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface ProviderBinding {
-  class ProviderInfo<Context> {
-    public final @NotNull PsiReferenceProvider provider;
-    public final @NotNull Context processingContext;
-    public final double priority;
+  class ProviderInfo<T> {
+    static final ProviderInfo<?>[] EMPTY_ARRAY = new ProviderInfo[0];
+    static final ArrayFactory<ProviderInfo<?>> ARRAY_FACTORY = n -> n == 0 ? ProviderInfo.EMPTY_ARRAY : new ProviderInfo[n];
+    final @NotNull PsiReferenceProvider provider;
+    final @NotNull T processingContext;
+    final double priority;
 
-    public ProviderInfo(@NotNull PsiReferenceProvider provider, @NotNull Context processingContext, double priority) {
+    ProviderInfo(@NotNull PsiReferenceProvider provider, @NotNull T processingContext, double priority) {
       this.provider = provider;
       this.processingContext = processingContext;
       this.priority = priority;

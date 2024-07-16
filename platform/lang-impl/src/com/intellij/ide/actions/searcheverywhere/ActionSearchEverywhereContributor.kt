@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.ide.IdeBundle
@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapManager
@@ -51,8 +50,9 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   private val myProject: Project?
   private val myContextComponent: WeakReference<Component?>
   protected val model: GotoActionModel
-  private val myProvider: ActionAsyncProvider
+  private val provider: ActionAsyncProvider
   protected var myDisabledActions: Boolean = false
+  protected var isScopeDefaultAndAutoSet: Boolean = true
 
   private val isRecentEnabled: Boolean
     get() = Registry.`is`("search.everywhere.recents") || ApplicationManager.getApplication().isInternal
@@ -61,7 +61,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     myProject = other.myProject
     myContextComponent = other.myContextComponent
     model = other.model
-    myProvider = other.myProvider
+    provider = other.provider
     myDisabledActions = other.myDisabledActions
   }
 
@@ -69,7 +69,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     myProject = project
     myContextComponent = WeakReference(contextComponent)
     model = GotoActionModel(project, contextComponent, editor)
-    myProvider = ActionAsyncProvider(model)
+    provider = ActionAsyncProvider(model)
   }
 
   override fun getGroupName(): String = IdeBundle.message("search.everywhere.group.name.actions")
@@ -114,6 +114,10 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
         myDisabledActions = state
         onChanged.run()
       }
+
+      override fun setScopeIsDefaultAndAutoSet(isDefault: Boolean) {
+        isScopeDefaultAndAutoSet = isDefault
+      }
     })
   }
 
@@ -157,7 +161,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     if (selected is BooleanOptionDescription) {
       if (selected is RequiresRebuild) {
         model.clearCaches() // release references to plugin actions so that the plugin can be unloaded successfully
-        myProvider.clearIntentions()
+        provider.clearIntentions()
       }
       selected.setOptionState(!selected.isOptionEnabled)
       return false
@@ -197,7 +201,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
 
     LOG.debug("Start actions search")
 
-    myProvider.filterElements(scope, presentationProvider, pattern) { element: MatchedValue? ->
+    provider.filterElements(scope, presentationProvider, pattern) { element: MatchedValue? ->
       if (element == null) {
         LOG.error("Null action has been returned from model")
         return@filterElements true
@@ -220,7 +224,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     if (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == SearchEverywhereManager.getInstance(myProject).selectedTabID) return
 
     val actionIDs: Set<String> = ActionHistoryManager.getInstance().state.ids
-    myProvider.processActions(scope, presentationProvider, pattern, actionIDs) { element: MatchedValue ->
+    provider.processActions(scope, presentationProvider, pattern, actionIDs) { element: MatchedValue ->
       if (!myDisabledActions && !(element.value as GotoActionModel.ActionWrapper).isAvailable) return@processActions true
       val action = getAction(element)
       if (action == null) return@processActions true

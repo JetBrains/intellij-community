@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.icons.AllIcons;
@@ -20,7 +20,7 @@ import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 import javax.swing.*;
 import java.util.*;
 
-public final class TestDataNavigationElementFactory {
+final class TestDataNavigationElementFactory {
   private static final int CREATE_MISSING_FILES_WITHOUT_CONFIRMATION_LIMIT = 3;
 
   private TestDataNavigationElementFactory() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.Pgp
@@ -7,12 +7,12 @@ import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.keePass.DB_FILE_NAME
 import com.intellij.credentialStore.keePass.KeePassFileManager
 import com.intellij.credentialStore.keePass.MainKeyFileStorage
+import com.intellij.credentialStore.keePass.getDefaultDbFile
 import com.intellij.credentialStore.keePass.getDefaultMainPasswordFile
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
-import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
@@ -35,6 +35,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.chooseFile
 import com.intellij.ui.layout.selected
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Paths
 import javax.swing.JCheckBox
@@ -46,9 +47,13 @@ import kotlin.io.path.isDirectory
 private val LOG: Logger
   get() = logger<PasswordSafeConfigurable>()
 
+/**
+ * API note: use [CredentialStoreUiService] instead of using this `.class` to show settings dialog
+ */
+@ApiStatus.Internal
 class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
-                                                                                                             CredentialStoreBundle.message("password.safe.configurable"),
-                                                                                                             "reference.ide.settings.password.safe") {
+                                                                                                    CredentialStoreBundle.passwordSafeConfigurable,
+                                                                                                    "reference.ide.settings.password.safe") {
   private val settings = service<PasswordSafeSettings>()
 
   override fun getSettings() = settings
@@ -56,6 +61,7 @@ class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, Pa
   override fun createUi() = PasswordSafeConfigurableUi(settings)
 }
 
+@ApiStatus.Internal
 class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : ConfigurableUi<PasswordSafeSettings> {
   private lateinit var panel: DialogPanel
   private lateinit var usePgpKey: JCheckBox
@@ -78,7 +84,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
     panel.reset()
 
-    keePassDbFile?.text = settings.keepassDb ?: getDefaultKeePassDbFile().toString()
+    keePassDbFile?.text = settings.keepassDb ?: getDefaultDbFile().toString()
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
@@ -155,7 +161,7 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     // not in createAndSaveKeePassDatabaseWithNewOptions (as logically should be) because we want to force users to set custom master passwords even if some another setting (not path) was changed
     // (e.g. PGP key)
     if (providerType == ProviderType.KEEPASS) {
-      createKeePassFileManager()?.setCustomMainPasswordIfNeeded(getDefaultKeePassDbFile())
+      createKeePassFileManager()?.setCustomMainPasswordIfNeeded(getDefaultDbFile())
     }
 
     settings.providerType = providerType

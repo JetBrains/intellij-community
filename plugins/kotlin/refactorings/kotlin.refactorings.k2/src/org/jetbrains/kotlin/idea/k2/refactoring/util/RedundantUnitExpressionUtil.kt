@@ -2,12 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.types.KtDynamicType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.previousStatement
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -36,11 +36,11 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
     val parent = referenceExpression.parent ?: return false
     if (parent is KtReturnExpression) {
         analyze(parent) {
-            val expectedReturnType = parent.getReturnTargetSymbol()?.returnType ?: return false
-            val expandedClassSymbol = expectedReturnType.expandedClassSymbol
+            val expectedReturnType = parent.expectedReturnType() ?: return false
+            val expandedClassSymbol = expectedReturnType.expandedSymbol
             return expandedClassSymbol != null &&
                     !expectedReturnType.isMarkedNullable &&
-                    expandedClassSymbol.classIdIfNonLocal != StandardClassIds.Any
+                    expandedClassSymbol.classId != StandardClassIds.Any
         }
     }
 
@@ -51,7 +51,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
             if (prev.isUnitLiteral()) return true
             if (prev is KtDeclaration && isDynamicCall(parent)) return false
             analyze(prev) {
-                val ktType = prev.getKtType()
+                val ktType = prev.expressionType
                 if (ktType != null) {
                     return ktType.isUnit && !ktType.isMarkedNullable && prev.canBeUsedAsValue()
                 }
@@ -69,20 +69,25 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
 }
 
 
-private fun isDynamicCall(parent: KtBlockExpression): Boolean = parent.getStrictParentOfType<KtFunctionLiteral>()?.findLambdaReturnType() is KtDynamicType
+private fun isDynamicCall(parent: KtBlockExpression): Boolean = parent.getStrictParentOfType<KtFunctionLiteral>()?.findLambdaReturnType() is KaDynamicType
 
-
-private fun KtFunctionLiteral.findLambdaReturnType(): KtType? {
-    val callExpression = getStrictParentOfType<KtCallExpression>() ?: return null
-    val valueArgument = getStrictParentOfType<KtValueArgument>() ?: return null
-    analyze(this) {
-        val functionCallOrNull = callExpression.resolveCall()?.singleFunctionCallOrNull() ?: return null
-        val variableLikeSignature = functionCallOrNull.argumentMapping[valueArgument.getArgumentExpression()] ?: return null
-        return (variableLikeSignature.returnType as? KtFunctionalType)?.returnType
+private fun KtReturnExpression.expectedReturnType(): KaType? = analyze(this) {
+    targetSymbol?.let {
+        (it.psi as? KtFunctionLiteral)?.findLambdaReturnType() ?: it.returnType
     }
 }
 
-context(KtAnalysisSession)
+private fun KtFunctionLiteral.findLambdaReturnType(): KaType? {
+    val callExpression = getStrictParentOfType<KtCallExpression>() ?: return null
+    val valueArgument = getStrictParentOfType<KtValueArgument>() ?: return null
+    analyze(this) {
+        val functionCallOrNull = callExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return null
+        val variableLikeSignature = functionCallOrNull.argumentMapping[valueArgument.getArgumentExpression()] ?: return null
+        return (variableLikeSignature.returnType as? KaFunctionType)?.returnType
+    }
+}
+
+context(KaSession)
 private fun KtExpression.canBeUsedAsValue(): Boolean {
     return when (this) {
         is KtIfExpression -> {
@@ -90,7 +95,7 @@ private fun KtExpression.canBeUsedAsValue(): Boolean {
             if (elseExpression is KtIfExpression) elseExpression.canBeUsedAsValue() else elseExpression != null
         }
         is KtWhenExpression ->
-            entries.lastOrNull()?.elseKeyword != null || getMissingCases().isEmpty()
+            entries.lastOrNull()?.elseKeyword != null || computeMissingCases().isEmpty()
         else ->
             true
     }

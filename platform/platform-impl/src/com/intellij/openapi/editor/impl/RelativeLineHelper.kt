@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -12,6 +13,7 @@ import kotlin.math.sign
  * - We do not increment the counter for wrapped lines (only logical lines are counted)
  * - We do not increment the counter for collapsed lines and skip them
  */
+@Internal
 object RelativeLineHelper {
   /**
    * @param editor the target editor.

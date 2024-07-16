@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +34,7 @@ public final class KeyStrokeMap {
   public KeyStroke get(String strokeText) {
     String s = strokeText.trim();
 
-    assert s.length() > 0;
+    assert !s.isEmpty();
 
     final String lowerCaseS = StringUtil.toLowerCase(s);
     boolean hasModifiers = lowerCaseS.contains("shift") || lowerCaseS.contains("control") || lowerCaseS.contains("alt") || lowerCaseS.contains("meta");

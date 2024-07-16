@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class LanguageFileTypeHighlighterProvider implements SyntaxHighlighterProvider {
+final class LanguageFileTypeHighlighterProvider implements SyntaxHighlighterProvider {
   @Override
   public @Nullable SyntaxHighlighter create(final @NotNull FileType fileType, final @Nullable Project project, final @Nullable VirtualFile file) {
     if (fileType instanceof LanguageFileType) {

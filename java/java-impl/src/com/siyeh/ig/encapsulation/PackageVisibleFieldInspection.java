@@ -33,8 +33,7 @@ public final class PackageVisibleFieldInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("package.visible.field.problem.descriptor");
   }
 

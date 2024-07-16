@@ -1,0 +1,288 @@
+f:com.intellij.remoteServer.CloudBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.remoteServer.RemoteServerConfigurable
+- com.intellij.openapi.options.UnnamedConfigurable
+- <init>():V
+- canCheckConnection():Z
+a:com.intellij.remoteServer.ServerType
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- p:<init>(java.lang.String):V
+- canAutoDetectConfiguration():Z
+- createConnector(com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.runtime.ServerTaskExecutor):com.intellij.remoteServer.runtime.ServerConnector
+- a:createConnector(com.intellij.remoteServer.configuration.ServerConfiguration,com.intellij.remoteServer.runtime.ServerTaskExecutor):com.intellij.remoteServer.runtime.ServerConnector
+- createDebugConnector():com.intellij.remoteServer.runtime.deployment.debug.DebugConnector
+- a:createDefaultConfiguration():com.intellij.remoteServer.configuration.ServerConfiguration
+- a:createDeploymentConfigurator(com.intellij.openapi.project.Project):com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator
+- createServerConfigurable(com.intellij.remoteServer.configuration.ServerConfiguration):com.intellij.remoteServer.RemoteServerConfigurable
+- getCustomToolWindowId():java.lang.String
+- getDeploymentComparator():java.util.Comparator
+- getDeploymentConfigurationFactoryId():java.lang.String
+- getDeploymentConfigurationTypePresentableName():java.lang.String
+- getHelpTopic():java.lang.String
+- a:getIcon():javax.swing.Icon
+- f:getId():java.lang.String
+- a:getPresentableName():java.lang.String
+- getSingletonDeploymentSourceTypes():java.util.List
+- mayHaveProjectSpecificDeploymentSources():Z
+a:com.intellij.remoteServer.agent.RemoteAgentManager
+- <init>():V
+- a:createAgent(com.intellij.remoteServer.agent.RemoteAgentProxyFactory,java.util.List,java.util.List,java.lang.String,java.lang.String,java.lang.Class,java.lang.String,java.lang.Class):com.intellij.remoteServer.agent.RemoteAgent
+- a:createAgentBuilder(com.intellij.remoteServer.agent.RemoteAgentProxyFactory,java.lang.Class,java.lang.Class):com.intellij.remoteServer.agent.RemoteAgentManager$Builder
+- a:createReflectiveThreadProxyFactory(java.lang.ClassLoader):com.intellij.remoteServer.agent.RemoteAgentProxyFactory
+- s:getInstance():com.intellij.remoteServer.agent.RemoteAgentManager
+a:com.intellij.remoteServer.agent.RemoteAgentManager$Builder
+- <init>():V
+- a:buildAgent(java.lang.String):com.intellij.remoteServer.agent.RemoteAgent
+- a:withInstanceLibraries(java.util.List):com.intellij.remoteServer.agent.RemoteAgentManager$Builder
+- a:withModuleDependency(java.lang.String,java.lang.String):com.intellij.remoteServer.agent.RemoteAgentManager$Builder
+- f:withRtDependencies(java.util.List):com.intellij.remoteServer.agent.RemoteAgentManager$Builder
+- a:withRtDependency(java.lang.Class):com.intellij.remoteServer.agent.RemoteAgentManager$Builder
+com.intellij.remoteServer.agent.RemoteAgentProxyFactory
+- a:createProxy(java.util.List,java.lang.Class,java.lang.String):java.lang.Object
+com.intellij.remoteServer.configuration.RemoteServer
+- a:getConfiguration():com.intellij.remoteServer.configuration.ServerConfiguration
+- a:getName():java.lang.String
+- a:getType():com.intellij.remoteServer.ServerType
+- a:setName(java.lang.String):V
+com.intellij.remoteServer.configuration.RemoteServerListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:serverAdded(com.intellij.remoteServer.configuration.RemoteServer):V
+- a:serverRemoved(com.intellij.remoteServer.configuration.RemoteServer):V
+a:com.intellij.remoteServer.configuration.RemoteServersManager
+- <init>():V
+- a:addServer(com.intellij.remoteServer.configuration.RemoteServer):V
+- a:createServer(com.intellij.remoteServer.ServerType):com.intellij.remoteServer.configuration.RemoteServer
+- a:createServer(com.intellij.remoteServer.ServerType,java.lang.String):com.intellij.remoteServer.configuration.RemoteServer
+- a:findByName(java.lang.String,com.intellij.remoteServer.ServerType):com.intellij.remoteServer.configuration.RemoteServer
+- s:getInstance():com.intellij.remoteServer.configuration.RemoteServersManager
+- a:getServers():java.util.List
+- a:getServers(com.intellij.remoteServer.ServerType):java.util.List
+- a:removeServer(com.intellij.remoteServer.configuration.RemoteServer):V
+a:com.intellij.remoteServer.configuration.ServerConfiguration
+- <init>():V
+- getCustomToolWindowId():java.lang.String
+- a:getSerializer():com.intellij.openapi.components.PersistentStateComponent
+a:com.intellij.remoteServer.configuration.ServerConfigurationBase
+- com.intellij.remoteServer.configuration.ServerConfiguration
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- getSerializer():com.intellij.openapi.components.PersistentStateComponent
+- getState():com.intellij.remoteServer.configuration.ServerConfigurationBase
+- loadState(com.intellij.remoteServer.configuration.ServerConfigurationBase):V
+a:com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration
+- com.intellij.execution.ui.FragmentedSettings
+- <init>():V
+- a:checkConfiguration(com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.configuration.deployment.DeploymentSource):V
+- checkConfiguration(com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.configuration.deployment.DeploymentSource,com.intellij.openapi.project.Project):V
+- a:getSerializer():com.intellij.openapi.components.PersistentStateComponent
+c:com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationBase
+- com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- checkConfiguration(com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.configuration.deployment.DeploymentSource):V
+- getSelectedOptions():java.util.List
+- getSerializer():com.intellij.openapi.components.PersistentStateComponent
+- getState():com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationBase
+- loadState(com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationBase):V
+- setSelectedOptions(java.util.List):V
+a:com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager
+- <init>():V
+- a:createAndRunConfiguration(com.intellij.remoteServer.ServerType,com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.configuration.deployment.DeploymentSourceType):V
+- a:getDeploymentConfigurations(com.intellij.remoteServer.ServerType):java.util.List
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager
+a:com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator
+- <init>():V
+- a:createDefaultConfiguration(com.intellij.remoteServer.configuration.deployment.DeploymentSource):com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration
+- a:createEditor(com.intellij.remoteServer.configuration.deployment.DeploymentSource,com.intellij.remoteServer.configuration.RemoteServer):com.intellij.openapi.options.SettingsEditor
+- a:getAvailableDeploymentSources():java.util.List
+- isGeneratedConfigurationName(java.lang.String,com.intellij.remoteServer.configuration.deployment.DeploymentSource,com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration):Z
+- suggestConfigurationName(com.intellij.remoteServer.configuration.deployment.DeploymentSource,com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration):java.lang.String
+com.intellij.remoteServer.configuration.deployment.DeploymentSource
+- a:getFile():java.io.File
+- a:getFilePath():java.lang.String
+- a:getIcon():javax.swing.Icon
+- a:getPresentableName():java.lang.String
+- a:getType():com.intellij.remoteServer.configuration.deployment.DeploymentSourceType
+- a:isArchive():Z
+- a:isValid():Z
+a:com.intellij.remoteServer.configuration.deployment.DeploymentSourceType
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- p:<init>(java.lang.String):V
+- f:getId():java.lang.String
+- isEditableInDumbMode():Z
+- a:load(org.jdom.Element,com.intellij.openapi.project.Project):com.intellij.remoteServer.configuration.deployment.DeploymentSource
+- a:save(com.intellij.remoteServer.configuration.deployment.DeploymentSource,org.jdom.Element):V
+- setBuildBeforeRunTask(com.intellij.execution.configurations.RunConfiguration,com.intellij.remoteServer.configuration.deployment.DeploymentSource):V
+- updateBuildBeforeRunOption(javax.swing.JComponent,com.intellij.openapi.project.Project,com.intellij.remoteServer.configuration.deployment.DeploymentSource,Z):V
+c:com.intellij.remoteServer.configuration.deployment.DummyDeploymentConfiguration
+- com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- checkConfiguration(com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.configuration.deployment.DeploymentSource):V
+- getSelectedOptions():java.util.List
+- getSerializer():com.intellij.openapi.components.PersistentStateComponent
+- getState():com.intellij.remoteServer.configuration.deployment.DummyDeploymentConfiguration
+- loadState(com.intellij.remoteServer.configuration.deployment.DummyDeploymentConfiguration):V
+- setSelectedOptions(java.util.List):V
+com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource
+- com.intellij.remoteServer.configuration.deployment.DeploymentSource
+- a:getContentRoot():com.intellij.openapi.vfs.VirtualFile
+- a:getModule():com.intellij.openapi.module.Module
+- a:getModulePointer():com.intellij.openapi.module.ModulePointer
+c:com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType
+- com.intellij.remoteServer.configuration.deployment.DeploymentSourceType
+- <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
+- ps:findExtension(java.lang.Class):com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType
+- f:getPresentableName():java.lang.String
+- getSingletonSource():com.intellij.remoteServer.configuration.deployment.DeploymentSource
+- load(org.jdom.Element,com.intellij.openapi.project.Project):com.intellij.remoteServer.configuration.deployment.DeploymentSource
+- save(com.intellij.remoteServer.configuration.deployment.DeploymentSource,org.jdom.Element):V
+e:com.intellij.remoteServer.runtime.ConnectionStatus
+- java.lang.Enum
+- sf:CONNECTED:com.intellij.remoteServer.runtime.ConnectionStatus
+- sf:CONNECTING:com.intellij.remoteServer.runtime.ConnectionStatus
+- sf:DISCONNECTED:com.intellij.remoteServer.runtime.ConnectionStatus
+- getPresentableText():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.remoteServer.runtime.ConnectionStatus
+- s:values():com.intellij.remoteServer.runtime.ConnectionStatus[]
+com.intellij.remoteServer.runtime.Deployment
+- a:getConnection():com.intellij.remoteServer.runtime.ServerConnection
+- a:getDeploymentTask():com.intellij.remoteServer.runtime.deployment.DeploymentTask
+- a:getName():java.lang.String
+- a:getOrCreateLogManager(com.intellij.openapi.project.Project):com.intellij.remoteServer.runtime.deployment.DeploymentLogManager
+- a:getParentRuntime():com.intellij.remoteServer.runtime.deployment.DeploymentRuntime
+- a:getPresentableName():java.lang.String
+- a:getRuntime():com.intellij.remoteServer.runtime.deployment.DeploymentRuntime
+- a:getStatus():com.intellij.remoteServer.runtime.deployment.DeploymentStatus
+- a:getStatusText():java.lang.String
+- a:setStatus(com.intellij.remoteServer.runtime.deployment.DeploymentStatus,java.lang.String):V
+com.intellij.remoteServer.runtime.RemoteOperationCallback
+- a:errorOccurred(java.lang.String):V
+- errorOccurred(java.lang.String,com.intellij.remoteServer.runtime.deployment.DeploymentRuntime):V
+com.intellij.remoteServer.runtime.ServerConnection
+- a:computeDeployments(java.lang.Runnable):V
+- a:connect(java.lang.Runnable):V
+- a:connectIfNeeded(com.intellij.remoteServer.runtime.ServerConnector$ConnectionCallback):V
+- a:deploy(com.intellij.remoteServer.runtime.deployment.DeploymentTask,java.util.function.Consumer):V
+- a:disconnect():V
+- a:getDeployments():java.util.Collection
+- a:getLogManager(com.intellij.openapi.project.Project,com.intellij.remoteServer.runtime.Deployment):com.intellij.remoteServer.runtime.deployment.DeploymentLogManager
+- a:getServer():com.intellij.remoteServer.configuration.RemoteServer
+- a:getStatus():com.intellij.remoteServer.runtime.ConnectionStatus
+- a:getStatusText():java.lang.String
+- a:undeploy(com.intellij.remoteServer.runtime.Deployment,com.intellij.remoteServer.runtime.deployment.DeploymentRuntime):V
+com.intellij.remoteServer.runtime.ServerConnectionListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:onConnectionCreated(com.intellij.remoteServer.runtime.ServerConnection):V
+- a:onConnectionStatusChanged(com.intellij.remoteServer.runtime.ServerConnection):V
+- a:onDeploymentsChanged(com.intellij.remoteServer.runtime.ServerConnection):V
+a:com.intellij.remoteServer.runtime.ServerConnectionManager
+- <init>():V
+- createTemporaryConnection(com.intellij.remoteServer.configuration.RemoteServer):com.intellij.remoteServer.runtime.ServerConnection
+- a:getConnection(com.intellij.remoteServer.configuration.RemoteServer):com.intellij.remoteServer.runtime.ServerConnection
+- a:getConnections():java.util.Collection
+- s:getInstance():com.intellij.remoteServer.runtime.ServerConnectionManager
+- a:getOrCreateConnection(com.intellij.remoteServer.configuration.RemoteServer):com.intellij.remoteServer.runtime.ServerConnection
+a:com.intellij.remoteServer.runtime.ServerConnector
+- <init>():V
+- a:connect(com.intellij.remoteServer.runtime.ServerConnector$ConnectionCallback):V
+com.intellij.remoteServer.runtime.ServerConnector$ConnectionCallback
+- com.intellij.remoteServer.runtime.RemoteOperationCallback
+- a:connected(com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance):V
+com.intellij.remoteServer.runtime.ServerTaskExecutor
+- java.util.concurrent.Executor
+- a:submit(com.intellij.util.ThrowableRunnable,com.intellij.remoteServer.runtime.RemoteOperationCallback):V
+- a:submit(java.lang.Runnable):V
+c:com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryDescription
+- <init>(java.lang.String,java.net.URL):V
+- getDescriptionUrl():java.net.URL
+- f:getId():java.lang.String
+a:com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager
+- <init>():V
+- a:download(com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryDescription):java.util.List
+- s:getInstance():com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager
+com.intellij.remoteServer.runtime.deployment.DeploymentLogManager
+- a:addAdditionalLog(java.lang.String):com.intellij.remoteServer.runtime.log.LoggingHandler
+- a:addTerminal(java.lang.String,java.io.InputStream,java.io.OutputStream):com.intellij.remoteServer.runtime.log.TerminalHandler
+- a:getMainLoggingHandler():com.intellij.remoteServer.runtime.log.LoggingHandler
+- a:getProject():com.intellij.openapi.project.Project
+- a:isTtySupported():Z
+- a:removeAdditionalLog(java.lang.String):V
+a:com.intellij.remoteServer.runtime.deployment.DeploymentRuntime
+- <init>():V
+- getParent():com.intellij.remoteServer.runtime.deployment.DeploymentRuntime
+- isUndeploySupported():Z
+- a:undeploy(com.intellij.remoteServer.runtime.deployment.DeploymentRuntime$UndeploymentTaskCallback):V
+com.intellij.remoteServer.runtime.deployment.DeploymentRuntime$UndeploymentTaskCallback
+- com.intellij.remoteServer.runtime.RemoteOperationCallback
+- a:succeeded():V
+c:com.intellij.remoteServer.runtime.deployment.DeploymentStatus
+- sf:DEPLOYED:com.intellij.remoteServer.runtime.deployment.DeploymentStatus
+- sf:DEPLOYING:com.intellij.remoteServer.runtime.deployment.DeploymentStatus
+- sf:NOT_DEPLOYED:com.intellij.remoteServer.runtime.deployment.DeploymentStatus
+- sf:UNDEPLOYING:com.intellij.remoteServer.runtime.deployment.DeploymentStatus
+- <init>(javax.swing.Icon,java.lang.String,Z):V
+- <init>(javax.swing.Icon,java.util.function.Supplier,Z):V
+- getIcon():javax.swing.Icon
+- getPresentableText():java.lang.String
+- isTransition():Z
+com.intellij.remoteServer.runtime.deployment.DeploymentTask
+- a:getConfiguration():com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration
+- a:getExecutionEnvironment():com.intellij.execution.runners.ExecutionEnvironment
+- a:getProject():com.intellij.openapi.project.Project
+- a:getSource():com.intellij.remoteServer.configuration.deployment.DeploymentSource
+- a:isDebugMode():Z
+a:com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance
+- <init>():V
+- a:computeDeployments(com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance$ComputeDeploymentsCallback):V
+- a:deploy(com.intellij.remoteServer.runtime.deployment.DeploymentTask,com.intellij.remoteServer.runtime.deployment.DeploymentLogManager,com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance$DeploymentOperationCallback):V
+- a:disconnect():V
+- getDeploymentName(com.intellij.remoteServer.configuration.deployment.DeploymentSource,com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration):java.lang.String
+- getRuntimeDeploymentName(com.intellij.remoteServer.runtime.deployment.DeploymentRuntime,com.intellij.remoteServer.configuration.deployment.DeploymentSource,com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration):java.lang.String
+com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance$ComputeDeploymentsCallback
+- com.intellij.remoteServer.runtime.RemoteOperationCallback
+- a:addDeployment(java.lang.String):V
+- a:addDeployment(java.lang.String,com.intellij.remoteServer.runtime.deployment.DeploymentRuntime):V
+- a:addDeployment(java.lang.String,com.intellij.remoteServer.runtime.deployment.DeploymentRuntime,com.intellij.remoteServer.runtime.deployment.DeploymentStatus,java.lang.String):com.intellij.remoteServer.runtime.Deployment
+- a:succeeded():V
+com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance$DeploymentOperationCallback
+- com.intellij.remoteServer.runtime.RemoteOperationCallback
+- started(com.intellij.remoteServer.runtime.deployment.DeploymentRuntime):V
+- a:succeeded(com.intellij.remoteServer.runtime.deployment.DeploymentRuntime):com.intellij.remoteServer.runtime.Deployment
+com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionData
+c:com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionDataNotAvailableException
+- java.lang.Exception
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
+a:com.intellij.remoteServer.runtime.deployment.debug.DebugConnector
+- <init>():V
+- a:getConnectionData(com.intellij.remoteServer.runtime.deployment.DeploymentRuntime):com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionData
+- a:getLauncher():com.intellij.remoteServer.runtime.deployment.debug.DebuggerLauncher
+com.intellij.remoteServer.runtime.deployment.debug.DebuggerLauncher
+- a:startDebugSession(com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionData,com.intellij.execution.runners.ExecutionEnvironment,com.intellij.remoteServer.configuration.RemoteServer):V
+c:com.intellij.remoteServer.runtime.deployment.debug.JavaDebugConnectionData
+- com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionData
+- <init>(java.lang.String,I):V
+- getHost():java.lang.String
+- getPort():I
+- getServerModeHandler():com.intellij.remoteServer.runtime.deployment.debug.JavaDebugServerModeHandler
+a:com.intellij.remoteServer.runtime.deployment.debug.JavaDebugServerModeHandler
+- <init>():V
+- a:attachRemote():V
+- a:detachRemote():V
+a:com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher
+- com.intellij.remoteServer.runtime.deployment.debug.DebuggerLauncher
+- <init>():V
+- s:getInstance():com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher
+com.intellij.remoteServer.runtime.log.LoggingHandler
+- a:attachToProcess(com.intellij.execution.process.ProcessHandler):V
+- a:clear():V
+- a:print(java.lang.String):V
+- a:printHyperlink(java.lang.String):V
+- a:printHyperlink(java.lang.String,com.intellij.execution.filters.HyperlinkInfo):V
+- a:scrollTo(I):V
+com.intellij.remoteServer.runtime.log.TerminalHandler
+- a:close():V

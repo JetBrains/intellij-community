@@ -4,41 +4,25 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.refactoring.suggested.endOffset
-import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import com.intellij.psi.util.endOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtIsExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNullableType
-import org.jetbrains.kotlin.psi.KtOperationExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.KtVariableDeclaration
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import kotlin.collections.any
-import kotlin.collections.singleOrNull
-import kotlin.let
-import kotlin.sequences.first
 
 data class FoldInitializerAndIfExpressionData(
     val initializer: KtExpression,
@@ -48,7 +32,8 @@ data class FoldInitializerAndIfExpressionData(
     val variableTypeString: String?
 )
 
-context(KtAnalysisSession)
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
 fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
     if (element.`else` != null) return null
 
@@ -81,38 +66,40 @@ fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
     val typeReference = (operationExpression as? KtIsExpression)?.typeReference
 
     if (typeReference != null) {
-        val checkedType = typeReference.getKtType()
-        val variableType = variableDeclaration.getReturnKtType()
+        val checkedType = typeReference.type
+        val variableType = variableDeclaration.returnType
         if (!checkedType.isPossiblySubTypeOf(variableType)) return null
     }
 
 
-    if (statement.getKtType()?.isNothing != true) return null
+    if (statement.expressionType?.isNothing != true) return null
 
     if (ReferencesSearch.search(variableDeclaration, LocalSearchScope(statement)).findFirst() != null) {
         return null
     }
 
     val type = calculateType(variableDeclaration, element, initializer)?.let { type ->
-        if (type is KtErrorType) null
+        if (type is KaErrorType) null
         else type.render(position = Variance.OUT_VARIANCE)
     }
 
     return FoldInitializerAndIfExpressionData(
-      initializer,
-      variableDeclaration,
-      statement,
-      typeReference,
-      type
+        initializer,
+        variableDeclaration,
+        statement,
+        typeReference,
+        type
     )
 }
 
-fun joinLines(element: KtIfExpression,
-              variableDeclaration: KtVariableDeclaration,
-              initializer: KtExpression,
-              ifNullExpr: KtExpression,
-              typeChecked: KtTypeReference?,
-              variableTypeString: String?): KtBinaryExpression {
+fun joinLines(
+    element: KtIfExpression,
+    variableDeclaration: KtVariableDeclaration,
+    initializer: KtExpression,
+    ifNullExpr: KtExpression,
+    typeChecked: KtTypeReference?,
+    variableTypeString: String?
+): KtBinaryExpression {
     val childRangeBefore = PsiChildRange(variableDeclaration, element)
     val commentSaver = CommentSaver(childRangeBefore)
     val childRangeAfter = childRangeBefore.withoutLastStatement()
@@ -135,7 +122,7 @@ fun joinLines(element: KtIfExpression,
     return positionedElvis
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun calculateType(
     declaration: KtVariableDeclaration,
     element: KtIfExpression,
@@ -148,48 +135,21 @@ private fun calculateType(
 
             val isUsedAsNotNullable = ReferencesSearch.search(declaration, LocalSearchScope(declaration.parent)).any {
                 if (it.element.startOffset <= ifEndOffset) return@any false
-                !(it.element.safeAs<KtExpression>()?.getKtType()?.isMarkedNullable ?: return@any false)
+                !(it.element.safeAs<KtExpression>()?.expressionType?.isMarkedNullable ?: return@any false)
             }
 
-            if (isUsedAsNotNullable) null else initializer.getKtType()
+            if (isUsedAsNotNullable) null else initializer.expressionType
 
         } else {
-            initializer.getKtType()
+            initializer.expressionType
         }
     }
 
     // for val with explicit type, change it to non-nullable
     !declaration.isVar && declaration.typeReference != null ->
-        initializer.getKtType()?.withNullability(KtTypeNullability.NON_NULLABLE)
+        initializer.expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
 
     else -> null
-}
-
-private fun KtExpression?.isNullExpression(): Boolean = this?.unwrapBlockOrParenthesis()?.node?.elementType == KtNodeTypes.NULL
-
-
-private fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
-    val innerExpression = KtPsiUtil.safeDeparenthesize(this, true)
-    if (innerExpression is KtBlockExpression) {
-        val statement = innerExpression.statements.singleOrNull() ?: return this
-        val deparenthesized = KtPsiUtil.safeDeparenthesize(statement, true)
-        if (deparenthesized is KtLambdaExpression) return this
-        return deparenthesized
-    }
-    return innerExpression
-}
-
-private fun KtBinaryExpression.expressionComparedToNull(): KtExpression? {
-    val operationToken = this.operationToken
-    if (operationToken != KtTokens.EQEQ && operationToken != KtTokens.EXCLEQ) return null
-
-    val right = this.right ?: return null
-    val left = this.left ?: return null
-
-    val rightIsNull = right.isNullExpression()
-    val leftIsNull = left.isNullExpression()
-    if (leftIsNull == rightIsNull) return null
-    return if (leftIsNull) right else left
 }
 
 private fun createElvisExpression(

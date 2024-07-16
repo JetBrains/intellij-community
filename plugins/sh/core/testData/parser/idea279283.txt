@@ -75,12 +75,10 @@ SHELL_SCRIPT
               LITERAL
                 PsiElement(word)('curl')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('https')
             SIMPLE_COMMAND_ELEMENT
               ASSIGNMENT_COMMAND
                 LITERAL
-                  PsiElement(word)('://go.dev/VERSION?m')
+                  PsiElement(word)('https://go.dev/VERSION?m')
                 PsiElement(=)('=')
                 LITERAL
                   PsiElement(word)('text')

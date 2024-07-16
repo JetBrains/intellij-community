@@ -44,6 +44,7 @@ public interface PopupBorder extends Border {
     }
   }
 
+  @ApiStatus.Internal
   final class BaseBorder implements PopupBorder {
     private final boolean myVisible;
     private final Color myActiveColor;

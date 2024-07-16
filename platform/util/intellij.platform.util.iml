@@ -33,6 +33,8 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="commons-compress" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="commons-io" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="commons-codec" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" exported="" />
@@ -41,6 +43,8 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.troveCompileOnly" scope="PROVIDED" />
   </component>
   <component name="copyright">
     <Base>

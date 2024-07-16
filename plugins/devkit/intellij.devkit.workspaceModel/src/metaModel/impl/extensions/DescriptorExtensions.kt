@@ -115,7 +115,10 @@ internal fun createObjTypeStub(interfaceDescriptor: ClassDescriptor, module: Com
     interfaceDescriptor.isAnnotatedBy(StandardNames.OPEN_ANNOTATION) -> ObjClass.Openness.open
     else -> ObjClass.Openness.final
   }
-  return ObjClassImpl(module, interfaceDescriptor.name.identifier, openness, interfaceDescriptor.source)
+  val propertyAnnotations = interfaceDescriptor.annotations
+                              .mapNotNull { it.fqName }
+                              .map { ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() }) }
+  return ObjClassImpl(module, interfaceDescriptor.name.identifier, openness, interfaceDescriptor.source, propertyAnnotations)
 }
 
 internal fun computeKind(property: PropertyDescriptor): ObjProperty.ValueKind {

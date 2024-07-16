@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.metadata
 
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.metadata.exceptions.MissingTypeMetadataException
 import com.intellij.platform.workspace.storage.metadata.exceptions.MissingTypeMetadataHashException
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
@@ -11,6 +12,7 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
  *
  * See [com.intellij.platform.workspace.storage.metadata.model] to see all the classes that implement this interface
  */
+@WorkspaceEntityInternalApi
 public interface StorageMetadata
 
 
@@ -19,6 +21,8 @@ public interface StorageMetadata
  *
  * Stores metadata of all types from one package
  */
+
+@WorkspaceEntityInternalApi
 public interface MetadataStorage {
   public fun getMetadataByTypeFqnOrNull(fqName: String): StorageTypeMetadata?
 

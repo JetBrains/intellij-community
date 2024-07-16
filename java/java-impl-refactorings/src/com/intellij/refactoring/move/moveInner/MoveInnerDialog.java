@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInner;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -321,10 +322,10 @@ public class MoveInnerDialog extends MoveDialogBase {
       PsiType outerType = JavaPsiFacade.getElementFactory(manager.getProject()).createType(myInnerClass.getContainingClass());
       mySuggestedNameInfo =  JavaCodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, outerType);
       String[] variants = mySuggestedNameInfo.names;
-      myParameterField = new NameSuggestionsField(variants, myProject);
+      myParameterField = new NameSuggestionsField(variants, myProject, JavaFileType.INSTANCE);
     }
     else {
-      myParameterField = new NameSuggestionsField(new String[]{""}, myProject);
+      myParameterField = new NameSuggestionsField(new String[]{""}, myProject, JavaFileType.INSTANCE);
       myParameterField.getComponent().setEnabled(false);
     }
 

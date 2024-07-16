@@ -7,6 +7,7 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.isRunnableKotlinScript
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
@@ -36,7 +37,7 @@ class KotlinStandaloneScriptRunConfigurationProducer :
         fun pathFromPsiElement(element: PsiElement): String? {
             val file = element.getParentOfType<KtFile>(false) ?: return null
             val script = file.script ?: return null
-            return script.containingKtFile.virtualFile.canonicalPath
+            return script.containingKtFile.virtualFile.takeIf { it.isRunnableKotlinScript(file.project) }?.canonicalPath
         }
     }
 

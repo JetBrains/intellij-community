@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.signatureverifier.ILogger
 import com.jetbrains.signatureverifier.InvalidDataException
 import com.jetbrains.signatureverifier.crypt.SignatureVerificationParams
@@ -21,6 +21,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.readZipFile
@@ -123,17 +124,17 @@ private fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: 
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
     .use {
       transformZipUsingTempFile(origin) { zipWriter ->
-        val index = PackageIndexBuilder()
+        val packageIndexBuilder = PackageIndexBuilder()
         readZipFile(origin) { name, dataSupplier ->
-          index.addFile(name)
+          packageIndexBuilder.addFile(name)
           if (entries.containsKey(name)) {
-            zipWriter.file(name, entries.getValue(name))
+            zipWriter.file(name, entries.getValue(name), packageIndexBuilder.indexWriter)
           }
           else {
-            zipWriter.uncompressedData(name, dataSupplier())
+            zipWriter.uncompressedData(name, dataSupplier(), packageIndexBuilder.indexWriter)
           }
         }
-        index.writePackageIndex(zipWriter)
+        packageIndexBuilder.writePackageIndex(zipWriter)
       }
       Files.setLastModifiedTime(origin, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }
@@ -141,7 +142,7 @@ private fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: 
 
 internal fun signingOptions(contentType: String, context: BuildContext): PersistentMap<String, String> {
   val certificateID = context.proprietaryBuildTools.macOsCodesignIdentity?.value
-  check(certificateID != null || !context.signMacOsBinaries) {
+  check(certificateID != null || context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)) {
     "Missing certificate ID"
   }
   val entitlements = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/entitlements.xml")

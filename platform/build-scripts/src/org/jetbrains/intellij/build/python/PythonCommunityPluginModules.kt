@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
 import kotlinx.collections.immutable.PersistentList
@@ -8,58 +8,63 @@ import org.jetbrains.intellij.build.io.copyDir
 import java.nio.file.Files
 
 object PythonCommunityPluginModules {
-  @JvmStatic
+  @JvmField
   val COMMUNITY_MODULES: PersistentList<String> = persistentListOf(
-    "intellij.python.ast",
+    "intellij.commandInterface",
+    "intellij.jupyter.core",
     "intellij.python.community",
+    "intellij.python.community.communityOnly",
+    "intellij.python.community.core.impl",
+    "intellij.python.community.deprecated.extensions",
+    "intellij.python.community.impl",
+    "intellij.python.community.impl.huggingFace",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
-    "intellij.python.parser",
+    "intellij.python.community.plugin.minor",
+    "intellij.python.community.plugin.minorRider",
+    "intellij.python.copyright",
+    "intellij.python.featuresTrainer",
+    "intellij.python.grazie",
+    "intellij.python.langInjection",
+    "intellij.python.markdown",
     "intellij.python.psi",
     "intellij.python.psi.impl",
-    "intellij.python.community.core.impl",
     "intellij.python.pydev",
-    "intellij.python.community.impl",
-    "intellij.python.community.impl.poetry",
-    "intellij.python.community.impl.huggingFace",
-    "intellij.python.community.impl.community_only",
-    "intellij.python.langInjection",
-    "intellij.python.copyright",
-    "intellij.python.terminal",
-    "intellij.python.grazie",
-    "intellij.python.markdown",
     "intellij.python.reStructuredText",
-    "intellij.commandInterface",
     "intellij.python.sdk",
-    "intellij.python.featuresTrainer",
-    "intellij.jupyter.core",
+    "intellij.python.terminal",
+  )
+
+  /**
+   * List of modules used in both Python plugin and Python Frontend plugin
+   */
+  @JvmStatic
+  val PYTHON_COMMON_MODULES: PersistentList<String> = persistentListOf(
+    "intellij.python.parser",
+    "intellij.python.ast",
     "intellij.python.syntax",
-    "intellij.python.syntax.core",
-    "intellij.python.community.deprecated.extensions"
+    "intellij.python.syntax.core"
   )
 
   const val pythonCommunityName: String = "python-ce"
 
   fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    val communityOnlyModules = persistentListOf(
-      "intellij.python.community.plugin.minor",
-      "intellij.python.community.plugin.minor.rider",
-    )
-    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) { spec ->
+    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES) { spec ->
+      PYTHON_COMMON_MODULES.forEach {
+        spec.withModule(it, "python-common.jar")
+      }
+
       body?.invoke(spec)
       spec.withProjectLibrary("XmlRPC")
     }
   }
 
-  @JvmStatic
-  fun pythonPlugin(mainModuleName: String,
-                   name: String,
-                   modules: List<String>,
-                   body: (PluginLayout.PluginLayoutSpec) -> Unit): PluginLayout {
-    return PluginLayout.plugin(mainModuleName) { spec ->
+  fun pythonPlugin(mainModuleName: String, name: String, modules: List<String>, body: (PluginLayout.PluginLayoutSpec) -> Unit): PluginLayout {
+    return PluginLayout.plugin(mainModuleName, auto = true) { spec ->
       spec.directoryName = name
-      spec.mainJarName = "${name}.jar"
+      spec.mainJarName = "$name.jar"
       spec.withModules(modules)
+
       spec.withGeneratedResources { targetDir, context ->
         val output = targetDir.resolve("helpers")
         Files.createDirectories(output)
@@ -75,13 +80,14 @@ object PythonCommunityPluginModules {
           fileFilter = { path -> !path.endsWith("setup.py") && !path.endsWith("conftest.py") }
         )
       }
-      // required for "Python Console" in intellij.python.community.impl module
+
+      // required for "Python Console" in PythonCore plugin
       @Suppress("SpellCheckingInspection")
       spec.withProjectLibrary("libthrift")
+      spec.excludeProjectLibrary("Gradle")
       body(spec)
     }
   }
 
-  @JvmStatic
   fun getPluginBuildNumber(): String = System.getProperty("build.number", "SNAPSHOT")
 }

@@ -1,4 +1,3 @@
-// EXPECTED_DUPLICATED_HIGHLIGHTING
 interface <symbolName textAttributesKey="KOTLIN_TRAIT">TheInterface</symbolName> {
 }
 

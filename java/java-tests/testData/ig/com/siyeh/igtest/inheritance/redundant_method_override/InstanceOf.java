@@ -108,7 +108,7 @@ class Bar extends Foo {
 
   @Override
   void test4(Object obj) {
-    if (obj instanceof Point(double x, <error descr="Incompatible types. Found: 'int', required: 'double'">int y</error>)) {}
+    if (obj instanceof Point(double x, <error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">int y</error>)) {}
   }
 
   @Override

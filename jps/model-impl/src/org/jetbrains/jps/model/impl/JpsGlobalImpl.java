@@ -17,7 +17,10 @@ package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -26,21 +29,13 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryRole;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
-import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
-public final class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements JpsGlobal {
+final class JpsGlobalImpl extends JpsGlobalBase {
   private final JpsLibraryCollectionImpl myLibraryCollection;
-  private JpsPathMapper myPathMapper = JpsPathMapper.IDENTITY;
 
-  public JpsGlobalImpl(@NotNull JpsModel model) {
+  JpsGlobalImpl(@NotNull JpsModel model) {
     super(model);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
-    myContainer.setChild(JpsFileTypesConfigurationImpl.ROLE, new JpsFileTypesConfigurationImpl());
-  }
-
-  public JpsGlobalImpl(JpsGlobalImpl original, JpsModel model) {
-    super(original, model);
-    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 
   @NotNull
@@ -70,27 +65,5 @@ public final class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> imple
   @Override
   public JpsLibraryCollection getLibraryCollection() {
     return myLibraryCollection;
-  }
-
-  @NotNull
-  @Override
-  public JpsFileTypesConfiguration getFileTypesConfiguration() {
-    return myContainer.getChild(JpsFileTypesConfigurationImpl.ROLE);
-  }
-
-  @Override
-  public @NotNull JpsPathMapper getPathMapper() {
-    return myPathMapper;
-  }
-
-  @Override
-  public void setPathMapper(@NotNull JpsPathMapper pathMapper) {
-    myPathMapper = pathMapper;
-  }
-
-  @NotNull
-  @Override
-  public JpsElementReference<JpsGlobal> createReference() {
-    return new JpsGlobalElementReference();
   }
 }

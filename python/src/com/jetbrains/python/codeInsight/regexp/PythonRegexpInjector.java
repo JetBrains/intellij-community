@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.lang.Language;
@@ -24,7 +24,7 @@ import java.util.List;
 
 public final class PythonRegexpInjector implements MultiHostInjector {
   private static final class RegexpMethodDescriptor {
-    @NotNull private final String methodName;
+    private final @NotNull String methodName;
     private final int argIndex;
 
     private RegexpMethodDescriptor(@NotNull String methodName, int argIndex) {
@@ -65,8 +65,7 @@ public final class PythonRegexpInjector implements MultiHostInjector {
     }
   }
 
-  @Nullable
-  private PsiElement resolvePossibleRegexpCall(@NotNull PyCallExpression call) {
+  private @Nullable PsiElement resolvePossibleRegexpCall(@NotNull PyCallExpression call) {
     final PyExpression callee = call.getCallee();
 
     if (callee instanceof PyReferenceExpression referenceExpression && canBeRegexpCall(callee)) {
@@ -88,9 +87,8 @@ public final class PythonRegexpInjector implements MultiHostInjector {
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
                          PyCallExpression.class);
   }
@@ -114,8 +112,7 @@ public final class PythonRegexpInjector implements MultiHostInjector {
     return false;
   }
 
-  @Nullable
-  private RegexpMethodDescriptor findRegexpMethodDescriptor(@Nullable PsiElement element) {
+  private @Nullable RegexpMethodDescriptor findRegexpMethodDescriptor(@Nullable PsiElement element) {
     if (element == null ||
         !(ScopeUtil.getScopeOwner(element) instanceof PyFile) ||
         !ArrayUtil.contains(element.getContainingFile().getName(), "re.py", "re.pyi") ||

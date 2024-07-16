@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text.foldingGrave
 
 import com.intellij.openapi.diagnostic.Logger
@@ -87,7 +87,7 @@ internal class FoldingState(
 
   @RequiresEdt
   fun applyState(document: Document, foldingModel: FoldingModelEx): Boolean {
-    if (contentHash == document.contentHash()) {
+    if (contentHash == contentHash(document)) {
       foldingModel.runBatchFoldingOperationDoNotCollapseCaret {
         val applied1 = applyRegions(foldingModel)
         val applied2 = applyGroupedRegions(foldingModel)

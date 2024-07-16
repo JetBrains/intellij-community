@@ -15,9 +15,11 @@
  */
 package org.jetbrains.jps.model.module;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.jps.model.JpsCompositeElement;
 
 public interface JpsDependencyElement extends JpsCompositeElement {
+  @ApiStatus.Internal
   void remove();
 
   JpsModule getContainingModule();

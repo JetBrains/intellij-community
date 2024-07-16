@@ -9,11 +9,15 @@ import org.jetbrains.annotations.Nullable;
 public enum JsonSchemaVersion {
   SCHEMA_4,
   SCHEMA_6,
-  SCHEMA_7;
+  SCHEMA_7,
+  SCHEMA_2019_09,
+  SCHEMA_2020_12;
 
   private static final String ourSchemaV4Schema = "http://json-schema.org/draft-04/schema";
   private static final String ourSchemaV6Schema = "http://json-schema.org/draft-06/schema";
   private static final String ourSchemaV7Schema = "http://json-schema.org/draft-07/schema";
+  private static final String ourSchemaV201909Schema = "http://json-schema.org/draft/2019-09/schema";
+  private static final String ourSchemaV202012Schema = "http://json-schema.org/draft/2020-12/schema";
   private static final String ourSchemaOrgPrefix = "http://json-schema.org/";
 
   @Override
@@ -22,6 +26,8 @@ public enum JsonSchemaVersion {
       case SCHEMA_4 -> 4;
       case SCHEMA_6 -> 6;
       case SCHEMA_7 -> 7;
+      case SCHEMA_2019_09 -> 201909;
+      case SCHEMA_2020_12 -> 202012;
     });
   }
 
@@ -34,6 +40,8 @@ public enum JsonSchemaVersion {
       case ourSchemaV4Schema -> SCHEMA_4;
       case ourSchemaV6Schema -> SCHEMA_6;
       case ourSchemaV7Schema -> SCHEMA_7;
+      case ourSchemaV201909Schema -> SCHEMA_2019_09;
+      case ourSchemaV202012Schema -> SCHEMA_2020_12;
       default -> id.startsWith(ourSchemaOrgPrefix) ? SCHEMA_7 : null;
     };
   }

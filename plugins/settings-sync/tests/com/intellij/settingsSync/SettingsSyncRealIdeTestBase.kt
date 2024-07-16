@@ -9,9 +9,9 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import java.lang.reflect.Constructor
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
@@ -19,13 +19,13 @@ import java.util.concurrent.CountDownLatch
 internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected lateinit var componentStore: TestComponentStore
 
-  @Before
+  @BeforeEach
   fun setupComponentStore() {
     componentStore = TestComponentStore(configDir)
     application.replaceService(IComponentStore::class.java, componentStore, disposable)
   }
 
-  @After
+  @AfterEach
   fun resetComponentStatesToDefault() {
     componentStore.resetComponents()
   }
@@ -44,13 +44,12 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
 
     execution()
 
-    Assert.assertTrue("Didn't await until new settings are applied", cdl.wait())
+    assertTrue(cdl.wait(), "Didn't await until new settings are applied")
 
     val reinitedComponents = componentStore.reinitedComponents
     for (componentToReinit in componentsToReinit) {
       val componentName = componentToReinit.name
-      Assert.assertTrue("Reinitialized components don't contain $componentName among those: $reinitedComponents",
-                        reinitedComponents.contains(componentName))
+      assertTrue(reinitedComponents.contains(componentName), "Reinitialized components don't contain $componentName among those: $reinitedComponents")
     }
   }
 

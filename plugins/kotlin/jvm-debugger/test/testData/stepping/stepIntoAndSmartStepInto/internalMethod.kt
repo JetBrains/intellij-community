@@ -13,6 +13,3 @@ class Example {
 
     internal fun boo() = Unit
 }
-
-// IGNORE_K2_SMART_STEP_INTO
-// Remove after IDEA-326256 fix

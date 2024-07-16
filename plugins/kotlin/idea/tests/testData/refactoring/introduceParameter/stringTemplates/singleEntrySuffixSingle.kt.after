@@ -1,0 +1,7 @@
+// SINGLE_REPLACE
+fun foo(a: Int, s: String = "def"): String {
+    val x = "xdef$a"
+    val y = "${a}defx"
+    val z = "xddf$a"
+    return "abc$s"
+}

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.api
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext
 import com.intellij.openapi.components.service
+import com.intellij.psi.PsiElement
 
 interface CompletionDummyIdentifierProviderService {
     fun correctPositionForStringTemplateEntry(context: CompletionInitializationContext): Boolean
@@ -12,6 +13,7 @@ interface CompletionDummyIdentifierProviderService {
      */
     fun correctPositionForParameter(context: CompletionInitializationContext)
     fun provideDummyIdentifier(context: CompletionInitializationContext): String
+    fun provideSuffixToAffectParsingIfNecessary(element: PsiElement): String
 
     companion object {
         fun getInstance(): CompletionDummyIdentifierProviderService = service()

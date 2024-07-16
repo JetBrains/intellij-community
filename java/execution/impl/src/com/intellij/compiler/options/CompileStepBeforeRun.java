@@ -154,9 +154,8 @@ public final class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileSte
                 }
 
                 final Ref<Boolean> includeTests = new Ref<>(true); // use the biggest scope by default
-                if (configuration instanceof JavaRunConfigurationBase) {
+                if (configuration instanceof JavaRunConfigurationBase conf) {
                   // use more fine-grained compilation scope avoiding compiling classes, not relevant for running this configuration
-                  final JavaRunConfigurationBase conf = (JavaRunConfigurationBase)configuration;
                   final String runClass = conf.getRunClass();
                   final JavaRunConfigurationModule confModule = conf.getConfigurationModule();
                   if (runClass != null && confModule != null) {

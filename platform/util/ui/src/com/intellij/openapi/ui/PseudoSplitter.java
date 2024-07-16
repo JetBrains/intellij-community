@@ -2,9 +2,12 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.util.MathUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
+@Deprecated(forRemoval = true) // An implementation detail of SplitterWithSecondHideable.
+@ApiStatus.Internal
 public class PseudoSplitter extends Splitter {
   private boolean myFirstIsFixed;
   private int myFirstFixedSize;

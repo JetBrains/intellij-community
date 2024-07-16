@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -37,7 +37,7 @@ public final class NameConverterUtil {
           builder.append('.');
         }
         builder.append(part);
-        if (JavaLexer.isKeyword(part, LanguageLevel.JDK_1_9)) {
+        if (PsiUtil.isKeyword(part, LanguageLevel.JDK_1_9)) {
           builder.append('x');
         }
       }

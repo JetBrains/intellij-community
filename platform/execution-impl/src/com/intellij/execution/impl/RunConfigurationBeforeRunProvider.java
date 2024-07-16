@@ -161,6 +161,7 @@ public final class RunConfigurationBeforeRunProvider
                              @NotNull RunConfigurableBeforeRunTask task) {
     Pair<RunnerAndConfigurationSettings, ExecutionTarget> settings = task.getSettingsWithTarget();
     if (settings.first == null) {
+      LOG.info("Cannot find run configuration '" + task.typeNameTarget.getName() + "' configured as 'Before launch' task in '" + env.getRunProfile().getName() + "', task is skipped");
       return true; // ignore missing configurations: IDEA-155476 Run/debug silently fails when 'Run another configuration' step is broken
     }
     return doExecuteTask(env, settings.first, settings.second);
@@ -177,6 +178,7 @@ public final class RunConfigurationBeforeRunProvider
     final String executorId = executor.getId();
     ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
     if (builder == null) {
+      LOG.info("Cannot create environment builder for 'Before launch' task '" + settings.getName() + "' in '" + env.getRunProfile().getName() + "', task is skipped");
       return false;
     }
 
@@ -195,6 +197,7 @@ public final class RunConfigurationBeforeRunProvider
     }
 
     if (effectiveTarget == null) {
+      LOG.debug("No suitable targets for 'Before launch' task '" + settings.getName() + "' in '" + env.getRunProfile().getName() + "', task is skipped");
       return false;
     }
 
@@ -203,10 +206,12 @@ public final class RunConfigurationBeforeRunProvider
     env.copyUserDataTo(environment);
 
     if (!environment.getRunner().canRun(executorId, environment.getRunProfile())) {
+      LOG.debug("'canRun' returned 'false' for 'Before launch' task '" + settings.getName() + "' in '" + env.getRunProfile().getName() + "', task is skipped");
       return false;
     }
     else {
       beforeRun(environment);
+      LOG.debug("Starting 'Before launch' task '" + settings.getName() + "' in '" + env.getRunProfile().getName() + "'");
       return doRunTask(executorId, environment, environment.getRunner());
     }
   }
@@ -228,6 +233,7 @@ public final class RunConfigurationBeforeRunProvider
       public void processNotStarted(final @NotNull String executorIdLocal, final @NotNull ExecutionEnvironment environmentLocal) {
         if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
           Boolean skipRun = environment.getUserData(ExecutionManagerImpl.EXECUTION_SKIP_RUN);
+          LOG.debug("process not started for before launch task '" + environment.getRunProfile().getName() + "', skipRun=" + skipRun);
           if (skipRun != null && skipRun) {
             result.set(true);
           }
@@ -241,6 +247,7 @@ public final class RunConfigurationBeforeRunProvider
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
         if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
+          LOG.debug("process terminated for before launch task '" + environment.getRunProfile().getName() + "', exitCode=" + exitCode);
           result.set(exitCode == 0);
           targetDone.up();
         }
@@ -407,6 +414,11 @@ public final class RunConfigurationBeforeRunProvider
       task.typeNameTarget.setName(typeNameTarget.getName());
       task.typeNameTarget.setTargetId(typeNameTarget.getTargetId());
       return task;
+    }
+
+    @Override
+    public String toString() {
+      return "RunConfigurableBeforeRunTask{name = " + typeNameTarget.getName() + "}";
     }
   }
 }

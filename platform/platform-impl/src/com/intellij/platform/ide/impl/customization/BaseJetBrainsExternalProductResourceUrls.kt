@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.customization
 
 import com.intellij.openapi.application.ApplicationInfo
@@ -11,6 +11,7 @@ import com.intellij.platform.ide.customization.FeedbackReporter
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -20,17 +21,17 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
   abstract val basePatchDownloadUrl: Url
 
   /**
-   * Returns ID of YouTrack Project which will be used by "Submit a Bug Report" action.
+   * Returns ID of YouTrack Project which will be used by the "Submit a Bug Report" action.
    */
   abstract val youtrackProjectId: String
 
   /**
-   * Returns the product name in the form shown at intellij-support.jetbrains.com site and jetbrains.com/feedback/feedback.jsp page
+   * Returns the product name in the form shown at "intellij-support.jetbrains.com" site and "jetbrains.com/feedback/feedback.jsp" page.
    */
   abstract val shortProductNameUsedInForms: String?
 
   /**
-   * Returns URL of the product page on jetbrains.com site. 
+   * Returns URL of the product page on the "jetbrains.com" site.
    * It's used to compute URLs of the following resources: 
    * * [productPageUrl]/download to get the address of the download page;
    * * [productPageUrl]/whatsnew to get the address of "What's New" page.  
@@ -39,42 +40,36 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 
   /**
    * Returns base URL of context help pages. 
-   * The current IDE version number and ID of the requested topic are added to it to obtain the actual URL:
+   * The current IDE version number and ID of the requested topic are added to it to get the actual URL:
    * [baseWebHelpUrl]`/<version>/?<topicId>`.
    */
   abstract val baseWebHelpUrl: Url?
 
   /**
-   * Returns ID of the form used to contact support at intellij-support.jetbrains.com site 
+   * Returns ID of the form used to contact support at the "intellij-support.jetbrains.com" site.
    */
   open val intellijSupportFormId: Int
     get() = 66731
 
   /**
-   * Use in-product form for `Help | Submit Feedback...`
+   * Use an in-product form for "Help | Submit Feedback...".
    */
   open val useInIdeGeneralFeedback: Boolean
     get() = false
 
   /**
-   * Use in-product form for evaluation feedback
+   * Use an in-product form for evaluation feedback.
    */
   open val useInIdeEvaluationFeedback: Boolean
     get() = false
 
   override val updateMetadataUrl: Url
-    get() {
-      val customUrl = System.getProperty("idea.updates.url")
-      if (customUrl != null) {
-        return Urls.newFromEncoded(customUrl)
-      }
-      return UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded("https://www.jetbrains.com/updates/updates.xml"))
-    }
+    get() = System.getProperty("idea.updates.url")?.let { Urls.newFromEncoded(it) }
+            ?: UpdateRequestParameters.amendUpdateRequest(Urls.newFromEncoded("https://www.jetbrains.com/updates/updates.xml"))
 
-  final override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url {
-    return computeCustomPatchDownloadUrl(from, to)
-           ?: basePatchDownloadUrl.resolve(computePatchFileName(from, to)) 
-  }
+  final override fun computePatchUrl(from: BuildNumber, to: BuildNumber): Url =
+    computeCustomPatchDownloadUrl(from, to)
+    ?: basePatchDownloadUrl.resolve(computePatchFileName(from, to))
 
   override val bugReportUrl: ((String) -> Url)?
     get() = { description ->
@@ -89,7 +84,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
     get() = { _ ->  
       Urls.newFromEncoded("https://intellij-support.jetbrains.com/hc/en-us/requests/new").addParameters(
         mapOf(
-          "ticket_form_id" to "$intellijSupportFormId",
+          "ticket_form_id" to intellijSupportFormId.toString(),
           "product" to shortProductNameUsedInForms,
           "build" to ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode(),
           "os" to currentOsNameForIntelliJSupport(),
@@ -119,33 +114,24 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
 }
 
 /**
- * Supported values for https://intellij-support.jetbrains.com
- * * Linux - `linux`
+ * Supported values for [intellij-support.jetbrains.com](https://intellij-support.jetbrains.com):
+ * * Windows 10+ - `win-10[-64]`
+ * * Windows 8 - `win-8[-64]`
+ * * Windows 7- - `win-7[-64]`
  * * macOS - `mac`
- * * Windows 10 - `win-10`[[-64]]
- * * Windows 8 - `win-8`[[-64]]
- * * Windows 7 or older - `win-7`[[-64]]
+ * * Linux - `linux`
  * * Other - `other-os`
  */
 @ApiStatus.Internal
-fun currentOsNameForIntelliJSupport(): String = when {
-  SystemInfo.isWindows -> {
+fun currentOsNameForIntelliJSupport(): String = when (OS.CURRENT) {
+  OS.Windows -> {
     "win-" +
-    when {
-      SystemInfo.isWin10OrNewer -> "-10"
-      SystemInfo.isWin8OrNewer -> "-8"
-      else -> "-7"
-    } + if (!CpuArch.is32Bit()) "-64" else ""
+    (if (SystemInfo.isWin10OrNewer) "-10" else if (SystemInfo.isWin8OrNewer) "-8" else "-7") +
+    (if (CpuArch.CURRENT.width == 64) "-64" else "")
   }
-  SystemInfo.isLinux -> {
-    "linux"
-  }
-  SystemInfo.isMac -> {
-    "mac"
-  }
-  else -> {
-    "other-os"
-  }
+  OS.macOS -> "mac"
+  OS.Linux -> "linux"
+  else -> "other-os"
 }
 
 internal fun computePatchFileName(from: BuildNumber, to: BuildNumber): String {

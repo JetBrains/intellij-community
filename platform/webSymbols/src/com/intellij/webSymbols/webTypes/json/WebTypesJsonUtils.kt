@@ -26,8 +26,11 @@ import com.intellij.webSymbols.WebSymbol.Companion.PROP_KIND
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_READ_ONLY
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_RUBY_GEMS
+import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_NODE_PACKAGES
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
@@ -278,20 +281,21 @@ internal fun Reference.codeCompletion(name: String,
 }
 
 internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules =
-  WebSymbolsContextKindRules.EnablementRules(
-    nodePackages,
-    projectToolExecutables,
-    fileExtensions,
-    ideLibraries,
-    fileNamePatterns.mapNotNull { it.toRegex() },
-    scriptUrlPatterns.mapNotNull { it.toRegex() }
-  )
+  WebSymbolsContextKindRules.createEnablementRules {
+    pkgManagerDependencies(PKG_MANAGER_NODE_PACKAGES, nodePackages)
+    pkgManagerDependencies(PKG_MANAGER_RUBY_GEMS, rubyGems)
+    pkgManagerDependencies(additionalProperties)
+    projectToolExecutables(projectToolExecutables)
+    fileExtensions(fileExtensions)
+    ideLibraries(ideLibraries)
+    fileNamePatterns(fileNamePatterns.mapNotNull { it.toRegex() })
+  }
 
 internal fun DisablementRules.wrap(): WebSymbolsContextKindRules.DisablementRules =
-  WebSymbolsContextKindRules.DisablementRules(
-    fileExtensions,
-    fileNamePatterns.mapNotNull { it.toRegex() },
-  )
+  WebSymbolsContextKindRules.createDisablementRules {
+    fileExtensions(fileExtensions)
+    fileNamePatterns(fileNamePatterns.mapNotNull { it.toRegex() })
+  }
 
 internal fun BaseContribution.Priority.wrap() =
   WebSymbol.Priority.values()[ordinal]
@@ -493,20 +497,21 @@ internal fun <T> buildNameConverters(map: Map<String, T>?,
 internal fun List<Type>.mapToTypeReferences(): List<WebSymbolTypeSupport.TypeReference> =
   mapNotNull {
     when (val reference = it.value) {
-      is String -> WebSymbolTypeSupport.TypeReference(null, reference)
+      is String -> WebSymbolTypeSupport.TypeReference.create(null, reference)
       is TypeReference -> if (reference.name != null)
-        WebSymbolTypeSupport.TypeReference(reference.module, reference.name)
+        WebSymbolTypeSupport.TypeReference.create(reference.module, reference.name)
       else null
       else -> null
     }
   }
 
-internal fun ContextBase.evaluate(context: WebSymbolsContext): Boolean =
+internal fun RequiredContextBase?.evaluate(context: WebSymbolsContext): Boolean =
   when (this) {
-    is ContextKindName -> context[kind] == name
-    is ContextAllOf -> allOf.all { it.evaluate(context) }
-    is ContextAnyOf -> anyOf.any { it.evaluate(context) }
-    is ContextNot -> !not.evaluate(context)
+    null -> true
+    is RequiredContextKindName -> context[kind] == name
+    is RequiredContextAllOf -> allOf.all { it.evaluate(context) }
+    is RequiredContextAnyOf -> anyOf.any { it.evaluate(context) }
+    is RequiredContextNot -> !not.evaluate(context)
     else -> throw IllegalStateException(this.javaClass.simpleName)
   }
 

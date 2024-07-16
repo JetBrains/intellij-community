@@ -6,12 +6,15 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.ui.JBColor
 import com.intellij.ui.NewUiValue
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.currentMode
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.CELL_STRIPE_COLOR
+import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import java.awt.Color
 
@@ -56,7 +59,6 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
 
   val CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR")
   val CELL_UNDER_CARET_EDITOR_MODE_STRIPE_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CARET_EDITOR_MODE_STRIPE_COLOR")
-  private val CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR")
 
   // see org.jetbrains.plugins.notebooks.visualization.CaretBasedCellSelectionModelKt.getSelectionLines
   private fun isCellSelected(editor: Editor, lines: IntRange): Boolean {
@@ -78,7 +80,7 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
   override fun getCellStripeColor(editor: EditorImpl, lines: IntRange): Color? {
     val isSelected = isCellSelected(editor, lines)
     val color = when {
-      isSelected && currentMode() == NotebookEditorMode.COMMAND -> CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR
+      isSelected && editor.currentMode == NotebookEditorMode.COMMAND -> CELL_UNDER_CARET_COMMAND_MODE_STRIPE_COLOR
       isSelected -> CELL_UNDER_CARET_EDITOR_MODE_STRIPE_COLOR
       else -> null
     }
@@ -93,8 +95,16 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
     return null
   }
 
-  override fun getCellLeftLineWidth(): Int =
-    when (currentMode()) {
+  override fun getCellStripeHoverColor(editor: Editor): Color {
+    return editor.colorsScheme.getColor(CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR) ?: JBColor.BLUE
+  }
+
+  override fun getCellStripeColor(editor: Editor): Color {
+    return editor.colorsScheme.getColor(CELL_STRIPE_COLOR) ?: JBColor.GRAY
+  }
+
+  override fun getCellLeftLineWidth(editor: Editor): Int =
+    when (editor.currentMode) {
       NotebookEditorMode.EDIT -> EDIT_MODE_CELL_LEFT_LINE_WIDTH
       NotebookEditorMode.COMMAND -> COMMAND_MODE_CELL_LEFT_LINE_WIDTH
     }
@@ -107,4 +117,6 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
   override fun shouldShowExecutionCounts(): Boolean = true
 
   override fun shouldShowOutExecutionCounts(): Boolean = false
+
+  override fun shouldShowRunButtonInGutter(): Boolean = true
 }

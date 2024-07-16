@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -37,9 +37,8 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implement
     super("castvar", "T name = (T)expr", selectorTopmost(IS_NON_VOID));
   }
 
-  @Nullable
   @Override
-  public String getTemplateString(@NotNull PsiElement element) {
+  public @Nullable String getTemplateString(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     boolean isFinal = JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS;
 
@@ -71,8 +70,7 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implement
     template.addVariable(TYPE_VAR, expr, expr, true);
   }
 
-  @NotNull
-  private static Set<LookupElement> createLookupItems(PsiType @NotNull [] suggestedTypes) {
+  private static @NotNull Set<LookupElement> createLookupItems(PsiType @NotNull [] suggestedTypes) {
     Set<LookupElement> itemSet = new LinkedHashSet<>();
     for (PsiType type : suggestedTypes) {
       itemSet.add(PsiTypeLookupItem.createLookupItem(type, null));

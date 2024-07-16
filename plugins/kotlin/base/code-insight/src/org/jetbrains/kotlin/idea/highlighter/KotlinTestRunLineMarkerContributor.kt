@@ -88,7 +88,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
                                 listOf(
                                     KonanTarget.IOS_X64,
                                     KonanTarget.MACOS_X64,
-                                    KonanTarget.WATCHOS_X64, KonanTarget.WATCHOS_X86,
+                                    KonanTarget.WATCHOS_X64,
                                     KonanTarget.TVOS_X64
                                 )
                             }
@@ -96,7 +96,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
                         }
 
                         HostManager.hostIsLinux -> target == KonanTarget.LINUX_X64
-                        HostManager.hostIsMingw -> target in listOf(KonanTarget.MINGW_X86, KonanTarget.MINGW_X64)
+                        HostManager.hostIsMingw -> target in listOf(KonanTarget.MINGW_X64)
                         else -> false
                     }
                 }

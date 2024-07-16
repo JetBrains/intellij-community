@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -16,7 +16,7 @@ import java.util.Collections;
 /**
  * Extension point to implement a file-based inverted index.
  * <p>
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/indexing_and_psi_stubs/file_based_indexes.html">SDK Docs</a> for reference.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/file-based-indexes.html">SDK Docs</a> for reference.
  * <p>
  *   <ul>
  *     <li>

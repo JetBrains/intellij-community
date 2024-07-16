@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.KeyValueStore;
-import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,4 +20,7 @@ public interface ForwardIndex extends KeyValueStore<Integer, ByteArraySequence> 
   void put(@NotNull Integer key, @Nullable ByteArraySequence value) throws IOException;
 
   void clear() throws IOException;
+
+  //MAYBE RC: push it up to KeyValueStore?
+  boolean isClosed();
 }

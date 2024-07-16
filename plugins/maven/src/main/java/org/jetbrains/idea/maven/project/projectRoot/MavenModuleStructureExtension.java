@@ -16,7 +16,7 @@ import java.util.Set;
 import static com.intellij.ide.highlighter.ModuleFileType.DOT_DEFAULT_EXTENSION;
 import static org.jetbrains.idea.maven.model.MavenConstants.POM_XML;
 
-public class MavenModuleStructureExtension extends ModuleStructureExtension {
+public final class MavenModuleStructureExtension extends ModuleStructureExtension {
   private final Set<Module> myModulesToRemove = new HashSet<>();
   private final List<String> myPomsToIgnore = new ArrayList<>();
   private MavenProjectsManager myMavenProjectsManager = null;

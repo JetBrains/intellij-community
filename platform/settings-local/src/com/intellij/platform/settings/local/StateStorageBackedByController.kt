@@ -29,32 +29,14 @@ internal class StateStorageBackedByController(
   @JvmField val controller: SettingsControllerMediator,
   private val tags: List<SettingTag>,
 ) : StateStorage {
-  override fun <T : Any> getState(
-    component: Any?,
-    componentName: String,
-    pluginId: PluginId,
-    stateClass: Class<T>,
-    mergeInto: T?,
-    reload: Boolean,
-  ): T? {
+  override fun <T : Any> getState(component: Any?, componentName: String, pluginId: PluginId, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     when {
       stateClass === Element::class.java -> {
-        return deserializeAsJdomElement(
-          localValue = null,
-          controller = controller,
-          componentName = componentName,
-          pluginId = pluginId,
-          tags = tags,
-        ) as T?
+        return deserializeAsJdomElement(localValue = null, controller = controller, componentName = componentName, pluginId = pluginId, tags = tags) as T?
       }
       com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass) -> {
-        return readDataForDeprecatedJdomExternalizable(
-          componentName = componentName,
-          mergeInto = mergeInto,
-          stateClass = stateClass,
-          pluginId = pluginId,
-        )
+        return readDataForDeprecatedJdomExternalizable(componentName = componentName, mergeInto = mergeInto, stateClass = stateClass, pluginId = pluginId)
       }
       else -> {
         try {
@@ -64,12 +46,7 @@ internal class StateStorageBackedByController(
             return rootBinding.fromJson(currentValue = null, element = data) as T
           }
           else {
-            return getXmlSerializationState(
-              mergeInto = mergeInto,
-              beanBinding = rootBinding,
-              componentName = componentName,
-              pluginId = pluginId,
-            )
+            return getXmlSerializationState(mergeInto = mergeInto, beanBinding = rootBinding, componentName = componentName, pluginId = pluginId)
           }
         }
         catch (e: SerializationException) {
@@ -82,19 +59,8 @@ internal class StateStorageBackedByController(
     }
   }
 
-  private fun <T : Any> readDataForDeprecatedJdomExternalizable(
-    componentName: String,
-    pluginId: PluginId,
-    mergeInto: T?,
-    stateClass: Class<T>,
-  ): T? {
-    val data = deserializeAsJdomElement(
-      localValue = null,
-      controller = controller,
-      componentName = componentName,
-      pluginId = pluginId,
-      tags = tags,
-    ) ?: return mergeInto
+  private fun <T : Any> readDataForDeprecatedJdomExternalizable(componentName: String, pluginId: PluginId, mergeInto: T?, stateClass: Class<T>): T? {
+    val data = deserializeAsJdomElement(localValue = null, controller = controller, componentName = componentName, pluginId = pluginId, tags = tags) ?: return mergeInto
     if (mergeInto != null) {
       thisLogger().error("State is ${stateClass.name}, merge into is $mergeInto, state element text is $data")
     }
@@ -108,12 +74,7 @@ internal class StateStorageBackedByController(
     return t as T
   }
 
-  private fun <T : Any> getXmlSerializationState(
-    mergeInto: T?,
-    beanBinding: Binding,
-    componentName: String,
-    pluginId: PluginId,
-  ): T? {
+  private fun <T : Any> getXmlSerializationState(mergeInto: T?, beanBinding: Binding, componentName: String, pluginId: PluginId): T? {
     var result = mergeInto
     val bindings = (beanBinding as BeanBinding).bindings!!
     for (binding in bindings) {

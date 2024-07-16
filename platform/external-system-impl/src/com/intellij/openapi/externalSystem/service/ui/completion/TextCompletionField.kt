@@ -16,7 +16,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.text.BadLocationException
 import com.intellij.openapi.observable.util.whenTextChangedFromUi as whenTextChangedFromUiImpl
@@ -30,17 +29,7 @@ abstract class TextCompletionField<T>(
   var completionType: CompletionType = CompletionType.REPLACE_TEXT
 
   @get:ApiStatus.OverrideOnly
-  protected open val completionCollector: TextCompletionCollector<T> =
-    TextCompletionCollector.basic {
-      @Suppress("DEPRECATION")
-      getCompletionVariants()
-    }
-
-  @ScheduledForRemoval
-  @Deprecated("Please, override completionCollector instead")
-  protected open fun getCompletionVariants(): List<T> {
-    throw UnsupportedOperationException("Please, override completionCollector property")
-  }
+  protected abstract val completionCollector: TextCompletionCollector<T>
 
   private val updateMutex = AtomicBoolean()
 

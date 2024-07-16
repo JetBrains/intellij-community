@@ -242,7 +242,7 @@ public final class SMTestRunnerConnectionUtil {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
-      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+      else if (DumbService.getInstance(project).isUsableInCurrentContext(myLocator)) {
         return myLocator.getLocation(protocol, path, metainfo, project, scope);
       }
       else {
@@ -317,9 +317,7 @@ public final class SMTestRunnerConnectionUtil {
     @NotNull
     @Override
     public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-      boolean isDumbMode = DumbService.isDumb(project);
-
-      if (myPrimaryLocator != null && (!isDumbMode || DumbService.isDumbAware(myPrimaryLocator))) {
+      if (myPrimaryLocator != null && DumbService.getInstance(project).isUsableInCurrentContext(myPrimaryLocator)) {
         List<Location> locations = myPrimaryLocator.getLocation(protocol, path, project);
         if (!locations.isEmpty()) {
           return locations;
@@ -334,7 +332,7 @@ public final class SMTestRunnerConnectionUtil {
       }
 
       for (TestLocationProvider provider : TestLocationProvider.EP_NAME.getExtensionList()) {
-        if (!isDumbMode || DumbService.isDumbAware(provider)) {
+        if (DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
           List<Location> locations = provider.getLocation(protocol, path, project);
           if (!locations.isEmpty()) {
             return locations;

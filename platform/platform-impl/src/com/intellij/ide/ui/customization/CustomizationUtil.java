@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
@@ -23,6 +22,8 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.PopupMenuListenerAdapter;
@@ -46,11 +47,10 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -311,9 +311,7 @@ public final class CustomizationUtil {
 
   public static @NotNull MouseListener installPopupHandler(@NotNull JComponent component, @NotNull String groupId, @NotNull String place) {
     Supplier<ActionGroup> actionGroupSupplier = () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-    PopupHandler popupHandler = PopupHandler.installPopupMenu(component, new PopupComputableActionGroup(actionGroupSupplier), place);
-    PopupMenuPreloader.install(component, place, popupHandler, actionGroupSupplier);
-    return popupHandler;
+    return PopupHandler.installPopupMenu(component, new PopupComputableActionGroup(actionGroupSupplier), place);
   }
 
   /**
@@ -335,8 +333,7 @@ public final class CustomizationUtil {
     @NotNull String text;
     @Nullable String description = null;
     Icon icon = null;
-    if (obj instanceof Group) {
-      Group group = (Group)obj;
+    if (obj instanceof Group group) {
       String name = group.getName();
       @NlsSafe String id = group.getId();
       text = name != null ? name : Objects.requireNonNullElse(id, IdeBundle.message("action.group.name.unnamed.group"));
@@ -345,8 +342,7 @@ public final class CustomizationUtil {
         description = id;
       }
     }
-    else if (obj instanceof String) {
-      String actionId = (String)obj;
+    else if (obj instanceof String actionId) {
       AnAction action = ActionManager.getInstance().getAction(actionId);
       String name = action != null ? action.getTemplatePresentation().getText() : null;
       text = !StringUtil.isEmptyOrSpaces(name) ? name : actionId;
@@ -577,13 +573,33 @@ public final class CustomizationUtil {
       }
 
       @Override
-      protected void doOKAction() {
+      protected Action @NotNull [] createActions() {
+        List<Action> actions = new ArrayList<>(Arrays.asList(super.createActions()));
+        Action applyAction = new DialogWrapperAction(IdeBundle.message("dialog.apply")) {
+          @Override
+          protected void doAction(ActionEvent e) {
+            apply();
+            setEnabled(false);
+          }
+        };
+        actions.add(applyAction);
+        panel.setApplyAction(applyAction);
+
+        return actions.toArray(Action[]::new);
+      }
+
+      private void apply() {
         try {
           panel.apply();
         }
         catch (ConfigurationException ex) {
           LOG.error(ex);
         }
+      }
+
+      @Override
+      protected void doOKAction() {
+        apply();
         close(OK_EXIT_CODE);
       }
 
@@ -608,10 +624,54 @@ public final class CustomizationUtil {
   private static final class ToolbarCustomizableActionsPanel extends CustomizableActionsPanel {
     private final @NotNull String myGroupID;
     private final @Nls @NotNull String myGroupName;
+    private @Nullable Action myApplyAction;
 
     private ToolbarCustomizableActionsPanel(@NotNull String groupID, @Nls @NotNull String groupName) {
       myGroupID = groupID;
       myGroupName = groupName;
+    }
+
+    @Override
+    public void apply() throws ConfigurationException {
+      super.apply();
+      updateActionToolbars();
+      onModified();
+    }
+
+    private void setApplyAction(@Nullable Action applyAction) {
+      this.myApplyAction = applyAction;
+      if (applyAction != null) {
+        applyAction.setEnabled(isModified(false));
+      }
+    }
+
+    private void updateActionToolbars() {
+      HashSet<String> editedChildrenSet = new HashSet<>();
+      if (ActionManager.getInstance().getAction(myGroupID) instanceof ActionGroup group) {
+        editedChildrenSet.addAll(Arrays.stream(group.getChildren(null)).map(action -> {
+          return ActionManager.getInstance().getId(action);
+        }).toList());
+      }
+
+      for (IdeFrame frame: WindowManager.getInstance().getAllProjectFrames()) {
+        for (Component c : UIUtil.uiTraverser(frame.getComponent()).traverse()) {
+          if (c instanceof ActionToolbar toolbar) {
+            AnAction foundGroup = ActionUtil.getDelegateChainRootAction(toolbar.getActionGroup());
+
+            String foundId = ActionManager.getInstance().getId(foundGroup);
+            if (myGroupID.equals(foundId) || editedChildrenSet.contains(foundId)) {
+              toolbar.updateActionsAsync();
+            }
+          }
+        }
+      }
+    }
+
+    @Override
+    protected void onModified() {
+      if (myApplyAction != null) {
+        myApplyAction.setEnabled(CustomActionsSchema.getInstance().isModified(mySelectedSchema));
+      }
     }
 
     @Override

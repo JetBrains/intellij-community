@@ -21,7 +21,7 @@ import java.util.List;
  * <p/>
  * That's why we need to provide special code which maps that directory to exact config file.
  */
-public class GradleConfigLocator implements ExternalSystemConfigLocator {
+public final class GradleConfigLocator implements ExternalSystemConfigLocator {
 
   @NotNull
   @Override

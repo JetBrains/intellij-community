@@ -1,4 +1,4 @@
-// IGNORE_K2
+// INPLACE_VARIABLE_NAME: s
 fun foo(a: Int): String {
     val s = "ab$a:${a + 1}cd"
     val x = "_${s}__"

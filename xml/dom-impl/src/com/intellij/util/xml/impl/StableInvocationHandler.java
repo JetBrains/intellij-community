@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Factory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.MergedObject;
 import com.intellij.util.xml.StableElement;
@@ -28,30 +12,33 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-class StableInvocationHandler<T> implements InvocationHandler, StableElement {
-  private T myOldValue;
-  private T myCachedValue;
-  private final Set<Class<?>> myClasses;
-  private final Factory<? extends T> myProvider;
-  private final Condition<? super T> myValidator;
+final class StableInvocationHandler<T> implements InvocationHandler, StableElement {
+  private T oldValue;
+  private T cachedValue;
+  private final Set<Class<?>> classes;
+  private final Supplier<? extends T> provider;
+  private final Predicate<? super T> validator;
 
-  StableInvocationHandler(final T initial, final Factory<? extends T> provider, Condition<? super T> validator) {
-    myProvider = provider;
-    myCachedValue = initial;
-    myOldValue = initial;
-    myValidator = validator;
-    final Class<?> superClass = initial.getClass().getSuperclass();
-    final Set<Class<?>> classes = new HashSet<>();
+  StableInvocationHandler(final T initial, final Supplier<? extends T> provider, Predicate<? super T> validator) {
+    this.provider = provider;
+    cachedValue = initial;
+    oldValue = initial;
+    this.validator = validator;
+    Class<?> superClass = initial.getClass().getSuperclass();
+
+    Set<Class<?>> classes = new HashSet<>();
     ContainerUtil.addAll(classes, initial.getClass().getInterfaces());
     ContainerUtil.addIfNotNull(classes, superClass);
     classes.remove(MergedObject.class);
-    myClasses = classes;
+    this.classes = classes;
   }
 
 
   @Override
-  public final Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+  public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
     if (StableElement.class.equals(method.getDeclaringClass())) {
       try {
         return method.invoke(this, args);
@@ -63,12 +50,12 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
 
     if (AdvancedProxy.FINALIZE_METHOD.equals(method)) return null;
 
-    if (isNotValid(myCachedValue)) {
-      if (myCachedValue != null) {
-        myOldValue = myCachedValue;
+    if (isNotValid(cachedValue)) {
+      if (cachedValue != null) {
+        oldValue = cachedValue;
       }
-      myCachedValue = myProvider.create();
-      if (isNotValid(myCachedValue)) {
+      cachedValue = provider.get();
+      if (isNotValid(cachedValue)) {
         if (AdvancedProxy.EQUALS_METHOD.equals(method)) {
 
           final Object arg = args[0];
@@ -77,11 +64,11 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
           final StableInvocationHandler<?> handler = DomManagerImpl.getStableInvocationHandler(arg);
           if (handler == null || handler.getWrappedElement() != null) return false;
 
-          return Comparing.equal(myOldValue, handler.myOldValue);
+          return Comparing.equal(oldValue, handler.oldValue);
         }
 
-        if (myOldValue != null && Object.class.equals(method.getDeclaringClass())) {
-          return method.invoke(myOldValue, args);
+        if (oldValue != null && Object.class.equals(method.getDeclaringClass())) {
+          return method.invoke(oldValue, args);
         }
 
         if ("isValid".equals(method.getName())) {
@@ -94,17 +81,17 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
     if (AdvancedProxy.EQUALS_METHOD.equals(method)) {
       final Object arg = args[0];
       if (arg instanceof StableElement) {
-        return myCachedValue.equals(((StableElement<?>)arg).getWrappedElement());
+        return cachedValue.equals(((StableElement<?>)arg).getWrappedElement());
       }
-      return myCachedValue.equals(arg);
+      return cachedValue.equals(arg);
 
     }
     if (AdvancedProxy.HASHCODE_METHOD.equals(method)) {
-      return myCachedValue.hashCode();
+      return cachedValue.hashCode();
     }
 
     try {
-      return method.invoke(myCachedValue, args);
+      return method.invoke(cachedValue, args);
     }
     catch (InvocationTargetException e) {
       throw e.getCause();
@@ -112,35 +99,35 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
   }
 
   @Override
-  public final void revalidate() {
-    final T t = myProvider.create();
-    if (!isNotValid(t) && !t.equals(myCachedValue)) {
-      myCachedValue = t;
+  public void revalidate() {
+    final T t = provider.get();
+    if (!isNotValid(t) && !t.equals(cachedValue)) {
+      cachedValue = t;
     }
   }
 
   @Override
-  public final void invalidate() {
-    if (!isNotValid(myCachedValue)) {
-      myCachedValue = null;
+  public void invalidate() {
+    if (!isNotValid(cachedValue)) {
+      cachedValue = null;
     }
   }
 
   @Override
-  public final T getWrappedElement() {
-    if (isNotValid(myCachedValue)) {
-      myCachedValue = myProvider.create();
+  public T getWrappedElement() {
+    if (isNotValid(cachedValue)) {
+      cachedValue = provider.get();
     }
-    return myCachedValue;
+    return cachedValue;
   }
 
   public T getOldValue() {
-    return myOldValue;
+    return oldValue;
   }
 
   private boolean isNotValid(final T t) {
-    if (t == null || !myValidator.value(t)) return true;
-    for (final Class<?> aClass : myClasses) {
+    if (t == null || !validator.test(t)) return true;
+    for (final Class<?> aClass : classes) {
       if (!aClass.isInstance(t)) return true;
     }
     return false;

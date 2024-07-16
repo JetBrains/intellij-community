@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nls;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-public class NlsActions {
+public final class NlsActions {
   @NlsContext(prefix = "action", suffix = "text")
   @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
   public @Nls(capitalization = Nls.Capitalization.Title) @interface ActionText {
@@ -15,5 +15,8 @@ public class NlsActions {
   @NlsContext(prefix = "action", suffix = "description")
   @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
   public @Nls(capitalization = Nls.Capitalization.Sentence) @interface ActionDescription {
+  }
+
+  private NlsActions() {
   }
 }

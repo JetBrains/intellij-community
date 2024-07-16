@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.util.TextRange;
@@ -16,11 +16,11 @@ import java.util.Set;
 public class JavaElementArrangementEntry extends DefaultArrangementEntry
   implements TypeAwareArrangementEntry, NameAwareArrangementEntry, ModifierAwareArrangementEntry {
 
-  @NotNull private final Set<ArrangementSettingsToken> myModifiers = new HashSet<>();
-  @NotNull private final Set<ArrangementSettingsToken> myTypes = new HashSet<>();
+  private final @NotNull Set<ArrangementSettingsToken> myModifiers = new HashSet<>();
+  private final @NotNull Set<ArrangementSettingsToken> myTypes = new HashSet<>();
 
-  @NotNull private final ArrangementSettingsToken myType;
-  @Nullable private final String myName;
+  private final @NotNull ArrangementSettingsToken myType;
+  private final @Nullable String myName;
 
   public JavaElementArrangementEntry(@Nullable ArrangementEntry parent,
                                      @NotNull TextRange range,
@@ -51,9 +51,8 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
     myModifiers.add(modifier);
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 
@@ -62,8 +61,7 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
     return myTypes;
   }
 
-  @NotNull
-  public ArrangementSettingsToken getType() {
+  public @NotNull ArrangementSettingsToken getType() {
     return myType;
   }
 

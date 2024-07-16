@@ -3,16 +3,21 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
@@ -28,9 +33,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (!ktFile.isCompiled) return declaration
         val project = ktFile.project
-        when (val ktModule = ProjectStructureProvider.getModule(project, ktFile, null)) {
-            is KtLibraryModule -> {
-                val librarySource = ktModule.librarySources ?: return declaration
+        when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
+            is KaLibraryModule -> {
+                val librarySource = module.librarySources ?: return declaration
                 val scope = librarySource.getContentScopeWithCommonDependencies()
                 return getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(declaration, scope, project) ?: declaration
             }
@@ -43,9 +48,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (ktFile.isCompiled) return declaration
         val project = ktFile.project
-        when (val ktModule = ProjectStructureProvider.getModule(project, ktFile, null)) {
-            is KtLibrarySourceModule -> {
-                val libraryBinary = ktModule.binaryLibrary
+        when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
+            is KaLibrarySourceModule -> {
+                val libraryBinary = module.binaryLibrary
                 val scope = libraryBinary.getContentScopeWithCommonDependencies()
                 return getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(declaration, scope, project) ?: declaration
             }
@@ -226,18 +231,18 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     }
 
     // Maybe called from EDT by IJ Platfrom :(
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private fun renderTypesForComparasion(declaration: KtCallableDeclaration) = allowAnalysisOnEdt {
-        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        @OptIn(KaAllowAnalysisFromWriteAction::class)
         allowAnalysisFromWriteAction {
             analyze(declaration) {
                 buildString {
-                    val symbol = declaration.getSymbol() as KtCallableSymbol
+                    val symbol = declaration.symbol as KaCallableSymbol
                     symbol.receiverType?.let { receiverType ->
                         append(receiverType.render(renderer, position = Variance.INVARIANT))
                         append('.')
                     }
-                    if (symbol is KtFunctionLikeSymbol) {
+                    if (symbol is KaFunctionSymbol) {
                         symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
                     }
                 }
@@ -259,17 +264,18 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         }
     }
 
-    private fun KtModule.getContentScopeWithCommonDependencies(): GlobalSearchScope {
-        if (platform.isCommon()) return contentScope
+    private fun KaModule.getContentScopeWithCommonDependencies(): GlobalSearchScope {
+        if (targetPlatform.isCommon()) return contentScope
 
         val scopes = buildList {
             add(contentScope)
-            allDirectDependencies().filter { it.platform.isCommon() }.mapTo(this) { it.contentScope }
+            allDirectDependencies().filter { it.targetPlatform.isCommon() }.mapTo(this) { it.contentScope }
         }
         return GlobalSearchScope.union(scopes)
     }
 
     companion object {
-        private val renderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES
+        @KaExperimentalApi
+        private val renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES
     }
 }

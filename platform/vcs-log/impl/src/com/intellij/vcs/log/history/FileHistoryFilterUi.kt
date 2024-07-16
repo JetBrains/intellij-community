@@ -15,12 +15,10 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.filter.BranchFilterModel
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
-import com.intellij.vcs.log.ui.filter.BranchFilters
 import com.intellij.vcs.log.ui.filter.VcsLogPopupComponentAction
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.swing.JComponent
 
 class FileHistoryFilterUi(private val path: FilePath,
@@ -36,8 +34,7 @@ class FileHistoryFilterUi(private val path: FilePath,
   var visiblePack: VisiblePack = VisiblePack.EMPTY
 
   init {
-    branchFilterModel = BranchFilterModel(Supplier { visiblePack }, data.storage, listOf(root), propertiesWrapper, initialFilters)
-    branchFilterModel.visibleRoots = listOf(root)
+    branchFilterModel = BranchFilterModel(::visiblePack, data.storage, listOf(root), { listOf(root) }, propertiesWrapper, initialFilters)
     branchFilterModel.addSetFilterListener { filterConsumer.accept(filters) }
   }
 
@@ -48,7 +45,7 @@ class FileHistoryFilterUi(private val path: FilePath,
   }
 
   @RequiresEdt
-  fun hasBranchFilter(): Boolean = branchFilterModel.getFilter()?.isEmpty() == false
+  fun hasBranchFilter(): Boolean = branchFilterModel.getFilter()?.isEmpty == false
 
   fun isBranchFilterEnabled(): Boolean {
     if (FileHistoryFilterer.canFilterWithIndex(data.index, root, visiblePack.dataPack)) return true
@@ -59,7 +56,7 @@ class FileHistoryFilterUi(private val path: FilePath,
 
   @RequiresEdt
   fun resetFiltersToDefault() {
-    branchFilterModel.setFilter(BranchFilters.fromCollection(initialFilters))
+    branchFilterModel.setFilter(initialFilters)
   }
 
   @RequiresEdt

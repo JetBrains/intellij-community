@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -108,6 +109,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private JLabel myVersion2;
   private JLabel mySize;
   private JEditorPane myRequiredPlugins;
+  private JLabel myCustomRepoForDebug;
 
   private LinkPanel myAuthor;
   private BorderLayoutPanel myControlledByOrgNotification;
@@ -789,6 +791,11 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myDate.setForeground(ListPluginComponent.GRAY_COLOR);
     mySize.setForeground(ListPluginComponent.GRAY_COLOR);
 
+    if (myMarketplace && ApplicationManager.getApplication().isInternal()) {
+      infoPanel.add(myCustomRepoForDebug = new JLabel());
+      myCustomRepoForDebug.setForeground(ListPluginComponent.GRAY_COLOR);
+    }
+
     pane.add(IdeBundle.message("plugins.configurable.additional.info.tab.name"), new Wrapper(infoPanel));
   }
 
@@ -1150,14 +1157,17 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
 
     showLicensePanel();
+    String homepage = MarketplaceUrls.getPluginHomepage(myPlugin.getPluginId());
 
-    if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate() || !isPluginFromMarketplace()) {
+    if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate()
+        || !isPluginFromMarketplace()
+        || homepage == null) {
       myHomePage.hide();
     } else {
       myHomePage.showWithBrowseUrl(
         IdeBundle.message("plugins.configurable.plugin.homepage.link"),
         true,
-        () -> MarketplaceUrls.getPluginHomepage(myPlugin.getPluginId())
+        () -> homepage
       );
     }
 
@@ -1243,6 +1253,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       myVendorInfoPanel.show(pluginNode);
 
       requiredPluginNames = pluginNode.getDependencyNames() != null ? pluginNode.getDependencyNames() : emptyList();
+
+      if (myCustomRepoForDebug != null) {
+        String customRepo = pluginNode.getRepositoryName();
+        myCustomRepoForDebug.setText("Custom Repository: " + customRepo); //NON-NLS
+        myCustomRepoForDebug.setVisible(customRepo != null);
+      }
     }
 
     myRating.setText(myMultiTabs ? IdeBundle.message("plugins.configurable.rate.0", rating) : rating);
@@ -1486,8 +1502,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
       if (myMultiTabs) {
         boolean bundled = myPlugin.isBundled();
+        boolean isEssential = ApplicationInfo.getInstance().isEssentialPlugin(myPlugin.getPluginId());
         myGearButton.setVisible(!uninstalled && !bundled);
         myEnableDisableButton.setVisible(bundled);
+        myEnableDisableButton.setEnabled(!isEssential);
       }
       else {
         myGearButton.setVisible(!uninstalled);

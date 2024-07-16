@@ -127,7 +127,7 @@ public final class GitUpdateProcess {
     myProgressIndicator.setText(GitBundle.message("update.process.progress.title"));
 
     // check if update is possible
-    if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
+    if (isUpdateNotReady()) {
       return GitUpdateResult.NOT_READY;
     }
 
@@ -146,6 +146,10 @@ public final class GitUpdateProcess {
     }
     myProgressIndicator.setText(oldText);
     return result;
+  }
+
+  public boolean isUpdateNotReady() {
+    return checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles();
   }
 
   private @NotNull GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod) {

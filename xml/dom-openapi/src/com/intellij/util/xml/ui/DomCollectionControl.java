@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -117,22 +117,19 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     myCollectionPanel.getTable().setRowSelectionInterval(index, index);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (DOM_COLLECTION_CONTROL.is(dataId)) {
       return this;
     }
     return null;
   }
 
-  @Nullable @NonNls
-  protected String getHelpId() {
+  protected @Nullable @NonNls String getHelpId() {
     return null;
   }
 
-  @Nullable @Nls
-  protected String getEmptyPaneText() {
+  protected @Nullable @Nls String getEmptyPaneText() {
     return null;
   }
 
@@ -295,8 +292,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     };
   }
 
-  @Nullable
-  private static DomEditorManager getDomEditorManager(DomUIControl control) {
+  private static @Nullable DomEditorManager getDomEditorManager(DomUIControl control) {
     JComponent component = control.getComponent();
     while (component != null && !(component instanceof DomEditorManager)) {
       final Container parent = component.getParent();
@@ -356,7 +352,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    protected final void afterAddition(@NotNull final T newElement) {
+    protected final void afterAddition(final @NotNull T newElement) {
       reset();
       afterAddition(myCollectionPanel.getTable(), myCollectionElements.size() - 1);
     }

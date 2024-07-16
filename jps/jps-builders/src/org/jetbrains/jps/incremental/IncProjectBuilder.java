@@ -1651,14 +1651,14 @@ public final class IncProjectBuilder {
             }
             finally {
               outputConsumer.setCurrentBuilderName(null);
-              final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
-              if (moreToCompile) {
-                nextPassRequired = true;
-              }
             }
           }
         }
         finally {
+          final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
+          if (moreToCompile) {
+            nextPassRequired = true;
+          }
           JavaBuilderUtil.clearDataOnRoundCompletion(context);
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.execution.ExecutionExceptionWithAttachments;
@@ -9,10 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.NoRouteToHostException;
 
 public class RemoteSdkException extends ExecutionExceptionWithAttachments {
-  private final boolean myNoRouteToHost;
-  private final boolean myAuthFailed;
-
-  private Throwable myCause;
+  private final Throwable myCause;
 
   public RemoteSdkException(@DialogMessage String s, Throwable throwable) {
     this(s, throwable, null, null);
@@ -21,18 +18,14 @@ public class RemoteSdkException extends ExecutionExceptionWithAttachments {
   public RemoteSdkException(@DialogMessage String s, Throwable throwable, @Nullable String stdout, @Nullable String stderr) {
     super(s, throwable, stdout, stderr);
 
-    myAuthFailed = false;
     Throwable t = throwable;
     while (t != null) {
       if (t instanceof NoRouteToHostException) {
         myCause = t;
-        myNoRouteToHost = true;
         return;
       }
-
       t = t.getCause();
     }
-    myNoRouteToHost = false;
     myCause = throwable;
   }
 
@@ -42,29 +35,12 @@ public class RemoteSdkException extends ExecutionExceptionWithAttachments {
 
   public RemoteSdkException(@DialogMessage String s, @Nullable String stdout, @Nullable String stderr) {
     super(s, stdout, stderr);
-    myAuthFailed = false;
-    myNoRouteToHost = false;
-  }
-
-  public boolean isNoRouteToHost() {
-    return myNoRouteToHost;
-  }
-
-  public boolean isAuthFailed() {
-    return myAuthFailed;
+    myCause = null;
   }
 
   @Override
   public String getMessage() {
-    if (myNoRouteToHost) {
-      return myCause.getMessage();
-    }
-    else if (myAuthFailed) {
-      return RemoteBundle.message("authentication.failed");
-    }
-    else {
-      return super.getMessage();
-    }
+    return myCause instanceof NoRouteToHostException ? myCause.getMessage() : super.getMessage();
   }
 
   public static @NotNull RemoteSdkException cantObtainRemoteCredentials(@NotNull Throwable e) {

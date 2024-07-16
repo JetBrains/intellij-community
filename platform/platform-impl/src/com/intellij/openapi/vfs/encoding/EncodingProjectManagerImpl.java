@@ -508,7 +508,12 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   @Override
   public void setDefaultCharsetName(@NotNull String name) {
-    setEncoding(null, name.isEmpty() ? null : CharsetToolkit.forName(name));
+    Charset oldCharset = getDefaultCharset();
+    Charset newCharset = CharsetToolkit.forName(name);
+    if (!Comparing.equal(oldCharset, newCharset)) {
+      setEncoding(null, name.isEmpty() ? null : newCharset);
+      EncodingManagerImpl.firePropertyChange(null, PROP_DEFAULT_FILES_ENCODING, oldCharset, newCharset);
+    }
   }
 
   @Override

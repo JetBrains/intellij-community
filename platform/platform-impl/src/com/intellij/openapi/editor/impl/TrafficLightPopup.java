@@ -43,8 +43,10 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 final class TrafficLightPopup {
   private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupLevelChangePolicy");
@@ -56,7 +58,6 @@ final class TrafficLightPopup {
   private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
   private final AncestorListener myAncestorListener;
   private final Alarm popupAlarm = new Alarm();
-  private final List<DropDownLink<?>> levelLinks = new ArrayList<>();
 
   private JBPopup myPopup;
   private boolean insidePopup;
@@ -170,7 +171,6 @@ final class TrafficLightPopup {
       return;
     }
     myContent.removeAll();
-    levelLinks.clear();
 
     GridBag gc = new GridBag().nextLine().next().
       anchor(GridBagConstraints.LINE_START).
@@ -298,7 +298,6 @@ final class TrafficLightPopup {
         // do not create lower panel for code with me guests with no write access
         if (msg == null) {
           DropDownLink<?> link = createDropDownLink(levels.get(0), controller, prefix);
-          levelLinks.add(link);
           panel.add(link, constrains);
         }
         else {
@@ -313,7 +312,6 @@ final class TrafficLightPopup {
           // do not create lower panel for code with me guests with no write access
           if (msg == null) {
             DropDownLink<?> link = createDropDownLink(level, controller, prefix);
-            levelLinks.add(link);
             panel.add(link, constrains);
           }
           else {

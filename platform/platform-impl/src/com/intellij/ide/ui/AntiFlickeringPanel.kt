@@ -9,15 +9,29 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.image.BufferedImage
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 /** A hacky way to reduce flickering. */
 @ApiStatus.Internal
-class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
+class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout()) {
   private var savedSelfieImage: BufferedImage? = null
   private var savedSize: Dimension? = null
   private var savedPreferredSize: Dimension? = null
   private var needToScroll: Rectangle? = null
+  private var isChildOpaque = false
+
+  private var childWasAdded = false
+  
+  init {
+    add(content)
+    childWasAdded = true
+  }
+
+  override fun addImpl(comp: Component?, constraints: Any?, index: Int) {
+    require(!childWasAdded) { "${this.javaClass} is now working only with one child" }
+    super.addImpl(comp, constraints, index)
+  }
 
   fun freezePainting(delay: Int) {
     isOpaque = true
@@ -27,14 +41,18 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
       isOpaque = false
       return
     }
-    savedSize = size
-    savedPreferredSize = preferredSize
+    savedSize = size.dimensionCopy()
+    savedPreferredSize = size.dimensionCopy()
+
+    isChildOpaque = content.isOpaque
+    content.isOpaque = false
 
     val alarm = SingleAlarm({
                               savedSelfieImage = null
                               savedSize = null
                               savedPreferredSize = null
                               isOpaque = false
+                              content.isOpaque = isChildOpaque
                               revalidate()
                               needToScroll?.let {
                                 needToScroll = null
@@ -46,11 +64,11 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
   }
 
   override fun getSize(): Dimension {
-    return savedSize ?: super.getSize()
+    return savedSize?.dimensionCopy() ?: super.getSize()
   }
 
   override fun getPreferredSize(): Dimension {
-    return savedPreferredSize ?: super.getPreferredSize()
+    return savedPreferredSize?.dimensionCopy() ?: super.getPreferredSize()
   }
 
   @DirtyUI
@@ -83,3 +101,5 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
     }
   }
 }
+
+private fun Dimension.dimensionCopy(): Dimension = Dimension(width, height)

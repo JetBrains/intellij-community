@@ -9,14 +9,16 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -203,14 +205,14 @@ class CodeFloatingToolbar(
 
       override fun beforeShown(event: LightweightWindowEvent) {
         activeMenuPopup = popup
-        button.isSelected = true
+        Toggleable.setSelected(button, true)
         alignButtonPopup(popup)
         HelpTooltip.setMasterPopupOpenCondition(button) { true }
       }
 
       override fun onClosed(event: LightweightWindowEvent) {
         activeMenuPopup = null
-        button.isSelected = false
+        Toggleable.setSelected(button, null)
       }
     })
   }
@@ -288,6 +290,8 @@ class CodeFloatingToolbar(
     val isPopupButton = button.presentation.isPopupGroup
     button.addMouseListener(object : java.awt.event.MouseListener {
       override fun mouseEntered(e: MouseEvent?) {
+        val component = hintComponent ?: return
+        val modality = ModalityState.stateForComponent(component)
         coroutineScope.launch {
           mouseWasOutsideOfComponent = false
           val delayMs = if (isPopupButton && activeMenuPopup != null) 40L else 300L
@@ -295,10 +299,8 @@ class CodeFloatingToolbar(
           if (mouseWasOutsideOfComponent) {
             cancel()
           }
-          withContext(Dispatchers.EDT) {
-            blockingContext {
-              if (isPopupButton) button.click() else activeMenuPopup?.cancel()
-            }
+          withContext(Dispatchers.EDT + modality.asContextElement()) {
+            if (isPopupButton) button.click() else activeMenuPopup?.cancel()
           }
         }
       }

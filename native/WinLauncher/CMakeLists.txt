@@ -45,6 +45,7 @@ if(USE_CEF_SANDBOX)
   # Setup linking with CEF sandbox library
   include("DownloadCEF.cmake")
   if(NOT DEFINED CEF_VERSION)
+    # keep synced with the cef_version in the build.rs of the xplatlauncher
     set(CEF_VERSION "122.1.9+gd14e051+chromium-122.0.6261.94")
   endif()
 

@@ -64,7 +64,7 @@ class KotlinSuggestedRefactoringExecution(
         val project = declaration.project
 
         val configuration = object : KotlinChangeSignatureConfiguration {
-            override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = true
         }
 
         val changeSignature = KotlinChangeSignature(project, null, descriptor, configuration, declaration, null)

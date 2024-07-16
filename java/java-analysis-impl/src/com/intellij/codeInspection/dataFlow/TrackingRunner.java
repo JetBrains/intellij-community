@@ -35,10 +35,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -235,7 +232,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   public static class CauseItem {
-    private static final String PLACE_POINTER = "___PLACE___";
+    private static final @NlsSafe String PLACE_POINTER = "___PLACE___";
     final @NotNull List<CauseItem> myChildren;
     final @NotNull DfaProblemType myProblem;
     final @Nullable SmartPsiFileRange myTarget;
@@ -339,7 +336,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       }
       int childIndex = parent == null ? 0 : parent.myChildren.indexOf(this);
       if (childIndex > 0) {
-        title = (parent.myProblem instanceof PossibleExecutionDfaProblemType ? "or " : "and ") + title;
+        title = (parent.myProblem instanceof PossibleExecutionDfaProblemType
+                 ? JavaAnalysisBundle.message("dfa.find.cause.or.another", title)
+                 : JavaAnalysisBundle.message("dfa.find.cause.and.another", title));
       } else {
         title = StringUtil.capitalize(title);
       }
@@ -348,7 +347,6 @@ public final class TrackingRunner extends StandardDataFlowRunner {
 
     @Override
     public @Nls String toString() {
-      //noinspection HardCodedStringLiteral
       return getProblemName().replaceFirst(PLACE_POINTER, JavaAnalysisBundle.message("dfa.find.cause.place.here"));
     }
 
@@ -509,7 +507,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       if (other instanceof RangeDfaProblemType rangeProblem &&
           myTemplate.equals(rangeProblem.myTemplate) &&
           Objects.equals(myType, rangeProblem.myType)) {
-        return new RangeDfaProblemType(myTemplate, myRangeSet.join(((RangeDfaProblemType)other).myRangeSet), myType);
+        return new RangeDfaProblemType(myTemplate, myRangeSet.join(rangeProblem.myRangeSet), myType);
       }
       return super.tryMerge(other);
     }

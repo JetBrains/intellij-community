@@ -2,25 +2,20 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.Model
-import org.gradle.tooling.model.gradle.GradleBuild
+import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmProjectContainer
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 
 object IdeaKpmProjectProvider : ProjectImportModelProvider {
-    override fun populateBuildModels(
-        controller: BuildController,
-        buildModel: GradleBuild,
-        consumer: ProjectImportModelProvider.BuildModelConsumer
-    ) = Unit
 
     override fun populateProjectModels(
         controller: BuildController,
-        projectModel: Model,
-        modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
+        projectModel: BasicGradleProject,
+        modelConsumer: GradleModelConsumer
     ) {
         val container = controller.findModel(projectModel, IdeaKpmProjectContainer::class.java) ?: return
-        modelConsumer.consume(container, IdeaKpmProjectContainer::class.java)
+        modelConsumer.consumeProjectModel(projectModel, container, IdeaKpmProjectContainer::class.java)
     }
 }
 

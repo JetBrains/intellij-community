@@ -15,7 +15,8 @@ class CreateBeanPropertyRequest(
   project: Project,
   propertyName: String,
   propertyKind: PropertyKind,
-  private val type: PsiType
+  private val type: PsiType,
+  private val isStartTemplate: Boolean = true
 ) : CreateMethodRequest {
 
   private val isSetter: Boolean = propertyKind == PropertyKind.SETTER
@@ -39,4 +40,6 @@ class CreateBeanPropertyRequest(
   override fun getExpectedParameters(): List<ExpectedParameter> = myParameters
 
   override fun isValid(): Boolean = type.isValid
+
+  override fun isStartTemplate(): Boolean = isStartTemplate
 }

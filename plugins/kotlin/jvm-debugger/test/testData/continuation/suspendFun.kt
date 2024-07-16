@@ -27,3 +27,5 @@ suspend fun b(bParam: String) {
     //Breakpoint!
     b + 1
 }
+
+// REGISTRY: debugger.async.stacks.coroutines=false

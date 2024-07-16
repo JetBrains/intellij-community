@@ -12,7 +12,6 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.pyi.PyiUtil
 
 object PyCollectionTypeUtil {
 

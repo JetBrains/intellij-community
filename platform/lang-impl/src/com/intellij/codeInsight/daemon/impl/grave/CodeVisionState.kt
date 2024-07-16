@@ -22,7 +22,7 @@ internal data class CodeVisionState(val contentHash: Int, val entries: List<Code
   }
 
   object Externalizer : VersionedExternalizer<CodeVisionState> {
-    override fun serdeVersion() = 0
+    override fun serdeVersion() = 1
 
     override fun save(output: DataOutput, value: CodeVisionState) {
       writeINT(output, value.contentHash)

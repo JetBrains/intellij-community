@@ -1,17 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin
 
+import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.uast.testFramework.env.AbstractCoreEnvironment
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiNameHelper
+import com.intellij.psi.impl.PsiNameHelperImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.URLUtil
+import junit.framework.TestCase
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -24,95 +29,167 @@ import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.messageCollector
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.test.TestJdkKind
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UastContext
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
+import org.jetbrains.uast.java.JavaUastLanguagePlugin
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.CliKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.internal.UastAnalysisHandlerExtension
-import org.jetbrains.uast.test.kotlin.env.AbstractUastTest
 import java.io.File
 
-abstract class AbstractKotlinUastTest : AbstractUastTest() {
+abstract class AbstractKotlinUastTest : TestCase(),
+                                        ExpectedPluginModeProvider {
 
+    private lateinit var testRootDisposable: Disposable
     private lateinit var compilerConfiguration: CompilerConfiguration
-    private var kotlinCoreEnvironment: KotlinCoreEnvironment? = null
+    private lateinit var kotlinCoreEnvironment: KotlinCoreEnvironment
+
+    protected val project: MockProject
+        get() = kotlinCoreEnvironment.project as MockProject
+
+    protected val uastContext: UastContext
+        get() = project.getService(UastContext::class.java)
+
+    protected val psiManager: PsiManager
+        get() = PsiManager.getInstance(project)
 
     open var testDataDir: File = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
-    override fun getVirtualFile(testName: String): VirtualFile {
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
+    protected fun doTest(
+        testName: String,
+        checkCallback: (String, UFile) -> Unit = ::check,
+    ) {
+        val virtualFile = getVirtualFile(testName)
+
+        val psiFile = psiManager.findFile(virtualFile) ?: error("Can't get psi file for $testName")
+        val uFile = UastFacade.convertElementWithParent(psiFile, null) ?: error("Can't get UFile for $testName")
+        checkCallback(testName, uFile as UFile)
+    }
+
+    protected abstract fun check(
+        testName: String,
+        file: UFile,
+    )
+
+    protected fun getVirtualFile(testName: String): VirtualFile {
         val testFile = testDataDir.listFiles { pathname -> pathname.nameWithoutExtension == testName }.first()
 
-        super.initializeEnvironment(testFile)
+        if (ApplicationManager.getApplication() == null) {
+            Disposer.register(testRootDisposable) {
+                resetApplicationToNull()
+            }
+        }
 
+        createEnvironment(testFile)
+
+        initializeCoreEnvironment()
         initializeKotlinEnvironment()
 
-        val trace = NoScopeRecordCliBindingTrace()
+        val trace = NoScopeRecordCliBindingTrace(project)
 
-        val environment = kotlinCoreEnvironment!!
         TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
-            project, environment.getSourceFiles(), trace, compilerConfiguration, environment::createPackagePartProvider
+            project = project,
+            files = kotlinCoreEnvironment.getSourceFiles(),
+            trace = trace,
+            configuration = compilerConfiguration,
+            packagePartProvider = kotlinCoreEnvironment::createPackagePartProvider,
         )
 
         val vfs = VirtualFileManager.getInstance().getFileSystem(URLUtil.FILE_PROTOCOL)
 
-        val ideaProject = project
-        ideaProject.baseDir = vfs.findFileByPath(TEST_KOTLIN_MODEL_DIR.canonicalPath)
+        project.baseDir = vfs.findFileByPath(TEST_KOTLIN_MODEL_DIR.canonicalPath)
 
         return vfs.findFileByPath(testFile.canonicalPath)!!
     }
 
+    private fun initializeCoreEnvironment() {
+        CoreApplicationEnvironment.registerApplicationExtensionPoint(
+          UastLanguagePlugin.EP,
+          UastLanguagePlugin::class.java,
+        )
+
+        CoreApplicationEnvironment.registerApplicationExtensionPoint(
+            UEvaluatorExtension.EXTENSION_POINT_NAME,
+            UEvaluatorExtension::class.java,
+        )
+
+        project.registerService(
+            PsiNameHelper::class.java,
+            PsiNameHelperImpl(project),
+        )
+        project.registerService(UastContext::class.java)
+
+        Extensions.getRootArea().getExtensionPoint(UastLanguagePlugin.EP)
+            .registerExtension(JavaUastLanguagePlugin())
+
+        AnalysisHandlerExtension.registerExtension(
+            project,
+            UastAnalysisHandlerExtension(),
+        )
+    }
+
     private fun initializeKotlinEnvironment() {
         val area = Extensions.getRootArea()
-        area.getExtensionPoint(UastLanguagePlugin.extensionPointName).registerExtension(KotlinUastLanguagePlugin(), project)
-        area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).registerExtension(KotlinEvaluatorExtension(), project)
+        area.getExtensionPoint(UastLanguagePlugin.EP)
+            .registerExtension(KotlinUastLanguagePlugin(), project)
+        area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME)
+            .registerExtension(KotlinEvaluatorExtension(), project)
 
         val application = ApplicationManager.getApplication() as MockComponentManager
         application.registerService(
             BaseKotlinUastResolveProviderService::class.java,
-            CliKotlinUastResolveProviderService::class.java
+            CliKotlinUastResolveProviderService::class.java,
         )
         project.registerService(
             KotlinUastResolveProviderService::class.java,
-            CliKotlinUastResolveProviderService::class.java
+            CliKotlinUastResolveProviderService::class.java,
         )
     }
 
-    override fun createEnvironment(source: File): AbstractCoreEnvironment {
-        val appWasNull = ApplicationManager.getApplication() == null
+    private fun createEnvironment(source: File) {
         compilerConfiguration = createKotlinCompilerConfiguration(source)
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
         compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.kotlinCompiler)
 
-        val parentDisposable = Disposer.newDisposable()
-        val kotlinCoreEnvironment =
-            KotlinCoreEnvironment.createForTests(parentDisposable, compilerConfiguration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
-
-        this.kotlinCoreEnvironment = kotlinCoreEnvironment
-
-        AnalysisHandlerExtension.registerExtension(
-            kotlinCoreEnvironment.project, UastAnalysisHandlerExtension()
+        kotlinCoreEnvironment = KotlinCoreEnvironment.createForTests(
+            parentDisposable = testRootDisposable,
+            initialConfiguration = compilerConfiguration,
+            extensionConfigs = EnvironmentConfigFiles.JVM_CONFIG_FILES,
         )
-
-        return KotlinCoreEnvironmentWrapper(kotlinCoreEnvironment, parentDisposable, appWasNull)
     }
 
+    override fun setUp() {
+        testRootDisposable = Disposer.newDisposable()
+        setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+    }
+
+    @Suppress("SSBasedInspection")
     override fun tearDown() {
-        kotlinCoreEnvironment = null
-        ApplicationManager.getApplication().invokeAndWait {
-            ApplicationManager.getApplication().runWriteAction {
-                super.tearDown()
-            }
+        try {
+            runWriteActionAndWait { Disposer.dispose(testRootDisposable) }
+        } finally {
+            super.tearDown()
         }
     }
 
@@ -120,38 +197,13 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
         return KotlinTestUtils.newConfiguration(ConfigurationKind.STDLIB_REFLECT, TestJdkKind.FULL_JDK).apply {
             addKotlinSourceRoot(sourceFile.canonicalPath)
 
-            val messageCollector = PrintingMessageCollector(System.err, MessageRenderer.PLAIN_RELATIVE_PATHS, true)
-            put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
+            messageCollector = PrintingMessageCollector(System.err, MessageRenderer.PLAIN_RELATIVE_PATHS, true)
 
             put(CommonConfigurationKeys.MODULE_NAME, LightProjectDescriptor.TEST_MODULE_NAME)
 
             if (sourceFile.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
                 put(CommonConfigurationKeys.ALLOW_ANY_SCRIPTS_IN_SOURCE_ROOTS, true)
                 loadScriptingPlugin(this)
-            }
-        }
-    }
-
-    private class KotlinCoreEnvironmentWrapper(
-        val environment: KotlinCoreEnvironment,
-        val parentDisposable: Disposable,
-        val appWasNull: Boolean
-    ) : AbstractCoreEnvironment() {
-        override fun addJavaSourceRoot(root: File) {
-            TODO("not implemented")
-        }
-
-        override fun addJar(root: File) {
-            TODO("not implemented")
-        }
-
-        override val project: MockProject
-            get() = environment.project as MockProject
-
-        override fun dispose() {
-            Disposer.dispose(parentDisposable)
-            if (appWasNull) {
-                resetApplicationToNull()
             }
         }
     }

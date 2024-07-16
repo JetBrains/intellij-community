@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -9,6 +9,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.Callable;
 
 /**
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
  *
  * @param <T> Result type.
  * @see WriteAction
@@ -117,11 +118,14 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   public static final class CannotReadException extends ProcessCanceledException {
 
     @Internal
-    public CannotReadException() { super(); }
+    public CannotReadException() {
+      // Still public constructor because it is used in asciidoc plugin
+      super();
+    }
 
     @Internal
-    public CannotReadException(@NotNull Throwable cause) {
-      super(cause);
+    public static @NotNull Runnable jobCancellation(@NotNull Job job) {
+      return () -> job.cancel(new CannotReadException());
     }
   }
 }

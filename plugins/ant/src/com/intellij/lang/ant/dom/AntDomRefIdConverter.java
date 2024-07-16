@@ -23,7 +23,7 @@ import java.util.Set;
 public class AntDomRefIdConverter extends Converter<AntDomElement> implements CustomReferenceConverter<AntDomElement>{
 
   @Override
-  public AntDomElement fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public AntDomElement fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s != null) {
       final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
       if (element != null) {
@@ -34,7 +34,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
   }
 
   @Override
-  public String toString(@Nullable AntDomElement antDomElement, ConvertContext context) {
+  public String toString(@Nullable AntDomElement antDomElement, @NotNull ConvertContext context) {
     return antDomElement != null? antDomElement.getId().getRawText() : null;
   }
 

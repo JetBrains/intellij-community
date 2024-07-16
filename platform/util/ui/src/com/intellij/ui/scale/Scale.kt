@@ -95,8 +95,7 @@ enum class ScaleType {
  *
  * @author tav
  */
-@Internal
-data class Scale(@JvmField val value: Double, @JvmField val type: ScaleType)
+data class Scale @Internal constructor(@JvmField val value: Double, @JvmField val type: ScaleType)
 
 // the cache radically reduces potential thousands of equal Scale instances
 private val cache = ThreadLocal.withInitial {

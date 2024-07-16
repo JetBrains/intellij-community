@@ -11,30 +11,45 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 // ContainerUtil requires trove in classpath
 public final class CollectionFactory {
+
+  /**
+   * Concurrent weak key:K -> strong value:V map.
+   */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap() {
     return new ConcurrentWeakHashMap<>(0.75f);
   }
 
+  /**
+   * Concurrent weak key:K -> strong value:V map.
+   */
   @Contract(value = "_, -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap(@NotNull HashingStrategy<? super K> strategy) {
     return new ConcurrentWeakHashMap<>(strategy);
   }
 
+  /**
+   * Concurrent weak key:String -> strong value:V map with case-insensitive hashing strategy.
+   */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentMap<@NotNull String, @NotNull V> createConcurrentWeakCaseInsensitiveMap() {
     return new ConcurrentWeakHashMap<>(HashingStrategy.caseInsensitive());
   }
 
+  /**
+   * Concurrent strong key:K -> weak value:V map
+   */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap() {
     return new ConcurrentWeakValueHashMap<>(null);
   }
 
+  /**
+   * Concurrent strong key:K -> soft value:V map
+   */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap() {
     return new ConcurrentSoftValueHashMap<>(null);
@@ -45,7 +60,7 @@ public final class CollectionFactory {
    * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding key
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
     return new ConcurrentWeakValueHashMap<>(evictionListener);
   }
 
@@ -54,10 +69,13 @@ public final class CollectionFactory {
    * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding key
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super K> evictionListener) {
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
     return new ConcurrentSoftValueHashMap<>(evictionListener);
   }
 
+  /**
+   * Concurrent weak key:K -> strong value:V map with identity hashing strategy.
+   */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakIdentityMap() {
     return new ConcurrentWeakHashMap<>(HashingStrategy.identity());
@@ -75,7 +93,7 @@ public final class CollectionFactory {
   /**
    * Weak keys hard values hash map.
    * Null keys are NOT allowed
-   * Null values are allowed
+   * Null values ARE allowed
    */
   @Contract(value = "_,_,_ -> new", pure = true)
   public static @NotNull <K, V> Map<@NotNull K, V> createWeakMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> hashingStrategy) {
@@ -376,7 +394,7 @@ public final class CollectionFactory {
    * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
     return new ConcurrentSoftHashMap<>(evictionListener);
   }
 

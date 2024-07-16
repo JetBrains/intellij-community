@@ -1,0 +1,6 @@
+// FIX: Remove 'val' from parameter
+class UsedWithoutThisInInitProperty(x: Int) {
+    init {
+        val y = x
+    }
+}

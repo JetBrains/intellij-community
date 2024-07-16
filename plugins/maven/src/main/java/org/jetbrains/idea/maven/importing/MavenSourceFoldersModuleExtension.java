@@ -13,6 +13,7 @@ import com.intellij.project.model.impl.module.content.JpsContentEntry;
 import com.intellij.project.model.impl.module.content.JpsSourceFolder;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import static org.jetbrains.idea.maven.importing.MavenRootModelAdapter.getMavenE
 /**
  * @author Vladislav.Soroka
  */
-public class MavenSourceFoldersModuleExtension extends ModuleExtension {
+public final class MavenSourceFoldersModuleExtension extends ModuleExtension {
 
   private ModifiableRootModel myRootModel;
   private JpsModule myDummyJpsModule;
@@ -57,11 +58,12 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension {
     for (ContentEntry eachEntry : modifiableRootModel.getContentEntries()) {
       for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
         //noinspection unchecked
+        JpsModuleSourceRootType<JpsElement> rootType = (JpsModuleSourceRootType<JpsElement>)eachFolder.getRootType();
         final JpsModuleSourceRoot jpsModuleSourceRoot =
           JpsElementFactory.getInstance().createModuleSourceRoot(
             eachFolder.getUrl(),
-            (JpsModuleSourceRootType<JpsElement>)eachFolder.getRootType(),
-            eachFolder.getJpsElement().getProperties().getBulkModificationSupport().createCopy());
+            rootType,
+            SourceRootPropertiesHelper.createPropertiesCopy(eachFolder.getJpsElement().getProperties(), rootType));
 
         addJspSourceFolder(jpsModuleSourceRoot, eachFolder.getUrl());
       }

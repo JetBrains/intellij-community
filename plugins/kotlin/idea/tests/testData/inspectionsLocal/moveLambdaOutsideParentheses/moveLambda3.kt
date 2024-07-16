@@ -4,7 +4,7 @@
 // ERROR: Unresolved reference: it
 // SKIP_ERRORS_AFTER
 fun foo() {
-    bar({ it <caret>})
+    bar(<caret>{ it })
 }
 
 fun bar(a: Int, b: (Int) -> Int) {

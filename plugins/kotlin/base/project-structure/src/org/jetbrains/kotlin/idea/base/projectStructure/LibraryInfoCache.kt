@@ -16,7 +16,6 @@ import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -137,7 +136,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             value: List<LibraryInfo>,
         ) {
             cache[key] = value
-            deduplicationCache.getOrPut(root) { mutableListOf() } += key
+            deduplicationCache.getOrPut<String, MutableList<LibraryEx>>(root) { mutableListOf<LibraryEx>() } += key
         }
 
         private fun cachedDeduplicatedValue(
@@ -265,7 +264,8 @@ class LibraryInfoCache(project: Project) : Disposable {
             cache: MutableMap<LibraryEx, List<LibraryInfo>>,
         ): Collection<List<LibraryInfo>> {
             val outdatedValues = mutableListOf<List<LibraryInfo>>()
-            for ((root, invalidatedLibraries) in keys.groupBy { it.firstRoot() }) {
+            val groupBy = keys.groupBy { it.firstRoot() }
+            for ((root, invalidatedLibraries) in groupBy) {
                 val deduplicatedLibraries = deduplicationCache[root] ?: continue
                 if (deduplicatedLibraries.isEmpty()) continue
                 deduplicatedLibraries.removeAll(invalidatedLibraries)
@@ -328,7 +328,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             if (libraryChanges.none() && moduleChanges.none()) return
 
             val outdatedLibraries: MutableList<Library> = libraryChanges
-                .mapNotNull {
+                .mapNotNullTo(LinkedHashSet()) {
                     val oldEntity = it.oldEntity.takeIf { it?.entitySource !is JpsGlobalFileEntitySource }
                     oldEntity?.findLibraryBridge(storageBefore)
                 }
@@ -338,7 +338,7 @@ class LibraryInfoCache(project: Project) : Disposable {
                 it.oldEntity?.dependencies?.filterIsInstance<LibraryDependency>()
             }.flatten().associateBy { it.library }
 
-            val newLibDependencies = moduleChanges.mapNotNull {
+            val newLibDependencies = moduleChanges.mapNotNullTo(LinkedHashSet()) {
                 it.newEntity?.dependencies?.filterIsInstance<LibraryDependency>()
             }.flatten().associateBy { it.library }
 

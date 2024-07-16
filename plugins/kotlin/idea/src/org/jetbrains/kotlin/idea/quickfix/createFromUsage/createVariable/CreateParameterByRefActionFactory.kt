@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateParameterUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getExpressionForTypeGuess
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getTypeParameters
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.guessTypes
@@ -21,13 +21,14 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 object CreateParameterByRefActionFactory : CreateParameterFromUsageFactory<KtSimpleNameExpression>() {
     override fun getElementOfInterest(diagnostic: Diagnostic): KtSimpleNameExpression? {
@@ -50,48 +51,19 @@ object CreateParameterByRefActionFactory : CreateParameterFromUsageFactory<KtSim
             }
         }
 
-        var valOrVar: KotlinValVar = KotlinValVar.None
 
         fun chooseFunction(): PsiElement? {
             if (varExpected) return null
             return element.parents.filter { it is KtNamedFunction || it is KtSecondaryConstructor }.firstOrNull()
         }
 
-        fun chooseContainingClass(it: PsiElement): KtClass? {
-            valOrVar = if (varExpected) KotlinValVar.Var else KotlinValVar.Val
-            return it.parents.firstIsInstanceOrNull<KtClassOrObject>() as? KtClass
+        val pair = CreateParameterUtil.chooseContainerPreferringClass(element, varExpected)
+        val container = pair.first ?: chooseFunction()
+        val valOrVar: KotlinValVar = when (pair.second) {
+            CreateParameterUtil.ValVar.VAL -> KotlinValVar.Val
+            CreateParameterUtil.ValVar.VAR -> KotlinValVar.Var
+            CreateParameterUtil.ValVar.NONE -> KotlinValVar.None
         }
-
-        // todo: skip lambdas for now because Change Signature doesn't apply to them yet
-        fun chooseContainerPreferringClass(): PsiElement? {
-            return element.parents
-                .filter {
-                    it is KtNamedFunction || it is KtSecondaryConstructor || it is KtPropertyAccessor || it is KtClassBody || it is KtAnonymousInitializer || it is KtSuperTypeListEntry
-                }
-                .firstOrNull()
-                ?.let {
-                    when {
-                        (it is KtNamedFunction || it is KtSecondaryConstructor) && varExpected ||
-                                it is KtPropertyAccessor -> chooseContainingClass(it)
-                        it is KtAnonymousInitializer -> it.parents.match(KtClassBody::class, last = KtClass::class)
-                        it is KtSuperTypeListEntry -> {
-                            val klass = it.getStrictParentOfType<KtClassOrObject>()
-                            if (klass is KtClass && !klass.isInterface() && klass !is KtEnumEntry) klass else null
-                        }
-                        it is KtClassBody -> {
-                            val klass = it.parent as? KtClass
-                            when {
-                                klass is KtEnumEntry -> chooseContainingClass(klass)
-                                klass != null && klass.isInterface() -> null
-                                else -> klass
-                            }
-                        }
-                        else -> it
-                    }
-                }
-        }
-
-        val container = chooseContainerPreferringClass() ?: chooseFunction()
 
         val functionDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, container]?.let {
             if (it is ClassDescriptor) it.unsubstitutedPrimaryConstructor else it
@@ -110,7 +82,7 @@ object CreateParameterByRefActionFactory : CreateParameterFromUsageFactory<KtSim
         )
     }
 
-    override fun extractFixData(element: KtSimpleNameExpression, diagnostic: Diagnostic) = extractFixData(element)
+    override fun extractFixData(element: KtSimpleNameExpression, diagnostic: Diagnostic): CreateParameterData<KtSimpleNameExpression>? = extractFixData(element)
 }
 
 fun KotlinType.hasTypeParametersToAdd(functionDescriptor: FunctionDescriptor, context: BindingContext): Boolean {

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * Change content stored in {@link ChangeListManagerSerialization} to keep change-to-changelist mappings between IDE restarts.
  * These are going to be replaced by real content revision after the next CLM refresh.
  */
-public class FakeRevision implements ContentRevision {
+public class FakeRevision implements ByteBackedContentRevision {
   private static final Logger LOG = Logger.getInstance(FakeRevision.class);
 
   private final Project myProject;
@@ -39,14 +39,27 @@ public class FakeRevision implements ContentRevision {
   }
 
   @Override
+  public byte @Nullable [] getContentAsBytes() throws VcsException {
+    ContentRevision revision = createDelegateContentRevision();
+    if (revision == null) return null;
+    return ChangesUtil.loadContentRevision(revision);
+  }
+
+  @Override
   @Nullable
   public String getContent() throws VcsException {
+    ContentRevision revision = createDelegateContentRevision();
+    if (revision == null) return null;
+    return revision.getContent();
+  }
+
+  private @Nullable ContentRevision createDelegateContentRevision() {
     if (LOG.isDebugEnabled()) {
       LOG.debug("FakeRevision queried for " + myFile.getPath() + (myCurrentRevision ? " (current)" : ""), new Throwable());
     }
 
     if (myCurrentRevision) {
-      return new CurrentContentRevision(myFile).getContent();
+      return new CurrentContentRevision(myFile);
     }
 
     VirtualFile virtualFile = myFile.getVirtualFile();
@@ -59,7 +72,7 @@ public class FakeRevision implements ContentRevision {
     ContentRevision delegateContent = diffProvider.createCurrentFileContent(virtualFile);
     if (delegateContent == null) return null;
 
-    return delegateContent.getContent();
+    return delegateContent;
   }
 
   @Override

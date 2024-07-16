@@ -1,6 +1,6 @@
 // "Opt in for 'A' in containing file 'appendFileAnnotationToOtherFileAnnotations.kts'" "true"
-// ACTION: Add '-opt-in=p.AppendFileAnnotationToOtherFileAnnotations.A' to module light_idea_test_case compiler arguments
 // ACTION: Opt in for 'A' in containing file 'appendFileAnnotationToOtherFileAnnotations.kts'
+// ACTION: Opt in for 'A' in module 'light_idea_test_case'
 // ACTION: Opt in for 'A' on 'g'
 // ACTION: Opt in for 'A' on statement
 // ACTION: Propagate 'A' opt-in requirement to 'g'

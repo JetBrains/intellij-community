@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHel
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
-public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
+public final class GantPositionManagerHelper extends ScriptPositionManagerHelper {
 
   @Override
   public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {

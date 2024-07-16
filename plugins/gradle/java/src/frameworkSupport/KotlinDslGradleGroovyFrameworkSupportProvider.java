@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class KotlinDslGradleGroovyFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
+public final class KotlinDslGradleGroovyFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
 
   public static final String ID = "groovy";
 
@@ -49,7 +49,7 @@ public class KotlinDslGradleGroovyFrameworkSupportProvider extends KotlinDslGrad
                          @NotNull BuildScriptDataBuilder buildScriptData) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("groovy")
-      .addRepositoriesDefinition("mavenCentral()")
+      .withMavenCentral()
       .addOther("""
                   tasks.getByName<Test>("test") {
                       useJUnitPlatform()

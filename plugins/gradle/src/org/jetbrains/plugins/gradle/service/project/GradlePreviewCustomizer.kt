@@ -8,9 +8,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.gradleIdentityPath
 import java.io.File
@@ -18,25 +16,29 @@ import java.io.File
 @ApiStatus.OverrideOnly
 @ApiStatus.Experimental
 interface GradlePreviewCustomizer {
+
+  fun isApplicable(resolverContext: ProjectResolverContext): Boolean
+
+  fun resolvePreviewProjectInfo(resolverContext: ProjectResolverContext): DataNode<ProjectData>
+
   companion object {
     var EP_NAME: ExtensionPointName<GradlePreviewCustomizer> = create("org.jetbrains.plugins.gradle.previewCustomizer")
 
-    fun getCustomizer(projectPath: String, taskId: ExternalSystemTaskId): GradlePreviewCustomizer =
-      EP_NAME.extensionList.firstOrNull { it.isApplicable(projectPath, taskId) } ?: DefaultGradlePreviewCustomizer
+    fun getCustomizer(resolverContext: ProjectResolverContext): GradlePreviewCustomizer {
+      return EP_NAME.extensionList.firstOrNull { it.isApplicable(resolverContext) } ?: DefaultGradlePreviewCustomizer
+    }
   }
-
-  fun isApplicable(projectPath: String, taskId: ExternalSystemTaskId): Boolean
-
-  fun resolvePreviewProjectInfo(projectPath: String, taskId: ExternalSystemTaskId, settings: GradleExecutionSettings?): DataNode<ProjectData>
 }
 
 object DefaultGradlePreviewCustomizer : GradlePreviewCustomizer {
-  override fun isApplicable(projectPath: String, taskId: ExternalSystemTaskId): Boolean = true
 
-  override fun resolvePreviewProjectInfo(projectPath: String, taskId: ExternalSystemTaskId, settings: GradleExecutionSettings?): DataNode<ProjectData> {
-    val projectName: String = File(projectPath).name
+  override fun isApplicable(resolverContext: ProjectResolverContext): Boolean = true
 
-    val ideProjectPath = settings?.ideProjectPath
+  override fun resolvePreviewProjectInfo(resolverContext: ProjectResolverContext): DataNode<ProjectData> {
+    val projectPath = resolverContext.projectPath
+    val projectName = File(projectPath).name
+
+    val ideProjectPath = resolverContext.settings?.ideProjectPath
     val mainModuleFileDirectoryPath = ideProjectPath ?: projectPath
 
     val projectData = ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath)

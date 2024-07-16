@@ -50,33 +50,36 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       return null
     }
 
+    val providedSuggestion = SUGGESTION_EP_NAME.extensionList.asSequence()
+      .mapNotNull { it.getSuggestion(project, file) }
+      .firstOrNull()
+
     val suggestionData = getSuggestionData(project = project,
                                            activeProductCode = service<ApplicationInfo>().build.productCode,
                                            fileName = file.name,
                                            fileType = file.fileType)
 
+    // If no advertisement suggestions are found, schedule an advertiser update so we make sure that
+    // plugin/IDE information is up to date next time the file is opened.
     if (suggestionData == null) {
       project.service<AdvertiserInfoUpdateService>().scheduleAdvertiserUpdate(file)
+    }
+
+    // If no suggestion was found of either kind, do not show any kind of notification.
+    if (providedSuggestion == null && suggestionData == null) {
       return null
     }
 
-    val providedSuggestion = SUGGESTION_EP_NAME.extensionList.asSequence()
-      .mapNotNull { it.getSuggestion(project, file) }
-      .firstOrNull()
-
     return Function { editor ->
-      val panel = suggestionData.apply(editor)
-
-      if (panel != null) {
-        logSuggestionShown(project, suggestionData.getSuggested())
-        panel
-      }
-      else if (providedSuggestion != null) {
+      // Plugin suggestions should take priority over IDE advertisements
+      if (providedSuggestion != null) {
         logSuggestionShown(project, providedSuggestion.pluginIds.map { PluginId.getId(it) })
         providedSuggestion.apply(editor)
-      }
-      else {
-        null
+      } else {
+        suggestionData?.apply(editor)?.let { panel ->
+          logSuggestionShown(project, suggestionData.getSuggested())
+          panel
+        }
       }
     }
   }

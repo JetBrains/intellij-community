@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
@@ -40,11 +40,10 @@ public final class RenamePyFileProcessor extends RenamePsiFileProcessor {
     return element;
   }
 
-  @NotNull
   @Override
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
-                                                 @NotNull SearchScope searchScope,
-                                                 boolean searchInCommentsAndStrings) {
+  public @NotNull Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                          @NotNull SearchScope searchScope,
+                                                          boolean searchInCommentsAndStrings) {
     final List<PsiReference> results = new ArrayList<>();
     for (PsiReference reference : super.findReferences(element, searchScope, searchInCommentsAndStrings)) {
       if (isNotAliasedInImportElement(reference)) {
@@ -56,7 +55,7 @@ public final class RenamePyFileProcessor extends RenamePsiFileProcessor {
 
   @Override
   public void findCollisions(@NotNull PsiElement element,
-                             @NotNull final String newName,
+                             final @NotNull String newName,
                              @NotNull Map<? extends PsiElement, String> allRenames,
                              @NotNull List<UsageInfo> result) {
     final String newFileName = FileUtilRt.getNameWithoutExtension(newName);
@@ -109,9 +108,8 @@ public final class RenamePyFileProcessor extends RenamePsiFileProcessor {
     return true;
   }
 
-  @Nullable
   @Override
-  public String getHelpID(PsiElement element) {
+  public @Nullable String getHelpID(PsiElement element) {
     return "procedures.refactoring.renameRefactorings";
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
@@ -18,6 +19,7 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,16 +98,21 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       return;
     }
 
-    ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
+    Project project = environment.getProject();
+    ExecutionManager executionManager = ExecutionManager.getInstance(project);
     RunProfile runProfile = environment.getRunProfile();
+    StructuredIdeActivity activity = ProgramRunnerUsageCollector.INSTANCE.startExecute(project, this, runProfile);
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
         currentState instanceof TargetEnvironmentAwareRunProfileState) {
       executionManager.startRunProfileWithPromise(environment, currentState, (ignored) -> {
-        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)currentState, environment);
+        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)currentState, environment).onSuccess((RunContentDescriptor descr) -> {
+          ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, true);
+        });
       });
     }
     else {
       executionManager.startRunProfile(environment, currentState, (ignored) -> doExecute(currentState, environment));
+      ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, false);
     }
   }
 

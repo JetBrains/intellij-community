@@ -3,7 +3,6 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
-import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.createAdditionalDataField
@@ -12,7 +11,6 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.application
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -20,7 +18,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 30)
+  private val GROUP = EventLogGroup("inline.completion", 33)
 
   const val INVOKED_EVENT_ID = "invoked"
   const val SHOWN_EVENT_ID = "shown"
@@ -28,11 +26,11 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   @ApiStatus.Internal
   object InvokedEvents {
-    val REQUEST_ID = EventFields.Long("request_id")
-    val EVENT = EventFields.Class("event")
-    val PROVIDER = EventFields.Class("provider")
-    val TIME_TO_COMPUTE = EventFields.Long("time_to_compute")
-    val OUTCOME = EventFields.NullableEnum<Outcome>("outcome")
+    val REQUEST_ID = EventFields.Long("request_id", "ID of the request. Use it to match invoked, shown and inserted_state events")
+    val EVENT = EventFields.Class("event", "Event which triggered completion")
+    val PROVIDER = EventFields.Class("provider", "Completion provider class")
+    val TIME_TO_COMPUTE = EventFields.Long("time_to_compute", "Time of provider execution (ms)")
+    val OUTCOME = EventFields.NullableEnum<Outcome>("outcome", "Invocation outcome (show, no_suggestions, etc.)")
 
     enum class Outcome {
       EXCEPTION,
@@ -42,25 +40,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     val ADDITIONAL: ObjectEventField = createAdditionalDataField(GROUP.id, INVOKED_EVENT_ID)
-    val CONTEXT_FEATURES = ObjectEventField(
-      "context_features",
-      InlineContextFeatures.LINE_NUMBER,
-      InlineContextFeatures.COLUMN_NUMBER,
-      InlineContextFeatures.SYMBOLS_IN_LINE_BEFORE_CARET,
-      InlineContextFeatures.SYMBOLS_IN_LINE_AFTER_CARET,
-      InlineContextFeatures.IS_WHITE_SPACE_BEFORE_CARET,
-      InlineContextFeatures.IS_WHITE_SPACE_AFTER_CARET,
-      InlineContextFeatures.NON_SPACE_SYMBOL_BEFORE_CARET,
-      InlineContextFeatures.NON_SPACE_SYMBOL_AFTER_CARET,
-      InlineContextFeatures.PREVIOUS_EMPTY_LINES_COUNT,
-      InlineContextFeatures.PREVIOUS_NON_EMPTY_LINE_LENGTH,
-      InlineContextFeatures.FOLLOWING_EMPTY_LINES_COUNT,
-      InlineContextFeatures.FOLLOWING_NON_EMPTY_LINE_LENGTH,
-      InlineContextFeatures.TIME_SINCE_LAST_TYPING,
-      *InlineContextFeatures.PARENT_FEATURES,
-      *TypingSpeedTracker.getEventFields(),
-    )
-    val CONTEXT_FEATURES_COMPUTATION_TIME = EventFields.Long("context_features_computation_time")
   }
 
   internal val INVOKED_EVENT: VarargEventId = GROUP.registerVarargEvent(
@@ -73,23 +52,21 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     InvokedEvents.TIME_TO_COMPUTE,
     InvokedEvents.OUTCOME,
     InvokedEvents.ADDITIONAL,
-    InvokedEvents.CONTEXT_FEATURES,
-    InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME,
   )
 
   @ApiStatus.Internal
   object ShownEvents {
-    val REQUEST_ID = EventFields.Long("request_id")
-    val PROVIDER = EventFields.Class("provider")
-    val LINES = EventFields.IntList("lines")
-    val LENGTH = EventFields.IntList("length")
-    val LENGTH_CHANGE_DURING_SHOW = EventFields.Int("typing_during_show")
+    val REQUEST_ID = EventFields.Long("request_id", "ID of the request. Use it to match invoked, shown and inserted_state events")
+    val PROVIDER = EventFields.Class("provider", "Completion provider class")
+    val LINES = EventFields.IntList("lines", "Number of lines in the suggestion")
+    val LENGTH = EventFields.IntList("length", "Length of the 'gray text' shown (in chars)")
+    val LENGTH_CHANGE_DURING_SHOW = EventFields.Int("typing_during_show", "How many chars the user typed over completion or length of partially accepted completion")
 
-    val TIME_TO_SHOW = EventFields.Long("time_to_show")
-    val SHOWING_TIME = EventFields.Long("showing_time")
-    val FINISH_TYPE = EventFields.Enum<FinishType>("finish_type")
+    val TIME_TO_SHOW = EventFields.Long("time_to_show", "Time between completion invocation time and show time (ms)")
+    val SHOWING_TIME = EventFields.Long("showing_time", "Period of time for which the user was looking at the suggestion (ms)")
+    val FINISH_TYPE = EventFields.Enum<FinishType>("finish_type", "How completion session was finished")
 
-    val EXPLICIT_SWITCHING_VARIANTS_TIMES = EventFields.Int("explicit_switching_variants_times")
+    val EXPLICIT_SWITCHING_VARIANTS_TIMES = EventFields.Int("explicit_switching_variants_times", "How many times the user was switching between completion variants (we only have 1 at the moment)")
     val SELECTED_INDEX = EventFields.Int("selected_index")
 
     enum class FinishType {
@@ -128,12 +105,12 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   @ApiStatus.Internal
   object InsertedStateEvents {
-    val SUGGESTION_LENGTH = EventFields.Int("suggestion_length")
-    val RESULT_LENGTH = EventFields.Int("result_length")
-    val EDIT_DISTANCE = EventFields.Int("edit_distance")
-    val EDIT_DISTANCE_NO_ADD = EventFields.Int("edit_distance_no_add")
-    val COMMON_PREFIX_LENGTH = EventFields.Int("common_prefix_length")
-    val COMMON_SUFFIX_LENGTH = EventFields.Int("common_suffix_length")
+    val SUGGESTION_LENGTH = EventFields.Int("suggestion_length", "Length of the suggestion")
+    val RESULT_LENGTH = EventFields.Int("result_length", "Length of what remained in Editor")
+    val EDIT_DISTANCE = EventFields.Int("edit_distance", "Edit distance between the suggestion and what remained in Editor")
+    val EDIT_DISTANCE_NO_ADD = EventFields.Int("edit_distance_no_add", "Edit distance the suggestion and what remained in Editor, no counting additions")
+    val COMMON_PREFIX_LENGTH = EventFields.Int("common_prefix_length", "Length of common prefix between the suggestion and what remained in Editor")
+    val COMMON_SUFFIX_LENGTH = EventFields.Int("common_suffix_length", "Length of common suffix between the suggestion and what remained in Editor")
   }
 
   internal val INSERTED_STATE_EVENT: VarargEventId = GROUP.registerVarargEvent(
@@ -153,10 +130,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  private val requestIds = ContainerUtil.createConcurrentWeakMap<InlineCompletionRequest, Long>()
-
-  fun getRequestId(request: InlineCompletionRequest): Long = requestIds[request] ?: -1
-
   class Listener : InlineCompletionEventAdapter {
     private val lock = ReentrantLock()
     private var invocationTracker: InlineCompletionInvocationTracker? = null
@@ -164,7 +137,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InlineCompletionInvocationTracker(event).also {
-        requestIds[event.request] = it.requestId
         application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
       showTracker = null // Just in case
@@ -186,7 +158,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onChange(event: InlineCompletionEventType.Change) {
-      showTracker!!.lengthChanged(event.variantIndex, event.lengthChange)
+      val newText = event.elements.joinToString("") { it.text }
+      showTracker!!.suggestionChanged(event.variantIndex, event.lengthChange, newText)
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {

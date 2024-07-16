@@ -13,11 +13,13 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvider {
   private final boolean mySilentClipboard;
 
@@ -25,12 +27,14 @@ public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvide
     mySilentClipboard = silentClipboard;
   }
 
+  @ApiStatus.Internal
   public static class Dialog extends VcsLogCreatePatchActionProvider {
     public Dialog() {
       super(false);
     }
   }
 
+  @ApiStatus.Internal
   public static class Clipboard extends VcsLogCreatePatchActionProvider {
     public Clipboard() {
       super(true);

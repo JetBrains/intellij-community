@@ -1,15 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -123,7 +124,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
     try {
-      DumbService.getInstance(myProject).runWithAlternativeResolveEnabled(() -> ProgressManager.getInstance().runProcess(() -> {
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> ProgressManager.getInstance().runProcess(() -> {
         while (true) {
           try {
             if (threadRequest.isStopRequested()) {
@@ -133,7 +134,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
             final WorkerThreadRequest currentRequest = getCurrentRequest();
             if (currentRequest != threadRequest) {
               String message = "Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed();
-              reportCommandError(new IllegalStateException(message));
+              LOG.error(message, new IllegalStateException(message), ThreadDumper.dumpThreadsToString());
               break; // ensure events are processed by one thread at a time
             }
 

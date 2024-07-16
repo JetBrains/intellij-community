@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -74,6 +75,7 @@ public class OrderRootType {
    *
    * @return true if empty root type should be skipped, false otherwise.
    */
+  @ApiStatus.Internal
   public boolean skipWriteIfEmpty() {
     return false;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -166,7 +166,7 @@ public final class ConsoleExecutionEditor implements Disposable {
         }
 
         Editor selectedTextEditor = source.getSelectedTextEditor();
-        for (FileEditor fileEditor : source.getAllEditors(file)) {
+        for (FileEditor fileEditor : source.getAllEditorList(file)) {
           if (!(fileEditor instanceof TextEditor)) {
             continue;
           }

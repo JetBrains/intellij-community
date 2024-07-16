@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -11,6 +12,7 @@ import java.awt.*;
  * Using this class will be faster than direct calculations if a lot of checks need to be performed in one painting sessions, and
  * requests are mostly grouped by visual lines, as caching of intermediate data is performed.
  */
+@ApiStatus.Internal
 public final class ClipDetector {
   private final EditorImpl myEditor;
   private final Rectangle myClipRectangle;

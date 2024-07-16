@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.anonymizeSystemId
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 object MavenImportStats {
   // Hacky way to measure report import stages speed.
@@ -27,19 +28,16 @@ object MavenImportStats {
   data object PluginsResolvingTask : MavenBackgroundActivitySubstask(ProjectImportCollector.PLUGIN_RESOLVE_PROCESS)
 
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("to be removed")
   class ImportingTaskOld
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("to be removed")
   class ImportingTask
 
   data object ApplyingModelTask : MavenSyncSubstask(ProjectImportCollector.WORKSPACE_APPLY_STAGE)
 
-  data object ConfiguringProjectsTask : MavenSyncSubstask(ProjectImportCollector.PROJECT_CONFIGURATION_STAGE)
-
-  class MavenSyncProjectTask
-
-  class MavenReapplyModelOnlyProjectTask
 }
 
 

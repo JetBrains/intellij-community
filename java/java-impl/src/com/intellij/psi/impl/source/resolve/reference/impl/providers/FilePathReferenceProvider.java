@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.module.Module;
@@ -63,8 +63,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       }
 
       @Override
-      @NotNull
-      public Collection<PsiFileSystemItem> computeDefaultContexts() {
+      public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
         if (forModules.length > 0) {
           Set<PsiFileSystemItem> rootsForModules = new LinkedHashSet<>();
           for (Module forModule : forModules) {
@@ -109,7 +108,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
     String text = null;
     if (element instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)element).getValue();
@@ -124,8 +123,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
     return getReferencesByElement(element, text, 1, true);
   }
 
-  @NotNull
-  public static Collection<PsiFileSystemItem> getRoots(@Nullable final Module thisModule, boolean includingClasses) {
+  public static @NotNull Collection<PsiFileSystemItem> getRoots(final @Nullable Module thisModule, boolean includingClasses) {
     if (thisModule == null) return Collections.emptyList();
 
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(thisModule);

@@ -329,6 +329,8 @@ class GitStageLineStatusTracker(
   }
 
   private inner class MyDocumentTrackerHandler(private val unstaged: Boolean) : DocumentTracker.Handler {
+    private var wasEmpty = isTrackerEmpty()
+
     override fun afterBulkRangeChange(isDirty: Boolean) {
       cachedBlocks = null
 
@@ -336,16 +338,14 @@ class GitStageLineStatusTracker(
       if (!isDirty) listeners.multicaster.onRangesChanged()
 
       if (isOperational()) {
-        if (unstaged) {
-          if (unstagedTracker.blocks.isEmpty()) {
+        val isEmpty = isTrackerEmpty()
+        if (wasEmpty != isEmpty) {
+          wasEmpty = isEmpty
+
+          if (isEmpty && unstaged) {
             saveDocumentWhenUnchanged(project, document)
-            saveDocumentWhenUnchanged(project, stagedDocument)
           }
-        }
-        else {
-          if (stagedTracker.blocks.isEmpty()) {
-            saveDocumentWhenUnchanged(project, stagedDocument)
-          }
+          saveDocumentWhenUnchanged(project, stagedDocument)
         }
       }
     }
@@ -353,6 +353,15 @@ class GitStageLineStatusTracker(
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
       listeners.multicaster.onRangesChanged()
+    }
+
+    private fun isTrackerEmpty(): Boolean {
+      if (unstaged) {
+        return unstagedTracker.blocks.isEmpty()
+      }
+      else {
+        return stagedTracker.blocks.isEmpty()
+      }
     }
   }
 

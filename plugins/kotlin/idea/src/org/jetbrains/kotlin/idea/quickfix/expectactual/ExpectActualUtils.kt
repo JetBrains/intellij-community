@@ -11,7 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.SlowOperations
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
@@ -47,7 +49,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -132,8 +133,9 @@ fun <D : KtNamedDeclaration> generateExpectOrActualInFile(
     })
 }
 
-fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration): KtFile? {
-    val fileName = declaration.name ?: return null
+@ApiStatus.Internal
+fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration, fileName: String? = declaration.name): KtFile? {
+    if (fileName == null) return null
 
     val originalDir = declaration.containingFile.containingDirectory
     val containerPackage = JavaDirectoryService.getInstance().getPackage(originalDir)
@@ -196,7 +198,8 @@ fun KtNamedDeclaration?.getTypeDescription(): String = when (this) {
     else -> KotlinBundle.message("text.declaration")
 }
 
-internal fun KtPsiFactory.generateClassOrObject(
+@ApiStatus.Internal
+fun KtPsiFactory.generateClassOrObject(
     project: Project,
     generateExpectClass: Boolean,
     originalClass: KtClassOrObject,
@@ -351,7 +354,8 @@ private val forbiddenAnnotationFqNames = setOf(
     FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 )
 
-internal fun generateCallable(
+@ApiStatus.Internal
+fun generateCallable(
     project: Project,
     generateExpect: Boolean,
     originalDeclaration: KtDeclaration,

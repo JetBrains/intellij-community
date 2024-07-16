@@ -213,7 +213,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
 
     private val projectScope = GlobalSearchScope.projectScope(project)
 
-    internal fun onTooComplexChange() {
+    fun onTooComplexChange() {
         clear()
     }
 

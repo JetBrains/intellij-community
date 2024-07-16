@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
@@ -23,9 +24,9 @@ import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.core.appendElement
 import org.jetbrains.kotlin.idea.core.getOrCreateBody
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
+import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.psi.*
@@ -79,7 +80,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                     }
                 }
 
-                override fun performSilently(affectedFunctions: Collection<PsiElement>) = noUsagesExist(affectedFunctions)
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = noUsagesExist(affectedFunctions)
             }
         }
 
@@ -145,7 +146,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                     }
                 }
 
-                override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = noUsagesExist(affectedFunctions)
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = noUsagesExist(affectedFunctions)
             }
         }
 
@@ -177,7 +178,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                         val psiFactory = KtPsiFactory(project)
                         val name = newParam.name ?: return
                         constructor.safeAs<KtSecondaryConstructor>()?.getOrCreateBody()
-                            ?.appendElement(psiFactory.createExpression("this.${element.name} = $name"))
+                            ?.addElement(psiFactory.createExpression("this.${element.name} = $name"))
                             ?: element.setInitializer(psiFactory.createExpression(name))
                     }
                 }

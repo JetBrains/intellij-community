@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight.compiler
 
-import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
 
@@ -23,7 +23,7 @@ class K1KotlinCompilerIdeAllowedErrorFilter : KotlinCompilerIdeAllowedErrorFilte
         ).map { it.name }
     }
 
-    override fun invoke(diagnostic: KtDiagnostic): Boolean {
+    override fun invoke(diagnostic: KaDiagnostic): Boolean {
         return diagnostic.factoryName in ALLOWED_ERRORS
     }
 }

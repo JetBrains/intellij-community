@@ -34,11 +34,10 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
   private JTree myTree;
 
   CoverageTableModel(@NotNull CoverageSuitesBundle suitesBundle,
-                     CoverageViewManager.StateBean stateBean,
                      Project project,
                      CoverageViewTreeStructure structure) {
     final CoverageEngine coverageEngine = suitesBundle.getCoverageEngine();
-    COLUMN_INFOS = coverageEngine.createCoverageViewExtension(project, suitesBundle, stateBean).createColumnInfos();
+    COLUMN_INFOS = coverageEngine.createCoverageViewExtension(project, suitesBundle).createColumnInfos();
     myStructureModel = new StructureTreeModel<>(structure, this);
     myAsyncModel = new AsyncTreeModel(myStructureModel, true, this);
     myAsyncModel.addTreeModelListener(this);

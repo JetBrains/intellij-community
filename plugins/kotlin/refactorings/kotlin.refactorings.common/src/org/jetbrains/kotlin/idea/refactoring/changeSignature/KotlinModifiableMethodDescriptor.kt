@@ -3,8 +3,9 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.MethodDescriptor
-import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 
 interface KotlinModifiableMethodDescriptor<P : KotlinModifiableParameterInfo, V> : MethodDescriptor<P, V> {
     enum class Kind(val isConstructor: Boolean) {
@@ -17,9 +18,10 @@ interface KotlinModifiableMethodDescriptor<P : KotlinModifiableParameterInfo, V>
         get() {
             val descriptor = baseDeclaration
             return when (descriptor) {
-                !is KtConstructor<*> -> Kind.FUNCTION
+                is KtClass -> Kind.PRIMARY_CONSTRUCTOR
                 is KtPrimaryConstructor -> Kind.PRIMARY_CONSTRUCTOR
-                else -> Kind.SECONDARY_CONSTRUCTOR
+                is KtSecondaryConstructor -> Kind.SECONDARY_CONSTRUCTOR
+                else -> Kind.FUNCTION
             }
         }
 

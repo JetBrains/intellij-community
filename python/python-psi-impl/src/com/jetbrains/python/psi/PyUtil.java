@@ -68,7 +68,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
  * These methods don't depend on the Python runtime.
  *
  * @see PyPsiUtils for utilities used in Python PSI API
- * @see PyUiUtil for UI-related utilities for Python (available in intellij.python.community.impl)
+ * @see PyUiUtil for UI-related utilities for Python (available in PythonCore plugin)
  */
 public final class PyUtil {
 
@@ -1471,7 +1471,8 @@ public final class PyUtil {
   }
 
   public static boolean isObjectClass(@NotNull PyClass cls) {
-    return PyNames.OBJECT.equals(cls.getQualifiedName());
+    String qualifiedName = cls.getQualifiedName();
+    return PyNames.OBJECT.equals(qualifiedName) || (qualifiedName == null && PyNames.OBJECT.equals(cls.getName()));
   }
 
   @Nullable

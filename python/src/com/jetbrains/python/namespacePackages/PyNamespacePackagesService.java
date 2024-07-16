@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.namespacePackages;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -107,9 +107,8 @@ public final class PyNamespacePackagesService implements PersistentStateComponen
     return true;
   }
 
-  @Nullable
   @Override
-  public PyNamespacePackagesService getState() {
+  public @Nullable PyNamespacePackagesService getState() {
     return this;
   }
 

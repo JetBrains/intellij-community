@@ -14,6 +14,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.openapi.application.migrations.AIAssistant241;
+import com.intellij.openapi.application.migrations.PythonProMigration242;
 import com.intellij.openapi.application.migrations.RustUltimate241;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -80,6 +81,7 @@ import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FIL
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
 import static com.intellij.openapi.application.migrations.AIAssistant241Kt.AI_PLUGIN_ID;
 import static com.intellij.openapi.application.migrations.AIAssistant241Kt.migrateAiForToolbox;
+import static com.intellij.openapi.application.migrations.Localization242Kt.enableL10nIfPluginInstalled;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
@@ -143,6 +145,9 @@ public final class ConfigImportHelper {
         try {
           if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace mcp) {
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(mcp.getLocation());
+            if (oldConfigDirAndOldIdePath == null) {
+              logInfoAboutNotAcceptedConfigDirectory(log, "Custom location", mcp.getLocation());
+            }
             if (oldConfigDirAndOldIdePath != null && oldConfigDirAndOldIdePath.first != null) {
               if (doesVmOptionsFileExist(newConfigDir) && !vmOptionsRequiresMerge(oldConfigDirAndOldIdePath.first, newConfigDir, log)) {
                 //save old lines for the new file
@@ -168,7 +173,7 @@ public final class ConfigImportHelper {
           if (!isConfigOld(bestConfigGuess.second)) {
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
             if (oldConfigDirAndOldIdePath == null) {
-              log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+              logInfoAboutNotAcceptedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
               importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
             }
           }
@@ -205,7 +210,7 @@ public final class ConfigImportHelper {
           else {
             oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
             if (oldConfigDirAndOldIdePath == null) {
-              log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+              logInfoAboutNotAcceptedConfigDirectory(log, "Previous config directory", bestConfigGuess.first);
               importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
             }
           }
@@ -275,7 +280,6 @@ public final class ConfigImportHelper {
     // TODO If so, we need to patch restarter.
     if (vmOptionFileChanged && !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
       log.info("The vmoptions file has changed, restarting...");
-
       List<String> properties = new ArrayList<>();
       properties.add(FIRST_SESSION_KEY);
       if (isConfigImported()) {
@@ -283,10 +287,45 @@ public final class ConfigImportHelper {
       }
 
       if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
-        new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+        try {
+          new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+        }
+        catch (IOException e) {
+          log.error("cannot write config migration marker file to " + newConfigDir, e);
+        }
         restart(args);
       }
     }
+  }
+
+  private static void logInfoAboutNotAcceptedConfigDirectory(@NotNull Logger log, @NotNull String description, @NotNull Path path) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(description + " was detected but not accepted: ");
+    builder.append(path);
+    builder.append(". Its content:\n");
+    if (Files.isDirectory(path)) {
+      try {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+          for (Path child : stream) {
+            builder.append(" ").append(child.getFileName()).append("\n");
+            if (Files.isDirectory(child)) {
+              try (DirectoryStream<Path> grandChildren = Files.newDirectoryStream(path)) {
+                for (Path grandChild : grandChildren) {
+                  builder.append(" |- ").append(grandChild.getFileName()).append("\n");
+                }
+              }
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        builder.append("failed to get: ").append(e.toString());
+      }
+    }
+    else {
+      builder.append("not a directory");
+    }
+    log.info(builder.toString());
   }
 
   static @Nullable ConfigImportSettings findCustomConfigImportSettings() {
@@ -323,7 +362,7 @@ public final class ConfigImportHelper {
         Restarter.scheduleRestart(false);
       }
       catch (IOException e) {
-        StartupErrorReporter.showMessage(BootstrapBundle.message("restart.failed.title"), e);
+        StartupErrorReporter.showError(BootstrapBundle.message("restart.failed.title"), e);
       }
       System.exit(0);
     }
@@ -801,7 +840,7 @@ public final class ConfigImportHelper {
     catch (Exception e) {
       log.warn(e);
       String message = BootstrapBundle.message("import.settings.failed", IoErrorText.message(e));
-      StartupErrorReporter.showMessage(BootstrapBundle.message("import.settings.failed.title"), message, false);
+      StartupErrorReporter.showWarning(BootstrapBundle.message("import.settings.failed.title"), message);
     }
   }
 
@@ -916,6 +955,8 @@ public final class ConfigImportHelper {
       migratePlugins(oldPluginsDir, oldConfigDir, newPluginsDir, newConfigDir, options, hasPendingUpdate);
     }
 
+    migrateLocalization(oldConfigDir, oldPluginsDir);
+
     if (SystemInfoRt.isMac && (PlatformUtils.isIntelliJ() || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix()))) {
       setKeymapIfNeeded(oldConfigDir, newConfigDir, log);
     }
@@ -924,6 +965,10 @@ public final class ConfigImportHelper {
     StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
 
     updateVMOptions(newConfigDir, log);
+  }
+
+  public static void migrateLocalization(Path oldConfigDir, Path oldPluginsDir) {
+    enableL10nIfPluginInstalled(parseVersionFromConfig(oldConfigDir), oldPluginsDir);
   }
 
   private static List<ActionCommand> loadStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
@@ -1010,6 +1055,7 @@ public final class ConfigImportHelper {
 
     new RustUltimate241().migratePlugins(options);
     new AIAssistant241().migratePlugins(options);
+    new PythonProMigration242().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(Path newConfigDir,

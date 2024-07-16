@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.query
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.query.QueryId
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 

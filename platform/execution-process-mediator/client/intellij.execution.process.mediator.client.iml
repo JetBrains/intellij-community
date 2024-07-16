@@ -13,10 +13,6 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="library" name="grpc-core" level="project" />
-    <orderEntry type="library" name="grpc-stub" level="project" />
-    <orderEntry type="library" name="grpc-protobuf" level="project" />
-    <orderEntry type="library" name="grpc-kotlin-stub" level="project" />
     <orderEntry type="module" module-name="intellij.execution.process.mediator.daemon" />
     <orderEntry type="module" module-name="intellij.execution.process.mediator.common" />
     <orderEntry type="module" module-name="intellij.platform.util" />
@@ -42,5 +38,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.grpc" />
   </component>
 </module>

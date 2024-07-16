@@ -1,7 +1,7 @@
-import static p.Foo.FooEx.<error descr="Static method may be invoked on containing interface class only">foo</error>;
+import static p.Foo.FooEx.<error descr="Static method may only be called on its containing interface">foo</error>;
 
 class FooImpl {
     public void baz() {
-        <error descr="Static method may be invoked on containing interface class only">foo();</error>
+        <error descr="Static method may only be called on its containing interface">foo();</error>
     }
 }

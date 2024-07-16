@@ -1,6 +1,6 @@
-<!--suppress PluginXmlValidity -->
-<idea-plugin package="org.jetbrains.idea.devkit.dummy">
+<idea-plugin>
   <id>DevKit</id>
+  <!--suppress PluginXmlValidity -->
   <name>Plugin DevKit</name>
   <category>Plugin Development</category>
   <vendor>JetBrains</vendor>
@@ -12,7 +12,8 @@
   ]]></description>
 
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
+    <!--Required for correct compatible products. TODO: remove when https://youtrack.jetbrains.com/issue/MP-6600 is fixed-->
+    <plugin id="com.intellij.java"/>
   </dependencies>
 
   <content>
@@ -41,6 +42,9 @@
     <dependencySupport coordinate="com.jetbrains.intellij.gateway:gateway" kind="java" displayName="JetBrains Gateway"/>
     <dependencySupport coordinate="com.google.android.studio:android-studio" kind="java" displayName="Android Studio"/>
     <dependencySupport coordinate="com.jetbrains.intellij.fleetBackend:fleetBackend" kind="java" displayName="Fleet Backend"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.rustrover:RustRover" kind="java" displayName="RustRover"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.webstorm:webstorm" kind="java" displayName="WebStorm"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.idea:writerside" kind="java" displayName="Writerside"/>
 
     <!-- Dependencies created with IntelliJ Platform Gradle Plugin 2.x that point to CDN artifacts -->
     <dependencySupport coordinate="idea:ideaIC" kind="java" displayName="IntelliJ IDEA Community"/>

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Some util methods for annotation processing
@@ -35,9 +36,19 @@ public final class PsiAnnotationUtil {
   }
 
   @NotNull
-  public static <T> Collection<T> getAnnotationValues(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter, @NotNull Class<T> asClass) {
+  public static <T> Collection<T> getAnnotationValues(@NotNull PsiAnnotation psiAnnotation,
+                                                      @NotNull String parameter,
+                                                      @NotNull Class<T> asClass,
+                                                      @NotNull List<T> defaultDumbValue) {
     Collection<T> result = Collections.emptyList();
-    PsiAnnotationMemberValue attributeValue = psiAnnotation.findAttributeValue(parameter);
+    PsiAnnotationMemberValue attributeValue;
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation)) {
+      attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
+      if (attributeValue == null) return defaultDumbValue;
+    }
+    else {
+      attributeValue = psiAnnotation.findAttributeValue(parameter);
+    }
     if (attributeValue instanceof PsiArrayInitializerMemberValue) {
       final PsiAnnotationMemberValue[] memberValues = ((PsiArrayInitializerMemberValue) attributeValue).getInitializers();
       result = new ArrayList<>(memberValues.length);
@@ -73,6 +84,10 @@ public final class PsiAnnotationUtil {
 
   public static String getEnumAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String attributeName, @NotNull String defaultValue) {
     PsiAnnotationMemberValue attrValue = psiAnnotation.findDeclaredAttributeValue(attributeName);
+    if (DumbIncompleteModeUtil.isIncompleteMode(psiAnnotation.getProject()) && attrValue instanceof PsiReferenceExpression referenceExpression) {
+      //more or less good approximation if it is a complete mode
+      return referenceExpression.getReferenceName();
+    }
     String result = attrValue != null ? resolveElementValue(attrValue, String.class) : null;
     return result != null ? result : defaultValue;
   }

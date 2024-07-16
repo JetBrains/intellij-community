@@ -15,7 +15,6 @@ private class UseProjectColorsCheckboxAction : CheckboxAction(IdeBundle.messageP
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.place == ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR) &&
-                                         !UISettings.getInstance().separateMainMenu &&
                                          ProjectWindowCustomizerService.getInstance().isAvailable()
   }
 

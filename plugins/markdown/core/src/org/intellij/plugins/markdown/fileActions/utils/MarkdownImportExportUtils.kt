@@ -106,7 +106,7 @@ internal object MarkdownImportExportUtils {
 
       override fun run(indicator: ProgressIndicator) {
         val filePath = FileUtil.join(dirToImport, "${newFileName}.${MarkdownFileType.INSTANCE.defaultExtension}")
-        val cmd = getConvertDocxToMdCommandLine(vFileToImport, resourcesDir, filePath)
+        val cmd = getConvertDocxToMdCommandLine(vFileToImport, resourcesDir, filePath, project)
 
         output = ExecUtil.execAndGetOutput(cmd)
         createdFilePath = filePath
@@ -145,18 +145,21 @@ internal object MarkdownImportExportUtils {
   /**
    * returns a platform-independent cmd to perform the converting of docx to markdown using pandoc.
    */
-  private fun getConvertDocxToMdCommandLine(file: VirtualFile, mediaSrc: String, targetFile: String) = GeneralCommandLine(
-    "pandoc",
-    "--extract-media=$mediaSrc",
-    file.path,
-    "-f",
-    MarkdownDocxExportProvider.format.extension,
-    "-t",
-    TARGET_FORMAT_NAME,
-    "-s",
-    "-o",
-    targetFile
-  )
+  private fun getConvertDocxToMdCommandLine(file: VirtualFile, mediaSrc: String, targetFile: String, project: Project): GeneralCommandLine {
+    val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: "pandoc"
+    return GeneralCommandLine(
+      pandoc,
+      "--extract-media=$mediaSrc",
+      file.path,
+      "-f",
+      MarkdownDocxExportProvider.format.extension,
+      "-t",
+      TARGET_FORMAT_NAME,
+      "-s",
+      "-o",
+      targetFile
+    )
+  }
 
   /**
    * Checks whether the JCEF panel, which is needed for exporting to HTML and PDF, is open in the markdown editor.

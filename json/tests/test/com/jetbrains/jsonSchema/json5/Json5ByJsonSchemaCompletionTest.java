@@ -5,10 +5,10 @@ import com.jetbrains.jsonSchema.impl.JsonBySchemaCompletionBaseTest;
 
 public class Json5ByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTest {
   public void testTopLevel() throws Exception {
-    testBySchema("{\"properties\": {\"prima\": {}, \"proto\": {}, \"primus\": {}}}", "{pri<caret>}", "json5", "prima", "primus", "proto");
+    testBySchema("{\"properties\": {\"prima\": {}, \"proto\": {}, \"primus\": {}}}", "{pri<caret>}", "someFile.json5", "prima", "primus", "proto");
   }
 
   public void testAlreadyInsertedProperty() throws Exception {
-    testBySchema("{\"properties\": {\"prima\": {}, \"proto\": {}, \"primus\": {}}}", "{prima: 1, pri<caret>}", "json5", "primus", "proto");
+    testBySchema("{\"properties\": {\"prima\": {}, \"proto\": {}, \"primus\": {}}}", "{prima: 1, pri<caret>}", "someFile.json5", "primus", "proto");
   }
 }

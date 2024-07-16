@@ -157,7 +157,7 @@ class WorkspaceModelReactiveTest {
       writeAction {
         wm.updateProjectModel {
           val entity = it.resolve(NameId("X"))!!
-          it.modifyEntity(entity) {
+          it.modifyNamedEntity(entity) {
             myName = "Y"
           }
         }
@@ -197,7 +197,7 @@ class WorkspaceModelReactiveTest {
       writeAction {
         wm.updateProjectModel {
           val entity = it.resolve(NameId("X"))!!
-          it.modifyEntity(entity) {
+          it.modifyNamedEntity(entity) {
             myName = "Y"
           }
         }
@@ -384,8 +384,10 @@ class WorkspaceModelReactiveTest {
     writeAction {
       wm.updateProjectModel {
         val entity = it.entities(ChildSubEntity::class.java).single()
-        it addEntity ParentSubEntity("ParentData2", MySource) {
-          this.child = entity
+        it addEntity ParentSubEntity("ParentData2", MySource) parent@{
+          it.modifyChildSubEntity(entity) entity@{
+            this@parent.child = this@entity
+          }
         }
       }
     }
@@ -508,7 +510,7 @@ class WorkspaceModelReactiveTest {
     writeAction {
       wm.updateProjectModel {
         it.resolve(NameId("Y"))!!.also { entity ->
-          it.modifyEntity(entity) {
+          it.modifyNamedEntity(entity) {
             this.myName = "Z"
           }
         }

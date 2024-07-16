@@ -29,16 +29,15 @@ import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.utils.Path
+import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.junit.Assume
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 import java.util.function.Consumer
 
 class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
-  
+
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()
@@ -116,30 +115,15 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       adapter.addExcludedFolder(dir2.getPath())
       adapter.rootModel.commit()
     }
-    if (supportsImportOfNonExistingFolders()) {
-      assertSources("project", "userSourceFolder", "src/main/java")
-    }
-    else {
-      assertSources("project", "userSourceFolder")
-    }
+    assertSources("project", "userSourceFolder", "src/main/java")
     assertExcludes("project", "target", "userExcludedFolder")
 
     // incremental sync doesn't support updating source folders if effective pom dependencies haven't changed
     updateAllProjectsFullSync()
-    if (supportsImportOfNonExistingFolders()) {
-      assertSources("project", "src/main/java")
-    }
-    else {
-      assertSources("project", "userSourceFolder")
-    }
+    assertSources("project", "src/main/java")
     assertExcludes("project", "target", "userExcludedFolder")
     resolveFoldersAndImport()
-    if (supportsImportOfNonExistingFolders()) {
-      assertSources("project", "src/main/java")
-    }
-    else {
-      assertSources("project", "userSourceFolder")
-    }
+    assertSources("project", "src/main/java")
     assertExcludes("project", "target", "userExcludedFolder")
   }
 
@@ -185,7 +169,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
     assertSources("project", "src1")
-    mavenImporterSettings.isKeepSourceFolders = false
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -196,7 +179,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
     resolveFoldersAndImport()
     assertSources("project", "src2")
-    mavenImporterSettings.isKeepSourceFolders = true
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -206,12 +188,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                        </build>
                        """.trimIndent())
     resolveFoldersAndImport()
-    if (supportsLegacyKeepingFoldersFromPreviousImport()) {
-      assertSources("project", "src2", "src1")
-    }
-    else {
-      assertSources("project", "src1")
-    }
+    assertSources("project", "src1")
   }
 
   @Test
@@ -840,7 +817,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingExistingGeneratedSourcesInPerSourceTypeModules() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}")
     createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}")
@@ -910,7 +886,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testContentRootOutsideOfModuleDirInPerSourceTypeImport() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
@@ -1174,9 +1149,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testIgnoringFilesRightUnderGeneratedSources() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-    }
     createProjectSubFile("target/generated-sources/f.txt")
     createProjectSubFile("target/generated-test-sources/f.txt")
     importProjectAsync("""
@@ -1223,7 +1195,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUnloadedModules() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1323,7 +1294,7 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                     </build>
                     """.trimIndent())
     val targetPath = "$parentPath/target"
-    val targetUrl = Path(targetPath).toUrl().url
+    val targetUrl = MavenPathWrapper(targetPath).toUrl().url
     assertContentRoots("project", projectPath)
     assertModuleOutput("project",
                        "$parentPath/target/classes",
@@ -1441,9 +1412,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testContentRootOutsideOfModuleDir() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders("m1")
-    }
     createProjectSubFile("m1/pom.xml", createPomXml(
       """
         <artifactId>m1-pom</artifactId>
@@ -1681,9 +1649,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
     // incremental sync doesn't support updating source folders if effective pom dependencies haven't changed
     updateAllProjectsFullSync()
-    testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport())
+    testAssertions.accept(false)
     resolveFoldersAndImport()
-    testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport())
+    testAssertions.accept(false)
   }
 
   @Test
@@ -1803,9 +1771,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testCustomAnnotationProcessorSourcesUnderMainGeneratedFolder() = runBlocking {
-    if (!supportsImportOfNonExistingFolders()) {
-      createStdProjectFolders()
-    }
     createProjectSubDirsWithFile("target/generated-sources/foo",
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/custom-annotations",  // this and...

@@ -25,14 +25,15 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 
 /**
  * VcsRepositoryManager creates, stores and updates all repository's information using registered {@link VcsRepositoryCreator}
@@ -63,7 +64,9 @@ public final class VcsRepositoryManager implements Disposable {
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private volatile boolean myDisposed;
-  private volatile boolean myStarted;
+
+  private final AtomicBoolean myStarted = new AtomicBoolean(false);
+  private final AtomicBoolean myUpdateScheduled = new AtomicBoolean(false);
 
   public static @NotNull VcsRepositoryManager getInstance(@NotNull Project project) {
     return Objects.requireNonNull(project.getService(VcsRepositoryManager.class));
@@ -84,7 +87,9 @@ public final class VcsRepositoryManager implements Disposable {
   static final class MyStartupActivity implements VcsStartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      getInstance(project).initManager();
+      // run initial refresh and wait its completion
+      // to make sure VcsInitObject.AFTER_COMMON are being run with initialized repositories
+      getInstance(project).ensureUpToDate();
     }
 
     @Override
@@ -122,14 +127,22 @@ public final class VcsRepositoryManager implements Disposable {
   }
 
   private void scheduleUpdate() {
-    if (!myStarted || myDisposed) return;
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 100);
+    if (!myStarted.get() || myDisposed) return;
+    if (myUpdateScheduled.compareAndSet(false, true)) {
+      myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 100);
+    }
   }
 
-  private void initManager() {
-    myStarted = true;
-    checkAndUpdateRepositoryCollection(null);
+  @ApiStatus.Internal
+  public void ensureUpToDate() {
+    if (myStarted.compareAndSet(false, true)) {
+      myUpdateScheduled.set(true);
+      myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 0);
+    }
+
+    CountDownLatch waiter = new CountDownLatch(1);
+    myUpdateAlarm.addRequest(() -> waiter.countDown(), 10);
+    awaitWithCheckCanceled(waiter);
   }
 
   @RequiresBackgroundThread
@@ -315,6 +328,8 @@ public final class VcsRepositoryManager implements Disposable {
 
   @RequiresBackgroundThread
   private void checkAndUpdateRepositoryCollection(@Nullable VirtualFile checkedRoot) {
+    myUpdateScheduled.set(false);
+
     if (MODIFY_LOCK.isHeldByCurrentThread()) {
       LOG.error(new Throwable("Recursive Repository initialization"));
       return;

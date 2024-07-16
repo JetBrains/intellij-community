@@ -6,11 +6,11 @@ import com.intellij.ide.ui.UIDensity
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.mac.MacFullScreenControlsManager
 
 /**
  * @author Konstantin Bulenkov
@@ -25,15 +25,15 @@ class ToggleCompactModeAction: DumbAwareToggleAction(), ActionRemoteBehaviorSpec
     if (newValue != value) {
       UISettings.getInstance().uiDensity = newValue
       LafManager.getInstance().applyDensity()
-      if (SystemInfo.isMac) {
-        MacFullScreenControlsManager.updateForCompactMode()
-      }
     }
   }
 
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI()
+    e.presentation.keepPopupOnPerform =
+      if (SystemInfo.isMac) KeepPopupOnPerform.IfPreferred
+      else KeepPopupOnPerform.Never
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

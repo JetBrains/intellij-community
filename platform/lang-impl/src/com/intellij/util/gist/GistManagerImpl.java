@@ -2,6 +2,7 @@
 package com.intellij.util.gist;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -21,12 +22,15 @@ import com.intellij.util.gist.storage.GistStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GistManagerImpl extends GistManager {
@@ -163,15 +167,27 @@ public final class GistManagerImpl extends GistManager {
     }
   }
 
-  public void runWithMergingDependentCacheInvalidations(@NotNull Runnable runnable) {
+  @Contract(" -> new")
+  @ApiStatus.Internal
+  public @NotNull AccessToken mergeDependentCacheInvalidations() {
     myMergingDropCachesRequestors.incrementAndGet();
-    try {
-      runnable.run();
-    }
-    finally {
-      if (myMergingDropCachesRequestors.decrementAndGet() == 0) {
-        myDropCachesQueue.sendFlush();
+    return new AccessToken() {
+      private final AtomicBoolean alreadyFinished = new AtomicBoolean(false);
+
+      @Override
+      public void finish() {
+        if (alreadyFinished.compareAndSet(false, true)) {
+          if (myMergingDropCachesRequestors.decrementAndGet() == 0) {
+            myDropCachesQueue.sendFlush();
+          }
+        }
       }
+    };
+  }
+
+  public void runWithMergingDependentCacheInvalidations(@NotNull Runnable runnable) {
+    try (AccessToken ignored = mergeDependentCacheInvalidations()) {
+      runnable.run();
     }
   }
 

@@ -84,7 +84,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     final CreateGroupHandler validator;
     final String message, title;
 
-    if (PsiDirectoryFactory.getInstance(project).isPackage(directory)) {
+    if (isPackage(project, Collections.singletonList(directory))) {
       validator = new CreatePackageHandler(project, directory);
       message = IdeBundle.message("prompt.enter.new.package.name");
       title = IdeBundle.message("title.new.package");
@@ -146,14 +146,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     presentation.setEnabledAndVisible(true);
 
-    boolean isPackage = false;
-    final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(project);
-    for (PsiDirectory directory : directories) {
-      if (factory.isPackage(directory)) {
-        isPackage = true;
-        break;
-      }
-    }
+    boolean isPackage = isPackage(project, directories);
 
     if (isPackage) {
       presentation.setText(IdeBundle.messagePointer("action.package"));
@@ -163,6 +156,16 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       presentation.setText(IdeBundle.messagePointer("action.directory"));
       presentation.setIcon(PlatformIcons.FOLDER_ICON);
     }
+  }
+
+  protected boolean isPackage(@NotNull Project project, @NotNull List<@NotNull PsiDirectory> directories) {
+    final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(project);
+    for (PsiDirectory directory : directories) {
+      if (factory.isPackage(directory)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private JBPopup createLightWeightPopup(@Nullable Project project,

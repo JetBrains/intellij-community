@@ -29,7 +29,7 @@ so check inspection warnings form "Nullability and data flow problems", "Constan
 </code></pre>
 <p>
   This may cause false-positives if any kind of code postprocessing is used, for example, if an annotation processor 
-  later replaces the method body with something useful. To avoid false-positive warnings, one may suppress the automatic 
+  later replaces the method body with something useful. To avoid false-positive warnings, suppress the automatic 
   contract inference with explicit <code>@org.jetbrains.annotations.Contract</code> annotation from 
   <code>org.jetbrains:annotations</code> package:
 </p>

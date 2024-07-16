@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -27,10 +26,6 @@ object JpsProjectEntitiesLoader {
     data.loadAll(context.fileContentReader, builder, orphanage, unloadedEntitiesBuilder, unloadedModulesNameHolder, errorReporter)
     return data
   }
-  
-  @JvmStatic
-  val isModulePropertiesBridgeEnabled: Boolean
-    get() = Registry.`is`("workspace.model.test.properties.bridge")
   
   fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: MutableEntityStorage,
                  errorReporter: ErrorReporter, context: SerializationContext) {
@@ -81,13 +76,13 @@ object JpsProjectEntitiesLoader {
     val externalModuleListSerializer = ExternalModuleListSerializer(externalStorageRoot, context)
 
     val entityTypeSerializers: MutableList<JpsFileEntityTypeSerializer<*>> = mutableListOf(
-      JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, virtualFileManager.getOrCreateFromUri(librariesDirectoryUrl),
+      JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, virtualFileManager.getOrCreateFromUrl(librariesDirectoryUrl),
                                          context.fileInDirectorySourceNames))
 
     val artifactsExternalStorageFile = JpsProjectFileEntitySource.ExactFile(externalStorageRoot.append("project/artifacts.xml"),
                                                                             configLocation)
     val artifactsExternalFileSerializer = JpsArtifactsExternalFileSerializer(artifactsExternalStorageFile,
-                                                                             virtualFileManager.getOrCreateFromUri(artifactsDirectoryUrl),
+                                                                             virtualFileManager.getOrCreateFromUrl(artifactsDirectoryUrl),
                                                                              context.fileInDirectorySourceNames,
                                                                              virtualFileManager)
     entityTypeSerializers += artifactsExternalFileSerializer

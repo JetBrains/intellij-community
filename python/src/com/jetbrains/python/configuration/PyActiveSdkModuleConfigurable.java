@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
 import com.intellij.application.options.ModuleAwareProjectConfigurable;
@@ -20,9 +20,8 @@ public abstract class PyActiveSdkModuleConfigurable extends ModuleAwareProjectCo
     myProject = project;
   }
 
-  @NotNull
   @Override
-  protected UnnamedConfigurable createModuleConfigurable(Module module) {
+  protected @NotNull UnnamedConfigurable createModuleConfigurable(Module module) {
     return new PyActiveSdkConfigurable(module);
   }
 

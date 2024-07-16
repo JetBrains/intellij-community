@@ -9,7 +9,10 @@ import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
+import com.intellij.ide.ui.LafManager
+import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.rd.util.reactive.viewNotNull
 
 interface ImportSettingsController : BaseController {
   companion object {
@@ -41,8 +44,9 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
       dialog.dialogClose()
     }
 
-    settService.error.advise(lifetime) {
-      dialog.showError(it)
+
+    settService.notification.viewNotNull(lifetime) { lt, it ->
+      dialog.showOverlay(it, lt)
     }
   }
 
@@ -54,7 +58,8 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
   }
 
   override fun goToProductChooserPage() {
-    val page = ProductChooserPage(this)
+    val isDark = LafManager.getInstance().currentUIThemeLookAndFeel?.isDark ?: true
+    val page = ProductChooserPage(this, OnboardingBackgroundImageProvider.getInstance().getImage(isDark))
     Disposer.tryRegister(dialog.disposable, page)
     ImportSettingsEventsCollector.productPageShown()
     dialog.changePage(page)

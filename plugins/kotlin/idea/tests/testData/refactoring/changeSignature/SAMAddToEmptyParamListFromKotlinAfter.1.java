@@ -1,5 +1,5 @@
 class Foo {
     {
-        SAM s = () -> {};
+        SAM s = (int i) -> {};
     }
 }

@@ -263,10 +263,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
                 AnAction action = actionListeners.get(e.getDescription());
                 if (action != null) {
                   Object source = e.getSource();
-                  DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
                   if (source instanceof JComponent component) {
                     Notification.setDataProvider(notification, component);
                   }
+                  DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
                   Notification.fire(notification, action, context);
                   NotificationCollector.getInstance()
                     .logNotificationActionInvoked(project, notification, action, NotificationCollector.NotificationPlace.TOOL_WINDOW);
@@ -500,9 +500,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     text.setBorder(null);
 
-    JPanel content = new NonOpaquePanel(new BorderLayout());
+    JPanel content = new NonOpaquePanel(new BorderLayout(JBUI.scale(ExperimentalUI.isNewUI() ? 2 : 0), 0));
     content.setBorder(JBUI.Borders.empty(JBUI.insets("Notification.borderInsets",
-                                                     ExperimentalUI.isNewUI() ? JBUI.insets(4, 4, 4, 0) : JBInsets.emptyInsets())));
+                                                     ExperimentalUI.isNewUI() ? JBUI.insets(4, 4, 6, 0) : JBInsets.emptyInsets())));
 
     if (text.getCaret() != null) {
       text.setCaretPosition(0);

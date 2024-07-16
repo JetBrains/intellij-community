@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import java.util.*;
 /**
  * Contains colors used in editor color scheme.
  */
+@ApiStatus.Internal
 public abstract class EditorColorPalette {
   protected final EditorColorsScheme myColorsScheme;
   private final MultiMap<Color, TextAttributesKey> myColors = new MultiMap<>();

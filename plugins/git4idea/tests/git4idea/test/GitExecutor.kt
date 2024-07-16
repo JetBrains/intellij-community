@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitExecutor")
 package git4idea.test
 
@@ -151,6 +151,12 @@ fun GitRepository.mv(from: File, to: File) {
   mv(from.path, to.path)
 }
 
+private const val DefaultInitBranch = "master"
+fun GitPlatformTest.gitInit(vararg params: String, initialBranch: String = DefaultInitBranch) =
+  gitInit(project, *params, initialBranch =  initialBranch)
+fun gitInit(project: Project, vararg params: String, initialBranch: String = DefaultInitBranch) =
+  git(project, "init --initial-branch=$initialBranch ${params.joinToString(" ")}")
+
 fun GitRepository.prepareConflict(initialBranch: String = "master",
                                   featureBranch: String = "feature",
                                   conflictingFile: String = "c.txt"): String {
@@ -181,7 +187,7 @@ private class GitExecutorHolder {
   }
 }
 
-internal class TestFile internal constructor(val repo: GitRepository, val file: File) {
+class TestFile internal constructor(val repo: GitRepository, val file: File) {
   fun append(content: String): TestFile {
     FileUtil.writeToFile(file, content.toByteArray(), true)
     return this
@@ -201,6 +207,11 @@ internal class TestFile internal constructor(val repo: GitRepository, val file: 
   fun delete(): TestFile {
     assertTrue(file.exists())
     FileUtil.delete(file)
+    return this
+  }
+
+  fun assertExists(): TestFile {
+    assertTrue(file.exists())
     return this
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.*
@@ -28,20 +28,22 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import javax.swing.JComponent
 
 private val LOG = logger<CombinedDiffComponentProcessor>()
 
+@ApiStatus.Experimental
 interface CombinedDiffManager {
   fun createProcessor(diffPlace: String? = null): CombinedDiffComponentProcessor
 
   companion object {
-    @JvmStatic
     fun getInstance(project: Project): CombinedDiffManager = project.service()
   }
 }
 
+@ApiStatus.Internal
 class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
                                          goToChangeAction: AnAction?) : CombinedDiffComponentProcessor {
 
@@ -113,7 +115,7 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
 
     val textEditorProvider = TextEditorProvider.getInstance()
     state.activeEditorStates.zip(state.activeBlockId?.let(viewer::getDiffViewerForId)?.editors ?: listOf()) { st, editor ->
-      textEditorProvider.setStateImpl(null, editor, st, true)
+      textEditorProvider.setStateImpl(project = null, editor = editor, state = st, exactState = true)
     }
 
     if (state.activeBlockId != null) {
@@ -124,18 +126,20 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
 
   private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer? {
     val context = model.context
+    if (!DiffUtil.isUserDataFlagSet(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, context)) {
+      context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)
+    }
     val blocks = model.requests.toList()
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
     if (blocks.isEmpty()) return null
 
-    val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id) {
-      eventDispatcher.multicaster.onActiveFileChanged()
+    val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id).apply {
+      addListener({ _, _ -> eventDispatcher.multicaster.onActiveFileChanged() }, disposable)
     }
 
     return CombinedDiffViewer(context, MyBlockListener(), blockState, mainUi.getUiState()).also { viewer ->
       Disposer.register(disposable, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_KEY, viewer)
-      context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)
       mainUi.setContent(viewer, blockState)
     }
   }
@@ -244,7 +248,8 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
   }
 }
 
-data class CombinedDiffEditorState(
+@ApiStatus.Experimental
+internal data class CombinedDiffEditorState(
   val currentBlockIds: Set<CombinedBlockId>,
   val activeBlockId: CombinedBlockId?,
   val activeEditorStates: List<TextEditorState>
@@ -260,6 +265,7 @@ data class CombinedDiffEditorState(
   }
 }
 
+@ApiStatus.Experimental
 interface CombinedDiffComponentProcessor : DiffEditorViewer {
   val blocks: List<CombinedBlockProducer>
 

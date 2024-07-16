@@ -27,7 +27,7 @@ internal sealed class CodeReviewShowDiffActionProvider : AnActionExtensionProvid
     override fun CodeReviewChangeListViewModel.doShowDiff() = showDiffPreview()
   }
 
-  class Standalone : CodeReviewShowDiffActionProvider() {
+  /*class Standalone : CodeReviewShowDiffActionProvider() {
     override fun CodeReviewChangeListViewModel.doShowDiff() = showDiff()
-  }
+  }*/
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.services.ServiceEventListener;
@@ -146,13 +146,11 @@ public final class RemoteServersDeploymentManager {
     }
   }
 
-  @NotNull
-  public ServerTreeNodeExpander getNodeExpander() {
+  public @NotNull ServerTreeNodeExpander getNodeExpander() {
     return myNodeManipulator;
   }
 
-  @NotNull
-  public ServersTreeNodeSelector getNodeSelector() {
+  public @NotNull ServersTreeNodeSelector getNodeSelector() {
     return myNodeManipulator;
   }
 
@@ -179,9 +177,8 @@ public final class RemoteServersDeploymentManager {
     }
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
+  public @Nullable RemoteServersServiceViewContributor findContributor(@NotNull RemoteServer<?> server) {
     for (RemoteServersServiceViewContributor contributor : myContributors.keySet()) {
       if (contributor.accept(server)) {
         return contributor;
@@ -198,8 +195,7 @@ public final class RemoteServersDeploymentManager {
     }, POLL_DEPLOYMENTS_DELAY, ModalityState.any()));
   }
 
-  @Nullable
-  public static ServersTreeNodeSelector getNodeSelector(@NotNull AnActionEvent e) {
+  public static @Nullable ServersTreeNodeSelector getNodeSelector(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 

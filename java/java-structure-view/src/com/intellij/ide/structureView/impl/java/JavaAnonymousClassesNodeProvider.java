@@ -9,9 +9,9 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.PropertyOwner;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.IconManager;
@@ -59,7 +59,7 @@ public final class JavaAnonymousClassesNodeProvider
 
   @Override
   public Shortcut @NotNull [] getShortcut() {
-    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta I" : "control I")};
+    return new Shortcut[]{KeyboardShortcut.fromString(ClientSystemInfo.isMac() ? "meta I" : "control I")};
   }
 
   @Override

@@ -126,7 +126,8 @@ public abstract class AbstractVcsLogUi extends VcsLogUiBase implements Disposabl
     else if (VcsLogUtil.canRequestMore(myVisiblePack)) {
       VcsLogUtil.requestToLoadMore(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
-    else if (myLogData.getDataPack() != myVisiblePack.getDataPack()) {
+    else if (myLogData.getDataPack() != myVisiblePack.getDataPack() ||
+             (myVisiblePack.canRequestMore() && VcsLogUtil.isMoreRequested(myVisiblePack))) {
       VcsLogUtil.invokeOnChange(this, () -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (myVisiblePack.getDataPack() instanceof DataPack.ErrorDataPack ||

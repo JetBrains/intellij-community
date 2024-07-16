@@ -19,8 +19,8 @@ import java.awt.event.MouseEvent;
 
 final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotionListener {
   private final DocRenderSelectionManager mySelectionManager;
-  private DocRenderer.EditorPane myMouseOverPane;
-  private DocRenderer.EditorPane myDragPane;
+  private DocRenderer.EditorInlineHtmlPane myMouseOverPane;
+  private DocRenderer.EditorInlineHtmlPane myDragPane;
 
   DocRenderMouseEventBridge(DocRenderSelectionManager selectionManager) {
     mySelectionManager = selectionManager;
@@ -30,7 +30,7 @@ final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMous
   public void mouseMoved(@NotNull EditorMouseEvent event) {
     if (event.getArea() != EditorMouseEventArea.EDITING_AREA) return;
 
-    DocRenderer.EditorPane currentPane = redispatchEvent(event, MouseEvent.MOUSE_MOVED, null);
+    DocRenderer.EditorInlineHtmlPane currentPane = redispatchEvent(event, MouseEvent.MOUSE_MOVED, null);
     if (currentPane == null) {
       restoreCursor();
     }
@@ -91,18 +91,18 @@ final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMous
     }
   }
 
-  private void checkPaneSelection(@Nullable DocRenderer.EditorPane pane) {
+  private void checkPaneSelection(@Nullable DocRenderer.EditorInlineHtmlPane pane) {
     if (pane != null && pane.hasSelection()) {
       mySelectionManager.setPaneWithSelection(pane);
     }
   }
 
   @Nullable
-  private static DocRenderer.EditorPane redispatchEvent(@NotNull EditorMouseEvent event,
-                                                        // we need a separately passed eventId because EditorImpl dispatches MOUSE_RELEASED
-                                                        // events to both 'mouseReleased' and 'mouseClicked' methods in listeners
-                                                        int eventId,
-                                                        @Nullable DocRenderer.EditorPane targetPane) {
+  private static DocRenderer.EditorInlineHtmlPane redispatchEvent(@NotNull EditorMouseEvent event,
+                                                                  // we need a separately passed eventId because EditorImpl dispatches MOUSE_RELEASED
+                                                                  // events to both 'mouseReleased' and 'mouseClicked' methods in listeners
+                                                                  int eventId,
+                                                                  @Nullable DocRenderer.EditorInlineHtmlPane targetPane) {
     MouseEvent mouseEvent = event.getMouseEvent();
     Point mousePoint = mouseEvent.getPoint();
     Editor editor = event.getEditor();
@@ -116,14 +116,14 @@ final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMous
         int x = mousePoint.x - location.x - relativeBounds.x;
         int y = mousePoint.y - location.y - relativeBounds.y;
         if (x >= 0 && x < relativeBounds.width && y >= 0 && y < relativeBounds.height) {
-          DocRenderer.EditorPane editorPane = renderer.getRendererComponent(editor, relativeBounds.width);
-          if (eventId != MouseEvent.MOUSE_DRAGGED || targetPane == editorPane) {
+          DocRenderer.EditorInlineHtmlPane editorInlineHtmlPane = renderer.getRendererComponent(editor, relativeBounds.width, null);
+          if (eventId != MouseEvent.MOUSE_DRAGGED || targetPane == editorInlineHtmlPane) {
             int button = mouseEvent.getButton();
-            dispatchEvent(editorPane, new MouseEvent(editorPane, eventId, 0, mouseEvent.getModifiersEx(), x, y,
-                                                     mouseEvent.getClickCount(), false,
-                                                     // hack to process middle-button clicks (JEditorPane ignores them)
-                                                     button == MouseEvent.BUTTON2 ? MouseEvent.BUTTON1 : button));
-            return editorPane;
+            dispatchEvent(editorInlineHtmlPane, new MouseEvent(editorInlineHtmlPane, eventId, 0, mouseEvent.getModifiersEx(), x, y,
+                                                               mouseEvent.getClickCount(), false,
+                                                               // hack to process middle-button clicks (JEditorPane ignores them)
+                                                               button == MouseEvent.BUTTON2 ? MouseEvent.BUTTON1 : button));
+            return editorInlineHtmlPane;
           }
         }
       }
@@ -131,11 +131,11 @@ final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMous
     return null;
   }
 
-  private static void dispatchEvent(@NotNull DocRenderer.EditorPane editorPane, @NotNull MouseEvent event) {
-    editorPane.doWithRepaintTracking(() -> AWTAccessor.getComponentAccessor().processEvent(editorPane, event));
+  private static void dispatchEvent(@NotNull DocRenderer.EditorInlineHtmlPane editorInlineHtmlPane, @NotNull MouseEvent event) {
+    editorInlineHtmlPane.doWithRepaintTracking(() -> AWTAccessor.getComponentAccessor().processEvent(editorInlineHtmlPane, event));
   }
 
-  private static void dispatchMouseExitEvent(@NotNull DocRenderer.EditorPane editorPane) {
-    dispatchEvent(editorPane, new MouseEvent(editorPane, MouseEvent.MOUSE_EXITED, 0, 0, 0, 0, 0, false));
+  private static void dispatchMouseExitEvent(@NotNull DocRenderer.EditorInlineHtmlPane editorInlineHtmlPane) {
+    dispatchEvent(editorInlineHtmlPane, new MouseEvent(editorInlineHtmlPane, MouseEvent.MOUSE_EXITED, 0, 0, 0, 0, 0, false));
   }
 }

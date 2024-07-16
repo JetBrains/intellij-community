@@ -218,17 +218,17 @@ public class DomReferencesTest extends DomHardCoreTestCase {
 
     @Override
     @NotNull
-    public Collection<String> getVariants(final ConvertContext context) {
+    public Collection<String> getVariants(final @NotNull ConvertContext context) {
       return Collections.emptyList();
     }
 
     @Override
-    public String fromString(final String s, final ConvertContext context) {
+    public String fromString(final String s, final @NotNull ConvertContext context) {
       return s;
     }
 
     @Override
-    public String toString(final String s, final ConvertContext context) {
+    public String toString(final String s, final @NotNull ConvertContext context) {
       return s;
     }
   }
@@ -236,18 +236,18 @@ public class DomReferencesTest extends DomHardCoreTestCase {
   public static class MyStringBufferConverter extends ResolvingConverter<StringBuffer> {
 
     @Override
-    public StringBuffer fromString(final String s, final ConvertContext context) {
+    public StringBuffer fromString(final String s, final @NotNull ConvertContext context) {
       return s == null ? null : new StringBuffer(s);
     }
 
     @Override
-    public String toString(final StringBuffer t, final ConvertContext context) {
+    public String toString(final StringBuffer t, final @NotNull ConvertContext context) {
       return t == null ? null : t.toString();
     }
 
     @NotNull
     @Override
-    public Collection<StringBuffer> getVariants(final ConvertContext context) {
+    public Collection<StringBuffer> getVariants(final @NotNull ConvertContext context) {
       return Arrays.asList(new StringBuffer("239"), new StringBuffer("42"), new StringBuffer("foo"));
     }
 

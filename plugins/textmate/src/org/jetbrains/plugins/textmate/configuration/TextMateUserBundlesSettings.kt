@@ -52,7 +52,8 @@ class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMat
 
   companion object {
     @JvmStatic
-    val instance: TextMateUserBundlesSettings?
-      get() = ApplicationManager.getApplication().getService(TextMateUserBundlesSettings::class.java)
+    fun getInstance(): TextMateUserBundlesSettings? {
+      return ApplicationManager.getApplication().getService(TextMateUserBundlesSettings::class.java)
+    }
   }
 }

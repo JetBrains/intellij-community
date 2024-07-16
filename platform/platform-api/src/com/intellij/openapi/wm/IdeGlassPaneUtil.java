@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
@@ -61,17 +62,22 @@ public final class IdeGlassPaneUtil {
   }
 
   public static boolean canBePreprocessed(@NotNull MouseEvent e) {
-    Component c = UIUtil.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
-
-    if (JBPopupFactory.getInstance().getParentBalloonFor(c) != null && e.getID() != MouseEvent.MOUSE_DRAGGED) {
-      return false;
+    Component component = UIUtil.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+    if (component == null) {
+      return true;
     }
 
-    if (c instanceof IdeGlassPane.TopComponent) {
-      return ((IdeGlassPane.TopComponent)c).canBePreprocessed(e);
+    if (e.getID() != MouseEvent.MOUSE_DRAGGED) {
+      JBPopupFactory popupFactory = ApplicationManager.getApplication().getServiceIfCreated(JBPopupFactory.class);
+      if (popupFactory != null && popupFactory.getParentBalloonFor(component) != null) {
+        return false;
+      }
+    }
+
+    if (component instanceof IdeGlassPane.TopComponent) {
+      return ((IdeGlassPane.TopComponent)component).canBePreprocessed(e);
     }
 
     return true;
   }
-
 }

@@ -101,7 +101,7 @@ fun getProperties(instance: Any, annotationToFilterByClass: Class<*>? = null, us
   if (usePojoProperties) {
     // Java props
     val javaProperties = Introspector.getBeanInfo(instance.javaClass).propertyDescriptors
-    assert(annotationToFilterBy == null, { "Filtering java properties is not supported" })
+    assert(annotationToFilterBy == null) { "Filtering java properties is not supported" }
     return Properties(javaProperties.map { JavaProperty(it, instance) }, instance)
   }
   else {

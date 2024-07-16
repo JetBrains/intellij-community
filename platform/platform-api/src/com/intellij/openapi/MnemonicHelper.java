@@ -2,6 +2,7 @@
 package com.intellij.openapi;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -205,7 +206,7 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
   @MagicConstant(flagsFromClass = InputEvent.class)
   public static int getFocusAcceleratorKeyMask() {
     //noinspection MagicConstant
-    return SystemInfo.isMac ? ActionEvent.ALT_MASK | ActionEvent.CTRL_MASK : ActionEvent.ALT_MASK;
+    return ClientSystemInfo.isMac() ? ActionEvent.ALT_MASK | ActionEvent.CTRL_MASK : ActionEvent.ALT_MASK;
   }
 
   public static void registerMnemonicAction(@NotNull JComponent component, int mnemonic) {

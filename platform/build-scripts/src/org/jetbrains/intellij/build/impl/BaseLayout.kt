@@ -10,6 +10,8 @@ import org.jetbrains.intellij.build.BuildContext
 import java.lang.StackWalker.Option
 import kotlin.streams.asSequence
 
+typealias LayoutPatcher = suspend (ModuleOutputPatcher, PlatformLayout, BuildContext) -> Unit
+
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
  */
@@ -45,14 +47,20 @@ sealed class BaseLayout {
   @JvmField
   internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
 
-  internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
+  internal var patchers: PersistentList<LayoutPatcher> = persistentListOf()
     private set
 
-  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+  fun withPatch(patcher: LayoutPatcher) {
     patchers = patchers.add(patcher)
   }
 
+  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+    patchers = patchers.add { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
+  }
+
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
+
+  fun findProjectLibrary(name: String): ProjectLibraryData? = includedProjectLibraries.firstOrNull { it.libraryName == name }
 
   @TestOnly
   fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) ?: false
@@ -145,9 +153,22 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                    packMode = LibraryPackMode.MERGED,
-                                                    reason = "withProjectLibrary"))
+    includedProjectLibraries.add(
+      ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, reason = "withProjectLibrary")
+    )
+  }
+
+  internal fun withProjectLibraries(libraryNames: List<String>, outPath: String? = null) {
+    for (libraryName in libraryNames) {
+      includedProjectLibraries.add(
+        ProjectLibraryData(
+          libraryName = libraryName,
+          packMode = LibraryPackMode.MERGED,
+          reason = "withProjectLibrary",
+          outPath = outPath,
+        )
+      )
+    }
   }
 
   fun withProjectLibraries(libraryNames: Iterable<String>) {
@@ -206,11 +227,10 @@ class ModuleItem(
   }
 
   override fun equals(other: Any?): Boolean {
-    return this === other ||
-           other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
+    return this === other || other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
   }
 
   override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
-  override fun toString(): String = "ModuleItem(moduleName=${moduleName}, relativeOutputFile=${relativeOutputFile}, reason=${reason})"
+  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason)"
 }

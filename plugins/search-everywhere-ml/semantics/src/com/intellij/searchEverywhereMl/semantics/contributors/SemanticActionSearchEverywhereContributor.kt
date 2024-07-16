@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
@@ -12,11 +13,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
-import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
+import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.Companion.ORDERED_PRIORITIES
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
 import com.intellij.searchEverywhereMl.semantics.providers.LocalSemanticActionsProvider
@@ -26,10 +28,12 @@ import com.intellij.ui.JBColor
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.*
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 import javax.swing.ListCellRenderer
 
 
@@ -52,6 +56,8 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
 
   override val priorityThresholds
     get() = PRIORITY_THRESHOLDS
+
+  override var notifyCallback: Consumer<String>? = null
 
   override fun isElementSemantic(element: Any): Boolean {
     return (element is MatchedValue && element.type == GotoActionModel.MatchedValueType.SEMANTIC)
@@ -125,6 +131,10 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
           val semanticMatches = itemsProvider.searchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
           if (semanticMatches.isEmpty()) return@launch
           standardSearchJob.join()
+          val noStandardResults = knownItems.isEmpty()
+          if (noStandardResults && checkScopeIsDefaultAndAutoSet()) return@launch // allow the scope to change automatically
+          var sentNotification = false
+
           for (priority in ORDERED_PRIORITIES) {
             val iterator = if (priority == DescriptorPriority.HIGH) semanticMatches.iterator()
             else cachedMatches.filter { it.findPriority() == priority }.iterator()
@@ -140,8 +150,16 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
               for (descriptor in itemsProvider.createItemDescriptors(match.text, match.similarity, pattern)) {
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {
+                  if (noStandardResults && !sentNotification) {
+                    notifyCallback?.accept(SemanticSearchBundle.getMessage("search.everywhere.no.exact.matches"))
+                    sentNotification = true
+                  }
                   blockingContext { consumer.process(it) }
-                  foundItemsCount++
+                  val descriptorValue = it.item.value
+                  // Only count available actions
+                  if (descriptorValue is ActionWrapper && descriptorValue.isAvailable) {
+                    foundItemsCount++
+                  }
                 }
                 if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) return@launch
               }
@@ -194,6 +212,8 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
     return ORDERED_PRIORITIES.first { similarity > priorityThresholds[it]!! }
   }
 
+  override fun checkScopeIsDefaultAndAutoSet(): Boolean = isScopeDefaultAndAutoSet
+
   override fun syncSearchSettings() {
     throw UnsupportedOperationException()
   }
@@ -206,7 +226,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
 
     private fun extractAction(item: Any): AnAction? {
       if (item is AnAction) return item
-      return ((if (item is MatchedValue) item.value else item) as? GotoActionModel.ActionWrapper)?.action
+      return ((if (item is MatchedValue) item.value else item) as? ActionWrapper)?.action
     }
 
     private fun checkActionsEqual(lhs: Any, rhs: Any): Boolean {

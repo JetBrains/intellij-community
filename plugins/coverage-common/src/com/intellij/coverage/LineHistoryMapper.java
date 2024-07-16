@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * This service finds correspondence of lines of a file in a specified timestamp in VCS/local history and current state of the file.
  */
-public class LineHistoryMapper {
+class LineHistoryMapper {
   private static final Logger LOG = Logger.getInstance(LineHistoryMapper.class);
   private final Object myLock = new Object();
   private final Project myProject;
@@ -44,7 +44,7 @@ public class LineHistoryMapper {
   protected SoftReference<Int2IntMap> myOldToNewLines;
   private volatile SoftReference<byte[]> myOldContent;
 
-  public LineHistoryMapper(Project project, VirtualFile file, Document document, long date) {
+  LineHistoryMapper(Project project, VirtualFile file, Document document, long date) {
     myProject = project;
     myFile = file;
     myDocument = document;

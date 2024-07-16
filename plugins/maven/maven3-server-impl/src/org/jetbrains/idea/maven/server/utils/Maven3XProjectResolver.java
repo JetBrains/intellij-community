@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER_VERSION;
 
 public class Maven3XProjectResolver {
-  @NotNull private final Maven3XServerEmbedder myEmbedder;
+  @NotNull protected final Maven3XServerEmbedder myEmbedder;
   @NotNull private final MavenServerOpenTelemetry myTelemetry;
   private final boolean myUpdateSnapshots;
   @NotNull private final Maven3ImporterSpy myImporterSpy;
@@ -52,7 +52,7 @@ public class Maven3XProjectResolver {
   private final PomHashMap myPomHashMap;
   private final List<String> myActiveProfiles;
   private final List<String> myInactiveProfiles;
-  @Nullable private final MavenWorkspaceMap myWorkspaceMap;
+  @Nullable protected final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final Properties userProperties;
   private final boolean myResolveInParallel;
 
@@ -136,9 +136,7 @@ public class Maven3XProjectResolver {
           myImporterSpy.setIndicator(indicator);
           session.setTransferListener(new Maven3TransferListenerAdapter(indicator));
 
-          if (myWorkspaceMap != null) {
-            session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap));
-          }
+          setupWorkspaceReader(session);
 
           session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
           session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
@@ -159,7 +157,10 @@ public class Maven3XProjectResolver {
             buildingResults, br -> {
               String newDependencyHash = Maven3EffectivePomDumper.dependencyHash(br.getProject());
               if (null != newDependencyHash) {
-                fileToNewDependencyHash.put(br.getPomFile(), newDependencyHash);
+                File pomFile = br.getPomFile();
+                if (pomFile != null) {
+                  fileToNewDependencyHash.put(pomFile, newDependencyHash);
+                }
               }
               return br;
             }
@@ -167,22 +168,29 @@ public class Maven3XProjectResolver {
 
         for (ProjectBuildingResult buildingResult : buildingResults) {
           MavenProject project = buildingResult.getProject();
+          if (project == null) {
+            new Exception("PROJECT is null").printStackTrace();
+          }
           File pomFile = buildingResult.getPomFile();
 
-          if (project == null) {
-            executionResults.add(new Maven3ExecutionResult(pomFile, buildingResult.getProblems()));
-            continue;
+          String newDependencyHash = null;
+          if (pomFile != null) {
+            if (project == null) {
+              executionResults.add(new Maven3ExecutionResult(pomFile, buildingResult.getProblems()));
+              continue;
+            }
+
+            String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
+            newDependencyHash = fileToNewDependencyHash.get(pomFile);
+            if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
+              Maven3ExecutionResult res = new Maven3ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
+              res.setDependencyHash(previousDependencyHash);
+              res.setDependencyResolutionSkipped(true);
+              executionResults.add(res);
+              continue;
+            }
           }
 
-          String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
-          String newDependencyHash = fileToNewDependencyHash.get(pomFile);
-          if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
-            Maven3ExecutionResult res = new Maven3ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
-            res.setDependencyHash(previousDependencyHash);
-            res.setDependencyResolutionSkipped(true);
-            executionResults.add(res);
-            continue;
-          }
 
           List<Exception> exceptions = new ArrayList<>();
 
@@ -217,6 +225,12 @@ public class Maven3XProjectResolver {
     });
 
     return executionResults;
+  }
+
+  protected void setupWorkspaceReader(DefaultRepositorySystemSession session) {
+    if (myWorkspaceMap != null) {
+      session.setWorkspaceReader(new Maven3WorkspaceMapReader(myWorkspaceMap));
+    }
   }
 
   @NotNull
@@ -281,7 +295,8 @@ public class Maven3XProjectResolver {
 
     Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), result.isDependencyResolutionSkipped(), mavenModelMap, holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), result.isDependencyResolutionSkipped(), mavenModelMap,
+                                                 holder, activatedProfiles);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
@@ -308,7 +323,7 @@ public class Maven3XProjectResolver {
   }
 
   @NotNull
-  private List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
+  protected List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files) {
     ProjectBuilder builder = myEmbedder.getComponent(ProjectBuilder.class);
 
     ModelInterpolator modelInterpolator = myEmbedder.getComponent(ModelInterpolator.class);
@@ -333,7 +348,7 @@ public class Maven3XProjectResolver {
       }
       else {
         try {
-          buildingResults = builder.build(new ArrayList<>(files), false, projectBuildingRequest);
+          buildMultiplyPoms(builder, buildingResults, projectBuildingRequest, files);
         }
         catch (ProjectBuildingException e) {
           for (ProjectBuildingResult result : e.getResults()) {
@@ -355,10 +370,18 @@ public class Maven3XProjectResolver {
     return buildingResults;
   }
 
-  private static void buildSinglePom(ProjectBuilder builder,
-                                     List<ProjectBuildingResult> buildingResults,
-                                     ProjectBuildingRequest projectBuildingRequest,
-                                     File pomFile) {
+  protected void buildMultiplyPoms(@NotNull ProjectBuilder builder,
+                                   List<ProjectBuildingResult> buildingResults,
+                                   ProjectBuildingRequest projectBuildingRequest,
+                                   @NotNull Collection<File> files
+  ) throws ProjectBuildingException {
+    buildingResults.addAll(builder.build(new ArrayList<>(files), false, projectBuildingRequest));
+  }
+
+  protected void buildSinglePom(ProjectBuilder builder,
+                                List<ProjectBuildingResult> buildingResults,
+                                ProjectBuildingRequest projectBuildingRequest,
+                                File pomFile) {
     try {
       ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
       buildingResults.add(build);

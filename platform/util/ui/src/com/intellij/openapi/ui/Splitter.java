@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ public class Splitter extends JPanel implements Splittable {
   private final float myMaxProp;
 
 
+  @ApiStatus.Internal
   protected float myProportion;// first size divided by (first + second)
   private Float myLagProportion;
 
@@ -417,8 +419,9 @@ public class Splitter extends JPanel implements Splittable {
       mySkipNextLayout = false;
       return;
     }
-    int width = getWidth();
-    int height = getHeight();
+    var insets = getInsets();
+    int width = getWidth() - insets.left - insets.right;
+    int height = getHeight() - insets.top - insets.bottom;
 
     int total = isVertical() ? height : width;
     if (total <= 0) return;
@@ -444,14 +447,14 @@ public class Splitter extends JPanel implements Splittable {
       int iSize2 = Math.max(0, total - iSize1 - d);
 
       if (isVertical()) {
-        firstRect.setBounds(0, 0, width, iSize1);
-        dividerRect.setBounds(0, iSize1, width, d);
-        secondRect.setBounds(0, iSize1 + d, width, iSize2);
+        firstRect.setBounds(insets.left, insets.top, width, iSize1);
+        dividerRect.setBounds(insets.left, insets.top + iSize1, width, d);
+        secondRect.setBounds(insets.left, insets.top + iSize1 + d, width, iSize2);
       }
       else {
-        firstRect.setBounds(0, 0, iSize1, height);
-        dividerRect.setBounds(iSize1, 0, d, height);
-        secondRect.setBounds((iSize1 + d), 0, iSize2, height);
+        firstRect.setBounds(insets.left, insets.top, iSize1, height);
+        dividerRect.setBounds(insets.left + iSize1, insets.top, d, height);
+        secondRect.setBounds((insets.left + iSize1 + d), insets.top, iSize2, height);
       }
       myDivider.setVisible(true);
       myFirstComponent.setBounds(firstRect);
@@ -463,26 +466,26 @@ public class Splitter extends JPanel implements Splittable {
     else if (!isNull(myFirstComponent) && myFirstComponent.isVisible()) { // only first component is visible
       hideNull(mySecondComponent);
       myDivider.setVisible(false);
-      myFirstComponent.setBounds(0, 0, width, height);
+      myFirstComponent.setBounds(insets.left, insets.top, width, height);
       //myFirstComponent.revalidate();
     }
     else if (!isNull(mySecondComponent) && mySecondComponent.isVisible()) { // only second component is visible
       hideNull(myFirstComponent);
       myDivider.setVisible(false);
-      mySecondComponent.setBounds(0, 0, width, height);
+      mySecondComponent.setBounds(insets.left, insets.top, width, height);
       //mySecondComponent.revalidate();
     }
     else { // both components are null or invisible
       myDivider.setVisible(false);
       if (myFirstComponent != null) {
-        myFirstComponent.setBounds(0, 0, 0, 0);
+        myFirstComponent.setBounds(insets.left, insets.top, 0, 0);
         //myFirstComponent.revalidate();
       }
       else {
         hideNull(myFirstComponent);
       }
       if (mySecondComponent != null) {
-        mySecondComponent.setBounds(0, 0, 0, 0);
+        mySecondComponent.setBounds(insets.left, insets.top, 0, 0);
         //mySecondComponent.revalidate();
       }
       else {
@@ -594,7 +597,7 @@ public class Splitter extends JPanel implements Splittable {
     proportion = MathUtil.clamp(proportion, myMinProp, myMaxProp);
     float oldProportion = myProportion;
     myProportion = proportion;
-    firePropertyChange(PROP_PROPORTION, new Float(oldProportion), new Float(myProportion));
+    firePropertyChange(PROP_PROPORTION, Float.valueOf(oldProportion), Float.valueOf(myProportion));
     revalidate();
     repaint();
   }
@@ -825,6 +828,11 @@ public class Splitter extends JPanel implements Splittable {
     @Override
     public void setSwitchOrientationEnabled(boolean switchOrientationEnabled) {
       mySwitchOrientationEnabled = switchOrientationEnabled;
+    }
+
+    @Override
+    protected Graphics getComponentGraphics(Graphics g) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
     }
   }
 }

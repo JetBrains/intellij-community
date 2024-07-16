@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore;
 
-import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -10,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
-public class StateAnnotation implements State {
+class StateAnnotation implements State {
   private final String name;
   private final Storage @NotNull [] storages;
 
@@ -88,6 +87,11 @@ public class StateAnnotation implements State {
 
   @Override
   public boolean exportable() {
+    return false;
+  }
+
+  @Override
+  public boolean perClient() {
     return false;
   }
 

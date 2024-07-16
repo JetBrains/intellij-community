@@ -36,7 +36,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.util.containers.ContainerUtil.indexOf;
 
-public class MavenApplicationConfigurationExecutionEnvironmentProvider implements MavenExecutionEnvironmentProvider {
+public final class MavenApplicationConfigurationExecutionEnvironmentProvider implements MavenExecutionEnvironmentProvider {
 
   @Override
   public boolean isApplicable(@NotNull ExecuteRunConfigurationTask task) {

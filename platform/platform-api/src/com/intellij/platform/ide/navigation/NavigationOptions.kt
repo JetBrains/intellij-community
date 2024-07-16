@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation
 
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -40,6 +40,12 @@ interface NavigationOptions {
    */
   fun preserveCaret(value: Boolean): NavigationOptions
 
+  @Internal
+  fun openInRightSplit(value: Boolean): NavigationOptions
+
+  @Internal
+  fun sourceNavigationOnly(value: Boolean): NavigationOptions
+
   companion object {
 
     @JvmStatic
@@ -48,6 +54,8 @@ interface NavigationOptions {
     private val defaultOptions = Impl(
       requestFocus = true,
       preserveCaret = false,
+      openInRightSplit = false,
+      sourceNavigationOnly = false,
     )
   }
 
@@ -55,8 +63,18 @@ interface NavigationOptions {
   data class Impl internal constructor(
     val requestFocus: Boolean,
     val preserveCaret: Boolean,
+    // some UI uses single-click navigation instead of double-click,
+    // in this case we want only source navigation,
+    // but not opening library settings (https://youtrack.jetbrains.com/issue/IJPL-157790)
+    @Experimental @JvmField val sourceNavigationOnly: Boolean,
+    @Experimental @JvmField val openInRightSplit: Boolean,
   ) : NavigationOptions {
     override fun requestFocus(value: Boolean): NavigationOptions = copy(requestFocus = value)
+
     override fun preserveCaret(value: Boolean): NavigationOptions = copy(preserveCaret = value)
+
+    override fun openInRightSplit(value: Boolean): NavigationOptions = copy(openInRightSplit = value)
+
+    override fun sourceNavigationOnly(value: Boolean): NavigationOptions = copy(sourceNavigationOnly = value)
   }
 }

@@ -104,8 +104,7 @@ public class FieldEvaluator implements Evaluator {
   }
 
   private Object evaluateField(Object object, EvaluationContextImpl context) throws EvaluateException {
-    if (object instanceof ReferenceType) {
-      ReferenceType refType = (ReferenceType)object;
+    if (object instanceof ReferenceType refType) {
       Field field = findField(refType);
       if (field == null || !field.isStatic()) {
         field = refType.fieldByName(myFieldName);

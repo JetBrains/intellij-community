@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -91,7 +91,7 @@ public class IntroduceHolderFix extends PsiUpdateModCommandQuickFix {
     }
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(field.getProject());
     final String fieldName = field.getName();
-    @NonNls final String holderName =
+    final @NonNls String holderName =
       StringUtil.capitalize(codeStyleManager.variableNameToPropertyName(fieldName, VariableKind.STATIC_FINAL_FIELD)) + "Holder";
     final PsiElement expressionParent = referenceExpression.getParent();
     if (!(expressionParent instanceof PsiAssignmentExpression assignmentExpression)) {
@@ -101,7 +101,7 @@ public class IntroduceHolderFix extends PsiUpdateModCommandQuickFix {
     if (rhs == null) {
       return;
     }
-    @NonNls final String text = "private static final class " + holderName + " {}";
+    final @NonNls String text = "private static final class " + holderName + " {}";
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(field.getProject());
     final PsiClass holder = elementFactory.createClassFromText(text, field).getInnerClasses()[0];
     final PsiMember method = PsiTreeUtil.getParentOfType(referenceExpression, PsiMember.class);
@@ -136,8 +136,7 @@ public class IntroduceHolderFix extends PsiUpdateModCommandQuickFix {
     updater.rename(holderClass, Stream.of(holderClass.getName(), suggestHolderName(field)).distinct().toList());
   }
 
-  @NonNls
-  private static String suggestHolderName(PsiField field) {
+  private static @NonNls String suggestHolderName(PsiField field) {
     String string = field.getType().getDeepComponentType().getPresentableText();
     final int index = string.indexOf('<');
     if (index != -1) {
@@ -147,8 +146,7 @@ public class IntroduceHolderFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("introduce.holder.class.quickfix");
   }
 

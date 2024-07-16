@@ -5,7 +5,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 
 import java.util.Objects;
 
-class RepositoryData {
+public class RepositoryData {
   private final String id;
   private final String url;
 

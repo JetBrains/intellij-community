@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * @noinspection unused
+ * @noinspection unused, MismatchedQueryAndUpdateOfCollection
  */
 public class YouTrackIssue {
   public static final String DEFAULT_FIELDS = "idReadable,updated,created,resolved,summary,description,customFields(name,value(name))";

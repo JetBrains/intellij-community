@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @TestApplication
 abstract class BasePluginManagerTest {
   internal lateinit var pluginManager: SettingsSyncPluginManager
@@ -97,11 +96,11 @@ abstract class BasePluginManagerTest {
   fun setUp() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.State())
-    testPluginManager = TestPluginManager()
-    testPluginManager.addPluginDescriptors(*TestPluginDescriptor.allDependenciesOnly().toTypedArray())
-    ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
     testScheduler = TestCoroutineScheduler()
     testDispatcher = StandardTestDispatcher(testScheduler)
+    testPluginManager = TestPluginManager(testScheduler)
+    testPluginManager.addPluginDescriptors(*TestPluginDescriptor.allDependenciesOnly().toTypedArray())
+    ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
     pluginManager = SettingsSyncPluginManager(CoroutineScope(testDispatcher))
     Disposer.register(testRootDisposable, pluginManager)
   }

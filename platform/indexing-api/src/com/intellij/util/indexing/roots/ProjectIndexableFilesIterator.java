@@ -2,8 +2,10 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public interface ProjectIndexableFilesIterator extends IndexableFilesIterator {
   @Override
   @NotNull ProjectFileOrDirOrigin getOrigin();

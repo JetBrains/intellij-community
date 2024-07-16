@@ -1,11 +1,14 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
+import java.awt.Container
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyEvent
@@ -21,6 +24,7 @@ fun EditorEx.addComponentInlay(
   showWhenFolded: Boolean = true,
   priority: Int,
   offset: Int,
+  rendererFactory: RendererFactory? = null
 ): Inlay<*> {
   // see DS-5614
   val fullWidthArg: Boolean = this.editorKind != EditorKind.DIFF
@@ -29,7 +33,7 @@ fun EditorEx.addComponentInlay(
     component,
     EditorEmbeddedComponentManager.Properties(
       EditorEmbeddedComponentManager.ResizePolicy.none(),
-      null,
+      rendererFactory,
       isRelatedToPrecedingText,
       showAbove,
       showWhenFolded,
@@ -54,12 +58,14 @@ fun EditorEx.addComponentInlay(
 private fun updateUiOnParentResizeImpl(parent: JComponent, childRef: WeakReference<JComponent>) {
   val listener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      val child = childRef.get()
-      if (child != null) {
-        child.updateUI()
-      }
-      else {
-        parent.removeComponentListener(this)
+      ReadAction.run<Throwable> {
+        val child = childRef.get()
+        if (child != null) {
+          child.updateUI()
+        }
+        else {
+          parent.removeComponentListener(this)
+        }
       }
     }
   }
@@ -110,3 +116,11 @@ fun JComponent.yOffsetFromEditor(editor: Editor): Int? =
   SwingUtilities.convertPoint(this, 0, 0, editor.contentComponent).y
     .takeIf { it >= 0 }
     ?.let { it + insets.top }
+
+fun validateComponent(c: Container) {
+  var validationRoot = c
+  while (!validationRoot.isValidateRoot && validationRoot.parent != null) {
+    validationRoot = validationRoot.parent
+  }
+  validationRoot.validate()
+}

@@ -19,7 +19,7 @@ import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DOCUMENTATION_DELEGATE_FQN;
 
-public class BindableTransformationSupport implements AstTransformationSupport {
+public final class BindableTransformationSupport implements AstTransformationSupport {
 
   @NlsSafe private static final String BINDABLE_FQN = "groovy.beans.Bindable";
   @NlsSafe private static final String PCL_FQN = "java.beans.PropertyChangeListener";

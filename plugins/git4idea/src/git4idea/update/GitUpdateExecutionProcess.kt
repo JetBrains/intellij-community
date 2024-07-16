@@ -68,6 +68,7 @@ internal class GitUpdateExecutionProcess(private val project: Project,
 
     private fun setBranchUpstream(repository: GitRepository, branchConfig: GitBranchPair) {
       val handler = GitLineHandler(project, repository.root, GitCommand.BRANCH)
+      handler.setSilent(false)
       val (local, remote) = branchConfig
       handler.addParameters("--set-upstream-to", remote.name, local.name)
 

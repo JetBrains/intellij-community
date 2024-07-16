@@ -11,6 +11,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +127,8 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @Override
   public @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root,
                                                                 @NotNull VcsLogFilterCollection filterCollection,
-                                                                int maxCount) throws VcsException {
+                                                                @NotNull PermanentGraph.Options graphOptions,
+                                                                int maxCount) {
     throw new UnsupportedOperationException();
   }
 

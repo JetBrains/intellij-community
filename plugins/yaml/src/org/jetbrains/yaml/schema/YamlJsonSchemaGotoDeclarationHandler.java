@@ -29,18 +29,20 @@ public class YamlJsonSchemaGotoDeclarationHandler implements GotoDeclarationHand
 
     final IElementType elementType = PsiUtilCore.getElementType(sourceElement);
     if (elementType != YAMLTokenTypes.SCALAR_KEY) return null;
-    final YAMLKeyValue literal = PsiTreeUtil.getParentOfType(sourceElement, YAMLKeyValue.class);
+    final YAMLKeyValue keyValue = PsiTreeUtil.getParentOfType(sourceElement, YAMLKeyValue.class);
     // do not override injected references
-    if (literal == null || literal.getKey() != sourceElement|| !ArrayUtil.isEmpty(literal.getReferences())) return null;
-    final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
-    final PsiFile containingFile = literal.getContainingFile();
+    if (keyValue == null || keyValue.getKey() != sourceElement|| !ArrayUtil.isEmpty(keyValue.getReferences())) return null;
+    final JsonSchemaService service = JsonSchemaService.Impl.get(keyValue.getProject());
+    final PsiFile containingFile = keyValue.getContainingFile();
     final VirtualFile file = containingFile.getVirtualFile();
     if (file == null || !service.isApplicableToFile(file)) return null;
-    final JsonPointerPosition steps = YamlJsonPsiWalker.INSTANCE.findPosition(literal, true);
+    final JsonPointerPosition steps = YamlJsonPsiWalker.INSTANCE.findPosition(keyValue, true);
     if (steps == null) return null;
     final JsonSchemaObject schemaObject = service.getSchemaObject(containingFile);
     if (schemaObject != null) {
-      final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps).findNavigationTarget(literal.getValue());
+      final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps, YamlJsonPsiWalker.INSTANCE.createValueAdapter(keyValue.getParent()))
+      //final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps, YamlJsonPsiWalker.INSTANCE.getParentPropertyAdapter(keyValue).getNameValueAdapter())
+        .findNavigationTarget(keyValue.getValue());
       if (target != null) {
         return new PsiElement[] {target};
       }

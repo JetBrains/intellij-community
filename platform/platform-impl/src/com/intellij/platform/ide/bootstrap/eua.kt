@@ -71,7 +71,5 @@ Android Studio: b/200625563 */
       false
     }
   }
-  else {
-    return null
-  }
+  return null
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class DomInvocationHandler extends UserDataHolderBase implements InvocationHandler, DomElement {
+public abstract class DomInvocationHandler extends UserDataHolderBase implements DomElement {
   private static final Logger LOG = Logger.getInstance(DomInvocationHandler.class);
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
@@ -501,7 +501,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
         //noinspection unchecked
         implementation = (Class<? extends DomElement>)rawType;
       }
-      myProxy = proxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
+      myProxy = proxy = AdvancedProxy.createProxy(invocationHandler, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
     }
     return proxy;
   }
@@ -627,15 +627,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new VirtualDomParentStrategy(this), null);
   }
 
-  @Override
-  public final @Nullable Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    try {
-      return findInvocation(method).invoke(this, args);
-    }
-    catch (InvocationTargetException ex) {
-      throw ex.getTargetException();
-    }
-  }
+  private final InvocationHandler invocationHandler = new MyInvocationHandler();
 
   private @NotNull Invocation findInvocation(Method method) {
     Invocation invocation = myAccessorInvocations.get(method);
@@ -861,6 +853,22 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
 
   public int hashCode() {
     return myChildDescription.hashCode();
+  }
+
+  final class MyInvocationHandler implements InvocationHandler {
+    DomInvocationHandler getDomInvocationHandler() {
+      return DomInvocationHandler.this;
+    }
+
+    @Override
+    public @Nullable Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      try {
+        return findInvocation(method).invoke(DomInvocationHandler.this, args);
+      }
+      catch (InvocationTargetException ex) {
+        throw ex.getTargetException();
+      }
+    }
   }
 }
 

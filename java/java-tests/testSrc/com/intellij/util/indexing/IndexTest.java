@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.find.ngrams.TrigramIndex;
@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -68,8 +67,10 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.*;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.IsFileChangedResult;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import com.intellij.util.indexing.events.IndexedFilesListener;
@@ -99,7 +100,8 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SkipSlowTestLocally
 public class IndexTest extends JavaCodeInsightFixtureTestCase {
@@ -589,7 +591,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   private void assertIsIndexed(VirtualFile vFile) {
     ScanningRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getReadOnlyTokenForTest();
     assertTrue(
-      IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)) || VfsData.isIndexedFlagDisabled());
+      IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)) || IndexingFlag.isIndexedFlagDisabled());
+    assertThat(IndexingFlag.isFileChanged(vFile, indexingRequest.getFileIndexingStamp(vFile))).isEqualTo(IsFileChangedResult.NO);
   }
 
   public void test_no_index_stamp_update_when_no_change_2() throws IOException {
@@ -699,38 +702,27 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void runFindClassStubIndexQueryThatProducesInvalidResult(final String qName) {
-    final AtomicReference<PsiClass> foundFile = new AtomicReference<>();
-
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getProject());
+
+    class StubMismatchLikeException extends RuntimeException {
+    }
+
     final Processor<PsiClass> processor = file -> {
-      foundFile.set(file);
-      return false;
+      throw new StubMismatchLikeException();
     };
 
     try {
-
       StubIndex.getInstance()
         .processElements(JavaStubIndexKeys.CLASS_FQN, qName, getProject(), searchScope, PsiClass.class, aClass -> {
           StubIndex.getInstance()
             .processElements(JavaStubIndexKeys.CLASS_FQN, qName, getProject(), searchScope, PsiClass.class, processor);
           return false;
         });
-      fail("Should fail with class mismatch");
+      fail("Should fail with StubMismatchLikeException");
     }
-    catch (AssertionError ignored) {
-      // stub mismatch
+    catch (StubMismatchLikeException ignored) {
+      // expected
     }
-
-    //assertTrue(((StubIndexImpl)StubIndex.instance).areAllProblemsProcessedInTheCurrentThread())
-    //
-    //try {
-    //  StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, qName, project, searchScope, PsiFile.class, processor)
-    //
-    //  fail("Unexpected")
-    //}
-    //catch (AssertionError ignored) {
-    //  // stub mismatch
-    //}
   }
 
   public void test_do_not_collect_stub_tree_while_holding_stub_elements() {
@@ -965,7 +957,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     final String filename = "A.java";
     myFixture.addFileToProject("foo/bar/" + filename, "class A {}");
 
-    PlatformTestUtil.newPerformanceTest("Vfs Event Processing By Index", () -> {
+    PerformanceTestUtil.newPerformanceTest("Vfs Event Processing By Index", () -> {
       PsiFile[] files = FilenameIndex.getFilesByName(getProject(), filename, GlobalSearchScope.moduleScope(getModule()));
       assertEquals(1, files.length);
 
@@ -1103,17 +1095,22 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void test_file_increases_beyond_too_large_limit() throws IOException {
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     final String item = createLongSequenceOfCharacterConstants();
     final String fileText = "class Bar { char[] item = { " + item + "};\n }";
     final VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileText).getVirtualFile();
+    int fileId = ((VirtualFileWithId)file).getId();
     assertNotNull(findClass("Bar"));
+    assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
 
     for (int i = 0; i < 2; ++i) {
-      WriteAction.run(() -> VfsUtil.saveText(file, item + item));
+      WriteAction.run(() -> VfsUtil.saveText(file, "class Bar { char[] item = { " + item + item + "};\n }"));
       assertNull(findClass("Bar"));
+      assertNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
 
       WriteAction.run(() -> VfsUtil.saveText(file, fileText));
       assertNotNull(findClass("Bar"));
+      assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
     }
   }
 
@@ -1326,7 +1323,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   private boolean findWordInDumbMode(String word, final VirtualFile file, boolean inDumbMode) {
     assertEquals(inDumbMode, DumbService.isDumb(getProject()));
-    assertTrue(FileBasedIndex.isIndexAccessDuringDumbModeEnabled());
 
     final IdIndexEntry wordHash = new IdIndexEntry(word, true);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());

@@ -11,7 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -44,7 +45,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
 
   public void testTypingInBigFile() throws Exception {
     configureByFile(getTestName(true) + "/File1.properties");
-    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
       type(' ');
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
       backspace();
@@ -55,7 +56,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   public void testResolveManyLiterals() throws Exception {
     final PsiClass aClass = generateTestFiles();
     assertNotNull(aClass);
-    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         PsiReference[] references = expression.getReferences();
@@ -89,6 +90,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(src);
     assertNotNull(src, virtualFile);
     virtualFile.refresh(false, true);
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
 
     final PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
     assert aClass != null;
@@ -97,6 +99,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        //noinspection ResultOfMethodCallIgnored
         expression.getNode();
       }
     });

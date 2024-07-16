@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.history.integration.ui.models.RecentChange;
+import com.intellij.history.integration.ui.models.RecentChangeKt;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -16,12 +17,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class RecentChangesPopup {
   public static void show(Project project, @NotNull IdeaGateway gw, @NotNull LocalHistoryFacade vcs) {
     List<RecentChange> cc = ProgressManager.getInstance().run(new Task.WithResult<>(project,
@@ -30,7 +33,7 @@ public final class RecentChangesPopup {
       @Override
       protected List<RecentChange> compute(@NotNull ProgressIndicator indicator) {
         return LocalHistoryCounter.INSTANCE.logLoadItems(project, LocalHistoryCounter.Kind.Recent, () -> {
-          return vcs.getRecentChanges(ReadAction.compute(() -> {
+          return RecentChangeKt.getRecentChanges(vcs, ReadAction.compute(() -> {
             return gw.createTransientRootEntry();
           }));
         });

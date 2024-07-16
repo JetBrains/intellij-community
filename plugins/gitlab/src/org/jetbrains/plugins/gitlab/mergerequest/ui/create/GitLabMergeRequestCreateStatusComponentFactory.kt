@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JLabelUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -37,6 +38,7 @@ internal object GitLabMergeRequestCreateStatusComponentFactory {
     return JLabel(AllIcons.Ide.FatalError).apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       text = GitLabBundle.message("merge.request.create.error.creating")
+      JLabelUtil.setTrimOverflow(this, true)
       bindVisibilityIn(cs, createVm.reviewCreatingError.map { it != null })
     }
   }
@@ -45,6 +47,7 @@ internal object GitLabMergeRequestCreateStatusComponentFactory {
     return JLabel().apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
       icon = AllIcons.General.Error
+      JLabelUtil.setTrimOverflow(this, true)
       val reviewRequirementsErrorFlow = createVm.reviewRequirementsErrorState
       bindVisibilityIn(cs, reviewRequirementsErrorFlow.map { it != null })
       bindTextIn(cs, reviewRequirementsErrorFlow.filterNotNull().map { type ->
@@ -69,6 +72,7 @@ internal object GitLabMergeRequestCreateStatusComponentFactory {
   private fun alreadyExistStatusLabel(cs: CoroutineScope, createVm: GitLabMergeRequestCreateViewModel): JComponent {
     val iconLabel = JLabel(AllIcons.Ide.FatalError).apply {
       text = GitLabBundle.message("merge.request.create.status.already.exists")
+      JLabelUtil.setTrimOverflow(this, true)
     }
     val linkLabel = ActionLink(GitLabBundle.message("merge.request.create.status.already.exists.view")) {
       cs.launch {

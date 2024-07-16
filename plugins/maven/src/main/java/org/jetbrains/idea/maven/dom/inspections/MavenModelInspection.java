@@ -26,7 +26,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenDomSoftAwareConverter;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-public class MavenModelInspection extends BasicDomElementsInspection<MavenDomProjectModel> {
+public final class MavenModelInspection extends BasicDomElementsInspection<MavenDomProjectModel> {
   public MavenModelInspection() {
     super(MavenDomProjectModel.class);
   }

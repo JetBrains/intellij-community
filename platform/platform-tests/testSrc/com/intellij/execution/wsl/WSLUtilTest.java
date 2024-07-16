@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -23,6 +23,8 @@ public final class WSLUtilTest {
   @ClassRule public static final RuleChain ruleChain = RuleChain.outerRule(appRule).around(wslRule);
 
   @Rule public final TempDirectory tempDirectory = new TempDirectory();
+
+  @Rule public final ProgressJobRule myProgressJobRule = new ProgressJobRule();
 
   @Test
   public void testUncPrefix() {

@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.highlighting;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/diagnostics")
     public static class Diagnostics extends AbstractK2HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -50,6 +57,12 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/dsl")
     public static class Dsl extends AbstractK2HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -88,6 +101,12 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/focusMode")
     public static class FocusMode extends AbstractK2HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -109,8 +128,78 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/jvm")
+    public static class Jvm extends AbstractK2HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaFields.kt")
+        public void testJavaFields() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaFields.kt");
+        }
+
+        @TestMetadata("JavaRecord.kt")
+        public void testJavaRecord() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaRecord.kt");
+        }
+
+        @TestMetadata("javaStaticFields.kt")
+        public void testJavaStaticFields() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaStaticFields.kt");
+        }
+
+        @TestMetadata("JavaTypes.kt")
+        public void testJavaTypes() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaTypes.kt");
+        }
+
+        @TestMetadata("KotlinAnnotationsInJava.kt")
+        public void testKotlinAnnotationsInJava() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinAnnotationsInJava.kt");
+        }
+
+        @TestMetadata("KotlinInjection.kt")
+        public void testKotlinInjection() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
+        }
+
+        @TestMetadata("NonExistingKotlinMethodFromJava.kt")
+        public void testNonExistingKotlinMethodFromJava() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/NonExistingKotlinMethodFromJava.kt");
+        }
+
+        @TestMetadata("RepeatableAnnotation.kt")
+        public void testRepeatableAnnotation() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/RepeatableAnnotation.kt");
+        }
+
+        @TestMetadata("RepeatableAsAliasAnnotation.kt")
+        public void testRepeatableAsAliasAnnotation() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/RepeatableAsAliasAnnotation.kt");
+        }
+
+        @TestMetadata("SyntheticExtensionProperty.kt")
+        public void testSyntheticExtensionProperty() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/SyntheticExtensionProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/smartCasts")
     public static class SmartCasts extends AbstractK2HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -154,11 +243,27 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         public void testInvokes() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Invokes.kt");
         }
+
+        @TestMetadata("Unstable_explicitReceiver.kt")
+        public void testUnstable_explicitReceiver() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Unstable_explicitReceiver.kt");
+        }
+
+        @TestMetadata("Unstable_implicitReceiver.kt")
+        public void testUnstable_implicitReceiver() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Unstable_implicitReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo")
     public static class Uncategorized extends AbstractK2HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -213,39 +318,9 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/InvokeCall.kt");
         }
 
-        @TestMetadata("javaFields.kt")
-        public void testJavaFields() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/javaFields.kt");
-        }
-
-        @TestMetadata("JavaRecord.kt")
-        public void testJavaRecord() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/JavaRecord.kt");
-        }
-
-        @TestMetadata("javaStaticFields.kt")
-        public void testJavaStaticFields() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/javaStaticFields.kt");
-        }
-
-        @TestMetadata("JavaTypes.kt")
-        public void testJavaTypes() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/JavaTypes.kt");
-        }
-
         @TestMetadata("KDoc.kt")
         public void testKDoc() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/KDoc.kt");
-        }
-
-        @TestMetadata("KotlinAnnotationsInJava.kt")
-        public void testKotlinAnnotationsInJava() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/KotlinAnnotationsInJava.kt");
-        }
-
-        @TestMetadata("KotlinInjection.kt")
-        public void testKotlinInjection() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/KotlinInjection.kt");
         }
 
         @TestMetadata("Labels.kt")
@@ -278,16 +353,6 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarationsInDumbMode.kt");
         }
 
-        @TestMetadata("RepeatableAnnotation.kt")
-        public void testRepeatableAnnotation() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/RepeatableAnnotation.kt");
-        }
-
-        @TestMetadata("RepeatableAsAliasAnnotation.kt")
-        public void testRepeatableAsAliasAnnotation() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/RepeatableAsAliasAnnotation.kt");
-        }
-
         @TestMetadata("script.kts")
         public void testScript() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/script.kts");
@@ -296,11 +361,6 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("Suspend.kt")
         public void testSuspend() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/Suspend.kt");
-        }
-
-        @TestMetadata("SyntheticExtensionProperty.kt")
-        public void testSyntheticExtensionProperty() throws Exception {
-            runTest("../../idea/tests/testData/highlighterMetaInfo/SyntheticExtensionProperty.kt");
         }
 
         @TestMetadata("Todo.kt")
@@ -332,6 +392,12 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/unresolved")
     public static class Unresolved extends AbstractK2HighlightingMetaInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

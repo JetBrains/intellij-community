@@ -18,7 +18,7 @@ internal class GitLabAccountViewModelImpl(
   private val account: GitLabAccount,
   private val accountManager: GitLabAccountManager
 ) : GitLabAccountViewModel {
-  private val cs: CoroutineScope = parentCs.childScope(CoroutineName("GitLab Account VM"))
+  private val cs: CoroutineScope = parentCs.childScope("GitLab Account VM")
 
   override fun loginAction(): Action {
     return GitLabHttpStatusErrorAction.LogInAgain(project, cs, account, accountManager)

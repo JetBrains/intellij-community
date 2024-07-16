@@ -1,17 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import org.jetbrains.annotations.ApiStatus;
+import it.unimi.dsi.fastutil.ints.IntCollection;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -19,26 +20,28 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
-import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
-
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
- *
+ * <p>
  * Should not be used directly, please consider {@link com.intellij.find.TextSearchService}
  */
 public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
-  @ApiStatus.Internal
+  @Internal
+  public TrigramIndex() {
+  }
+
+  @Internal
   public static boolean isEnabled() {
     return TrigramTextSearchService.useIndexingSearchExtensions();
   }
 
-  @ApiStatus.Internal
-  public static boolean isIndexable(FileType fileType) {
-    return !fileType.isBinary() &&
-           isEnabled() &&
-           (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
+  @Internal
+  public static boolean isIndexable(@NotNull VirtualFile file, @NotNull Project project) {
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
+    TrigramIndexFilter trigramIndexFilter = ApplicationManager.getApplication().getService(TrigramIndexFilter.class);
+    return trigramIndexFilter.acceptInput(indexedFile);
   }
 
   @Override
@@ -63,7 +66,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
+    return ApplicationManager.getApplication().getService(TrigramIndexFilter.class);
   }
 
   @Override
@@ -84,6 +87,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   private static final ThreadLocalCachedIntArray SPARE_BUFFER_LOCAL = new ThreadLocalCachedIntArray();
 
   @Override
+  @Internal
   public @NotNull DataExternalizer<Collection<Integer>> createExternalizer() {
     return new DataExternalizer<>() {
       @Override
@@ -92,16 +96,21 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
         int[] buffer = SPARE_BUFFER_LOCAL.getBuffer(numberOfValues);
         int ptr = 0;
-        for (Integer i : value) {
-          buffer[ptr++] = i;
+        if (value instanceof IntCollection intCollection) {
+          buffer = intCollection.toArray(buffer);
+        } else {
+          for (Integer i : value) {
+            buffer[ptr++] = i;
+          }
         }
         Arrays.sort(buffer, 0, numberOfValues);
 
         DataInputOutputUtil.writeINT(out, numberOfValues);
         int prev = 0;
         for (ptr = 0; ptr < numberOfValues; ++ptr) {
-          DataInputOutputUtil.writeLONG(out, (long)buffer[ptr] - prev);
-          prev = buffer[ptr];
+          int cur = buffer[ptr];
+          DataInputOutputUtil.writeLONG(out, (long)cur - prev);
+          prev = cur;
         }
       }
 

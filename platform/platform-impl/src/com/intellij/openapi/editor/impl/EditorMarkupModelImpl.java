@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -33,6 +33,8 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.impl.inspector.InspectionsGroup;
+import com.intellij.openapi.editor.impl.inspector.RedesignedInspectionsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -61,6 +63,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +84,7 @@ import java.util.Queue;
 import java.util.*;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class EditorMarkupModelImpl extends MarkupModelImpl
       implements EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
@@ -190,7 +194,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     TrafficLightAction trafficLightAction = new TrafficLightAction();
     populateInspectionWidgetActionsFromExtensions();
-    DefaultActionGroup actions = new DefaultActionGroup(inspectionWidgetActions, trafficLightAction, navigateGroup);
+    DefaultActionGroup actions = new DefaultActionGroup(inspectionWidgetActions, new InspectionsGroup(() -> analyzerStatus, editor), trafficLightAction, navigateGroup);
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
@@ -215,6 +219,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                                @NotNull String place,
                                                                @NotNull Presentation presentation,
                                                                Supplier<? extends @NotNull Dimension> minimumSize) {
+        if (RedesignedInspectionsManager.isAvailable()) return super.createTextButton(action, place, presentation, minimumSize);
+
         ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
         JBColor color = JBColor.lazy(() -> {
           return ObjectUtils.notNull(editor.getColorsScheme().getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor());
@@ -228,6 +234,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                        @NotNull String place,
                                                        @NotNull Presentation presentation,
                                                        Supplier<? extends @NotNull Dimension> minimumSize) {
+        if (Registry.is("ide.redesigned.inspector", false)) return super.createIconButton(action, place, presentation, minimumSize);
+
         return new ActionButton(action, presentation, place, minimumSize) {
           @Override
           public void updateIcon() {
@@ -245,6 +253,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
           @Override
           public @NotNull Dimension getPreferredSize() {
+
             Icon icon = getIcon();
             Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
 
@@ -269,7 +278,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       }
 
-      @Override
+/*      @Override
       protected Dimension updatePreferredSize(Dimension preferredSize) {
         return preferredSize;
       }
@@ -277,7 +286,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       @Override
       protected Dimension updateMinimumSize(Dimension minimumSize) {
         return minimumSize;
-      }
+      }*/
     };
 
     statusToolbar.setMiniMode(true);
@@ -296,6 +305,15 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     toolbar.setLayout(new StatusComponentLayout());
     toolbar.addComponentListener(toolbarComponentListener);
     toolbar.setBorder(JBUI.Borders.empty(2));
+
+/*    if(RedesignedInspectionsManager.isAvailable()) {
+      GotItTooltip tooltip = new GotItTooltip("redesigned.inspections.tooltip",
+                                              "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled and it stays in place", resourcesDisposable);
+      tooltip.withShowCount(1);
+      tooltip.withHeader("Paw Patrol");
+      tooltip.withIcon(AllIcons.General.BalloonInformation);
+      tooltip.show(toolbar, GotItTooltip.BOTTOM_MIDDLE);
+    }*/
 
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
@@ -377,6 +395,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private void doUpdateTrafficLightVisibility() {
     if (trafficLightVisible) {
+      if(RedesignedInspectionsManager.isAvailable()) {
+        statusToolbar.updateActionsAsync();
+      }
+
       if (showToolbar && myEditor.myView != null) {
         statusToolbar.setTargetComponent(myEditor.getContentComponent());
         VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
@@ -422,19 +444,23 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        AnAction action = extension.createAction(myEditor);
-        if (action != null) {
-          extensionActions.put(extension, action);
-          addInspectionWidgetAction(action, null);
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          AnAction action = extension.createAction(myEditor);
+          if (action != null) {
+            extensionActions.put(extension, action);
+            addInspectionWidgetAction(action, null);
+          }
+        });
       }
 
       @Override
       public void extensionRemoved(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        AnAction action = extensionActions.remove(extension);
-        if (action != null) {
-          removeInspectionWidgetAction(action);
-        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          AnAction action = extensionActions.remove(extension);
+          if (action != null) {
+            removeInspectionWidgetAction(action);
+          }
+        });
       }
     }, resourcesDisposable);
   }
@@ -456,7 +482,17 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {
     AnAction delegate = ActionManager.getInstance().getAction(id);
-    AnAction result = new MarkupModelDelegateAction(delegate);
+    AnAction result = new MarkupModelDelegateAction(delegate){
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if(RedesignedInspectionsManager.isAvailable()) {
+          e.getPresentation().setEnabledAndVisible(false);
+          return;
+        }
+        e.getPresentation().setEnabledAndVisible(true);
+        super.update(e);
+      }
+    };
     result.getTemplatePresentation().setIcon(icon);
     return result;
   }
@@ -488,6 +524,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     dimensionsAreValid = scrollBarHeight != 0;
   }
 
+  @Override
   public void setTrafficLightIconVisible(boolean value) {
     MyErrorPanel errorPanel = getErrorPanel();
     if (errorPanel != null) {
@@ -669,7 +706,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     int shift = 0;
     if (visualLine >= lineCount - 1) {
       CharSequence sequence = editor.getDocument().getCharsSequence();
-      shift = sequence.length() < 1 ? 0 : sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
+      shift = sequence.isEmpty() ? 0 : sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
     }
     return Math.max(0, Math.min(lineCount - shift, visualLine));
   }
@@ -1515,6 +1552,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+
+      if(RedesignedInspectionsManager.isAvailable()) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
       List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
       Icon newIcon = analyzerStatus.getIcon();
 
@@ -1905,7 +1948,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private final class MarkupModelDelegateAction extends AnActionWrapper {
+  private class MarkupModelDelegateAction extends AnActionWrapper {
 
     MarkupModelDelegateAction(@NotNull AnAction delegate) {
       super(delegate);

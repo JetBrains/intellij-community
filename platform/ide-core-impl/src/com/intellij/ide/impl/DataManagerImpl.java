@@ -55,6 +55,19 @@ public class DataManagerImpl extends DataManager {
   }
 
   @ApiStatus.Internal
+  public @NotNull List<DataKey<?>> keysForRuleType(@Nullable GetDataRuleType ruleType) {
+    boolean includeFast = ruleType == GetDataRuleType.PROVIDER;
+    List<DataKey<?>> result = null;
+    for (KeyedLazyInstance<GetDataRule> bean : GetDataRule.EP_NAME.getExtensionsIfPointIsRegistered()) {
+      GetDataRuleType type = ((GetDataRuleBean)bean).type;
+      if (type != ruleType && !(includeFast && type == GetDataRuleType.FAST)) continue;
+      if (result == null) result = new ArrayList<>();
+      result.add(DataKey.create(((GetDataRuleBean)bean).key));
+    }
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  @ApiStatus.Internal
   public @Nullable Object getDataFromProviderAndRules(@NotNull String dataId,
                                                       @Nullable GetDataRuleType ruleType,
                                                       @NotNull DataProvider provider) {
@@ -159,6 +172,26 @@ public class DataManagerImpl extends DataManager {
     return data == CustomizedDataContext.EXPLICIT_NULL ? null : data;
   }
 
+  @Override
+  public @NotNull DataContext customizeDataContext(@NotNull DataContext context, @NotNull Object provider) {
+    class MyAdapter implements EdtNoGetDataProvider, DataValidators.SourceWrapper {
+      @Override
+      public @NotNull Object unwrapSource() { return provider; }
+
+      @Override
+      public void dataSnapshot(@NotNull DataSink sink) {
+        if (provider instanceof UiDataProvider o) o.uiDataSnapshot(sink);
+        else if (provider instanceof DataSnapshotProvider o) o.dataSnapshot(sink);
+      }
+    }
+    DataProvider p = provider instanceof DataProvider o ? o :
+                     provider instanceof UiDataProvider ? new MyAdapter() :
+                     provider instanceof DataSnapshotProvider ? new MyAdapter() :
+                     null;
+    if (p == null) throw new AssertionError("Unexpected provider: " + provider.getClass().getName());
+    return IdeUiService.getInstance().createCustomizedDataContext(context, p);
+  }
+
   private static @Nullable GetDataRule getDataRule(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
     return switch (ruleType) {
       case FAST -> {
@@ -173,8 +206,7 @@ public class DataManagerImpl extends DataManager {
   private static @Nullable GetDataRule getDataRuleInner(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
     String uninjectedId = InjectedDataKeys.uninjectedId(dataId);
     GetDataRule slowRule = ruleType == GetDataRuleType.PROVIDER &&
-                           !PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId) &&
-                           !PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId) ?
+                           !PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId) ?
                            dataProvider -> getSlowData(dataId, dataProvider) : null;
     List<GetDataRule> rules1 = rulesForKey(dataId, ruleType);
     List<GetDataRule> rules2 = uninjectedId == null ? null : rulesForKey(uninjectedId, ruleType);
@@ -225,13 +257,6 @@ public class DataManagerImpl extends DataManager {
     if (bgtProvider != null) {
       Object data = getDataFromProviderInner(dataId, bgtProvider);
       if (data != null) return data;
-    }
-    Iterable<DataProvider> slowProviders = PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(dataProvider);
-    if (slowProviders != null) {
-      for (DataProvider p : slowProviders) {
-        Object data = getDataFromProviderInner(dataId, p);
-        if (data != null) return data;
-      }
     }
     return null;
   }
@@ -351,12 +376,8 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data) {
-    if (!(dataContext instanceof UserDataHolder)) return;
-    for (DataContext cur = dataContext; cur != null; ) {
-      if (cur instanceof FreezingDataContext && ((FreezingDataContext)cur).isFrozenDataContext()) return;
-      cur = cur instanceof CustomizedDataContext ? ((CustomizedDataContext)cur).getParent() : null;
-    }
-    ((UserDataHolder)dataContext).putUserData(dataKey, data);
+    if (!(dataContext instanceof UserDataHolder holder)) return;
+    holder.putUserData(dataKey, data);
   }
 
   @Override

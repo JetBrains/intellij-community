@@ -65,9 +65,6 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.LPARENTH:
         return getFirstChildNode() != null && getFirstChildNode().getElementType() == JavaTokenType.LPARENTH ? getFirstChildNode() : null;
 
@@ -78,6 +75,9 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
         else {
           return null;
         }
+
+      default:
+        return null;
     }
   }
 

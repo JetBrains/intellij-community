@@ -54,6 +54,13 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 return factory.createIndentCalculatorForArrow(before, after)
             }
 
+            after.isAt(Arrow) -> {
+                val arrowCalculator = factory.createIndentCalculatorForArrowInsideWhenEntry(after, settings)
+                if (arrowCalculator != null) {
+                    return arrowCalculator
+                }
+            }
+
             after.isAt(ArrayClosingBracket) && !currentPosition.hasLineBreaksAfter(offset) ->
                 return factory.createIndentCalculatorForBrace(
                     before,
@@ -181,6 +188,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             KtTokens.LONG_TEMPLATE_ENTRY_START to TemplateEntryOpen,
             KtTokens.LONG_TEMPLATE_ENTRY_END to TemplateEntryClose,
 
+            KtTokens.INTERPOLATION_PREFIX to OpenQuote,
             KtTokens.OPEN_QUOTE to OpenQuote,
             KtTokens.CLOSING_QUOTE to ClosingQuote,
 
@@ -268,6 +276,23 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 createIndentCalculator(normalIndent, arrowPosition.startOffset)
             } else {
                 createIndentCalculatorForBrace(leftBrace, after, BlockOpeningBrace, BlockClosingBrace, normalIndent)
+            }
+        }
+
+        private fun IndentCalculatorFactory.createIndentCalculatorForArrowInsideWhenEntry(
+            arrowPosition: SemanticEditorPosition,
+            settings: KotlinIndentationAdjuster,
+        ): IndentCalculator? {
+            val leftBrace = arrowPosition.copyAnd {
+                it.moveToLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace)
+            }
+
+            val indent = if (settings.indentBeforeArrowOnNewLine) Indent.getNormalIndent() else Indent.getNoneIndent()
+            val controlFlowStatementBefore = leftBrace.controlFlowStatementBefore()
+            return if (controlFlowStatementBefore != null && controlFlowStatementBefore.isAt(WhenKeyword)) {
+                createIndentCalculator(indent, arrowPosition.startOffset)
+            } else {
+                null
             }
         }
 

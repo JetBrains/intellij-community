@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.ui.paint.LinePainter2D;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -119,7 +118,7 @@ public class Graphics2DDelegate extends Graphics2D{
 
   @Override
   public void drawLine(int x1, int y1, int x2, int y2) {
-    LinePainter2D.paint(myDelegate, x1, y1, x2, y2);
+    myDelegate.drawLine(x1, y1, x2, y2);
   }
 
   @Override

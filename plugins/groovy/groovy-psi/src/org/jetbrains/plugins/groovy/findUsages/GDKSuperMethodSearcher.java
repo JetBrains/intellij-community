@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
+public final class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBackedByPsiMethod, SuperMethodsSearch.SearchParameters> {
 
   @Override
   public boolean execute(@NotNull SuperMethodsSearch.SearchParameters queryParameters, @NotNull Processor<? super MethodSignatureBackedByPsiMethod> consumer) {

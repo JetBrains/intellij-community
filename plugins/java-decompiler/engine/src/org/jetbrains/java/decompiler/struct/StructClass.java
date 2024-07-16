@@ -193,8 +193,8 @@ public class StructClass extends StructMember {
   }
 
   public boolean isVersion5() {
-    return (majorVersion > CodeConstants.BYTECODE_JAVA_LE_4 ||
-            (majorVersion == CodeConstants.BYTECODE_JAVA_LE_4 && minorVersion > 0)); // FIXME: check second condition
+    return majorVersion > CodeConstants.BYTECODE_JAVA_LE_4 ||
+           majorVersion == CodeConstants.BYTECODE_JAVA_LE_4 && minorVersion > 0; // FIXME: check second condition
   }
 
   public boolean isVersion7() {
@@ -220,6 +220,7 @@ public class StructClass extends StructMember {
   public boolean isVersion17() {
     return majorVersion >= CodeConstants.BYTECODE_JAVA_17;
   }
+
   public boolean isVersion21() {
     return majorVersion >= CodeConstants.BYTECODE_JAVA_21;
   }
@@ -229,15 +230,17 @@ public class StructClass extends StructMember {
   }
 
   public boolean hasSealedClassesSupport() {
-    return isVersion17() || (isVersion15() && isPreviewVersion());
+    return isVersion17() || isVersion15() && isPreviewVersion();
   }
 
   public boolean hasPatternsInInstanceofSupport() {
-    return isVersion16() || (isVersion14() && isPreviewVersion());
+    return isVersion16() || isVersion14() && isPreviewVersion();
   }
+
   public boolean hasEnhancedSwitchSupport() {
     return isVersion14();
   }
+
   public boolean hasRecordPatternSupport() {
     return isVersion21();
   }

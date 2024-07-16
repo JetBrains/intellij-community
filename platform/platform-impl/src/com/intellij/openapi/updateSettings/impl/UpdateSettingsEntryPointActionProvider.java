@@ -3,7 +3,10 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.PluginStateListener;
+import com.intellij.ide.plugins.PluginStateManager;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -23,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.ide.actions.SettingsEntryPointAction.*;
@@ -40,7 +42,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static @Nullable PlatformUpdates.Loaded myPlatformUpdateInfo;
   private static @Nullable Collection<? extends IdeaPluginDescriptor> myIncompatiblePlugins;
 
-  private static Set<String> myAlreadyShownPluginUpdates;
+  private static @Nullable Set<String> myAlreadyShownPluginUpdates;
   private static @Nullable Collection<PluginDownloader> myUpdatedPlugins;
   private static @Nullable Collection<PluginNode> myCustomRepositoryPlugins;
 
@@ -93,8 +95,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   private static void initPluginsListeners() {
     if (myUpdatesService == null) {
-      myUpdatesService = PluginUpdatesService.connectWithUpdates(descriptors -> {
-        if (ContainerUtil.isEmpty(descriptors)) {
+      myUpdatesService = PluginUpdatesService.connectWithUpdates(updateResult -> {
+        if (updateResult == null) {
           newUpdatedPlugins(null);
           myCustomRepositoryPlugins = null;
           return;
@@ -102,19 +104,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         if (!UpdateSettings.getInstance().isPluginsCheckNeeded()) {
           return;
         }
-        List<PluginDownloader> downloaders = new ArrayList<>();
-        try {
-          for (IdeaPluginDescriptor descriptor : descriptors) {
-            if (!UpdateChecker.isIgnored(descriptor)) {
-              downloaders.add(PluginDownloader.createDownloader(descriptor));
-            }
-          }
-        }
-        catch (IOException e) {
-          PluginManagerCore.getLogger().error(e);
-        }
-        newUpdatedPlugins(downloaders);
-        myCustomRepositoryPlugins = null;
+        newUpdatedPlugins(updateResult.getPluginUpdates().getAll());
+        myCustomRepositoryPlugins = updateResult.getPluginNods();
       });
     }
     if (myPluginStateListener == null) {
@@ -132,7 +123,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
   }
 
-  private static void newPlatformUpdate() {
+  private static void clearUpdatesInfo() {
     setPlatformUpdateInfo(null);
     newPlatformUpdate(null, null, (String)null);
     updateState();
@@ -189,6 +180,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
     else {
       myUpdatedPlugins = null;
+      myCustomRepositoryPlugins = null;
     }
     updateState();
   }
@@ -252,30 +244,25 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
               @Override
               protected @NotNull Pair<@NotNull PlatformUpdates, @Nullable InternalPluginResults> compute(@NotNull ProgressIndicator indicator) {
                 PlatformUpdates platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
-
                 InternalPluginResults pluginResults = platformUpdates instanceof PlatformUpdates.Loaded ?
                                                       getInternalPluginUpdates((PlatformUpdates.Loaded)platformUpdates, indicator) :
                                                       null;
-                return Pair.create(platformUpdates,
-                                   pluginResults);
+                return Pair.create(platformUpdates, pluginResults);
               }
 
               private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
                                                                                      @NotNull ProgressIndicator indicator) {
-                return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(),
-                                                              indicator);
+                return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(), indicator);
               }
             });
 
           PlatformUpdates platformUpdateInfo = result.getFirst();
           InternalPluginResults pluginResults = result.getSecond();
-          if (platformUpdateInfo instanceof PlatformUpdates.Loaded &&
-              pluginResults != null) {
+          if (platformUpdateInfo instanceof PlatformUpdates.Loaded && pluginResults != null) {
             setPlatformUpdateInfo((PlatformUpdates.Loaded)platformUpdateInfo);
             newPlatformUpdate(pluginResults.getPluginUpdates().getAllEnabled().stream().toList(),
-                              pluginResults.getPluginNods(),
+                              pluginResults.getPluginUpdates().getIncompatible().stream().toList(),
                               null);
-
             super.actionPerformed(e);
           }
           else {
@@ -289,7 +276,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
               Messages.showInfoMessage(project,
                                        IdeBundle.message("updates.no.updates.notification"),
                                        IdeBundle.message("find.ide.update.title"));
-              newPlatformUpdate();
+              clearUpdatesInfo();
             }
           }
         }
@@ -368,7 +355,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       UpdateInfoDialog dialog = new UpdateInfoDialog(e.getProject(), Objects.requireNonNull(myPlatformUpdateInfo),
                                                      true, myUpdatedPlugins, myIncompatiblePlugins);
       if (dialog.showAndGet()) {
-        newPlatformUpdate();
+        clearUpdatesInfo();
       }
     }
   }

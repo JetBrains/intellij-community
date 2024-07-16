@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,10 +25,8 @@ public final class DefUseUtil {
   private DefUseUtil() { }
 
   public static class Info {
-    @NotNull
-    private final PsiVariable myVariable;
-    @NotNull
-    private final PsiElement myContext;
+    private final @NotNull PsiVariable myVariable;
+    private final @NotNull PsiElement myContext;
     private final boolean myIsRead;
 
     private final boolean myWriteOutsideDeclaration;
@@ -40,13 +38,11 @@ public final class DefUseUtil {
       myWriteOutsideDeclaration = writeOutsideDeclaration;
     }
 
-    @NotNull
-    public PsiVariable getVariable() {
+    public @NotNull PsiVariable getVariable() {
       return myVariable;
     }
 
-    @NotNull
-    public PsiElement getContext() {
+    public @NotNull PsiElement getContext() {
       return myContext;
     }
 
@@ -64,8 +60,7 @@ public final class DefUseUtil {
 
   private static class InstructionState implements Comparable<InstructionState> {
     private Set<PsiVariable> myUsed;
-    @NotNull
-    private final InstructionKey myInstructionKey;
+    private final @NotNull InstructionKey myInstructionKey;
     private final List<InstructionKey> myBackwardTraces;
     private boolean myIsVisited;
 
@@ -134,8 +129,7 @@ public final class DefUseUtil {
     }
   }
 
-  @Nullable
-  public static List<Info> getUnusedDefs(PsiElement body, Set<? super PsiVariable> outUsedVariables) {
+  public static @Nullable List<Info> getUnusedDefs(PsiElement body, Set<? super PsiVariable> outUsedVariables) {
     if (body == null) {
       return null;
     }
@@ -319,7 +313,7 @@ public final class DefUseUtil {
         }
 
         @Override
-        protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
+        protected void processInstruction(final @NotNull Set<? super PsiElement> res, final @NotNull Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
             WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
             if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
@@ -380,7 +374,7 @@ public final class DefUseUtil {
         }
 
         @Override
-        protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
+        protected void processInstruction(final @NotNull Set<? super PsiElement> res, final @NotNull Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
             if (psiManager.areElementsEquivalent(instructionR.variable, def)) {
@@ -412,8 +406,7 @@ public final class DefUseUtil {
     protected abstract int   nNext(int index);
     protected abstract int getNext(int index, int no);
 
-    @NotNull
-    final List<Instruction> instructions;
+    final @NotNull List<Instruction> instructions;
     final ControlFlow flow;
     final PsiCodeBlock body;
 
@@ -580,8 +573,7 @@ public final class DefUseUtil {
       myInstructions = instructions;
     }
 
-    @NotNull
-    private Map<InstructionKey, InstructionState> walk() {
+    private @NotNull Map<InstructionKey, InstructionState> walk() {
       InstructionKey startKey = InstructionKey.create(0);
       myStates.put(startKey, new InstructionState(startKey));
       myWalkThroughStack.push(InstructionKey.create(-1), startKey);
@@ -632,8 +624,7 @@ public final class DefUseUtil {
       }
     }
 
-    @NotNull
-    static Map<InstructionKey, InstructionState> getStates(@NotNull List<? extends Instruction> instructions) {
+    static @NotNull Map<InstructionKey, InstructionState> getStates(@NotNull List<? extends Instruction> instructions) {
       return new InstructionStateWalker(instructions).walk();
     }
   }

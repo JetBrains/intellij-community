@@ -195,13 +195,15 @@ object TemplateInlayUtil {
   fun createSettingsPresentation(editor: EditorImpl, onClick: (MouseEvent) -> Unit = {}): SelectableInlayPresentation {
     val factory = PresentationFactory(editor)
     fun button(background: Color?): InlayPresentation {
-      val button = factory.container(
-        presentation = factory.icon(AllIcons.Actions.InlayGear),
-        padding = InlayPresentationFactory.Padding(4, 4, 4, 4),
+      val scaledFactory = ScaleAwarePresentationFactory(editor, factory)
+      val icon = scaledFactory.icon(AllIcons.Actions.InlayGear)
+      val inset = (editor.lineHeight - icon.height) / 2
+      val button = scaledFactory.container(
+        presentation = factory.inset(icon, left = inset, right = inset, top = inset, down = inset),
         roundedCorners = InlayPresentationFactory.RoundedCorners(6, 6),
         background = background
       )
-      return factory.container(button, padding = InlayPresentationFactory.Padding(3, 6, 0, 0))
+      return scaledFactory.inset(button, left = 3, right = 6)
     }
 
     val colorsScheme = editor.colorsScheme
@@ -260,26 +262,28 @@ object TemplateInlayUtil {
 
     val editor = templateState.editor as EditorImpl
     val factory = PresentationFactory(editor)
+    val scaledFactory = ScaleAwarePresentationFactory(editor, factory)
     val colorsScheme = editor.colorsScheme
-    fun button(presentation: InlayPresentation, second: Boolean) = factory.container(
-      presentation = presentation,
-      padding = InlayPresentationFactory.Padding(if (second) 0 else 4, 4, 4, 4)
-    )
+    fun button(presentation: InlayPresentation, second: Boolean): InlayPresentation {
+      val inset = (editor.lineHeight - presentation.height) / 2
+      val padding = InlayPresentationFactory.Padding((if (second) 0 else inset), inset, inset, inset)
+      return factory.container(presentation = presentation, padding = padding)
+    }
 
     var tooltip = LangBundle.message("inlay.rename.tooltip.header")
     val commentStringPresentation = initOptions.commentStringOccurrences?.let { commentStringOccurrences ->
       tooltip += LangBundle.message("inlay.rename.tooltip.comments.strings")
       BiStatePresentation(
-        first = { factory.icon(AllIcons.Actions.InlayRenameInCommentsActive) },
-        second = { factory.icon(AllIcons.Actions.InlayRenameInComments) },
+        first = { scaledFactory.icon(AllIcons.Actions.InlayRenameInCommentsActive) },
+        second = { scaledFactory.icon(AllIcons.Actions.InlayRenameInComments) },
         initiallyFirstEnabled = commentStringOccurrences,
       )
     }
     val textPresentation = initOptions.textOccurrences?.let { textOccurrences ->
       tooltip += LangBundle.message("inlay.rename.tooltip.non.code")
       BiStatePresentation(
-        first = { factory.icon(AllIcons.Actions.InlayRenameInNoCodeFilesActive) },
-        second = { factory.icon(AllIcons.Actions.InlayRenameInNoCodeFiles) },
+        first = { scaledFactory.icon(AllIcons.Actions.InlayRenameInNoCodeFilesActive) },
+        second = { scaledFactory.icon(AllIcons.Actions.InlayRenameInNoCodeFiles) },
         initiallyFirstEnabled = textOccurrences,
       )
     }
@@ -301,7 +305,7 @@ object TemplateInlayUtil {
       tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement", KeymapUtil.getShortcutText(shortcut))
     }
 
-    fun withBackground(bgKey: ColorKey) = factory.container(
+    fun withBackground(bgKey: ColorKey) = scaledFactory.container(
       presentation = buttonsPresentation,
       roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
       background = colorsScheme.getColor(bgKey),

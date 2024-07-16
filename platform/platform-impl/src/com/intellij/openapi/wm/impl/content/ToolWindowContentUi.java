@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeBundle;
@@ -28,11 +28,7 @@ import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.toolWindow.ToolWindowHeader;
 import com.intellij.toolWindow.ToolWindowPane;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.MouseDragHelper;
-import com.intellij.ui.PopupHandler;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
@@ -58,7 +54,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.function.Predicate;
 
-public final class ToolWindowContentUi implements ContentUI, DataProvider {
+public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
   public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
   public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
@@ -456,14 +452,12 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       private void arm(Component c) {
         Component component = c != null ? getActualSplitter() : null;
-        if (component instanceof ThreeComponentsSplitter) {
-          ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
+        if (component instanceof ThreeComponentsSplitter splitter) {
           myIsLastComponent.set(SwingUtilities.isDescendingFrom(c, splitter.getLastComponent()));
           myInitialHeight.set(myIsLastComponent.get() ? splitter.getLastSize() : splitter.getFirstSize());
           return;
         }
-        if (component instanceof Splitter) {
-          Splitter splitter = (Splitter)component;
+        if (component instanceof Splitter splitter) {
           myIsLastComponent.set(true);
           myInitialHeight.set(splitter.getSecondComponent().getHeight());
           return;
@@ -552,8 +546,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();
         if (isToolWindowDrag(e)) return;//it's drag, not resize!
-        if (component instanceof ThreeComponentsSplitter) {
-          ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
+        if (component instanceof ThreeComponentsSplitter splitter) {
           if (myIsLastComponent.get() == Boolean.TRUE) {
             splitter.setLastSize(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y);
           }
@@ -561,8 +554,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
             splitter.setFirstSize(myInitialHeight.get() + myLastPoint.get().y - myPressPoint.get().y);
           }
         }
-        if (component instanceof Splitter) {
-          Splitter splitter = (Splitter)component;
+        if (component instanceof Splitter splitter) {
           splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
         }
         if (component instanceof ToolWindowPane) {
@@ -704,27 +696,17 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
-      return window;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.TOOL_WINDOW, window);
+    sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
+    sink.set(CommonDataKeys.PROJECT, window.getToolWindowManager().getProject());
+    sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget());
+    if (getCurrentLayout() instanceof MorePopupAware o) {
+      sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);
     }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return window.getHelpId();
+    if (type == ToolWindowContentUiType.TABBED) {
+      sink.set(SELECTED_CONTENT_TAB_LABEL, tabsLayout.findTabLabelByContent(contentManager.getSelectedContent()));
     }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return window.getToolWindowManager().getProject();
-    }
-    else if (CloseAction.CloseTarget.KEY.is(dataId)) {
-      return computeCloseTarget();
-    }
-    else if (MorePopupAware.KEY_TOOLWINDOW_TITLE.is(dataId)) {
-      ContentLayout layout = getCurrentLayout();
-      return  (layout instanceof MorePopupAware) ? layout : null;
-    }
-    else if (SELECTED_CONTENT_TAB_LABEL.is(dataId) && type == ToolWindowContentUiType.TABBED) {
-      return tabsLayout.findTabLabelByContent(contentManager.getSelectedContent());
-    }
-    return null;
   }
 
   public void setTabActions(@NotNull List<AnAction> actions) {

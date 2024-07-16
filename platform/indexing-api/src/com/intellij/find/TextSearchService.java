@@ -2,6 +2,7 @@
 package com.intellij.find;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -20,7 +21,7 @@ public interface TextSearchService {
   @NotNull
   TextSearchResult processFilesWithText(@NotNull String text, Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope);
 
-  boolean isInSearchableScope(@NotNull VirtualFile file);
+  boolean isInSearchableScope(@NotNull VirtualFile file, @NotNull Project project);
 
   enum TextSearchResult {
     FINISHED,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.util.io.FileUtil
@@ -6,13 +6,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.io.DigestUtil
 import git4idea.history.GitLogParser.*
 import git4idea.history.GitLogParser.GitLogOption.*
 import git4idea.history.GitLogParser.NameStatus.NONE
 import git4idea.history.GitLogParser.NameStatus.STATUS
 import git4idea.test.GitPlatformTest
 import junit.framework.TestCase
-import org.apache.commons.codec.digest.DigestUtils
 import java.io.File
 import java.util.*
 
@@ -350,7 +350,7 @@ private fun createTestRecord(vararg parameters: Pair<GitLogOption, Any>,
                           Pair(COMMITTER_NAME, "John Doe"),
                           Pair(COMMITTER_EMAIL, "John.Doe@example.com"))
   parameters.associateTo(data) { it }
-  data[HASH] = DigestUtils.sha1Hex(data.toString())
+  data[HASH] = DigestUtil.sha1Hex(data.toString())
   return GitTestLogRecord(data, changes, newRefsFormat)
 }
 

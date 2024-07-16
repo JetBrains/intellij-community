@@ -2,7 +2,8 @@
 package com.intellij.collaboration.ui.codereview.timeline
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.ClippingRoundedPanel
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -45,6 +46,7 @@ import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.event.ActionListener
 import javax.swing.JComponent
@@ -116,6 +118,7 @@ object TimelineDiffComponentFactory {
     DiffDrawUtil.createHighlighter(this, lineRange.start, lineRange.end, AnchorLine, false)
   }
 
+  @ApiStatus.Internal
   object AnchorLine : TextDiffType {
     override fun getName() = "Comment Anchor Line"
 
@@ -126,6 +129,7 @@ object TimelineDiffComponentFactory {
     override fun getMarkerColor(editor: Editor?) = getColor(editor)
   }
 
+  @ApiStatus.Internal
   const val DIFF_CONTEXT_SIZE = 3
 
   private fun truncateHunk(hunk: PatchHunk, anchor: DiffLineLocation, anchorStart: DiffLineLocation?): PatchHunk {
@@ -221,7 +225,7 @@ object TimelineDiffComponentFactory {
 
 
 
-    return RoundedPanel(ListLayout.vertical(0), 8).apply {
+    return ClippingRoundedPanel(8, CodeReviewCommentUIUtil.COMMENT_BUBBLE_BORDER_COLOR, ListLayout.vertical(0)).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
@@ -241,7 +245,7 @@ object TimelineDiffComponentFactory {
                            filePath: @NlsSafe String,
                            fileNameClickListener: Flow<ActionListener?>,
                            diffComponent: JComponent): JComponent {
-    return RoundedPanel(ListLayout.vertical(0), 8).apply {
+    return ClippingRoundedPanel(8, CodeReviewCommentUIUtil.COMMENT_BUBBLE_BORDER_COLOR, ListLayout.vertical()).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground

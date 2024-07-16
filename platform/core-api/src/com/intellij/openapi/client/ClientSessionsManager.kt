@@ -33,7 +33,7 @@ open class ClientSessionsManager<T : ClientSession> {
      */
     @JvmStatic
     fun getAppSessions(kind: ClientKind): List<ClientAppSession> {
-      return ApplicationManager.getApplication().service<ClientSessionsManager<ClientAppSession>>().getSessions(kind)
+      return ApplicationManager.getApplication()?.service<ClientSessionsManager<ClientAppSession>>()?.getSessions(kind) ?: emptyList()
     }
 
     /**

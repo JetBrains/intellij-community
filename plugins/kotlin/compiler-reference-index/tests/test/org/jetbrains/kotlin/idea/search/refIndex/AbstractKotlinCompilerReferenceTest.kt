@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.testFramework.assertEqualsToFile
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import kotlin.io.path.*
 
@@ -17,7 +18,9 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         myFixture.testDataPath = testDataFilePath
 
         val configurationPath = Path(testDataFilePath, "testConfig.json")
-        val firConfigurationPath = Path(testDataFilePath, "testConfig.fir.json").takeIf { isFir && it.exists() }
+        val isFir = pluginMode == KotlinPluginMode.K2
+        val firConfigurationPath = Path(testDataFilePath, "testConfig.fir.json")
+            .takeIf { isFir && it.exists() }
         val pathToCheck = firConfigurationPath ?: configurationPath
         val config: JsonObject = JsonParser.parseReader(pathToCheck.reader()).asJsonObject
 

@@ -1,0 +1,7 @@
+// FIX: Use property access syntax
+// COMPILER_ARGUMENTS: -XXLanguage:+ReferencesToSyntheticJavaProperties
+
+fun main() {
+    val j = J()
+    j.setX(j::x)
+}

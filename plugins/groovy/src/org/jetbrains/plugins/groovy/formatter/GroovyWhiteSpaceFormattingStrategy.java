@@ -20,7 +20,7 @@ import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
-public class GroovyWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
+public final class GroovyWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
   @Override
   public boolean containsWhitespacesOnly(@NotNull ASTNode node) {
     return node.getElementType() == GroovyTokenTypes.mNLS;

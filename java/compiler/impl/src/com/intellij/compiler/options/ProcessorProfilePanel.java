@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -98,7 +98,7 @@ public class ProcessorProfilePanel extends JPanel {
       private static @NlsSafe String getPathString(VirtualFile[] files) {
         final StringBuilder builder = new StringBuilder();
         for (VirtualFile file : files) {
-          if (builder.length() > 0) {
+          if (!builder.isEmpty()) {
             builder.append(File.pathSeparator);
           }
           builder.append(FileUtil.toSystemDependentName(file.getPath()));

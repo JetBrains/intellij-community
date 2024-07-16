@@ -62,3 +62,5 @@ private fun i(a: Int, b: Int): Int {
     }
     return b1
 }
+
+// IGNORE_K2

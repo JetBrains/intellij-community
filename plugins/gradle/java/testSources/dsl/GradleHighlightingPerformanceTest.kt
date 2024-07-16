@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.vfs.readText
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
@@ -30,10 +30,9 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
       invokeAndWaitIfNeeded {
         fixture.openFileInEditor(file)
         fixture.editor.caretModel.moveToOffset(pos + 1)
-        //IDEA-345202 and perf tests are failing massively due to broken tearDown
-        //fixture.checkHighlighting()
+        fixture.checkHighlighting()
 
-        PlatformTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testPerformance") {
+        PerformanceTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testPerformance") {
           fixture.psiManager.dropPsiCaches()
           repeat(4) {
             fixture.type('a')
@@ -61,7 +60,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         val document = PsiDocumentManager.getInstance(project).getDocument(fixture.file)
         disableSlowCompletionElements(fixture.testRootDisposable)
         val repeatSize = 10
-        PlatformTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testCompletion") {
+        PerformanceTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testCompletion") {
           fixture.psiManager.dropResolveCaches()
           repeat(repeatSize) {
             val lookupElements = fixture.completeBasic()
@@ -83,18 +82,20 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         setProjectName("GradleHighlightingPerformanceTest")
       }
       withBuildFile(gradleVersion) {
-        addBuildScriptRepository("mavenCentral()")
+        withBuildScriptMavenCentral()
         addBuildScriptClasspath("io.github.http-builder-ng:http-builder-ng-apache:1.0.3")
         addImport("groovyx.net.http.HttpBuilder")
-        call("tasks.create", "bitbucketJenkinsTest") {
-          call("doLast") {
-            property("bitbucket", call("HttpBuilder.configure") {
-              assign("request.uri", "https://127.0.0.1")
-              call("request.auth.basic", "", "")
-            })
-            call("bitbucket.post") {
-              assign("request.uri.path", "/rest/api/")
-              assign("request.contentType", "a.json")
+        withPostfix {
+          call("tasks.create", "bitbucketJenkinsTest") {
+            call("doLast") {
+              property("bitbucket", call("HttpBuilder.configure") {
+                assign("request.uri", "https://127.0.0.1")
+                call("request.auth.basic", "", "")
+              })
+              call("bitbucket.post") {
+                assign("request.uri.path", "/rest/api/")
+                assign("request.contentType", "a.json")
+              }
             }
           }
         }

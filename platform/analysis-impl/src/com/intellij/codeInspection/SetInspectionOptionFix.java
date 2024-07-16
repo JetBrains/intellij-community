@@ -35,7 +35,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.*;
 /**
  * @deprecated use {@link UpdateInspectionOptionFix} instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class SetInspectionOptionFix extends IntentionAndQuickFixAction implements LowPriorityAction, Iconable {
   private final String myShortName;
   private final String myProperty;
@@ -99,13 +99,18 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return generatePreview(project, null, previewDescriptor.getPsiElement().getContainingFile());
+    return generatePreviewForFile(previewDescriptor.getPsiElement().getContainingFile());
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return generatePreviewForFile(file);
+  }
+
+  private @NotNull IntentionPreviewInfo generatePreviewForFile(@NotNull PsiFile psiFile) {
+    Project project = psiFile.getProject();
     InspectionToolWrapper<?, ?> tool =
-      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, file);
+      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, psiFile);
     if (tool == null) return IntentionPreviewInfo.EMPTY;
     InspectionProfileEntry inspection = getLocalTool(tool);
     OptPane pane = inspection.getOptionsPane();
@@ -124,7 +129,7 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
         ));
       return new IntentionPreviewInfo.Html(
         new HtmlBuilder().append(value ? AnalysisBundle.message("set.option.description.check")
-                                         : AnalysisBundle.message("set.option.description.uncheck"))
+                                       : AnalysisBundle.message("set.option.description.uncheck"))
           .br().br().append(info).toFragment());
     } else if (myValue instanceof Integer value) {
       OptNumber control = ObjectUtils.tryCast(pane.findControl(myProperty), OptNumber.class);
@@ -133,14 +138,15 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
       Element input = tag("input").attr("type", "text").attr("value", value)
         .attr("size", value.toString().length() + 1).attr("readonly", "true");
       HtmlChunk info = tag("table").child(tag("tr").children(
-          tag("td").child(text(prefixSuffix.prefix())),
-          tag("td").child(input),
-          tag("td").child(text(prefixSuffix.suffix()))
+        tag("td").child(text(prefixSuffix.prefix())),
+        tag("td").child(input),
+        tag("td").child(text(prefixSuffix.suffix()))
       ));
       return new IntentionPreviewInfo.Html(
         new HtmlBuilder().append(AnalysisBundle.message("set.option.description.input"))
           .br().br().append(info).br().toFragment());
-    } else {
+    }
+    else {
       throw new IllegalStateException("Value of type " + myValue.getClass() + " is not supported");
     }
   }

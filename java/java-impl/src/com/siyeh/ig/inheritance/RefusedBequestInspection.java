@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -51,15 +51,13 @@ public final class RefusedBequestInspection extends BaseInspection {
     );
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new RefusedBequestFix();
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MethodDoesntCallSuperMethod";
   }
 
@@ -78,8 +76,7 @@ public final class RefusedBequestInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("refused.bequest.problem.descriptor");
   }
 
@@ -90,10 +87,8 @@ public final class RefusedBequestInspection extends BaseInspection {
 
   private static class RefusedBequestFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("refused.bequest.fix.family.name");
     }
 
@@ -220,8 +215,7 @@ public final class RefusedBequestInspection extends BaseInspection {
       return InheritanceUtil.isInheritor(aClass, "junit.framework.TestCase");
     }
 
-    @Nullable
-    private PsiMethod getDirectSuperMethod(PsiMethod method) {
+    private @Nullable PsiMethod getDirectSuperMethod(PsiMethod method) {
       final PsiMethod superMethod = MethodUtils.getSuper(method);
       if (superMethod == null ||
           superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ||

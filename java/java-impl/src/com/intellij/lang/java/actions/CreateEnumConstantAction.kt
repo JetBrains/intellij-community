@@ -55,6 +55,7 @@ internal class CreateEnumConstantAction(
     enumConstant = enumConstant.replace(elementFactory.createEnumConstantFromText("$name($paramString)", null)) as PsiEnumConstant
 
     val builder = TemplateBuilderImpl(enumConstant)
+    builder.setScrollToTemplate(request.isStartTemplate)
     val argumentList = enumConstant.argumentList!!
     for (expression in argumentList.expressions) {
       builder.replaceElement(expression, EmptyExpression())

@@ -18,9 +18,10 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowserBase.ErrorPage
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.Alarm
@@ -44,7 +45,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)
-  private val htmlTabScope = (project as ComponentManagerEx).getCoroutineScope().namedChildScope("HTMLFileEditor[${file.name}]")
+  private val htmlTabScope = (project as ComponentManagerEx).getCoroutineScope().childScope("HTMLFileEditor[${file.name}]")
 
   private val multiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent = when (key) {
@@ -102,7 +103,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     val queryHandler = request.queryHandler
     if (queryHandler != null) {
       val config = CefMessageRouter.CefMessageRouterConfig(HTMLEditorProvider.JS_FUNCTION_NAME, "${HTMLEditorProvider.JS_FUNCTION_NAME}Cancel")
-      val jsRouter = CefMessageRouter.create(config)
+      val jsRouter = JBCefApp.getInstance().createMessageRouter(config)
       jsRouter.addHandler(object : CefMessageRouterHandlerAdapter() {
         override fun onQuery(browser: CefBrowser, frame: CefFrame, id: Long, request: String?, persistent: Boolean, callback: CefQueryCallback): Boolean {
           htmlTabScope.launch {

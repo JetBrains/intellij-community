@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.actions.CreateFileAction;
@@ -42,8 +42,7 @@ public final class PackageUtil {
    * @param scope the scope in which directories are searched.
    * @return all classes that are declared under a {@link PsiPackage}, including classes in sub packages.
    */
-  @NotNull
-  public static List<PsiClass> getClasses(@NotNull PsiPackage pkg, boolean withInnerClasses, @NotNull GlobalSearchScope scope) {
+  public static @NotNull List<PsiClass> getClasses(@NotNull PsiPackage pkg, boolean withInnerClasses, @NotNull GlobalSearchScope scope) {
     ProgressManager.checkCanceled();
     return ReadAction.compute(() -> {
       List<PsiClass> classes = new ArrayList<>();
@@ -60,13 +59,11 @@ public final class PackageUtil {
     });
   }
 
-  @Nullable
-  public static PsiDirectory findPossiblePackageDirectoryInModule(@NotNull Module module, @NotNull String packageName) {
+  public static @Nullable PsiDirectory findPossiblePackageDirectoryInModule(@NotNull Module module, @NotNull String packageName) {
     return findPossiblePackageDirectoryInModule(module, packageName, true);
   }
 
-  @Nullable
-  public static PsiDirectory findPossiblePackageDirectoryInModule(
+  public static @Nullable PsiDirectory findPossiblePackageDirectoryInModule(
     @NotNull Module module,
     @NotNull String packageName,
     boolean preferNonGeneratedRoots
@@ -108,11 +105,10 @@ public final class PackageUtil {
     return psiDirectory;
   }
 
-  @Nullable
-  public static PsiDirectory findOrCreateDirectoryForPackage(@NotNull Project project,
-                                                             @NotNull String packageName,
-                                                             @Nullable PsiDirectory baseDir,
-                                                             boolean askUserToCreate) throws IncorrectOperationException {
+  public static @Nullable PsiDirectory findOrCreateDirectoryForPackage(@NotNull Project project,
+                                                                       @NotNull String packageName,
+                                                                       @Nullable PsiDirectory baseDir,
+                                                                       boolean askUserToCreate) throws IncorrectOperationException {
     PsiDirectory psiDirectory = null;
 
     if (!packageName.isEmpty()) {
@@ -187,20 +183,18 @@ public final class PackageUtil {
     return psiDirectory[0];
   }
 
-  @Nullable
-  public static PsiDirectory findOrCreateDirectoryForPackage(@NotNull Module module,
-                                                             @NotNull String packageName,
-                                                             @Nullable PsiDirectory baseDir,
-                                                             boolean askUserToCreate) throws IncorrectOperationException {
+  public static @Nullable PsiDirectory findOrCreateDirectoryForPackage(@NotNull Module module,
+                                                                       @NotNull String packageName,
+                                                                       @Nullable PsiDirectory baseDir,
+                                                                       boolean askUserToCreate) throws IncorrectOperationException {
     return findOrCreateDirectoryForPackage(module, packageName, baseDir, askUserToCreate, false);
   }
 
-  @Nullable
-  public static PsiDirectory findOrCreateDirectoryForPackage(@NotNull Module module,
-                                                             @NotNull String packageName,
-                                                             @Nullable PsiDirectory baseDir,
-                                                             boolean askUserToCreate,
-                                                             boolean filterSourceDirsForBaseTestDirectory) throws IncorrectOperationException {
+  public static @Nullable PsiDirectory findOrCreateDirectoryForPackage(@NotNull Module module,
+                                                                       @NotNull String packageName,
+                                                                       @Nullable PsiDirectory baseDir,
+                                                                       boolean askUserToCreate,
+                                                                       boolean filterSourceDirsForBaseTestDirectory) throws IncorrectOperationException {
     final Project project = module.getProject();
     PsiDirectory psiDirectory = null;
     if (!packageName.isEmpty()) {
@@ -385,8 +379,7 @@ public final class PackageUtil {
     return true;
   }
 
-  @NotNull
-  public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory directory, @NotNull String directoryName) {
+  public static @NotNull PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory directory, @NotNull String directoryName) {
     return CreateFileAction.findOrCreateSubdirectory(directory, directoryName);
   }
 

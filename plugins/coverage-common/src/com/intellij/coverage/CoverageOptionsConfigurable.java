@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CoverageOptionsConfigurable extends CompositeConfigurable<CoverageOptions>implements SearchableConfigurable,
                                                                                                   Configurable.WithEpDependencies {
   private CoverageOptionsPanel myPanel;
@@ -51,7 +53,7 @@ public final class CoverageOptionsConfigurable extends CompositeConfigurable<Cov
 
     List<JComponent> extensionPanels = collectExtensionOptionsComponents();
 
-    if (extensionPanels.size() > 0) {
+    if (!extensionPanels.isEmpty()) {
       return createCompositePanel(extensionPanels);
     }
     else {

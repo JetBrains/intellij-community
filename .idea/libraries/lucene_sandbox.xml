@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-sandbox" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-sandbox:9.9.1">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-sandbox:9.10.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.9.1/lucene-sandbox-9.9.1.jar">
-          <sha256sum>3a9bba4d702070c96c0ddc6f3d7b814194229cadf959f594c1e6d025dadf0c42</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.10.0/lucene-sandbox-9.10.0.jar">
+          <sha256sum>fd574f4e685e0ad382ef075460d2e0e21169f1faff81579a32a59fdc82319795</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.9.1/lucene-sandbox-9.9.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.10.0/lucene-sandbox-9.10.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.9.1/lucene-sandbox-9.9.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.10.0/lucene-sandbox-9.10.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.9.1/lucene-sandbox-9.9.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-sandbox/9.10.0/lucene-sandbox-9.10.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

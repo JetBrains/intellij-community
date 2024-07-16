@@ -3,6 +3,7 @@
 package com.jetbrains.performancePlugin.remotedriver.xpath
 
 import org.w3c.dom.Document
+import org.w3c.dom.Element
 import java.io.StringWriter
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.Transformer
@@ -13,11 +14,11 @@ import javax.xml.transform.stream.StreamResult
 internal fun Document.convertToHtml(): String {
   return try {
     val sw = StringWriter()
-    sw.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\">")
-    sw.append("<script src=\"scripts.js\"></script>\n")
-    sw.append("<script src=\"xpathEditor.js\"></script>\n")
+    sw.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"static/styles.css\">")
+    sw.append("<script src=\"static/scripts.js\"></script>\n")
+    sw.append("<script src=\"static/xpathEditor.js\"></script>\n")
 
-    sw.append("<script src=\"updateButton.js\"></script>\n")
+    sw.append("<script src=\"static/updateButton.js\"></script>\n")
     sw.append("<div id=\"updateButton\"></div>\n")
 
     val tf = TransformerFactory.newInstance()
@@ -33,3 +34,5 @@ internal fun Document.convertToHtml(): String {
     throw RuntimeException("Error converting to String", ex)
   }
 }
+
+fun Element.childElements() = (0..childNodes.length).mapNotNull { childNodes.item(it) }.filterIsInstance<Element>()

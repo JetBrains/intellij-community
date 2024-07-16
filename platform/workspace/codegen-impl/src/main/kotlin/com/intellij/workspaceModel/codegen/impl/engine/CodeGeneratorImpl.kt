@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.codegen.engine.*
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsMetadataStorageBridgeCode
 import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsMetadataStorageCode
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.implPackage
 
 class CodeGeneratorImpl : CodeGenerator {
 
@@ -66,7 +67,7 @@ class CodeGeneratorImpl : CodeGenerator {
       implWsMetadataStorageCode(metadataStorageImplModule, notEmptyModules.flatMap { it.types }, notEmptyModules.flatMap { it.abstractTypes })
     )
 
-    val metadataStorageImplFqn = fqn(metadataStorageImplModule.name, MetadataStorage.IMPL_NAME)
+    val metadataStorageImplFqn = fqn(metadataStorageImplModule.implPackage, MetadataStorage.IMPL_NAME)
     metadataStorageBridgeModules.forEach {
       addMetadataStorageCode(
         generatedCode, it,

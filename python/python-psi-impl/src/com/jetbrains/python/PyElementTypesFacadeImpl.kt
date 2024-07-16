@@ -2,12 +2,10 @@
 package com.jetbrains.python
 
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.components.Service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.tree.IReparseableElementType
 import com.jetbrains.python.psi.impl.*
-import com.jetbrains.python.PyElementTypesFacade
-import com.jetbrains.python.psi.PyElementType
 import java.util.function.Function
 
 
@@ -54,6 +52,9 @@ class PyElementTypesFacadeImpl : PyElementTypesFacade() {
   override val typeAliasStatement: IStubElementType<*, *>
     get() = PyStubElementTypes.TYPE_ALIAS_STATEMENT
 
+  override val statementList: IReparseableElementType
+    get() = PyStatementListElementType()
+
   override val argumentListConstructor: F
     get() = F { node: ASTNode -> PyArgumentListImpl(node) }
   override val printTargetConstructor: F
@@ -99,8 +100,6 @@ class PyElementTypesFacadeImpl : PyElementTypesFacade() {
     get() = F { node -> PyWithStatementImpl(node) }
   override val whileStatementConstructor: F
     get() = F { node -> PyWhileStatementImpl(node) }
-  override val statementListConstructor: F
-    get() = F { node -> PyStatementListImpl(node) }
   override val nonlocalStatementConstructor: F
     get() = F { node -> PyNonlocalStatementImpl(node) }
   override val withItemConstructor: F

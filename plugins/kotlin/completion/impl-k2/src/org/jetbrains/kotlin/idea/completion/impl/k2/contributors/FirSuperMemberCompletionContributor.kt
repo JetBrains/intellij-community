@@ -1,21 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentsOfType
-import com.intellij.refactoring.suggested.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
@@ -38,17 +39,17 @@ internal class FirSuperMemberCompletionContributor(
     priority: Int
 ) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(basicContext, priority) {
     private data class CallableInfo(
-        private val _type: KtType,
-        private val _signature: KtCallableSignature<*>,
-        val scopeKind: KtScopeKind
-    ) : KtLifetimeOwner {
-        override val token: KtLifetimeToken
+        private val _type: KaType,
+        private val _signature: KaCallableSignature<*>,
+        val scopeKind: KaScopeKind
+    ) : KaLifetimeOwner {
+        override val token: KaLifetimeToken
             get() = _signature.token
-        val type: KtType get() = withValidityAssertion { _type }
-        val signature: KtCallableSignature<*> get() = withValidityAssertion { _signature }
+        val type: KaType get() = withValidityAssertion { _type }
+        val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext,
@@ -56,10 +57,10 @@ internal class FirSuperMemberCompletionContributor(
     ) = with(positionContext) {
         val superReceiver = positionContext.superExpression
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
-        val superType = superReceiver.getKtType() ?: return
+        val superType = superReceiver.expressionType ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
-            if (superType !is KtIntersectionType) {
+            if (superType !is KaIntersectionType) {
                 getNonExtensionsMemberSymbols(superType, visibilityChecker, sessionParameters).asIterable() to emptySet()
             } else {
                 getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker, sessionParameters)
@@ -69,30 +70,30 @@ internal class FirSuperMemberCompletionContributor(
 
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getSymbolsAndNamesNeedDisambiguation(
-        superTypes: List<KtType>,
+        superTypes: List<KaType>,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Pair<List<CallableInfo>, Set<Name>> {
         val allSymbols = mutableListOf<CallableInfo>()
-        val symbolsInAny = mutableSetOf<KtCallableSymbol>()
+        val symbolsInAny = mutableSetOf<KaCallableSymbol>()
         val symbolCountsByName = mutableMapOf<Name, Int>()
         for (superType in superTypes) {
             for (callableInfo in getNonExtensionsMemberSymbols(superType, visibilityChecker, sessionParameters)) {
                 val symbol = callableInfo.signature.symbol
 
                 // Abstract symbol does not participate completion.
-                if (symbol !is KtSymbolWithModality || symbol.modality == Modality.ABSTRACT) continue
+                if (symbol !is KaSymbolWithModality || symbol.modality == KaSymbolModality.ABSTRACT) continue
 
                 // Unlike typical diamond cases, calls to method of `Any` always do not need extra qualification.
-                if (symbol.callableIdIfNonLocal?.classId == StandardClassIds.Any) {
+                if (symbol.callableId?.classId == StandardClassIds.Any) {
                     if (symbol in symbolsInAny) continue
                     symbolsInAny.add(symbol)
                 }
 
                 allSymbols.add(CallableInfo(superType, callableInfo.signature, callableInfo.scopeKind))
-                val name = callableInfo.signature.callableIdIfNonLocal?.callableName ?: continue
+                val name = callableInfo.signature.callableId?.callableName ?: continue
                 symbolCountsByName[name] = (symbolCountsByName[name] ?: 0) + 1
             }
         }
@@ -106,9 +107,9 @@ internal class FirSuperMemberCompletionContributor(
         return Pair(allSymbols, nameNeedDisambiguation)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun getNonExtensionsMemberSymbols(
-        receiverType: KtType,
+        receiverType: KaType,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableInfo> {
@@ -116,7 +117,7 @@ internal class FirSuperMemberCompletionContributor(
             .map { CallableInfo(receiverType, it.signature, it.scopeKind) }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectCallToSuperMember(
         superReceiver: KtSuperExpression,
         nonExtensionMembers: Iterable<CallableInfo>,
@@ -142,13 +143,13 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
-    private fun getInsertionStrategy(signature: KtCallableSignature<*>): CallableInsertionStrategy = when (signature) {
-        is KtFunctionLikeSignature<*> -> CallableInsertionStrategy.AsCall
+    context(KaSession)
+    private fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy = when (signature) {
+        is KaFunctionSignature<*> -> CallableInsertionStrategy.AsCall
         else -> CallableInsertionStrategy.AsIdentifier
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun collectDelegateCallToSuperMember(
         context: WeighingContext,
         superReceiver: KtSuperExpression,
@@ -178,7 +179,7 @@ internal class FirSuperMemberCompletionContributor(
             .flatMap { containingFunction ->
                 containingFunction
                     .getFunctionLikeSymbol()
-                    .getAllOverriddenSymbols()
+                    .allOverriddenSymbols
                     .map { superFunctionSymbol ->
                         superFunctionSymbol to containingFunction
                     }
@@ -189,7 +190,7 @@ internal class FirSuperMemberCompletionContributor(
         for (callableInfo in nonExtensionMembers) {
             val signature = callableInfo.signature
             val matchedContainingFunction = superFunctionToContainingFunction[callableInfo.signature.symbol] ?: continue
-            if (signature !is KtFunctionLikeSignature<*>) continue
+            if (signature !is KaFunctionSignature<*>) continue
             if (signature.valueParameters.isEmpty()) continue
             val args = matchedContainingFunction.valueParameters.mapNotNull {
                 val name = it.name ?: return@mapNotNull null
@@ -219,16 +220,16 @@ internal class FirSuperMemberCompletionContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun wrapWithDisambiguationIfNeeded(
         insertionStrategy: CallableInsertionStrategy,
-        superType: KtType,
-        callableSignature: KtCallableSignature<*>,
+        superType: KaType,
+        callableSignature: KaCallableSignature<*>,
         namesNeedDisambiguation: Set<Name>,
         superReceiver: KtSuperExpression
     ): CallableInsertionStrategy {
-        val superClassId = (superType as? KtUsualClassType)?.classId
-        val needDisambiguation = callableSignature.callableIdIfNonLocal?.callableName in namesNeedDisambiguation
+        val superClassId = (superType as? KaUsualClassType)?.classId
+        val needDisambiguation = callableSignature.callableId?.callableName in namesNeedDisambiguation
         return if (needDisambiguation && superClassId != null) {
             CallableInsertionStrategy.WithSuperDisambiguation(superReceiver.createSmartPointer(), superClassId, insertionStrategy)
         } else {

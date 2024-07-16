@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Maps;
@@ -24,8 +24,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.icons.PythonIcons;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +39,8 @@ public class PyStackFrame extends XStackFrame {
   private static final Logger LOG = Logger.getInstance(PyStackFrame.class);
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
-  @NotNull @NonNls public static final Set<String> COMPREHENSION_NAMES = Set.of("<genexpr>", "<listcomp>", "<dictcomp>",
-                                                                                         "<setcomp>");
+  public static final @NotNull @NonNls Set<String> COMPREHENSION_NAMES = Set.of("<genexpr>", "<listcomp>", "<dictcomp>",
+                                                                                "<setcomp>");
   private final Project myProject;
   private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
@@ -53,8 +53,8 @@ public class PyStackFrame extends XStackFrame {
   public static final Topic<PyStackFrameRefreshedListener> TOPIC = new Topic<>(PyStackFrameRefreshedListener.class);
 
   public PyStackFrame(@NotNull Project project,
-                      @NotNull final PyFrameAccessor debugProcess,
-                      @NotNull final PyStackFrameInfo frameInfo, XSourcePosition position) {
+                      final @NotNull PyFrameAccessor debugProcess,
+                      final @NotNull PyStackFrameInfo frameInfo, XSourcePosition position) {
     myProject = project;
     myDebugProcess = debugProcess;
     myFrameInfo = frameInfo;
@@ -113,7 +113,7 @@ public class PyStackFrame extends XStackFrame {
   }
 
   @Override
-  public void computeChildren(@NotNull final XCompositeNode node) {
+  public void computeChildren(final @NotNull XCompositeNode node) {
     if (node.isObsolete()) return;
     myDebugProcess.setCurrentRootNode(node);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -136,7 +136,7 @@ public class PyStackFrame extends XStackFrame {
     });
   }
 
-  protected void addChildren(@NotNull final XCompositeNode node, @Nullable final XValueChildrenList children) {
+  protected void addChildren(final @NotNull XCompositeNode node, final @Nullable XValueChildrenList children) {
     if (children == null) {
       node.addChildren(XValueChildrenList.EMPTY, true);
       return;
@@ -198,8 +198,7 @@ public class PyStackFrame extends XStackFrame {
     return myPosition;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myFrameInfo.getName();
   }
 

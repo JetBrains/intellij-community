@@ -45,7 +45,7 @@ public final class GrHighlightUtil {
     PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceExpression ref) || ((GrReferenceExpression)element).isQualified()) {
+        if (!(element instanceof GrReferenceExpression ref) || ref.isQualified()) {
           return true;
         }
 

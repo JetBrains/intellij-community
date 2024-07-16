@@ -28,12 +28,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 import java.util.HashSet;
 
-import static com.intellij.psi.util.PointersKt.createSmartPointer;
+import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
 /**
  * @author Max Medvedev
  */
-public class TypeCustomizerInspection extends BaseInspection {
+public final class TypeCustomizerInspection extends BaseInspection {
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {

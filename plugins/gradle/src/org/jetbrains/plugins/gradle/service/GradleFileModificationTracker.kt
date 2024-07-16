@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -8,6 +9,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
 import org.gradle.tooling.ProjectConnection
 import org.jetbrains.annotations.ApiStatus
@@ -25,9 +27,10 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Experimental
 class GradleFileModificationTracker: Disposable {
   private val myCacheRef = AtomicReference<MutableSet<Path>>(ConcurrentHashMap.newKeySet())
-  private val alarm = SingleAlarm.pooledThreadSingleAlarm(5000, this) {
+  // This runnable does not interact with project configuration, it should not carry context
+  private val alarm = SingleAlarm(ContextAwareRunnable {
     myCacheRef.set(ConcurrentHashMap.newKeySet())
-  }
+  }, 5000, this, Alarm.ThreadToUse.POOLED_THREAD)
 
   /**
    * If called when wrapper is not yet available, wrapper download events will be lost!

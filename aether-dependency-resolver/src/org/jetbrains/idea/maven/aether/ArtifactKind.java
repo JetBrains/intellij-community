@@ -23,7 +23,7 @@ public enum ArtifactKind {
   ARTIFACT("", "jar"), SOURCES("sources", "jar"), JAVADOC("javadoc", "jar"),
   ANNOTATIONS("annotations", "zip"), AAR_ARTIFACT("", "aar"), POM("", "pom"),
   ALL("all", "jar"), HTTP("http", "jar"), DLL("", "dll"),
-  ZIP("", "zip");
+  ZIP("", "zip"), KLIB("", "klib");
 
   private final String myClassifier;
   private final String myExtension;

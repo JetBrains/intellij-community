@@ -55,7 +55,7 @@ public final class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<Jps
     return ourReferenceRoles.get(type);
   }
 
-  private static class JpsSdkReferencesTableRole extends JpsElementChildRoleBase<JpsSdkReferencesTable> implements JpsElementCreator<JpsSdkReferencesTable> {
+  public static class JpsSdkReferencesTableRole extends JpsElementChildRoleBase<JpsSdkReferencesTable> implements JpsElementCreator<JpsSdkReferencesTable> {
     JpsSdkReferencesTableRole() {
       super("sdk references");
     }

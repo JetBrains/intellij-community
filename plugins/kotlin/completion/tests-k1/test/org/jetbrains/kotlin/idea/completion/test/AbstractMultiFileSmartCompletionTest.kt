@@ -4,11 +4,15 @@ package org.jetbrains.kotlin.idea.completion.test
 
 import com.intellij.codeInsight.completion.CompletionType
 import org.jetbrains.kotlin.idea.test.AstAccessControl
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
-abstract class AbstractMultiFileSmartCompletionTest : KotlinCompletionTestCase() {
+abstract class AbstractMultiFileSmartCompletionTest : KotlinCompletionTestCase(),
+                                                      ExpectedPluginModeProvider {
+
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         setType(CompletionType.SMART)
     }
 

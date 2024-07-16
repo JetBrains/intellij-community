@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectView;
 
 import com.google.common.base.Function;
@@ -44,8 +44,7 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
-  @Nullable
-  public static PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
+  public static @Nullable PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
     SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
     if (sdkAdditionalData instanceof RemoteSdkProperties && sdkAdditionalData instanceof PythonSdkAdditionalData) {
       VirtualFile remoteLibrary = PythonSdkUtil.findAnyRemoteLibrary(sdk);
@@ -82,8 +81,7 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
     }).filter(Predicates.notNull()).toList();
   }
 
-  @Nullable
-  private PsiDirectory getDirectoryForJar(PsiFile input) {
+  private @Nullable PsiDirectory getDirectoryForJar(PsiFile input) {
     VirtualFile jarRoot = getJarRoot(input);
     if (myProject != null && jarRoot != null) {
       return PsiManager.getInstance(myProject).findDirectory(jarRoot);
@@ -93,8 +91,7 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
     }
   }
 
-  @Nullable
-  private static VirtualFile getJarRoot(PsiFile input) {
+  private static @Nullable VirtualFile getJarRoot(PsiFile input) {
     final VirtualFile file = input.getVirtualFile();
     if (file == null || !file.isValid() || !(file.getFileType() instanceof ArchiveFileType)) {
       return null;

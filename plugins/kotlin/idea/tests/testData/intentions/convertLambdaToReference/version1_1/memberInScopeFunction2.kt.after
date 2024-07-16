@@ -14,3 +14,5 @@ class Test {
         }
     }
 }
+
+// IGNORE_K2

@@ -2221,16 +2221,6 @@ public final class ContainerUtil {
     return result.computeIfAbsent(key, __ -> factory.create());
   }
 
-  /**
-   * @deprecated use {@link Map#getOrDefault(Object, Object)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @Contract(pure = true)
-  public static @NotNull <T, V> V getOrElse(@NotNull Map<? extends T, V> map, T key, @NotNull V defValue) {
-    return map.getOrDefault(key, defValue);
-  }
-
   @Contract(pure=true)
   public static <T> boolean and(T @NotNull [] iterable, @NotNull Condition<? super T> condition) {
     for (T t : iterable) {
@@ -2528,6 +2518,25 @@ public final class ContainerUtil {
   public static <T> int indexOf(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
     for (int i = 0, listSize = list.size(); i < listSize; i++) {
       T t = list.get(i);
+      if (condition.value(t)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Finds the first element in the array that satisfies given condition.
+   *
+   * @param list array to scan
+   * @param condition condition that should be satisfied
+   * @param <T> type of the list elements
+   * @return index of the first element in the array that satisfies the condition; -1 if no element satisfies the condition.
+   */
+  @Contract(pure=true)
+  public static <T> int indexOf(T @NotNull [] list, @NotNull Condition<? super T> condition) {
+    for (int i = 0; i < list.length; i++) {
+      T t = list[i];
       if (condition.value(t)) {
         return i;
       }

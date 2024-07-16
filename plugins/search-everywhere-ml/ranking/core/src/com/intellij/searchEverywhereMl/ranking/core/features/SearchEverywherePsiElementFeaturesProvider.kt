@@ -9,13 +9,15 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.LanguageUsageStatistics
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.ml.embeddings.utils.convertNameToNaturalLanguage
+import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiNamedElement
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.IS_INVALID_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.IS_PURE_SEMANTIC
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_IS_MOST_USED_DATA_KEY
@@ -25,7 +27,6 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsi
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_USED_IN_LAST_MONTH
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_USED_IN_LAST_WEEK
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_USE_COUNT_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.SIMILARITY_SCORE
 import com.intellij.util.PathUtil
 import com.intellij.util.Time.DAY
 import com.intellij.util.Time.WEEK
@@ -40,9 +41,6 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     @JvmStatic
     val IS_INVALID_DATA_KEY = EventFields.Boolean("isInvalid")
 
-    val SIMILARITY_SCORE = EventFields.Double("similarityScore")
-    val IS_PURE_SEMANTIC = EventFields.Boolean("isPureSemantic")
-
     val LANGUAGE_DATA_KEY = EventFields.StringValidatedByCustomRule("language", LangCustomRuleValidator::class.java)
     val LANGUAGE_USE_COUNT_DATA_KEY = EventFields.Int("langUseCount")
     val LANGUAGE_IS_MOST_USED_DATA_KEY = EventFields.Boolean("langIsMostUsed")
@@ -55,8 +53,7 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> = listOf(
-    IS_INVALID_DATA_KEY, SIMILARITY_SCORE, IS_PURE_SEMANTIC,
-    LANGUAGE_DATA_KEY, LANGUAGE_USE_COUNT_DATA_KEY, LANGUAGE_IS_MOST_USED_DATA_KEY,
+    IS_INVALID_DATA_KEY, LANGUAGE_DATA_KEY, LANGUAGE_USE_COUNT_DATA_KEY, LANGUAGE_IS_MOST_USED_DATA_KEY,
     LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY, LANGUAGE_USED_IN_LAST_DAY, LANGUAGE_USED_IN_LAST_WEEK,
     LANGUAGE_USED_IN_LAST_MONTH, LANGUAGE_NEVER_USED_DATA_KEY, LANGUAGE_IS_SAME_AS_OPENED_FILE
   )
@@ -66,15 +63,35 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
-    if (element is PsiItemWithSimilarity<*>) {
-      return buildList {
-        addAll(getElementFeatures(element.value, currentTime, searchQuery, elementPriority, cache))
-        element.similarityScore?.let { add(SIMILARITY_SCORE.with(it)) }
-        add(IS_PURE_SEMANTIC.with(element.isPureSemantic))
+    val result = mutableListOf<EventPair<*>>()
+    var similarityScore: Double? = null
+
+    val item = if (element is PsiItemWithSimilarity<*>) {
+      result.add(IS_SEMANTIC_ONLY.with(element.isPureSemantic))
+      element.similarityScore?.let { similarityScore = it }
+      element.value
+    }
+    else {
+      result.add(IS_SEMANTIC_ONLY.with(false))
+      element
+    }
+
+    if (similarityScore != null) {
+      result.add(SIMILARITY_SCORE.with(roundDouble(similarityScore!!)))
+    }
+    else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
+      val elementName = getElementName(item)
+      val elementEmbedding = elementName?.let { generateEmbeddingBlocking(convertNameToNaturalLanguage(it)) }
+      val queryEmbedding = getQueryEmbedding(searchQuery, split = true)
+      if (elementEmbedding != null && queryEmbedding != null) {
+        result.add(SIMILARITY_SCORE.with(roundDouble(elementEmbedding.cosine(queryEmbedding).toDouble())))
       }
     }
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
-    return getLanguageFeatures(psiElement, cache) + getNameFeatures(element, searchQuery)
+
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(item) ?: return emptyList()
+    result.addAll(getLanguageFeatures(psiElement, cache))
+    result.addAll(getNameFeatures(item, searchQuery))
+    return result
   }
 
   private fun getLanguageFeatures(element: PsiElement, cache: FeaturesProviderCache?): List<EventPair<*>> {
@@ -121,9 +138,11 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
   }
 
   private fun getElementName(element: Any) = when (element) {
-    is PsiItemWithPresentation -> element.presentation.presentableText
-    is PsiNamedElement -> ReadAction.compute<String, Nothing> { element.name }
-    else -> null
+      is PsiItemWithPresentation -> element.item as? PsiNamedElement
+      is PsiNamedElement -> element
+      else -> null
+    }?.let {
+      ReadAction.compute<String, Nothing> { it.name }
   }
 
   /**

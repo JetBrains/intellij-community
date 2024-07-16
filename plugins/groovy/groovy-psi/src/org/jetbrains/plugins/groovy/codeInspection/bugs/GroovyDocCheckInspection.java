@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 /**
  * @author Max Medvedev
  */
-public class GroovyDocCheckInspection extends BaseInspection {
+public final class GroovyDocCheckInspection extends BaseInspection {
 
   @Override
   protected String buildErrorString(Object... args) {

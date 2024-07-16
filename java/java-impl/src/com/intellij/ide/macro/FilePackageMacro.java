@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.java.JavaBundle;
@@ -12,15 +12,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class FilePackageMacro extends Macro {
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "FilePackage";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return JavaBundle.message("macro.file.package");
   }
 
@@ -31,8 +29,7 @@ public final class FilePackageMacro extends Macro {
     return aPackage.getName();
   }
 
-  @Nullable
-  static PsiPackage getFilePackage(DataContext dataContext) {
+  static @Nullable PsiPackage getFilePackage(DataContext dataContext) {
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile == null) return null;
     PsiDirectory containingDirectory = psiFile.getContainingDirectory();

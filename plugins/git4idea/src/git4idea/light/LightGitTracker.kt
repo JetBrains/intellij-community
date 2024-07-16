@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEditService
@@ -229,9 +229,7 @@ class LightGitTracker : Disposable {
   }
 
   private sealed class StateUpdater(val state: State) {
-    object Clear : StateUpdater(State.Blank) {
-      override fun toString(): @NonNls String = "Clear"
-    }
+    data object Clear : StateUpdater(State.Blank)
 
     class Update(s: State, val updateLocation: Boolean) : StateUpdater(s) {
       override fun toString(): @NonNls String {
@@ -254,9 +252,7 @@ class LightGitTracker : Disposable {
       }
     }
 
-    object CheckGit : Request() {
-      override fun toString(): @NonNls String = "CheckGit"
-    }
+    data object CheckGit : Request()
   }
 
   companion object {

@@ -3,15 +3,11 @@ package com.intellij.execution.configurations
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.SmartList
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
-import java.io.File
 import java.nio.charset.Charset
-import java.util.regex.Pattern
 
 /**
  * The information about a single log file displayed in the console when the configuration
@@ -20,12 +16,6 @@ import java.util.regex.Pattern
 @Tag("log_file")
 class LogFileOptions : BaseState {
   companion object {
-    @JvmStatic
-    fun collectMatchedFiles(root: File, pattern: Pattern, files: MutableList<File>) {
-      val dirs = root.listFiles() ?: return
-      dirs.filterTo(files) { pattern.matcher(it.name).matches() && it.isFile }
-    }
-
     @JvmStatic
     fun areEqual(options1: LogFileOptions?, options2: LogFileOptions?): Boolean {
       return if (options1 == null || options2 == null) {
@@ -59,46 +49,6 @@ class LogFileOptions : BaseState {
 
   @get:Attribute(value = "charset", converter = CharsetConverter::class)
   var charset: Charset by property(Charset.defaultCharset())
-
-  fun getPaths(): Set<String> {
-    val logFile = File(pathPattern!!)
-    if (logFile.exists()) {
-      return setOf(pathPattern!!)
-    }
-
-    val dirIndex = pathPattern!!.lastIndexOf(File.separator)
-    if (dirIndex == -1) {
-      return emptySet()
-    }
-
-    val files = SmartList<File>()
-    collectMatchedFiles(File(pathPattern!!.substring(0, dirIndex)),
-                        Pattern.compile(FileUtil.convertAntToRegexp(pathPattern!!.substring(dirIndex + File.separator.length))), files)
-    if (files.isEmpty()) {
-      return emptySet()
-    }
-
-    if (isShowAll) {
-      val result = HashSet<String>(files.size)
-      files.mapTo(result) { it.path }
-      return result
-    }
-    else {
-      var lastFile: File? = null
-      for (file in files) {
-        if (lastFile != null) {
-          if (file.lastModified() > lastFile.lastModified()) {
-            lastFile = file
-          }
-        }
-        else {
-          lastFile = file
-        }
-      }
-      assert(lastFile != null)
-      return setOf(lastFile!!.path)
-    }
-  }
 
   //read external
   constructor()

@@ -34,7 +34,7 @@ import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -44,9 +44,10 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.Future
 
 @State(name = "sourceFolderManager", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class SourceFolderManagerImpl(private val project: Project) : SourceFolderManager,
-                                                              PersistentStateComponent<SourceFolderManagerState>,
-                                                              Disposable {
+class SourceFolderManagerImpl(private val project: Project,
+                              val cs: CoroutineScope) : SourceFolderManager,
+                                                                    PersistentStateComponent<SourceFolderManagerState>,
+                                                                    Disposable {
 
   private val moduleNamesToSourceFolderState: MultiMap<String, SourceFolderModelState> = MultiMap.create()
   private var isDisposed = false
@@ -56,14 +57,17 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
 
   private val operationsStates = mutableListOf<Future<*>>()
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val refreshFilesDispatcher = Dispatchers.IO.limitedParallelism(3)
+
   override fun addSourceFolder(module: Module, url: String, type: JpsModuleSourceRootType<*>) {
     synchronized(mutex) {
       sourceFolders[url] = SourceFolderModel(module, url, type)
       addUrlToModuleModel(module, url)
     }
-    ApplicationManager.getApplication().invokeLater(Runnable {
+    cs.launch(refreshFilesDispatcher) {
       VirtualFileManager.getInstance().refreshAndFindFileByUrl(url)
-    }, project.disposed)
+    }
   }
 
   override fun setSourceFolderPackagePrefix(url: String, packagePrefix: String?) {

@@ -205,7 +205,7 @@ public final class ExistingTemplatesComponent {
     if (configuration.isPredefined()) {
       return;
     }
-    if (((DefaultMutableTreeNode)selection).isNodeAncestor(myRecentNode)) {
+    if (node.isNodeAncestor(myRecentNode)) {
       return;
     }
     final String configurationName = configuration.getName();

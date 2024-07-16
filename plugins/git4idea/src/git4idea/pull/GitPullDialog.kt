@@ -6,6 +6,7 @@ import com.intellij.dvcs.DvcsUtil.sortRepositories
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.Element.html
 import com.intellij.openapi.vcs.VcsNotifier
@@ -425,9 +425,10 @@ class GitPullDialog(private val project: Project,
   private fun getFetchActionShortcutText() = KeymapUtil.getPreferredShortcutText(getFetchActionShortcut().shortcuts)
 
   companion object {
-    private val FETCH_ACTION_SHORTCUT = if (SystemInfo.isMac)
-      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.META_DOWN_MASK))
-    else
-      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.CTRL_DOWN_MASK))
+    private val FETCH_ACTION_SHORTCUT
+      get() = if (ClientSystemInfo.isMac())
+        CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.META_DOWN_MASK))
+      else
+        CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.CTRL_DOWN_MASK))
   }
 }

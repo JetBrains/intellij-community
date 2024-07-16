@@ -33,18 +33,18 @@ import java.util.List;
 
 public class MavenPluginGoalConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
   @Override
-  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     return getVariants(context).contains(s) ? s : null;
   }
 
   @Override
-  public String toString(@Nullable String s, ConvertContext context) {
+  public String toString(@Nullable String s, @NotNull ConvertContext context) {
     return s;
   }
 
   @Override
   @NotNull
-  public Collection<String> getVariants(ConvertContext context) {
+  public Collection<String> getVariants(@NotNull ConvertContext context) {
     MavenDomPluginModel model = MavenPluginDomUtil.getMavenPluginModel(context.getInvocationElement());
     if (model == null) return Collections.emptyList();
 
@@ -57,7 +57,7 @@ public class MavenPluginGoalConverter extends ResolvingConverter<String> impleme
   }
 
   @Override
-  public PsiElement resolve(String text, ConvertContext context) {
+  public PsiElement resolve(String text, @NotNull ConvertContext context) {
     MavenDomPluginModel model = MavenPluginDomUtil.getMavenPluginModel(context.getInvocationElement());
     if (model == null) return null;
 

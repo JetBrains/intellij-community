@@ -30,20 +30,31 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
 
     @Override
     public void computeChildren(@NotNull final XCompositeNode node) {
-      myDialog.startEvaluation(new XEvaluationCallbackBase() {
-        @Override
-        public void evaluated(@NotNull final XValue result) {
-          String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
-          node.addChildren(XValueChildrenList.singleton(name, result), true);
-          myDialog.evaluationDone();
-        }
+      myDialog.startEvaluation(new MyEvaluationCallback(node));
+    }
 
-        @Override
-        public void errorOccurred(@NotNull final String errorMessage) {
-          node.setErrorMessage(errorMessage);
-          myDialog.evaluationDone();
-        }
-      });
+    private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin {
+      private final @NotNull XCompositeNode myNode;
+
+      private MyEvaluationCallback(@NotNull XCompositeNode node) { myNode = node; }
+
+      @Override
+      public XEvaluationOrigin getOrigin() {
+        return XEvaluationOrigin.DIALOG;
+      }
+
+      @Override
+      public void evaluated(@NotNull final XValue result) {
+        String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
+        myNode.addChildren(XValueChildrenList.singleton(name, result), true);
+        myDialog.evaluationDone();
+      }
+
+      @Override
+      public void errorOccurred(@NotNull final String errorMessage) {
+        myNode.setErrorMessage(errorMessage);
+        myDialog.evaluationDone();
+      }
     }
   }
 }

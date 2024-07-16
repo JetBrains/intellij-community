@@ -2,7 +2,6 @@
 package com.intellij.java.psi.search
 
 import com.intellij.JavaTestUtil
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -17,7 +16,7 @@ import java.lang.Integer.max
 class FindUsagesJava14Test : JavaPsiTestCase() {
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.project).languageLevel = LanguageLevel.HIGHEST
+    IdeaTestUtil.setProjectLanguageLevel(myJavaFacade.project, LanguageLevel.HIGHEST)
     val root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages14/" + getTestName(true)
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17())
     createTestProjectStructure(root)

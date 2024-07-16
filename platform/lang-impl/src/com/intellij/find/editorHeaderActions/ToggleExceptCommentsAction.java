@@ -3,9 +3,12 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
 
 public final class ToggleExceptCommentsAction extends EditorHeaderSetSearchContextAction {
   public ToggleExceptCommentsAction() {
     super(FindBundle.message("search.context.title.except.comments"), FindModel.SearchContext.EXCEPT_COMMENTS);
+
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
   }
 }

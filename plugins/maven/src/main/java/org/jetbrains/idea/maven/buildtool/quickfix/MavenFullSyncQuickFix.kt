@@ -1,0 +1,22 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.buildtool.quickfix
+
+import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import java.util.concurrent.CompletableFuture
+
+class MavenFullSyncQuickFix : BuildIssueQuickFix {
+  override val id: String = ID
+
+  override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
+    val manager = MavenProjectsManager.getInstance(project)
+    manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+    return CompletableFuture.completedFuture(null)
+  }
+
+  companion object {
+    const val ID = "maven_full_sync_quick_fix"
+  }
+}

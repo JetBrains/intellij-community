@@ -221,7 +221,7 @@ class GitLabMergeRequestDraftNoteImpl(
           api.rest.submitSingleDraftNote(project, mr.iid, noteData.id.restId.toLong()).body()
         }
       }
-      mr.reloadDiscussions()
+      mr.refreshData()
     }
   }
 

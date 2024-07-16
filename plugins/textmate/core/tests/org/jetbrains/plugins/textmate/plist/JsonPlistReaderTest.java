@@ -18,9 +18,9 @@ public class JsonPlistReaderTest extends PlistReaderTestCase {
   @Override
   @Test
   public void parseArray() throws Exception {
-    Plist plist = read("{list:['alex','zolotov',42]}");
+    Plist plist = read("{list:[\"alex\",\"zolotov\",42]}");
     HashMap<String, PListValue> map = new HashMap<>() {{
-      put("list", array(string("alex"), string("zolotov"), integer(Long.valueOf(42))));
+      put("list", array(string("alex"), string("zolotov"), integer(Integer.valueOf(42))));
     }};
     assertEquals(Plist.fromMap(map), plist);
   }
@@ -45,11 +45,11 @@ public class JsonPlistReaderTest extends PlistReaderTestCase {
   @Override
   protected String prepareText(String string) {
     return Strings.unescapeXmlEntities(string.replace("<dict><key>", "{").replace("</dict>", "}").
-                  replace("<key>", ",").replace("</key>", ": ").
-                  replace("<integer>", "").replace("</integer>", "").
-                  replace("<real>", "").replace("</real>", "").
-                  replace("<string>", "\"").replace("</string>", "\"").
-                  replace("<array>", "[").replace("<array>", "]").
-                  replace("<true/>", "true").replace("<false/>", "false"));
+                                         replace("<key>", ",").replace("</key>", ": ").
+                                         replace("<integer>", "").replace("</integer>", "").
+                                         replace("<real>", "").replace("</real>", "").
+                                         replace("<string>", "\"").replace("</string>", "\"").
+                                         replace("<array>", "[").replace("<array>", "]").
+                                         replace("<true/>", "true").replace("<false/>", "false"));
   }
 }

@@ -5,11 +5,12 @@ import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.Project
+import com.intellij.util.PlatformUtils
 
 private class ReaderModeConfigurableProvider(private val project: Project) : ConfigurableProvider() {
   override fun createConfigurable(): Configurable {
     return ReaderModeConfigurable(project)
   }
 
-  override fun canCreateConfigurable() = Experiments.getInstance().isFeatureEnabled("editor.reader.mode")
+  override fun canCreateConfigurable() = Experiments.getInstance().isFeatureEnabled("editor.reader.mode") && !PlatformUtils.isRider() // Rider has its own reader mode
 }

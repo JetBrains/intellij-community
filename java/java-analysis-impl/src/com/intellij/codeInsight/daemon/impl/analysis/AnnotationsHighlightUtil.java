@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -46,8 +45,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public final class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
-  static HighlightInfo.Builder checkNameValuePair(@NotNull PsiNameValuePair pair,
-                                          @Nullable RefCountHolder refCountHolder) {
+  static HighlightInfo.Builder checkNameValuePair(@NotNull PsiNameValuePair pair) {
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
     if (annotation == null) return null;
     PsiClass annotationClass = annotation.resolveAnnotationType();
@@ -55,9 +53,6 @@ public final class AnnotationsHighlightUtil {
     PsiReference ref = pair.getReference();
     if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
-    if (refCountHolder != null) {
-      refCountHolder.registerReference(ref, method != null ? new CandidateInfo(method, PsiSubstitutor.EMPTY) : JavaResolveResult.EMPTY);
-    }
     if (method == null) {
       if (pair.getName() != null) {
         String description = JavaErrorBundle.message("annotation.unknown.method", ref.getCanonicalText());
@@ -357,6 +352,10 @@ public final class AnnotationsHighlightUtil {
     PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
+        if (IncompleteModelUtil.isIncompleteModel(expression) && 
+            IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expression)) {
+          return null;
+        }
         String description = JavaErrorBundle.message("annotation.non.constant.attribute.value");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
       }
@@ -545,7 +544,7 @@ public final class AnnotationsHighlightUtil {
     PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
     if (nameReferenceElement != null) {
       PsiElement resolved = nameReferenceElement.resolve();
-      if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) {
+      if (resolved != null && (!(resolved instanceof PsiClass psiClass) || !psiClass.isAnnotationType())) {
         String description = JavaErrorBundle.message("annotation.annotation.type.expected");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameReferenceElement).descriptionAndTooltip(description);
       }
@@ -605,17 +604,18 @@ public final class AnnotationsHighlightUtil {
       if (list == method.getThrowsList()) {
         String description = JavaErrorBundle.message("annotation.members.may.not.have.throws.list");
         HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list.getFirstChild()).descriptionAndTooltip(description);
         IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
         info.registerFix(action, null, null, null, null);
         return info;
       }
     }
-    else if (parent instanceof PsiClass && ((PsiClass)parent).isAnnotationType()) {
-      if (PsiKeyword.EXTENDS.equals(list.getFirstChild().getText())) {
+    else if (parent instanceof PsiClass aClass && aClass.isAnnotationType()) {
+      PsiElement child = list.getFirstChild();
+      if (PsiUtil.isJavaToken(child, JavaTokenType.EXTENDS_KEYWORD)) {
         String description = JavaErrorBundle.message("annotation.may.not.have.extends.list");
         HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description);
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(child).descriptionAndTooltip(description);
         IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
         info.registerFix(action, null, null, null, null);
         return info;

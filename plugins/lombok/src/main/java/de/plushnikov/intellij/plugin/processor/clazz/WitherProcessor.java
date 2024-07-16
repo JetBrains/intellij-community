@@ -125,34 +125,34 @@ public final class WitherProcessor extends AbstractClassProcessor {
     Collection<PsiField> witherFields = new ArrayList<>();
 
     for (PsiField psiField : psiClass.getFields()) {
-      boolean createWither = true;
-      PsiModifierList modifierList = psiField.getModifierList();
-      if (null != modifierList) {
-        // Skip static fields.
-        createWither = !modifierList.hasModifierProperty(PsiModifier.STATIC);
-        // Skip final fields that are initialized and not annotated with @Builder.Default
-        createWither &= !(modifierList.hasModifierProperty(PsiModifier.FINAL) && psiField.hasInitializer() &&
-                          PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION) == null);
-        // Skip fields that start with $
-        createWither &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-        // Skip fields having Wither annotation already
-        createWither &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
-      }
-      if (createWither) {
+      if (shouldGenerateWither(psiField)) {
         witherFields.add(psiField);
       }
     }
     return witherFields;
   }
 
+  private static boolean shouldGenerateWither(@NotNull PsiField psiField) {
+    boolean createWither = true;
+    PsiModifierList modifierList = psiField.getModifierList();
+    if (null != modifierList) {
+      // Skip static fields.
+      createWither = !modifierList.hasModifierProperty(PsiModifier.STATIC);
+      // Skip final fields that are initialized and not annotated with @Builder.Default
+      createWither &= !(modifierList.hasModifierProperty(PsiModifier.FINAL) && psiField.hasInitializer() &&
+                        PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION) == null);
+      // Skip fields that start with $
+      createWither &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+      // Skip fields having Wither annotation already
+      createWither &= !PsiAnnotationSearchUtil.isAnnotatedWith(psiField, LombokClassNames.WITHER, LombokClassNames.WITH);
+    }
+    return createWither;
+  }
+
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiClass containingClass = psiField.getContainingClass();
-    if (null != containingClass) {
-      final Collection<PsiField> witherFields = getWitherFields(containingClass);
-      if (PsiClassUtil.getNames(witherFields).contains(psiField.getName())) {
-        return LombokPsiElementUsage.READ_WRITE;
-      }
+    if (shouldGenerateWither(psiField)) {
+      return LombokPsiElementUsage.READ_WRITE;
     }
     return LombokPsiElementUsage.NONE;
   }

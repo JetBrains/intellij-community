@@ -11,9 +11,11 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.toBuilder
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object WorkspaceEntityLifecycleSupporterUtils {
-  fun ensureEntitiesInWorkspaceAreAsProviderDefined(project: Project, provider: WorkspaceEntityLifecycleSupporter<*>) {
+  fun ensureEntitiesInWorkspaceAreAsProviderDefined(project: Project, provider: WorkspaceEntityLifecycleSupporter<*, *>) {
     val workspaceModel = WorkspaceModel.getInstance(project)
     val builderRef: Ref<MutableEntityStorage?> = Ref.create()
     val snapshot = workspaceModel.currentSnapshot
@@ -42,10 +44,10 @@ object WorkspaceEntityLifecycleSupporterUtils {
     }
   }
 
-  private fun <E : WorkspaceEntity> ensureInitialized(project: Project,
-                                                      provider: WorkspaceEntityLifecycleSupporter<E>,
-                                                      snapshot: ImmutableEntityStorage,
-                                                      builderRef: Ref<MutableEntityStorage?>) {
+  private fun <E : WorkspaceEntity, M : WorkspaceEntity.Builder<E>> ensureInitialized(project: Project,
+                                                                                      provider: WorkspaceEntityLifecycleSupporter<E, M>,
+                                                                                      snapshot: ImmutableEntityStorage,
+                                                                                      builderRef: Ref<MutableEntityStorage?>) {
     val expectedEntity = provider.createSampleEntity(project)
     val actualEntities = snapshot.entities(provider.getEntityClass()).toList()
 

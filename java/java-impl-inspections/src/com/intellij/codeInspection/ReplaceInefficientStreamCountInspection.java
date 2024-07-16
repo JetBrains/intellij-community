@@ -32,9 +32,11 @@ import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
 public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STREAM_COUNT =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "count").parameterCount(0);
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "count").parameterCount(0);
   private static final CallMatcher COLLECTION_STREAM =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "stream").parameterCount(0);
+  private static final CallMatcher CHAR_SEQUENCE_CHARS =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, "chars").parameterCount(0);
   private static final CallMatcher STREAM_FLAT_MAP =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "flatMap").parameterTypes(
       CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
@@ -50,13 +52,13 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
 
   private static final CallMapper<CountFix> FIX_MAPPER = new CallMapper<CountFix>()
     .register(COLLECTION_STREAM, call -> new CountFix(SimplificationMode.COLLECTION_SIZE))
+    .register(CHAR_SEQUENCE_CHARS, call -> new CountFix(SimplificationMode.CHAR_SEQUENCE_LENGTH))
     .register(STREAM_FLAT_MAP, call -> doesFlatMapCallCollectionStream(call) ? new CountFix(SimplificationMode.SUM) : null)
     .register(STREAM_FILTER, call -> extractComparison(call, true) != null ? new CountFix(SimplificationMode.ANY_MATCH) : null)
     .register(STREAM_FILTER, call -> extractComparison(call, false) != null ? new CountFix(SimplificationMode.NONE_MATCH) : null);
 
   private static final Logger LOG = Logger.getInstance(ReplaceInefficientStreamCountInspection.class);
 
-  private static final String SIZE_METHOD = "size";
   private static final String STREAM_METHOD = "stream";
 
   @Override
@@ -182,6 +184,7 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
 
   private enum SimplificationMode {
     SUM("Stream.mapToLong().sum()"),
+    CHAR_SEQUENCE_LENGTH("CharSequence.length()"),
     COLLECTION_SIZE("Collection.size()"),
     ANY_MATCH("stream.anyMatch()"),
     NONE_MATCH("stream.noneMatch()"),
@@ -233,7 +236,8 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
       switch (mySimplificationMode) {
         case SUM -> replaceFlatMap(countName, qualifierCall);
-        case COLLECTION_SIZE -> replaceSimpleCount(countCall, qualifierCall);
+        case COLLECTION_SIZE -> replaceSimpleCount(countCall, qualifierCall, "size");
+        case CHAR_SEQUENCE_LENGTH -> replaceSimpleCount(countCall, qualifierCall, "length");
         case ANY_MATCH -> replaceFilterCountComparison(qualifierCall, true);
         case NONE_MATCH -> replaceFilterCountComparison(qualifierCall, false);
         case IS_PRESENT -> replaceSimpleCountComparison(countCall, true);
@@ -254,10 +258,10 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
       ct.replaceAndRestoreComments(comparison, base + "." + (isAnyMatch? "anyMatch" : "noneMatch") + "(" + filterText + ")");
     }
 
-    private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall) {
-      if (!COLLECTION_STREAM.test(qualifierCall)) return;
+    private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall, String replacementName) {
+      if (!COLLECTION_STREAM.test(qualifierCall) && !CHAR_SEQUENCE_CHARS.test(qualifierCall)) return;
       PsiReferenceExpression methodExpression = qualifierCall.getMethodExpression();
-      ExpressionUtils.bindCallTo(qualifierCall, SIZE_METHOD);
+      ExpressionUtils.bindCallTo(qualifierCall, replacementName);
       boolean addCast = true;
       PsiElement toReplace = countCall;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());

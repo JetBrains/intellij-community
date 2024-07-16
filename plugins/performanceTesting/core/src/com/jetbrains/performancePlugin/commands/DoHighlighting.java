@@ -55,8 +55,6 @@ public final class DoHighlighting extends PerformanceCommand {
   protected Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
-      boolean highlightErrorElements = true;
-      boolean runAnnotators = true;
       Project project = context.getProject();
       final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       if (editor == null) {
@@ -73,7 +71,7 @@ public final class DoHighlighting extends PerformanceCommand {
         long start = System.nanoTime();
         TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
           GlobalInspectionTool tool = new HighlightVisitorBasedInspection()
-            .setHighlightErrorElements(highlightErrorElements).setRunAnnotators(runAnnotators).setRunVisitors(false);
+            .setHighlightErrorElements(true).setRunAnnotators(true).setRunVisitors(false);
           InspectionManager inspectionManager = InspectionManager.getInstance(project);
           GlobalInspectionContext globalContext = inspectionManager.createNewGlobalContext();
           InspectionEngine.runInspectionOnFile(psiFile, new GlobalInspectionToolWrapper(tool), globalContext);

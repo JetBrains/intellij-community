@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -54,19 +53,19 @@ final class CreateLauncherScriptAction extends DumbAwareAction implements Action
       var dir = Path.of(PathManager.getBinPath());
       var name1 = ApplicationNamesInfo.getInstance().getScriptName() + ".bat";
       var name2 = ApplicationNamesInfo.getInstance().getScriptName() + "64.exe";
-      var url = ((HelpManagerImpl)HelpManager.getInstance()).getHelpUrl(TOPIC);
+      var url = HelpManagerImpl.getHelpUrl(TOPIC);
       message = ApplicationBundle.message("cli.launcher.message.windows", dir, name1, name2, url);
     }
     else if (SystemInfo.isMac) {
       var dir = Path.of(PathManager.getHomePath()).resolve("MacOS");
       var name = ApplicationNamesInfo.getInstance().getScriptName();
-      var url = ((HelpManagerImpl)HelpManager.getInstance()).getHelpUrl(TOPIC);
+      var url = HelpManagerImpl.getHelpUrl(TOPIC);
       message = ApplicationBundle.message("cli.launcher.message.unix", dir, name, url);
     }
     else {
       var dir = Path.of(PathManager.getBinPath());
-      var name = ApplicationNamesInfo.getInstance().getScriptName() + ".sh";
-      var url = ((HelpManagerImpl)HelpManager.getInstance()).getHelpUrl(TOPIC);
+      var name = ApplicationNamesInfo.getInstance().getScriptName() + (Boolean.getBoolean("ide.native.launcher") ? "" : ".sh");
+      var url = HelpManagerImpl.getHelpUrl(TOPIC);
       message = ApplicationBundle.message("cli.launcher.message.unix", dir, name, url);
     }
     Messages.showInfoMessage(project, message, ApplicationBundle.message("cli.launcher.message.title"));
@@ -83,6 +82,7 @@ final class CreateLauncherScriptAction extends DumbAwareAction implements Action
         ProcessIOExecutorService.INSTANCE.execute(() -> {
           try {
             var launcherName = ApplicationNamesInfo.getInstance().getScriptName();
+            @SuppressWarnings("SpellCheckingInspection")
             var scriptName = switch (launcherName) {
               case "phpstorm" -> "pstorm";
               case "pycharm" -> "charm";

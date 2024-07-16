@@ -33,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.intellij.lang.annotations.MagicConstant;
@@ -45,6 +46,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static com.intellij.psi.PsiKeyword.*;
+
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
@@ -55,6 +58,27 @@ public final class PsiUtil extends PsiUtilCore {
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
 
   private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?[A-Za-z\\d]*");
+
+  private static final @NotNull Map<CharSequence, JavaFeature> SOFT_KEYWORDS = CollectionFactory.createCharSequenceMap(true);
+
+  static {
+    SOFT_KEYWORDS.put(VAR, JavaFeature.LVTI);
+    SOFT_KEYWORDS.put(RECORD, JavaFeature.RECORDS);
+    SOFT_KEYWORDS.put(YIELD, JavaFeature.SWITCH_EXPRESSION);
+    SOFT_KEYWORDS.put(SEALED, JavaFeature.SEALED_CLASSES);
+    SOFT_KEYWORDS.put(PERMITS, JavaFeature.SEALED_CLASSES);
+    SOFT_KEYWORDS.put(WHEN, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
+    SOFT_KEYWORDS.put(OPEN, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(MODULE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(REQUIRES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(EXPORTS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(OPENS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(USES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(PROVIDES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TRANSITIVE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TO, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(WITH, JavaFeature.MODULES);
+  }
 
   private PsiUtil() {}
 
@@ -306,6 +330,7 @@ public final class PsiUtil extends PsiUtilCore {
    * @return topmost code block where variable makes sense
    */
   @Nullable
+  @Contract(pure = true)
   public static PsiElement getVariableCodeBlock(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     PsiElement codeBlock = null;
     if (variable instanceof PsiParameter) {
@@ -689,10 +714,10 @@ public final class PsiUtil extends PsiUtilCore {
     return equalOnEquivalentClasses(result1.getSubstitutor(), aClass, result2.getSubstitutor(), bClass);
   }
 
-  private static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1,
-                                                  @NotNull PsiClass aClass,
-                                                  @NotNull PsiSubstitutor s2,
-                                                  @NotNull PsiClass bClass) {
+  public static boolean equalOnEquivalentClasses(@NotNull PsiSubstitutor s1,
+                                                 @NotNull PsiClass aClass,
+                                                 @NotNull PsiSubstitutor s2,
+                                                 @NotNull PsiClass bClass) {
     if (s1 == s2 && aClass == bClass) return true;
     // assume generic class equals to non-generic
     if (aClass.hasTypeParameters() != bClass.hasTypeParameters()) return true;
@@ -841,45 +866,58 @@ public final class PsiUtil extends PsiUtilCore {
    */
   @NotNull
   public static PsiType captureToplevelWildcards(@NotNull PsiType type, @NotNull PsiElement context) {
-    if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
-      PsiClass aClass = result.getElement();
-      if (aClass != null) {
-        PsiSubstitutor substitutor = result.getSubstitutor();
+    if (!(type instanceof PsiClassType)) return type;
+    PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+    PsiClass aClass = result.getElement();
+    if (aClass == null) return type;
+    PsiClassType updatedType = getSubstitutorWithWildcardsCaptured(context, result);
+    return updatedType == null ? type : updatedType;
+  }
 
-        PsiSubstitutor captureSubstitutor = substitutor;
-        for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
-          PsiType substituted = substitutor.substitute(typeParameter);
-          if (substituted instanceof PsiWildcardType) {
-            captureSubstitutor = captureSubstitutor.put(typeParameter, PsiCapturedWildcardType.create((PsiWildcardType)substituted, context, typeParameter));
-          }
-        }
+  /**
+   * Applies capture conversion to the {@link PsiClassType.ClassResolveResult}.
+   */
+  public static PsiClassType.@NotNull ClassResolveResult captureTopLevelWildcards(PsiClassType.@NotNull ClassResolveResult result) {
+    PsiClass aClass = result.getElement();
+    if (aClass == null) return result;
+    PsiClassType updatedType = getSubstitutorWithWildcardsCaptured(aClass, result);
+    return updatedType == null ? result : updatedType.resolveGenerics();
+  }
 
-        if (captureSubstitutor != substitutor) {
-          Map<PsiTypeParameter, PsiType> substitutionMap = null;
-          for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
-            PsiType substituted = substitutor.substitute(typeParameter);
-            if (substituted instanceof PsiWildcardType) {
-              if (substitutionMap == null) substitutionMap = new HashMap<>(substitutor.getSubstitutionMap());
-              PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
-              LOG.assertTrue(capturedWildcard != null);
-              PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
-              if (upperBound != null) {
-                capturedWildcard.setUpperBound(upperBound);
-              }
-              substitutionMap.put(typeParameter, capturedWildcard);
-            }
-          }
+  private static @Nullable PsiClassType getSubstitutorWithWildcardsCaptured(
+    @NotNull PsiElement context, PsiClassType.@NotNull ClassResolveResult result) {
+    PsiClass aClass = result.getElement();
+    if (aClass == null) return null;
+    PsiSubstitutor substitutor = result.getSubstitutor();
 
-          if (substitutionMap != null) {
-            PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
-            PsiSubstitutor newSubstitutor = factory.createSubstitutor(substitutionMap);
-            return factory.createType(aClass, newSubstitutor);
-          }
-        }
+    PsiSubstitutor captureSubstitutor = substitutor;
+    for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
+      PsiType substituted = substitutor.substitute(typeParameter);
+      if (substituted instanceof PsiWildcardType) {
+        captureSubstitutor =
+          captureSubstitutor.put(typeParameter, PsiCapturedWildcardType.create((PsiWildcardType)substituted, context, typeParameter));
       }
     }
-    return type;
+
+    if (captureSubstitutor == substitutor) return null;
+    Map<PsiTypeParameter, PsiType> substitutionMap = null;
+    for (PsiTypeParameter typeParameter : typeParametersIterable(aClass)) {
+      PsiType substituted = substitutor.substitute(typeParameter);
+      if (substituted instanceof PsiWildcardType) {
+        if (substitutionMap == null) substitutionMap = new HashMap<>(substitutor.getSubstitutionMap());
+        PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
+        LOG.assertTrue(capturedWildcard != null);
+        PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
+        if (upperBound != null) {
+          capturedWildcard.setUpperBound(upperBound);
+        }
+        substitutionMap.put(typeParameter, capturedWildcard);
+      }
+    }
+
+    if (substitutionMap == null) return null;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+    return factory.createType(aClass, factory.createSubstitutor(substitutionMap));
   }
 
   public static boolean isInsideJavadocComment(PsiElement element) {
@@ -1032,7 +1070,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isRawSubstitutor(@NotNull PsiTypeParameterListOwner owner, @NotNull PsiSubstitutor substitutor) {
-    if (substitutor == PsiSubstitutor.EMPTY) return false;
+    if (!substitutor.hasRawSubstitution()) return false;
 
     for (PsiTypeParameter parameter : typeParametersIterable(owner)) {
       if (substitutor.substitute(parameter) == null) return true;
@@ -1503,6 +1541,41 @@ public final class PsiUtil extends PsiUtilCore {
       return imports[imports.length - 1].getStartOffsetInParent() > element.getStartOffsetInParent();
     }
     return false;
+  }
+
+  private static final Set<String> KEYWORDS = ContainerUtil.immutableSet(
+    ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
+    FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
+    RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
+    TRUE, FALSE, NULL, NON_SEALED);
+
+  /**
+   * @param id word to check
+   * @param level language level
+   * @return true if the given word is a keyword at a given level
+   */
+  public static boolean isKeyword(@NotNull String id, @NotNull LanguageLevel level) {
+    return KEYWORDS.contains(id) ||
+           JavaFeature.ASSERTIONS.isSufficient(level) && ASSERT.equals(id) ||
+           JavaFeature.ENUMS.isSufficient(level) && ENUM.equals(id);
+  }
+
+  /**
+   * @param id keyword candidate
+   * @param level current language level
+   * @return true if given id is a soft (restricted) keyword at a given language level
+   */
+  public static boolean isSoftKeyword(@NotNull CharSequence id, @NotNull LanguageLevel level) {
+    JavaFeature feature = softKeywordFeature(id);
+    return feature != null && feature.isSufficient(level);
+  }
+
+  /**
+   * @param keyword soft keyword
+   * @return JavaFeature, which introduced a given keyword; null if the supplied string is not a soft keyword 
+   */
+  public static @Nullable JavaFeature softKeywordFeature(@NotNull CharSequence keyword) {
+    return SOFT_KEYWORDS.get(keyword);
   }
 
   //<editor-fold desc="Deprecated stuff">

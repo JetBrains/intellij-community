@@ -19,6 +19,10 @@ class MarkdownCodeInsightSettings: SimplePersistentStateComponent<MarkdownCodeIn
     var enableFileDrop: Boolean by property(true)
   }
 
+  override fun noStateLoaded() {
+    reset()
+  }
+
   fun reset() {
     loadState(State())
   }

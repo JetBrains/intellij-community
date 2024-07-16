@@ -6,13 +6,9 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBranchSyncStatus
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitLineHandler
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
@@ -108,17 +104,9 @@ private suspend fun checkSyncState(repository: GitRepository, currentRev: String
   val headSha = commits.last()
   if (currentRev == headSha) return GitBranchSyncStatus.SYNCED
   if (commits.contains(currentRev)) return GitBranchSyncStatus(true, false)
-  if (testCurrentBranchContains(repository, headSha)) return GitBranchSyncStatus(false, true)
+  if (GitCodeReviewUtils.testIsAncestor(repository, headSha, "HEAD")) return GitBranchSyncStatus(false, true)
   return GitBranchSyncStatus(true, true)
 }
-
-private suspend fun testCurrentBranchContains(repository: GitRepository, sha: String): Boolean =
-  coroutineToIndicator {
-    val h = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_BASE)
-    h.setSilent(true)
-    h.addParameters("--is-ancestor", sha, "HEAD")
-    Git.getInstance().runCommand(h).success()
-  }
 
 fun <S : ServerPath, M : HostedGitRepositoryMapping> GitRemotesFlow.mapToServers(serversState: Flow<Set<S>>,
                                                                                  mapper: (S, GitRemoteUrlCoordinates) -> M?)

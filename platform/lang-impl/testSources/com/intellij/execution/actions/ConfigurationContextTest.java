@@ -112,7 +112,7 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     addConfiguration(configuration);
     DataContext context = createDataContext();
     AnActionEvent event = TestActionEvent.createTestEvent(context);
-    new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).fullUpdate(event);
+    new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
     assertEquals("Run 'world_'", event.getPresentation().getText());
 
@@ -122,7 +122,7 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
 
     DataContext context1 = createDataContext();
     AnActionEvent event1 = TestActionEvent.createTestEvent(context1);
-    new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).fullUpdate(event1);
+    new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).update(event1);
     assertTrue(event1.getPresentation().isEnabledAndVisible());
     assertEquals("Run 'world_'", event1.getPresentation().getText());
   }
@@ -165,12 +165,12 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     DataContext context = createDataContext();
     assertNull(ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN).findExisting());
     AnActionEvent event = TestActionEvent.createTestEvent(context);
-    new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).fullUpdate(event);
+    new RunNewConfigurationContextAction(DefaultRunExecutor.getRunExecutorInstance()).update(event);
     assertFalse(event.getPresentation().isEnabledAndVisible());
     
     DataContext context1 = createDataContext();
     AnActionEvent event1 = TestActionEvent.createTestEvent(context1);
-    new RunContextAction(DefaultRunExecutor.getRunExecutorInstance()).fullUpdate(event1);
+    new RunContextAction(DefaultRunExecutor.getRunExecutorInstance()).update(event1);
     assertTrue(event1.getPresentation().isEnabledAndVisible());
     assertEquals("Run 'world_'", event1.getPresentation().getText());
   }

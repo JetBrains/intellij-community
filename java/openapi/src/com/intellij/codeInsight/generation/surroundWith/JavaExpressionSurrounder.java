@@ -35,7 +35,7 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
   @Override
   public TextRange surroundElements(@NotNull Project project,
                                     @NotNull Editor editor,
-                                    PsiElement @NotNull [] elements) throws IncorrectOperationException {
+                                    PsiElement @NotNull [] elements) {
     if (elements.length != 1 || !(elements[0] instanceof PsiExpression)) {
       throw new IllegalArgumentException(Arrays.toString(elements));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
@@ -42,7 +42,7 @@ public class LocateLibraryDialog extends DialogWrapper {
 
   public LocateLibraryDialog(@NotNull Module module,
                              @NotNull List<String> defaultLibraryPaths,
-                             @NotNull @NonNls final String presentableName) {
+                             final @NotNull @NonNls String presentableName) {
     super (module.getProject(), true);
     myDefaultLibraryPaths = defaultLibraryPaths;
     setTitle(QuickFixBundle.message("add.library.title.dialog", presentableName));
@@ -78,8 +78,7 @@ public class LocateLibraryDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
-  public List<String> showAndGetResult() {
+  public @NotNull List<String> showAndGetResult() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       Disposer.dispose(myDisposable);
       return myDefaultLibraryPaths;
@@ -98,20 +97,17 @@ public class LocateLibraryDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "#com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog";
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myUseBundledRadioButton;
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myContentPane;
   }
 

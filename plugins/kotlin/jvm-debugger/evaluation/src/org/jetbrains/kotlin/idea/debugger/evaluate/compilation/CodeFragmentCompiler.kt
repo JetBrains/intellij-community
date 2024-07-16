@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
@@ -333,12 +335,13 @@ private class EvaluatorModuleDescriptor(
 internal val OutputFile.internalClassName: String
     get() = computeInternalClassName(relativePath)
 
-internal val KtCompiledFile.internalClassName: String
+@KaExperimentalApi
+internal val KaCompiledFile.internalClassName: String
     get() = computeInternalClassName(path)
 
 private fun computeInternalClassName(path: String): String {
     require(path.endsWith(".class", ignoreCase = true))
-    return path.dropLast(".class".length).replace('/', '.')
+    return path.dropLast(".class".length).internalNameToFqn()
 }
 
 internal class CodeFragmentCompilationStats {

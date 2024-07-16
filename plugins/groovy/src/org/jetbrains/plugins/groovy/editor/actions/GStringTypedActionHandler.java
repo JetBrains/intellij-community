@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Maxim.Medvedev
  */
-public class GStringTypedActionHandler extends TypedHandlerDelegate {
+public final class GStringTypedActionHandler extends TypedHandlerDelegate {
   @NotNull
   @Override
   public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

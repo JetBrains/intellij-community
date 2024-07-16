@@ -10,16 +10,18 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "This function is deprecated because it replaces the whole context. " +
   "Instead, use blockingContext with full context.",
   ReplaceWith("blockingContext(job, action)")
 )
-fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContext(job, action)
+fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContextInner(job, action)
 
 /**
  * ```

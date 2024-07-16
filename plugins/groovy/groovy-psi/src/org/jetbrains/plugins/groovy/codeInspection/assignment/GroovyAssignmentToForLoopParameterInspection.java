@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-public class GroovyAssignmentToForLoopParameterInspection extends BaseInspection {
+public final class GroovyAssignmentToForLoopParameterInspection extends BaseInspection {
 
   @Override
   @Nullable

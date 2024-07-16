@@ -10,7 +10,7 @@ fun PtyOptions.toLocalPtyOptions(): LocalPtyOptions =
   when (this) {
     is LocalTargetPtyOptions -> localPtyOptions
     else -> {
-      LocalPtyOptions.DEFAULT.builder()
+      LocalPtyOptions.defaults().builder()
         .initialRows(initialRows)
         .initialColumns(initialColumns)
         .build()

@@ -94,7 +94,7 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     val defaultProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo
       get() {
         return when {
-          JBCefApp.isSupported() -> JCEFHtmlPanelProvider().providerInfo
+          JCEFHtmlPanelProvider.canBeUsed() -> JCEFHtmlPanelProvider().providerInfo
           else -> MarkdownHtmlPanelProvider.ProviderInfo("Unavailable", "Unavailable")
         }
       }

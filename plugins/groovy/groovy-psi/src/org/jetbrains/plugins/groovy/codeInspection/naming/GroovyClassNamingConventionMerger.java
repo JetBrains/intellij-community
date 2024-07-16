@@ -6,7 +6,7 @@ package org.jetbrains.plugins.groovy.codeInspection.naming;
 import com.intellij.codeInspection.naming.AbstractNamingConventionMerger;
 import com.intellij.psi.PsiClass;
 
-public class GroovyClassNamingConventionMerger extends AbstractNamingConventionMerger<PsiClass> {
+public final class GroovyClassNamingConventionMerger extends AbstractNamingConventionMerger<PsiClass> {
   public GroovyClassNamingConventionMerger() {
     super(new NewGroovyClassNamingConventionInspection());
   }

@@ -22,13 +22,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
+import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.storage.*;
 import com.intellij.util.io.storage.lf.RefCountingContentStorageImplLF;
@@ -45,11 +45,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
+import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.EXPAND_FILE;
 import static com.intellij.util.io.storage.CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
@@ -79,11 +81,18 @@ public final class PersistentFSLoader {
    * In both cases, we attach all other exceptions to .suppressed list of the main exception
    */
   private static final @NotNull Function<List<? extends Throwable>, IOException> ASYNC_EXCEPTIONS_REPORTER = exceptions -> {
-    IOException mainException = (IOException)ContainerUtil.find(exceptions, e -> e instanceof IOException);
-    if (mainException != null && !mainException.getMessage().isEmpty()) {
+    IOException mainIoException = (IOException)exceptions.stream()
+      .map(ex -> {
+        //unwrap CompletionException from async processing
+        return ex instanceof CompletionException ? ex.getCause() : ex;
+      })
+      .filter(e -> e instanceof IOException)
+      .findFirst().orElse(null);
+
+    if (mainIoException != null && !mainIoException.getMessage().isEmpty()) {
       for (Throwable exception : exceptions) {
-        if (exception != mainException) {
-          mainException.addSuppressed(exception);
+        if (exception != mainIoException) {
+          mainIoException.addSuppressed(exception);
         }
       }
     }
@@ -92,12 +101,12 @@ public final class PersistentFSLoader {
         .map(e -> ExceptionUtil.getNonEmptyMessage(e, ""))
         .filter(message -> !message.isBlank())
         .findFirst().orElse("<Error message not found>");
-      mainException = new IOException(nonEmptyErrorMessage);
+      mainIoException = new IOException(nonEmptyErrorMessage);
       for (Throwable exception : exceptions) {
-        mainException.addSuppressed(exception);
+        mainIoException.addSuppressed(exception);
       }
     }
-    return mainException;
+    return mainIoException;
   };
 
 
@@ -418,8 +427,8 @@ public final class PersistentFSLoader {
     //So the tradeoff: we use few heuristics to quickly check for the most likely signs of corruption,
     // and if we find any such sign -- switch to more vigilant checking:
 
-    if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
-      addProblem(NOT_CLOSED_PROPERLY, "VFS wasn't safely shut down: records.connectionStatus != SAFELY_CLOSED");
+    if (!recordsStorage.wasClosedProperly()) {
+      addProblem(NOT_CLOSED_PROPERLY, "VFS wasn't safely shut down: records.wasClosedProperly is false");
     }
     int errorsAccumulated = recordsStorage.getErrorsAccumulated();
     if (errorsAccumulated > 0) {
@@ -630,7 +639,7 @@ public final class PersistentFSLoader {
           .pageSize(pageSize)
           //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
           // data from non-mmapped -- the only 'migration' needed is to page-align the file:
-          .expandFileIfNotPageAligned(true)
+          .ifFileIsNotPageAligned(EXPAND_FILE)
           .wrapStorageSafely(
             attributesFile,
             storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
@@ -769,15 +778,21 @@ public final class PersistentFSLoader {
   }
 
   public @NotNull PersistentFSRecordsStorage createRecordsStorage(@NotNull Path recordsFile) throws IOException {
-    PersistentFSRecordsStorage storage = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
-    if (vfsLog != null) {
-      var recordsInterceptors = vfsLog.getConnectionInterceptors().stream()
-        .filter(RecordsInterceptor.class::isInstance)
-        .map(RecordsInterceptor.class::cast)
-        .toList();
-      storage = InterceptorInjection.INSTANCE.injectInRecords(storage, recordsInterceptors);
-    }
-    return storage;
+    StorageFactory<PersistentFSRecordsStorage> recordsStorageFactory = PersistentFSRecordsStorageFactory.storageImplementation();
+
+    LOG.info("VFS uses " + recordsStorageFactory + " storage for main file records table");
+    return recordsStorageFactory.wrapStorageSafely(recordsFile, records -> {
+      if (vfsLog != null) {
+        var recordsInterceptors = vfsLog.getConnectionInterceptors().stream()
+          .filter(RecordsInterceptor.class::isInstance)
+          .map(RecordsInterceptor.class::cast)
+          .toList();
+        return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
+      }
+      else {
+        return records;
+      }
+    });
   }
 
   /** @return common version of all 3 storages, or -1, if their versions are different (i.e. inconsistent) */
@@ -805,7 +820,6 @@ public final class PersistentFSLoader {
     records.setVersion(version);
     attributes.setVersion(version);
     contents.setVersion(version);
-    records.setConnectionStatus(PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
   }
 
   private static void makeBestEffortToCleanStorage(@Nullable Object storage,
@@ -816,17 +830,20 @@ public final class PersistentFSLoader {
       }
       catch (Throwable t) {
         LOG.info(storage.getClass().getSimpleName() + ".closeAndClean() fails: " +
-                 ExceptionUtil.getNonEmptyMessage(t, t.getClass().getSimpleName() + "(<no error message given>)"));
+                 t.getClass().getSimpleName() + "(" + ExceptionUtil.getNonEmptyMessage(t, "<no error message given>") + ")");
       }
     }
     else {
       LOG.info("[" + storageFile.getFileName() + "]: " + storage + " is not CleanableStorage " +
                "-> trying to clean by explicitly removing all the files [" + storageFile.getFileName() + "*]");
     }
-    //In theory, we should try removing files explicitly only as a last resort, if the code above fails
-    // -- i.e. if .closeAndClean() fails, or storage is null, or not CleanableStorage...
-    //In practice, though, I trust no one, not even JVM, nor my own code. Especially not my own code.
-    // So let's do that always:
+    //If storage fails to open -- we can't use storage to closeAndClean() its on-disk data, because the storage=null.
+    // In a perfect world we should setup each storage to clean-if-not-successfully-open -- in a real world we
+    // can't be sure all of the storages follow that rule.
+    // And if some storage does not follow, it creates infinite cycle: trying to open VFS -> fail -> trying
+    // to clean -> fail to clean some storage(s) -> trying to open fresh -> fail again as some storage(s) wasn't
+    // cleaned -> repeat.
+    //So this branch is still useful to prevent such a cycle.
     boolean noSuchFilesRemains = IOUtil.deleteAllFilesStartingWith(storageFile);
     if (!noSuchFilesRemains) {
       LOG.info("Can't delete " + storageFile + "*");

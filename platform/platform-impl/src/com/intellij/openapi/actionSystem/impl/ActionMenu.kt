@@ -10,6 +10,7 @@ import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
@@ -37,6 +38,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.ComponentEvent
@@ -49,6 +51,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import javax.swing.event.MenuEvent
 import javax.swing.event.MenuListener
+import kotlin.math.abs
 
 @Suppress("RedundantConstructorKeyword")
 class ActionMenu constructor(private val context: DataContext?,
@@ -91,30 +94,21 @@ class ActionMenu constructor(private val context: DataContext?,
   }
 
   companion object {
-    /**
-     * By default, a "performable" non-empty popup action group menu item still shows a submenu.
-     * Use this key to disable the submenu and avoid children expansion on update as follows:
-     *
-     * `presentation.putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true)`.
-     *
-     * Both ordinary and template presentations are supported.
-     * @see Presentation.setPerformGroup
-     */
+    @Deprecated("Use ActionUtil.SUPPRESS_SUBMENU")
     @JvmField
-    val SUPPRESS_SUBMENU: Key<Boolean> = Key.create("SUPPRESS_SUBMENU")
+    val SUPPRESS_SUBMENU = ActionUtil.SUPPRESS_SUBMENU
 
-    /**
-     * Same as [AlwaysVisibleActionGroup]
-     */
+    @Deprecated("Use ActionUtil.ALWAYS_VISIBLE_GROUP")
     @JvmField
-    val ALWAYS_VISIBLE: Key<Boolean> = Key.create("ALWAYS_VISIBLE")
+    val ALWAYS_VISIBLE = ActionUtil.ALWAYS_VISIBLE_GROUP
 
+    @Deprecated("Use ActionUtil.KEYBOARD_SHORTCUT_SUFFIX")
     @JvmField
-    val KEYBOARD_SHORTCUT_SUFFIX: Key<@NlsSafe String> = Key.create("keyboardShortcutTextSuffix");
+    val KEYBOARD_SHORTCUT_SUFFIX = ActionUtil.KEYBOARD_SHORTCUT_SUFFIX
 
-    /** The icon that will be placed after the text */
+    @Deprecated("Use ActionUtil.SECONDARY_ICON")
     @JvmField
-    val SECONDARY_ICON: Key<Icon> = Key.create("SECONDARY_ICON")
+    val SECONDARY_ICON = ActionUtil.SECONDARY_ICON
 
     @JvmStatic
     fun shouldConvertIconToDarkVariant(): Boolean {
@@ -431,6 +425,8 @@ class ActionMenu constructor(private val context: DataContext?,
 private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatcher, AWTEventListener, Disposable {
   private var component: Component?
   private var startMousePoint: Point?
+  private var xClosestToTargetSoFar = 0
+  private var closestHorizontalDistanceSoFar = 0
   private var upperTargetPoint: Point? = null
   private var lowerTargetPoint: Point? = null
   private var callbackAlarm: SingleAlarm? = null
@@ -448,6 +444,7 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
     val info = MouseInfo.getPointerInfo()
     startMousePoint = info?.location
     if (startMousePoint != null) {
+      xClosestToTargetSoFar = startMousePoint!!.x
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.COMPONENT_EVENT_MASK)
       getInstance().addDispatcher(this, this)
     }
@@ -470,10 +467,12 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
       if (startMousePoint!!.x < bounds.x) {
         upperTargetPoint = Point(bounds.x, bounds.y)
         lowerTargetPoint = Point(bounds.x, bounds.y + bounds.height)
+        closestHorizontalDistanceSoFar = abs(upperTargetPoint!!.x - xClosestToTargetSoFar)
       }
       if (startMousePoint!!.x > bounds.x + bounds.width) {
         upperTargetPoint = Point(bounds.x + bounds.width, bounds.y)
         lowerTargetPoint = Point(bounds.x + bounds.width, bounds.y + bounds.height)
+        closestHorizontalDistanceSoFar = abs(upperTargetPoint!!.x - xClosestToTargetSoFar)
       }
     }
   }
@@ -491,10 +490,18 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
     val point = e.locationOnScreen
     val bounds = component!!.bounds
     bounds.location = component!!.locationOnScreen
-    val isMouseMovingTowardsSubmenu = bounds.contains(point) ||
-                                      Polygon(intArrayOf(startMousePoint!!.x, upperTargetPoint!!.x, lowerTargetPoint!!.x),
-                                              intArrayOf(startMousePoint!!.y, upperTargetPoint!!.y, lowerTargetPoint!!.y), 3)
-                                        .contains(point)
+    val insideTarget = bounds.contains(point)
+    val horizontalDistance = abs(upperTargetPoint!!.x - point.x)
+    if (!insideTarget && horizontalDistance < closestHorizontalDistanceSoFar) {
+      closestHorizontalDistanceSoFar = horizontalDistance
+    }
+    val startedToMoveAway = !insideTarget && horizontalDistance >= closestHorizontalDistanceSoFar + JBUI.scale(MOVING_AWAY_THRESHOLD)
+    val isMouseMovingTowardsSubmenu = insideTarget || (
+      !startedToMoveAway &&
+      Polygon(intArrayOf(startMousePoint!!.x, upperTargetPoint!!.x, lowerTargetPoint!!.x),
+              intArrayOf(startMousePoint!!.y, upperTargetPoint!!.y, lowerTargetPoint!!.y), 3)
+        .contains(point)
+    )
     eventToRedispatch = e
     if (!isMouseMovingTowardsSubmenu) {
       callbackAlarm.request()
@@ -514,6 +521,8 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
     Toolkit.getDefaultToolkit().removeAWTEventListener(this)
   }
 }
+
+private const val MOVING_AWAY_THRESHOLD = 16
 
 private class SubElementSelector(private val owner: ActionMenu) {
   companion object {

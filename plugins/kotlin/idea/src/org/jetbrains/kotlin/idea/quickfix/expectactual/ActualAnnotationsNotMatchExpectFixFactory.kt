@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.quickfix.expectactual
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -63,8 +63,8 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
 
     private fun getAnnotationClassId(annotationEntry: KtAnnotationEntry): ClassId? {
         analyze(annotationEntry) {
-            val resolvedExpectAnnotationCall = annotationEntry.resolveCall()?.singleConstructorCallOrNull() ?: return null
-            return resolvedExpectAnnotationCall.symbol.containingClassIdIfNonLocal
+            val resolvedExpectAnnotationCall = annotationEntry.resolveToCall()?.singleConstructorCallOrNull() ?: return null
+            return resolvedExpectAnnotationCall.symbol.containingClassId
         }
     }
 }

@@ -54,4 +54,21 @@ object FUCollectorTestCase {
     action()
     return mockLoggerProvider.getLoggedEvents()
   }
+
+  /**
+   * Allows collecting [LogEvent] for multiple recorders simultaneously.
+   */
+  fun collectLogEvents(listenerPerRecorder: Map<String, Consumer<LogEvent>?>,
+                       parentDisposable: Disposable,
+                       action: () -> Unit): Map<String, List<LogEvent>> {
+    val mockProviderByRecorder: Map<String, TestStatisticsEventLoggerProvider> = listenerPerRecorder.entries.associate { (recorder, listener) ->
+      val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder)
+      mockLoggerProvider.logger.eventListener = listener
+      recorder to mockLoggerProvider
+    }
+    (StatisticsEventLoggerProvider.EP_NAME.point as ExtensionPointImpl<StatisticsEventLoggerProvider>)
+      .maskAll(mockProviderByRecorder.values.toList(), parentDisposable, true)
+    action()
+    return mockProviderByRecorder.mapValues { it.value.getLoggedEvents() }
+  }
 }

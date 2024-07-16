@@ -8,6 +8,7 @@ import com.intellij.ide.environment.EnvironmentService
 import com.intellij.ide.environment.description
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.configuration.HeadlessLogging
 import kotlinx.coroutines.*
 import java.io.IOException
 
@@ -19,7 +20,12 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
 
   override suspend fun getEnvironmentValue(key: EnvironmentKey): String {
     return getEnvironmentValueOrNull(key)
-           ?: throw MissingEnvironmentKeyException(key)
+           ?: run {
+             val throwable = MissingEnvironmentKeyException(key)
+             LOG.error(throwable)
+             HeadlessLogging.logFatalError(MissingEnvironmentKeyException(key))
+             throw throwable
+           }
   }
 
   override suspend fun getEnvironmentValue(key: EnvironmentKey, defaultValue: String): String {
@@ -50,7 +56,10 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
 
   class MissingEnvironmentKeyException(val key: EnvironmentKey) : CancellationException(
     """Missing value for the environment key '${key.id}'
-      |Usage:
+      |The value can be set as a system property (`-D${key.id}=<value>` in the VM options),
+      |or as an entry in the JSON configuration file (the command-line starter `./idea.sh generateEnvironmentKeysFile`).
+      |
+      |Description of ${key.id}:
       |${key.description}
       |""".trimMargin())
 

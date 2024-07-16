@@ -5,7 +5,7 @@ import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.EditorTabPreviewBase
+import com.intellij.openapi.vcs.changes.showExternalToolIfNeeded
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.wm.IdeFocusManager
@@ -16,7 +16,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import java.awt.Component
 import java.lang.ref.WeakReference
 
-class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
+internal class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
   : TreeHandlerEditorDiffPreview(changesBrowser.viewer, VcsLogDiffPreviewHandler(changesBrowser)) {
 
   init {
@@ -30,8 +30,7 @@ class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
     return super.openPreview(requestFocus)
   }
 
-  override fun handleEscapeKey() {
-    closePreview()
+  override fun returnFocusToTree() {
     restoreToolWindowFocus(oldToolWindowFocus)
   }
 
@@ -75,11 +74,13 @@ class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
     if (ExternalDiffTool.isEnabled()) {
       val diffProducers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer)
         .map { change -> changesBrowser.getDiffRequestProducer(change, false) }
-      if (EditorTabPreviewBase.showExternalToolIfNeeded(project, diffProducers)) {
+      if (showExternalToolIfNeeded(project, diffProducers)) {
         return true
       }
     }
 
     return super.performDiffAction()
   }
+
+  override fun isOpenPreviewWithNextDiffShortcut(): Boolean = false
 }

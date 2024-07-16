@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.textFieldWithBrowseButton
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
@@ -279,17 +280,26 @@ internal class JdkDownloadDialog(
     versionComboBox.onSelectionChange(::onVersionSelectionChange)
 
     panel = panel {
-      row(ProjectBundle.message("dialog.row.jdk.version")) { cell(versionComboBox).widthGroup("combo") }
-      row(ProjectBundle.message("dialog.row.jdk.vendor")) { cell(vendorComboBox).widthGroup("combo").focused()
-        .validationInfo {
-          val itemArch = CpuArch.fromString(it.item.item.arch)
-          when {
-            itemArch != CpuArch.CURRENT -> warning(ProjectBundle.message("dialog.jdk.arch.validation", itemArch, CpuArch.CURRENT))
-            else -> null
-          }
-        }
+      row(ProjectBundle.message("dialog.row.jdk.version")) {
+        cell(versionComboBox)
+          .align(AlignX.FILL)
       }
-      row(ProjectBundle.message("dialog.row.jdk.location")) { cell(installDirComponent) }
+      row(ProjectBundle.message("dialog.row.jdk.vendor")) {
+        cell(vendorComboBox)
+          .align(AlignX.FILL)
+          .focused()
+          .validationInfo {
+            val itemArch = CpuArch.fromString(it.item.item.arch)
+            when {
+              itemArch != CpuArch.CURRENT -> warning(ProjectBundle.message("dialog.jdk.arch.validation", itemArch, CpuArch.CURRENT))
+              else -> null
+            }
+          }
+      }
+      row(ProjectBundle.message("dialog.row.jdk.location")) {
+        cell(installDirComponent)
+          .align(AlignX.FILL)
+      }
     }
 
     myOKAction.putValue(Action.NAME, okActionText)

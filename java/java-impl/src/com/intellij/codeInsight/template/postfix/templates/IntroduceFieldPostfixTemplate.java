@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduceField.JavaIntroduceFieldHandlerBase;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
   @Override
   protected void prepareAndExpandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     //no write action
-    expandForChooseExpression(expression, editor);
+    DumbService.getInstance(expression.getProject())
+      .withAlternativeResolveEnabled(() -> expandForChooseExpression(expression, editor));
   }
 }

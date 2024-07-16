@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ComparisonMergeUtil {
+
+  private ComparisonMergeUtil() { }
+
   @NotNull
   public static List<MergeRange> buildSimple(@NotNull FairDiffIterable fragments1,
                                              @NotNull FairDiffIterable fragments2,
@@ -24,10 +27,10 @@ public final class ComparisonMergeUtil {
   }
 
   @NotNull
-  public static List<MergeRange> buildMerge(@NotNull FairDiffIterable fragments1,
-                                            @NotNull FairDiffIterable fragments2,
-                                            @NotNull SideEquality trueEquality,
-                                            @NotNull CancellationChecker indicator) {
+  static List<MergeRange> buildMerge(@NotNull FairDiffIterable fragments1,
+                                     @NotNull FairDiffIterable fragments2,
+                                     @NotNull SideEquality trueEquality,
+                                     @NotNull CancellationChecker indicator) {
     assert fragments1.getLength1() == fragments2.getLength1();
     return new FairMergeBuilder(trueEquality).execute(fragments1, fragments2);
   }

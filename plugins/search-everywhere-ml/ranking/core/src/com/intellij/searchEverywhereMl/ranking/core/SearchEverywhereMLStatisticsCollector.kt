@@ -134,6 +134,9 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              elements: List<SearchEverywhereFoundElementInfoWithMl>,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
+    val elementsEvents = getElementsEvents(project, shouldLogFeatures, featureCache, elements, mixedListInfo, elementIdProvider,
+                                          cache.sessionStartTime)
+
     eventId.log(project) {
       val tabId = cache.tabId
       addAll(additionalEvents)
@@ -155,7 +158,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       )
 
       addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
-      addAll(getElementsEvents(project, shouldLogFeatures, featureCache, elements, mixedListInfo, elementIdProvider))
+      addAll(elementsEvents)
     }
   }
 
@@ -171,11 +174,12 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                 featureCache: SearchEverywhereMlFeaturesCache,
                                 elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
-                                elementIdProvider: SearchEverywhereMlItemIdProvider): List<EventPair<*>> {
+                                elementIdProvider: SearchEverywhereMlItemIdProvider,
+                                sessionStartTime: Long): List<EventPair<*>> {
     val contributorFeaturesProvider = { it: SearchEverywhereFoundElementInfoWithMl ->
       buildList {
         if (shouldLogFeatures) {
-          addAll(contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo))
+          addAll(contributorFeaturesProvider.getFeatures(it.contributor, mixedListInfo, sessionStartTime))
         }
         else {
           add(contributorFeaturesProvider.getContributorIdFeature(it.contributor))
@@ -184,7 +188,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
 
     val updateEvents = featureCache.getUpdateEventsAndCache(project, shouldLogFeatures, elements.take(REPORTED_ITEMS_LIMIT),
-                                                             contributorFeaturesProvider, elementIdProvider)
+                                                            contributorFeaturesProvider, elementIdProvider)
     val events = listOf(
       IS_PROJECT_DISPOSED_KEY.with(updateEvents == null)
     )
@@ -270,7 +274,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                           idProvider: SearchEverywhereMlItemIdProvider): List<Int> {
     return ReadAction.compute<List<Int>, Nothing> {
       selectedIndices.map { index ->
-        if (index >= elements.lastIndex) return@map -1
+        if (index > elements.lastIndex) return@map -1
 
         val element = elements[index].element
         return@map idProvider.getId(element) ?: -1
@@ -292,7 +296,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     return true
   }
 
-  private val GROUP = EventLogGroup("mlse.log", 93, MLSE_RECORDER_ID)
+  private val GROUP = EventLogGroup("mlse.log", 104, MLSE_RECORDER_ID)
 
   private val IS_INTERNAL = EventFields.Boolean("isInternal")
   private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
@@ -335,14 +339,16 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   @VisibleForTesting
   val FEATURES_DATA_KEY = createFeaturesEventObject()
   val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
+  val PRIORITY_KEY = EventFields.Int("priority", "The final priority used for sorting elements")
   val ABSENT_FEATURES_KEY = EventFields.StringListValidatedByCustomRule("absentFeatures",
-                                                                                SearchEverywhereMlElementFeatureValidationRule::class.java)
+                                                                        SearchEverywhereMlElementFeatureValidationRule::class.java)
   val CONTRIBUTOR_DATA_KEY = ObjectEventField(
     "contributor", *SearchEverywhereContributorFeaturesProvider.getFeaturesDeclarations().toTypedArray()
   )
 
   val COLLECTED_RESULTS_DATA_KEY = ObjectListEventField(
-    "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_DATA_KEY, ML_WEIGHT_KEY, ABSENT_FEATURES_KEY
+    "collectedItems", ID_KEY, ACTION_ID_KEY, FEATURES_DATA_KEY, CONTRIBUTOR_DATA_KEY, ML_WEIGHT_KEY, PRIORITY_KEY,
+    ABSENT_FEATURES_KEY
   )
 
   // events
@@ -357,10 +363,12 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   private fun collectNameFeaturesToFields(): Map<String, EventField<*>> {
     val nameFeatureToField = hashMapOf<String, EventField<*>>(
-      SearchEverywhereElementFeaturesProvider.NAME_LENGTH.name to SearchEverywhereElementFeaturesProvider.NAME_LENGTH,
-      SearchEverywhereElementFeaturesProvider.ML_SCORE_KEY.name to SearchEverywhereElementFeaturesProvider.ML_SCORE_KEY
+      *SearchEverywhereElementFeaturesProvider.run {
+        listOf(NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY, BUFFERED_TIMESTAMP)
+      }.map { it.name to it }.toTypedArray()
     )
-    nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.nameFeatureToField.values.map { it.name to it })
+    nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.prefixMatchingNameFeatureToField.values.map { it.name to it })
+    nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.wholeMatchingNameFeatureToField.values.map { it.name to it })
     for (featureProvider in SearchEverywhereElementFeaturesProvider.getFeatureProviders()) {
       nameFeatureToField.putAll(featureProvider.getFeaturesDeclarations().map {
         it.name to it

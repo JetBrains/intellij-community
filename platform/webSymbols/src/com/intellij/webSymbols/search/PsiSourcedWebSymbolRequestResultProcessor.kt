@@ -14,7 +14,9 @@ import com.intellij.util.Processor
 import com.intellij.webSymbols.PsiSourcedWebSymbol
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.references.WebSymbolReference
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiElement,
                                                 private val targetSymbols: List<WebSymbol>,
                                                 private val includeRegularReferences: Boolean) : RequestResultProcessor() {

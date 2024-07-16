@@ -19,7 +19,7 @@ import java.net.URI
 import java.net.http.HttpResponse
 
 @SinceGitLab("12.0")
-suspend fun GitLabApi.GraphQL.getProject(project: GitLabProjectCoordinates): HttpResponse<out GitLabProjectDTO> {
+suspend fun GitLabApi.GraphQL.findProject(project: GitLabProjectCoordinates): HttpResponse<out GitLabProjectDTO?> {
   val parameters = mapOf(
     "projectId" to project.projectPath.fullPath(),
   )

@@ -23,7 +23,7 @@ import java.util.List;
 
 public abstract class AbstractSearcherTest extends KotlinLightCodeInsightFixtureTestCase {
     @Override
-    public void setUp() {
+    protected void setUp() {
         super.setUp();
         TestUtilsKt.invalidateLibraryCache(getProject());
     }

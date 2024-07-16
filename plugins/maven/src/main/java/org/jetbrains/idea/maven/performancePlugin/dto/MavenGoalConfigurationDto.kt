@@ -4,5 +4,6 @@ package org.jetbrains.idea.maven.performancePlugin.dto
 data class MavenGoalConfigurationDto(
   val moduleName: String,
   val goals: List<String>,
-  val settingsFilePath: String = ""
+  val settingsFilePath: String = "",
+  val runAnything: Boolean = false,
 )

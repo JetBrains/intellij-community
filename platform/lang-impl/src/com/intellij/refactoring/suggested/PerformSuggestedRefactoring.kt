@@ -33,6 +33,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
@@ -92,7 +93,7 @@ fun performSuggestedRefactoring(state: SuggestedRefactoringState,
 
   when (val refactoringData = refactoringSupport.availability.detectAvailableRefactoring(state)) {
     is SuggestedRenameData -> {
-      val popup = RenamePopup(refactoringData.oldName, refactoringData.declaration.name!!)
+      val popup = RenamePopup(refactoringData.oldName, refactoringData.newName)
 
       fun doRefactor() {
         doRefactor(refactoringData, state, editor, actionPlace) {
@@ -374,7 +375,7 @@ private fun performRename(refactoringSupport: SuggestedRefactoringSupport, data:
 
   val relativeCaretOffset = editor.caretModel.offset - refactoringSupport.anchorOffset(data.declaration)
 
-  val newName = data.declaration.name!!
+  val newName = data.newName
   runWriteAction {
     data.declaration.setName(data.oldName)
   }

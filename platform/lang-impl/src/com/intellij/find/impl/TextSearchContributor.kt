@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl
 
 import com.intellij.find.FindBundle
@@ -9,9 +9,7 @@ import com.intellij.find.impl.TextSearchRightActionAction.*
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.SearchEverywhereBaseAction
-import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.Companion.SE_TAB_TOPIC
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.SETabSwitchedEvent
 import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
@@ -60,7 +58,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel
 
-  private var everywhereScope = getEverywhereScope()
+  private var everywhereScope = GlobalSearchScope.everythingScope(project)
   private var projectScope: GlobalSearchScope?
   private var selectedScopeDescriptor: ScopeDescriptor
   private var psiContext = getPsiContext()
@@ -77,12 +75,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
     SmartPointerManager.getInstance(project).createSmartPsiElementPointer(it)
   }
 
-  private fun getEverywhereScope() =
-    SearchEverywhereClassifier.EP_Manager.getEverywhereScope(project) ?: GlobalSearchScope.everythingScope(project)
-
   private fun getProjectScope(descriptors: List<ScopeDescriptor>): GlobalSearchScope? {
-    SearchEverywhereClassifier.EP_Manager.getProjectScope(project)?.let { return it }
-
     GlobalSearchScope.projectScope(project).takeIf { it != everywhereScope }?.let { return it }
 
     val secondScope = JBIterable.from(descriptors).filter { !it.scopeEquals(everywhereScope) && !it.scopeEquals(null) }.first()
@@ -151,7 +144,8 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
       if (model.isWholeWordsOnly != word.get()) word.set(model.isWholeWordsOnly)
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe<SETabSwitcherListener>(
+    val connection = ApplicationManager.getApplication().getMessageBus().connect(this)
+    connection.subscribe<SETabSwitcherListener>(
       SE_TAB_TOPIC, object : SETabSwitcherListener {
       override fun tabSwitched(event: SETabSwitchedEvent) {
         case.set(false)
@@ -201,7 +195,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   private fun createScopes() = mutableListOf<ScopeDescriptor>().apply {
     addAll(project.service<ScopeService>()
              .createModel(setOf(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
-             .getScopesImmediately(createContext(project, psiContext))
+             .getScopesImmediately(AbstractGotoSEContributor.createContext(project, psiContext))
              .scopeDescriptors
     )
   }

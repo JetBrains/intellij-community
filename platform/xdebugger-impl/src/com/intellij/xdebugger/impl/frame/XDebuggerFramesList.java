@@ -124,6 +124,15 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+
+    if (ExpandedItemListCellRendererWrapper.unwrap(getCellRenderer()) instanceof XDebuggerGroupedFrameListRenderer renderer) {
+      renderer.updateUI();
+    }
+  }
+
+  @Override
   public @Nullable Object getData(@NonNls @NotNull String dataId) {
     if (FRAMES_LIST.is(dataId)) {
       return this;
@@ -271,6 +280,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       mySeparatorComponent.setCaptionCentered(false);
     }
 
+    public void updateUI() {
+      SwingUtilities.updateComponentTreeUI(myRendererComponent);
+    }
+
     @Override
     protected Border getDefaultItemComponentBorder() {
       return null;
@@ -281,6 +294,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       setSeparatorFont(list.getFont());
       myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      result.getAccessibleContext().setAccessibleName(myOriginalRenderer.getAccessibleContext().getAccessibleName());
       var itemComponent = getItemComponent();
       if (itemComponent instanceof SelectablePanel selectablePanel) {
         Color stackFrameColor = value instanceof XStackFrame stackFrame ? getFrameBgColor(stackFrame) : null;

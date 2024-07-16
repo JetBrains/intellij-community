@@ -4,7 +4,6 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.idea.TestFor;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -20,7 +19,7 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
   }
 
   private void doTest() {
@@ -111,6 +110,8 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testInConditionalPreserveResolve() { doTest(); }
 
   public void testArrayAccess() { doTest(); }
+  
+  public void testSwitchUnboxing() { doTest(); }
 
   public void testPackagePrivate() {
     myFixture.addClass("package a; public class A {void foo() {}}");
@@ -122,4 +123,6 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testInstanceofPattern() { doTest(); }
 
   public void testSwitchSelectorJava21() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest); }
+  
+  public void testVarInitializer() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest); }
 }

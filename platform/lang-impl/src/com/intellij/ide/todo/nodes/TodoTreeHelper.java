@@ -146,13 +146,11 @@ public class TodoTreeHelper {
 
   @Nullable
   public PsiElement getSelectedElement(Object userObject) {
-    if (userObject instanceof TodoDirNode) {
-      TodoDirNode descriptor = (TodoDirNode)userObject;
+    if (userObject instanceof TodoDirNode descriptor) {
       return descriptor.getValue();
     }
 
-    else if (userObject instanceof TodoFileNode) {
-      TodoFileNode descriptor = (TodoFileNode)userObject;
+    else if (userObject instanceof TodoFileNode descriptor) {
       return descriptor.getValue();
     }
     return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -372,7 +372,8 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
               //FIXME RC: to not hold >1 pagelock at a time, we need to allocate _slot_ for the new record
               //          and write its id into current record -- and then release current page, and acquire
               //          target page, and write data into a new record?
-              final int newRecordId = writeToNewlyAllocatedRecord(newRecordContent, newRecordContent.capacity());
+              int newRecordCapacity = allocationStrategy.capacity(newRecordLength, newRecordContent.capacity());
+              final int newRecordId = writeToNewlyAllocatedRecord(newRecordContent, newRecordCapacity);
 
               final RecordLayout.MovedRecord movedRecordLayout = RecordLayout.MovedRecord.INSTANCE;
               //mark current record as either 'moved' or 'deleted'

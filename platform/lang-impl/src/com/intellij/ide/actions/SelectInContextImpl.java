@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -24,8 +24,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.util.List;
 
 public final class SelectInContextImpl extends FileSelectInContext {
   private final Object mySelector;
@@ -48,8 +49,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
     return mySelector;
   }
 
-  @Nullable
-  public static SelectInContext createContext(AnActionEvent event) {
+  public static @Nullable SelectInContext createContext(AnActionEvent event) {
     SelectInContext result = event.getData(SelectInContext.DATA_KEY);
     if (result != null) {
       return result;
@@ -86,8 +86,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
     return null;
   }
 
-  @Nullable
-  private static SelectInContext createDescriptorContext(OpenFileDescriptor descriptor) {
+  private static @Nullable SelectInContext createDescriptorContext(OpenFileDescriptor descriptor) {
     VirtualFile file = descriptor.getFile();
     Document document = !file.isValid() ? null : FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return null;
@@ -95,8 +94,8 @@ public final class SelectInContextImpl extends FileSelectInContext {
     if (psiFile == null) return null;
     return new SmartSelectInContext(psiFile, psiFile, () -> {
       descriptor.navigate(false);
-      FileEditor[] allEditors = FileEditorManager.getInstance(descriptor.getProject()).getAllEditors(descriptor.getFile());
-      return ArrayUtil.getFirstElement(allEditors);
+      List<FileEditor> allEditors = FileEditorManager.getInstance(descriptor.getProject()).getAllEditorList(descriptor.getFile());
+      return ContainerUtil.getFirstItem(allEditors);
     });
   }
 
@@ -145,15 +144,13 @@ public final class SelectInContextImpl extends FileSelectInContext {
     }
   }
 
-  @Nullable
-  private static Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor) {
+  private static @Nullable Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor) {
     StructureViewBuilder builder = editor.getStructureViewBuilder();
     if (builder == null) return null;
     return getElementFromStructureView(project, editor, builder);
   }
 
-  @Nullable
-  private static Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor, @NotNull StructureViewBuilder builder) {
+  private static @Nullable Object getElementFromStructureView(@NotNull Project project, @NotNull FileEditor editor, @NotNull StructureViewBuilder builder) {
     if (builder instanceof TreeBasedStructureViewBuilder) {
       return getElementFromStructureTreeView(editor, (TreeBasedStructureViewBuilder)builder);
     }
@@ -165,8 +162,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
     }
   }
 
-  @Nullable
-  private static Object getElementFromStructureTreeView(@NotNull FileEditor fileEditor, TreeBasedStructureViewBuilder builder) {
+  private static @Nullable Object getElementFromStructureTreeView(@NotNull FileEditor fileEditor, TreeBasedStructureViewBuilder builder) {
     Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     StructureViewModel model = builder.createStructureViewModel(editor);
     Object selectorInFile = model.getCurrentEditorElement();
@@ -174,16 +170,14 @@ public final class SelectInContextImpl extends FileSelectInContext {
     return selectorInFile;
   }
 
-  @Nullable
-  private static Object getElementFromStructureViewComponent(@NotNull Project project, @NotNull FileEditor editor, @NotNull StructureViewBuilder builder) {
+  private static @Nullable Object getElementFromStructureViewComponent(@NotNull Project project, @NotNull FileEditor editor, @NotNull StructureViewBuilder builder) {
     StructureView structureView = builder.createStructureView(editor, project);
     Object selectorInFile = structureView.getTreeModel().getCurrentEditorElement();
     Disposer.dispose(structureView);
     return selectorInFile;
   }
 
-  @Nullable
-  private static SelectInContext createPsiContext(AnActionEvent event) {
+  private static @Nullable SelectInContext createPsiContext(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiElement == null || !psiElement.isValid()) {
@@ -196,8 +190,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
     return new SmartSelectInContext(psiFile, psiElement);
   }
 
-  @Nullable
-  public static SelectInContext createFileSystemItemContext(PsiElement psiElement) {
+  public static @Nullable SelectInContext createFileSystemItemContext(PsiElement psiElement) {
     PsiFileSystemItem fsItem = ObjectUtils.tryCast(psiElement, PsiFileSystemItem.class);
     VirtualFile vfile = fsItem == null ? null : fsItem.getVirtualFile();
     return vfile == null ? null : new FileSelectInContext(psiElement.getProject(), vfile) {
@@ -208,8 +201,7 @@ public final class SelectInContextImpl extends FileSelectInContext {
     };
   }
 
-  @Nullable
-  private static JComponent getEventComponent(AnActionEvent event) {
+  private static @Nullable JComponent getEventComponent(AnActionEvent event) {
     InputEvent inputEvent = event.getInputEvent();
     Object source;
     if (inputEvent != null && (source = inputEvent.getSource()) instanceof JComponent) {

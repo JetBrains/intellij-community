@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.psi.PsiMethod
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -133,7 +133,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   fun `test modules module delegate`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       testBuildscript("dependencies { modules { module(':') { <caret> } } }") {
-        val name = if (gradleVersion.isGradleAtLeast("5.0"))
+        val name = if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.0"))
           GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS
         else GRADLE_API_COMPONENT_MODULE_METADATA
         closureDelegateTest(name, 1)

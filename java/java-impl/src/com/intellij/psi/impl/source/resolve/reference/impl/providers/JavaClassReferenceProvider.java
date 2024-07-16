@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -40,8 +40,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   @Deprecated(forRemoval = true)
   public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
 
-  @Nullable
-  private Map<CustomizationKey, Object> myOptions;
+  private @Nullable Map<CustomizationKey, Object> myOptions;
 
   private boolean myAllowEmpty;
 
@@ -71,23 +70,19 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     }
   }
 
-  @Nullable
-  public <T> T getOption(@NotNull CustomizationKey<T> option) {
+  public @Nullable <T> T getOption(@NotNull CustomizationKey<T> option) {
     return myOptions == null ? null : option.getValue(myOptions);
   }
 
-  @Nullable
-  public GlobalSearchScope getScope(@NotNull Project project) {
+  public @Nullable GlobalSearchScope getScope(@NotNull Project project) {
     return null;
   }
 
-  @NotNull
-  public PsiFile getContextFile(@NotNull PsiElement element) {
+  public @NotNull PsiFile getContextFile(@NotNull PsiElement element) {
     return element.getContainingFile();
   }
 
-  @Nullable
-  public PsiClass getContextClass(@NotNull PsiElement element) {
+  public @Nullable PsiClass getContextClass(@NotNull PsiElement element) {
     return null;
   }
 
@@ -124,13 +119,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     }
   }
 
-  @NotNull
-  static List<PsiPackage> getDefaultPackages(@NotNull Project project) {
+  static @NotNull List<PsiPackage> getDefaultPackages(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, ourPackagesKey, ourPackagesProvider, false, project);
   }
 
-  @NotNull
-  static Set<String> getDefaultPackagesNames(@NotNull Project project) {
+  static @NotNull Set<String> getDefaultPackagesNames(@NotNull Project project) {
     return CachedValuesManager.getManager(project)
       .getCachedValue(project, 
                       () -> CachedValueProvider.Result.create(ContainerUtil.map2Set(getDefaultPackages(project), PsiPackage::getName), 
@@ -138,8 +131,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @Override
-  @Nullable
-  public Map<CustomizationKey, Object> getOptions() {
+  public @Nullable Map<CustomizationKey, Object> getOptions() {
     return myOptions;
   }
 

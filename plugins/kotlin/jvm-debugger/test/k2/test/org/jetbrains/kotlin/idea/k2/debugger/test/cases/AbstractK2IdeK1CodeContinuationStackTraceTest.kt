@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.k2.debugger.test.K2DebuggerTestCompilerFacility
 
 abstract class AbstractK2IdeK1CodeContinuationStackTraceTest : AbstractContinuationStackTraceTest() {
 
-    override val isK2Plugin = true
     override fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles,
         jvmTarget: JvmTarget,

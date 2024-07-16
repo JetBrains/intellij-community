@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.memberInfo
 
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
@@ -22,6 +24,9 @@ class K1MemberInfoSupport : KotlinMemberInfoSupport {
     }
 
     override fun renderMemberInfo(member: KtNamedDeclaration): String {
-        return renderer.render(member.resolveToDescriptorWrapperAware())
+        val rendered = renderer.render(member.resolveToDescriptorWrapperAware())
+        return if (member.isAbstract()) {
+            KotlinBundle.message("member.info.abstract.0", rendered)
+        } else rendered
     }
 }

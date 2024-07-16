@@ -59,7 +59,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
           <properties>
               <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-              <junit.version>5.10.0</junit.version>
+              <junit.version>5.10.2</junit.version>
           </properties>
 
           <dependencies>
@@ -93,7 +93,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                   <plugin>
                       <groupId>org.apache.maven.plugins</groupId>
                       <artifactId>maven-compiler-plugin</artifactId>
-                      <version>3.11.0</version>
+                      <version>3.13.0</version>
                       <configuration>
                           <source>11</source>
                           <target>11</target>
@@ -168,7 +168,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       }
 
       ext {
-          junitVersion = '5.10.0'
+          junitVersion = '5.10.2'
       }
 
       sourceCompatibility = '11'

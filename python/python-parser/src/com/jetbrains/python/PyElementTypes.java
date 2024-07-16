@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementType;
 
 import static com.jetbrains.python.PyElementTypesFacade.Companion;
 
@@ -28,6 +27,7 @@ public interface PyElementTypes {
   IElementType TYPE_PARAMETER = Companion.getINSTANCE().getTypeParameter();
   IElementType TYPE_PARAMETER_LIST = Companion.getINSTANCE().getTypeParameterList();
   IElementType TYPE_ALIAS_STATEMENT = Companion.getINSTANCE().getTypeAliasStatement();
+  IElementType STATEMENT_LIST = Companion.getINSTANCE().getStatementList();
 
   TokenSet PARAMETER_LIST_SET = TokenSet.create(PARAMETER_LIST);
 
@@ -58,7 +58,6 @@ public interface PyElementTypes {
   PyElementType TRY_EXCEPT_STATEMENT = new PyElementType("TRY_EXCEPT_STATEMENT", Companion.getINSTANCE().getTryExceptStatementConstructor());
   PyElementType WITH_STATEMENT = new PyElementType("WITH_STATEMENT", Companion.getINSTANCE().getWithStatementConstructor());
   PyElementType WHILE_STATEMENT = new PyElementType("WHILE_STATEMENT", Companion.getINSTANCE().getWhileStatementConstructor());
-  PyElementType STATEMENT_LIST = new PyElementType("STATEMENT_LIST", Companion.getINSTANCE().getStatementListConstructor());
 
   PyElementType NONLOCAL_STATEMENT = new PyElementType("NONLOCAL_STATEMENT", Companion.getINSTANCE().getNonlocalStatementConstructor());
   PyElementType WITH_ITEM = new PyElementType("WITH_ITEM", Companion.getINSTANCE().getWithItemConstructor());

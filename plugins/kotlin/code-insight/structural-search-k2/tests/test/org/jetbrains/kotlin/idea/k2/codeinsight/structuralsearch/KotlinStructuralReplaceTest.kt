@@ -13,12 +13,12 @@ import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.SmartList
-import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
 abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
 
     private val searchConfiguration = SearchConfiguration().apply {
         name = "SSR"
@@ -34,6 +33,9 @@ abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     protected fun doTest(
         searchPattern: String,
@@ -75,8 +77,8 @@ abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCa
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 }

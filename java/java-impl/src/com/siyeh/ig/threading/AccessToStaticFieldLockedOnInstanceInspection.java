@@ -50,9 +50,8 @@ public final class AccessToStaticFieldLockedOnInstanceInspection extends BaseIns
     ));
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
     if (aClass == null) return null;
@@ -65,8 +64,7 @@ public final class AccessToStaticFieldLockedOnInstanceInspection extends BaseIns
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.problem.descriptor");
   }
 

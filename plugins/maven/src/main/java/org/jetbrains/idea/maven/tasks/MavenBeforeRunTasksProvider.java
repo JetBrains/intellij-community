@@ -40,7 +40,7 @@ import java.util.List;
 import static com.intellij.openapi.util.Pair.pair;
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
+public final class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
   public static final Key<MavenBeforeRunTask> ID = Key.create("Maven.BeforeRunTask");
   private final Project myProject;
 

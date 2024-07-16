@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -44,7 +45,7 @@ class KotlinGotoTargetPresentationProvider : GotoTargetPresentationProvider {
         return TargetPresentation.builder(presentableText)
           .icon(presentation.getIcon(true))
           .locationText(moduleTextWithIcon?.text, moduleTextWithIcon?.icon)
-          .containerText(ktFile.packageFqName.asString())
+          .containerText(ktFile.packageFqName.takeUnless { it == FqName.ROOT }?.asString())
           .presentation()
     }
 }

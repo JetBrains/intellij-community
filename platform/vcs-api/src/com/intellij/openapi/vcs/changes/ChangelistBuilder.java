@@ -75,19 +75,6 @@ public interface ChangelistBuilder {
    */
   void processModifiedWithoutCheckout(VirtualFile file);
 
-  /**
-   * Process the file that is ignored by the version control.
-   *
-   * @param file an ignored file
-   * @deprecated use {@link #processIgnoredFile(FilePath)} instead
-   */
-  @Deprecated(forRemoval = true)
-  default void processIgnoredFile(VirtualFile file) {
-    if (file != null) {
-      processIgnoredFile(VcsUtil.getFilePath(file));
-    }
-  }
-
   void processIgnoredFile(FilePath filePath);
 
   /**

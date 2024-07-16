@@ -10,22 +10,18 @@ import org.jetbrains.plugins.notebooks.visualization.r.inlays.table.filters.gui.
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableModel;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Internal class to handle choices without adaptive behaviour<br>
  * Choices are automatically updated as the table model changes.
  */
 class NonAdaptiveChoicesHandler extends ChoicesHandler {
-
     private boolean interrupted = true;
-    // it is needed to map the filters to its editors
-    private Map<IFilter, FilterEditor> filtersMap =
-      new HashMap<>();
-    // entry used to filter rows
-    private RowEntry rowEntry;
 
-    public NonAdaptiveChoicesHandler(FiltersHandler handler) {
+    NonAdaptiveChoicesHandler(FiltersHandler handler) {
         super(handler);
     }
 
@@ -41,8 +37,6 @@ class NonAdaptiveChoicesHandler extends ChoicesHandler {
                 for (FilterEditor editor : handler.getEditors()) {
                     editorUpdated(editor);
                 }
-
-                initialiseFiltersInfo();
             }
         }
 
@@ -62,9 +56,6 @@ class NonAdaptiveChoicesHandler extends ChoicesHandler {
 
     @Override public void filterOperation(boolean start) {
         handler.enableNotifications(!start);
-        if (!start && !interrupted) {
-            initialiseFiltersInfo();
-        }
     }
 
     @Override public void filterEnabled(IFilter filter) {
@@ -99,22 +90,21 @@ class NonAdaptiveChoicesHandler extends ChoicesHandler {
             // (every update is handled by re-extracting the choices
             FilterEditor editor = handler.getEditor(column);
             if (editor.isEnabled()) {
-                setChoicesFromModel(editor, model);
+                setChoicesFromModel(editor);
             }
         } else {
-            lastRow = Math.min(model.getRowCount() - 1, lastRow);
             for (FilterEditor editor : handler.getEditors()) {
                 if (editor.isEnabled()
-                        && (AutoChoices.ENABLED == editor.getAutoChoices())) {
+                    && (AutoChoices.ENABLED == editor.getAutoChoices())) {
                     // insert events can be handled by adding the
                     // new model's values.
                     // updates/deletes require reparsing the whole
                     // table to obtain again the available choices
                     if (eventType == TableModelEvent.INSERT) {
-                        editor.addChoices(modelExtract(editor, model, firstRow,
-                                lastRow, new HashSet<>()));
-                    } else {
-                        setChoicesFromModel(editor, model);
+                        editor.addChoices(new HashSet<>());
+                    }
+                    else {
+                        setChoicesFromModel(editor);
                     }
                 }
             }
@@ -149,44 +139,13 @@ class NonAdaptiveChoicesHandler extends ChoicesHandler {
 
                 editor.setChoices(choices);
             } else {
-                setChoicesFromModel(editor, model);
+                setChoicesFromModel(editor);
             }
         }
     }
 
     /** Sets the content for the given editor from the model's values. */
-    private static void setChoicesFromModel(FilterEditor editor, TableModel model) {
-        editor.setChoices(modelExtract(editor, model, 0,
-                model.getRowCount() - 1, editor.getCustomChoices()));
+    private static void setChoicesFromModel(FilterEditor editor) {
+        editor.setChoices(editor.getCustomChoices());
     }
-
-    /**
-     * Extract content from the given range of rows in the model, adding the
-     * results to the provided Set, which is then returned.
-     */
-    private static Set modelExtract(FilterEditor editor,
-                                    TableModel model,
-                                    int firstRow,
-                                    int lastRow,
-                                    Set fill) {
-        return fill;
-    }
-
-    /** Initialise structures related to the filters and editors. */
-    private void initialiseFiltersInfo() {
-        // recreate the filtersMap
-        filtersMap.clear();
-
-        if (handler.getTable() != null) {
-            for (FilterEditor fe : handler.getEditors()) {
-                filtersMap.put(fe.getFilter(), fe);
-            }
-
-            // and the RowEntry
-            Collection<FilterEditor> eds = handler.getEditors();
-            rowEntry = new RowEntry(handler.getTable().getModel(),
-                    eds.toArray(new FilterEditor[eds.size()]));
-        }
-    }
-
 }

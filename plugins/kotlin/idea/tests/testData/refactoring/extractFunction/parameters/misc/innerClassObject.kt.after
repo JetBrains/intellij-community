@@ -19,5 +19,3 @@ private fun i(): Int {
     A.B.coFun()
     return A.B.coProp + 10
 }
-
-

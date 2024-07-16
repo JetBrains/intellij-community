@@ -12,7 +12,6 @@ import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker.cach
 import com.intellij.platform.workspace.storage.impl.query.Diff
 import com.intellij.platform.workspace.storage.impl.query.MatchList
 import com.intellij.platform.workspace.storage.impl.query.MatchWithEntityId
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
@@ -24,13 +23,17 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 
+@ApiStatus.Internal
 public data class CachedValue<T>(
   public val cacheProcessStatus: CacheProcessingStatus,
   public val value: T,
 )
 
+@ApiStatus.Internal
 public sealed interface CacheProcessingStatus {
+  @ApiStatus.Internal
   public sealed interface Hit: CacheProcessingStatus
+  @ApiStatus.Internal
   public sealed interface ValueChanged: CacheProcessingStatus
 }
 internal data object CacheHit: CacheProcessingStatus.Hit
@@ -39,7 +42,6 @@ internal data object CacheHitNotAffectedByChanges: CacheProcessingStatus.Hit
 internal data object IncrementalUpdate: CacheProcessingStatus.ValueChanged
 internal data object Initialization: CacheProcessingStatus.ValueChanged
 
-@OptIn(EntityStorageInstrumentationApi::class)
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface TracedSnapshotCache {
@@ -78,6 +80,7 @@ public interface TracedSnapshotCache {
   }
 }
 
+@ApiStatus.Internal
 public fun cache(): TracedSnapshotCache {
   return TracedSnapshotCacheImpl()
 }
@@ -88,7 +91,6 @@ public sealed interface EntityStorageChange {
   public val size: Int
 }
 
-@OptIn(EntityStorageInstrumentationApi::class)
 internal fun EntityStorageChange.createTraces(snapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
   return when (this) {
     is ChangeOnWorkspaceBuilderChangeLog -> this.createTraces(snapshot)
@@ -125,13 +127,13 @@ internal fun List<EntityStorageChange>.collapse(): EntityStorageChange {
   return target
 }
 
+@ApiStatus.Internal
 public class ChangeOnVersionedChange(
   private val changes: Sequence<EntityChange<*>>,
 ) : EntityStorageChange {
   override val size: Int
     get() = 0 // We should not collect more than one changelog, so there is no need to analyze the size
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   internal fun createTraces(snapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet = changes.toTraces(snapshot)
 
   internal fun makeTokensForDiff(): MatchList {
@@ -177,7 +179,6 @@ internal class ChangeOnWorkspaceBuilderChangeLog(
     }
   }
 
-  @OptIn(EntityStorageInstrumentationApi::class)
   internal fun createTraces(snapshot: ImmutableEntityStorageInstrumentation): ReadTraceHashSet {
     val externalMappingTraces = this.externalMappingChanges.entries
       .filter { it.value.isNotEmpty() }
@@ -226,6 +227,7 @@ internal class ChangeOnWorkspaceBuilderChangeLog(
  * Should be used in tests only.
  */
 @TestOnly
+@ApiStatus.Internal
 public object CacheResetTracker {
   public var enabled: Boolean = false
   public var cacheReset: Boolean = false

@@ -22,7 +22,7 @@ final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjec
       return;
     }
 
-    final CoverageDataManager coverageDataManager = getCoverageDataManager(project);
+    final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     CoverageSuitesBundle javaSuite = getJavaSuite(coverageDataManager, project);
     // This decorator is applicable only to java suites
     if (javaSuite == null) return;

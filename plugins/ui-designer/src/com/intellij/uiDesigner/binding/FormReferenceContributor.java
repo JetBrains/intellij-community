@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiFile;
 
 
-public class FormReferenceContributor extends PsiReferenceContributor {
+public final class FormReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(final @NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(psiFile(PsiPlainTextFile.class), new FormReferenceProvider());

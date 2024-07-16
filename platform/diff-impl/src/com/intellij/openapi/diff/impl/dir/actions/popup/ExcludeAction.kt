@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 
-class ExcludeAction : DumbAwareAction() {
+internal class ExcludeAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val dirDiffModel = e.getData(DirDiffPanel.DIR_DIFF_MODEL) ?: return
 

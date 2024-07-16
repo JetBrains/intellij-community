@@ -9,7 +9,6 @@ import org.jetbrains.plugins.github.util.DisposalCountingHolder
 
 internal class GHPRDataProviderImpl(override val id: GHPRIdentifier,
                                     override val detailsData: GHPRDetailsDataProvider,
-                                    override val stateData: GHPRStateDataProvider,
                                     override val changesData: GHPRChangesDataProvider,
                                     override val commentsData: GHPRCommentsDataProvider,
                                     override val reviewData: GHPRReviewDataProvider,

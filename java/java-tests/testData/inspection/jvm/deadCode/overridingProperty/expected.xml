@@ -4,7 +4,7 @@
     <file>TC.kt</file>
     <line>1</line>
     <entry_point TYPE="method" FQNAME="Type Type(T default)"/>
-    <description>All constructor usages belong to the calls chain that has no members reachable from entry points.</description>
+    <description>All constructor usages are not reachable from the entry points.</description>
   </problem>
 
 
@@ -12,7 +12,7 @@
     <file>TC.kt</file>
     <line>5</line>
     <entry_point TYPE="field" FQNAME="TCKt nullability"/>
-    <description>Field has no usages.</description>
+    <description>Field is never used.</description>
   </problem>
 
 
@@ -20,14 +20,21 @@
     <file>TC.kt</file>
     <line>2</line>
     <entry_point TYPE="field" FQNAME="Type forEnumConstant"/>
-    <description>Field has no usages.</description>
+    <description>Field is never used.</description>
+  </problem>
+
+  <problem>
+    <file>TC.kt</file>
+    <line>10</line>
+    <entry_point TYPE="class" FQNAME="Nullability" />
+    <description>Enum is never used.</description>
   </problem>
 
   <problem>
     <file>TC.kt</file>
     <line>11</line>
     <entry_point TYPE="field" FQNAME="Nullability Nullable"/>
-    <description>Field has no usages.</description>
+    <description>Enum constant is never used.</description>
   </problem>
 
   <!-- wrong, to be removed later -->

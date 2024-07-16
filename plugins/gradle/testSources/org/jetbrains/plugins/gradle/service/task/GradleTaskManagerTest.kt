@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.service.task
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -156,7 +156,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
   }
 }
 
-class TaskExecutionOutput: ExternalSystemTaskNotificationListenerAdapter() {
+class TaskExecutionOutput : ExternalSystemTaskNotificationListener {
   private val storage = mutableListOf<String>()
   override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
     storage.add(text)

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.testFramework.StartupActivityTestUtil
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -60,7 +61,9 @@ abstract class AutoLinkTestCase {
 
   suspend fun openProject(relativePath: String): Project {
     val projectRoot = testRoot.getDirectory(relativePath)
-    return openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
+    val project = openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
+    StartupActivityTestUtil.waitForProjectActivitiesToComplete(project)
+    return project
   }
 
   fun createUnlinkedProjectAware(systemId: String, buildFileExtension: String): MockUnlinkedProjectAware {
@@ -77,9 +80,9 @@ abstract class AutoLinkTestCase {
       override fun isProjectFile(file: VirtualFile): Boolean =
         unlinedProjectAware.isBuildFile(file)
 
-      override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+      override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
         val projectDirectory = getProjectDirectory(projectFile).toNioPath()
-        unlinedProjectAware.linkAndLoadProject(project, projectDirectory.invariantSeparatorsPathString)
+        unlinedProjectAware.linkAndLoadProjectAsync(project, projectDirectory.invariantSeparatorsPathString)
       }
     }
     return object : ProjectOpenProcessor() {

@@ -38,8 +38,12 @@ abstract class GitOperationActionBase (
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
+
+    val affectedRepositories = getAffectedRepositories(project)
+    if (affectedRepositories.isEmpty()) return
+
     val defaultRepo = GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)
-    val repository = chooseRepository(project, getAffectedRepositories(project), defaultRepo)
+    val repository = chooseRepository(project, affectedRepositories, defaultRepo)
 
     if (repository != null) {
       performInBackground(repository)
@@ -51,7 +55,7 @@ abstract class GitOperationActionBase (
 
   private fun getAffectedRepositories(project: Project?): Collection<GitRepository> {
     if (project == null) return emptyList()
-    return GitUtil.getRepositoriesInState(project, repositoryState)
+    return GitUtil.getRepositoriesInStates(project, repositoryState)
   }
 
   private fun chooseRepository(project: Project, repositories: Collection<GitRepository>, defaultRepo: GitRepository?): GitRepository? {

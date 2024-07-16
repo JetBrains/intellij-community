@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlowKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -171,10 +172,6 @@ public final class Mock {
     }
 
     @Override
-    public void unsplitWindow() {
-    }
-
-    @Override
     public void unsplitAllWindow() {
     }
 
@@ -274,11 +271,6 @@ public final class Mock {
     }
 
     @Override
-    public @Nullable Object canOpenFileAsync(@NotNull VirtualFile file, @NotNull Continuation<? super Boolean> $completion) {
-      return false;
-    }
-
-    @Override
     public VirtualFile @NotNull [] getOpenFiles() {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -306,6 +298,11 @@ public final class Mock {
     @Override
     public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
       return FileEditor.EMPTY_ARRAY;
+    }
+
+    @Override
+    public @NotNull @Unmodifiable List<@NotNull FileEditor> getAllEditorList(@NotNull VirtualFile file) {
+      return List.of();
     }
 
     @Override

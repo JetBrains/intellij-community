@@ -3,7 +3,9 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class FileBasedIndexInfrastructureExtensionStartup : StartupActivity.RequiredForSmartMode {
 
   override fun runActivity(project: Project) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.problems.pass
 
 import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal.Companion.restartDaemonUpdatingHints
@@ -12,7 +12,7 @@ import com.intellij.lang.jvm.JvmLanguage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -26,19 +26,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -52,7 +51,7 @@ import kotlin.time.Duration.Companion.seconds
  * 5. PSI tree changed -> rollback file state for all the editors with this file<br></br>
  */
 
-internal class ProjectProblemFileFileEditorManagerListener : FileEditorManagerListener {
+private class ProjectProblemFileFileEditorManagerListener : FileEditorManagerListener {
   override fun selectionChanged(event: FileEditorManagerEvent) {
     val project = event.manager.project
     if (!isCodeVisionEnabled(project)) {
@@ -173,52 +172,50 @@ private class ProjectPsiChangesProcessor(private val scope: CoroutineScope) {
   }
 }
 
-internal class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
-  @OptIn(FlowPreview::class)
+private class ProjectProblemFileSelectionListenerStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment && !TestModeFlags.`is`(ProjectProblemUtils.ourTestingProjectProblems)) {
       return
     }
-    val parentDisposable = FileStateCache.getInstance(project)
 
-    VirtualFileManager.getInstance().addAsyncFileListener(object : AsyncFileListener {
-      override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier {
-        val fileIndex = ProjectRootManager.getInstance(project).fileIndex
-        val removedFiles = mutableListOf<PsiJavaFile>()
-        val contentChangedFiles = mutableListOf<PsiJavaFile>()
-        val selectedFile = getSelectedFile(project)
+    val parentDisposable = project.serviceAsync<FileStateCache>()
 
-        for (event in events) {
-          if (event is VFileDeleteEvent) {
-            val deletedFile = event.file
-            if (fileIndex.isInContent(deletedFile)) {
-              getJavaFile(project, deletedFile)?.let { removedFiles.add(it) }
-            }
-          }
+    VirtualFileManager.getInstance().addAsyncFileListener({ events ->
+      val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+      val removedFiles = mutableListOf<PsiJavaFile>()
+      val contentChangedFiles = mutableListOf<PsiJavaFile>()
+      val selectedFile = getSelectedFile(project)
 
-          if (event is VFileContentChangeEvent || event is VFileDeleteEvent) {
-            if (selectedFile != null && event.file != selectedFile) {
-              getJavaFile(project, selectedFile)?.let { contentChangedFiles.add(it) }
-            }
+      for (event in events) {
+        if (event is VFileDeleteEvent) {
+          val deletedFile = event.file
+          if (fileIndex.isInContent(deletedFile)) {
+            getJavaFile(project, deletedFile)?.let { removedFiles.add(it) }
           }
         }
 
-        return object : AsyncFileListener.ChangeApplier {
-          override fun beforeVfsChange() {
-            for (removedFile in removedFiles) {
-              removeState(removedFile)
-            }
+        if (event is VFileContentChangeEvent || event is VFileDeleteEvent) {
+          if (selectedFile != null && event.file != selectedFile) {
+            getJavaFile(project, selectedFile)?.let { contentChangedFiles.add(it) }
+          }
+        }
+      }
 
-            for (javaFile in contentChangedFiles) {
-              setPreviousState(javaFile)
-            }
+      object : AsyncFileListener.ChangeApplier {
+        override fun beforeVfsChange() {
+          for (removedFile in removedFiles) {
+            removeState(removedFile)
+          }
+
+          for (javaFile in contentChangedFiles) {
+            setPreviousState(javaFile)
           }
         }
       }
     }, parentDisposable)
 
-    val psiChangesProcessor = project.service<ProjectPsiChangesProcessor>()
-    PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
+    val psiChangesProcessor = project.serviceAsync<ProjectPsiChangesProcessor>()
+    project.serviceAsync<PsiManager>().addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
       private fun addToQueue(event: PsiTreeChangeEvent) {
         psiChangesProcessor.submitPsiChange(event)
       }
@@ -264,11 +261,13 @@ private fun getSelectedFile(project: Project): VirtualFile? {
 }
 
 private fun getJavaFile(project: Project, file: VirtualFile?): PsiJavaFile? {
-  if (file == null || file is VirtualFileWindow || !file.isValid) {
+  if (file == null || file is VirtualFileWindow || !file.isValid ||
+    !ProjectProblemUtils.containsJvmLanguage(file)) {
     return null
   }
-
-  return if (ProjectProblemUtils.containsJvmLanguage(file)) PsiManager.getInstance(project).findFile(file) as? PsiJavaFile else null
+  SlowOperations.knownIssue("IDEA-334994, EA-852866").use {
+    return PsiManager.getInstance(project).findFile(file) as? PsiJavaFile
+  }
 }
 
 private fun getEditor(fileEditor: FileEditor?): Editor? = (fileEditor as? TextEditor)?.editor

@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.EditorBundle;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public enum TabCharacterPaintMode {
   LONG_ARROW {
     @Override

@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,14 +12,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
-public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
+final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final GroupNode.Root myRootNode;
 
   private final @Nullable TargetsRootNode myTargetsNode;
   private final UsageTarget[] myTargets;
   private UsageTargetNode[] myTargetNodes;
 
-  public UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, UsageTarget @NotNull [] targets) {
+  UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, UsageTarget @NotNull [] targets) {
     super(GroupNode.createRoot());
     myRootNode = (GroupNode.Root)root;
 
@@ -77,26 +78,15 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   UsageNode getFirstUsageNode() {
-    return (UsageNode)getFirstChildOfType(myRootNode, UsageNode.class);
+    return getFirstUsageNode(myRootNode);
   }
 
-  @Nullable GroupNode getFirstGroupNode() {
-    return (GroupNode)getFirstChildOfType(myRootNode, GroupNode.class);
-  }
-
-  private static TreeNode getFirstChildOfType(@NotNull TreeNode parent, @NotNull Class<?> type) {
-    int childCount = parent.getChildCount();
-    for (int idx = 0; idx < childCount; idx++) {
-      TreeNode child = parent.getChildAt(idx);
-      if (type.isAssignableFrom(child.getClass())) {
-        return child;
-      }
-      TreeNode firstChildOfType = getFirstChildOfType(child, type);
-      if (firstChildOfType != null) {
-        return firstChildOfType;
-      }
+  private static UsageNode getFirstUsageNode(@NotNull GroupNode parent) {
+    Node found;
+    synchronized (parent) {
+      found = ContainerUtil.find(parent.getChildren(), c -> c instanceof UsageNode || c instanceof GroupNode);
     }
-    return null;
+    return (found instanceof GroupNode groupNode) ? getFirstUsageNode(groupNode) : (UsageNode)found;
   }
 
   boolean areTargetsValid() {

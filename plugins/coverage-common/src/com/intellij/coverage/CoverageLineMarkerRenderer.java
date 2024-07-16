@@ -42,6 +42,7 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
+@ApiStatus.Internal
 public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, FillingLineMarkerRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;
@@ -167,11 +169,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
     final LineData lineData = getLineData(oldLine);
     final Editor uEditor;
     final String report;
+    Project project = editor.getProject();
     if (!mySubCoverageActive && (report = getReport(lineData, lineInCurrent, editor, myCoverageSuite)) != null) {
       final EditorFactory factory = EditorFactory.getInstance();
       final Document doc = factory.createDocument(report);
       doc.setReadOnly(true);
-      uEditor = factory.createViewer(doc, editor.getProject(), EditorKind.PREVIEW);
+      uEditor = factory.createViewer(doc, project, EditorKind.PREVIEW);
       var component = EditorFragmentComponent.createEditorFragmentComponent(uEditor, 0, doc.getLineCount(), false, false);
       component.setBorder(JBUI.Borders.empty(4, 8));
 
@@ -192,6 +195,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, Filling
         super.hide();
       }
     };
+    int coverage = lineData == null ? LineCoverage.NONE : lineData.getStatus();
+    CoverageLogger.logGutterPopup(project, coverage, myCoverageByTestApplicable && ShowCoveringTestsAction.isEnabled(project, myCoverageSuite, lineData));
     int hideFlags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE |
                     HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING;
     HintHint hintInfo = new HintHint(editor, new Point());

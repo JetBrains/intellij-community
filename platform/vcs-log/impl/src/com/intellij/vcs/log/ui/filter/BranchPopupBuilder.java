@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.RefGroup;
@@ -136,7 +137,8 @@ public abstract class BranchPopupBuilder {
       else {
         TreeMap<String, TreeMap<String, Collection<VcsRef>>> groups =
           refGroup.isExpanded() ? actions.expandedGroups : actions.collapsedGroups;
-        TreeMap<String, Collection<VcsRef>> groupActions = groups.computeIfAbsent(refGroup.getName(), key -> new TreeMap<>());
+        TreeMap<String, Collection<VcsRef>> groupActions =
+          groups.computeIfAbsent(refGroup.getName(), key -> new TreeMap<>(NaturalComparator.INSTANCE));
         for (VcsRef ref : refGroup.getRefs()) {
           if (isFavorite(pack, ref)) {
             append(actions.favoriteGroups, ref.getName(), ref);

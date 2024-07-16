@@ -40,7 +40,7 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     }
 
     promise = promise == null ? Promises.rejectedPromise() : promise;
-    return promise.onSuccess(v -> addJigsawModule(from, to, scope, exported));
+    return promise.onSuccess(v -> addJigsawModule(from, to, scope));
   }
 
   @Override
@@ -52,7 +52,7 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     }
 
     promise = promise == null ? Promises.rejectedPromise() : promise;
-    return promise.onSuccess(v -> addJigsawModule(from, library, scope, exported));
+    return promise.onSuccess(v -> addJigsawModule(from, library, scope));
   }
 
   @Override
@@ -69,7 +69,7 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     return promise.onSuccess(v -> {
       Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
         .getLibraryByName(libraryDescriptor.getPresentableName());
-      from.forEach(m -> addJigsawModule(m, library, scope, false));
+      from.forEach(m -> addJigsawModule(m, library, scope));
     });
   }
 
@@ -106,28 +106,25 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
 
   private static void addJigsawModule(@NotNull Module from,
                                       @NotNull Module to,
-                                      @NotNull DependencyScope scope,
-                                      boolean exported) {
+                                      @NotNull DependencyScope scope) {
     PsiJavaModule toModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(to, scope == DependencyScope.TEST));
-    addJigsawModule(from, toModule, scope, exported);
+    addJigsawModule(from, toModule, scope);
   }
 
   private static void addJigsawModule(@NotNull Module from,
                                       @Nullable Library library,
-                                      @NotNull DependencyScope scope,
-                                      boolean exported) {
+                                      @NotNull DependencyScope scope) {
     if (library == null) return;
     PsiJavaModule toModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, from.getProject()));
-    addJigsawModule(from, toModule, scope, exported);
+    addJigsawModule(from, toModule, scope);
   }
 
   private static void addJigsawModule(@NotNull Module from,
                                       @Nullable PsiJavaModule to,
-                                      @NotNull DependencyScope scope,
-                                      boolean exported) {
+                                      @NotNull DependencyScope scope) {
     if (to == null) return;
     PsiJavaModule fromModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(from, scope == DependencyScope.TEST));
     if (fromModule == null) return;
-    WriteAction.run(() -> JavaModuleGraphUtil.addDependency(fromModule, to.getName(), scope, exported));
+    WriteAction.run(() -> JavaModuleGraphUtil.addDependency(fromModule, to, scope));
   }
 }

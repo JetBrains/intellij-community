@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 /**
  * @author Lekanich
  */
-public class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAction {
+public final class ReplaceWithLombokAnnotationAction extends AbstractLombokIntentionAction {
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {

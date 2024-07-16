@@ -122,6 +122,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "booleanMethod", "BOOLEAN", "AN_OBJECT", "class", "Inner", "voidMethod");
   }
 
+  @NeedsIndex.ForStandardLibrary(reason = "String class used")
   public void testDispreferDeclared() {
     checkPreferredItems(0, "aabbb", "aaa");
   }
@@ -849,6 +850,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "MyEnum.bar", "MyEnum", "MyEnum.foo");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testPreferExpectedTypeFieldOverUnexpectedLocalVariables() {
     checkPreferredItems(0, "field", "local");
   }

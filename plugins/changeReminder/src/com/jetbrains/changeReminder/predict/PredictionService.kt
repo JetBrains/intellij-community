@@ -9,21 +9,13 @@ import com.intellij.openapi.util.Comparing.haveEqualElements
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.changeReminder.getGitRootFiles
 import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
-import com.jetbrains.changeReminder.stats.ChangeReminderChangeListChangedEvent
-import com.jetbrains.changeReminder.stats.ChangeReminderNodeExpandedEvent
 import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserListener
 import git4idea.history.getTraverser
 import git4idea.history.subscribeForGitHistoryTraverserCreation
-import javax.swing.event.TreeExpansionEvent
-import javax.swing.event.TreeExpansionListener
 
 @Service(Service.Level.PROJECT)
 internal class PredictionService(val project: Project) : Disposable {
@@ -77,11 +69,6 @@ internal class PredictionService(val project: Project) : Disposable {
     override fun changeListsChanged() {
       val changes = ChangeListManager.getInstance(project).defaultChangeList.changes
       if (!haveEqualElements(changes, lastChanges)) {
-        if (changes.size <= Registry.intValue("vcs.changeReminder.changes.limit")) {
-          val prevFiles = lastChanges.map { ChangesUtil.getFilePath(it) }
-          val curFiles = changes.map { ChangesUtil.getFilePath(it) }
-          ChangeReminderChangeListChangedEvent(prevFiles, predictionData, curFiles).logEvent(project)
-        }
         calculatePrediction()
         lastChanges = changes
       }
@@ -96,36 +83,6 @@ internal class PredictionService(val project: Project) : Disposable {
       else {
         shutdownService()
       }
-    }
-  }
-
-  private val nodeExpandedListener = object : TreeExpansionListener {
-    private var view: ChangesListView? = null
-    override fun treeExpanded(event: TreeExpansionEvent?) {
-      if (event == null) {
-        return
-      }
-      val predictionData = TreeUtil.findObjectInPath(event.path, PredictionData.Prediction::class.java) ?: return
-      ChangeReminderNodeExpandedEvent(predictionData).logEvent(project)
-    }
-
-    override fun treeCollapsed(event: TreeExpansionEvent?) {}
-
-    fun tryToSubscribe() {
-      if (view != null) {
-        return
-      }
-
-      val changeListViewPanel =
-        ChangesViewContentManager.getInstance(project).getActiveComponent(ChangesViewManager.ChangesViewToolWindowPanel::class.java)
-        ?: return
-      view = UIUtil.findComponentOfType(changeListViewPanel, ChangesListView::class.java)?.also {
-        it.addTreeExpansionListener(this)
-      }
-    }
-
-    fun unsubscribe() {
-      view?.removeTreeExpansionListener(this)
     }
   }
 
@@ -153,8 +110,6 @@ internal class PredictionService(val project: Project) : Disposable {
   }
 
   private fun calculatePrediction() = synchronized(LOCK) {
-    nodeExpandedListener.tryToSubscribe()
-
     if (!Disposer.isDisposed(predictionRequestDisposable)) {
       Disposer.dispose(predictionRequestDisposable)
     }
@@ -198,8 +153,6 @@ internal class PredictionService(val project: Project) : Disposable {
 
   private fun shutdownService() = synchronized(LOCK) {
     Disposer.dispose(predictionRequestDisposable)
-
-    nodeExpandedListener.unsubscribe()
 
     onTraverserDisposed()
 

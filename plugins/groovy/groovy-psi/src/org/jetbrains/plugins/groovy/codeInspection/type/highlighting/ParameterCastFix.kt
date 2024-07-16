@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiType
-import com.intellij.psi.util.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.plugins.groovy.GroovyBundle

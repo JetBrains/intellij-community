@@ -22,5 +22,12 @@ public interface JpsElementReference<T extends JpsElement> extends JpsElement {
   @Nullable
   T resolve();
 
-  JpsElementReference<T> asExternal(@NotNull JpsModel model);
+  /**
+   * @deprecated external references aren't supported anymore. If you need to refer to a {@link JpsElement} outside the model,
+   * use its name instead.
+   */
+  @Deprecated(forRemoval = true)
+  default JpsElementReference<T> asExternal(@NotNull JpsModel model) {
+    throw new UnsupportedOperationException();
+  }
 }

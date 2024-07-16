@@ -461,7 +461,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
           try {
             boolean computationSuccessful;
-            if (AppExecutorUtil.propagateContextOrCancellation()) {
+            if (AppExecutorUtil.propagateContext()) {
               try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
                 computationSuccessful = attemptComputation();
               }
@@ -522,7 +522,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
         }
       } catch (ProcessCanceledException e) {
-        cancelJob(new PceCancellationException(e));
+        cancelJob(e);
         throw e;
       }
       finally {
@@ -667,17 +667,6 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private void failJob(@NotNull Throwable reason) {
       Continuation<Unit> continuation = myChildContext.getContinuation();
       if (continuation != null) {
-        if (reason instanceof ProcessCanceledException e) {
-          Job job = myChildContext.getJob();
-          if (job != null) {
-            // Normally, any exception reported here goes directly to top-level `CoroutineExceptionHandlerImpl`.
-            // This is undesirable for PCE, which expresses cancellation, and not a fatal error.
-            // As a rule, PCE in continuation is handled in `runAsCoroutine`, but since we are opting for manual cancellation handling,
-            // we need to process PCE manually as well.
-            job.cancel(new PceCancellationException(e));
-            return;
-          }
-        }
         continuation.resumeWith(new Result.Failure(reason));
       }
     }
@@ -723,7 +712,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
         if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
           try {
-            if (AppExecutorUtil.propagateContextOrCancellation()) {
+            if (AppExecutorUtil.propagateContext()) {
               try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), false)) {
                 builder.myUiThreadAction.accept(result);
               }

@@ -15,7 +15,7 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.yield
 import java.awt.Point
 
-class MoreToolWindowsStep : NewUiOnboardingStep {
+internal class MoreToolWindowsStep : NewUiOnboardingStep {
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val actionButton = NewUiOnboardingUtil.findUiComponent(project) { button: ActionButton ->
       button.action is ShowMoreToolWindowsAction

@@ -38,13 +38,12 @@ public final class ReplaceSwitchWithIfIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new SwitchPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiJavaToken switchToken = (PsiJavaToken)element;
     final PsiSwitchStatement switchStatement = (PsiSwitchStatement)switchToken.getParent();
     if (switchStatement == null) {

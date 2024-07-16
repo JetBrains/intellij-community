@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -70,13 +70,13 @@ final class ErrorStripeMarkerImpl extends RangeMarkerImpl {
     LOG.error(message,
               new Attachment("document.txt", document instanceof DocumentImpl ? ((DocumentImpl)document).dumpState() : "" ),
               new Attachment("originalTree.txt", node == null ? "" : node.getTree().dumpState()),
-              new Attachment("mirrorTree.txt", myNode.getTree().dumpState()));
+              new Attachment("mirrorTree.txt", myNode != null ? myNode.getTree().dumpState(): "<ErrorStripeMarkerImpl#myNode is null>"));
   }
 
   @Override
   public String toString() {
     String result = super.toString();
-    if (myNode.isFlagSet(RangeHighlighterTree.RHNode.IS_PERSISTENT)) {
+    if (myNode != null && myNode.isFlagSet(RangeHighlighterTree.RHNode.IS_PERSISTENT)) {
       result += "(persistent)";
     }
     return result;

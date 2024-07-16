@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,21 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.*;
 
 public final class CommonMoveUtil {
-
+  /**
+   * Comparator that ensures that the longest qualified chain is processed first. Example:
+   * {@snippet lang='java' :
+   * import foo.X;
+   *
+   * class Y {
+   *   void foo() {
+   *     X x = new X();
+   *   }
+   * }
+   * }
+   * Here we want to retarget the import before any other reference, otherwise we won't be able to shorten the reference without affecting
+   * other references.
+   */
+  @SuppressWarnings("JavadocDeclaration")
   static final Comparator<UsageInfo> USAGE_INFO_COMPARATOR = (o1, o2) -> {
     final VirtualFile file1 = o1.getVirtualFile();
     final VirtualFile file2 = o2.getVirtualFile();

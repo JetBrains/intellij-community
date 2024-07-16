@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -31,6 +31,7 @@ import com.intellij.xdebugger.impl.BreakpointManagerState;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -444,10 +445,11 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myLineBreakpointManager.queueBreakpointUpdate(breakpoint, () -> fireBreakpointPresentationUpdated(breakpoint, null));
   }
 
+  @ApiStatus.Internal
   @NotNull
   public BreakpointManagerState saveState(@NotNull BreakpointManagerState state) {
     // create default breakpoints map without locking
-    var defaultBreakpointsMap = StreamEx.of(createDefaultBreakpoints()).toMap(XBreakpointBase::getType, Function.identity());
+    Map<XBreakpointType, XBreakpointBase> defaultBreakpointsMap = StreamEx.of(createDefaultBreakpoints()).toMap(XBreakpointBase::getType, Function.identity());
 
     return withLockMaybeCancellable(myLock, () -> {
       myDependentBreakpointManager.saveState();
@@ -516,6 +518,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     return res;
   }
 
+  @ApiStatus.Internal
   public void loadState(@NotNull BreakpointManagerState state) {
     // create default breakpoint without locking
     var defaultBreakpoints = createDefaultBreakpoints();
@@ -570,8 +573,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     });
   }
 
-  private List<XBreakpointBase> createDefaultBreakpoints() {
-    //noinspection unchecked
+  private List<? extends XBreakpointBase> createDefaultBreakpoints() {
     return XBreakpointUtil.breakpointTypes().map(this::createDefaultBreakpoint).nonNull().toList();
   }
 
@@ -680,7 +682,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   @Nullable
   public XBreakpoint restoreLastRemovedBreakpoint() {
-    // FIXME[inline-bp]: support multiple breakpoints here
+    // FIXME[inline-bp]: support multiple breakpoints restore
     if (myLastRemovedBreakpoint != null) {
       XBreakpoint breakpoint = myLastRemovedBreakpoint.restore();
       myLastRemovedBreakpoint = null;

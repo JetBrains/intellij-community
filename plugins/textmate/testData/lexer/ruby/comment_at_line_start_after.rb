@@ -1,10 +1,8 @@
 source.ruby;comment.line.number-sign.ruby;punctuation.definition.comment.ruby: [0, 1], {#}
-source.ruby;comment.line.number-sign.ruby: [1, 32], { Commented lines are greyed out}
-source.ruby: [32, 33], {
+source.ruby;comment.line.number-sign.ruby: [1, 33], { Commented lines are greyed out
 }
 source.ruby;comment.line.number-sign.ruby;punctuation.definition.comment.ruby: [33, 34], {#}
-source.ruby;comment.line.number-sign.ruby: [34, 49], { The second one}
-source.ruby: [49, 50], {
+source.ruby;comment.line.number-sign.ruby: [34, 50], { The second one
 }
 source.ruby: [50, 51], {
 }

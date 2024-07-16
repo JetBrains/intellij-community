@@ -9,7 +9,11 @@ import org.jetbrains.annotations.NotNull;
  * @see BidiRegionsSeparator
  */
 public final class LanguageBidiRegionsSeparator extends LanguageExtension<BidiRegionsSeparator> {
-  public static final LanguageBidiRegionsSeparator INSTANCE = new LanguageBidiRegionsSeparator();
+  private static final LanguageBidiRegionsSeparator INSTANCE = new LanguageBidiRegionsSeparator();
+
+  public static LanguageBidiRegionsSeparator getInstance() {
+    return INSTANCE;
+  }
 
   private LanguageBidiRegionsSeparator() {
     super("com.intellij.bidiRegionsSeparator", new BidiRegionsSeparator() {

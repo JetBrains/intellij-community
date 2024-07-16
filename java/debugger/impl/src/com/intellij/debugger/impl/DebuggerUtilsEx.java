@@ -13,9 +13,7 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.GeneratedLocation;
-import com.intellij.debugger.jdi.JvmtiError;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.ui.CollectionHistoryView;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -684,12 +682,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  public static String getSourceName(Location location, Function<? super Throwable, String> defaultName) {
+  @Nullable
+  public static String getSourceName(Location location, @Nullable String defaultName) {
+    return getSourceName(location, e -> defaultName);
+  }
+
+  @Nullable
+  public static String getSourceName(Location location, @NotNull Function<? super Throwable, String> defaultNameProvider) {
     try {
       return location.sourceName();
     }
     catch (InternalError | AbsentInformationException | IllegalArgumentException e) {
-      return defaultName.apply(e);
+      return defaultNameProvider.apply(e);
     }
   }
 
@@ -985,7 +989,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String getLocationMethodName(@NotNull Location location) {
-    return location instanceof GeneratedLocation ? ((GeneratedLocation)location).methodName() : location.method().name();
+    if (location instanceof GeneratedLocation generatedLocation) {
+      return generatedLocation.methodName();
+    }
+    Method method = getMethod(location);
+    if (method == null) {
+      return "<invalid method>";
+    }
+    return method.name();
   }
 
   private static PsiElement getNextElement(PsiElement element) {
@@ -1106,27 +1117,48 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (!intersects(lineRange, lambda)) return null;
     PsiElement body = lambda.getBody();
     if (body == null || !intersects(lineRange, body)) return null;
+
     if (body instanceof PsiCodeBlock) {
       PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-      if (statements.length > 0) {
-        for (PsiStatement statement : statements) {
-          // return first statement starting on the line
-          if (lineRange.contains(statement.getTextOffset())) {
-            return statement;
-          }
-          // otherwise check all children
-          else if (intersects(lineRange, statement)) {
-            for (PsiElement element : SyntaxTraverser.psiTraverser(statement)) {
-              if (lineRange.contains(element.getTextOffset())) {
-                return element;
-              }
-            }
-          }
+      if (statements.length == 0) {
+        // empty lambda
+        LOG.assertTrue(lineRange.contains(body.getTextOffset()));
+        return body;
+      }
+      for (PsiStatement statement : statements) {
+        // return first statement starting on the line
+        var found = getFirstElementOnTheLine(lineRange, statement);
+        if (found != null) {
+          return found;
         }
-        return null;
       }
     }
-    return body;
+    else {
+      // check expression body
+      var found = getFirstElementOnTheLine(lineRange, body);
+      if (found != null) {
+        return found;
+      }
+    }
+
+    return null;
+  }
+
+  private static PsiElement getFirstElementOnTheLine(TextRange lineRange, PsiElement element) {
+    if (lineRange.contains(element.getTextOffset())) {
+      return element;
+    }
+
+    // otherwise check all children
+    if (intersects(lineRange, element)) {
+      for (PsiElement child : SyntaxTraverser.psiTraverser(element)) {
+        if (lineRange.contains(child.getTextOffset())) {
+          return child;
+        }
+      }
+    }
+
+    return null;
   }
 
   public static boolean inTheMethod(@NotNull SourcePosition pos, @NotNull PsiElement method) {
@@ -1229,5 +1261,50 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         return projectFileIndex.isInLibrary(file);
       }
     });
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess, StackTraceElement stackTraceElement) {
+    return findOrCreateLocation(debugProcess, debugProcess.getVirtualMachineProxy()::classesByName, stackTraceElement);
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull ClassesByNameProvider classesByName,
+                                              StackTraceElement stackTraceElement) {
+    return findOrCreateLocation(debugProcess,
+                                classesByName,
+                                stackTraceElement.getClassName(),
+                                stackTraceElement.getMethodName(),
+                                stackTraceElement.getLineNumber());
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull String className,
+                                              @NotNull String methodName,
+                                              int line) {
+    return findOrCreateLocation(debugProcess, debugProcess.getVirtualMachineProxy()::classesByName, className, methodName, line);
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull ClassesByNameProvider classesByName,
+                                              @NotNull String className,
+                                              @NotNull String methodName,
+                                              int line) {
+    ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
+    if (classType == null) {
+      classType = new GeneratedReferenceType(debugProcess.getVirtualMachineProxy().getVirtualMachine(), className);
+    }
+    else if (line >= 0) {
+      for (Method method : declaredMethodsByName(classType, methodName)) {
+        List<Location> locations = locationsOfLine(method, line);
+        if (!locations.isEmpty()) {
+          return locations.get(0);
+        }
+      }
+    }
+    return new GeneratedLocation(classType, methodName, line);
   }
 }

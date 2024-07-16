@@ -95,7 +95,6 @@ final class ActionStepBuilder {
   }
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-    boolean multiChoicePopup = Utils.isMultiChoiceGroup(actionGroup);
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
       actionGroup, myPresentationFactory, myDataContext, myActionPlace);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
@@ -108,9 +107,6 @@ final class ActionStepBuilder {
       }
       else {
         Presentation presentation = myPresentationFactory.getPresentation(action);
-        if (multiChoicePopup && action instanceof Toggleable) {
-          presentation.setMultiChoice(true);
-        }
         appendAction(action, presentation);
       }
     }

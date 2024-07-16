@@ -16,7 +16,7 @@ class ExternalEntityMappingImplTest {
   fun `mapping mutability test`() {
     val initialBuilder = createEmptyBuilder()
     val sampleEntity = initialBuilder addEntity SampleEntity(false, "123", ArrayList(), HashMap(),
-                                                             VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
+                                                             VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                                              SampleEntitySource("test"))
     val mutableMapping = initialBuilder.getMutableExternalMapping(externalMappingKey)
     mutableMapping.addMapping(sampleEntity, 1)
@@ -24,11 +24,11 @@ class ExternalEntityMappingImplTest {
     val newBuilder = createBuilderFrom(initialBuilder)
 
     val anotherEntity = initialBuilder addEntity SampleEntity(false, "321", ArrayList(), HashMap(),
-                                                              VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
+                                                              VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                                               SampleEntitySource("test"))
     mutableMapping.addMapping(anotherEntity, 2)
 
     val anotherMapping = newBuilder.getExternalMapping(externalMappingKey)
-    assertTrue(anotherMapping.getEntities(2).isEmpty())
+    assertTrue(anotherMapping.getEntities(2).none())
   }
 }

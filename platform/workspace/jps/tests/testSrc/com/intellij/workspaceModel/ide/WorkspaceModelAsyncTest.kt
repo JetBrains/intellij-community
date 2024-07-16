@@ -7,18 +7,24 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.workspaceModel.update
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.drop
 import org.junit.After
 import org.junit.ClassRule
 import org.junit.Rule
@@ -26,6 +32,8 @@ import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class WorkspaceModelAsyncTest {
   companion object {
@@ -39,7 +47,7 @@ class WorkspaceModelAsyncTest {
   val projectModel = ProjectModelRule()
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val cs = GlobalScope.namedChildScope("TestScope")
+  private val cs = GlobalScope.childScope("TestScope")
 
   @After
   fun tearDown() {
@@ -62,13 +70,13 @@ class WorkspaceModelAsyncTest {
     val job = launch {
       assertEquals(false, application.isWriteAccessAllowed)
       listenerIsReady.send(Unit)
-      workspaceModel.subscribe { _, changes ->
-        changes.collect { event ->
-          val entityChange = event.getAllChanges().single()
+      workspaceModel.eventLog
+        .drop(1) // Drop the first event form the previous update
+        .collect { event ->
+          val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
           assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
           collectedEventsCount.incrementAndGet()
         }
-      }
     }
 
     try {
@@ -94,13 +102,13 @@ class WorkspaceModelAsyncTest {
       val collectedEventsCount = AtomicInteger()
       val workspaceModel = WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelImpl
       val job = launch {
-        workspaceModel.subscribe { _, changes ->
-          changes.collect { event ->
-            val entityChange = event.getAllChanges().single()
+        workspaceModel.eventLog
+          .drop(1) // Drop the first event form the previous update
+          .collect { event ->
+            val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
             assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
             collectedEventsCount.incrementAndGet()
           }
-        }
       }
 
       try {
@@ -128,7 +136,7 @@ class WorkspaceModelAsyncTest {
     projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         assertEquals(true, application.isWriteAccessAllowed)
-        val entityChange = event.getAllChanges().single()
+        val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
 
         assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
       }
@@ -149,7 +157,7 @@ class WorkspaceModelAsyncTest {
     projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         assertEquals(true, application.isWriteAccessAllowed)
-        val entityChange = event.getAllChanges().single()
+        val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
 
         assertInstanceOf<EntityChange.Added<ModuleEntity>>(entityChange)
         assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
@@ -176,13 +184,13 @@ class WorkspaceModelAsyncTest {
     val collectedEventsCount = AtomicInteger()
     val job = launch {
       assertEquals(false, application.isWriteAccessAllowed)
-      workspaceModel.subscribe { _, changes ->
-        changes.collect { event ->
-          val entityChange = event.getAllChanges().single()
+      workspaceModel.eventLog
+        .drop(1) // Drop the first event form the previous update
+        .collect { event ->
+          val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
           assertContains(moduleNames, (entityChange.newEntity as ModuleEntity).name)
           collectedEventsCount.incrementAndGet()
         }
-      }
     }
 
     try {
@@ -198,5 +206,16 @@ class WorkspaceModelAsyncTest {
     } finally {
       job.cancel()
     }
+  }
+
+  @Test(timeout = 10_000)
+  fun `workspace model update is available right after modification`() = runBlocking {
+    val workspaceModel = projectModel.project.workspaceModel
+
+    assertFalse(workspaceModel.currentSnapshot.contains(ModuleId("ABC")))
+    workspaceModel.update {
+      it addEntity ModuleEntity("ABC", emptyList(), MySource)
+    }
+    assertTrue(workspaceModel.currentSnapshot.contains(ModuleId("ABC")))
   }
 }

@@ -7,12 +7,12 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.LocalsControlFlowPolicy;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import one.util.streamex.StreamEx;
 
 public class ControlFlowPerformanceTest extends LightJavaCodeInsightTestCase {
   public void testHugeMethodChainControlFlow() {
-    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
       int size = 2500;
       String source = StreamEx.constant(".toString()", size).joining("", "\"\"", "");
       PsiExpression expression = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(source, null);

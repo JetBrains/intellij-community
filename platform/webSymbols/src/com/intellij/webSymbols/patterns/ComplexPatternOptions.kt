@@ -3,7 +3,9 @@ package com.intellij.webSymbols.patterns
 
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class ComplexPatternOptions(
   val additionalScope: WebSymbol? = null,
   val apiStatus: WebSymbolApiStatus? = null,

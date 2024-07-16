@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.getAllDefinitions
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 
 class IDESettingsFUSCollector : ProjectUsagesCollector() {
@@ -27,7 +28,7 @@ class IDESettingsFUSCollector : ProjectUsagesCollector() {
       val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
       // filling up scriptingAutoReloadEnabled Event
-      for (definition in ScriptDefinitionsManager.getInstance(project).allDefinitions) {
+      for (definition in getAllDefinitions(project)) {
         if (definition.canAutoReloadScriptConfigurationsBeSwitchedOff) {
           val scriptingAutoReloadEnabled = KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
           metrics.add(scriptingAREvent.metric(definition.name, scriptingAutoReloadEnabled, pluginInfo))

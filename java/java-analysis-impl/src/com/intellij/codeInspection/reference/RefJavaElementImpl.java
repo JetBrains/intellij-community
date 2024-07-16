@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -21,7 +21,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
+/**
+ * Subclasses are allowed to use bit 17 and higher for flags.
+ */
+public sealed abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement
+  permits RefClassImpl, RefFieldImpl, RefFunctionalExpressionImpl, RefMethodImpl, RefParameterImpl {
+
   private static final int ACCESS_MODIFIER_MASK = 0b11;
   private static final int ACCESS_PRIVATE = 0b00;
   private static final int ACCESS_PROTECTED = 0b01;
@@ -80,14 +85,18 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   @NotNull
   private static String getName(@NotNull UElement declaration) {
     PsiElement element = declaration.getJavaPsi();
-    if (element instanceof PsiAnonymousClass psiAnonymousClass) {
-      PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
+    if (element instanceof PsiAnonymousClass anonymousClass) {
+      PsiClass psiBaseClass = anonymousClass.getBaseClassType().resolve();
       if (psiBaseClass == null) {
-        return "anonymous class";
+        return JavaAnalysisBundle.message("inspection.reference.anonymous.class");
       }
       else {
         return JavaAnalysisBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
       }
+    }
+    if (element instanceof PsiImplicitClass) {
+      PsiFile file = element.getContainingFile();
+      return JavaAnalysisBundle.message("inspection.reference.implicit.class", file.getName());
     }
 
     if (element instanceof PsiSyntheticClass jspClass) {
@@ -148,7 +157,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   void setIsFinal(boolean isFinal) {
     setFlag(isFinal, IS_FINAL_MASK);
   }
-
 
   @Override
   public boolean isSyntheticJSP() {
@@ -243,9 +251,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
         ((RefJavaElementImpl)refWhat).markReferenced(this, forWriting, forReading, expression);
       }
     } else {
-      if (psiWhat instanceof PsiMethod) {
-        markEnumUsedIfValuesMethod((PsiMethod)psiWhat, expression);
-      }
       getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
     }
   }
@@ -300,21 +305,5 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
       }
     }
     return super.getIcon(expanded);
-  }
-
-  private void markEnumUsedIfValuesMethod(PsiMethod psiWhat, UExpression expression) {
-    //TODO support kotlin enums
-    final PsiClass containingClass = psiWhat.getContainingClass();
-    if (containingClass != null && containingClass.isEnum() && "values".equals(psiWhat.getName())) {
-      for (PsiField enumConstant : containingClass.getFields()) {
-        if (enumConstant instanceof PsiEnumConstant) {
-          final RefJavaElementImpl enumConstantReference = (RefJavaElementImpl)getRefManager().getReference(enumConstant);
-          if (enumConstantReference != null) {
-            addOutReference(enumConstantReference);
-            enumConstantReference.markReferenced(this, false, true, expression);
-          }
-        }
-      }
-    }
   }
 }

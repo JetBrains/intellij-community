@@ -62,8 +62,7 @@ public final class MagicNumberInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("magic.number.problem.descriptor");
   }
 

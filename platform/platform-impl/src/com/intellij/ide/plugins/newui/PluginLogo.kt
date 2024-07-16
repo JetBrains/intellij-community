@@ -8,12 +8,12 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -24,7 +24,6 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.ui.JBImageIcon
 import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
@@ -40,6 +39,7 @@ import java.nio.file.Path
 import java.util.zip.ZipFile
 import javax.swing.Icon
 import kotlin.coroutines.CoroutineContext
+import com.intellij.util.lang.ZipFile as IntelliJZipFile
 
 private val iconCache = CollectionFactory.createConcurrentWeakValueMap<String, Pair<PluginLogoIconProvider?, PluginLogoIconProvider?>>()
 private val MISSING: Pair<PluginLogoIconProvider?, PluginLogoIconProvider?> = Pair(null, null)
@@ -145,7 +145,7 @@ internal fun reloadPluginIcon(icon: Icon, width: Int, height: Int): Icon {
 
 internal fun getPluginIconFileName(light: Boolean): String = PluginManagerCore.META_INF + if (light) PLUGIN_ICON else PLUGIN_ICON_DARK
 
-private fun tryLoadIcon(zipFile: com.intellij.util.lang.ZipFile, light: Boolean): PluginLogoIconProvider? {
+private fun tryLoadIcon(zipFile: IntelliJZipFile, light: Boolean): PluginLogoIconProvider? {
   val pluginIconFileName = getPluginIconFileName(light)
   try {
     return zipFile.getData(pluginIconFileName)?.let { loadFileIcon(it) }
@@ -269,7 +269,7 @@ private fun tryLoadJarIcons(idPlugin: String,
   }
 
   try {
-    ImmutableZipFile.load(path).use { zipFile ->
+    IntelliJZipFile.load(path).use { zipFile ->
       val light = tryLoadIcon(zipFile = zipFile, light = true)
       val dark = tryLoadIcon(zipFile = zipFile, light = false)
       if (put || light != null || dark != null) {
@@ -286,7 +286,7 @@ private fun tryLoadJarIcons(idPlugin: String,
 
 private fun downloadOrCheckUpdateFile(idPlugin: String, file: Path, theme: String) {
   try {
-    val url = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl + "/api/icon?pluginId=" +
+    val url = MarketplaceUrls.getPluginManagerUrl() + "/api/icon?pluginId=" +
               URLUtil.encodeURIComponent(idPlugin) + theme
     MarketplaceRequests.readOrUpdateFile(file, url, null, "", InputStream::close)
   }

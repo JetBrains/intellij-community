@@ -24,3 +24,5 @@ fun fibonacci() = sequence {
         step++
     }
 }
+
+// REGISTRY: debugger.async.stacks.coroutines=false

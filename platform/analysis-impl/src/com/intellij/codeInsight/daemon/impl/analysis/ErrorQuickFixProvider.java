@@ -10,14 +10,6 @@ import org.jetbrains.annotations.NotNull;
 public interface ErrorQuickFixProvider extends PossiblyDumbAware {
   ExtensionPointName<ErrorQuickFixProvider> EP_NAME = ExtensionPointName.create("com.intellij.errorQuickFixProvider");
 
-  /**
-   * @deprecated implement {@link #registerErrorQuickFix(PsiErrorElement, HighlightInfo.Builder)} instead
-   */
-  @Deprecated(forRemoval = true)
-  default void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo highlightInfo) {
-
-  }
-
   default void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo.Builder builder) {
   }
 }

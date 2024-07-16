@@ -14,8 +14,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
-import org.junit.*
+ import org.junit.*
 import org.junit.rules.TemporaryFolder
 
 class JpsGlobalEntitiesSavingTest {
@@ -52,11 +51,11 @@ class JpsGlobalEntitiesSavingTest {
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
           workspaceModel.updateModel("Test update") { builder ->
-            var libraryRoot = LibraryRoot(virtualFileManager.getOrCreateFromUri("/a/b/one.txt"), LibraryRootTypeId.COMPILED)
+            var libraryRoot = LibraryRoot(virtualFileManager.getOrCreateFromUrl("/a/b/one.txt"), LibraryRootTypeId.COMPILED)
             val gradleLibraryEntity = LibraryEntity(librariesNames.get(0), globalLibraryTableId, listOf(libraryRoot), entitySource)
             builder.addEntity(gradleLibraryEntity)
 
-            libraryRoot = LibraryRoot(virtualFileManager.getOrCreateFromUri("/a/c/test.jar"), LibraryRootTypeId.SOURCES)
+            libraryRoot = LibraryRoot(virtualFileManager.getOrCreateFromUrl("/a/c/test.jar"), LibraryRootTypeId.SOURCES)
             val mavenLibraryEntity = LibraryEntity(librariesNames.get(1), globalLibraryTableId, listOf(libraryRoot), entitySource)
             builder.addEntity(mavenLibraryEntity)
           }
@@ -71,7 +70,6 @@ class JpsGlobalEntitiesSavingTest {
 
   @Test
   fun `test global sdk saving`() {
-    Assume.assumeTrue("Test has to be executed on the new implementation of SDK", GlobalSdkTableBridge.isEnabled())
     // TODO:: Investigate failing on TC
     Assume.assumeFalse("Temporary failed in check of expected file content", UsefulTestCase.IS_UNDER_TEAMCITY)
     copyAndLoadGlobalEntities(expectedFile = "sdk/saving", testDir = temporaryFolder.newFolder(),
@@ -88,16 +86,16 @@ class JpsGlobalEntitiesSavingTest {
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
           workspaceModel.updateModel("Test update") { builder ->
-            var sdkRoots = listOf(SdkRoot(virtualFileManager.getOrCreateFromUri("/Contents/Home!/java.compiler"), SdkRootTypeId(OrderRootType.CLASSES.customName)),
-                                  SdkRoot(virtualFileManager.getOrCreateFromUri("/lib/src.zip!/java.se"), SdkRootTypeId(OrderRootType.SOURCES.customName)))
+            var sdkRoots = listOf(SdkRoot(virtualFileManager.getOrCreateFromUrl("/Contents/Home!/java.compiler"), SdkRootTypeId(OrderRootType.CLASSES.customName)),
+                                  SdkRoot(virtualFileManager.getOrCreateFromUrl("/lib/src.zip!/java.se"), SdkRootTypeId(OrderRootType.SOURCES.customName)))
             val jbrSdkEntity = SdkEntity(sdkNames[0], "JavaSDK", sdkRoots, "", entitySource) {
-              this.homePath = virtualFileManager.getOrCreateFromUri("/Library/Java/JavaVirtualMachines/jbr-2048/Contents/Home")
+              this.homePath = virtualFileManager.getOrCreateFromUrl("/Library/Java/JavaVirtualMachines/jbr-2048/Contents/Home")
             }
             builder.addEntity(jbrSdkEntity)
 
-            sdkRoots = listOf(SdkRoot(virtualFileManager.getOrCreateFromUri("/Contents/plugins/java/lib/resources/jdkAnnotations.jar"), SdkRootTypeId(AnnotationOrderRootType.getInstance().customName)))
+            sdkRoots = listOf(SdkRoot(virtualFileManager.getOrCreateFromUrl("/Contents/plugins/java/lib/resources/jdkAnnotations.jar"), SdkRootTypeId(AnnotationOrderRootType.getInstance().customName)))
             val amazonSdkEntity = SdkEntity(sdkNames[1], "JavaSDK", sdkRoots, "", entitySource) {
-              this.homePath = virtualFileManager.getOrCreateFromUri("/Library/Java/JavaVirtualMachines/amazon.crevetto/Contents/Home")
+              this.homePath = virtualFileManager.getOrCreateFromUrl("/Library/Java/JavaVirtualMachines/amazon.crevetto/Contents/Home")
             }
             builder.addEntity(amazonSdkEntity)
           }

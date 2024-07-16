@@ -58,7 +58,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
+public class ArtifactEditorImpl implements ArtifactEditorEx, UiDataProvider {
   private JPanel myMainPanel;
   private JCheckBox myBuildOnMakeCheckBox;
   private TextFieldWithBrowseButton myOutputDirectoryField;
@@ -189,7 +189,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
 
   public JComponent createMainComponent() {
     myLayoutTreeComponent.initTree();
-    DataManager.registerDataProvider(myMainPanel, this);
+    DataManager.registerDataProvider(myMainPanel, (EdtNoGetDataProvider)this::uiDataSnapshot);
 
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 
@@ -549,13 +549,9 @@ public class ArtifactEditorImpl implements ArtifactEditorEx, DataProvider {
     return helpId != null ? helpId : "reference.settingsdialog.project.structure.artifacts";
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (ARTIFACTS_EDITOR_KEY.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(ARTIFACTS_EDITOR_KEY, this);
   }
 
 }

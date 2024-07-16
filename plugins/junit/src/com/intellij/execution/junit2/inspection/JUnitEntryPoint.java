@@ -41,8 +41,7 @@ public final class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)psiElement;
+    if (psiElement instanceof PsiClass aClass) {
       if (JUnitUtil.isTestClass(aClass, false, true)) {
         final boolean isJUnit5 = JUnitUtil.isJUnit5(aClass);
         if (!PsiClassUtil.isRunnableClass(aClass, !isJUnit5, true)) {

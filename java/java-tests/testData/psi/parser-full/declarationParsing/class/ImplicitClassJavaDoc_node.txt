@@ -1,0 +1,57 @@
+java.FILE
+  IMPORT_LIST
+    <empty list>
+  IMPLICIT_CLASS
+    METHOD
+      DOC_COMMENT
+        DOC_COMMENT_START
+        WHITE_SPACE
+        DOC_COMMENT_LEADING_ASTERISKS
+        DOC_COMMENT_DATA
+        WHITE_SPACE
+        DOC_COMMENT_END
+      WHITE_SPACE
+      MODIFIER_LIST
+        PUBLIC_KEYWORD
+        WHITE_SPACE
+        STATIC_KEYWORD
+      TYPE_PARAMETER_LIST
+        <empty list>
+      WHITE_SPACE
+      TYPE
+        VOID_KEYWORD
+      WHITE_SPACE
+      IDENTIFIER
+      PARAMETER_LIST
+        LPARENTH
+        RPARENTH
+      THROWS_LIST
+        <empty list>
+      WHITE_SPACE
+      CODE_BLOCK
+        LBRACE
+        WHITE_SPACE
+        EXPRESSION_STATEMENT
+          METHOD_CALL_EXPRESSION
+            REFERENCE_EXPRESSION
+              REFERENCE_EXPRESSION
+                REFERENCE_EXPRESSION
+                  REFERENCE_PARAMETER_LIST
+                    <empty list>
+                  IDENTIFIER
+                DOT
+                REFERENCE_PARAMETER_LIST
+                  <empty list>
+                IDENTIFIER
+              DOT
+              REFERENCE_PARAMETER_LIST
+                <empty list>
+              IDENTIFIER
+            EXPRESSION_LIST
+              LPARENTH
+              LITERAL_EXPRESSION
+                STRING_LITERAL
+              RPARENTH
+          SEMICOLON
+        WHITE_SPACE
+        RBRACE

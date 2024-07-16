@@ -2,13 +2,14 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyFindUsagesTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
 
-  override fun setUp() = runBlocking {
+  override fun setUp() = runBlocking(Dispatchers.EDT) {
     super.setUp()
 
     importProjectAsync("""
@@ -19,7 +20,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindModelPropertyFromReference() = runBlocking {
+  fun testFindModelPropertyFromReference() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -34,7 +35,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindModelPropertyFromReferenceWithDifferentQualifiers() = runBlocking {
+  fun testFindModelPropertyFromReferenceWithDifferentQualifiers() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -49,7 +50,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesFromTag() = runBlocking {
+  fun testFindUsagesFromTag() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -64,7 +65,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesFromTagValue() = runBlocking {
+  fun testFindUsagesFromTagValue() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -76,7 +77,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesFromProperty() = runBlocking {
+  fun testFindUsagesFromProperty() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -91,7 +92,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesForEnvProperty() = runBlocking {
+  fun testFindUsagesForEnvProperty() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
   <groupId>test</groupId>
   <artifactId>module1</artifactId>
@@ -104,7 +105,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesForSystemProperty() = runBlocking {
+  fun testFindUsagesForSystemProperty() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -117,7 +118,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking {
+  fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking(Dispatchers.EDT) {
     createProjectSubDir("res")
 
     importProjectAsync("""
@@ -143,7 +144,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testHighlightingFromTag() = runBlocking {
+  fun testHighlightingFromTag() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>

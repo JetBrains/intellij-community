@@ -11,6 +11,7 @@ import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.ui.ExperimentalUI
 import org.junit.Rule
 import org.junit.Test
 
@@ -50,7 +51,8 @@ class TopHitProvidersTest {
         // we can't reliably restore the original state for non-boolean options
         if (option is NotABooleanOptionDescription ||
             // makes sense only on Windows
-            option.option == "UI: Show main menu in a separate toolbar") {
+            option.option == "UI: Show main menu in a separate toolbar" ||
+            (ExperimentalUI.isNewUI() && option.option == "View: Show Main Toolbar")) {
           continue
         }
 

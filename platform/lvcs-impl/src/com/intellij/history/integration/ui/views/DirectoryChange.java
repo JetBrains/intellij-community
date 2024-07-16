@@ -1,43 +1,40 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.integration.ui.models.DirectoryChangeModel;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class DirectoryChange extends Change {
-  private final DirectoryChangeModel myModel;
+  private final @NotNull IdeaGateway myGateway;
+  private final @NotNull Difference myDifference;
 
-  public DirectoryChange(@NotNull DirectoryChangeModel m) {
-    super(m.getContentRevision(0), m.getContentRevision(1));
-    myModel = m;
-  }
-
-  public @NotNull DirectoryChangeModel getModel() {
-    return myModel;
+  public DirectoryChange(@NotNull IdeaGateway gateway, @NotNull Difference difference) {
+    super(difference.getLeftContentRevision(gateway), difference.getRightContentRevision(gateway));
+    myGateway = gateway;
+    myDifference = difference;
   }
 
   public boolean canShowFileDifference() {
-    return myModel.canShowFileDifference();
+    if (!myDifference.isFile()) return false;
+    Entry e = getLeftEntry();
+    if (e == null) e = getRightEntry();
+    return myGateway.areContentChangesVersioned(e.getName());
   }
 
-  public Difference getDifference() {
-    return myModel.getDifference();
+  public @NotNull Difference getDifference() {
+    return myDifference;
+  }
+
+  public @Nullable Entry getLeftEntry() {
+    return myDifference.getLeft();
+  }
+
+  public @Nullable Entry getRightEntry() {
+    return myDifference.getRight();
   }
 }

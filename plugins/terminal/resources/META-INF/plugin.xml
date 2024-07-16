@@ -18,7 +18,6 @@
 
   <resource-bundle>messages.TerminalBundle</resource-bundle>
   <xi:include href="/META-INF/terminal.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/completion-specs.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
     <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
@@ -93,29 +92,29 @@
 
 
     <!--  New Terminal Actions  -->
-    <action id="Terminal.SelectLastBlock" class="org.jetbrains.plugins.terminal.exp.TerminalSelectLastBlockAction">
+    <action id="Terminal.SelectLastBlock" class="org.jetbrains.plugins.terminal.block.prompt.TerminalSelectLastBlockAction">
       <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X" replace-all="true"/>
       <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
-    <action id="Terminal.SelectPrompt" class="org.jetbrains.plugins.terminal.exp.TerminalSelectPromptAction">
+    <action id="Terminal.SelectPrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalSelectPromptAction">
       <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X" replace-all="true"/>
       <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
-    <action id="Terminal.SelectBlockAbove" class="org.jetbrains.plugins.terminal.exp.TerminalSelectBlockAboveAction">
+    <action id="Terminal.SelectBlockAbove" class="org.jetbrains.plugins.terminal.block.prompt.TerminalSelectBlockAboveAction">
       <keyboard-shortcut first-keystroke="UP" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+"/>
     </action>
-    <action id="Terminal.SelectBlockBelow" class="org.jetbrains.plugins.terminal.exp.TerminalSelectBlockBelowAction">
+    <action id="Terminal.SelectBlockBelow" class="org.jetbrains.plugins.terminal.block.prompt.TerminalSelectBlockBelowAction">
       <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
     </action>
-    <action id="Terminal.ExpandBlockSelectionAbove" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionAboveAction"
+    <action id="Terminal.ExpandBlockSelectionAbove" class="org.jetbrains.plugins.terminal.block.prompt.TerminalExpandBlockSelectionAboveAction"
             use-shortcut-of="EditorUpWithSelection">
     </action>
-    <action id="Terminal.ExpandBlockSelectionBelow" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionBelowAction"
+    <action id="Terminal.ExpandBlockSelectionBelow" class="org.jetbrains.plugins.terminal.block.prompt.TerminalExpandBlockSelectionBelowAction"
             use-shortcut-of="EditorDownWithSelection">
     </action>
     <action id="Terminal.CopyBlock" class="org.jetbrains.plugins.terminal.action.TerminalCopyBlockAction" icon="AllIcons.Actions.Copy">
@@ -126,7 +125,7 @@
     <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
-    <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.exp.TerminalInsertInlineCompletionAction">
+    <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.block.completion.TerminalInsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
     </action>
     <action id="Terminal.ShowDocumentation" class="org.jetbrains.plugins.terminal.action.TerminalShowDocAction"
@@ -148,11 +147,17 @@
       <keyboard-shortcut first-keystroke="control W" keymap="Mac OS X" replace-all="true"/>
       <keyboard-shortcut first-keystroke="control W" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
-    <action id="Terminal.SearchInCommandHistory" class="org.jetbrains.plugins.terminal.exp.history.CommandSearchAction">
+    <action id="Terminal.SearchInCommandHistory" class="org.jetbrains.plugins.terminal.block.history.CommandSearchAction">
       <keyboard-shortcut first-keystroke="control R" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X" replace-all="true"/>
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
+
+    <group id="Terminal.PromptStyle" popup="true">
+      <action id="Terminal.UseSingleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseSingleLinePromptAction"/>
+      <action id="Terminal.UseDoubleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseDoubleLinePromptAction"/>
+      <action id="Terminal.UseShellPrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseShellPromptAction"/>
+    </group>
 
     <group id="Terminal.OutputContextMenu">
       <reference ref="Terminal.CopyBlock"/>
@@ -165,10 +170,13 @@
       <reference ref="EditorCut"/>
       <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.PromptStyle"/>
     </group>
 
+    <group id="Terminal.PromptToolbar"/>
+
     <action id="Terminal.ShowFeedbackNotification" internal="true"
-            class="org.jetbrains.plugins.terminal.exp.feedback.ShowBlockTerminalFeedbackNotificationAction"/>
+            class="org.jetbrains.plugins.terminal.block.feedback.ShowBlockTerminalFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>

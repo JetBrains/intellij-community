@@ -33,8 +33,7 @@ public final class AnonymousClassComplexityInspection
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OverlyComplexAnonymousInnerClass";
   }
 
@@ -55,8 +54,7 @@ public final class AnonymousClassComplexityInspection
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer totalComplexity = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "overly.complex.anonymous.inner.class.problem.descriptor",

@@ -2,14 +2,21 @@
 package com.intellij.refactoring.rename.naming
 
 import com.intellij.codeInsight.TestFrameworks
+import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.module.Module
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.containers.ContainerUtil
 import java.util.regex.Pattern
 
 abstract class AutomaticTestMethodRenamerFactory : AutomaticRenamerFactory {
+  override fun isApplicable(element: PsiElement): Boolean {
+    val file = element.containingFile
+    return !ProjectRootsUtil.isInTestSource(file)
+  }
+
   override fun getOptionName(): String = JavaRefactoringBundle.message("rename.test.method")
 
   protected class AutomaticTestMethodRenamer(oldMethodName: String?,

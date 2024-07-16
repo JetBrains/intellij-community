@@ -1,4 +1,4 @@
-// WITH_LIBRARY: KotlinLibrary
+// WITH_LIBRARY: ../KotlinLibrary
 <selection>
 /*
  * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.

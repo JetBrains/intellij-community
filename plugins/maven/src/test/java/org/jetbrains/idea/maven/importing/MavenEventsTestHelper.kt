@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.project.Project
@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.util.messages.MessageBusConnection
 import org.junit.Assert
 
@@ -29,7 +30,7 @@ class MavenEventsTestHelper {
 
     connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
-        val hasChanges = event.getAllChanges().iterator().hasNext()
+        val hasChanges = (event as VersionedStorageChangeInternal).getAllChanges().iterator().hasNext()
         if (hasChanges) workspaceChangesCount++
       }
     })

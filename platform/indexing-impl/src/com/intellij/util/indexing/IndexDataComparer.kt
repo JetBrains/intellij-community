@@ -5,7 +5,9 @@ import com.intellij.psi.stubs.ObjectStubBase
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.Stub
 import com.intellij.util.containers.hash.EqualityPolicy
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object IndexDataComparer {
 
   fun <K, V> areIndexedDataOfFileTheSame(

@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard
 
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyValue
@@ -10,6 +11,7 @@ import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
+import java.util.function.Consumer
 import javax.swing.JLabel
 
 class WebTemplateProjectWizardStep<T>(
@@ -39,13 +41,21 @@ class WebTemplateProjectWizardStep<T>(
   }
 
   override fun setupProject(project: Project) {
-    val builder = WebModuleBuilder(template, peer)
-    builder.moduleFilePath = "${parent.path}/${parent.name}"
-    builder.contentEntryPath = "${parent.path}/${parent.name}"
-    builder.name = parent.name
-    builder.commitModule(project, null)
+    webModuleBuilder().commitModule(project, null)
   }
-  
+
+  private fun webModuleBuilder(): WebModuleBuilder<T> {
+    return WebModuleBuilder(template, peer).apply {
+      moduleFilePath = "${parent.path}/${parent.name}"
+      contentEntryPath = "${parent.path}/${parent.name}"
+      name = parent.name
+    }
+  }
+
+  override fun createModuleConfigurator(): Consumer<Module>? {
+    return webModuleBuilder().createModuleConfigurator()
+  }
+
   init {
     data.putUserData(WebTemplateProjectWizardData.KEY, this)
   }

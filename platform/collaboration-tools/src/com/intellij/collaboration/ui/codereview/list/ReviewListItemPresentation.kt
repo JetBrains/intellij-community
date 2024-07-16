@@ -19,7 +19,7 @@ interface ReviewListItemPresentation {
   val userGroup1: NamedCollection<UserPresentation>?
   val userGroup2: NamedCollection<UserPresentation>?
   val commentsCounter: CommentsCounter?
-  val seen: Boolean
+  val seen: Boolean?
 
   data class Simple(override val title: String,
                     override val id: String,
@@ -32,7 +32,7 @@ interface ReviewListItemPresentation {
                     override val userGroup1: NamedCollection<UserPresentation>? = null,
                     override val userGroup2: NamedCollection<UserPresentation>? = null,
                     override val commentsCounter: CommentsCounter? = null,
-                    override val seen: Boolean = true) : ReviewListItemPresentation
+                    override val seen: Boolean? = null) : ReviewListItemPresentation
 
   data class Status(val icon: Icon, val tooltip: @Nls String)
 

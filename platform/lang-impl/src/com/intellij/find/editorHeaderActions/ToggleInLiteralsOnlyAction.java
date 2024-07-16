@@ -3,9 +3,12 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
 
 public final class ToggleInLiteralsOnlyAction extends EditorHeaderSetSearchContextAction {
   public ToggleInLiteralsOnlyAction() {
     super(FindBundle.message("search.context.title.in.string.literals"), FindModel.SearchContext.IN_STRING_LITERALS);
+
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
   }
 }

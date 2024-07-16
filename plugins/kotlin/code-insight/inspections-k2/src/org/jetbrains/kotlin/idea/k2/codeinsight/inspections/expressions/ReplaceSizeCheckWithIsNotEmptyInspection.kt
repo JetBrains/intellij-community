@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isOneIntegerConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isZeroIntegerConstant
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -12,13 +13,20 @@ internal class ReplaceSizeCheckWithIsNotEmptyInspection : ReplaceSizeCheckInspec
 
     override val methodToReplaceWith = EmptinessCheckMethod.IS_NOT_EMPTY
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("replace.size.check.with.isnotempty")
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: ReplacementInfo,
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : ReplaceSizeCheckQuickFixBase(context) {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.size.check.with.isnotempty")
+
+        override fun getName(): String =
+            KotlinBundle.message("replace.size.check.with.0", context.fixMessage())
+    }
 
     override fun getProblemDescription(element: KtBinaryExpression, context: ReplacementInfo) =
         KotlinBundle.message("inspection.replace.size.check.with.is.not.empty.display.name")
-
-    override fun getActionName(element: KtBinaryExpression, context: ReplacementInfo) =
-        KotlinBundle.message("replace.size.check.with.0", context.fixMessage())
 
     override fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression? =
         when (expr.operationToken) {

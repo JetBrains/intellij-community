@@ -1,12 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +21,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
@@ -63,15 +62,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractModuleDataService<E extends ModuleData> extends AbstractProjectDataService<E, Module> {
-
   public static final Key<ModuleData> MODULE_DATA_KEY = Key.create("MODULE_DATA_KEY");
   public static final Key<Module> MODULE_KEY = Key.create("LINKED_MODULE");
   public static final Key<Map<OrderEntry, OrderAware>> ORDERED_DATA_MAP_KEY = Key.create("ORDER_ENTRY_DATA_MAP");
   private static final Key<Set<Path>> ORPHAN_MODULE_FILES = Key.create("ORPHAN_FILES");
   private static final Key<AtomicInteger> ORPHAN_MODULE_HANDLERS_COUNTER = Key.create("ORPHAN_MODULE_HANDLERS_COUNTER");
-
-  private static final NotificationGroup ORPHAN_MODULE_NOTIFICATION_GROUP =
-    NotificationGroupManager.getInstance().getNotificationGroup("Build sync orphan modules");
 
   private static final Logger LOG = Logger.getInstance(AbstractModuleDataService.class);
 
@@ -233,10 +228,15 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
     ContainerUtil.removeDuplicates(modules);
 
-    for (Module module : modules) {
-      if (module.isDisposed()) continue;
-      unlinkModuleFromExternalSystem(module);
-    }
+    ProjectSystemId projectSystemId = projectData.getOwner();
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove external system options from workspace model", __ -> {
+      for (Module module : modules) {
+        if (module.isDisposed()) continue;
+        ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove options for " + module.getName(), ___ -> {
+          unlinkModuleFromExternalSystem(module);
+        });
+      }
+    });
 
     ExternalSystemApiUtil.executeOnEdt(true, () -> {
       AtomicInteger counter = project.getUserData(ORPHAN_MODULE_HANDLERS_COUNTER);
@@ -286,7 +286,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
             }
           }
           modelsProvider.getModifiableModuleModel().disposeModule(module);
-          ModuleBuilder.deleteModuleFile(path);
         }
       }
       finally {
@@ -328,7 +327,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       String buildSystem = projectData != null ? projectData.getOwner().getReadableName() : "build system";
       String content = ExternalSystemBundle.message("orphan.modules.text", buildSystem,
                                                     StringUtil.shortenTextWithEllipsis(modulesToRestoreText.toString(), 50, 0));
-      Notification cleanUpNotification = ORPHAN_MODULE_NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION)
+      Notification cleanUpNotification = NotificationGroupManager.getInstance().getNotificationGroup("Build sync orphan modules")
+        .createNotification(content, NotificationType.INFORMATION)
         .setListener((notification, event) -> {
           if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
           if (showRemovedOrphanModules(modulesToRestore, project)) {
@@ -481,9 +481,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       index++;
     }
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isTraceEnabled()) {
       boolean changed = !Arrays.equals(orderEntries, newOrder);
-      LOG.debug(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
+      LOG.trace(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);
   }

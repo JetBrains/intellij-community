@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static de.plushnikov.intellij.plugin.LombokClassNames.MAIN_LOMBOK_CLASSES;
 
-public class LombokExternalLibraryResolver extends ExternalLibraryResolver {
+public final class LombokExternalLibraryResolver extends ExternalLibraryResolver {
 
   private final Set<String> allLombokPackages;
   private final Map<String, String> simpleNameToFQNameMap;

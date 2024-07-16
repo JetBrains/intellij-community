@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -10,13 +10,11 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
+import com.intellij.vcs.log.graph.collapsing.LinearFragmentGenerator.GraphFragment;
 import com.intellij.vcs.log.graph.impl.facade.GraphChangesUtil;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer;
-import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator;
-import com.intellij.vcs.log.graph.impl.visible.LinearFragmentGenerator.GraphFragment;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet;
 import org.jetbrains.annotations.NotNull;
@@ -202,7 +200,7 @@ final class CollapsedActionManager {
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       modification.removeAdditionalEdges();
       modification.resetNodesVisibility();
-      return new DeferredGraphAnswer(GraphChangesUtil.SOME_CHANGES, modification);
+      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, () -> modification.apply());
     }
 
     @NotNull
@@ -233,7 +231,7 @@ final class CollapsedActionManager {
         }
       }
 
-      return new DeferredGraphAnswer(GraphChangesUtil.SOME_CHANGES, modification);
+      return new LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, () -> modification.apply());
     }
 
     @NotNull
@@ -318,20 +316,5 @@ final class CollapsedActionManager {
     }
 
     return null;
-  }
-
-  private static class DeferredGraphAnswer extends LinearGraphController.LinearGraphAnswer {
-    @NotNull private final CollapsedGraph.Modification myModification;
-
-    DeferredGraphAnswer(@Nullable GraphChanges<Integer> graphChanges, @NotNull CollapsedGraph.Modification modification) {
-      super(graphChanges);
-      myModification = modification;
-    }
-
-    @Nullable
-    @Override
-    public Runnable getGraphUpdater() {
-      return () -> myModification.apply();
-    }
   }
 }

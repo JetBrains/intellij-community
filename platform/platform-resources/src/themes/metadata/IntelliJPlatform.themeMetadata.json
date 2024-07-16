@@ -220,6 +220,16 @@
       "since": "2023.3"
     },
     {
+      "key": "CombinedDiff.BlockBorder.selectedActiveColor",
+      "description": "Active border color around current (selected) Combined (All in One) Diff block",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.BlockBorder.selectedInactiveColor",
+      "description": "Inactive border color around current (selected) Combined (All in One) Diff block",
+      "since": "2023.3"
+    },
+    {
       "key": "ComboPopup.border",
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },
@@ -250,8 +260,13 @@
     },
     {
       "key": "CompletionPopup.Body.insets",
-      "description": "Insets around body  (experimental UI only). If bottom panel with advertiser is visible then bottom inset is not applied",
+      "description": "Insets around body  (experimental UI only). If bottom panel with advertiser is visible then BodyWithAdvertiser.insets is used instead",
       "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.BodyWithAdvertiser.insets",
+      "description": "Insets around body  (experimental UI only). Used only when the advertiser (bottom panel) is visible",
+      "since": "2024.2"
     },
     {
       "key": "CompletionPopup.infoForeground",
@@ -307,6 +322,36 @@
       "key": "CompletionPopup.selectionInnerInsets",
       "description": "Inner insets in selection line (experimental UI only)",
       "since": "2022.2"
+    },
+    {
+      "key": "DisclosureButton.arc",
+      "description": "Arc of disclosure button",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.defaultBackground",
+      "description": "Background of disclosure button",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.hoverOverlay",
+      "description": "Hover overlay color, which is painted over background for hover state",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.pressedOverlay",
+      "description": "Pressed overlay color, which is painted over background for hover state",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.successBackground",
+      "description": "Success or visited background of disclosure button",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.textRightIconGap",
+      "description": "Gap between text and right icon",
+      "since": "2024.2"
     },
     {
       "key": "FindPopup.scopesPanelInsets",
@@ -603,7 +648,6 @@
       "since": "2019.2",
       "description": "Selected tab underline color when the tab is not in focus. If value isn't specified the value of DefaultTabs.inactiveUnderlineColor will be used"
     },
-
     {
       "key": "EditorTabs.selectedBackground",
       "description": "Background for all tabs in 2019.1",
@@ -1176,7 +1220,7 @@
       "key": "NotificationsToolwindow.Notification.hoverBackground"
     },
     {
-      "key" : "OnePixelDivider.background",
+      "key": "OnePixelDivider.background",
       "description": "One pixel divider color"
     },
     {
@@ -1547,6 +1591,36 @@
       "description": "Color of the border around highlighted items when searching in the Settings dialog"
     },
     {
+      "key": "Shortcut.backgroundColor",
+      "description": "Shortcut elements background",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.backgroundOpacity",
+      "description": "Shortcut elements background opacity in percents",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.foregroundColor",
+      "description": "Shortcut elements foreground",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.borderColor",
+      "description": "Shortcut elements border color",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.borderWidth",
+      "description": "Shortcut elements border width in pixels",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.borderRadius",
+      "description": "Shortcut elements border radius in pixels",
+      "since": "2024.2"
+    },
+    {
       "key": "SidePanel.background",
       "description": "Left-side tree background in the Settings and Project Structure dialogs"
     },
@@ -1564,7 +1638,6 @@
       "key": "Slider.trackColor",
       "description": "Slider track color",
       "since": "2019.3"
-
     },
     {
       "key": "Slider.tickColor",
@@ -2078,6 +2151,16 @@
       "since": "2023.1"
     },
     {
+      "key": "VersionControl.Log.Graph.saturation",
+      "description": "Saturation of the graph in the Version Control | Log tab (a floating point number between 0 and 1)",
+      "since": "2024.2"
+    },
+    {
+      "key": "VersionControl.Log.Graph.brightness",
+      "description": "Brightness of the graph in the Version Control | Log tab (a floating point number between 0 and 1)",
+      "since": "2024.2"
+    },
+    {
       "key": "VersionControl.RefLabel.backgroundBase",
       "description": "Reference label background base color",
       "since": "2019.1"
@@ -2106,6 +2189,11 @@
       "key": "VersionControl.MarkerPopup.Toolbar.background",
       "description": "Color of toolbar background in the Vcs Marker Popup",
       "since": "2022.3"
+    },
+    {
+      "key": "VersionControl.Merge.Status.NoConflicts.foreground",
+      "description": "Color for the status label when all conflicts are resolved",
+      "since": "2024.2"
     },
     {
       "key": "WelcomeScreen.background"
@@ -2418,6 +2506,22 @@
     },
     {
       "key": "MainWindow.FullScreeControl.Background"
+    },
+    {
+      "key": "LicenseDialog.termsAndConditionsForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.separatorColor",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.LicenseList.licenseDetailsForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.LicenseList.separatorColor",
+      "since": "2024.2"
     }
   ]
 }

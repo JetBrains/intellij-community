@@ -2,6 +2,7 @@
 package com.intellij.usages.impl
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.usages.rules.UsageFilteringRuleCustomizer
 
 internal class UsageFilteringRuleStateImpl(
   private val sharedState: MutableSet<String>
@@ -10,7 +11,7 @@ internal class UsageFilteringRuleStateImpl(
   private val localState: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
   init {
-    localState.addAll(sharedState)
+    localState.addAll(sharedState.filter { shouldShareState(it) })
   }
 
   /**
@@ -24,11 +25,21 @@ internal class UsageFilteringRuleStateImpl(
   override fun setActive(ruleId: String, active: Boolean) {
     if (active) {
       localState.add(ruleId)
-      sharedState.add(ruleId)
+      if (shouldShareState(ruleId)) {
+        sharedState.add(ruleId)
+      }
     }
     else {
       localState.remove(ruleId)
-      sharedState.remove(ruleId)
+      if (shouldShareState(ruleId)) {
+        sharedState.remove(ruleId)
+      }
     }
+  }
+
+  private fun shouldShareState(ruleId: String): Boolean {
+    // For not it is used in Rider to disable persisting `Show Read Usages / Show Write Usages` between different sessions
+    //  because we consider this behavior misleading - users ofter lose some usages because of "forgotten" access filters
+    return UsageFilteringRuleCustomizer.EP.extensionList.none { it.transientRule(ruleId) }
   }
 }

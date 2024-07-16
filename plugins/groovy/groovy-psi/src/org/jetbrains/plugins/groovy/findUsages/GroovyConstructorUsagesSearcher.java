@@ -43,7 +43,7 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
+public final class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
   public GroovyConstructorUsagesSearcher() {
     super(true);
   }
@@ -168,15 +168,13 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
           });
         }
       }
-      else if (grandpa instanceof GrTypeCastExpression) {
-        final GrTypeCastExpression cast = (GrTypeCastExpression)grandpa;
+      else if (grandpa instanceof GrTypeCastExpression cast) {
         if (cast.getCastTypeElement() == typeElement &&
             !checkLiteralInstantiation(cast.getOperand(), literalProcessor)) {
           return false;
         }
       }
-      else if (grandpa instanceof GrSafeCastExpression) {
-        final GrSafeCastExpression cast = (GrSafeCastExpression)grandpa;
+      else if (grandpa instanceof GrSafeCastExpression cast) {
         if (cast.getCastTypeElement() == typeElement &&
             !checkLiteralInstantiation(cast.getOperand(), literalProcessor)) {
           return false;

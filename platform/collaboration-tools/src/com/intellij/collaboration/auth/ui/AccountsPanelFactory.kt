@@ -9,13 +9,12 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil.asObservableIn
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.findIndex
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
+import com.intellij.credentialStore.PasswordSafeConfigurable
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,11 +25,10 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBList
-import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +37,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 import javax.swing.*
 
@@ -203,18 +200,16 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
      * live on for as long as the scope is live. This means the scope needs to be cancelled
      * manually or through a disposing scope.
      */
-    @ApiStatus.Experimental
     fun addWarningForPersistentCredentials(cs: CoroutineScope,
                                            canPersistCredentials: Flow<Boolean>,
                                            panel: (Panel.() -> Unit) -> Panel,
-                                           solution: ((DataContext) -> Unit)? = null) {
+                                           solution: ((DataContext) -> Unit)? = null): CellBase<Panel> =
       panel {
         row {
           cell(HorizontalListPanel(4).apply {
             val warning = message(if (solution != null) "accounts.error.password-not-saved.colon" else "accounts.error.password-not-saved")
-            add(JLabel(warning).apply {
-              foreground = NamedColorUtil.getErrorForeground()
-            })
+
+            add(JLabel(warning, AllIcons.General.Warning, SwingConstants.LEFT))
 
             if (solution != null) {
               add(ActionLink(message("accounts.error.password-not-saved.link")).apply {
@@ -224,13 +219,26 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
                 }
               })
             }
-          }).align(AlignX.RIGHT)
-            .visibleIf(canPersistCredentials.map { !it }
-                         .stateIn(cs, SharingStarted.Lazily, false)
-                         .asObservableIn(cs))
+          })
         }
-      }.align(AlignX.FILL)
-    }
+      }.visibleIf(canPersistCredentials.map { !it }
+                    .stateIn(cs, SharingStarted.Lazily, false)
+                    .asObservableIn(cs))
+
+    fun addWarningForMemoryOnlyPasswordSafeAndGet(cs: CoroutineScope,
+                                                  canPersistCredentials: Flow<Boolean>,
+                                                  panel: (Panel.() -> Unit) -> Panel): CellBase<Panel> =
+      addWarningForPersistentCredentials(cs, canPersistCredentials, panel) {
+        val settings = Settings.KEY.getData(it)
+        val project = CommonDataKeys.PROJECT.getData(it)
+        if (settings != null) {
+          settings.select(settings.find(PasswordSafeConfigurable::class.java))
+        }
+        else {
+          ShowSettingsUtil.getInstance()
+            .showSettingsDialog(project, PasswordSafeConfigurable::class.java)
+        }
+      }
 
     /**
      * Adds a warning to a panel that tells the user that password safe settings are
@@ -239,14 +247,10 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
      *
      * This specific function also adds a link to the settings page to solve it.
      */
-    @ApiStatus.Experimental
     fun addWarningForMemoryOnlyPasswordSafe(cs: CoroutineScope,
                                             canPersistCredentials: Flow<Boolean>,
                                             panel: (Panel.() -> Unit) -> Panel) {
-      addWarningForPersistentCredentials(cs, canPersistCredentials, panel) {
-        val settings = Settings.KEY.getData(it)
-        settings?.select(settings.find("application.passwordSafe"))
-      }
+      addWarningForMemoryOnlyPasswordSafeAndGet(cs, canPersistCredentials, panel)
     }
   }
 }

@@ -9,18 +9,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 public final class PsiAnnotationSearchUtil {
 
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiModifierListOwner)) {
+      return DumbIncompleteModeUtil.findAnnotationInDumbOrIncompleteMode(psiModifierListOwner, annotationFQN);
+    }
     return psiModifierListOwner.getAnnotation(annotationFQN);
   }
 
   @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationFQNs) {
+    boolean isDumbMode = DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiModifierListOwner);
     for (String annotationFQN : annotationFQNs) {
-      PsiAnnotation annotation = psiModifierListOwner.getAnnotation(annotationFQN);
+      PsiAnnotation annotation;
+      if (isDumbMode) {
+        annotation = DumbIncompleteModeUtil.findAnnotationInDumbOrIncompleteMode(psiModifierListOwner, annotationFQN);
+      }
+      else {
+        annotation = psiModifierListOwner.getAnnotation(annotationFQN);
+      }
       if (annotation != null) {
         return annotation;
       }
@@ -29,6 +40,9 @@ public final class PsiAnnotationSearchUtil {
   }
 
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiModifierListOwner)) {
+      return DumbIncompleteModeUtil.findAnnotationInDumbOrIncompleteMode(psiModifierListOwner, annotationFQN) != null;
+    }
     return psiModifierListOwner.hasAnnotation(annotationFQN);
   }
 
@@ -79,6 +93,17 @@ public final class PsiAnnotationSearchUtil {
 
   public static boolean checkAnnotationHasOneOfFQNs(@NotNull PsiAnnotation psiAnnotation,
                                                     String @NotNull ... annotationFQNs) {
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation)) {
+      return ContainerUtil.or(annotationFQNs, fqn-> DumbIncompleteModeUtil.hasQualifiedNameInDumbOrIncompleteMode(psiAnnotation, fqn));
+    }
+    return ContainerUtil.or(annotationFQNs, psiAnnotation::hasQualifiedName);
+  }
+
+  public static boolean checkAnnotationHasOneOfFQNs(@NotNull PsiAnnotation psiAnnotation,
+                                                    @NotNull Set<String> annotationFQNs) {
+    if (DumbIncompleteModeUtil.isDumbOrIncompleteMode(psiAnnotation)) {
+      return ContainerUtil.or(annotationFQNs, fqn -> DumbIncompleteModeUtil.hasQualifiedNameInDumbOrIncompleteMode(psiAnnotation, fqn));
+    }
     return ContainerUtil.or(annotationFQNs, psiAnnotation::hasQualifiedName);
   }
 }

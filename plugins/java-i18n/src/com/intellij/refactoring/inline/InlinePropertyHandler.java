@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author gregsh
  */
-public class InlinePropertyHandler extends JavaInlineActionHandler {
+public final class InlinePropertyHandler extends JavaInlineActionHandler {
   public static final String REFACTORING_ID = "refactoring.inline.property";
 
   @Override

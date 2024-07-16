@@ -17,18 +17,6 @@ public final class TerminalHandlerImpl extends TerminalHandlerBase {
 
   private final TerminalWidget myTerminalWidget;
 
-  /**
-   * @deprecated use {@link TerminalHandlerImpl#TerminalHandlerImpl(String, Project, InputStream, OutputStream)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public TerminalHandlerImpl(@NotNull String presentableName,
-                             @NotNull Project project,
-                             @NotNull InputStream terminalOutput,
-                             @NotNull OutputStream terminalInput,
-                             @SuppressWarnings("unused") boolean deferTerminalSessionUntilFirstShown) {
-    this(presentableName, project, terminalOutput, terminalInput);
-  }
-
   public TerminalHandlerImpl(@NotNull String presentableName,
                              @NotNull Project project,
                              @NotNull InputStream terminalOutput,

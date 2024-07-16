@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
-import com.intellij.codeInspection.ex.UnfairLocalInspectionTool
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
@@ -17,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 /**
  * Will work during batch run only. For on-the-fly code, see [org.jetbrains.kotlin.idea.highlighting.KotlinUnusedHighlightingVisitor]
  */
-class UnusedSymbolInspection : LocalInspectionTool(), UnfairLocalInspectionTool {
+class UnusedSymbolInspection : LocalInspectionTool() {
     // TODO: Having parity between Java and Kotlin might be a good idea once we replace the global Kotlin inspection with a UAST-based one.
     private val javaInspection = UnusedDeclarationInspection()
 

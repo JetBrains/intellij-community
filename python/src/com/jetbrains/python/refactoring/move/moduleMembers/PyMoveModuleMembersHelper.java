@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
 import com.intellij.psi.PsiElement;
@@ -83,8 +83,7 @@ public final class PyMoveModuleMembersHelper {
    *
    * @see #extractNamedElement(PsiElement)
    */
-  @Nullable
-  public static PsiElement expandNamedElementBody(@NotNull PsiNamedElement element) {
+  public static @Nullable PsiElement expandNamedElementBody(@NotNull PsiNamedElement element) {
     if (element instanceof PyClass || element instanceof PyFunction) {
       return element;
     }
@@ -100,8 +99,7 @@ public final class PyMoveModuleMembersHelper {
    *
    * @see #expandNamedElementBody(PsiNamedElement)
    */
-  @Nullable
-  public static PsiNamedElement extractNamedElement(@NotNull PsiElement element) {
+  public static @Nullable PsiNamedElement extractNamedElement(@NotNull PsiElement element) {
     if (element instanceof PyClass || element instanceof PyFunction || element instanceof PyTargetExpression) {
       return (PsiNamedElement)element;
     }

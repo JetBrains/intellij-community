@@ -5,6 +5,7 @@ import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.DurableDataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.StorageLockContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
  * {@link com.intellij.util.io.DataEnumerator} contract (which doesn't specify how to generate an id).
  *
  */
+@ApiStatus.Internal
 public interface ContentHashEnumerator extends DurableDataEnumerator<byte[]>,
                                                ScannableDataEnumeratorEx<byte[]>,
                                                CleanableStorage {

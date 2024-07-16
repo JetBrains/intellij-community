@@ -25,19 +25,27 @@ class BuildPaths(
   /**
    * Path to a directory where resulting artifacts like installer distributions will be placed
    */
-  val artifactDir: Path = buildOutputDir.resolve("artifacts"),
+  val artifactDir: Path,
+  /**
+   * Path to a directory where temporary files required for a particular build step can be stored
+   */
+  val tempDir: Path,
+  /**
+   * Path to a directory where searchable options will be built in
+   */
+  val searchableOptionDir: Path = tempDir.resolve("searchable-options")
 ) {
   companion object {
     @JvmStatic
     val ULTIMATE_HOME: Path by lazy {
-      IdeaProjectLoaderUtil.guessUltimateHome(javaClass) ?: error(
-        "Could not detect ultimate home folder from class: ${BuildPaths.javaClass.name}")
+      IdeaProjectLoaderUtil.guessUltimateHome(this::class.java) ?: error(
+        "Could not detect ultimate home folder from class: ${BuildPaths::class.java.name}")
     }
 
     @JvmStatic
     val COMMUNITY_ROOT: BuildDependenciesCommunityRoot by lazy {
-      IdeaProjectLoaderUtil.guessCommunityHome(javaClass) ?: error(
-        "Could not detect community home folder from class: ${BuildPaths.javaClass.name}")
+      IdeaProjectLoaderUtil.guessCommunityHome(this::class.java) ?: error(
+        "Could not detect community home folder from class: ${BuildPaths::class.java.name}")
     }
   }
 
@@ -52,21 +60,10 @@ class BuildPaths(
   var distAllDir: Path = buildOutputDir.resolve("dist.all")
 
   /**
-   * Path to a directory where temporary files required for a particular build step can be stored
-   */
-  val tempDir: Path = buildOutputDir.resolve("temp")
-
-  /**
    * Build scripts use different folder to store JPS build artifacts
    * instead of 'out/classes/artifacts' which is IDE default folder for those artifacts.
    * Different folders are used not to affect incremental build of IDE.
    * Not to be confused with [artifactDir].
    */
   val jpsArtifacts: Path = buildOutputDir.resolve("jps-artifacts")
-
-  /**
-   * Path to a directory where searchable options will be built in
-   */
-  val searchableOptionDir: Path
-    get() = tempDir.resolve("searchableOptionsResult")
 }

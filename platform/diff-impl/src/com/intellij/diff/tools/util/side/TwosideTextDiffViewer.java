@@ -19,7 +19,6 @@ import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.breadcrumbs.SimpleDiffBreadcrumbsPanel;
-import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
@@ -88,10 +87,6 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   protected void onInit() {
     super.onInit();
     installEditorListeners();
-
-    for (EditorEx editor : getEditors()) {
-      editor.putUserData(DiffUserDataKeys.DIFF_VIEWER, this);
-    }
   }
 
   @Override

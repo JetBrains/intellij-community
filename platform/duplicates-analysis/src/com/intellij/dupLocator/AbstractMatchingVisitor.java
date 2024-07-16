@@ -15,12 +15,12 @@
  */
 package com.intellij.dupLocator;
 
-import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.PsiElement;
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.iterators.SiblingNodeIterator;
+import com.intellij.dupLocator.util.NodeFilter;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

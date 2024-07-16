@@ -27,7 +27,7 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

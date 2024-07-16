@@ -18,10 +18,12 @@ import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.runBlocking
-import java.io.File
+import com.intellij.platform.ide.bootstrap.commandNameFromExtension
+import com.intellij.warmup.util.importOrOpenProjectAsync
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -31,9 +33,6 @@ import kotlin.system.exitProcess
 internal class CompletionEvaluationStarter : ApplicationStarter {
   override val requiredModality: Int
     get() = ApplicationStarter.NOT_IN_EDT
-
-  override val commandName: String
-    get() = "ml-evaluate"
 
   override fun main(args: List<String>) {
     MainEvaluationCommand()
@@ -63,16 +62,21 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
     }
 
+    protected fun runPreliminarySteps(feature: EvaluableFeature<*>, workspace: EvaluationWorkspace) {
+      for (step in feature.getPreliminaryEvaluationSteps()) {
+        println("Starting preliminary step: ${step.name}")
+        step.start(workspace)
+      }
+    }
+
     protected fun loadAndApply(projectPath: String, action: (Project) -> Unit) {
       val project: Project?
 
       try {
         println("Open and load project $projectPath. Operation may take a few minutes.")
         @Suppress("SSBasedInspection")
-        project = runBlocking {
-          ProjectOpeningUtils.openProject(
-            File(projectPath).toPath()
-          )
+        project = runUnderModalProgressIfIsEdt {
+          importOrOpenProjectAsync(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)))
         }
         println("Project loaded!")
 
@@ -80,7 +84,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
           action(project)
         }
         catch (exception: Exception) {
-          throw RuntimeException("Failed to run actions on the project: $exception")
+          throw RuntimeException("Failed to run actions on the project: $exception", exception)
         }
       }
       catch (e: Exception) {
@@ -94,7 +98,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
   }
 
-  inner class MainEvaluationCommand : EvaluationCommand(commandName, "Evaluate code completion quality in headless mode") {
+  inner class MainEvaluationCommand : EvaluationCommand(commandNameFromExtension!!, "Evaluate code completion quality in headless mode") {
     override fun run() = Unit
   }
 
@@ -105,8 +109,9 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the $featureName")
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
+      val workspace = EvaluationWorkspace.create(config)
+      runPreliminarySteps(feature, workspace)
       loadAndApply(config.projectPath) { project ->
-        val workspace = EvaluationWorkspace.create(config)
         val stepFactory = BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true))
         EvaluationProcess.build({
                                   customize()
@@ -145,6 +150,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
       val workspace = EvaluationWorkspace.open(workspacePath)
       val config = workspace.readConfig(feature.getStrategySerializer())
+      runPreliminarySteps(feature, workspace)
       loadAndApply(config.projectPath) { project ->
         val process = EvaluationProcess.build({
                                                 shouldGenerateActions = false

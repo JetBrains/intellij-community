@@ -7,7 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-public class MavenFileTemplateGroupFactory implements FileTemplateGroupDescriptorFactory {
+public final class MavenFileTemplateGroupFactory implements FileTemplateGroupDescriptorFactory {
   public static final String MAVEN_PROJECT_XML_TEMPLATE = "Maven Project.xml";
   public static final String MAVEN_SETTINGS_XML_TEMPLATE = "Maven Settings.xml";
 

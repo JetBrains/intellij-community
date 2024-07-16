@@ -3,7 +3,7 @@ package com.intellij.gradle.toolingExtension.modelProvider;
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.model.Model;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
@@ -40,18 +40,18 @@ public class GradleClassProjectModelProvider<T> implements ProjectImportModelPro
 
   @Override
   public @NotNull String getName() {
-    return modelClass.getName();
+    return modelClass.getSimpleName();
   }
 
   @Override
   public void populateProjectModels(
     @NotNull BuildController controller,
-    @NotNull Model projectModel,
-    @NotNull ProjectModelConsumer modelConsumer
+    @NotNull BasicGradleProject projectModel,
+    @NotNull GradleModelConsumer modelConsumer
   ) {
     T instance = controller.findModel(projectModel, modelClass);
     if (instance != null) {
-      modelConsumer.consume(instance, modelClass);
+      modelConsumer.consumeProjectModel(projectModel, instance, modelClass);
     }
   }
 

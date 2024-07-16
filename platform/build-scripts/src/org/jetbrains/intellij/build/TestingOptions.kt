@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.TestCaseLoader
@@ -132,9 +132,13 @@ open class TestingOptions {
   var batchTestIncludes: String? = System.getProperty("intellij.build.test.batchTest.includes")
 
   /**
-   * Run only whole classes in forked Runtime in case if [batchTestIncludes] mode enabled
+   * Run only whole classes/packages in forked Runtime
+   * Allowed values:
+   * * `false`
+   * * `class`
+   * * `package`
    */
-  var isDedicatedRuntimePerClassEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.dedicated.runtime.per.class.enabled", false)
+  var isDedicatedTestRuntime: String = System.getProperty("intellij.build.test.dedicated.runtime", "false")
 
   var isPerformanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
 
@@ -159,4 +163,10 @@ open class TestingOptions {
    * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
    */
   var bucketIndex: Int = SystemProperties.getIntProperty(TestCaseLoader.TEST_RUNNER_INDEX_FLAG, 0)
+
+  /**
+   * Whether to use jars instead of directories with classes.
+   * Better together with [BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK]
+   */
+  val useArchivedCompiledClasses: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
 }

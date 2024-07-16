@@ -29,12 +29,12 @@ import java.util.Collection;
 import java.util.function.IntConsumer;
 import java.util.function.ObjIntConsumer;
 
-public class VcsLogFullDetailsIndex<T, D> implements Disposable {
+class VcsLogFullDetailsIndex<T, D> implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogFullDetailsIndex.class);
   private final @NotNull MapReduceIndex<Integer, T, D> myMapReduceIndex;
   private volatile boolean myDisposed = false;
 
-  public VcsLogFullDetailsIndex(@NotNull MapReduceIndex<Integer, T, D> mapReduceIndex, @NotNull Disposable disposableParent) {
+  VcsLogFullDetailsIndex(@NotNull MapReduceIndex<Integer, T, D> mapReduceIndex, @NotNull Disposable disposableParent) {
     myMapReduceIndex = mapReduceIndex;
     Disposer.register(disposableParent, this);
   }
@@ -51,8 +51,8 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     MyIndexExtension<T, D> extension = new MyIndexExtension<>(name, indexer, externalizer, storageId.getVersion());
     PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext);
     try {
-      return new MyMapReduceIndex<T, D>(extension, new MyMapIndexStorage<>(name, storageId, externalizer), forwardIndex,
-                                        forwardIndexAccessor, errorHandler);
+      return new MyMapReduceIndex<>(extension, new MyMapIndexStorage<>(name, storageId, externalizer), forwardIndex,
+                                    forwardIndexAccessor, errorHandler);
     }
     finally {
       PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove();

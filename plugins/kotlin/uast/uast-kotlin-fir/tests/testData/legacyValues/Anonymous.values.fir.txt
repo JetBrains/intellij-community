@@ -15,29 +15,24 @@ UFile (package = ) [import java.io.Closeable...]
                     USimpleNameReferenceExpression (identifier = runnable) [runnable] = (var runnable = Undetermined)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] = external run()()
                         UIdentifier (Identifier (run)) [UIdentifier (Identifier (run))]
-                        USimpleNameReferenceExpression (identifier = run, resolvesTo = null) [run] = external run()()
                 UDeclarationsExpression [var runnable2: java.lang.Runnable = Runnable({ ...})] = Undetermined
                     ULocalVariable (name = runnable2) [var runnable2: java.lang.Runnable = Runnable({ ...})]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
     return println()
 })(Undetermined)
                             UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
-                            USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] = external Runnable({
-    return println()
-})(Undetermined)
+                            USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] = external Runnable()
                             ULambdaExpression [{ ...}] = Undetermined
                                 UBlockExpression [{...}] = Nothing
                                     UReturnExpression [return println()] = Nothing
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
                                             UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println()()
                 UQualifiedReferenceExpression [runnable2.run()] = external run()()
                     USimpleNameReferenceExpression (identifier = runnable2) [runnable2] = (var runnable2 = external Runnable({
     return println()
 })(Undetermined))
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] = external run()()
                         UIdentifier (Identifier (run)) [UIdentifier (Identifier (run))]
-                        USimpleNameReferenceExpression (identifier = run, resolvesTo = null) [run] = external run()()
                 UDeclarationsExpression [var closeableRunnable: java.lang.Object = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] = Undetermined
                     ULocalVariable (name = closeableRunnable) [var closeableRunnable: java.lang.Object = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }]
                         UObjectLiteralExpression [anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }] = Undetermined
@@ -58,10 +53,10 @@ UFile (package = ) [import java.io.Closeable...]
                                 UMethod (name = run) [public fun run() : void {...}]
                                     UBlockExpression [{...}] = Undetermined
                                 UMethod (name = ) [private fun () {...}]
-                                    UBlockExpression [{...}] = external <init>()()
-                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                                    UBlockExpression [{...}] = external InputStream()()
+                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [InputStream()] = external InputStream()()
                                             UIdentifier (Identifier (InputStream)) [UIdentifier (Identifier (InputStream))]
-                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: InputStream) [<init>] = external <init>()()
+                                            USimpleNameReferenceExpression (identifier = InputStream, resolvesTo = PsiClass: InputStream) [InputStream] = external InputStream()
         UMethod (name = withErr) [public static final fun withErr() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 UDeclarationsExpression [var runnable: java.lang.Object = anonymous null] = Undetermined

@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiManager
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 
 internal class StatisticsEventLogConsole(private val project: Project, model: LogFilterModel, recorderId: String)
   : LogConsoleBase(project, null, eventLogToolWindowsId, false, model) {

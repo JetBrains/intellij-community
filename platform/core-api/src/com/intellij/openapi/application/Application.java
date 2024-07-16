@@ -601,7 +601,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Checks if IDE is running in
-   * <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/internal_actions/enabling_internal.html">Internal Mode</a>
+   * <a href="https://plugins.jetbrains.com/docs/intellij/enabling-internal.html">Internal Mode</a>
    * to enable additional features for plugin development.
    */
   boolean isInternal();
@@ -612,6 +612,9 @@ public interface Application extends ComponentManager {
   default boolean isExitInProgress() {
     return false;
   }
+
+  @ApiStatus.Internal
+  boolean isSaveAllowed();
 
   //<editor-fold desc="Deprecated stuff">
 

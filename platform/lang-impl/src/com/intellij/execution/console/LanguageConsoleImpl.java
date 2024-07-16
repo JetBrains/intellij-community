@@ -55,7 +55,6 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,10 +87,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull Language language) {
     this(new Helper(project, new LightVirtualFile(title, language, "")));
-  }
-
-  public LanguageConsoleImpl(@NotNull Project project, @NotNull String title, @NotNull VirtualFile virtualFile) {
-    this(new Helper(project, virtualFile).setTitle(title));
   }
 
   public LanguageConsoleImpl(@NotNull Helper helper) {
@@ -400,12 +395,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       }
     }
   }
-
-  @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    return super.getData(dataId);
-  }
-
 
   @Override
   public @NotNull EditorEx getCurrentEditor() {

@@ -54,7 +54,7 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(this, ui)
 
     workflow.addListener(this, this)
-    workflow.addVcsCommitListener(GitCommitStateCleaner(), this)
+    workflow.addVcsCommitListener(NonModalCommitStateCleaner(), this)
     workflow.addVcsCommitListener(PostCommitChecksRunner(), this)
 
     ui.addCommitAuthorListener(this, this)
@@ -309,7 +309,7 @@ internal class ChangesViewCommitWorkflowHandler(
     fun activityStateChanged()
   }
 
-  private inner class GitCommitStateCleaner : CommitStateCleaner() {
+  private inner class NonModalCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
       commitMessagePolicy.onAfterCommit(currentChangeList)

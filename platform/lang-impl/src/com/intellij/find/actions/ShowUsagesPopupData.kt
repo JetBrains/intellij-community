@@ -47,7 +47,10 @@ internal class ShowUsagesPopupData(@JvmField val parameters: ShowUsagesParameter
         findUsagesRunnable.run()
       }
     }
+
+    pinGroup.add(ActionManager.getInstance().getAction("ShowUsagesPinGroup"))
     pinGroup.add(pinAction)
+
     val pinToolbar = ShowUsagesAction.createActionToolbar(table, pinGroup)
     val result = pinToolbar.component
     result.border = null

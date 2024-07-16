@@ -270,7 +270,7 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
                              }
                             }""");
     JavaFoldingTestCase.performInitialFolding(getEditor());
-    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile(), null);
+    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile());
     assertSize(2, ContainerUtil.findAll(actions, a -> {
       String text = a.getTemplatePresentation().getText();
       return text != null && text.contains("while");

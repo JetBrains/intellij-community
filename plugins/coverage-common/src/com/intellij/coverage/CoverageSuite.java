@@ -9,6 +9,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.coverage.data.ProjectData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public interface CoverageSuite extends JDOMExternalizable {
 
   boolean isBranchCoverage();
 
+  @ApiStatus.Internal
   boolean isCoverageByTestEnabled();
 
   /**
@@ -63,10 +65,12 @@ public interface CoverageSuite extends JDOMExternalizable {
   /**
    * Reinit coverage data cache with {@link CoverageRunner#loadCoverageData(File, CoverageSuite)}.
    */
-  void restoreCoverageData();
+  @ApiStatus.Internal
+  default void restoreCoverageData() {
+  }
 
   /**
-   * @return true if engine can provide means to remove coverage data.
+   * @return true if engine can provide the means to remove coverage data.
    */
   default boolean canRemove() {
     CoverageFileProvider provider = getCoverageDataFileProvider();
@@ -92,6 +96,7 @@ public interface CoverageSuite extends JDOMExternalizable {
     getCoverageEngine().deleteAssociatedTraces(this);
   }
 
+  @ApiStatus.Internal
   default boolean isCoverageByTestApplicable() {
     CoverageRunner runner = getRunner();
     if (runner == null) return false;

@@ -38,8 +38,7 @@ public final class AnnotationNamingConvention extends NamingConvention<PsiClass>
   }
 
   @Override
-  @NonNls
-  public String getShortName() {
+  public @NonNls String getShortName() {
     return "AnnotationNamingConvention";
   }
 

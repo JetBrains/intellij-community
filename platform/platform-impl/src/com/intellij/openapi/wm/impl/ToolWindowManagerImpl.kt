@@ -2534,7 +2534,8 @@ private fun getActivateToolWindowVKsMask(): Int {
   val baseShortcut = KeymapManager.getInstance().activeKeymap.getShortcuts("ActivateProjectToolWindow")
 
   @Suppress("DEPRECATION")
-  var baseModifiers = if (SystemInfoRt.isMac) InputEvent.META_MASK else InputEvent.ALT_MASK
+  val defaultModifiers = if (SystemInfoRt.isMac) InputEvent.META_MASK else InputEvent.ALT_MASK
+  var baseModifiers = 0
   for (each in baseShortcut) {
     if (each is KeyboardShortcut) {
       val keyStroke = each.firstKeyStroke
@@ -2546,7 +2547,15 @@ private fun getActivateToolWindowVKsMask(): Int {
   }
   // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
   @Suppress("DEPRECATION")
-  return baseModifiers and (InputEvent.SHIFT_MASK or InputEvent.CTRL_MASK or InputEvent.META_MASK or InputEvent.ALT_MASK)
+  baseModifiers = baseModifiers and (InputEvent.SHIFT_MASK or InputEvent.CTRL_MASK or InputEvent.META_MASK or InputEvent.ALT_MASK)
+
+  // If the keymap either doesn't define an ActivateProjectToolWindow shortcut,
+  // or defines it with multiple modifiers, fall back to the default behavior.
+  if (baseModifiers.countOneBits() == 1) {
+    return baseModifiers
+  } else {
+    return defaultModifiers
+  }
 }
 
 private val isStackEnabled: Boolean

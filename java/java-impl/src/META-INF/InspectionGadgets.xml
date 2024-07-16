@@ -636,7 +636,7 @@
                      implementationClass="com.siyeh.ig.controlflow.ContinueStatementWithLabelInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DefaultNotLastCaseInSwitch" bundle="messages.InspectionGadgetsBundle"
                      key="default.not.last.case.in.switch.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.DefaultNotLastCaseInSwitchInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DoubleNegation" bundle="messages.InspectionGadgetsBundle" key="double.negation.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
@@ -644,6 +644,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateCondition" bundle="messages.InspectionGadgetsBundle" key="duplicate.condition.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.DuplicateConditionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ExpressionComparedToItself" bundle="messages.JavaAnalysisBundle" key="inspection.message.expression.compared.to.itself.description"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.ExpressionComparedToItselfInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.controlflow.DuplicateConditionInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumSwitchStatementWhichMissesCases" bundle="messages.InspectionGadgetsBundle"
                      key="enum.switch.statement.which.misses.cases.display.name" groupBundle="messages.InspectionsBundle"
@@ -1395,12 +1398,8 @@
                      implementationClass="com.siyeh.ig.logging.ClassWithoutLoggerInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LoggerInitializedWithForeignClass" bundle="messages.InspectionGadgetsBundle"
                      key="logger.initialized.with.foreign.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.siyeh.ig.logging.LoggerInitializedWithForeignClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="LogStatementGuardedByLogCondition" bundle="messages.InspectionGadgetsBundle"
-                     key="log.statement.guarded.by.log.condition.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.logging.LogStatementGuardedByLogConditionInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonConstantLogger" shortName="NonStaticFinalLogger" bundle="messages.InspectionGadgetsBundle"
                      key="non.constant.logger.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.logging.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.logging.NonStaticFinalLoggerInspection"/>
@@ -1416,7 +1415,7 @@
     <!--group.names.code.maturity.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="UseOfSystemOutOrSystemErr" shortName="SystemOutErr" bundle="messages.InspectionGadgetsBundle"
                      key="use.system.out.err.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.code.maturity.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.maturity.SystemOutErrInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToPrintStackTrace" shortName="ThrowablePrintStackTrace" bundle="messages.InspectionGadgetsBundle"
                      key="printstacktrace.call.display.name" groupBundle="messages.InspectionsBundle"
@@ -1680,7 +1679,7 @@
                      implementationClass="com.siyeh.ig.numeric.CharUsedInArithmeticContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ComparisonOfShortAndChar" bundle="messages.InspectionGadgetsBundle"
                      key="comparison.of.short.and.char.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.ComparisonOfShortAndCharInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ComparisonToNaN" bundle="messages.InspectionGadgetsBundle" key="comparison.to.nan.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
@@ -1887,10 +1886,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="string.buffer.must.have.initial.capacity.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringBufferMustHaveInitialCapacityInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StringBufferToStringInConcatenation" bundle="messages.InspectionGadgetsBundle"
-                     key="string.buffer.to.string.in.concatenation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.performance.StringBufferToStringInConcatenationInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="StringConcatenationInLoop" alternativeId="StringContatenationInLoop" shortName="StringConcatenationInLoops"
                      bundle="messages.InspectionGadgetsBundle" key="string.concatenation.in.loops.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"

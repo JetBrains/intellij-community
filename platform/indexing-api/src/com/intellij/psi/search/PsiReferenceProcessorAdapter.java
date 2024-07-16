@@ -21,9 +21,11 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiReferenceProcessorAdapter extends ReadActionProcessor<PsiReference> {
+@Internal
+public class PsiReferenceProcessorAdapter extends ReadActionProcessor<PsiReference> { // todo: drop
   @NotNull
   private final PsiReferenceProcessor myProcessor;
 

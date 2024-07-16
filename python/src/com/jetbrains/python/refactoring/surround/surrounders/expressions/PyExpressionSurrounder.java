@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.surround.surrounders.expressions;
 
 import com.intellij.lang.surroundWith.Surrounder;
@@ -20,14 +20,13 @@ public abstract class PyExpressionSurrounder implements Surrounder {
     return isApplicable((PyExpression)elements[0]);
   }
 
-  public abstract boolean isApplicable(@NotNull final PyExpression expr);
+  public abstract boolean isApplicable(final @NotNull PyExpression expr);
 
   public abstract TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PyExpression element)
     throws IncorrectOperationException;
 
   @Override
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
-    throws IncorrectOperationException {
+  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
     return surroundExpression(project, editor, (PyExpression)elements[0]);
   }
 }

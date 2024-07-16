@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.intellij.openapi.module.Module;
@@ -34,8 +34,7 @@ public final class NewFilesProcessor {
    * @param files file names, imploded with comma
    * @return Since this method is designed to be console filter, it returns user-readable message about files
    */
-  @NotNull
-  public static String processNewFiles(@NotNull final Module module, @NotNull final String files) {
+  public static @NotNull String processNewFiles(final @NotNull Module module, final @NotNull String files) {
     final Sdk sdk = ModuleExtKt.getSdk(module);
     assert sdk != null : String.format("Sdk can't be null on module %s", module);
     final PyProjectSynchronizer synchronizer = PyProjectSynchronizerProvider.getSynchronizer(sdk);
@@ -68,7 +67,7 @@ public final class NewFilesProcessor {
   /**
    * @param localFileNames names of local files to add to VCS
    */
-  private static void addToVcsIfNeeded(@NotNull final Module module, final String @NotNull ... localFileNames) {
+  private static void addToVcsIfNeeded(final @NotNull Module module, final String @NotNull ... localFileNames) {
     final LocalFileSystem fs = LocalFileSystem.getInstance();
     fs.refresh(false);
     final Project project = module.getProject();

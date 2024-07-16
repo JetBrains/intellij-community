@@ -9,7 +9,6 @@ import com.intellij.coverage.analysis.JavaCoverageAnnotator;
 import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
 import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.coverage.view.CoverageViewExtension;
-import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.JavaCoverageViewExtension;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -71,6 +70,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.stream.IntStream;
 
 /**
@@ -439,7 +439,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   @NotNull
-  public String getQualifiedName(@NotNull final File outputFile, @NotNull final PsiFile sourceFile) {
+  protected String getQualifiedName(@NotNull final File outputFile, @NotNull final PsiFile sourceFile) {
     final String packageFQName = getPackageName(sourceFile);
     return StringUtil.getQualifiedName(packageFQName, FileUtilRt.getNameWithoutExtension(outputFile.getName()));
   }
@@ -552,6 +552,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       List<ConditionCoverageExpression> conditions = JavaCoveragePsiUtilsKt.getConditions(psiFile, range);
 
       return createBriefReport(lineData, conditions, switches);
+    }
+    catch (CancellationException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
@@ -753,16 +756,15 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
+  protected boolean isGeneratedCode(Project project, String qualifiedName, Object lineData) {
     if (JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, ((LineData)lineData).getMethodSignature())) return true;
     return super.isGeneratedCode(project, qualifiedName, lineData);
   }
 
   @Override
   public CoverageViewExtension createCoverageViewExtension(Project project,
-                                                           CoverageSuitesBundle suiteBundle,
-                                                           CoverageViewManager.StateBean stateBean) {
-    return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle, stateBean);
+                                                           CoverageSuitesBundle suiteBundle) {
+    return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle);
   }
 
   public static boolean isSourceMapNeeded(RunConfigurationBase<?> configuration) {

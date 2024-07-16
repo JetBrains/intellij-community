@@ -7,17 +7,22 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
 
-class MainMenuAsSeparateToolbarAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+internal class MainMenuAsSeparateToolbarAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
+  init {
+    templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return UISettings.getInstance().separateMainMenu
@@ -59,9 +64,5 @@ class MainMenuAsSeparateToolbarAction : ToggleAction(), DumbAware, ActionRemoteB
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI() && !SystemInfo.isMac
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
   }
 }

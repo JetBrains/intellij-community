@@ -1,17 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.impl.source.xml.XmlFileImpl
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 
 class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = true
-
-  override fun setUp() = runBlocking {
+  override fun setUp() = runBlocking(Dispatchers.EDT) {
     super.setUp()
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -21,7 +21,7 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testParentRelativePathOutsideProjectRoot() = runBlocking {
+  fun testParentRelativePathOutsideProjectRoot() = runBlocking(Dispatchers.EDT) {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
 
@@ -51,7 +51,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
 
   @Test
-  fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking {
+  fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking(Dispatchers.EDT) {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/pom.xml")
 
     val parentFile = file.getParentFile()

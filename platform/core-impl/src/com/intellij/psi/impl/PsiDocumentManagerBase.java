@@ -323,7 +323,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @ApiStatus.Internal
   public void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
     List<Runnable> actions = myActionsAfterCommit.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList());
-    actions.add(ThreadContext.captureThreadContext(ClientId.decorateRunnable(action)));
+    actions.add(ThreadContext.captureThreadContext(action));
   }
 
   private @NotNull Runnable @NotNull [] getAndClearActionsAfterCommit(@NotNull Document document) {
@@ -607,7 +607,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       actions = new CompositeRunnable();
       actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
     }
-    actions.add(ThreadContext.captureThreadContext(ClientId.decorateRunnable(action)));
+    actions.add(ThreadContext.captureThreadContext(action));
 
     if (modality != ModalityState.nonModal() && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
       // this client obviously expects all documents to be committed ASAP even inside modal dialog

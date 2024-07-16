@@ -2,9 +2,7 @@
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
 import com.intellij.openapi.actionSystem.IdeActions
@@ -22,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ScreenUtil
@@ -35,6 +32,7 @@ import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.CancellablePromise
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -42,17 +40,18 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyBoundsAdapter
 import java.awt.event.HierarchyEvent
+import javax.swing.JComponent
 import javax.swing.JWindow
 import kotlin.math.max
 import kotlin.math.min
 
-class IntentionPreviewPopupUpdateProcessor(private val project: Project,
-                                           private val originalFile: PsiFile,
-                                           private val originalEditor: Editor) : PopupUpdateProcessor(project) {
+class IntentionPreviewPopupUpdateProcessor internal constructor(
+  private val project: Project, private val fn: (Any?) -> IntentionPreviewInfo) : PopupUpdateProcessor(project) {
   private var index: Int = LOADING_PREVIEW
   private var show = false
   private var originalPopup: JBPopup? = null
   private val editorsToRelease = mutableListOf<EditorEx>()
+  private var promise: CancellablePromise<IntentionPreviewInfo?>? = null
 
   private lateinit var popup: JBPopup
   private lateinit var component: IntentionPreviewComponent
@@ -77,7 +76,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
         .addUserData(IntentionPreviewPopupKey())
 
       //see with com.intellij.ui.popup.AbstractPopup.show(java.awt.Component, int, int, boolean).
-      //don't use in cases, when borders may be preserved
+      //don't use in cases when borders may be preserved
       if (WindowRoundedCornersManager.isAvailable() && SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
         popupBuilder = popupBuilder.setShowBorder(true)
       }
@@ -87,10 +86,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent?) {
           var size = popup.size
-          val key = component.multiPanel.key
-          if (key != NO_PREVIEW) {
-            size = Dimension(size.width.coerceAtLeast(MIN_WIDTH), size.height)
-          }
+          size = Dimension(size.width.coerceAtLeast(MIN_WIDTH), size.height)
           popup.content.preferredSize = size
           popup.size = size
           adjustPosition(originalPopup, true)
@@ -102,19 +98,17 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
 
     val value = component.multiPanel.getValue(index, false)
     if (value != null) {
+      promise?.cancel()
       select(index)
       return
     }
 
-    val action = intentionAction as IntentionActionWithTextCaching
-
     component.startLoading()
 
-    ReadAction.nonBlocking(
-      IntentionPreviewComputable(project, action.action, originalFile, originalEditor, action.fixOffset))
+    promise = ReadAction.nonBlocking<IntentionPreviewInfo> { postprocess(fn(intentionAction)) }
       .expireWith(popup)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it) }
+      .finishOnUiThread(ModalityState.defaultModalityState()) { select(index, renderPreview(it)) }
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
@@ -134,7 +128,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       val bounds: Rectangle = positionAdjuster.adjustBounds(previousDimension, arrayOf(RIGHT, LEFT))
       val popupSize = popup.size
       val screen = ScreenUtil.getScreenRectangle(bounds.x, bounds.y)
-      val targetBounds = Rectangle(Point(bounds.x, bounds.y), popup.content.preferredSize);
+      val targetBounds = Rectangle(Point(bounds.x, bounds.y), popup.content.preferredSize)
       if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
         hide()
       }
@@ -147,33 +141,47 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     }
   }
 
-  private fun renderPreview(result: IntentionPreviewInfo) {
-    when (result) {
+  private fun renderPreview(result: IntentionPreviewInfo): JComponent {
+    return when (result) {
       is IntentionPreviewDiffResult -> {
         val editors = IntentionPreviewEditorsPanel.createEditors(project, result)
         if (editors.isEmpty()) {
-          selectNoPreview()
-          return
+          IntentionPreviewComponent.NO_PREVIEW_LABEL
+        } else {
+          val size = component.preferredSize
+          val location = popup.locationOnScreen
+          val screen = ScreenUtil.getScreenRectangle(location)
+
+          var delta = screen.width + screen.x - location.x
+          val content = originalPopup?.content
+          val origLocation = if (content?.isShowing == true) content.locationOnScreen else null
+          // On the left side of the original popup: avoid overlap
+          if (origLocation != null && location.x < origLocation.x) {
+            delta = delta.coerceAtMost(origLocation.x - screen.x - PositionAdjuster.DEFAULT_GAP)
+          }
+          size.width = size.width.coerceAtMost(delta)
+
+          editors.forEach {
+            it.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
+              override fun recalculationEnds() {
+                val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + 6
+                it.component.preferredSize = Dimension(it.component.preferredSize.width, min(height, MAX_HEIGHT))
+                it.component.parent?.invalidate()
+                popup.pack(true, true)
+              }
+
+              override fun softWrapsChanged() {}
+            })
+
+            it.component.preferredSize = Dimension(max(size.width, MIN_WIDTH), min(it.component.preferredSize.height, MAX_HEIGHT))
+          }
+
+          editorsToRelease.addAll(editors)
+          IntentionPreviewEditorsPanel(editors.toMutableList())
         }
-
-        editorsToRelease.addAll(editors)
-        select(index, editors)
       }
-      is Html -> {
-        select(index, html = result)
-      }
-      else -> {
-        selectNoPreview()
-      }
-    }
-  }
-
-  private fun selectNoPreview() {
-    if (justActivated) {
-      select(NO_PREVIEW)
-    }
-    else {
-      popupWindow?.isVisible = false
+      is Html -> IntentionPreviewComponent.createHtmlPanel(result)
+      else -> IntentionPreviewComponent.NO_PREVIEW_LABEL
     }
   }
 
@@ -195,6 +203,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   }
 
   private fun cancel(): Boolean {
+    promise?.cancel()
     editorsToRelease.forEach { editor -> EditorFactory.getInstance().releaseEditor(editor) }
     editorsToRelease.clear()
     component.removeAll()
@@ -202,49 +211,20 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
     return true
   }
 
-  private fun select(index: Int, editors: List<EditorEx> = emptyList(), @NlsSafe html: Html? = null) {
+  private fun select(index: Int, previewComponent: JComponent? = null) {
+    val selectedComponent = previewComponent ?: component.multiPanel.getValue(index, false)
+    popupWindow?.isVisible = selectedComponent != IntentionPreviewComponent.NO_PREVIEW_LABEL || justActivated
     justActivated = false
-    popupWindow?.isVisible = true
     component.stopLoading()
-    component.editors = editors
-    component.html = html
+    // Need to set previewComponent before select, as multiPanel.create expects previewComponent to be initialized 
+    component.previewComponent = previewComponent
     component.multiPanel.select(index, true)
-
-    val size = component.preferredSize
-    val location = popup.locationOnScreen
-    val screen = ScreenUtil.getScreenRectangle(location)
-
-    if (screen != null) {
-      var delta = screen.width + screen.x - location.x
-      val content = originalPopup?.content
-      val origLocation = if (content?.isShowing == true) content.locationOnScreen else null
-      // On the left side of the original popup: avoid overlap
-      if (origLocation != null && location.x < origLocation.x) {
-        delta = delta.coerceAtMost(origLocation.x - screen.x - PositionAdjuster.DEFAULT_GAP)
-      }
-      size.width = size.width.coerceAtMost(delta)
-    }
-
-    component.editors.forEach {
-      it.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
-        override fun recalculationEnds() {
-          val height = (it as EditorImpl).offsetToXY(it.document.textLength).y + it.lineHeight + 6
-          it.component.preferredSize = Dimension(it.component.preferredSize.width, min(height, MAX_HEIGHT))
-          it.component.parent?.invalidate()
-          popup.pack(true, true)
-        }
-
-        override fun softWrapsChanged() {}
-      })
-
-      it.component.preferredSize = Dimension(max(size.width, MIN_WIDTH), min(it.component.preferredSize.height, MAX_HEIGHT))
-    }
 
     popup.pack(true, true)
   }
 
   /**
-   * Call when process is just activated via hotkey
+   * Call when the process is just activated via hotkey
    */
   fun activate() {
     justActivated = true
@@ -284,15 +264,23 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       }
     }
 
+    private fun postprocess(info: IntentionPreviewInfo) = when(info) {
+      is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(info)
+      is IntentionPreviewInfo.MultiFileDiff -> IntentionPreviewDiffResult.fromMultiDiff(info)
+      else -> info
+    }
+
     @TestOnly
     @JvmStatic
+    @JvmOverloads
     fun getPreviewInfo(project: Project,
                        action: IntentionAction,
                        originalFile: PsiFile,
-                       originalEditor: Editor): IntentionPreviewInfo =
-      ProgressManager.getInstance().runProcess<IntentionPreviewInfo>(
-        { IntentionPreviewComputable(project, action, originalFile, originalEditor, -1).generatePreview() },
-        EmptyProgressIndicator()) ?: IntentionPreviewInfo.EMPTY
+                       originalEditor: Editor,
+                       fixOffset: Int = -1): IntentionPreviewInfo =
+      postprocess(ProgressManager.getInstance().runProcess<IntentionPreviewInfo>(
+        { IntentionPreviewComputable(project, action, originalFile, originalEditor, fixOffset).generatePreview() },
+        EmptyProgressIndicator()) ?: IntentionPreviewInfo.EMPTY)
   }
 
   internal class IntentionPreviewPopupKey

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
+import com.intellij.gradle.toolingExtension.impl.modelSerialization.DefaultSerializationService;
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.kotlin.dsl.InternalKotlinDslScriptsModel;
 

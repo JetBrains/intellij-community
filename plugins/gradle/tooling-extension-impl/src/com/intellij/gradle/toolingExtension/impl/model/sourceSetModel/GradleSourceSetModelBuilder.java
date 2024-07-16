@@ -64,8 +64,6 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     sourceSetModel.setAdditionalArtifacts(collectNonSourceSetArtifacts(project, context));
     sourceSetModel.setSourceSets(collectSourceSets(project, context));
 
-    GradleSourceSetCache.getInstance(context).setSourceSetModel(project, sourceSetModel);
-
     return sourceSetModel;
   }
 
@@ -74,12 +72,11 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
                                  @NotNull Project project,
                                  @NotNull ModelBuilderContext context,
                                  @NotNull Exception exception) {
-    GradleSourceSetCache.getInstance(context).markSourceSetModelAsError(project);
-
     context.getMessageReporter().createMessage()
       .withGroup(Messages.SOURCE_SET_MODEL_GROUP)
       .withKind(Message.Kind.ERROR)
       .withTitle("Source set model building failure")
+      .withText("Project source sets cannot be resolved")
       .withException(exception)
       .reportMessage(project);
   }
@@ -592,7 +589,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     if (sourceDirectorySet.getGradleOutputDirs().isEmpty()) {
       sourceDirectorySet.setGradleOutputDirs(Collections.singleton(GradleProjectUtil.getBuildDirectory(project)));
     }
-    sourceDirectorySet.setInheritedCompilerOutput(sourceSetResolutionContext.isIdeaInheritOutputDirs);
+    sourceDirectorySet.setCompilerOutputPathInherited(sourceSetResolutionContext.isIdeaInheritOutputDirs);
 
     DefaultExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet();
     resourcesDirectorySet.setName(sourceSet.getResources().getName());
@@ -605,7 +602,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     if (resourcesDirectorySet.getGradleOutputDirs().isEmpty()) {
       resourcesDirectorySet.setGradleOutputDirs(sourceDirectorySet.getGradleOutputDirs());
     }
-    resourcesDirectorySet.setInheritedCompilerOutput(sourceSetResolutionContext.isIdeaInheritOutputDirs);
+    resourcesDirectorySet.setCompilerOutputPathInherited(sourceSetResolutionContext.isIdeaInheritOutputDirs);
 
     DefaultExternalSourceDirectorySet generatedSourceDirectorySet = null;
     Set<File> generatedSourceDirs = new LinkedHashSet<>(sourceDirectorySet.getSrcDirs());
@@ -618,7 +615,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       generatedSourceDirectorySet.setName("generated " + sourceDirectorySet.getName());
       generatedSourceDirectorySet.setSrcDirs(generatedSourceDirs);
       generatedSourceDirectorySet.setGradleOutputDirs(sourceDirectorySet.getGradleOutputDirs());
-      generatedSourceDirectorySet.setInheritedCompilerOutput(sourceDirectorySet.isCompilerOutputPathInherited());
+      generatedSourceDirectorySet.setCompilerOutputPathInherited(sourceDirectorySet.isCompilerOutputPathInherited());
     }
 
     boolean isIdeaTestSourceSet = sourceSetResolutionContext.ideaTestSourceDirs.containsAll(sourceDirectorySet.getSrcDirs());
@@ -706,7 +703,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         else {
           testSourceDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/classes"));
         }
-        testSourceDirectorySet.setInheritedCompilerOutput(sourceDirectorySet.isCompilerOutputPathInherited());
+        testSourceDirectorySet.setCompilerOutputPathInherited(sourceDirectorySet.isCompilerOutputPathInherited());
 
         externalSourceSet.addSource(ExternalSystemSourceType.TEST, testSourceDirectorySet);
       }
@@ -728,7 +725,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         else {
           testResourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/resources"));
         }
-        testResourcesDirectorySet.setInheritedCompilerOutput(resourcesDirectorySet.isCompilerOutputPathInherited());
+        testResourcesDirectorySet.setCompilerOutputPathInherited(resourcesDirectorySet.isCompilerOutputPathInherited());
 
         externalSourceSet.addSource(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet);
       }
@@ -745,7 +742,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         testGeneratedDirectorySet.setSrcDirs(testGeneratedSourceDirs);
         testGeneratedDirectorySet.setGradleOutputDirs(Collections.singleton(generatedSourceDirectorySet.getOutputDir()));
         testGeneratedDirectorySet.setOutputDir(generatedSourceDirectorySet.getOutputDir());
-        testGeneratedDirectorySet.setInheritedCompilerOutput(generatedSourceDirectorySet.isCompilerOutputPathInherited());
+        testGeneratedDirectorySet.setCompilerOutputPathInherited(generatedSourceDirectorySet.isCompilerOutputPathInherited());
 
         externalSourceSet.addSource(ExternalSystemSourceType.TEST_GENERATED, testGeneratedDirectorySet);
       }
@@ -831,7 +828,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         if (sourceDirectorySet != null) {
           generatedDirectorySet.setGradleOutputDirs(Collections.singleton(sourceDirectorySet.getOutputDir()));
           generatedDirectorySet.setOutputDir(sourceDirectorySet.getOutputDir());
-          generatedDirectorySet.setInheritedCompilerOutput(sourceDirectorySet.isCompilerOutputPathInherited());
+          generatedDirectorySet.setCompilerOutputPathInherited(sourceDirectorySet.isCompilerOutputPathInherited());
         }
         externalSourceSet.addSource(generatedSourceType, generatedDirectorySet);
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.dataframe;
 
 import com.jetbrains.python.debugger.containerview.ColumnFilter;
@@ -22,23 +8,20 @@ import javax.swing.*;
 
 public class SeriesViewStrategy extends DataFrameViewStrategy {
 
-  protected SeriesViewStrategy(@NotNull final String typeName) {
+  protected SeriesViewStrategy(final @NotNull String typeName) {
     super(typeName);
   }
 
-  @NotNull
-  public static SeriesViewStrategy createInstanceForSeries() {
+  public static @NotNull SeriesViewStrategy createInstanceForSeries() {
     return new SeriesViewStrategy("Series");
   }
 
-  @NotNull
-  public static SeriesViewStrategy createInstanceForGeoSeries() {
+  public static @NotNull SeriesViewStrategy createInstanceForGeoSeries() {
     return new SeriesViewStrategy("GeoSeries");
   }
 
   @Override
-  @NotNull
-  public String sortModifier(@NotNull String varName, @NotNull RowSorter.SortKey key) {
+  public @NotNull String sortModifier(@NotNull String varName, @NotNull RowSorter.SortKey key) {
     return String.format("%s.sort_values(%s)", varName,
                          key.getSortOrder() == SortOrder.ASCENDING ? "" : "ascending=False");
   }

@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.builtInHelp
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.mapping.HelpMap
+import com.jetbrains.builtInHelp.mapping.HelpMapId
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.io.send
+import javax.xml.bind.JAXBContext
 
 @Suppress("unused")
 class HelpContentRequestHandler : HelpRequestHandlerBase() {
@@ -21,14 +21,6 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
     "searchAlgoliaIndexName", "versionsService"
   )
 
-  private val xmlMapper = XmlMapper().apply {
-    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-  }
-
-  private val jsonMapper = ObjectMapper().apply {
-    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-  }
-
   override fun process(
     urlDecoder: QueryStringDecoder,
     request: FullHttpRequest,
@@ -37,12 +29,15 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
     for (name: String in urlDecoder.parameters().keys) {
       val param = urlDecoder.parameters()[name]
       if (param != null && (param.isEmpty() || StringUtil.isEmpty(param[0]))) {
-
         val mapStream = ResourceUtil.getResourceAsStream(
           HelpContentRequestHandler::class.java.classLoader,
           "topics", "Map.jhm"
         )
-        val map: HelpMap = xmlMapper.readValue(mapStream, HelpMap::class.java)
+        val map: HelpMap = JAXBContext.newInstance(
+          HelpMap::class.java, HelpMapId::class.java
+        ).createUnmarshaller().unmarshal(
+          mapStream
+        ) as HelpMap
 
         val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.TEMPORARY_REDIRECT)
         response.headers().add(
@@ -65,7 +60,8 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
           "topics", "config.json"
         )
 
-        @Suppress("UNCHECKED_CAST") val configJson: LinkedHashMap<String, Any> = jsonMapper.readValue(
+        @Suppress("UNCHECKED_CAST")
+        val configJson: LinkedHashMap<String, Any> = jacksonObjectMapper().readValue(
           configStream,
           LinkedHashMap::class.java
         ) as LinkedHashMap<String, Any>
@@ -83,9 +79,8 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
             )
           }
         }
-
         sendData(
-          jsonMapper.writeValueAsBytes(configJson),
+          jacksonObjectMapper().writeValueAsBytes(configJson),
           "config.json",
           request,
           context.channel(),

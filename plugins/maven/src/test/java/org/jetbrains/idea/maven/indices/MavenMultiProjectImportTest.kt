@@ -17,19 +17,14 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
-import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.isImportToWorkspaceModelEnabled
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider
-import org.junit.Assume
 import java.nio.file.Path
 
 class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?>() {
   override fun runInDispatchThread() = false
   private var myDir: Path? = null
-
-  private val isWorkspaceImport: Boolean
-    get() = isImportToWorkspaceModelEnabled(myProject)
 
   override fun tearDown() {
     RunAll(
@@ -41,7 +36,6 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
   }
 
   fun testIndicesForDifferentProjectsShouldBeSameInstance() = runBlocking {
-    Assume.assumeTrue(isWorkspaceImport)
     myDir = tempDir.newPath("", true)
     val pom1 = createPomXml("projectDir1", """
       <groupId>test</groupId>
@@ -65,7 +59,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     importMaven(project2, pom2)
     MavenIndicesManager.getInstance(project2).updateIndexList()
     MavenIndicesManager.getInstance(myProject).updateIndexList()
-    MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted();
+    MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
 
     TestCase.assertEquals(1, MavenSystemIndicesManager.getInstance().getAllGavIndices().size)
   }
@@ -82,6 +76,6 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val manager = MavenProjectsManager.getInstance(project)
     manager.initForTests()
     manager.addManagedFiles(listOf(file))
-    manager.updateAllMavenProjects(MavenSyncSpec.full("MavenMultiProjectImportTest"))
+    manager.updateAllMavenProjects(MavenSyncSpec.incremental("MavenMultiProjectImportTest"))
   }
 }

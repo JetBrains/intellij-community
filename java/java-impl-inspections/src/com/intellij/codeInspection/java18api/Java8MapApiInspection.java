@@ -99,8 +99,7 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
         PsiMethodCallExpression getCall = extractMapMethodCall(expression, "get");
         if (getCall == null) return;
 
-        List<PsiReferenceExpression> references = VariableAccessUtils
-          .getVariableReferences(variable, PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class));
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
 
         if (references.isEmpty()) return;
 

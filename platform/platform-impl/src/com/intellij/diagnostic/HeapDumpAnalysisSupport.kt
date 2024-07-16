@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -20,8 +20,6 @@ import java.io.FileOutputStream
 import java.io.OutputStreamWriter
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.io.path.exists
 
 internal open class HeapDumpAnalysisSupport {
   companion object {
@@ -101,8 +99,8 @@ internal class AnalyzePendingSnapshotActivity: ProjectActivity {
     }
 
     path?.let {
-      val hprofPath = Paths.get(it)
-      if (hprofPath.exists()) {
+      val hprofPath = Path.of(it)
+      if (Files.exists(hprofPath)) {
         val heapProperties = HeapReportProperties(reason ?: MemoryReportReason.None, liveStats ?: "")
         AnalysisRunnable(hprofPath, heapProperties, true).run()
       }

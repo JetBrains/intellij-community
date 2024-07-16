@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.changeSignature;
 
@@ -157,8 +157,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   }
 
   @Override
-  @Nullable
-  public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
+  public @Nullable PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
     if (StringUtil.isEmpty(defaultValue)) return null;
     try {
       final PsiExpression expression =
@@ -220,49 +219,42 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return result.toArray(new ParameterInfoImpl[0]);
   }
 
-  @NotNull
   @Contract(value = "-> new", pure = true)
-  public static ParameterInfoImpl createNew() {
+  public static @NotNull ParameterInfoImpl createNew() {
     return create(NEW_PARAMETER);
   }
 
-  @NotNull
   @Contract(value = "_ -> new", pure = true)
-  public static ParameterInfoImpl create(int oldParameterIndex) {
+  public static @NotNull ParameterInfoImpl create(int oldParameterIndex) {
     return new ParameterInfoImpl(oldParameterIndex);
   }
 
-  @NotNull
   @Contract(value = "_ -> this")
-  public ParameterInfoImpl withName(@NonNls String name) {
+  public @NotNull ParameterInfoImpl withName(@NonNls String name) {
     setName(name);
     return this;
   }
 
-  @NotNull
   @Contract(value = "_ -> this")
-  public ParameterInfoImpl withType(PsiType aType) {
+  public @NotNull ParameterInfoImpl withType(PsiType aType) {
     setType(aType);
     return this;
   }
 
-  @NotNull
   @Contract(value = "_ -> this")
-  public ParameterInfoImpl withType(CanonicalTypes.Type typeWrapper) {
+  public @NotNull ParameterInfoImpl withType(CanonicalTypes.Type typeWrapper) {
     myType = typeWrapper;
     return this;
   }
 
-  @NotNull
   @Contract(value = "_ -> this")
-  public ParameterInfoImpl withDefaultValue(@NonNls String defaultValue) {
+  public @NotNull ParameterInfoImpl withDefaultValue(@NonNls String defaultValue) {
     this.defaultValue = defaultValue;
     return this;
   }
 
-  @NotNull
   @Contract(value = "-> this")
-  public ParameterInfoImpl useAnySingleVariable() {
+  public @NotNull ParameterInfoImpl useAnySingleVariable() {
     useAnySingleVariable = true;
     return this;
   }

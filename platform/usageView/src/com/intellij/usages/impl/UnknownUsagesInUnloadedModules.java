@@ -9,6 +9,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 
+@ApiStatus.Internal
 public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usage {
   private final String myExplanationText;
 

@@ -30,16 +30,19 @@ interface RootBinding : Binding {
 interface Binding {
   fun serialize(bean: Any, parent: Element, filter: SerializationFilter?)
 
+  @Internal
   fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean
 
   fun init(originalType: Type, serializer: Serializer) {
   }
 
+  @Internal
   fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any?
 
   fun toJson(bean: Any, filter: SerializationFilter?): JsonElement?
 }
 
+@Internal
 interface NestedBinding : Binding {
   val accessor: MutableAccessor
 

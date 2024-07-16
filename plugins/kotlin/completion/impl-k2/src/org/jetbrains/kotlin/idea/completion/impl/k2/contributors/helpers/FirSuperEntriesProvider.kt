@@ -5,29 +5,27 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.nextLeafs
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object FirSuperEntriesProvider {
-    context(KtAnalysisSession)
-    fun getSuperClassesAvailableForSuperCall(context: PsiElement): List<KtNamedClassOrObjectSymbol> {
+    context(KaSession)
+    fun getSuperClassesAvailableForSuperCall(context: PsiElement): List<KaNamedClassOrObjectSymbol> {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
         val containingClassSymbol = containingClass.getClassOrObjectSymbol() ?: return emptyList()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
-            val classType = superType as? KtNonErrorClassType ?: return@mapNotNull null
-            classType.classSymbol as? KtNamedClassOrObjectSymbol
+            val classType = superType as? KaClassType ?: return@mapNotNull null
+            classType.symbol as? KaNamedClassOrObjectSymbol
         }
     }
 }
@@ -46,12 +44,12 @@ internal object SuperCallInsertionHandler : InsertHandler<LookupElement> {
     ) {
         val replaceTo = lookupObject.replaceTo ?: return
         context.tailOffset = getCorrectedTailOffsetForSuperCall(context) ?: context.tailOffset
-        context.document.replaceString(context.startOffset, context.tailOffset, replaceTo)
-        context.commitDocument()
 
         if (lookupObject.shortenReferencesInReplaced) {
-            val targetFile = context.file as KtFile
-            shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
+            context.insertAndShortenReferencesInStringUsingTemporarySuffix(replaceTo)
+        } else {
+            context.document.replaceString(context.startOffset, context.tailOffset, replaceTo)
+            context.commitDocument()
         }
     }
 

@@ -3,7 +3,6 @@ package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscod
 
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.intellij.ide.startup.importSettings.db.KnownPlugins
 import com.intellij.ide.startup.importSettings.models.FeatureInfo
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.UnknownFeature
@@ -74,12 +73,6 @@ class PluginParser(private val settings: Settings) {
       settings.keymap = keymapPlugin
     }
     val featureInfo = PluginMappings.pluginIdMap(foreignPluginId) ?: UnknownFeature
-    val originalPluginName = root["displayName"]?.textValue()
-
-    if (originalPluginName == null && (featureInfo == KnownPlugins.DummyPlugin || featureInfo == KnownPlugins.DummyBuiltInFeature)) {
-      return
-    }
-
     if (!addedPluginIds.contains(featureInfo) || featureInfo == UnknownFeature) {
       settings.plugins[foreignPluginId] = featureInfo
       addedPluginIds.add(featureInfo)

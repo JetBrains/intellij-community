@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
@@ -8,7 +8,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.StartupUiUtil
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.Property
+import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -17,7 +18,10 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
 
-class WizardServiceTest : WizardService {
+class WizardServiceTest : StartupWizardService {
+  override val isActive = true
+  override val shouldClose = Signal<Unit>()
+
   override fun getKeymapService(): KeymapService {
     return TestKeymapService()
   }
@@ -30,26 +34,29 @@ class WizardServiceTest : WizardService {
     return PluginServiceImpl()
   }
 
-
+  override fun onEnter() {}
+  override fun onCancel() {}
+  override fun onExit() {}
 }
 
 class ThemeServiceImpl : ThemeService {
 
   private var vs: @NlsSafe String = "Visual Studio"
+  private var vsa: @NlsSafe String = "Visual Assist"
   private var rider: @NlsSafe String = "Rider"
   private var IDEA: @NlsSafe String = "IDEA"
 
   private val map = mapOf(
-    rider to WizardScheme(rider, rider, IconLoader.getIcon("wizardPreviews/rider.png", this.javaClass), JBColor(0xFFFFFF, 0x262626)),
-    vs to WizardScheme(vs, vs, IconLoader.getIcon("wizardPreviews/vs.png", this.javaClass), JBColor(0xFFFFFF, 0x1E1E1E)),
-    IDEA to WizardScheme(IDEA, IDEA, IconLoader.getIcon("wizardPreviews/ij.png", this.javaClass), JBColor(0xFFFFFF, 0x2B2B2B))
+    vs to WizardScheme(vs, vs, IconLoader.getIcon("wizardPreviews_stub/vs.png", this.javaClass), JBColor(0xFFFFFF, 0x1E1E1E)),
+    rider to WizardScheme(rider, rider, IconLoader.getIcon("wizardPreviews_stub/rider.png", this.javaClass), JBColor(0xFFFFFF, 0x262626)),
+    vsa to WizardScheme(vsa, vsa, IconLoader.getIcon("wizardPreviews_stub/vs.png", this.javaClass), JBColor(0xFFFFFF, 0x1E1E1E)),
+    IDEA to WizardScheme(IDEA, IDEA, IconLoader.getIcon("wizardPreviews_stub/ij.png", this.javaClass), JBColor(0xFFFFFF, 0x2B2B2B))
   )
 
   override var currentTheme: ThemeService.Theme
     get() = if(StartupUiUtil.isDarkTheme) ThemeService.Theme.Dark else ThemeService.Theme.Light
 
     set(value) {
-      println("currentTheme: ${value.name}")
       val lm = LafManager.getInstance()
 
       val laf = if(value.isDark)
@@ -65,9 +72,9 @@ class ThemeServiceImpl : ThemeService {
     }
 
   override val schemesList: List<WizardScheme> = map.values.toList()
+  override val initialSchemeId: String? = null
 
-  override fun finish(schemeId: String, theme: ThemeService.Theme) {
-  }
+  override fun onStepEnter(isForwardDirection: Boolean) {}
 
   override fun updateScheme(schemeId: String) {
 
@@ -106,15 +113,11 @@ class PluginServiceImpl : PluginService {
 
   )
 
-  private val listOf1: List<WizardPlugin> = listOf(
-    WizardPluginImpl(AllIcons.Plugins.PluginLogo, "Python Community Edition", "The Python plugin provides smart editing for Python scripts. The feature set of the plugin corresponds to PyCharm IDE Community Edition"),
-    WizardPluginImpl(AllIcons.Plugins.PluginLogoDisabled, "IdeaVim", "Emulates Vim editor"),
-    WizardPluginImpl(AllIcons.TransferSettings.RecentProjects, "Heap Allocation Viewer", "Highlights local object allocations, boxing, delegates and closure creations points"),
-  )
-
   override val plugins: List<WizardPlugin> = listOf
 
-  override fun install(ids: List<String>): PluginImportProgress = TestPluginImportProgress(Lifetime.Eternal)
+  override fun onStepEnter() {}
+
+  override fun install(lifetime: Lifetime, ids: List<String>): PluginImportProgress = TestPluginImportProgress(lifetime)
   override fun skipPlugins() {
 
   }
@@ -156,14 +159,14 @@ class WizardPluginImpl(override val icon: Icon,
 class TestKeymapService : KeymapService {
   override val keymaps: List<WizardKeymap> =
     listOf(TestWizardKeymap(UUID.randomUUID().toString(), "Visual Studio",
-                        "Visual Studio Visual Studio Visual Studio", 0),
+                            "Visual Studio Visual Studio Visual Studio"),
 
            TestWizardKeymap(UUID.randomUUID().toString(), "Visual Assist",
-                            "Visual Studio Visual Studio Visual Studio", 1),
-             TestWizardKeymap(UUID.randomUUID().toString(), "JetBrains IDE",
-           "Visual Studio Visual Studio Visual Studio", 2),
+                            "Visual Studio Visual Studio Visual Studio"),
+           TestWizardKeymap(UUID.randomUUID().toString(), "JetBrains IDE",
+                            "Visual Studio Visual Studio Visual Studio"),
            TestWizardKeymap(UUID.randomUUID().toString(), "VS Code",
-                            "Visual Studio Visual Studio Visual Studio", 3)
+                            "Visual Studio Visual Studio Visual Studio")
            )
 
   override val shortcuts: List<Shortcut> = listOf(Shortcut(UUID.randomUUID().toString(), "Search"),
@@ -172,6 +175,8 @@ class TestKeymapService : KeymapService {
   Shortcut(UUID.randomUUID().toString(), "Extend Selection"),
   Shortcut(UUID.randomUUID().toString(), "Build Solution"))
 
+  override fun onStepEnter(isForwardDirection: Boolean) {}
+
   override fun chosen(id: String) {
 
   }
@@ -179,12 +184,10 @@ class TestKeymapService : KeymapService {
 
 class TestWizardKeymap(override val id: String,
                        override val name: String,
-                       override val description: @Nls String, val ind: Int? = null) : WizardKeymap {
+                       override val description: @Nls String) : WizardKeymap {
 
   private val shortCuts = listOf("Shift+Shift", "F12", "Alt+Shift+F12", "Alt+Shift+F1", "F1", "Ctrl+Shift+B")
-  override fun getShortcutValue(id_: String): String {
-    return ind?.let{ shortCuts[it] } ?: shortCuts.random()
+  override fun getShortcutValue(id: String): String {
+    return shortCuts.random()
   }
-
 }
-

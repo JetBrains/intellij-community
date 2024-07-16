@@ -6,7 +6,6 @@ class Some {
 }
 
 // SEARCH_TEXT: test
-// REF: (<root>).testFunction()
 // REF: (in Some).testFunInClass()
-
+// REF: testFunction()
 

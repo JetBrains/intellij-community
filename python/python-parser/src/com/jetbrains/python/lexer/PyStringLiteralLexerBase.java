@@ -56,8 +56,7 @@ public abstract class PyStringLiteralLexerBase extends LexerBase {
     return getEscapeSequenceType();
   }
 
-  @NotNull
-  public IElementType getEscapeSequenceType() {
+  public @NotNull IElementType getEscapeSequenceType() {
     if (myStart + 1 >= myEnd) return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; // escape ends too early
     char nextChar = myBuffer.charAt(myStart + 1);
     mySeenEscapedSpacesOnly &= nextChar == ' ';
@@ -146,8 +145,7 @@ public abstract class PyStringLiteralLexerBase extends LexerBase {
   }
 
   @Override
-  @NotNull
-  public final CharSequence getBufferSequence() {
+  public final @NotNull CharSequence getBufferSequence() {
     return myBuffer;
   }
 

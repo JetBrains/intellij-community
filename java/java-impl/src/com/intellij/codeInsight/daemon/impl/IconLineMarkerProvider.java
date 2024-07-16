@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClassType;
@@ -56,6 +57,8 @@ final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
       if (expression == null) {
         continue;
       }
+
+      ProgressManager.checkCanceled();
 
       if (!ProjectIconsAccessor.isIconClassType(expression.getExpressionType())) {
         continue;

@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.EventWatcher;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -77,9 +75,7 @@ final class FlushQueue {
 
   // Extracted to have a capture point
   private static void doRun(@Async.Execute @NotNull RunnableInfo info, @NotNull ApplicationEx app) {
-    try (AccessToken ignored = ClientId.withClientId(info.clientId)) {
-      app.runWithImplicitRead(info.runnable);
-    }
+    app.runWithImplicitRead(info.runnable);
   }
 
   @Override
@@ -211,7 +207,6 @@ final class FlushQueue {
     private final @NotNull Runnable runnable;
     private final @NotNull ModalityState modalityState;
     private final @NotNull Condition<?> expired;
-    private final @NotNull String clientId;
     private final long queuedTimeNs;
     /** How many items were in queue at the moment this item was enqueued */
     private final int queueSize;
@@ -222,7 +217,7 @@ final class FlushQueue {
                  final @NotNull ModalityState modalityState,
                  final @NotNull Condition<?> expired,
                  final int queueSize) {
-      this(runnable, modalityState, expired, ClientId.getCurrentValue(),
+      this(runnable, modalityState, expired,
            queueSize, System.nanoTime(), /* wasInSkippedItems: */ false);
     }
 
@@ -230,14 +225,12 @@ final class FlushQueue {
     private RunnableInfo(final @NotNull Runnable runnable,
                          final @NotNull ModalityState modalityState,
                          final @NotNull Condition<?> expired,
-                         final @NotNull String clientId,
                          final int queueSize,
                          final long queuedTimeNs,
                          final boolean wasInSkippedItems) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
-      this.clientId = clientId;
       this.queuedTimeNs = queuedTimeNs;
       this.queueSize = queueSize;
       this.wasInSkippedItems = wasInSkippedItems;
@@ -246,7 +239,7 @@ final class FlushQueue {
     public RunnableInfo wasSkipped() {
       return new RunnableInfo(
         runnable, modalityState, expired,
-        clientId, queueSize, queuedTimeNs,
+        queueSize, queuedTimeNs,
         /*wasInSkippedItems: */ true
       );
     }

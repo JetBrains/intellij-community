@@ -18,3 +18,5 @@ class C {
         }
     }
 }
+
+// IGNORE_K2

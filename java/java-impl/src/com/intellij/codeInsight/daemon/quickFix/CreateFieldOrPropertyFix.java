@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -38,8 +38,7 @@ public class CreateFieldOrPropertyFix extends PsiUpdateModCommandAction<PsiClass
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message(myMemberType == PropertyMemberType.FIELD ? "create.field.text" : "create.property.text", myName);
   }
 
@@ -55,7 +54,7 @@ public class CreateFieldOrPropertyFix extends PsiUpdateModCommandAction<PsiClass
     assert scope != null;
     ModTemplateBuilder builder = updater.templateBuilder();
     boolean first = true;
-    @NonNls final String TYPE_NAME_VAR = "TYPE_NAME_VAR";
+    final @NonNls String TYPE_NAME_VAR = "TYPE_NAME_VAR";
     for (GenerationInfo prototype : prototypes) {
       final PsiTypeElement typeElement = PropertyUtilBase.getPropertyTypeElement(prototype.getPsiMember());
       if (typeElement == null) continue;

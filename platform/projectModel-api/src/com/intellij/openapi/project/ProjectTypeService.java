@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -28,6 +29,9 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
   private static final Key<CachedValue<Collection<ProjectType>>> PROJECT_TYPES_KEY = Key.create("PROJECT_TYPES");
 
   private ProjectType myProjectType;
+
+  ProjectTypeService() {
+  }
 
   /**
    * @deprecated Use {@link #getProjectTypes(Project)} instead
@@ -60,19 +64,23 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
     }, false);
   }
 
-  private static Collection<ProjectType> findProjectTypes(@NotNull Project project) {
+  private static @NotNull List<ProjectType> findProjectTypes(@NotNull Project project) {
     List<ProjectTypesProvider> providers = ProjectTypesProvider.EP_NAME.getExtensionList();
     if (providers.isEmpty()) return emptyList();
 
-    return ReadAction.compute(() -> {
+    return ReadAction.<List<ProjectType>>nonBlocking(() -> {
       if (DumbService.isDumb(project)) return emptyList();
 
       return providers.stream()
         .flatMap(p -> p.inferProjectTypes(project).stream())
         .toList();
-    });
+    }).executeSynchronously();
   }
 
+  /**
+   * @deprecated Use {@link #getProjectTypes(Project)} instead.
+   */
+  @Deprecated
   public static void setProjectType(@NotNull Project project, @NotNull ProjectType projectType) {
     getInstance(project).loadState(projectType);
   }
@@ -81,11 +89,13 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
     return project.getService(ProjectTypeService.class);
   }
 
+  @ApiStatus.Internal
   @Override
   public @Nullable ProjectType getState() {
     return myProjectType;
   }
 
+  @ApiStatus.Internal
   @Override
   public void loadState(@NotNull ProjectType state) {
     myProjectType = state;

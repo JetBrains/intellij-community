@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -58,7 +57,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun getKind(): PersistentLibraryKind<*>? = currentLibrary.kind
   override fun getUrls(rootType: OrderRootType): Array<String> = currentLibrary.getUrls(rootType)
   override fun getName(): String? = currentLibrary.name
-  override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
+  override fun getPresentableName(): String = LibraryBridgeImpl.getPresentableName(this)
   override fun getProperties(): LibraryProperties<*>? = currentLibrary.properties
   override fun getExcludedRootUrls(): Array<String> = currentLibrary.excludedRootUrls
   override fun isJarDirectory(url: String): Boolean = currentLibrary.isJarDirectory(url)
@@ -74,7 +73,7 @@ internal class LibraryModifiableModelBridgeImpl(
     }
 
     entityId = entity.symbolicId.copy(name = name)
-    diff.modifyEntity(entity) {
+    diff.modifyLibraryEntity(entity) {
       this.name = name
     }
 
@@ -123,8 +122,11 @@ internal class LibraryModifiableModelBridgeImpl(
     if (isChanged) originalLibrary.entityId = entityId
   }
 
+  override val libraryId: LibraryId
+    get() = entityId
+
   private fun update(updater: LibraryEntity.Builder.() -> Unit) {
-    diff.modifyEntity(currentLibrary.libraryEntity, updater)
+    diff.modifyLibraryEntity(currentLibrary.libraryEntity, updater)
   }
 
   override fun setExternalSource(externalSource: ProjectModelExternalSource) {
@@ -146,16 +148,20 @@ internal class LibraryModifiableModelBridgeImpl(
       }
     }
     else if (properties == null) {
-      diff.addEntity(LibraryPropertiesEntity(libraryType, entity.entitySource) {
-        library = entity
-        if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
-      })
+      diff.modifyLibraryEntity(currentLibrary.libraryEntity) {
+        this.libraryProperties = LibraryPropertiesEntity(entity.entitySource) {
+          if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
+        }
+      }
     }
     else {
-      diff.modifyEntity(properties) {
-        this.libraryType = libraryType
+      diff.modifyLibraryPropertiesEntity(properties) {
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       }
+    }
+
+    diff.modifyLibraryEntity(entity) {
+      this.typeId = libraryType?.let { LibraryTypeId(libraryType) }
     }
   }
 
@@ -168,6 +174,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
   private fun LibraryEntity.hasEqualProperties(another: LibraryEntity): Boolean {
     if (this.tableId != another.tableId) return false
+    if (this.typeId != another.typeId) return false
     if (this.name != another.name) return false
     if (this.roots != another.roots) return false
     if (this.excludedRoots != another.excludedRoots) return false
@@ -175,9 +182,7 @@ internal class LibraryModifiableModelBridgeImpl(
   }
 
   private fun LibraryPropertiesEntity.hasEqualProperties(another: LibraryPropertiesEntity): Boolean {
-    if (this.libraryType != another.libraryType) return false
-    if (this.propertiesXmlTag != another.propertiesXmlTag) return false
-    return true
+    return this.propertiesXmlTag == another.propertiesXmlTag
   }
 
   override fun addJarDirectory(url: String, recursive: Boolean) =
@@ -187,7 +192,7 @@ internal class LibraryModifiableModelBridgeImpl(
     assertModelIsLive()
 
     val rootTypeId = rootType.toLibraryRootType()
-    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
     update {
@@ -207,7 +212,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun moveRootUp(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     update {
       val index = roots.indexOfFirst { it.url == virtualFileUrl }
@@ -224,7 +229,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun moveRootDown(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     update {
       val index = roots.indexOfFirst { it.url == virtualFileUrl }
@@ -255,7 +260,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addExcludedRoot(url: String) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     update {
       if (!excludedRoots.map { it.url }.contains(virtualFileUrl)) {
@@ -271,7 +276,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addRoot(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     val root = LibraryRoot(
       url = virtualFileUrl,
@@ -336,7 +341,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun removeRoot(url: String, rootType: OrderRootType): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     if (!currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) return false
 
@@ -358,7 +363,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun removeExcludedRoot(url: String): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.getOrCreateFromUri(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     val excludeUrlEntity = currentLibrary.libraryEntity.excludedRoots.find { it.url == virtualFileUrl }
     if (excludeUrlEntity == null) return false

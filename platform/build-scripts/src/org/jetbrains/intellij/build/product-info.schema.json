@@ -3,7 +3,7 @@
   "$id": "http://jetbrains.org/intellij/schema/product.schema.json",
   "title": "IntelliJ-based IDE installation",
   "description": "Meta-information about installation of an IDE based on IntelliJ Platform",
-  "version": "0.3",
+  "version": "0.4",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -181,10 +181,38 @@
       }
     },
     "modules": {
-      "description": "IDs of product modules (non-removable bundled plugins) contained in this distribution, e.g. 'com.intellij.modules.lang'; see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules",
+      "description": "IDs of plugin aliases (non-removable bundled plugins) contained in this distribution, e.g. 'com.intellij.modules.lang'; see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules",
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "layout": {
+      "description": "IDs of product modules (non-removable bundled plugins)",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "minItems": 0,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "classPath": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minItems": 0
+            }
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ]
       }
     },
     "flavors": {
@@ -198,8 +226,8 @@
         "properties": {
           "id": {
             "type": "string"
+            }
           }
-        }
       }
     }
   }

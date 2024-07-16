@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
@@ -18,10 +17,12 @@ import java.util.Collection;
 
 /**
  * Text field with completion from a list of values.
- *
- * Differs from {@link TextFieldWithCompletion} in 2 aspects:
- * 1. only accepts instances of {@link TextFieldWithAutoCompletionListProvider} (and not other implementations of {@link com.intellij.util.textCompletion.TextCompletionProvider});
- * 2. allows to change completion variants {@link #setVariants(Collection)}.
+ * <p>
+ * Differs from {@link TextFieldWithCompletion} in two aspects:
+ * <ol>
+ * <li>only accepts instances of {@link TextFieldWithAutoCompletionListProvider} (and not other implementations of {@link com.intellij.util.textCompletion.TextCompletionProvider});</li>
+ * <li>allows to change completion variants {@link #setVariants(Collection)}.</li>
+ * </ol>
  *
  * Completion is implemented via {@link com.intellij.util.textCompletion.TextCompletionContributor}.
  *

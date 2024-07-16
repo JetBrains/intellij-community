@@ -10,7 +10,7 @@ public interface ExternalEntityMapping<T> {
   /**
    * Returns all entities associated with the given [data].
    */
-  public fun getEntities(data: T): List<WorkspaceEntity>
+  public fun getEntities(data: T): Sequence<WorkspaceEntity>
 
   /**
    * Returns the first entity associated with the given [data] or `null` if there are no such entities.
@@ -73,7 +73,7 @@ public interface MutableExternalEntityMapping<T> : ExternalEntityMapping<T> {
  * In order to use the key from multiple places, it should be stored in a field.
  */
 // MUST NOT be data class. Each instance is unique
-public class ExternalMappingKey<T>(private val name: String) {
+public class ExternalMappingKey<T> private constructor(private val name: String) {
   override fun toString(): String {
     return "ExternalMappingKey[name=$name]"
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -25,13 +26,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
+@SuppressWarnings("removal")
 public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePointerCapableFileSystem, TempFileSystemMarker {
   private static final String TEMP_PROTOCOL = "temp";
 
   private final FSItem myRoot = new FSDir();
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  public static TempFileSystem getInstance() {
+  public static @NotNull TempFileSystem getInstance() {
     return (TempFileSystem)VirtualFileManager.getInstance().getFileSystem(TEMP_PROTOCOL);
   }
 

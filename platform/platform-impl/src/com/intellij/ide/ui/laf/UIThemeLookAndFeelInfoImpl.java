@@ -131,7 +131,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     boolean installed = installBackgroundImage(theme.getBackground(), IdeBackgroundUtil.EDITOR_PROP);
     installed = installBackgroundImage(theme.getEmptyFrameBackground(), IdeBackgroundUtil.FRAME_PROP) || installed;
     if (installed) {
-      IdeBackgroundUtil.repaintAllWindows();
+      IdeBackgroundUtil.resetBackgroundImagePainters();
     }
   }
 

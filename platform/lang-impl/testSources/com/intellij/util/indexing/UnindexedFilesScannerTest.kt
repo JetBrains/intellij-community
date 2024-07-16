@@ -9,11 +9,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,13 +22,14 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.application
+import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
 import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
+import com.intellij.util.indexing.events.FileIndexingRequest
 import com.intellij.util.indexing.mocks.*
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-import it.unimi.dsi.fastutil.longs.LongSet
 import org.junit.*
 import org.junit.Assert.assertEquals
 import org.junit.runner.RunWith
@@ -243,6 +244,23 @@ class UnindexedFilesScannerTest {
     captureIndexingResults(indexers).assertNoIndexerIndexedFiles()
   }
 
+  @Test
+  fun `test scanning increases mod count of DumbService even if dumb mode was not triggered`() {
+    val dir = tempDir.createDir()
+    val oneDirIterator = SingleRootIndexableFilesIterator(dir.toUri().toString())
+
+    val dumbService = DumbService.getInstance(project)
+    val dumbModCount1 = dumbService.modificationTracker.modificationCount
+
+    val (scanningStat, dirtyFiles) = scanFiles(oneDirIterator)
+    assertThat(dirtyFiles).isEmpty()
+    assertEquals(0, scanningStat.numberOfFilesForIndexing)
+    IndexingTestUtil.waitUntilIndexesAreReady(project) // wait until flows in UnindexedFilesScannerExecutorImpl are updated
+
+    val dumbModCount2 = dumbService.modificationTracker.modificationCount
+    assertEquals(dumbModCount1 + 1, dumbModCount2)
+  }
+
   private fun registerFiletype(filetype: FakeFileType) {
     runInEdtAndWait {
       (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(
@@ -318,7 +336,8 @@ class UnindexedFilesScannerTest {
   }
 
   private fun indexFiles(provider: SingleRootIndexableFilesIterator, dirtyFiles: Collection<VirtualFile>) {
-    val indexingTask = UnindexedFilesIndexer(project, mapOf(provider to dirtyFiles), "Test", LongSet.of())
+    val files = QueuedFiles.fromFilesCollection(dirtyFiles, emptyList())
+    val indexingTask = UnindexedFilesIndexer(project, files, "Test")
     val indicator = EmptyProgressIndicator()
     ProgressManager.getInstance().runProcess({ indexingTask.perform(indicator) }, indicator)
   }
@@ -330,34 +349,19 @@ class UnindexedFilesScannerTest {
   }
 
   private fun scanFiles(filesAndDirs: SingleRootIndexableFilesIterator): Pair<JsonScanningStatistics, Collection<VirtualFile>> {
-    val (history, dirtyFilesPerOrigin) = scanFiles(filesAndDirs as IndexableFilesIterator)
-
-    assertThat(dirtyFilesPerOrigin.size).isLessThanOrEqualTo(1)
-    val dirtyFiles = dirtyFilesPerOrigin[filesAndDirs] ?: emptyList<VirtualFile>().also {
-      assertThat(dirtyFilesPerOrigin).isEmpty()
-    }
+    val (history, dirtyFiles) = scanFiles(filesAndDirs as IndexableFilesIterator)
 
     assertEquals(1, history.scanningStatistics.size)
     val scanningStat = history.scanningStatistics[0]
 
-    return Pair(scanningStat, dirtyFiles)
+    return Pair(scanningStat, dirtyFiles.map(FileIndexingRequest::file))
   }
 
-  private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
-    val scanningHistoryRef = Ref<ProjectScanningHistory>()
-    val scanningTask = object : UnindexedFilesScanner(project, false, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL) {
-      override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
-                                              progressReporter: IndexingProgressReporter): ProjectScanningHistory {
-        return super.performScanningAndIndexing(indicator, progressReporter).also(scanningHistoryRef::set)
-      }
+  private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Collection<FileIndexingRequest>> {
+    return project.service<PerProjectIndexingQueue>().getFilesSubmittedDuring {
+      val scanningTask = UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL, null)
+      return@getFilesSubmittedDuring scanningTask.queue().get()
     }
-    scanningTask.setFlushQueueAfterScanning(false)
-    val indicator = EmptyProgressIndicator()
-    ProgressManager.getInstance().runProcess({ scanningTask.perform(indicator) }, indicator)
-
-    val history = scanningHistoryRef.get()
-    val dirtyFilesPerOrigin = project.service<PerProjectIndexingQueue>().getFilesAndClear()
-    return Pair(history, dirtyFilesPerOrigin)
   }
 
   /**

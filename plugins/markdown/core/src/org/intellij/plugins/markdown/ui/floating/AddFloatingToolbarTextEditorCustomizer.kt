@@ -1,20 +1,21 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.floating
 
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.coroutineScope
 import org.intellij.plugins.markdown.editor.isMarkdownScratchFile
 import org.intellij.plugins.markdown.lang.hasMarkdownType
-import org.intellij.plugins.markdown.util.MarkdownPluginScope
 
 private class AddFloatingToolbarTextEditorCustomizer: TextEditorCustomizer {
-  override fun customize(textEditor: TextEditor) {
-    val project = textEditor.editor.project ?: return
+  override suspend fun execute(textEditor: TextEditor) {
     if (shouldAcceptEditor(textEditor) && !AdvancedSettings.getBoolean("markdown.hide.floating.toolbar")) {
-      val coroutineScope = MarkdownPluginScope.createChildScope(project)
-      val toolbar = MarkdownFloatingToolbar(textEditor.editor, coroutineScope)
-      Disposer.register(textEditor, toolbar)
+      coroutineScope {
+        val toolbar = MarkdownFloatingToolbar(editor = textEditor.editor, coroutineScope = this)
+        Disposer.register(textEditor, toolbar)
+      }
     }
   }
 

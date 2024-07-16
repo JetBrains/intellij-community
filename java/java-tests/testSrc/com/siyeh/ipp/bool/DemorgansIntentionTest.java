@@ -8,12 +8,13 @@ public class DemorgansIntentionTest extends IPPTestCase {
   public void testNeedsParentheses() { doTest(); }
   public void testNeedsMoreParentheses() { doTest(); }
   public void testNotTooManyParentheses() { doTest(); }
-  public void testErrorElement() { doTest(); }
+  public void testErrorElement() { assertIntentionNotAvailable(); }
   public void testFlattenPolyadic() { doTest(); }
   public void testUnclosedLiteral() { doTest(); }
   public void testUnclosedLiteral2() { doTest(); }
   public void testClosedLiteral() { doTest(); }
   public void testRegression() { doTest(CommonQuickFixBundle.message("fix.replace.x.with.y", "&&", "||")); }
+  public void testEmptyNegation() { assertIntentionNotAvailable(CommonQuickFixBundle.message("fix.replace.x.with.y", "&&", "||")); }
 
   @Override
   protected String getIntentionName() {

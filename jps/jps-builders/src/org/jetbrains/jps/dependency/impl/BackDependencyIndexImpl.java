@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -88,11 +88,7 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   private void cleanupDependencies(Node<?, ?> node, Map<ReferenceID, Set<ReferenceID>> depsToRemove) {
     ReferenceID nodeID = node.getReferenceID();
     for (ReferenceID referentId : getIndexedDependencies(node)) {
-      Set<ReferenceID> deps = depsToRemove.get(referentId);
-      if (deps == null) {
-        depsToRemove.put(referentId, deps = new HashSet<>());
-      }
-      deps.add(nodeID);
+      depsToRemove.computeIfAbsent(referentId, k -> new HashSet<>()).add(nodeID);
     }
   }
 

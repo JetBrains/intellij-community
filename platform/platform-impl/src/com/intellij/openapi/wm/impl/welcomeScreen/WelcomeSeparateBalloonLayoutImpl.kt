@@ -120,10 +120,12 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
 
     val startY = SwingUtilities.convertPoint(myLayoutBaseComponent, 0, 0, layeredPane).y
     val totalWidth = layeredPane!!.size.width
+    val header = layeredPane!!.getClientProperty(FlatWelcomeFrame.CUSTOM_HEADER)
+    val headerHeight = if (header is JComponent) { header.height } else 0
 
-    myScrollController.configure(totalWidth, startY)
+    myScrollController.configure(totalWidth, headerHeight, startY - headerHeight)
     setBounds(balloons, totalWidth - JBUI.scale(10), startY + myScrollController.startY)
-    myScrollController.setClip(startY)
+    myScrollController.setClip(headerHeight, startY)
   }
 
   private fun getTotalHeight(): Int {
@@ -207,27 +209,27 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
       }
     }
 
-    fun configure(totalWidth: Int, startY: Int) {
+    fun configure(totalWidth: Int, startY: Int, endY: Int) {
       val totalHeight = getTotalHeight()
 
-      if (totalHeight <= startY) {
+      if (totalHeight <= endY) {
         hide(false)
       }
       else {
         if (myScrollBar.isVisible) {
-          val delta = startY - myScrollBar.model.extent + myScrollBar.maximum - totalHeight
+          val delta = endY - myScrollBar.model.extent + myScrollBar.maximum - totalHeight
           if (delta != 0) {
             if (myValue > 0) {
               myValue = max(0, myValue - delta)
             }
-            myStartValue = totalHeight - startY
+            myStartValue = totalHeight - endY
             this.startY = myStartValue - myValue
           }
         }
         else {
-          myStartValue = totalHeight - startY
+          myStartValue = totalHeight - endY
 
-          if (myState.save && myState.totalHeight == totalHeight && myState.extent == startY) {
+          if (myState.save && myState.totalHeight == totalHeight && myState.extent == endY) {
             myValue = myState.value
             this.startY = myStartValue - myValue
           }
@@ -238,12 +240,12 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
         }
 
         myState.totalHeight = totalHeight
-        myState.extent = startY
+        myState.extent = endY
         myState.save = false
 
-        myScrollBar.setValues(myValue, startY, 0, totalHeight)
+        myScrollBar.setValues(myValue, endY, 0, totalHeight)
         val scrollBarWidth = myScrollBar.preferredSize.width
-        myScrollBar.setBounds(totalWidth - scrollBarWidth, 0, scrollBarWidth, startY)
+        myScrollBar.setBounds(totalWidth - scrollBarWidth, startY, scrollBarWidth, endY)
         myScrollBar.isVisible = true
 
         if (myAwtListener == null) {
@@ -259,20 +261,27 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
       clearClip()
     }
 
-    fun setClip(startY: Int) {
+    fun setClip(startY: Int, endY: Int) {
       if (myScrollBar.isVisible) {
         for (balloon in balloons) {
           val balloonImpl = balloon as BalloonImpl
           val bounds = balloonImpl.component.bounds
-          if (bounds.y > startY) {
+          if (bounds.y > endY || bounds.maxY < startY) {
             balloonImpl.clipY = -1
             balloonImpl.component.isVisible = false
           }
-          else if (bounds.maxY > startY) {
-            val clipY = startY - bounds.y
+          else if (bounds.maxY > endY) {
+            val clipY = endY - bounds.y
             balloonImpl.clipY = clipY
             balloonImpl.component.isVisible = true
             balloonImpl.setActionButtonsVisible(clipY > JBUI.scale(26))
+          }
+          else if (bounds.y < startY) {
+            val clipY = startY - bounds.y
+            balloonImpl.clipY = clipY
+            balloonImpl.setTopClip(true)
+            balloonImpl.component.isVisible = true
+            balloonImpl.setActionButtonsVisible(false)
           }
           else {
             balloonImpl.clipY = -1
@@ -289,6 +298,7 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
       for (balloon in balloons) {
         val balloonImpl = balloon as BalloonImpl
         balloonImpl.clipY = -1
+        balloonImpl.setTopClip(false)
         balloonImpl.component?.isVisible = true
       }
     }

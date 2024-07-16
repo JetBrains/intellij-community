@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.completion.implCommon.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
@@ -30,14 +30,14 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
  * [org.jetbrains.kotlin.idea.fir.completion.test.handlers.FirKeywordCompletionHandlerTestGenerated]
  * [org.jetbrains.kotlin.idea.fir.completion.wheigher.HighLevelWeigherTestGenerated.Uncategorized]
  */
-class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHandler<KtAnalysisSession>(keyword) {
+class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHandler<KaSession>(keyword) {
     init {
         check(keyword == KtTokens.BREAK_KEYWORD || keyword == KtTokens.CONTINUE_KEYWORD) {
             "Keyword should be either `break` or `continue`. But was: $keyword"
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createLookups(expression: KtExpression?): Collection<LookupElement> {
         if (expression == null) return emptyList()
         val supportsNonLocalBreakContinue =
@@ -55,7 +55,7 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
             }
             .toList()
     }
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun canDoNonLocalJump(
         body: KtDeclarationWithBody,
         supportsNonLocalBreakContinue: Boolean,
@@ -63,7 +63,7 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
             body is KtFunctionLiteral &&
             isInlineFunctionCall(body.findLabelAndCall().second)
 
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
@@ -72,9 +72,9 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
     ): Collection<LookupElement> = createLookups(expression)
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 fun isInlineFunctionCall(call: KtCallExpression?): Boolean =
     (call?.calleeExpression as? KtReferenceExpression)?.mainReference
         ?.resolveToSymbol()
-        ?.let { it as? KtFunctionSymbol }
+        ?.let { it as? KaNamedFunctionSymbol }
         ?.isInline == true

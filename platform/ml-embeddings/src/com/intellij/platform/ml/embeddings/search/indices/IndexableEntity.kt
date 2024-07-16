@@ -1,6 +1,6 @@
 package com.intellij.platform.ml.embeddings.search.indices
 
 interface IndexableEntity {
-  val id: String
+  val id: EntityId
   val indexableRepresentation: String
 }

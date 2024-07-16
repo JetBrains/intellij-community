@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.searching.kmp
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import com.intellij.openapi.application.runReadAction
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 
 class KotlinK2ExpectActualSupport: ExpectActualSupport {
 
@@ -23,11 +24,12 @@ class KotlinK2ExpectActualSupport: ExpectActualSupport {
         return declaration.findAllActualForExpect( runReadAction { module?.moduleTestsWithDependentsScope ?: declaration.useScope } ).mapNotNull { it.element }.toSet()
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration? {
         if (declaration.isExpectDeclaration()) return declaration
         if (!declaration.isEffectivelyActual()) return null
         return analyze(declaration) {
-            val symbol: KtDeclarationSymbol = declaration.getSymbol()
+            val symbol: KaDeclarationSymbol = declaration.symbol
             (symbol.getExpectsForActual().mapNotNull { (it.psi as? KtDeclaration) }).firstOrNull()
         }
     }

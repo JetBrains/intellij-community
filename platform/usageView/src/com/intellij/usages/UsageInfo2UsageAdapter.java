@@ -560,11 +560,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return getNotNullCachedPresentation().getText();
   }
 
+  @ApiStatus.Internal
   @Override
   public final @Nullable UsageNodePresentation getCachedPresentation() {
     return myCachedPresentation;
   }
 
+  @ApiStatus.Internal
   @Override
   public final void updateCachedPresentation() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {

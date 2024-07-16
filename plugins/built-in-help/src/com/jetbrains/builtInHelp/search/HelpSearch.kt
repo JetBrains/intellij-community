@@ -1,13 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.builtInHelp.search
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ResourceUtil
-import com.jetbrains.builtInHelp.search.HelpSearchResult.Details
+import org.apache.commons.compress.utils.IOUtils
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.simple.SimpleQueryParser
@@ -17,39 +14,45 @@ import org.apache.lucene.search.highlight.Highlighter
 import org.apache.lucene.search.highlight.QueryScorer
 import org.apache.lucene.search.highlight.Scorer
 import org.apache.lucene.store.FSDirectory
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
 
 class HelpSearch {
+
   companion object {
     private val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
 
-    private val jsonMapper = ObjectMapper().apply {
-      configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    }
+    @NonNls
+    private const val NOT_FOUND = "[]"
 
-    private val analyzer = StandardAnalyzer()
+    private val analyzer: StandardAnalyzer = StandardAnalyzer()
 
     @NotNull
     fun search(query: String?, maxHits: Int): String {
-      val results = mutableListOf<HelpSearchResult>()
 
       if (query != null) {
         val indexDir: Path? = Files.createTempDirectory("search-index")
         var indexDirectory: FSDirectory? = null
         var reader: DirectoryReader? = null
-
         if (indexDir != null)
           try {
 
-            resources.forEach { resource ->
-              ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
-                                               "search", resource).use {
-                Files.copy(it, indexDir.resolve(resource))
-              }
+            for (resourceName in resources) {
+              val input = ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
+                                                           "search",
+                                                           resourceName)
+              val fos =
+                FileOutputStream(Paths.get(indexDir.toAbsolutePath().toString(), resourceName).toFile())
+              IOUtils.copy(input, fos)
+              fos.flush()
+              fos.close()
+              input?.close()
             }
 
             indexDirectory = FSDirectory.open(indexDir)
@@ -64,8 +67,9 @@ class HelpSearch {
             val scorer: Scorer = QueryScorer(q)
             val highlighter = Highlighter(scorer)
 
+            val results = ArrayList<HelpSearchResult>()
             for (i in hits.indices) {
-              val doc = searcher.storedFields().document(hits[i].doc)
+              val doc = searcher.doc(hits[i].doc)
               val contentValue = buildString {
                 append(highlighter.getBestFragment(
                   analyzer, "contents", doc.get("contents")
@@ -79,21 +83,23 @@ class HelpSearch {
                   "",
                   doc.get("title"),
                   i.toString(),
-                  HelpSearchResult.Snippet(
-                    HelpSearchResult.Snippet.Content(
+                  HelpSearchResult.SnippetResult(
+                    HelpSearchResult.SnippetResult.Content(
                       contentValue, "full"
                     )
                   ),
-                  HelpSearchResult.Highlights(
-                    Details(doc.get("filename")),
-                    Details(doc.get("title")),
-                    Details(contentValue),
-                    Details(doc.get("title")),
-                    Details(doc.get("title"))
+                  HelpSearchResult.HighlightedResult(
+                    HelpSearchResult.HelpSearchResultDetails(doc.get("filename")),
+                    HelpSearchResult.HelpSearchResultDetails(doc.get("title")),
+                    HelpSearchResult.HelpSearchResultDetails(contentValue),
+                    HelpSearchResult.HelpSearchResultDetails(doc.get("title")),
+                    HelpSearchResult.HelpSearchResultDetails(doc.get("title"))
                   )
                 )
               )
             }
+            val searchResults = HelpSearchResults(results)
+            if (searchResults.hits.isNotEmpty()) return jacksonObjectMapper().writeValueAsString(searchResults)
           }
           catch (e: Throwable) {
             Logger.getInstance(HelpSearch::class.java).info("Error searching help for $query", e)
@@ -101,10 +107,12 @@ class HelpSearch {
           finally {
             indexDirectory?.close()
             reader?.close()
-            NioFiles.deleteRecursively(indexDir)
+            val tempFiles = indexDir.toFile().listFiles()
+            tempFiles?.forEach { it.delete() }
+            Files.delete(indexDir)
           }
       }
-      return jsonMapper.writeValueAsString(HelpSearchResults(results))
+      return NOT_FOUND
     }
   }
 }
@@ -115,29 +123,30 @@ data class HelpSearchResult(
   val breadcrumbs: String,
   val mainTitle: String,
   val objectID: String,
-  @param:JsonProperty("_snippetResult") @get:JsonProperty("_snippetResult") val snippetResult: Snippet,
-  @param:JsonProperty("_highlightResult") @get:JsonProperty("_highlightResult") val highlightResult: Highlights
+  val _snippetResult: SnippetResult,
+  val _highlightResult: HighlightedResult
 ) {
-  data class Snippet(val content: Content) {
+  data class SnippetResult(val content: Content) {
     data class Content(
       val value: String,
       val matchLevel: String
     )
+
   }
 
-  data class Details(
+  data class HelpSearchResultDetails(
     val value: String,
     val matchLevel: String = "full",
     val fullyHighlighted: Boolean = true,
     val matchedWords: List<String> = Collections.emptyList()
   )
 
-  data class Highlights(
-    val url: Details,
-    val pageTitle: Details,
-    val metaDescription: Details,
-    val mainTitle: Details,
-    val headings: Details
+  data class HighlightedResult(
+    val url: HelpSearchResultDetails,
+    val pageTitle: HelpSearchResultDetails,
+    val metaDescription: HelpSearchResultDetails,
+    val mainTitle: HelpSearchResultDetails,
+    val headings: HelpSearchResultDetails
   )
 }
 

@@ -6,8 +6,6 @@ import com.intellij.collaboration.api.page.foldToList
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.platform.util.coroutines.childScope
@@ -15,11 +13,7 @@ import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.changes.filePath
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitHandlerInputProcessorUtil
-import git4idea.commands.GitLineHandler
-import git4idea.fetch.GitFetchSupport
+import git4idea.remote.hosting.GitCodeReviewUtils
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
@@ -29,7 +23,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
-import java.nio.charset.StandardCharsets
 
 interface GitLabMergeRequestChanges {
   /**
@@ -56,7 +49,6 @@ fun GitBranchComparisonResult.findLatestCommitWithChangesTo(gitRepository: GitRe
 private val LOG = logger<GitLabMergeRequestChanges>()
 
 class GitLabMergeRequestChangesImpl(
-  private val project: Project,
   parentCs: CoroutineScope,
   private val api: GitLabApi,
   private val glMetadata: GitLabServerMetadata?,
@@ -128,33 +120,13 @@ class GitLabMergeRequestChangesImpl(
     mergeRequestDetails.diffRefs?.baseSha?.also {
       revsToCheck.add(it)
     }
-    withContext(Dispatchers.IO) {
-      if (areAllRevisionsPresent(revsToCheck)) return@withContext
 
-      fetch(mergeRequestDetails.targetBranch)
-      fetch("""merge-requests/${mergeRequestDetails.iid}/head:""")
+    if (GitCodeReviewUtils.testRevisionsExist(projectMapping.gitRepository, revsToCheck)) return
 
-      check(areAllRevisionsPresent(revsToCheck)) { "Failed to fetch some revisions" }
-    }
-  }
+    GitCodeReviewUtils.fetch(projectMapping.gitRepository, projectMapping.gitRemote, mergeRequestDetails.targetBranch)
+    GitCodeReviewUtils.fetch(projectMapping.gitRepository, projectMapping.gitRemote, """merge-requests/${mergeRequestDetails.iid}/head:""")
 
-  private suspend fun areAllRevisionsPresent(revisions: List<String>): Boolean =
-    coroutineToIndicator {
-      val h = GitLineHandler(project, projectMapping.remote.repository.root, GitCommand.CAT_FILE)
-      h.setSilent(true)
-      h.addParameters("--batch-check=%(objecttype)")
-      h.endOptions()
-      h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(revisions, StandardCharsets.UTF_8))
-
-      !Git.getInstance().runCommand(h).getOutputOrThrow().contains("missing")
-    }
-
-  private suspend fun fetch(refspec: String) {
-    coroutineToIndicator {
-      val remote = projectMapping.remote
-      GitFetchSupport.fetchSupport(project)
-        .fetch(remote.repository, remote.remote, refspec).throwExceptionIfFailed()
-    }
+    check(GitCodeReviewUtils.testRevisionsExist(projectMapping.gitRepository, revsToCheck)) { "Failed to fetch some revisions" }
   }
 }
 

@@ -9,8 +9,8 @@ import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsBuilderIsIni
 
 fun ObjClass<*>.implWsEntityBuilderCode(): String {
   return """
-    $generatedCodeVisibilityModifier class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
-        $generatedCodeVisibilityModifier constructor(): this($javaDataName())
+    internal class Builder(result: $javaDataName?): ${ModifiableWorkspaceEntityBase}<$javaFullName, $javaDataName>(result), $javaBuilderName {
+        internal constructor(): this($javaDataName())
         
 ${
     lines(2) {
@@ -25,7 +25,6 @@ ${
         }
         line()
         line("this.diff = builder")
-        line("this.snapshot = builder")
         line("addToBuilder()")
         line("this.id = getEntityData().createEntityId()")
         lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")

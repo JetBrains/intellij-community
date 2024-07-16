@@ -24,6 +24,8 @@ import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.psi.impl.source.BasicElementTypes.*;
 
+//suppress to be clear, what type is used
+@SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
 @ApiStatus.Experimental
 public class BasicDeclarationParser {
   public enum BaseContext {

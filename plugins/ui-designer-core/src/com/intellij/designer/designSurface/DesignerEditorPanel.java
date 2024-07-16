@@ -1130,7 +1130,7 @@ public abstract class DesignerEditorPanel extends JPanel
           }
         }
         else {
-          action = new EmptyAction(true);
+          continue;
         }
         actionGroup.add(action);
         update(message, action.getTemplatePresentation(), true);

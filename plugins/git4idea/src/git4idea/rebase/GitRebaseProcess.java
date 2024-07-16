@@ -54,6 +54,7 @@ import java.util.regex.Pattern;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.GitActionIdsHolder.Id.*;
@@ -492,11 +493,12 @@ public class GitRebaseProcess {
 
     String upstream = myRebaseSpec.getParams().getUpstream();
     for (GitRepository repository : myRebaseSpec.getAllRepositories()) {
-      if (repository.getCurrentBranchName() == null) {
-        LOG.error("No current branch in " + repository);
+      String currentBranchName = chooseNotNull(repository.getCurrentBranchName(), repository.getCurrentRevision());
+      if (currentBranchName == null) {
+        LOG.error("No current branch or revision in " + repository);
         return true;
       }
-      String rebasingBranch = notNull(myRebaseSpec.getParams().getBranch(), repository.getCurrentBranchName());
+      String rebasingBranch = notNull(myRebaseSpec.getParams().getBranch(), currentBranchName);
       if (isRebasingPublishedCommit(repository, upstream, rebasingBranch)) {
         return askIfShouldRebasePublishedCommit();
       }

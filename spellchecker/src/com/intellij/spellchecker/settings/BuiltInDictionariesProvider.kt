@@ -4,6 +4,10 @@ package com.intellij.spellchecker.settings
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Extension point for providing built-in spellchecking dictionaries
+ * that should be displayed and can be edited in `Custom dictionaries` table in spellchecker options page.
+ */
 @ApiStatus.Internal
 interface BuiltInDictionariesProvider {
   fun getDictionaries(): List<BuiltInDictionary>

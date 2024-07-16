@@ -2,70 +2,69 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
-import org.jetbrains.kotlin.analysis.api.components.KtScopeWithKind
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
+import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.idea.references.KtReference
 
 /**
  * Resolves [reference] to symbol and returns static scope for the obtained symbol.
- * Note that if the symbol is [org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol], `null` is returned.
+ * Note that if the symbol is [org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol], `null` is returned.
  * See KT-34281 for more details.
  */
-context(KtAnalysisSession)
-internal fun getStaticScopes(reference: KtReference): List<KtScopeWithKind> {
+context(KaSession)
+internal fun getStaticScopes(reference: KtReference): List<KaScopeWithKind> {
     val scopeIndex = CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
 
     return reference.resolveToSymbols().mapNotNull { symbol ->
         when (symbol) {
-            is KtSymbolWithMembers -> {
-                val scope = if (symbol is KtNamedClassOrObjectSymbol && symbol.classKind.isObject) {
-                    symbol.getMemberScope()
+            is KaSymbolWithMembers -> {
+                val scope = if (symbol is KaNamedClassOrObjectSymbol && symbol.classKind.isObject) {
+                    symbol.memberScope
                 } else {
-                    symbol.getStaticMemberScope()
+                    symbol.staticMemberScope
                 }
 
-                KtScopeWithKind(scope, KtScopeKind.StaticMemberScope(scopeIndex), token)
+                KaScopeWithKindImpl(scope, KaScopeKinds.StaticMemberScope(scopeIndex))
             }
 
-            is KtPackageSymbol -> KtScopeWithKind(symbol.getPackageScope(), KtScopeKind.PackageMemberScope(scopeIndex), token)
+            is KtPackageSymbol -> KaScopeWithKindImpl(symbol.packageScope, KaScopeKinds.PackageMemberScope(scopeIndex))
             else -> null
         }
     }
 }
 
-internal data class KtClassifierSymbolWithContainingScopeKind(
-    private val _symbol: KtClassifierSymbol,
-    val scopeKind: KtScopeKind
-) : KtLifetimeOwner {
-    override val token: KtLifetimeToken
+internal data class KaClassifierSymbolWithContainingScopeKind(
+    private val _symbol: KaClassifierSymbol,
+    val scopeKind: KaScopeKind
+) : KaLifetimeOwner {
+    override val token: KaLifetimeToken
         get() = _symbol.token
-    val symbol: KtClassifierSymbol get() = withValidityAssertion { _symbol }
+    val symbol: KaClassifierSymbol get() = withValidityAssertion { _symbol }
 }
 
 internal data class KtCallableSignatureWithContainingScopeKind(
-    private val _signature: KtCallableSignature<*>,
-    val scopeKind: KtScopeKind
-) : KtLifetimeOwner {
-    override val token: KtLifetimeToken
+    private val _signature: KaCallableSignature<*>,
+    val scopeKind: KaScopeKind
+) : KaLifetimeOwner {
+    override val token: KaLifetimeToken
         get() = _signature.token
-    val signature: KtCallableSignature<*> get() = withValidityAssertion { _signature }
+    val signature: KaCallableSignature<*> get() = withValidityAssertion { _signature }
 }
 
 internal data class KtSymbolWithOrigin(
-    private val _symbol: KtSymbol,
+    private val _symbol: KaSymbol,
     val origin: CompletionSymbolOrigin,
-) : KtLifetimeOwner {
-    override val token: KtLifetimeToken
+) : KaLifetimeOwner {
+    override val token: KaLifetimeToken
         get() = _symbol.token
-    val symbol: KtSymbol get() = withValidityAssertion { _symbol }
+    val symbol: KaSymbol get() = withValidityAssertion { _symbol }
 }

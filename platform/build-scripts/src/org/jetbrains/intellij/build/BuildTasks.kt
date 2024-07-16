@@ -3,8 +3,6 @@
 
 package org.jetbrains.intellij.build
 
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import java.nio.file.Path
@@ -12,25 +10,6 @@ import java.nio.file.Path
 fun createBuildTasks(context: BuildContext): BuildTasks = BuildTasksImpl(context as BuildContextImpl)
 
 interface BuildTasks {
-  companion object {
-    @JvmStatic
-    @Obsolete
-    fun create(context: BuildContext): BuildTasks = createBuildTasks(context)
-  }
-
-  /**
-   * Builds archive containing production source roots of the project modules. If `includeLibraries` is `true`, the produced
-   * archive also includes sources of project-level libraries on which platform API modules from `modules` list depend on.
-   */
-  suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean)
-
-  @Obsolete
-  fun zipSourcesOfModulesBlocking(modules: List<String>, targetFile: Path) {
-    runBlocking {
-      zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = false)
-    }
-  }
-
   /**
    * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR
    * files accordingly to [ProductProperties.productLayout], and creating distributions and installers for all OS.
@@ -42,19 +21,6 @@ interface BuildTasks {
    * directory.
    */
   suspend fun buildNonBundledPlugins(mainPluginModules: List<String>)
-
-  fun compileProjectAndTests(includingTestsInModules: List<String>)
-
-  fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>)
-
-  fun compileModules(moduleNames: Collection<String>?) {
-    compileModules(moduleNames = moduleNames, includingTestsInModules = java.util.List.of())
-  }
-
-  /**
-   * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
-   */
-  suspend fun buildFullUpdaterJar()
 
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 }

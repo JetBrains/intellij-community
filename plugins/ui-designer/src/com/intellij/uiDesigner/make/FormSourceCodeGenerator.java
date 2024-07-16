@@ -55,7 +55,7 @@ public final class FormSourceCodeGenerator {
   private boolean myNeedLoadLabelText;
   private boolean myNeedLoadButtonText;
 
-  private static final Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<>();
+  private static final Map<Class<?>, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<>();
   private static final Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<>();
   private static final @NonNls Int2ObjectMap<String> ourFontStyleMap = new Int2ObjectOpenHashMap<>();
   private static final @NonNls Int2ObjectMap<String> ourTitleJustificationMap = new Int2ObjectOpenHashMap<>();
@@ -462,7 +462,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private @NonNls String getLoadMethodText(final String methodName, final Class componentClass, Module module) {
+  private @NonNls String getLoadMethodText(final String methodName, final Class<?> componentClass, Module module) {
     final boolean needIndex = haveSetDisplayedMnemonic(componentClass, module);
     return
       "/** @noinspection ALL */ " +
@@ -656,8 +656,7 @@ public final class FormSourceCodeGenerator {
       endConstructor(); // will finish the line
     }
 
-    if (component instanceof LwContainer) {
-      final LwContainer container = (LwContainer)component;
+    if (component instanceof LwContainer container) {
       if (!container.isCustomCreate() || container.getComponentCount() > 0) {
         getComponentLayoutGenerator(container).generateContainerLayout(container, this, variable);
       }
@@ -690,23 +689,18 @@ public final class FormSourceCodeGenerator {
             if (isAssignableFrom(AbstractButton.class.getName(), componentClass, globalSearchScope)) {
               myNeedLoadButtonText = true;
               startMethodCall("this", AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD);
-              pushVar(variable);
-              push(descriptor);
-              endMethod();
             }
             else {
               myNeedLoadLabelText = true;
               startMethodCall("this", AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD);
-              pushVar(variable);
-              push(descriptor);
-              endMethod();
             }
+            pushVar(variable);
           }
           else {
             startMethodCall(variable, property.getWriteMethodName());
-            push(descriptor);
-            endMethod();
           }
+          push(descriptor);
+          endMethod();
 
           continue;
         }
@@ -821,8 +815,7 @@ public final class FormSourceCodeGenerator {
       getComponentLayoutGenerator(component.getParent()).generateComponentLayout(component, this, componentVar, parentVariable);
     }
 
-    if (component instanceof LwContainer) {
-      final LwContainer container = (LwContainer)component;
+    if (component instanceof LwContainer container) {
 
       generateBorder(container, variable, globalSearchScope);
 
@@ -834,7 +827,7 @@ public final class FormSourceCodeGenerator {
   }
 
   private void generateSetMnemonic(final String variable, final SupportCode.TextWithMnemonic textWithMnemonic, final Module module,
-                                   final @NonNls String setMethodName, final Class controlClass) {
+                                   final @NonNls String setMethodName, final Class<?> controlClass) {
     startMethodCall(variable, setMethodName);
     pushVar("'" + textWithMnemonic.getMnemonicChar() + "'");
     endMethod();
@@ -847,7 +840,7 @@ public final class FormSourceCodeGenerator {
     }
   }
 
-  private boolean haveSetDisplayedMnemonic(final Class controlClass, final Module module) {
+  private boolean haveSetDisplayedMnemonic(final Class<?> controlClass, final Module module) {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(controlClass.getName(), module.getModuleWithLibrariesScope());
     return aClass != null && aClass.findMethodsByName("setDisplayedMnemonicIndex", true).length > 0;
   }
@@ -981,11 +974,6 @@ public final class FormSourceCodeGenerator {
       push(borderSize.right);
     }
     endMethod();
-  }
-
-  private static boolean isCustomBorder(final LwContainer container) {
-    return container.getBorderTitleJustification() != 0 || container.getBorderTitlePosition() != 0 ||
-           container.getBorderTitleColor() != null || container.getBorderTitleFont() != null;
   }
 
   private void generateClientProperties(final LwComponent component, final String variable) throws CodeGenerationException {
@@ -1317,7 +1305,7 @@ public final class FormSourceCodeGenerator {
     myIsFirstParameterStack.push(true);
   }
 
-  private void startStaticMethodCall(final Class aClass, final @NonNls String methodName) {
+  private void startStaticMethodCall(final Class<?> aClass, final @NonNls String methodName) {
     startStaticMethodCall(aClass.getCanonicalName(), methodName);
   }
 
@@ -1374,8 +1362,8 @@ public final class FormSourceCodeGenerator {
     myBuffer.append(value);
   }
 
-  void push(final int value, final Int2ObjectMap map){
-    final String stringRepresentation = (String)map.get(value);
+  void push(final int value, final Int2ObjectMap<String> map){
+    final String stringRepresentation = map.get(value);
     if (stringRepresentation != null) {
       checkParameter();
       myBuffer.append(stringRepresentation);

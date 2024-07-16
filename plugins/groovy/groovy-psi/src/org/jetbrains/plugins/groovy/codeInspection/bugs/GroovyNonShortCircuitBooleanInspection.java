@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
+public final class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
 
   @Override
   @Nullable

@@ -4,20 +4,23 @@ import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ml.embeddings.search.indices.EntityId
 import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
 import com.intellij.platform.ml.embeddings.search.services.SymbolEmbeddingStorage
+import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticSymbolSearchEverywhereContributor
-import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.kotlin.psi.KtFunction
 import kotlin.time.Duration.Companion.seconds
@@ -32,9 +35,9 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test basic semantics`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.size)
+    assertEquals(5, storage.index.getSize())
 
-    var neighbours = storage.searchNeighbours("begin indexing", 10, 0.5).asSequence().filterByModel()
+    var neighbours = storage.searchNeighbours("begin indexing", 10, 0.5).asFlow().filterByModel()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
 
     neighbours = storage.streamSearchNeighbours("begin indexing", 0.5).filterByModel()
@@ -46,31 +49,34 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test index ids are not duplicated`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
-    assertEquals(1, storage.index.size)
+    assertEquals(1, storage.index.getSize())
   }
 
   fun `test search everywhere contributor`() = runTest(
     timeout = 45.seconds // increased timeout because of a bug in symbol index
   ) {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticSymbolSearchEverywhereContributor(createEvent())),
-                                                { _ -> null }, null)
+
+    val contributor = SemanticSymbolSearchEverywhereContributor(createEvent())
+    Disposer.register(project, contributor)
+    val searchEverywhereUI = SearchEverywhereUI(project, listOf(contributor), { _ -> null }, null)
+    Disposer.register(project, searchEverywhereUI)
+
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("begin indexing"))
-    assertEquals(2, elements.size)
 
     val items: List<PsiElement> = elements.filterIsInstance<PsiItemWithSimilarity<*>>().mapNotNull { extractPsiElement(it) }
     assertEquals(2, items.size)
 
-    val methods = items.filterIsInstance<PsiMethod>().map { IndexableClass(it.name) } +
-                  items.filterIsInstance<KtFunction>().map { IndexableClass(it.name ?: "") } +
-                  items.filterIsInstance<PsiClass>().map { IndexableClass(it.name ?: "") } // we might have constructors in the results
+    val methods = items.filterIsInstance<PsiMethod>().map { IndexableClass(EntityId(it.name)) } +
+                  items.filterIsInstance<KtFunction>().map { IndexableClass(EntityId(it.name ?: "")) } +
+                  items.filterIsInstance<PsiClass>().map { IndexableClass(EntityId(it.name ?: "")) } // we might have constructors in the results
     assertEquals(2, methods.size)
-    assertEquals(setOf("ProjectIndexingTask", "startIndexing"), methods.map { it.id }.toSet())
+    assertEquals(setOf(EntityId("ProjectIndexingTask"), EntityId("startIndexing")), methods.map { it.id }.toSet())
   }
 
   fun `test method renaming changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.size)
+    assertEquals(5, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("begin indexing", 0.5).filterByModel()
     assertEquals(setOf("ProjectIndexingTask", "startIndexing"), neighbours)
@@ -97,7 +103,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test removal of file with method changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.size)
+    assertEquals(5, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("begin indexing", 0.5).filterByModel()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
@@ -118,8 +124,8 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("handleScoresFile", "clearFileWithScores"), neighbours)
   }
 
-  private fun Sequence<ScoredText>.filterByModel(): Set<String> {
-    return map { it.text }.filter {
+  private suspend fun Flow<ScoredText>.filterByModel(): Set<String> {
+    return this.map { it.text }.filter {
       model.getElementsByName(it, false, it).any { element ->
         (element as PsiElement).isValid
       }

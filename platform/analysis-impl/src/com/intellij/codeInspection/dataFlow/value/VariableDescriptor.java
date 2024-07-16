@@ -73,6 +73,16 @@ public interface VariableDescriptor {
   DfType getDfType(@Nullable DfaVariableValue qualifier);
 
   /**
+   * @param qualifier qualifier
+   * @param state memory state
+   * @return DfType of this value, which might be more precise than the result of {@link #getDfType(DfaVariableValue)} if the
+   * qualifier type is known to be more precise, and this information restricts the type of this value
+   */
+  default @NotNull DfType restrictFromState(@NotNull DfaVariableValue qualifier, @NotNull DfaMemoryState state) {
+    return getDfType(qualifier);
+  }
+
+  /**
    * Returns the DfType the value with this descriptor has at the beginning of the interpretation in a given context.
    *
    * @param thisValue DfaVariableValue representing the current variable

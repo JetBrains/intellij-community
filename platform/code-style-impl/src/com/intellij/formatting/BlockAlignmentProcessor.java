@@ -17,6 +17,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -26,6 +27,7 @@ import java.util.Set;
  * Stands for block alignment strategy (e.g. we may want to use different strategies for the different
  * {@link Alignment.Anchor alignment acnhors}).
  */
+@ApiStatus.Internal
 public interface BlockAlignmentProcessor {
   
   enum Result {

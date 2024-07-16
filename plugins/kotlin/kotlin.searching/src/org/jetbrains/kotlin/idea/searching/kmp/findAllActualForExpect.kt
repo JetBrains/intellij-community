@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.searching.kmp
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
@@ -17,8 +18,6 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import kotlin.collections.any
-import kotlin.let
 
 @RequiresBackgroundThread(generateAssertion = false)
 fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadAction { useScope }): Sequence<SmartPsiElementPointer<KtDeclaration>> {
@@ -43,7 +42,8 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
                         if (primaryConstructor?.matchesWithExpect(declaration) == true) {
                             primaryConstructor
                         } else {
-                            targetDeclaration.secondaryConstructors.find { it.matchesWithExpect(declaration) }
+                            val secondaryConstructor = targetDeclaration.secondaryConstructors.find { it.matchesWithExpect(declaration) }
+                            if (secondaryConstructor != null) secondaryConstructor else if (declaration.valueParameters.isEmpty()) targetDeclaration else null
                         }
                     } else null
                 }
@@ -80,10 +80,11 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun KtDeclaration.matchesWithExpect(expectDeclaration: KtDeclaration): Boolean {
     val declaration = this
     return declaration.isEffectivelyActual() && analyze(declaration) {
-        val symbol: KtDeclarationSymbol = declaration.getSymbol()
+        val symbol: KaDeclarationSymbol = declaration.symbol
         return symbol.getExpectsForActual().any { it.psi == expectDeclaration }
     }
 }

@@ -1,9 +1,9 @@
 // "Opt in for 'Library' on statement" "true"
-// ACTION: Add '-opt-in=DoubleExperementalApi.Library' to module light_idea_test_case compiler arguments
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Introduce local variable
 // ACTION: Opt in for 'Library' in containing file 'doubleExperementalApi.kts'
+// ACTION: Opt in for 'Library' in module 'light_idea_test_case'
 // ACTION: Opt in for 'Library' on 'bar'
 // ACTION: Opt in for 'Library' on statement
 // RUNTIME_WITH_SCRIPT_RUNTIME

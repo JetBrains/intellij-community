@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -83,8 +83,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
   }
 
 
-  @NotNull
-  public TextRange getValueRange() {
+  public @NotNull TextRange getValueRange() {
     String text = getText();
     int start = 0;
     int end = text.length();
@@ -137,8 +136,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
       return file.getManager().findFile(targetFile);
     }
 
-    @Nullable
-    private VirtualFile getDirectory() {
+    private @Nullable VirtualFile getDirectory() {
       if (mySnippetRoot == null) return null;
       List<String> path = StringUtil.split(getValue(), mySeparator);
       if (path.isEmpty()) return null;
@@ -162,9 +160,8 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
       return PsiSnippetAttributeValueImpl.this;
     }
 
-    @NotNull
     @Override
-    public TextRange getRangeInElement() {
+    public @NotNull TextRange getRangeInElement() {
       TextRange range = getValueRange();
       String text = getText();
       int lastDot = text.lastIndexOf(mySeparator);

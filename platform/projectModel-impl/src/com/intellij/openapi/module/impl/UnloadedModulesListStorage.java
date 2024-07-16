@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 @State(name = "UnloadedModulesList", storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))
 public final class UnloadedModulesListStorage implements PersistentStateComponent<UnloadedModulesListStorage> {
   @Property(surroundWithTag = false)
@@ -32,6 +33,7 @@ public final class UnloadedModulesListStorage implements PersistentStateComponen
 
   @Transient
   @NotNull
+  @ApiStatus.Internal
   public UnloadedModulesNameHolder getUnloadedModuleNameHolder() {
     return new UnloadedModulesNameHolderImpl(moduleNames);
   }

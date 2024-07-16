@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,10 +31,10 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private final List<ActionListener> myChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(PythonSdkChooserCombo.class);
 
-  public PythonSdkChooserCombo(@Nullable final Project project,
-                               @Nullable final Module module,
+  public PythonSdkChooserCombo(final @Nullable Project project,
+                               final @Nullable Module module,
                                @NotNull List<? extends Sdk> sdks,
-                               @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
+                               final @NotNull Condition<? super Sdk> acceptableSdkCondition) {
     super(new ComboBox<>());
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();
@@ -64,7 +64,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     getComboBox().setToolTipText(sdkHomePath != null ? FileUtil.toSystemDependentName(sdkHomePath) : null);
   }
 
-  private void showOptions(@Nullable final Project project, @Nullable Module module) {
+  private void showOptions(final @Nullable Project project, @Nullable Module module) {
     final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
     final Sdk[] sdks = interpreterList.getModel().getSdks();
     //noinspection unchecked

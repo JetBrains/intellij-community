@@ -14,6 +14,10 @@ public final class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
   private static String ourPid;
 
+  private OSProcessUtil() {
+    // Nothing.
+  }
+
   public static ProcessInfo @NotNull [] getProcessList() {
     return ProcessListUtil.getProcessList();
   }
@@ -76,6 +80,7 @@ public final class OSProcessUtil {
       UnixProcessManager.sendSignal(pid, UnixProcessManager.SIGKILL);
     }
   }
+
   /**
    * Terminates the specified process gracefully: on Windows sends Ctrl-C, on unix sends the SIGINT signal.
    *
@@ -146,6 +151,10 @@ public final class OSProcessUtil {
     return (int)ProcessHandle.current().pid();
   }
 
+  /**
+   * @deprecated {@link #getCurrentProcessId()} does the same.
+   */
+  @Deprecated
   public static String getApplicationPid() {
     if (ourPid == null) {
       ourPid = String.valueOf(getCurrentProcessId());

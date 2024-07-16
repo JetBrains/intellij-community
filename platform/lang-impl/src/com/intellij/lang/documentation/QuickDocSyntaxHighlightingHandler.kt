@@ -5,7 +5,9 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 interface QuickDocSyntaxHighlightingHandlerFactory {
   companion object {
     internal val EXTENSION: LanguageExtension<QuickDocSyntaxHighlightingHandlerFactory> =
@@ -19,6 +21,7 @@ interface QuickDocSyntaxHighlightingHandlerFactory {
  * Provides interface for special support for a language syntax highlighting.
  * Can store state, especially useful between calls to [preprocessCode] and [postProcessHtml].
  */
+@Internal
 interface QuickDocSyntaxHighlightingHandler {
 
   /**
@@ -38,10 +41,10 @@ interface QuickDocSyntaxHighlightingHandler {
    * Allows to perform additional, semantic syntax highlighting,
    * like semantic keywords or method calls.
    */
-  fun performSemanticHighlighting(file: PsiFile): List<HighlightInfo> =
+  fun performSemanticHighlighting(file: PsiFile): List<QuickDocHighlightInfo> =
     emptyList()
 
-  interface HighlightInfo {
+  interface QuickDocHighlightInfo {
 
     val startOffset: Int
 

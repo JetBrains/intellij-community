@@ -62,7 +62,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   @NlsSafe
   private var description: String? = null
   private var isToggled = false
-  var isKeepMenuOpen: Boolean = false
+  var keepPopupOnPerform: KeepPopupOnPerform = KeepPopupOnPerform.Never
     private set
   val secondaryIcon: Icon?
     get() = if (UISettings.getInstance().showIconsInMenus) presentation.getClientProperty(ActionMenu.SECONDARY_ICON) else null
@@ -80,7 +80,7 @@ class ActionMenuItem internal constructor(action: AnAction,
           screenMenuItemPeer.setState(isToggled)
         }
         SwingUtilities.invokeLater(Runnable {
-          if (actionRef.getAction().isEnabledInModalContext || this.context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
+          if (presentation.isEnabledInModalContext || this.context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
             (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity(
               Runnable { performAction(0) })
           }
@@ -125,7 +125,9 @@ class ActionMenuItem internal constructor(action: AnAction,
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon(presentation)
     description = presentation.description
-    isKeepMenuOpen = isKeepMenuOpen || presentation.isMultiChoice || actionRef.getAction() is KeepingPopupOpenAction
+    keepPopupOnPerform =
+      if (actionRef.getAction() is KeepingPopupOpenAction) KeepPopupOnPerform.Always
+      else presentation.keepPopupOnPerform
     if (screenMenuItemPeer != null) {
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)
@@ -207,7 +209,7 @@ class ActionMenuItem internal constructor(action: AnAction,
     }
     else if (UISettings.getInstance().showIconsInMenus) {
       var icon = presentation.icon
-      if (isToggleable && isToggled) {
+      if (isToggleable && isToggled && icon != null) {
         icon = PoppedIcon(icon, 16, 16)
       }
       var disabled = presentation.disabledIcon

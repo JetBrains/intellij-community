@@ -13,6 +13,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import kotlin.Pair;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,6 +25,10 @@ public final class BuildableRootsChangeRescanningInfoImpl extends BuildableRoots
   private final List<Pair<String, String>> sdks = new SmartList<>();
   private final List<LibraryId> libraries = new SmartList<>();
   private final List<WorkspaceEntity> entities = new SmartList<>();
+
+  @Internal
+  public BuildableRootsChangeRescanningInfoImpl() {
+  }
 
   @Override
   @NotNull

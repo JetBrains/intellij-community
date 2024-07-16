@@ -38,12 +38,16 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testStaticImportArrayCopyOfAccess() {
+    doTest()
+  }
+
   fun testJavaShebang() {
     val file = myFixture.configureByText("hello",
                                          """#!/path/to/java
                                  |class Main {{
                                  |int i = 0;
-                                 |i*<error descr="Expression expected"><error descr="Unexpected token">*</error></error>;
+                                 |<error descr="Not a statement">i*</error><error descr="Expression expected"><error descr="Unexpected token">*</error></error>;
                                  |}}""".trimMargin())
     myFixture.checkHighlighting()
     Assert.assertTrue(JavaHighlightUtil.isJavaHashBangScript(file))

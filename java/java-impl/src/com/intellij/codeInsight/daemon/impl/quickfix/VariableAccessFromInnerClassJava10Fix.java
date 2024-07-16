@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -31,7 +31,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
 
 public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAction<PsiElement> {
-  @NonNls private final static String[] NAMES = {
+  private static final @NonNls String[] NAMES = {
     "ref",
     "lambdaContext",
     "context",
@@ -42,10 +42,8 @@ public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCom
     super(context);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.variable.access.from.inner.class");
   }
 
@@ -126,8 +124,7 @@ public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCom
 
   private record DeclarationInfo(boolean isBefore, @NotNull PsiLocalVariable variable, @NotNull String name) {
 
-    @Nullable
-    static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable) {
+    static @Nullable DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable) {
       PsiElement varDeclarationStatement = CommonJavaRefactoringUtil.getParentStatement(variable, false);
       if (varDeclarationStatement == null) return null;
       PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(varDeclarationStatement, PsiStatement.class);
@@ -165,10 +162,9 @@ public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCom
       }
     }
 
-    @Nullable
-    private static DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable,
-                                                              @Nullable PsiDeclarationStatement declarationStatement,
-                                                              boolean isBefore) {
+    private static @Nullable DeclarationInfo findExistingAnonymousClass(@NotNull PsiVariable variable,
+                                                                        @Nullable PsiDeclarationStatement declarationStatement,
+                                                                        boolean isBefore) {
       if (declarationStatement == null) return null;
       PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
       if (declaredElements.length != 1) return null;

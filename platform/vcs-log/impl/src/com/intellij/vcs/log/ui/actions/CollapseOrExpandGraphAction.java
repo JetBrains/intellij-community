@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -18,10 +18,12 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.visible.VisiblePack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private final Supplier<@NlsActions.ActionText String> myLinearBranchesAction;
   private final Supplier<@NlsActions.ActionDescription String> myLinearBranchesDescription;
@@ -43,7 +45,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
     MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
-    if (ui == null) return;
+    if (ui == null || !ui.getDataPack().getVisibleGraph().getActionController().isActionSupported(getGraphAction())) return;
     executeAction(ui);
   }
 
@@ -56,8 +58,8 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && !ui.getDataPack().isEmpty());
     if (visible) {
-      if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
-          properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
+      if (properties != null && properties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS) &&
+          properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS) == PermanentGraph.Options.LinearBek.INSTANCE) {
         e.getPresentation().setText(myMergesAction.get());
         e.getPresentation().setDescription(myMergesDescription.get());
       }

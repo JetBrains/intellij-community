@@ -1,0 +1,11 @@
+// FILE: test/ConflictingImport.kt
+// BIND_TO test.bar.get
+package test
+
+import test.bar.get
+import test.foo.get
+
+fun foo() {
+    0<caret>[0]
+}
+

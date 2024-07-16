@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.util.treeView.FileNameComparator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -539,7 +540,7 @@ private val RECORD_INFO_COMPARATOR: Comparator<RecordInfo> = compareBy<RecordInf
     is RecordInfo.UnregisteredHeader -> 2
     is RecordInfo.UnregisteredMapping -> 3
   }
-}.thenBy { info -> (info as? RecordInfo.MappingInfo)?.mapping?.directory }
+}.thenBy(FileNameComparator.getInstance()) { info -> (info as? RecordInfo.MappingInfo)?.mapping?.directory }
 
 private sealed interface RecordInfo {
   sealed class MappingInfo : RecordInfo {

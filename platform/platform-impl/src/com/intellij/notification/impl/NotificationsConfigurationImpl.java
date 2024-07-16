@@ -145,9 +145,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
 
   @Override
   public @NotNull NotificationAnnouncingMode getNotificationAnnouncingMode() {
-    if (NOTIFICATION_ANNOUNCING_MODE != null) return NOTIFICATION_ANNOUNCING_MODE;
-    else if (SystemInfo.isWindows) return NotificationAnnouncingMode.NONE;
-    else return NotificationAnnouncingMode.MEDIUM;
+    return NOTIFICATION_ANNOUNCING_MODE != null ? NOTIFICATION_ANNOUNCING_MODE : NotificationAnnouncingMode.MEDIUM;
   }
 
   @Override
@@ -224,15 +222,11 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     }
     doRemove("Log Only");
 
-    if ("false".equals(state.getAttributeValue(SHOW_BALLOONS_ATTRIBUTE))) {
-      //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      SHOW_BALLOONS = false;
-    }
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
+    SHOW_BALLOONS = !"false".equals(state.getAttributeValue(SHOW_BALLOONS_ATTRIBUTE));
 
-    if ("false".equals(state.getAttributeValue(SYSTEM_NOTIFICATIONS_ATTRIBUTE))) {
-      //noinspection NonPrivateFieldAccessedInSynchronizedContext
-      SYSTEM_NOTIFICATIONS = false;
-    }
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
+    SYSTEM_NOTIFICATIONS = !"false".equals(state.getAttributeValue(SYSTEM_NOTIFICATIONS_ATTRIBUTE));
 
     NotificationAnnouncingMode announcingMode = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
     if (announcingMode != null) {

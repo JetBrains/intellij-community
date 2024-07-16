@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlo
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.NotClosedProperlyRecoverer;
 import com.intellij.testFramework.TemporaryDirectory;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -450,7 +451,7 @@ public class VFSCorruptionRecoveryTest {
     try (SeekableByteChannel channel = Files.newByteChannel(recordsPath, WRITE)) {
       ByteBuffer oneFieldBuffer = ByteBuffer.allocate(Integer.BYTES)
         .order(ByteOrder.nativeOrder());
-      oneFieldBuffer.putInt(PersistentFSHeaders.CONNECTED_MAGIC)
+      oneFieldBuffer.putInt(PersistentFSHeaders.IN_USE_STAMP)
         .clear();
 
       channel.position(HEADER_CONNECTION_STATUS_OFFSET);

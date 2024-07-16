@@ -22,6 +22,7 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
@@ -41,7 +42,7 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   // todo[akniazev]: check for package management tools
   val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
   val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
-  val pythonExecution = prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareTargetRequest)
+  val pythonExecution = blockingContext { prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareTargetRequest) }
 
   if (targetEnvironmentRequest is LocalTargetEnvironmentRequest) {
     if (Registry.`is`("python.packaging.tool.use.project.location.as.working.dir")) {
@@ -86,7 +87,7 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   // TODO [targets] Apply flavor from PythonSdkFlavor.getFlavor(mySdk)
   // TODO [targets] check askForSudo
 
-  val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
+  val process = blockingContext { targetEnvironment.createProcess(targetedCommandLine, indicator) }
 
   val commandLine = targetedCommandLine.collectCommandsSynchronously()
   val commandLineString = commandLine.joinToString(" ")
@@ -141,6 +142,6 @@ fun PythonPackageManager.isInstalled(name: String): Boolean {
 
 fun PythonRepositoryManager.createSpecification(name: String,
                                                 versionSpec: String? = null): PythonPackageSpecification? {
-  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> pkg.lowercase() == name.lowercase() } }?.first
+  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> normalizePackageName(pkg) == normalizePackageName(name) } }?.first
   return repository?.createForcedSpecPackageSpecification(name, versionSpec)
 }

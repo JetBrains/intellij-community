@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.xdebugger.XSourcePosition
 
+@Deprecated("scriptDebugger.ui is deprecated")
 class SourceInfo @JvmOverloads constructor(private val file: VirtualFile, private val line: Int, val column: Int = -1, private var offset: Int = -1, val functionName: String? = null, val url: Url? = null) : XSourcePosition {
   override fun getFile(): VirtualFile = file
 

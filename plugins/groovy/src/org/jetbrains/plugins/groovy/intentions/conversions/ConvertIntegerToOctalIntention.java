@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.math.BigInteger;
 
-public class ConvertIntegerToOctalIntention extends GrPsiUpdateIntention {
+public final class ConvertIntegerToOctalIntention extends GrPsiUpdateIntention {
 
 
   @Override

@@ -98,7 +98,7 @@ class KotlinUAnnotation(
     override val uastAnchor: UIdentifier
         get() = uastAnchorPart.getOrBuild {
             KotlinUIdentifier(
-                javaPsi?.nameReferenceElement,
+                { javaPsi?.nameReferenceElement },
                 annotationEntry.typeReference?.nameElement,
                 this
             )
@@ -128,7 +128,7 @@ class KotlinUNestedAnnotation private constructor(
     override val uastAnchor: UIdentifier
         get() = uastAnchorPart.getOrBuild {
             KotlinUIdentifier(
-                javaPsi?.nameReferenceElement?.referenceNameElement,
+                { javaPsi?.nameReferenceElement?.referenceNameElement },
                 (original.calleeExpression as? KtNameReferenceExpression)?.getReferencedNameElement(),
                 this
             )

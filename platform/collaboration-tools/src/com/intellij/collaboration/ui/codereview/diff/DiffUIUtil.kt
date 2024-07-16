@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 typealias DiffLineLocation = Pair<Side, Int>
 
-object DiffUIUtil {
+internal object DiffUIUtil {
   /**
    * Progress is delayed to avoid a flicker
    */

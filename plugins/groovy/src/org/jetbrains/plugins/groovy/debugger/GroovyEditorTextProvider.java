@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyEditorTextProvider implements EditorTextProvider {
+public final class GroovyEditorTextProvider implements EditorTextProvider {
   @Override
   public TextWithImports getEditorText(PsiElement elementAtCaret) {
     String result = "";

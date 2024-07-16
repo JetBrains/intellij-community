@@ -10,6 +10,7 @@ import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class Proto implements ExternalizableGraphElement {
   private final JVMFlags access;
@@ -39,19 +40,19 @@ public class Proto implements ExternalizableGraphElement {
     RW.writeCollection(out, annotations, t -> t.write(out));
   }
 
-  public JVMFlags getFlags() {
+  public final JVMFlags getFlags() {
     return access;
   }
 
-  public String getSignature() {
+  public final String getSignature() {
     return signature;
   }
 
-  public String getName() {
+  public final String getName() {
     return name;
   }
 
-  public @NotNull Iterable<ElementAnnotation> getAnnotations() {
+  public final @NotNull Iterable<ElementAnnotation> getAnnotations() {
     return annotations;
   }
 
@@ -113,15 +114,17 @@ public class Proto implements ExternalizableGraphElement {
     return false;
   }
 
-  public boolean isWeakerAccessThan(Proto anotherProto) {
+  public final boolean isWeakerAccessThan(Proto anotherProto) {
     return getFlags().isWeakerAccess(anotherProto.getFlags());
   }
 
   public class Diff<V extends Proto> implements Difference {
+    private final Supplier<Specifier<ElementAnnotation, ElementAnnotation.Diff>> myAnnotationsDiff;
     protected final V myPast;
 
     public Diff(V past) {
       myPast = past;
+      myAnnotationsDiff = Utils.lazyValue(() -> Difference.deepDiff(myPast.getAnnotations(), getAnnotations()));
     }
 
     @Override
@@ -158,7 +161,7 @@ public class Proto implements ExternalizableGraphElement {
     }
 
     public Specifier<ElementAnnotation, ElementAnnotation.Diff> annotations() {
-      return Difference.deepDiff(myPast.getAnnotations(), getAnnotations());
+      return myAnnotationsDiff.get();
     }
   }
 

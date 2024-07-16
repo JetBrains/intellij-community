@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroovyStatementMover extends StatementUpDownMover {
+public final class GroovyStatementMover extends StatementUpDownMover {
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {

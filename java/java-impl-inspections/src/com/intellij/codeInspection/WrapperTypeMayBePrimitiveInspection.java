@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -36,18 +36,16 @@ public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaL
   private static final CallMatcher HASH_CODE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode");
   private static final CallMatcher VALUE_OF = getValueOfMatcher();
 
-  private static final Set<String> ourAllowedInstanceCalls = new HashSet<>();
-
-  static {
-    ourAllowedInstanceCalls.add("isInfinite");
-    ourAllowedInstanceCalls.add("isNaN");
-    ourAllowedInstanceCalls.add("byteValue");
-    ourAllowedInstanceCalls.add("shortValue");
-    ourAllowedInstanceCalls.add("intValue");
-    ourAllowedInstanceCalls.add("longValue");
-    ourAllowedInstanceCalls.add("floatValue");
-    ourAllowedInstanceCalls.add("doubleValue");
-  }
+  private static final Set<String> ourAllowedInstanceCalls = Set.of(
+    "isInfinite",
+    "isNaN",
+    "byteValue",
+    "shortValue",
+    "intValue",
+    "longValue",
+    "floatValue",
+    "doubleValue"
+  );
 
   private static CallMatcher getValueOfMatcher() {
     CallMatcher[] matchers = JvmPrimitiveTypeKind.getBoxedFqns()

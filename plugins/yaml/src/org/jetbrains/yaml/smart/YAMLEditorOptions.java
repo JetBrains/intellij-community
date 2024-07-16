@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.smart;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,13 +18,12 @@ public class YAMLEditorOptions implements PersistentStateComponent<YAMLEditorOpt
   private boolean myUseSmartPaste = true;
 
   @Override
-  @NotNull
-  public YAMLEditorOptions getState() {
+  public @NotNull YAMLEditorOptions getState() {
     return this;
   }
 
   @Override
-  public void loadState(@NotNull final YAMLEditorOptions state) {
+  public void loadState(final @NotNull YAMLEditorOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
@@ -36,8 +35,7 @@ public class YAMLEditorOptions implements PersistentStateComponent<YAMLEditorOpt
     this.myUseSmartPaste = useSmartPaste;
   }
 
-  @NotNull
-  public static YAMLEditorOptions getInstance() {
+  public static @NotNull YAMLEditorOptions getInstance() {
     return ApplicationManager.getApplication().getService(YAMLEditorOptions.class);
   }
 }

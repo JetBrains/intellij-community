@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.TerminalStarter;
@@ -34,6 +35,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
 import com.pty4j.PtyProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,6 +139,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   @Override
   public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
     myContentHelper.addChangeListener(listener, parent);
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void flushImmediately() {
+    myContentHelper.flush();
   }
 
   private static @NotNull String encodeColor(@NotNull Color color) {

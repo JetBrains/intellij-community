@@ -46,7 +46,7 @@ internal class ModuleNamesListInspection : LocalInspectionTool() {
   companion object {
     inline fun checkModuleNames(lines: List<String>, project: Project, reportError: (Int, @InspectionMessage String) -> Unit) {
       val modulesCount = ModuleManager.getInstance(project).modules.size
-      val counts = lines.fold(HashMap<String, Int>(), { map, s -> map[s] = map.getOrDefault(s, 0) + 1; map })
+      val counts = lines.fold(HashMap<String, Int>()) { map, s -> map[s] = map.getOrDefault(s, 0) + 1; map }
       lines.forEachIndexed { line, s ->
         if (s.isEmpty()) {
           reportError(line, ProjectBundle.message("module.name.inspection.empty.name.is.not.allowed"))

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 
@@ -15,6 +16,7 @@ interface ScriptDefinitionContributor {
     @Deprecated("migrating to new configuration refinement: use ScriptDefinitionsSource instead")
     fun getDefinitions(): List<KotlinScriptDefinition>
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("migrating to new configuration refinement: drop usages")
     fun isReady() = true
 

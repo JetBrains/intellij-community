@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.workspace
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
- * Obsolete listener for the workspace model. Use [WorkspaceModel.subscribe]
+ * Obsolete listener for the workspace model. Use [WorkspaceModel.eventLog]
  */
 @ApiStatus.Obsolete
 public interface WorkspaceModelChangeListener : EventListener {
@@ -35,6 +34,7 @@ public interface WorkspaceModelChangeListener : EventListener {
  *
  * See documentation in [WorkspaceModelChangeListener] to understand how events are constructed
  */
+@ApiStatus.Internal
 public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
   /**
    * This method is invoked under Write Action after changes are applied.
@@ -44,10 +44,11 @@ public interface WorkspaceModelUnloadedStorageChangeListener : EventListener {
 }
 
 @Service(Service.Level.PROJECT)
-public class WorkspaceModelTopics : Disposable {
+@ApiStatus.Internal
+public class WorkspaceModelTopics {
   public companion object {
     /**
-     * Obsolete topic for the workspace model. Use [WorkspaceModel.subscribe]
+     * Obsolete topic for the workspace model. Use [WorkspaceModel.eventLog]
      */
     @Topic.ProjectLevel
     @JvmField
@@ -65,6 +66,7 @@ public class WorkspaceModelTopics : Disposable {
       Topic.BroadcastDirection.NONE, true
     )
 
+    @Deprecated("This service should not be used")
     public fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
@@ -75,8 +77,5 @@ public class WorkspaceModelTopics : Disposable {
   @Deprecated("This flag should not be used")
   public fun notifyModulesAreLoaded() {
     modulesAreLoaded = true
-  }
-
-  override fun dispose() {
   }
 }

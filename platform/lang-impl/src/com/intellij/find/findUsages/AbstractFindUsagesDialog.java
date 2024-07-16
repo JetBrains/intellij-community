@@ -3,6 +3,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
+import com.intellij.find.impl.FindSettingsImpl;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -19,12 +20,14 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Objects;
 
 public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   private final Project myProject;
@@ -67,6 +70,13 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
     setTitle(FindBundle.message(isSingleFile ? "find.usages.in.file.dialog.title" : "find.usages.dialog.title"));
+  }
+
+  @ApiStatus.Internal
+  void waitWithModalProgressUntilInitialized() {
+    if (myScopeCombo != null) { // some dialogs don't even initialize, consider initialization complete for them
+      myScopeCombo.waitWithModalProgressUntilInitialized();
+    }
   }
 
   @Override
@@ -138,9 +148,16 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {
-    options.searchScope = myScopeCombo == null || myScopeCombo.getSelectedScope() == null
-                          ? GlobalSearchScope.allScope(myProject)
-                          : myScopeCombo.getSelectedScope();
+    var noUserSelectedScope = myScopeCombo == null || myScopeCombo.getSelectedScope() == null;
+    if (noUserSelectedScope) {
+      // This happens when the dialog doesn't even have a scope combo box, e.g., when searching for usages of a private method.
+      // In this case, we use the "All" scope, and we don't save it, as it doesn't make any sense.
+      options.searchScope = GlobalSearchScope.allScope(myProject);
+    }
+    else {
+      options.searchScope = myScopeCombo.getSelectedScope();
+      FindSettings.getInstance().setDefaultScopeName(options.searchScope.getDisplayName());
+    }
 
     options.isSearchForTextOccurrences = isToChange(myCbToSearchForTextOccurrences) && isSelected(myCbToSearchForTextOccurrences);
   }
@@ -188,7 +205,8 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb != null && cb.getParent() != null && cb.isSelected();
   }
 
-  protected StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, JPanel panel, boolean toUpdate) {
+  @NotNull
+  protected StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, @NotNull JPanel panel, boolean toUpdate) {
     StateRestoringCheckBox cb = createCheckbox(name, toSelect, toUpdate);
     JComponent decoratedCheckbox = new ComponentPanelBuilder(cb).createPanel();
     decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -198,6 +216,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb;
   }
 
+  @NotNull
   protected StateRestoringCheckBox createCheckbox(@NlsContexts.Checkbox String name, boolean toSelect, boolean toUpdate) {
     StateRestoringCheckBox cb = new StateRestoringCheckBox(name);
     cb.setSelected(toSelect);
@@ -251,7 +270,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return null;
   }
 
-  protected void addUsagesOptions(JPanel panel) {
+  protected void addUsagesOptions(@NotNull JPanel panel) {
     if (mySearchForTextOccurrencesAvailable) {
       myCbToSearchForTextOccurrences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurrences.checkbox"),
                                                          myFindUsagesOptions.isSearchForTextOccurrences, panel, false);
@@ -267,7 +286,12 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   private JComponent createSearchScopePanel() {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
-    String scope = myFindUsagesOptions.searchScope.getDisplayName();
+    String scope = FindSettings.getInstance().getDefaultScopeName();
+    // The default name means we have to fall back to whatever the default scope is set in FindUsagesOptions.
+    // (The default name itself doesn't correspond to any real scope name anyway.)
+    if (Objects.equals(scope, FindSettingsImpl.getDefaultSearchScope())) {
+      scope = FindUsagesOptions.getDefaultScope(myProject).getDisplayName();
+    }
     myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
     Disposer.register(myDisposable, myScopeCombo);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);

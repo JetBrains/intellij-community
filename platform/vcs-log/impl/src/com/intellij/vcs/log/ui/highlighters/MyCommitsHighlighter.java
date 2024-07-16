@@ -13,19 +13,21 @@ import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class MyCommitsHighlighter implements VcsLogHighlighter {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogUi myUi;
   private final @NotNull VcsLogUserResolver myResolver;
   private boolean myShouldHighlightUser = false;
 
-  public MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi, @NotNull VcsLogUserResolver userResolver) {
+  MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi, @NotNull VcsLogUserResolver userResolver) {
     myLogData = logData;
     myUi = logUi;
     myResolver = userResolver;

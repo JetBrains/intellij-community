@@ -244,12 +244,15 @@
 
     <dependencySupport coordinate="org.projectlombok:lombok" kind="java" displayName="Lombok"/>
 
-    <iconMapper mappingFile="LombokIconMappings.json"/>
-
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokSlf4jLogger"/>
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokLog4j2Logger"/>
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokLog4jLogger"/>
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokApacheCommonsLogger"/>
+
+    <registryKey key="lombok.dumb.mode.enabled" defaultValue="true" restartRequired="true"
+                 description="Lombok augment works in dumb mode"/>
+    <registryKey key="lombok.incomplete.mode.enabled" defaultValue="true" restartRequired="true"
+                 description="Lombok supports incomplete mode"/>
   </extensions>
 
   <projectListeners>

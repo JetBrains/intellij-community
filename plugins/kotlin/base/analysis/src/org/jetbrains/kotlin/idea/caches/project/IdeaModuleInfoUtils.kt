@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.platform.wasm.isWasmJs
+import org.jetbrains.kotlin.platform.wasm.isWasmWasi
 
 val BinaryModuleInfo.binariesScope: GlobalSearchScope
     get() {
@@ -49,6 +51,8 @@ internal fun TargetPlatform.canDependOn(other: IdeaModuleInfo, isHmppEnabled: Bo
     } else {
         return this.isJvm() && other.platform.isJvm() ||
                 this.isJs() && other.platform.isJs() ||
+                this.isWasmJs() && other.platform.isWasmJs() ||
+                this.isWasmWasi() && other.platform.isWasmWasi() ||
                 this.isWasm() && other.platform.isWasm() ||
                 this.isNative() && other.platform.isNative() ||
                 this.isCommon() && other.platform.isCommon()

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -14,10 +14,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +46,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile vFile : filesToMove.keySet()) {
       PsiFile psiFile = psiManager.findFile(vFile);
-      if (psiFile instanceof PsiClassOwner) {
+      if (psiFile instanceof PsiJavaFile) {
         String packageName = "";
         MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper targetWrapper = filesToMove.get(vFile);
         PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetWrapper.getRootDirectory());
@@ -89,7 +91,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
 
   private static boolean isUnderRefactoring(PsiElement psiElement, PsiDirectory[] directoriesToMove) {
     for (PsiDirectory directory : directoriesToMove) {
-      if (PsiTreeUtil.isAncestor(directory, psiElement, true)) {
+      if (PsiTreeUtil.isAncestor(directory, psiElement, false)) {
         return true;
       }
     }
@@ -102,11 +104,11 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
                       Map<PsiElement, PsiElement> oldToNewElementsMapping,
                       List<? super PsiFile> movedFiles,
                       RefactoringElementListener listener) {
-    if (!(file instanceof PsiClassOwner)) {
+    if (!(file instanceof PsiJavaFile javaFile)) {
       return false;
     }
 
-    final PsiClass[] classes = ((PsiClassOwner)file).getClasses();
+    final PsiClass[] classes = javaFile.getClasses();
     if (classes.length == 0) {
       return false;
     }
@@ -121,6 +123,22 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
       listener.elementMoved(newClass);
     }
     return true;
+  }
+
+  @Override
+  public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
+    List<UsageInfo> usageInfosToProcess = ContainerUtil.filter(usages, usageInfo -> {
+      if (usageInfo instanceof MoveRenameUsageInfo moveRenameUsageInfo) {
+        final PsiElement referencedElement = moveRenameUsageInfo.getReferencedElement();
+        if (referencedElement == null) return false;
+        return referencedElement.getContainingFile() instanceof PsiJavaFile;
+      }
+      else {
+        return false;
+      }
+    });
+    CommonMoveUtil.retargetUsages(usageInfosToProcess.toArray(UsageInfo.EMPTY_ARRAY), oldToNewMap);
+    usages.removeAll(usageInfosToProcess);
   }
 
   @Override
@@ -170,28 +188,30 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
                                UsageInfo[] infos,
                                PsiDirectory targetDirectory,
                                MultiMap<PsiElement, String> conflicts) {
-    if (files != null) {
-      final VirtualFile vFile = PsiUtilCore.getVirtualFile(targetDirectory);
-      if (vFile != null) {
-        RefactoringConflictsUtil.getInstance().analyzeModuleConflicts(project, files, infos, vFile, conflicts);
-      }
+    if (files == null || files.isEmpty()) return;
+    List<PsiJavaFile> javaFiles = ContainerUtil.filterIsInstance(files, PsiJavaFile.class);
+    final VirtualFile vFile = PsiUtilCore.getVirtualFile(targetDirectory);
+    if (vFile != null) {
+      RefactoringConflictsUtil.getInstance().analyzeModuleConflicts(project, javaFiles, infos, vFile, conflicts);
     }
 
     if (targetDirectory != null) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
-      if (aPackage != null && files != null) {
-        MoveClassesOrPackagesProcessor.detectPackageLocalsUsed(conflicts, files.toArray(PsiElement.EMPTY_ARRAY), new PackageWrapper(aPackage));
+      if (aPackage != null) {
+        MoveClassesOrPackagesProcessor.detectPackageLocalsUsed(conflicts, javaFiles.toArray(PsiElement.EMPTY_ARRAY), new PackageWrapper(aPackage));
       }
     }
   }
 
   @Override
   public void beforeMove(PsiFile psiFile) {
+    if (!(psiFile instanceof PsiJavaFile)) return;
     ChangeContextUtil.encodeContextInfo(psiFile, true);
   }
 
   @Override
   public void afterMove(PsiElement newElement) {
+    if (!(newElement instanceof PsiJavaFile)) return;
     ChangeContextUtil.decodeContextInfo(newElement, null, null);
   }
 

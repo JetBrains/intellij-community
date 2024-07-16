@@ -7,6 +7,7 @@ import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsole
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.impl.*
@@ -76,7 +77,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
 
   override fun getOptions(queryExecutor: WebSymbolsQueryExecutor,
                           scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions {
-    val queryParams = WebSymbolsNameMatchQueryParams(queryExecutor, true, false)
+    val queryParams = WebSymbolsNameMatchQueryParams.create(queryExecutor, true, false)
     val delegate = pattern.delegate?.resolve(scopeStack, queryParams.queryExecutor)?.firstOrNull()
 
     // Allow delegate pattern to override settings

@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCompileStatic;
 
-public class GrContainerConverter extends GrTypeConverter {
+public final class GrContainerConverter extends GrTypeConverter {
 
   @Nullable
   @Override

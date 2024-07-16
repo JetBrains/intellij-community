@@ -4,11 +4,12 @@ package org.jetbrains.uast.kotlin.psi
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -26,7 +27,7 @@ import org.jetbrains.uast.kotlin.internal.analyzeForUast
  * Analysis API symbol if it's resolved.
  */
 internal class UastFakeDeserializedSymbolLightMethod(
-    private val original: KtSymbolPointer<KtFunctionSymbol>,
+    private val original: KaSymbolPointer<KaNamedFunctionSymbol>,
     name: String,
     containingClass: PsiClass,
     private val context: KtElement,
@@ -58,9 +59,20 @@ internal class UastFakeDeserializedSymbolLightMethod(
             }
         }
 
-    override fun computeNullability(): KtTypeNullability? {
+    override fun computeNullability(): KaTypeNullability? {
         return analyzeForUast(context) {
             val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast null
+            functionSymbol.psi?.let { psi ->
+                val hasInheritedGenericType = baseResolveProviderService.hasInheritedGenericType(psi)
+                if (hasInheritedGenericType) {
+                    // Inherited generic type: nullity will be determined at use-site
+                    return@analyzeForUast null
+                }
+            }
+            if (functionSymbol.isSuspend) {
+                // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+                return@analyzeForUast KaTypeNullability.NULLABLE
+            }
             functionSymbol.returnType.nullability
         }
     }
@@ -76,6 +88,7 @@ internal class UastFakeDeserializedSymbolLightMethod(
 
     private val parameterListPart = UastLazyPart<PsiParameterList>()
 
+    @OptIn(KaExperimentalApi::class)
     override fun getParameterList(): PsiParameterList =
         parameterListPart.getOrBuild {
             object : LightParameterListBuilder(context.manager, context.language) {

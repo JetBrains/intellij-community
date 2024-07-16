@@ -49,7 +49,7 @@ class MavenProjectsTreeUpdateContext {
     var existingFiles = new ConcurrentHashMap<File, Boolean>();
     Predicate<File> fileExistsPredicate = f -> {
       return existingFiles.computeIfAbsent(f, file -> {
-        return Files.exists(file.toPath());
+        return MavenProjectsManagerEx.getInstance(myTree.getProject()).projectFileExists(file);
       });
     };
 

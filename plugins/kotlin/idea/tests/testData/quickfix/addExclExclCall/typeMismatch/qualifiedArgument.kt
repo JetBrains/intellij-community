@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (a.foo().single()!!) call" "true"
 // WITH_STDLIB
 
 class A {

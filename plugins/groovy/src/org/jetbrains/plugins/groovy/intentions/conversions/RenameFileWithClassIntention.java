@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author Maxim.Medvedev
  */
-public class RenameFileWithClassIntention extends Intention implements Consumer<GrTypeDefinition> {
+public final class RenameFileWithClassIntention extends Intention implements Consumer<GrTypeDefinition> {
 
   private String myNewFileName = null;
 

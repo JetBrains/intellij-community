@@ -45,7 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
 /**
  * @author Niels Harremoes
  */
-public class InvertIfIntention extends GrPsiUpdateIntention {
+public final class InvertIfIntention extends GrPsiUpdateIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {

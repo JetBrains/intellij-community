@@ -102,9 +102,9 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
               cont.resume(runContentDescriptor, null)
               oldCallback?.processStarted(runContentDescriptor)
             }
-            override fun processNotStarted() {
+            override fun processNotStarted(error: Throwable?) {
               cont.cancel() // TODO: figure out if this is cancel or error or what
-              oldCallback?.processNotStarted()
+              oldCallback?.processNotStarted(error)
             }
           }
         }

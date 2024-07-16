@@ -61,9 +61,6 @@ public class PsiWhileStatementImpl extends PsiLoopStatementImpl implements PsiWh
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.WHILE_KEYWORD:
         return findChildByType(WHILE_KEYWORD);
 
@@ -78,6 +75,9 @@ public class PsiWhileStatementImpl extends PsiLoopStatementImpl implements PsiWh
 
       case ChildRole.LOOP_BODY:
         return PsiImplUtil.findStatementChild(this);
+
+      default:
+        return null;
     }
   }
 

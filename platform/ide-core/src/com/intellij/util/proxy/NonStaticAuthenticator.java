@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.proxy;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import java.net.Authenticator;
@@ -8,6 +9,12 @@ import java.net.InetAddress;
 import java.net.PasswordAuthentication;
 import java.net.URL;
 
+/**
+ * @deprecated given that {@link Authenticator#requestPasswordAuthenticationInstance(String, InetAddress, int, String, String, String, URL, Authenticator.RequestorType)}
+ * was introduced in java 9, this class is not needed anymore, please migrate to {@link Authenticator}
+ */
+@Deprecated
+@SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
 public abstract class NonStaticAuthenticator {
   private String requestingHost;
   private InetAddress requestingSite;
@@ -17,6 +24,8 @@ public abstract class NonStaticAuthenticator {
   private String requestingScheme;
   private URL requestingURL;
   private Authenticator.RequestorType requestingAuthType;
+
+  private final Authenticator wrapper = new AuthenticatorWrapper();
 
   public abstract PasswordAuthentication getPasswordAuthentication();
 
@@ -83,5 +92,44 @@ public abstract class NonStaticAuthenticator {
 
   protected void setRequestorType(Authenticator.RequestorType requestingAuthType) {
     this.requestingAuthType = requestingAuthType;
+  }
+
+  @ApiStatus.Internal
+  public PasswordAuthentication requestPasswordAuthenticationInstance(String host,
+                                                                      InetAddress addr,
+                                                                      int port,
+                                                                      String protocol,
+                                                                      @Nls String prompt,
+                                                                      String scheme,
+                                                                      URL url,
+                                                                      Authenticator.RequestorType reqType) {
+    synchronized (this) {
+      this.requestingHost = host;
+      this.requestingSite = addr;
+      this.requestingPort = port;
+      this.requestingProtocol = protocol;
+      this.requestingPrompt = prompt;
+      this.requestingScheme = scheme;
+      this.requestingURL = url;
+      this.requestingAuthType = reqType;
+      return this.getPasswordAuthentication();
+    }
+  }
+
+  @ApiStatus.Internal
+  public Authenticator asAuthenticator() {
+    return wrapper;
+  }
+
+  private class AuthenticatorWrapper extends Authenticator {
+    @Override
+    protected PasswordAuthentication getPasswordAuthentication() {
+      synchronized (NonStaticAuthenticator.this) {
+        //noinspection HardCodedStringLiteral
+        return NonStaticAuthenticator.this
+          .requestPasswordAuthenticationInstance(getRequestingHost(), getRequestingSite(), getRequestingPort(), getRequestingProtocol(),
+                                                 getRequestingPrompt(), getRequestingScheme(), getRequestingURL(), getRequestorType());
+      }
+    }
   }
 }

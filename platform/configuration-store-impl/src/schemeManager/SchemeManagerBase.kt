@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeProcessor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class SchemeManagerBase<T: Scheme, in MUTABLE_SCHEME : T>(internal val processor: SchemeProcessor<T, MUTABLE_SCHEME>) : SchemeManager<T>() {
   /**
    * Schemes can be lazily loaded, so, a client should be able to set a current scheme by name, not only by instance.

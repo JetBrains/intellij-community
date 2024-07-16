@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -176,8 +176,7 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
     return false;
   }
 
-  @Nullable
-  private static PsiNameValuePair getTheOnlyDefaultAttribute(@NotNull PsiAnnotation anno) {
+  private static @Nullable PsiNameValuePair getTheOnlyDefaultAttribute(@NotNull PsiAnnotation anno) {
     List<PsiNameValuePair> attributes = ContainerUtil.findAll(anno.getParameterList().getAttributes(), a -> !a.getTextRange().isEmpty());
     return attributes.size() == 1 && attributes.get(0).getNameIdentifier() == null ? attributes.get(0) : null;
   }
@@ -216,7 +215,7 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
   }
 
   @Override
-  protected void autoPopupMemberLookup(@NotNull Project project, @NotNull final Editor editor) {
+  protected void autoPopupMemberLookup(@NotNull Project project, final @NotNull Editor editor) {
     AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
       int offset = editor.getCaretModel().getOffset();
 
@@ -270,7 +269,7 @@ public final class JavaTypedHandler extends AbstractBasicJavaTypedHandler {
   }
 
   @Override
-  protected void autoPopupJavadocLookup(@NotNull final Project project, @NotNull final Editor editor) {
+  protected void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor) {
     AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
       int offset = editor.getCaretModel().getOffset();
 

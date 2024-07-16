@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_SINGLETON;
 import static org.jetbrains.plugins.groovy.transformations.singleton.ImplKt.getPropertyName;
 
-public class NewInstanceOfSingletonInspection extends BaseInspection {
+public final class NewInstanceOfSingletonInspection extends BaseInspection {
 
   @NotNull
   @Override

@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +29,7 @@ object WorkspaceChangesRetentionUtil {
           val newContentRoot = newContentRootMap[parentUrl]
           if (newContentRoot != null) {
             if (!newContentRoot.excludedUrls.map { it.url }.contains(url)) {
-              newStorage.modifyEntity(newContentRoot) {
+              newStorage.modifyContentRootEntity(newContentRoot) {
                 val excludedUrls = this.excludedUrls.toMutableList()
                 excludedUrls.add(ExcludeUrlEntity(url, previouslyExcludedUrl.entitySource))
                 this.excludedUrls = excludedUrls

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.ui.layout
 
 import com.intellij.openapi.util.NlsContexts
@@ -42,7 +44,7 @@ interface RowBuilder : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
 
   /**
@@ -76,21 +78,21 @@ abstract class Row : Cell(), RowBuilder {
   @set:ApiStatus.ScheduledForRemoval
   abstract var enabled: Boolean
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
   abstract var visible: Boolean
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
   abstract var subRowsEnabled: Boolean
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
   abstract var subRowsVisible: Boolean
 
@@ -98,11 +100,11 @@ abstract class Row : Cell(), RowBuilder {
    * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
    * calculated from row nesting.
    */
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   abstract var subRowIndent: Int
 
   @PublishedApi

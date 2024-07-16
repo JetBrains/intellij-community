@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.propertyBased
 
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.toClassId
-import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
@@ -62,12 +61,10 @@ internal val randomNames = Generator.sampledFrom(
   "reflection", "dad", "activity", "instance", "idea"
 )
 
-@OptIn(EntityStorageInstrumentationApi::class)
-internal inline fun <reified T : WorkspaceEntity> parentGenerator(storage: MutableEntityStorageImpl): Generator<T?> {
+internal inline fun <reified T : WorkspaceEntity, M : WorkspaceEntity.Builder<out T>> parentGenerator(storage: MutableEntityStorageImpl): Generator<M?> {
   return Generator.from {
     val classId = T::class.java.toClassId()
-    val parentId = it.generate(
-      EntityIdOfFamilyGenerator.create(storage, classId)) ?: return@from null
-    storage.entityDataByIdOrDie(parentId).createEntity(storage) as T
+    val parentId = it.generate(EntityIdOfFamilyGenerator.create(storage, classId)) ?: return@from null
+    storage.entityDataByIdOrDie(parentId).wrapAsModifiable(storage) as M
   }
 }

@@ -18,7 +18,7 @@ final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoveragePr
       return;
     }
 
-    final CoverageDataManager manager = getCoverageDataManager(project);
+    final CoverageDataManager manager = CoverageDataManager.getInstance(project);
     if (manager == null) return;
     for (CoverageSuitesBundle suite : manager.activeSuites()) {
       decorateBundle(node, data, suite, project, manager);

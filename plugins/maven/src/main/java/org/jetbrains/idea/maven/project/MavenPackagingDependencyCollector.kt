@@ -2,19 +2,22 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 
 internal class MavenPackagingDependencyCollector : DependencyCollector {
 
-  override fun collectDependencies(project: Project): Set<String> {
-    return MavenProjectsManager.getInstance(project)
-      .projects
-      .asSequence()
-      .map { it.packaging }
-      .filter { packaging ->
-        packaging.isNotBlank()
-        && packaging != "jar"
-        && packaging != "pom"
-      }.toSet()
+  override suspend fun collectDependencies(project: Project): Set<String> {
+    return readAction {
+      MavenProjectsManager.getInstance(project).projects.asSequence()
+        .map { it.packaging }
+        .distinct()
+        .filter { packaging ->
+          packaging.isNotBlank()
+          && packaging != "jar"
+          && packaging != "pom"
+        }
+        .toSet()
+    }
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.coverage.xml
 
 import com.intellij.coverage.*
-import com.intellij.coverage.view.CoverageViewManager
 import com.intellij.coverage.view.JavaCoverageViewExtension
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiFile
 
 class XMLReportEngine : CoverageEngine() {
+  @Deprecated("Deprecated in Java")
   override fun createCoverageSuite(covRunner: CoverageRunner,
                                    name: String,
                                    coverageDataFileProvider: CoverageFileProvider,
@@ -28,6 +28,7 @@ class XMLReportEngine : CoverageEngine() {
     return XMLReportSuite(name, project, covRunner, coverageDataFileProvider, lastCoverageTimeStamp, this)
   }
 
+  @Deprecated("Deprecated in Java")
   override fun createCoverageSuite(covRunner: CoverageRunner,
                                    name: String,
                                    coverageDataFileProvider: CoverageFileProvider,
@@ -49,13 +50,12 @@ class XMLReportEngine : CoverageEngine() {
   }
 
   override fun createCoverageViewExtension(project: Project,
-                                           suiteBundle: CoverageSuitesBundle?,
-                                           stateBean: CoverageViewManager.StateBean?) =
-    object : JavaCoverageViewExtension(getCoverageAnnotator(project), project, suiteBundle, stateBean) {
+                                           suiteBundle: CoverageSuitesBundle?) =
+    object : JavaCoverageViewExtension(getCoverageAnnotator(project), project, suiteBundle) {
       override fun isBranchInfoAvailable(coverageRunner: CoverageRunner?, branchCoverage: Boolean) = true
     }
 
-  override fun createSrcFileAnnotator(file: PsiFile?, editor: Editor?) = XMLReportEditorAnnotator(file, editor)
+  override fun createSrcFileAnnotator(file: PsiFile?, editor: Editor?): CoverageEditorAnnotator = XMLReportEditorAnnotator(file, editor)
   override fun isApplicableTo(conf: RunConfigurationBase<*>) = false
   override fun getPresentableText() = JavaCoverageBundle.message("coverage.xml.report.title")
   override fun getCoverageAnnotator(project: Project) = XMLReportAnnotator.getInstance(project)

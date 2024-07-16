@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -11,6 +11,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,24 +20,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class ActionPanel extends NonOpaquePanel {
-  private final List<ActionButton> myButtons = new ArrayList<>();
-  private final JBTabsImpl myTabs;
-  private final TabInfo myInfo;
+  private final List<ActionButton> buttons = new ArrayList<>();
+  private final JBTabsImpl tabs;
+  private final TabInfo info;
 
   private boolean myAutoHide;
   private boolean myActionsIsVisible = false;
   private boolean myMarkModified = false;
 
   public ActionPanel(JBTabsImpl tabs, TabInfo tabInfo, Consumer<? super MouseEvent> pass, Consumer<? super Boolean> hover) {
-    myTabs = tabs;
-    myInfo = tabInfo;
+    this.tabs = tabs;
+    info = tabInfo;
     ActionGroup group = tabInfo.getTabLabelActions() != null ? tabInfo.getTabLabelActions() : new DefaultActionGroup();
     ActionManager actionManager = ActionManager.getInstance();
     // TODO replace with a regular toolbar
     List<AnAction> children = JBTreeTraverser.<AnAction>of(
-        o -> !(o instanceof DefaultActionGroup) ? AnAction.EMPTY_ARRAY :
-             ((DefaultActionGroup)o).getChildren(null, actionManager))
+        o -> o instanceof DefaultActionGroup g ? g.getChildren(actionManager) : AnAction.EMPTY_ARRAY)
       .withRoot(group)
       .filter(o -> o.getActionUpdateThread() == ActionUpdateThread.EDT)
       .toList();
@@ -67,7 +68,7 @@ public final class ActionPanel extends NonOpaquePanel {
         }
       };
 
-      myButtons.add(eachButton);
+      buttons.add(eachButton);
       InplaceButton component = eachButton.getComponent();
       component.setFocusable(false);
       inner.add(component);
@@ -80,15 +81,15 @@ public final class ActionPanel extends NonOpaquePanel {
 
   @Override
   public void paint(Graphics g) {
-    TabLabel label = myTabs.getInfoToLabel().get(myInfo);
+    TabLabel label = tabs.getTabLabel(info);
     boolean isHovered = label != null && label.isHovered();
-    boolean isSelected = myTabs.getSelectedInfo() == myInfo;
+    boolean isSelected = tabs.getSelectedInfo() == info;
     if (ExperimentalUI.isNewUI()
-        && myTabs instanceof JBEditorTabs
+        && tabs instanceof JBEditorTabs
         && !isSelected
         && !isHovered
         && !myMarkModified
-        && !myInfo.isPinned()) {
+        && !info.isPinned()) {
       return;
     }
     super.paint(g);
@@ -99,9 +100,9 @@ public final class ActionPanel extends NonOpaquePanel {
     boolean changed = false;
     boolean anyVisible = false;
     boolean anyModified = false;
-    for (ActionButton each : myButtons) {
+    for (ActionButton each : buttons) {
       changed |= each.update();
-      each.setMouseDeadZone(myTabs.getTabActionsMouseDeadZone$intellij_platform_ide());
+      each.setMouseDeadZone(tabs.getTabActionsMouseDeadZone$intellij_platform_ide());
       anyVisible |= each.getComponent().isVisible();
 
       Boolean markModified = each.getPrevPresentation().getClientProperty(JBEditorTabs.MARK_MODIFIED_KEY);
@@ -122,7 +123,7 @@ public final class ActionPanel extends NonOpaquePanel {
 
   public void setAutoHide(final boolean autoHide) {
     myAutoHide = autoHide;
-    for (ActionButton each : myButtons) {
+    for (ActionButton each : buttons) {
       each.setAutoHide(myAutoHide);
     }
   }
@@ -133,7 +134,7 @@ public final class ActionPanel extends NonOpaquePanel {
   }
 
   public void toggleShowActions(final boolean show) {
-    for (ActionButton each : myButtons) {
+    for (ActionButton each : buttons) {
       each.toggleShowActions(show);
     }
   }

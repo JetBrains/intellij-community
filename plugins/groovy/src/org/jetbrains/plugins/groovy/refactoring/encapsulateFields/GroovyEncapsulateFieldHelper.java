@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
+public final class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static final Logger LOG = Logger.getInstance(GroovyEncapsulateFieldHelper.class);
 
   @Override
@@ -146,8 +146,7 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
       }
 
       final PsiElement parent = expr.getParent();
-      if (parent instanceof GrAssignmentExpression && expr.equals(((GrAssignmentExpression)parent).getLValue())) {
-        GrAssignmentExpression assignment = (GrAssignmentExpression)parent;
+      if (parent instanceof GrAssignmentExpression assignment && expr.equals(((GrAssignmentExpression)parent).getLValue())) {
         if (assignment.getRValue() != null) {
           PsiElement opSign = assignment.getOperationToken();
           if (!assignment.isOperatorAssignment()) {

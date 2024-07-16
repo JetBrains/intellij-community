@@ -38,7 +38,7 @@ import java.util.List;
  * <b>myBundle.properties</b>:
  * {@code extract.name=Extract +method+ name to +interface+ +I.java+}</pre>
  */
-public class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
+public final class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     if (!PropertiesFoldingSettings.getInstance().isFoldPlaceholdersToContext()) {

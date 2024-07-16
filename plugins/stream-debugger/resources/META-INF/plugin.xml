@@ -43,7 +43,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <iconMapper mappingFile="StreamDebuggerIconMappings.json"/>
   </extensions>
 
   <actions>

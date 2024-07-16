@@ -15,18 +15,18 @@ import org.jetbrains.idea.devkit.inspections.LevelType
 import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -48,16 +48,16 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
       override fun visitProperty(property: KtProperty) {
         if (property.isVar || !property.isStatic() || !property.hasBackingField()) return
 
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         val typeClassElement = allowAnalysisOnEdt {
           analyze(property) {
             // return if it's an explicit constructor call
-            val resolveSymbol = property.initializer?.resolveCall()?.singleFunctionCallOrNull()?.symbol
-            val isConstructorCall = resolveSymbol is KtSamConstructorSymbol || resolveSymbol is KtConstructorSymbol
+            val resolveSymbol = property.initializer?.resolveToCall()?.singleFunctionCallOrNull()?.symbol
+            val isConstructorCall = resolveSymbol is KaSamConstructorSymbol || resolveSymbol is KaConstructorSymbol
             if (isConstructorCall) return
 
             // can be KtClass or PsiClass
-            property.getReturnKtType().withNullability(KtTypeNullability.UNKNOWN).expandedClassSymbol?.psi ?: return
+            property.returnType.withNullability(KaTypeNullability.UNKNOWN).expandedSymbol?.psi ?: return
           }
         }
 
@@ -105,13 +105,13 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
   }
 
 
-  @OptIn(KtAllowAnalysisOnEdt::class)
+  @OptIn(KaAllowAnalysisOnEdt::class)
   private fun KtProperty.hasBackingField(): Boolean {
     allowAnalysisOnEdt {
       val property = this
 
       analyze(property) {
-        val propertySymbol = property.getVariableSymbol() as? KtPropertySymbol ?: return false
+        val propertySymbol = property.getVariableSymbol() as? KaPropertySymbol ?: return false
         return propertySymbol.hasBackingField
       }
     }
@@ -129,13 +129,13 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
     val supplierPropertyName = suggestSupplierPropertyName(element)
 
     // can be called both from EDT and from the preview
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     val ktPropertyType = allowAnalysisOnEdt {
-      @OptIn(KtAllowAnalysisFromWriteAction::class)
+      @OptIn(KaAllowAnalysisFromWriteAction::class)
       allowAnalysisFromWriteAction {
         analyze(element) {
-          val returnType = element.getReturnKtType().lowerBoundIfFlexible()
-          (returnType as? KtNonErrorClassType)?.classId
+          val returnType = element.returnType.lowerBoundIfFlexible()
+          (returnType as? KaClassType)?.classId
         }
       }
     }

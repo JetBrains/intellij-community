@@ -170,14 +170,14 @@ public class DesignerActionPanel implements DataProvider {
     }
   }
 
-  private static boolean isVisible(DefaultActionGroup group) {
+  private static boolean isVisible(@NotNull DefaultActionGroup group) {
     if (group.getChildrenCount() == 0) {
       return false;
     }
 
-    for (AnAction action : group.getChildren(null)) {
-      if (action instanceof DefaultActionGroup) {
-        if (isVisible((DefaultActionGroup)action)) {
+    for (AnAction action : group.getChildActionsOrStubs()) {
+      if (action instanceof DefaultActionGroup o) {
+        if (isVisible(o)) {
           return true;
         }
       }

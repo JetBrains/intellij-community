@@ -7,16 +7,15 @@ import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,15 +33,7 @@ public final class XDebuggerTreePanel implements DnDSource {
                             @NotNull @NonNls final String popupActionGroupId, @Nullable XValueMarkers<?, ?> markers) {
     myTree = new XDebuggerTree(project, editorsProvider, sourcePosition, popupActionGroupId, markers);
     myMainPanel = new JPanel(new BorderLayout());
-    Component content;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0) {
-      AntiFlickeringPanel antiFlickeringPanel = new AntiFlickeringPanel(new BorderLayout());
-      antiFlickeringPanel.add(myTree);
-      content = antiFlickeringPanel;
-    }
-    else {
-      content = myTree;
-    }
+    Component content = DebuggerUIUtil.shouldUseAntiFlickeringPanel() ? new AntiFlickeringPanel(myTree) : myTree;
     myMainPanel.add(ScrollPaneFactory.createScrollPane(content), BorderLayout.CENTER);
     Disposer.register(parentDisposable, myTree);
     Disposer.register(parentDisposable, new Disposable() {

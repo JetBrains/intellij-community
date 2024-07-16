@@ -15,10 +15,11 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
 
 /**
  * A test case that provides IDEA application and project. Note both are reused for each test run in the session so
@@ -46,6 +47,6 @@ public abstract class LightIdeaTestCase extends LightPlatformTestCase {
   @NotNull
   @Override
   protected String getModuleTypeId() {
-    return ModuleTypeId.JAVA_MODULE;
+    return JAVA_MODULE_ENTITY_TYPE_ID_NAME;
   }
 }

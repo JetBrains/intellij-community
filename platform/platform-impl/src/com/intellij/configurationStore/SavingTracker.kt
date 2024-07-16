@@ -10,8 +10,6 @@ private class SavingTracker : ActivityTracker {
   override val presentableName: @Nls String = "saving"
 
   override suspend fun isInProgress(project: Project): Boolean {
-    saveSettings(componentManager = ApplicationManager.getApplication(), forceSavingAllSettings = true)
-    saveProjectsAndApp(forceSavingAllSettings = true, onlyProject = project)
     return false
   }
 

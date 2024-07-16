@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -32,9 +32,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     super(node);
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiRequiresStatement> getRequires() {
+  public @NotNull Iterable<PsiRequiresStatement> getRequires() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY));
@@ -44,9 +43,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiPackageAccessibilityStatement> getExports() {
+  public @NotNull Iterable<PsiPackageAccessibilityStatement> getExports() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
@@ -58,9 +56,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiPackageAccessibilityStatement> getOpens() {
+  public @NotNull Iterable<PsiPackageAccessibilityStatement> getOpens() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.OPENS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
@@ -72,9 +69,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiUsesStatement> getUses() {
+  public @NotNull Iterable<PsiUsesStatement> getUses() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.USES_STATEMENT, PsiUsesStatement.EMPTY_ARRAY));
@@ -84,9 +80,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiProvidesStatement> getProvides() {
+  public @NotNull Iterable<PsiProvidesStatement> getProvides() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return JBIterable.of(stub.getChildrenByType(JavaElementType.PROVIDES_STATEMENT, PsiProvidesStatement.EMPTY_ARRAY));
@@ -96,15 +91,13 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public PsiJavaModuleReferenceElement getNameIdentifier() {
+  public @NotNull PsiJavaModuleReferenceElement getNameIdentifier() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiJavaModuleReferenceElement.class);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     PsiJavaModuleStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
@@ -132,9 +125,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
-  @Nullable
   @Override
-  public PsiDocComment getDocComment() {
+  public @Nullable PsiDocComment getDocComment() {
     return PsiTreeUtil.getChildOfType(this, PsiDocComment.class);
   }
 
@@ -167,9 +159,8 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ProjectScope.getProjectScope(getProject());
   }
 

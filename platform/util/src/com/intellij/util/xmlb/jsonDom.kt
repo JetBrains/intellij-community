@@ -38,7 +38,7 @@ fun jsonDomToXml(jsonObject: JsonObject): Element {
 }
 
 // used by TBE
-fun jdomToJson(element: Element): JsonElement {
+fun jdomToJson(element: Element): JsonObject {
   val keys: Array<String?> = arrayOfNulls(4)
   val values: Array<JsonElement?> = arrayOfNulls(4)
   var index = 0

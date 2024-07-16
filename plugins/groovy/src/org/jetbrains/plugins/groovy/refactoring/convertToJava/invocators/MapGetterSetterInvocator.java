@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil;
  * @author Max Medvedev
  */
 
-public class MapGetterSetterInvocator extends CustomMethodInvocator {
+public final class MapGetterSetterInvocator extends CustomMethodInvocator {
   @Override
   protected boolean invoke(@NotNull ExpressionGenerator generator,
                            @NotNull PsiMethod method,

@@ -1,6 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "ReplaceGetOrSet")
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -19,17 +17,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.ui.*
+import com.intellij.ui.AppUIUtil
+import com.intellij.ui.IconManager
 import com.intellij.ui.icons.CoreIconManager
+import com.intellij.ui.isWindowIconAlreadyExternallySet
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import sun.awt.AWTAutoShutdown
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -53,11 +51,16 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
 
   initAwtToolkitJob.join()
 
-  val preloadFontJob = asyncScope.launch(CoroutineName("system fonts loading") + Dispatchers.IO) {
-    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
-    Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
-    // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
-    GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+  val preloadFontJob = if (isHeadless) {
+    null
+  }
+  else {
+    asyncScope.launch(CoroutineName("system fonts loading") + Dispatchers.IO) {
+      // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
+      Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
+      // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
+      GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+    }
   }
 
   // SwingDispatcher must be used after Toolkit init
@@ -78,21 +81,19 @@ internal suspend fun configureCssUiDefaults() {
   }
 }
 
-private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job) {
+private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?) {
   if (!isHeadless) {
     span("graphics environment checking") {
       if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance) {
-        StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"),
-                                         BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
+        StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), BootstrapBundle.message("bootstrap.error.message.no.graphics"))
         exitProcess(AppExitCodes.NO_GRAPHICS)
       }
     }
-  }
 
-  // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-
-  if (SystemInfoRt.isLinux) {
-    preloadFontJob.join()
+    // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
+    if (SystemInfoRt.isLinux) {
+      preloadFontJob?.join()
+    }
   }
 
   val baseLaF = span("base LaF creation") { createBaseLaF() }
@@ -103,7 +104,7 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job) {
   }
 
   // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
-  // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
+  // and to compute system font data, we need to know `Label.font` UI default (that's why we compute base LaF first)
   if (!isHeadless && !SystemInfoRt.isMac) {
     JBUIScale.preload {
       runActivity("base LaF defaults getting") { baseLaF.defaults }
@@ -122,26 +123,6 @@ internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyT
     launch(CoroutineName("initAwtToolkit")) {
       initAwtToolkit(busyThread)
     }
-  }
-
-  launch(CoroutineName("IdeEventQueue class preloading") + Dispatchers.IO) {
-    val classLoader = AppStarter::class.java.classLoader
-    // preload class not in EDT
-    Class.forName(IdeEventQueue::class.java.name, true, classLoader)
-    Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
-  }
-  launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
-    val classLoader = AppStarter::class.java.classLoader
-    // preload class not in EDT
-    Class.forName(LookAndFeelThemeAdapter::class.java.name, true, classLoader)
-    if (SystemInfoRt.isWindows) {
-      Class.forName(IdeaLaf::class.java.name, true, classLoader)
-    }
-    Class.forName(JBUIScale::class.java.name, true, classLoader)
-    Class.forName(JreHiDpiUtil::class.java.name, true, classLoader)
-    Class.forName(SynchronizedClearableLazy::class.java.name, true, classLoader)
-    Class.forName(ScaleContext::class.java.name, true, classLoader)
-    Class.forName(StartupUiUtil::class.java.name, true, classLoader)
   }
   return task
 }
@@ -166,7 +147,8 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
     // Otherwise, it's possible to have EDT being terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
     // [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
     // and thus will effectively disable auto shutdown behavior for this application.
-    AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
+    @Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+    sun.awt.AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
   }
 
   // required for both UI scale computation and base LaF
@@ -227,9 +209,11 @@ fun checkHiDPISettings() {
 }
 
 // must happen after initUi
-internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob: Job,
-                                                                                       initUiScale: Job,
-                                                                                       appInfoDeferred: Deferred<ApplicationInfoEx>) {
+internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
+  initAwtToolkitJob: Job,
+  initUiScale: Job,
+  appInfoDeferred: Deferred<ApplicationInfoEx>,
+) {
   launch {
     initAwtToolkitJob.join()
 
@@ -244,10 +228,12 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
               .invoke(AppUIUtil.getFrameClass())
           }
         }
-        catch (ignore: Throwable) {
+        catch (_: Throwable) {
         }
       }
-    } else if (StartupUiUtil.isWaylandToolkit()) {
+    }
+    else if (StartupUiUtil.isWaylandToolkit()) {
+      appInfoDeferred.join()
       System.setProperty("awt.app.id", AppUIUtil.getFrameClass())
     }
 
@@ -263,7 +249,7 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
       }
     }
 
-    // preload cursors used by the drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
+    // preloading cursors used by the drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock (see RIDER-80810)
     launch(CoroutineName("DnD setup") + RawSwingDispatcher) {
       DragSource.getDefaultDragSource()
     }
@@ -289,7 +275,6 @@ fun createBaseLaF(): LookAndFeel {
   // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
   // and scale them based on Xft.dpi value.
   try {
-    @Suppress("SpellCheckingInspection")
     val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
     val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
       .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
@@ -302,9 +287,10 @@ fun createBaseLaF(): LookAndFeel {
       for (key in gtkDefaults.keys) {
         if (key.toString().endsWith(".font")) {
           // `UIDefaults#get` unwraps lazy values
-          fontDefaults.put(key, gtkDefaults.get(key))
+          fontDefaults.put(key, gtkDefaults[key])
         }
       }
+      @Suppress("UsePropertyAccessSyntax")
       return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
     }
   }

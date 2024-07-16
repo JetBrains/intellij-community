@@ -14,7 +14,7 @@ import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
-abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManager)
+internal abstract class GHListLoaderBase<T>(private val progressManager: ProgressManager)
   : GHListLoader<T> {
 
   private var lastFuture = CompletableFuture.completedFuture(emptyList<T>())

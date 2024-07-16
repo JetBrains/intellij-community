@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class DuplicatesProfile {
-  public static final ExtensionPointName<DuplicatesProfile> EP_NAME = ExtensionPointName.create("com.intellij.duplicates.profile");
+  private static final ExtensionPointName<DuplicatesProfile> EP_NAME = ExtensionPointName.create("com.intellij.duplicates.profile");
 
   @NotNull
   public abstract DuplocateVisitor createVisitor(@NotNull FragmentsCollector collector);
@@ -107,6 +107,10 @@ public abstract class DuplicatesProfile {
       }
     }
     return null;
+  }
+
+  public static <T extends DuplicatesProfile> DuplicatesProfile getProfile(Class<T> profileClass) {
+    return EP_NAME.findExtensionOrFail(profileClass);
   }
 
   @NotNull

@@ -73,7 +73,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected @Nullable WSLDistribution myWSLDistribution;
 
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     super.setUp();
     setUpFixtures();
     myProject = myTestFixture.getProject();
@@ -359,6 +359,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     VirtualFile file = createProjectSubFile(relativePath);
     setFileContent(file, content, false);
     return file;
+  }
+
+  protected Project getProject() {
+    return myProject;
   }
 
   protected Module getModule(final String name) {

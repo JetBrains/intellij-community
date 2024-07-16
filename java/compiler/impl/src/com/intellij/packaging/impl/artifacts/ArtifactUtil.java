@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -205,7 +205,7 @@ public final class ArtifactUtil {
     }
 
     String outputUrl = extension.getCompilerOutputUrl();
-    if (outputUrl == null || outputUrl.length() == 0) {
+    if (outputUrl == null || outputUrl.isEmpty()) {
       String baseDir = project.getBasePath();
       if (baseDir == null) {
         return null;
@@ -289,7 +289,7 @@ public final class ArtifactUtil {
                             firstName.equals(fileCopy.getOutputFileName());
 
           if (process) {
-            if (tail.length() == 0) {
+            if (tail.isEmpty()) {
               if (!processor.process(element, path)) return false;
             }
             else if (element instanceof CompositePackagingElement<?> packagingElement) {

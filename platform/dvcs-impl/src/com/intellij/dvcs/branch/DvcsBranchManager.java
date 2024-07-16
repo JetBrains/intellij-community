@@ -90,11 +90,23 @@ public abstract class DvcsBranchManager<T extends Repository> {
     }
 
     Map<T, List<String>> infoByRepo = new HashMap<>();
+
+    List<T> allRepos = myRepositoryManager.getRepositories();
+    List<String> allRepoFavorites = ContainerUtil.notNullize(infoByPath.remove(DvcsBranchUtil.getPathFor(null)));
+    if (!allRepoFavorites.isEmpty()) {
+      for (T repo : allRepos) {
+        List<String> repoList = infoByRepo.computeIfAbsent(repo, key -> new ArrayList<>());
+        repoList.addAll(allRepoFavorites);
+      }
+    }
+
     infoByPath.forEach((repoPath, list) -> {
       T repo = myRepositoryManager.getRepositoryForRootQuick(VcsUtil.getFilePath(repoPath, true));
       if (repo == null) return;
-      infoByRepo.put(repo, list);
+      List<String> repoList = infoByRepo.computeIfAbsent(repo, key -> new ArrayList<>());
+      repoList.addAll(list);
     });
+
     return infoByRepo;
   }
 

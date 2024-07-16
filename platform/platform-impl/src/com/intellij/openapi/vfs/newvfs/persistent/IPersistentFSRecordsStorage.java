@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
@@ -97,7 +97,7 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
   interface HeaderForRead {
     long getTimestamp() throws IOException;
 
-    int getConnectionStatus() throws IOException;
+    //TODO boolean wasClosedProperly() throws IOException;
 
     int getVersion() throws IOException;
 
@@ -107,8 +107,6 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
   }
 
   interface HeaderForUpdate extends HeaderForRead {
-    void setConnectionStatus(final int code) throws IOException;
-
     void setVersion(final int version) throws IOException;
 
     //TODO void setErrorsAccumulated(final int errors) throws IOException;

@@ -12,7 +12,7 @@ public class EcmaScriptUnicodeRegexpLanguage extends Language {
   public static final EcmaScriptUnicodeRegexpLanguage INSTANCE = new EcmaScriptUnicodeRegexpLanguage();
   public static final String ID = "JSUnicodeRegexp";
 
-  public EcmaScriptUnicodeRegexpLanguage() {
+  private EcmaScriptUnicodeRegexpLanguage() {
     super(RegExpLanguage.INSTANCE, ID);
   }
 }

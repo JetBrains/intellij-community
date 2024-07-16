@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -46,7 +46,7 @@ import java.util.List;
 import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNamesEnabled;
 
 public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
-  @NonNls public static final String ID = "PackagesPane";
+  public static final @NonNls String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
   public PackageViewPane(Project project) {
@@ -58,27 +58,23 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     support.setMultiSelectionEnabled(false);
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return JavaBundle.message("title.packages");
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Nodes.CopyOfFolder;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
-  @NotNull
   @Override
-  public List<PsiElement> getElementsFromNode(@Nullable Object node) {
+  public @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object o = getValueFromNode(node);
     if (o instanceof PackageElement) {
       PsiPackage aPackage = ((PackageElement)o).getPackage();
@@ -151,18 +147,16 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     return super.getSelectedDirectories(objects);
   }
 
-  @NotNull
   @Override
-  public SelectInTarget createSelectInTarget() {
+  public @NotNull SelectInTarget createSelectInTarget() {
     return new PackagesPaneSelectInTarget(myProject);
   }
 
-  @NotNull
   @Override
-  protected ProjectAbstractTreeStructureBase createStructure() {
+  protected @NotNull ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
       @Override
-      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
+      protected AbstractTreeNode createRoot(final @NotNull Project project, @NotNull ViewSettings settings) {
         return new PackageViewProjectNode(project, settings);
       }
 
@@ -173,9 +167,8 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     };
   }
 
-  @NotNull
   @Override
-  protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
+  protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
       public String toString() {
         return getTitle() + " " + super.toString();
@@ -183,8 +176,7 @@ public class PackageViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     };
   }
 
-  @NotNull
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return "PackagesPane";
   }
 

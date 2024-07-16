@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-public class GroovySillyAssignmentInspection extends BaseInspection {
+public final class GroovySillyAssignmentInspection extends BaseInspection {
 
   @Override
   @Nullable

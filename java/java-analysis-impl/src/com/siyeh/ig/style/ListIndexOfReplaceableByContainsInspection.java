@@ -4,8 +4,8 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -32,9 +32,7 @@ public final class ListIndexOfReplaceableByContainsInspection extends BaseInspec
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final String text;
     CommentTracker tracker = new CommentTracker();
-    if (lhs instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression callExpression =
-        (PsiMethodCallExpression)lhs;
+    if (lhs instanceof PsiMethodCallExpression callExpression) {
       text = createContainsExpressionText(callExpression, false,
                                           expression.getOperationTokenType(), tracker);
     }
@@ -65,9 +63,7 @@ public final class ListIndexOfReplaceableByContainsInspection extends BaseInspec
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       CommentTracker tracker = new CommentTracker();
       final String newExpressionText;
-      if (lhs instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression =
-          (PsiMethodCallExpression)lhs;
+      if (lhs instanceof PsiMethodCallExpression callExpression) {
         newExpressionText =
           createContainsExpressionText(callExpression, false, expression.getOperationTokenType(), tracker);
       }

@@ -28,7 +28,7 @@ class TooComplexCode {
     }
 
     @NotNull
-    private X newMethod(@NotNull X x) {
+    private TooComplexCode.X newMethod(@NotNull X x) {
         return x.get();
     }
 }

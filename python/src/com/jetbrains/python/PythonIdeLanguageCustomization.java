@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.lang.IdeLanguageCustomization;
@@ -14,9 +14,8 @@ import java.util.List;
 @ApiStatus.Internal
 public abstract class PythonIdeLanguageCustomization extends IdeLanguageCustomization {
   protected PythonIdeLanguageCustomization() {}
-  @NotNull
   @Override
-  public List<Language> getPrimaryIdeLanguages() {
+  public @NotNull List<Language> getPrimaryIdeLanguages() {
     return ContainerUtil.createMaybeSingletonList(findPythonLanguageByID());
   }
 
@@ -26,8 +25,7 @@ public abstract class PythonIdeLanguageCustomization extends IdeLanguageCustomiz
     return IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages().contains(python);
   }
 
-  @Nullable
-  private static Language findPythonLanguageByID() {
+  private static @Nullable Language findPythonLanguageByID() {
     return Language.findLanguageByID("Python");
   }
 }

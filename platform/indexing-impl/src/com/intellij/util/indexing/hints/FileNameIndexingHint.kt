@@ -6,11 +6,13 @@ import com.intellij.util.ThreeState
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.hints.BinaryFileTypePolicy.*
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Experimental
 enum class BinaryFileTypePolicy { BINARY, NON_BINARY, BINARY_OR_NON_BINARY }
 
-@ApiStatus.Experimental
+@Experimental
 class FileNameSuffixInputFilter(private val fileNameSuffix: String,
                                 private val ignoreCase: Boolean,
                                 binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
@@ -20,7 +22,7 @@ class FileNameSuffixInputFilter(private val fileNameSuffix: String,
   }
 }
 
-@ApiStatus.Experimental
+@Experimental
 class ExactFileNameInputFilter(private val fileName: String,
                                private val ignoreCase: Boolean,
                                binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
@@ -30,7 +32,7 @@ class ExactFileNameInputFilter(private val fileName: String,
   }
 }
 
-@ApiStatus.Experimental
+@Experimental
 class FileNameExtensionInputFilter(extension: String,
                                    private val ignoreCase: Boolean,
                                    binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
@@ -42,7 +44,7 @@ class FileNameExtensionInputFilter(extension: String,
   }
 }
 
-@ApiStatus.Experimental
+@Internal
 abstract class BaseWeakBinaryFileInputFilter internal constructor(
   private val binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY,
   fileTypeSubstitutionStrategy: FileTypeSubstitutionStrategy

@@ -18,7 +18,6 @@ import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import java.awt.event.ActionListener
-import javax.swing.Action
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -89,10 +88,9 @@ internal object GHPRSubmitReviewPopup : CodeReviewSubmitPopupHandler<GHPRSubmitR
   }
 
   override val errorPresenter: ErrorStatusPresenter<Throwable> by lazy {
-    object : ErrorStatusPresenter.Text<Throwable> {
-      override fun getErrorTitle(error: Throwable): String = CollaborationToolsBundle.message("review.submit.failed")
-      override fun getErrorDescription(error: Throwable): String = GHHtmlErrorPanel.getLoadingErrorText(error)
-      override fun getErrorAction(error: Throwable): Action? = null
-    }
+    ErrorStatusPresenter.simple(
+      CollaborationToolsBundle.message("review.submit.failed"),
+      descriptionProvider = GHHtmlErrorPanel::getLoadingErrorText
+    )
   }
 }

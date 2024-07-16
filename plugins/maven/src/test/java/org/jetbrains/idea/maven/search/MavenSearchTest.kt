@@ -8,17 +8,17 @@ import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.UsefulTestCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSearchTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
-  fun `test searching POM files by module name`() = runBlocking {
+  fun `test searching POM files by module name`() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""<groupId>test</groupId>
                      <artifactId>p1</artifactId>
                      <packaging>pom</packaging>

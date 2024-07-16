@@ -2,10 +2,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
 import org.jetbrains.kotlin.name.CallableId
@@ -25,7 +25,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
     protected abstract val uselessNames: Set<String>
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected abstract fun QualifiedExpressionVisitor.suggestConversionIfNeeded(
         expression: KtQualifiedExpression,
         calleeExpression: KtExpression,
@@ -56,8 +56,8 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
             if (calleeExpression.text !in uselessNames) return
 
             analyze(calleeExpression) {
-                val resolvedCall = calleeExpression.resolveCall()?.singleFunctionCallOrNull() ?: return
-                val callableId = resolvedCall.symbol.callableIdIfNonLocal ?: return
+                val resolvedCall = calleeExpression.resolveToCall()?.singleFunctionCallOrNull() ?: return
+                val callableId = resolvedCall.symbol.callableId ?: return
                 val conversion = uselessFqNames[callableId] ?: return
                 suggestConversionIfNeeded(expression, calleeExpression, conversion)
             }
@@ -92,7 +92,7 @@ abstract class AbstractUselessCallInspection : AbstractKotlinInspection() {
 
         fun Set<CallableId>.toShortNames() = mapTo(mutableSetOf()) { it.callableName.asString() }
 
-        context(KtAnalysisSession)
+        context(KaSession)
         fun KtQualifiedExpression.invertSelectorFunction(): KtQualifiedExpression? {
             return EmptinessCheckFunctionUtils.invertFunctionCall(this) as? KtQualifiedExpression
         }

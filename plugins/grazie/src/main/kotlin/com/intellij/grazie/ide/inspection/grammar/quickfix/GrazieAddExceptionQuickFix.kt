@@ -1,6 +1,5 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.grazie.GrazieConfig
@@ -65,7 +64,7 @@ open class GrazieAddExceptionQuickFix(
     action.redo()
 
     underlineRanges.forEach { underline ->
-      underline.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(file.viewProvider.document, project, it) }
+      underline.range?.let { GrazieReplaceTypoQuickFix.removeHighlightersWithExactRange(file.viewProvider.document, project, it) }
     }
 
     UndoManager.getInstance(project).undoableActionPerformed(action)

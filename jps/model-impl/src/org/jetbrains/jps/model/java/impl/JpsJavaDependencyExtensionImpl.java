@@ -20,17 +20,17 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
 
-public class JpsJavaDependencyExtensionImpl extends JpsElementBase<JpsJavaDependencyExtensionImpl> implements JpsJavaDependencyExtension {
+class JpsJavaDependencyExtensionImpl extends JpsElementBase<JpsJavaDependencyExtensionImpl> implements JpsJavaDependencyExtension {
   private boolean myExported;
   private JpsJavaDependencyScope myScope;
 
-  public JpsJavaDependencyExtensionImpl(boolean exported,
+  JpsJavaDependencyExtensionImpl(boolean exported,
                                         JpsJavaDependencyScope scope) {
     myExported = exported;
     myScope = scope;
   }
 
-  public JpsJavaDependencyExtensionImpl(JpsJavaDependencyExtensionImpl original) {
+  JpsJavaDependencyExtensionImpl(JpsJavaDependencyExtensionImpl original) {
     myExported = original.myExported;
     myScope = original.myScope;
   }

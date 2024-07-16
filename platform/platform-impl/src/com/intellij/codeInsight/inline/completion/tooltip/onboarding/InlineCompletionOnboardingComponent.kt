@@ -2,11 +2,14 @@
 package com.intellij.codeInsight.inline.completion.tooltip.onboarding
 
 import com.intellij.openapi.components.*
+import com.intellij.util.application
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @State(name = "InlineCompletionOnboarding", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
-internal class InlineCompletionOnboardingComponent : PersistentStateComponent<InlineCompletionOnboardingComponent> {
+class InlineCompletionOnboardingComponent : PersistentStateComponent<InlineCompletionOnboardingComponent> {
 
   private var shownTimeMs = 0L
 
@@ -22,14 +25,14 @@ internal class InlineCompletionOnboardingComponent : PersistentStateComponent<In
   }
 
   fun shouldExplicitlyDisplayTooltip(): Boolean {
-    return !onboardingFinished
+    return !onboardingFinished && !application.isUnitTestMode
   }
 
-  fun fireOnboardingFinished() {
+  internal fun fireOnboardingFinished() {
     onboardingFinished = true
   }
 
-  fun fireTooltipLivedFor(ms: Long) {
+  internal fun fireTooltipLivedFor(ms: Long) {
     if (shouldExplicitlyDisplayTooltip()) {
       shownTimeMs += ms
       if (shownTimeMs >= MAX_SHOWN_TIME_MS) {

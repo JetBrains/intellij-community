@@ -1,9 +1,11 @@
 package com.intellij.coverage;
 
+import com.intellij.coverage.filters.ModifiedFilesFilter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   private final Project myProject;
-  private boolean myHasVcsFilteredChildren;
+  private ModifiedFilesFilter myModifiedFilesFilter;
 
   @Nullable
   protected abstract Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager);
@@ -23,10 +25,13 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
   }
 
   @Override
-  public void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite) { }
+  public void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite) {
+    myModifiedFilesFilter = null;
+  }
 
+  @ApiStatus.Internal
   @Override
-  public void renewCoverageData(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
+  public final void renewCoverageData(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
     final Runnable request = createRenewRequest(suite, dataManager);
     if (request != null) {
       if (myProject.isDisposed()) return;
@@ -34,7 +39,8 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, CoverageBundle.message("coverage.view.loading.data"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-            request.run();
+          myModifiedFilesFilter = ModifiedFilesFilter.create(project);
+          request.run();
         }
 
         @Override
@@ -57,12 +63,10 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
     return myProject;
   }
 
-  public boolean hasVcsFilteredChildren() {
-    return myHasVcsFilteredChildren;
-  }
-
-  public void setVcsFilteredChildren(boolean hasVcsFilteredChildren) {
-    myHasVcsFilteredChildren = hasVcsFilteredChildren;
+  @ApiStatus.Internal
+  @Override
+  public @Nullable ModifiedFilesFilter getModifiedFilesFilter() {
+    return myModifiedFilesFilter;
   }
 
   public static class FileCoverageInfo {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.openapi.Disposable;
@@ -21,8 +21,7 @@ import java.util.Objects;
 
 @State(name = "RemoteRepositoriesConfiguration", storages = @Storage("jarRepositories.xml"))
 public class RemoteRepositoriesConfiguration implements PersistentStateComponent<RemoteRepositoriesConfiguration.State>, Disposable {
-  @NotNull
-  private volatile List<RemoteRepositoryDescription> myRepositories; // a reference to a non-modifiable repository list
+  private volatile @NotNull List<RemoteRepositoryDescription> myRepositories; // a reference to a non-modifiable repository list
 
   public RemoteRepositoriesConfiguration() {
     this(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
@@ -32,13 +31,11 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     myRepositories = List.copyOf(repos);
   }
 
-  @NotNull
-  public static RemoteRepositoriesConfiguration getInstance(Project project) {
+  public static @NotNull RemoteRepositoriesConfiguration getInstance(Project project) {
     return project.getService(RemoteRepositoriesConfiguration.class);
   }
 
-  @NotNull
-  public List<RemoteRepositoryDescription> getRepositories() {
+  public @NotNull List<RemoteRepositoryDescription> getRepositories() {
     return myRepositories;
   }
 
@@ -50,9 +47,8 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
     myRepositories = List.copyOf(repos.isEmpty()? RemoteRepositoryDescription.DEFAULT_REPOSITORIES : repos);
   }
 
-  @Nullable
   @Override
-  public RemoteRepositoriesConfiguration.State getState() {
+  public @Nullable RemoteRepositoriesConfiguration.State getState() {
     return new State(myRepositories);
   }
 
@@ -116,10 +112,7 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
       }
     }
 
-    @NotNull
-    @Property(surroundWithTag = false)
-    @XCollection
-    public final List<Repo> data;
+    @Property(surroundWithTag = false) @XCollection public final @NotNull List<Repo> data;
 
     // needed for PersistentStateComponent
     @SuppressWarnings("unused")

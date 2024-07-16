@@ -18,18 +18,22 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenProjectSettings
 import org.junit.Test
 import java.io.File
+import java.nio.file.Paths
+import kotlin.io.path.name
 
 class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = true
   @Throws(Exception::class)
-  override fun setUp() {
+  override fun setUp() = runBlocking(Dispatchers.EDT){
     super.setUp()
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassArgLine = true
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassEnvironmentVariables = true
@@ -38,7 +42,85 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   @Throws(CantRunException::class)
-  fun ExcludeClassPathElement() {
+  fun ExcludeProjectDependencyInClassPathElement() = runBlocking(Dispatchers.EDT) {
+    val m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>dep</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.16</version>
+            <configuration>
+              <classpathDependencyExcludes>
+                <classpathDependencyExclude>test:dep</classpathDependencyExclude>
+              </classpathDependencyExcludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      """.trimIndent())
+
+    val dep = createModulePom("dep", """
+      <groupId>test</groupId>
+      <artifactId>dep</artifactId>
+      <version>1</version>
+      <dependencies>
+      </dependencies>
+      
+      """.trimIndent())
+
+    createProjectSubDirs("m/src/main/java",
+                         "m/target/classes",
+                         "dep/src/main/java",
+                         "dep/target/classes")
+
+    importProjects(m, dep)
+    assertModules("m", "dep")
+    assertModuleModuleDeps("m", "dep")
+
+    val module = getModule("m")
+
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+
+    val pathTransformer = { path: String ->
+      val nioPath = Paths.get(path)
+
+      if (nioPath.name.endsWith(".jar")) {
+        nioPath.name
+      }
+      else {
+        nioPath.subpath(nioPath.nameCount - 3, nioPath.nameCount).toString()
+      }
+    }
+
+    javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18())
+    assertEquals(listOf("dep/target/classes", "junit-4.0.jar", "m/target/classes").map(PathUtil::getLocalPath),
+                 javaParameters.classPath.getPathList().map(pathTransformer).sorted())
+
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(listOf("junit-4.0.jar", "m/target/classes").map(PathUtil::getLocalPath),
+                 javaParameters.classPath.getPathList().map(pathTransformer).sorted())
+  }
+
+  @Test
+  @Throws(CantRunException::class)
+  fun ExcludeClassPathElement() = runBlocking(Dispatchers.EDT){
     val excludeSpecifications = arrayOf(
       """
 <classpathDependencyExcludes>
@@ -110,7 +192,7 @@ org.jetbrains:annotations
 
   @Test
   @Throws(CantRunException::class)
-  fun ExcludeScope() {
+  fun ExcludeScope() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -157,7 +239,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun AddClassPath() = runBlocking {
+  fun AddClassPath() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -191,7 +273,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgList() = runBlocking {
+  fun ArgList() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -226,7 +308,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun IgnoreJaCoCoOption() = runBlocking {
+  fun IgnoreJaCoCoOption() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><build>
         <plugins>
@@ -261,7 +343,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ImplicitArgLine() = runBlocking {
+  fun ImplicitArgLine() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
         <argLine>-Dfoo=${'$'}{version}</argLine>
@@ -289,7 +371,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun VmPropertiesResolve() = runBlocking {
+  fun VmPropertiesResolve() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -327,7 +409,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineLateReplacement() = runBlocking {
+  fun ArgLineLateReplacement() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -356,7 +438,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineLateReplacementParentProperty() = runBlocking {
+  fun ArgLineLateReplacementParentProperty() = runBlocking(Dispatchers.EDT) {
     createProjectPom(
       """
         <groupId>test</groupId>
@@ -412,7 +494,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineRefersAnotherProperty() = runBlocking {
+  fun ArgLineRefersAnotherProperty() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -445,7 +527,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineProperty() = runBlocking {
+  fun ArgLineProperty() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
       <argLine>-DsomeProp=Hello</argLine>
@@ -464,7 +546,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ResolvePropertiesUsingAt() = runBlocking {
+  fun ResolvePropertiesUsingAt() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>

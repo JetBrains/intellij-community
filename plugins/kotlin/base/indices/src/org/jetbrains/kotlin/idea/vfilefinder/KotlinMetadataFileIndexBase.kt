@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.base.indices.names.readKotlinMetadataDefinition
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
+import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 
 abstract class KotlinMetadataFileIndexBase(indexFunction: (ClassId) -> FqName) : KotlinFileIndexBase() {
@@ -33,6 +33,6 @@ internal fun FileContent.classIdFromKotlinMetadata(): ClassId? {
         return builtIns.nameResolver.getClassId(singleClass.fqName)
     }
 
-    val facadeName = this.fileName.substringBeforeLast(MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION)
+    val facadeName = this.fileName.substringBeforeLast(DOT_METADATA_FILE_EXTENSION)
     return ClassId(builtIns.packageFqName, Name.identifier(facadeName))
 }

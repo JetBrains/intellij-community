@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
@@ -20,6 +21,11 @@ abstract class LinuxDistributionCustomizer {
   var iconPngPathForEAP: String? = null
 
   /**
+   * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of hardcoding into a script).
+   */
+  var useXPlatLauncher = true
+
+  /**
    * Relative paths to files in Linux distribution which should take 'executable' permissions
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
@@ -32,12 +38,13 @@ abstract class LinuxDistributionCustomizer {
       "bin/restarter"
     )
 
+    val launcherPattern = if (useXPlatLauncher) listOf("bin/${context.productProperties.baseFileName}") else emptyList()
+
     val rtPatterns =
       if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, context.productProperties.runtimeDistribution)
       else emptyList()
 
-    return basePatterns +
-           rtPatterns +
+    return basePatterns + launcherPattern + rtPatterns +
            RepairUtilityBuilder.executableFilesPatterns(context) +
            extraExecutables +
            context.getExtraExecutablePattern(OsFamily.LINUX)
@@ -72,6 +79,7 @@ abstract class LinuxDistributionCustomizer {
     copyAdditionalFilesBlocking(context, targetDir, arch)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
   open fun copyAdditionalFilesBlocking(context: BuildContext, targetDir: Path, arch: JvmArchitecture) { }
 }

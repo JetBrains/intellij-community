@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:JvmName("DevMainImpl")
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
-import com.intellij.util.SystemProperties
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -17,6 +17,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ConsoleSpanExporter
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dev.BuildRequest
+import org.jetbrains.intellij.build.dev.buildProductInProcess
+import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.traceManagerInitializer
 import java.io.File
 import java.nio.file.Path
@@ -29,7 +32,7 @@ fun buildDevMain(): Collection<Path> {
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
   runBlocking(Dispatchers.Default) {
-    val batchSpanProcessorScope = childScope()
+    val batchSpanProcessorScope = childScope("BatchSpanProcessor")
     val spanProcessor = BatchSpanProcessor(coroutineScope = batchSpanProcessorScope, spanExporters = java.util.List.of(ConsoleSpanExporter()))
 
     val tracerProvider = SdkTracerProvider.builder()
@@ -47,21 +50,27 @@ fun buildDevMain(): Collection<Path> {
         tracer to spanProcessor
       }
 
-      buildProductInProcess(BuildRequest(
-        platformPrefix = System.getProperty("idea.platform.prefix", "idea"),
-        additionalModules = getAdditionalModules()?.toList() ?: emptyList(),
-        homePath = ideaProjectRoot,
-        keepHttpClient = false,
-        platformClassPathConsumer = { classPath, runDir ->
-          newClassPath = classPath
-          homePath = runDir.toString().replace(File.separator, "/")
+      buildProductInProcess(
+        BuildRequest(
+          platformPrefix = System.getProperty("idea.platform.prefix", "idea"),
+          additionalModules = System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }?.toList() ?: emptyList(),
+          projectDir = ideaProjectRoot,
+          keepHttpClient = false,
+          platformClassPathConsumer = { classPath, runDir ->
+            newClassPath = classPath
+            homePath = runDir.toString().replace(File.separator, "/")
 
-          for ((name, value) in getIdeSystemProperties(runDir)) {
-            System.setProperty(name, value)
-          }
-        },
-        generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false)
-      ))
+            val exceptions = setOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
+            val systemProperties = System.getProperties()
+            for ((name, value) in getIdeSystemProperties(runDir).map) {
+              if (exceptions.contains(name) || !systemProperties.containsKey(name)) {
+                systemProperties.setProperty(name, value)
+              }
+            }
+          },
+          generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false),
+        )
+      )
     }
     finally {
       batchSpanProcessorScope.cancel()

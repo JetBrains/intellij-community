@@ -172,7 +172,8 @@
         "backgroundOpacity": 7
       },
       "Block": {
-        "backgroundOpacity": 100,
+        "backgroundColor": "#5A5D6B",
+        "backgroundOpacity": 4,
         "borderColor":"#EBECF0",
         "EditorPane": {
           "backgroundColor": "#5A5D6B",
@@ -180,6 +181,10 @@
           "borderColor": "#EBECF0"
         }
       }
+    },
+
+    "Shortcut": {
+      "borderColor":"#A8ADBD"
     },
 
     "CodeWithMe": {
@@ -741,6 +746,10 @@
       }
     },
 
+    "ScrollPane": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder"
+    },
+
     "SearchEverywhere": {
       "Advertiser.background": "panel",
       "Advertiser.foreground": "infoPanelForeground",
@@ -872,6 +881,7 @@
       "lightSelectionForeground": "foreground",
       "lightSelectionInactiveBackground": "grey16",
       "rowHeight": 20,
+      "scrollPaneBorder": "com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder",
       "stripeColor": "#f2f5f9"
     },
 
@@ -1072,6 +1082,13 @@
       "Projects.actions.selectionBorderColor": "#3574F0",
       "Projects.actions.background": "#DCEDFE",
       "separatorColor": "border"
+    },
+
+    "CombinedDiff": {
+      "BlockBorder": {
+        "selectedActiveColor": "#A0BDF8",
+        "selectedInactiveColor": "#C9CCD6"
+      }
     },
 
     "ToolbarComboWidget": {

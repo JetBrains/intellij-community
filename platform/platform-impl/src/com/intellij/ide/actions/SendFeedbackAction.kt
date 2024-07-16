@@ -1,37 +1,37 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.FeedbackDescriptionProvider
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.troubleshooting.DisplayInfo
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.ide.customization.ExternalProductResourceUrls.Companion.getInstance
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.ui.LicensingFacade
-import com.intellij.ui.scale.JBUIScale.sysScale
-import com.intellij.util.io.URLUtil
+import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.NonNls
 import java.awt.GraphicsEnvironment
 
 class SendFeedbackAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
-    val isSupportedOS = SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isWindows
-    val feedbackReporter = getInstance().feedbackReporter
-    if (feedbackReporter != null && isSupportedOS) {
-      val feedbackSite = feedbackReporter.destinationDescription
-      e.presentation.setDescription(ActionsBundle.messagePointer("action.SendFeedback.detailed.description", feedbackSite))
+    val (os, arch) = OS.CURRENT to CpuArch.CURRENT
+    val isSupported = (os == OS.Windows || os == OS.macOS || os == OS.Linux) && (arch == CpuArch.X86_64 || arch == CpuArch.ARM64)
+    val feedbackReporter = ExternalProductResourceUrls.getInstance().feedbackReporter
+    if (feedbackReporter != null && isSupported) {
+      e.presentation.setDescription(ActionsBundle.messagePointer("action.SendFeedback.detailed.description", feedbackReporter.destinationDescription))
       e.presentation.setEnabledAndVisible(true)
     }
     else {
@@ -39,15 +39,12 @@ class SendFeedbackAction : AnAction(), DumbAware {
     }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
-    val feedbackReporter = getInstance().feedbackReporter
-    if (feedbackReporter != null) {
-      val formShown = feedbackReporter.showFeedbackForm(e.project, false)
-      if (!formShown) {
+    ExternalProductResourceUrls.getInstance().feedbackReporter?.let { feedbackReporter ->
+      val customFormShown = feedbackReporter.showFeedbackForm(e.project, false)
+      if (!customFormShown) {
         submit(e.project)
       }
     }
@@ -64,86 +61,56 @@ class SendFeedbackAction : AnAction(), DumbAware {
       }
     }
 
-    @Deprecated("""use {@link FeedbackDescriptionProvider} extension point to provide additional data to description used by the default
-    'Send Feedback' action instead of implementing your own action and calling this method.""")
-    fun submit(project: Project?, description: String) {
-      openFeedbackPageInBrowser(project, description)
-    }
-
     private fun openFeedbackPageInBrowser(project: Project?, description: String) {
-      val feedbackReporter = getInstance().feedbackReporter
-      if (feedbackReporter == null) return
-      BrowserUtil.browse(feedbackReporter.feedbackFormUrl(description).toExternalForm(), project)
-    }
-
-
-    @JvmStatic
-    @Deprecated("""use {@link FeedbackDescriptionProvider} extension point to provide additional data to description used by the default 
-    'Send Feedback' action instead of implementing your own action and calling this method.""")
-    fun submit(project: Project?, urlTemplate: String, description: String) {
-      val appInfo = ApplicationInfoEx.getInstanceEx()
-      val eap = appInfo.isEAP
-      val la = LicensingFacade.getInstance()
-      val url = urlTemplate
-        .replace("\$BUILD",
-                 URLUtil.encodeURIComponent(if (eap) appInfo.getBuild().asStringWithoutProductCode() else appInfo.getBuild().asString()))
-        .replace("\$TIMEZONE", URLUtil.encodeURIComponent(System.getProperty("user.timezone", "")))
-        .replace("\$VERSION", URLUtil.encodeURIComponent(appInfo.getFullVersion()))
-        .replace("\$EVAL", URLUtil.encodeURIComponent(if (la != null && la.isEvaluationLicense) "true" else "false"))
-        .replace("\$DESCR", URLUtil.encodeURIComponent(description))
-      BrowserUtil.browse(url, project)
+      ExternalProductResourceUrls.getInstance().feedbackReporter?.let { feedbackReporter ->
+        BrowserUtil.browse(feedbackReporter.feedbackFormUrl(description).toExternalForm(), project)
+      }
     }
 
     suspend fun getDescription(project: Project?): String {
-      val sb: @NonNls StringBuilder = StringBuilder("\n\n")
+      val sb = StringBuilder("\n\n")
+
       sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ")
+
       val javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"))
-      sb.append("JRE ")
-      sb.append(javaVersion)
-      val archDataModel = System.getProperty("sun.arch.data.model")
-      if (archDataModel != null) {
-        sb.append("x").append(archDataModel)
-      }
-      val javaVendor = System.getProperty("java.vm.vendor")
-      if (javaVendor != null) {
-        sb.append(" ").append(javaVendor)
-      }
+      sb.append("JRE ").append(javaVersion)
+      System.getProperty("sun.arch.data.model")?.let { sb.append('x').append(it) }
+      System.getProperty("java.vm.vendor")?.let { sb.append(' ').append(it) }
+
       sb.append(", OS ").append(System.getProperty("os.name"))
-      val osArch = System.getProperty("os.arch")
-      if (osArch != null) {
-        sb.append("(").append(osArch).append(")")
+      System.getProperty("os.arch")?.let { sb.append('(').append(it).append(')') }
+      System.getProperty("os.version")?.let { osVersion ->
+        sb.append(" v").append(osVersion)
+        val osPatchLevel = System.getProperty("sun.os.patch.level")
+        if (osPatchLevel != null && "unknown" != osPatchLevel) {
+          sb.append(' ').append(osPatchLevel)
+        }
       }
 
-      val osVersion = System.getProperty("os.version")
-      val osPatchLevel = System.getProperty("sun.os.patch.level")
-      if (osVersion != null) {
-        sb.append(" v").append(osVersion)
-        if (osPatchLevel != null && "unknown" != osPatchLevel) {
-          sb.append(" ").append(osPatchLevel)
-        }
-      }
       if (!GraphicsEnvironment.isHeadless()) {
-        sb.append(", screens ")
-        val devices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
-        for (i in devices.indices) {
-          if (i > 0) sb.append(", ")
-          val device = devices[i]
-          val displayMode = device.getDisplayMode()
-          val scale = sysScale(device.defaultConfiguration)
-          sb.append(displayMode.width * scale).append("x").append(displayMode.height * scale)
-        }
+        sb.append(", screens ").append(
+          DisplayInfo.get().screens.joinToString { "${it.resolution} (${it.scaling})" }
+        )
         if (UIUtil.isRetina()) {
           sb.append(if (SystemInfo.isMac) "; Retina" else "; HiDPI")
         }
       }
-      for (ext in EP_NAME.extensions) {
-        val pluginDescription = ext.getDescription(project)
-        if (!pluginDescription.isNullOrEmpty()) {
-          sb.append("\n").append(pluginDescription)
+
+      try {
+        EP_NAME.extensionList.forEach { ext ->
+          val pluginDescription = ext.getDescription(project)
+          if (!pluginDescription.isNullOrEmpty()) {
+            sb.append('\n').append(pluginDescription)
+          }
         }
       }
+      catch (t: Throwable) {
+        logger<SendFeedbackAction>().error(t)
+      }
+
       return sb.toString()
     }
+
     private val EP_NAME = ExtensionPointName<FeedbackDescriptionProvider>("com.intellij.feedbackDescriptionProvider")
   }
 }

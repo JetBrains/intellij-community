@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,34 +28,30 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public final class NonReproducibleMathCallInspection extends BaseInspection {
 
-  @NonNls private static final Set<String> nonReproducibleMethods =
-    new HashSet<>(20);
-
-  static {
-    nonReproducibleMethods.add("acos");
-    nonReproducibleMethods.add("asin");
-    nonReproducibleMethods.add("atan");
-    nonReproducibleMethods.add("atan2");
-    nonReproducibleMethods.add("cbrt");
-    nonReproducibleMethods.add("cos");
-    nonReproducibleMethods.add("cosh");
-    nonReproducibleMethods.add("exp");
-    nonReproducibleMethods.add("expm1");
-    nonReproducibleMethods.add("hypot");
-    nonReproducibleMethods.add("log");
-    nonReproducibleMethods.add("log10");
-    nonReproducibleMethods.add("log1p");
-    nonReproducibleMethods.add("pow");
-    nonReproducibleMethods.add("sin");
-    nonReproducibleMethods.add("sinh");
-    nonReproducibleMethods.add("tan");
-    nonReproducibleMethods.add("tanh");
-  }
+  @NonNls private static final Set<String> nonReproducibleMethods = Set.of(
+    "acos",
+    "asin",
+    "atan",
+    "atan2",
+    "cbrt",
+    "cos",
+    "cosh",
+    "exp",
+    "expm1",
+    "hypot",
+    "log",
+    "log10",
+    "log1p",
+    "pow",
+    "sin",
+    "sinh",
+    "tan",
+    "tanh"
+  );
 
   @Override
   @NotNull

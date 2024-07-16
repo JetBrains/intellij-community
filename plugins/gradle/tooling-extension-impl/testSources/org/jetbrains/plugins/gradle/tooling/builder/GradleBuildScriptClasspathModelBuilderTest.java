@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
+import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.junit.Test;
 
 import java.io.File;
@@ -66,13 +66,13 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
                       "  }\n" +
                       "}");
 
-    ProjectImportAction.AllModels allModels = fetchAllModels(new GradleBuildScriptClasspathModelProvider());
+    GradleIdeaModelHolder models = runBuildAction(new GradleBuildScriptClasspathModelProvider());
 
-    DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
+    DomainObjectSet<? extends IdeaModule> ideaModules = models.getRootModel(IdeaProject.class).getModules();
     assertEquals(5, ideaModules.size());
 
     for (IdeaModule module : ideaModules) {
-      GradleBuildScriptClasspathModel classpathModel = allModels.getModel(module, GradleBuildScriptClasspathModel.class);
+      GradleBuildScriptClasspathModel classpathModel = models.getProjectModel(module, GradleBuildScriptClasspathModel.class);
       assertNotNull("Null build classpath for module: " + module.getName(), classpathModel);
 
       if (module.getName().equals("moduleWithAdditionalClasspath")) {

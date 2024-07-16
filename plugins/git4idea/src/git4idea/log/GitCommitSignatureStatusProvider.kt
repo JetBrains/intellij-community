@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
@@ -17,6 +18,7 @@ import com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnServi
 import git4idea.GitIcons
 import git4idea.commit.signature.GitCommitSignature
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -26,6 +28,10 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
   override val id = ID
   override val isColumnEnabledByDefault = false
   override val columnName = GitBundle.message("column.name.commit.signature")
+
+  override fun isColumnAvailable(project: Project, roots: Collection<VirtualFile>): Boolean {
+    return roots.any { GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(it) != null }
+  }
 
   override fun getPresentation(project: Project, status: GitCommitSignature): VcsCommitExternalStatusPresentation.Signature =
     GitCommitSignatureStatusPresentation(status)

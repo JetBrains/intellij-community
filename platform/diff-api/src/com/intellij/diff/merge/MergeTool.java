@@ -40,7 +40,7 @@ public interface MergeTool {
 
   /**
    * Merge viewer should call {@link MergeContext#finishMerge(MergeResult)} when processing is over.
-   *
+   * <p>
    * {@link MergeRequest#applyResult(MergeResult)} will be performed by the caller, so it shouldn't be called by MergeViewer directly.
    */
   interface MergeViewer extends Disposable {

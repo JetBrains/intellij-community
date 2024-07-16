@@ -73,6 +73,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       if (processedLines.add(position.getLine())) {
         XBreakpointUtil.toggleLineBreakpoint(project,
                                              position,
+                                             !isFromGutterClick,
                                              editor,
                                              isAltClick || myTemporary,
                                              !isFromGutterClick,

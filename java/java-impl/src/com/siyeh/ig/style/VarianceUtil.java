@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
@@ -7,8 +7,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 final class VarianceUtil {
-  @NotNull
-  private static Variance getMethodSignatureVariance(@NotNull PsiMethod method, @NotNull PsiTypeParameter typeParameter) {
+  private static @NotNull Variance getMethodSignatureVariance(@NotNull PsiMethod method, @NotNull PsiTypeParameter typeParameter) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     PsiClass methodClass = method.getContainingClass();
     if (methodClass == null || !(owner instanceof PsiClass)) return Variance.INVARIANT;
@@ -63,24 +62,21 @@ final class VarianceUtil {
                                 @NotNull PsiTypeParameter parameter,
                                 @NotNull PsiSubstitutor superClassSubstitutor, boolean ignoreWildcardT) {
     return rootType.accept(new PsiTypeVisitor<>() {
-      @NotNull
       @Override
-      public Boolean visitClassType(@NotNull PsiClassType classType) {
+      public @NotNull Boolean visitClassType(@NotNull PsiClassType classType) {
         for (PsiType param : classType.getParameters()) {
           if (param.accept(this)) return true;
         }
         return visitType(classType);
       }
 
-      @NotNull
       @Override
-      public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
+      public @NotNull Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);
       }
 
-      @NotNull
       @Override
-      public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
+      public @NotNull Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         PsiType bound = wildcardType.getBound();
         if (bound == null) {
           return false;
@@ -89,9 +85,8 @@ final class VarianceUtil {
         return bound.accept(this);
       }
 
-      @NotNull
       @Override
-      public Boolean visitType(@NotNull PsiType type) {
+      public @NotNull Boolean visitType(@NotNull PsiType type) {
         return typeResolvesTo(type, parameter, superClassSubstitutor);
       }
     });
@@ -106,8 +101,7 @@ final class VarianceUtil {
     return typeParameter.equals(result.getElement()) && result.getSubstitutor().equals(PsiSubstitutor.EMPTY);
   }
 
-  @NotNull
-  static Variance getClassVariance(@NotNull PsiClass aClass, @NotNull PsiTypeParameter typeParameter) {
+  static @NotNull Variance getClassVariance(@NotNull PsiClass aClass, @NotNull PsiTypeParameter typeParameter) {
     Variance result = Variance.NOVARIANT;
     for (PsiMethod method : aClass.getAllMethods()) {
       PsiClass containingClass = method.getContainingClass();

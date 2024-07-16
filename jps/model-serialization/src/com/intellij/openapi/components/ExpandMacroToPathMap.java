@@ -4,6 +4,7 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -17,6 +18,11 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
   private final Map<String, String> myPlainMap = new LinkedHashMap<>();
   private final Map<String, String> myMacroExpands = new HashMap<>();
 
+  @ApiStatus.Internal
+  public ExpandMacroToPathMap() {
+  }
+
+  @ApiStatus.Internal
   public void addMacroExpand(@NotNull String macroName, @NotNull String path) {
     myMacroExpands.put(macroName, FileUtilRt.toSystemIndependentName(path));
   }
@@ -25,11 +31,13 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
     myPlainMap.put(fromText, toText);
   }
 
+  @ApiStatus.Internal
   public void putAll(@NotNull ExpandMacroToPathMap another) {
     myPlainMap.putAll(another.myPlainMap);
     myMacroExpands.putAll(another.myMacroExpands);
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull String substitute(@NotNull String text, boolean caseSensitive) {
     if (text.indexOf('$') < 0 && text.indexOf('%') < 0) {
@@ -81,6 +89,7 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
     }
   }
 
+  @ApiStatus.Internal
   @Override
   public int hashCode() {
     return myPlainMap.hashCode() + myMacroExpands.hashCode();

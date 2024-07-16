@@ -10,6 +10,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Create event for a {@link VirtualFile}.<br/>
+ * The created file name is {@link #getChildName()}.<br/>
+ * The created file is {@link #getFile()}. Use this method with caution, it can cause performance issues.
+ */
 public final class VFileCreateEvent extends VFileEvent {
   private final VirtualFile myParent;
   private final boolean myDirectory;
@@ -95,7 +100,14 @@ public final class VFileCreateEvent extends VFileEvent {
     return createdFile;
   }
 
-  public ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] getChildren() {
+  /**
+   * Children of the created file if it's a directory.
+   * <br/>
+   * <code>null</code> is returned if the file is not a directory or the children are not known.
+   *
+   * @return children of the created file if it's a directory
+   */
+  public ChildInfo @Nullable [] getChildren() {
     return myChildren;
   }
 

@@ -185,11 +185,6 @@ public class GenericType implements Type {
         case '+':
         case '-':
           break;
-        default:
-          if (!contMode) {
-            break loop;
-          }
-          break;
         case '<':
           counter++;
           break;
@@ -200,6 +195,12 @@ public class GenericType implements Type {
           if (counter == 0) {
             break loop;
           }
+          break;
+        default:
+          if (!contMode) {
+            break loop;
+          }
+          break;
       }
 
       index++;

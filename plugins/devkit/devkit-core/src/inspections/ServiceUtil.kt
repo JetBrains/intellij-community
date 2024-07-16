@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("ServiceUtil")
 
@@ -133,6 +133,26 @@ fun toLevel(name: String): Service.Level? {
   catch (_: IllegalArgumentException) {
     null
   }
+}
+
+internal fun isService(uClass: UClass): Boolean {
+  return isLightService(uClass) || isServiceRegisteredInXml(uClass)
+}
+
+internal fun isServiceRegisteredInXml(uClass: UClass): Boolean {
+  val project = uClass.sourcePsi?.project ?: return false
+  val domManager = DomManager.getDomManager(project)
+  val psiClass = uClass.javaPsi
+  for (candidate in locateExtensionsByPsiClass(psiClass)) {
+    val tag = candidate.pointer.element ?: continue
+    val element = domManager.getDomElement(tag) ?: continue
+    if (element is Extension) {
+      if (ExtensionUtil.hasServiceBeanFqn(element)) {
+        return true
+      }
+    }
+  }
+  return false
 }
 
 internal fun isLightService(uClass: UClass): Boolean {

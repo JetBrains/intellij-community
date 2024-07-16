@@ -56,7 +56,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
       else {
         context.affectUsage(usageFactory.apply(id));
       }
-      debug("Affect ", usageKind, " usage referenced of class ", id.getNodeName());
+      debug("Affect ", usageKind, " usage owned by node '", id.getNodeName(), "'");
     }
   }
 
@@ -78,15 +78,29 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
     LOG.debug(message);
   }
 
-  protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason) {
-    affectNodeSources(context, clsId, affectReason, false);
+  protected void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {
+    debug("Affecting subclasses of class: ", fromClass, "; with usages affection: ", affectUsages);
+    for (ReferenceID cl : utils.withAllSubclasses(fromClass)) {
+      affectNodeSources(context, cl, "Affecting source file: ", utils);
+      if (affectUsages) {
+        String nodeName = utils.getNodeName(cl);
+        if (nodeName != null) {
+          context.affectUsage(new ClassUsage(nodeName));
+          debug("Affect usage of class ", nodeName);
+        }
+      }
+    }
   }
 
-  protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, boolean forceAffect) {
+  protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, Utils utils) {
+    affectSources(context, utils.getNodeSources(clsId), affectReason, false);
+  }
+
+  protected void affectSources(DifferentiateContext context, Iterable<NodeSource> sources, String affectReason, boolean forceAffect) {
     Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
     Predicate<? super NodeSource> affectionFilter = context.getParams().affectionFilter();
-    for (NodeSource source : filter(context.getGraph().getSources(clsId), affectionFilter::test)) {
-      if (forceAffect || !context.isCompiled(source) && !deletedSources.contains(source)) {
+    for (NodeSource source : filter(sources, affectionFilter::test)) {
+      if ((forceAffect || !context.isCompiled(source)) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
         debug(affectReason, source);
       }

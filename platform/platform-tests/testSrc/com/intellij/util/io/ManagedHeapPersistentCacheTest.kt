@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import org.junit.jupiter.api.Test
@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 class ManagedHeapPersistentCacheTest : ManagedCacheTestBase() {
 
   override fun createCache(): ManagedHeapPersistentCache<Int, Int> {
-    return ManagedHeapPersistentCache("test-cache", mapBuilder(), inMemoryCount=5, closeAppOnShutdown=false)
+    return ManagedHeapPersistentCache("test-cache", mapBuilder(), inMemoryCount=5, closeAppOnShutdown=false, cleanDirOnFailure=true)
   }
 
   @Test

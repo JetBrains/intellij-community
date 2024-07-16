@@ -3,10 +3,13 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.myEp" interface="java.util.Collection"/>
+    <extensionPoint qualifiedName="com.intellij.applicationService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <myEp implementation="MyInspection"/>
     <myEp implementation="MakeNotPublic"/>
     <myEp implementation="VisibleForTestingAnnotation"/>
+
+    <applicationService serviceImplementation="MakeNotPublicService"/>
   </extensions>
 </idea-plugin>

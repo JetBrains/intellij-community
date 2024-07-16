@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PySdkUtil
-import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use Sdk.configureBuilderToRunPythonOnTarget")
 @Throws(ExecutionException::class)
@@ -37,13 +36,6 @@ fun runConda(sdk: Sdk?, arguments: List<String>): ProcessOutput {
   return run(condaExecutable, arguments, environment)
 }
 
-
-@Deprecated("Use Sdk.configureBuilderToRunPythonOnTarget")
-@ApiStatus.ScheduledForRemoval
-@Throws(ExecutionException::class)
-fun runCondaPython(condaPythonExecutable: String, arguments: List<String>): ProcessOutput {
-  return run(condaPythonExecutable, arguments, PySdkUtil.activateVirtualEnv(condaPythonExecutable))
-}
 
 private fun run(executable: String, arguments: List<String>, env: Map<String, String>?): ProcessOutput {
   val commandLine = GeneralCommandLine(executable).withParameters(arguments).withEnvironment(env)

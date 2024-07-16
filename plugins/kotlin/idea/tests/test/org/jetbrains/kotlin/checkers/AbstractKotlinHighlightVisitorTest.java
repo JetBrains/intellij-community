@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.rt.execution.junit.FileComparisonData;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
@@ -112,10 +111,9 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
                         data.init();
                         return ((JavaCodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
                     }
-                    catch (AssertionError e) {
-                        if (!(e instanceof FileComparisonData fcf)) throw e;
+                    catch (FileComparisonFailedError fcf) {
                         throw new FileComparisonFailedError(
-                                e.getMessage(),
+                                fcf.getMessage(),
                                 fcf.getExpectedStringPresentation(),
                                 fcf.getActualStringPresentation(),
                                 new File(fcf.getFilePath()).getAbsolutePath()

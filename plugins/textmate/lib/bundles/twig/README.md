@@ -43,6 +43,10 @@ Install through Visual Studio Code extensions. Search for `Twig Language 2`
 
 [Visual Studio Code Market Place: Twig Language 2](https://marketplace.visualstudio.com/items?itemName=mblode.twig-language-2)
 
+## Configuration
+
+Restart VS Code after making changes to Twig Language 2 extension settings.
+
 ## Documentation
 
 Twig Language 2 is a Visual Studio Code extension that provides snippets, syntax highlighting, hover, and formatting for the Twig file format.

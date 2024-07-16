@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.FileIndex
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,8 +26,8 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -41,22 +40,22 @@ import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 @Frontend10ApiUsage
-val KtModule.moduleInfo: IdeaModuleInfo
+val KaModule.moduleInfo: IdeaModuleInfo
     get() {
         require(this is KtModuleByModuleInfoBase)
         return ideaModuleInfo
     }
 
 
-val KtSourceModule.ideaModule: Module
+val KaSourceModule.ideaModule: Module
     get() {
         require(this is KtSourceModuleByModuleInfo)
         return ideaModule
     }
 
-fun Module.getMainKtSourceModule(): KtSourceModule? {
+fun Module.getMainKtSourceModule(): KaSourceModule? {
     val moduleInfo = productionSourceInfo ?: return null
-    return moduleInfo.toKtModuleOfType<KtSourceModule>()
+    return moduleInfo.toKaModuleOfType<KaSourceModule>()
 }
 
 val ModuleInfo.kotlinSourceRootType: KotlinSourceRootType?
@@ -153,6 +152,7 @@ fun ProjectFileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSo
     }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("use ProjectFileIndex.getKotlinSourceRootType(VirtualFile)")
 fun FileIndex.getKotlinSourceRootType(virtualFile: VirtualFile): KotlinSourceRootType? {
     // Ignore injected files

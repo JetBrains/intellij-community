@@ -6,4 +6,5 @@ enum class PlatformCodeVisionIds(val key: String) {
   INHERITORS("inheritors"),
   PROBLEMS("problems"),
   RENAME("rename"),
+  CHANGE_SIGNATURE("change.signature"),
 }

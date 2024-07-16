@@ -55,8 +55,8 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
       val pRightIcons = presentation.getClientProperty(RIGHT_ICONS_KEY)
       it.leftIcons = when {
         pLeftIcons != null -> pLeftIcons
-        !presentation.isEnabled && presentation.disabledIcon != null -> listOf(presentation.disabledIcon)
-        presentation.icon != null -> listOf(presentation.icon)
+        !presentation.isEnabled && presentation.disabledIcon != null -> listOf(presentation.disabledIcon!!)
+        presentation.icon != null -> listOf(presentation.icon!!)
         else -> emptyList()
       }
       if (pRightIcons != null) it.rightIcons = pRightIcons

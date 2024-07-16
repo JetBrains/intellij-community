@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -12,8 +12,7 @@ public final class GotoBreakContinueHandler extends GotoDeclarationHandlerBase {
   private static final Logger LOG = Logger.getInstance(GotoBreakContinueHandler.class);
 
   @Override
-  @Nullable
-  public PsiElement getGotoDeclarationTarget(@Nullable PsiElement elementAt, Editor editor) {
+  public @Nullable PsiElement getGotoDeclarationTarget(@Nullable PsiElement elementAt, Editor editor) {
     if (elementAt instanceof PsiKeyword) {
       IElementType type = ((PsiKeyword)elementAt).getTokenType();
       if (type == JavaTokenType.CONTINUE_KEYWORD) {

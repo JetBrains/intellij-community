@@ -244,7 +244,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   private void parseComprehension(SyntaxTreeBuilder.Marker expr,
-                                  @Nullable final IElementType endToken,
+                                  final @Nullable IElementType endToken,
                                   final IElementType exprType) {
     assertCurrentToken(PyTokenTypes.FOR_KEYWORD);
     while (true) {
@@ -1189,12 +1189,7 @@ public class ExpressionParsing extends Parsing {
         expr.done(PyElementTypes.PREFIX_EXPRESSION);
       }
       else {
-        if (isTargetExpression) {
-          expr.error(message("can.t.assign.to.await.expression"));
-        }
-        else {
-          expr.done(PyElementTypes.PREFIX_EXPRESSION);
-        }
+        expr.done(PyElementTypes.PREFIX_EXPRESSION);
       }
 
       return true;

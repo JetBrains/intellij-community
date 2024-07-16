@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -65,7 +65,7 @@ import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
  * In case the dialog must be created from another thread use
  * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}.
  *
- * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/dialog_wrapper.html">DialogWrapper on SDK DevGuide</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/dialog-wrapper.html">DialogWrapper IntelliJ Platform SDK Docs</a>
  */
 public abstract class DialogWrapper {
   private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
@@ -75,9 +75,9 @@ public abstract class DialogWrapper {
   public enum IdeModalityType {
     IDE,
     /**
-     * Effectively the same as {@link IDE}.
+     * Effectively the same as {@link #IDE}.
      *
-     * @deprecated use {@link IDE} instead
+     * @deprecated use {@link #IDE} instead
      */
     @Deprecated
     PROJECT,
@@ -260,8 +260,14 @@ public abstract class DialogWrapper {
       public void componentResized(ComponentEvent e) {
         if (!myResizeInProgress) {
           myActualSize = myPeer.getSize();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Updated the actual size to " + myActualSize + " because the dialog has been resized");
+          }
           if (myErrorText != null && myErrorText.isVisible()) {
             myActualSize.height -= myErrorText.getMinimumSize().height;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Adjusted the actual size to " + myActualSize + " to account for the minimum height of the error text");
+            }
           }
         }
       }
@@ -391,7 +397,7 @@ public abstract class DialogWrapper {
    *
    * @return {@code null} if everything is OK or validation descriptor
    *
-   * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/validation-errors.html">Validation errors guidelines</a>
    */
   protected @Nullable ValidationInfo doValidate() {
     return null;
@@ -407,7 +413,7 @@ public abstract class DialogWrapper {
    * @return {@code List<ValidationInfo>} of invalid fields. List
    * is empty if no errors found.
    *
-   * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/validation-errors.html">Validation errors guidelines</a>
    */
   protected @NotNull List<ValidationInfo> doValidateAll() {
     List<ValidationInfo> result = new ArrayList<>();
@@ -950,6 +956,9 @@ public abstract class DialogWrapper {
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
       if (myActualSize != null && isAutoAdjustable()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resetting the size on dispose to the actual size " + myActualSize);
+        }
         setSize(myActualSize.width, myActualSize.height);
       }
       myPeer.dispose();
@@ -1519,13 +1528,13 @@ public abstract class DialogWrapper {
 
   /**
    * Sets whether this dialog will keep previously opened popup open while it's showing.
-   *
+   *<p>
    * Some dialogs (e.g. Paste from History) can be invoked from a popup to perform
    * a certain task and then get back to working with the popup. However, as popups
    * normally disappear on losing focus, this doesn't work by default. Calling this
    * method with the parameter set to {@code true} will override this behavior
    * and keep all previously opened popups while the dialog is displayed.
-   *
+   *</p>
    * @param keepPopupsOpen whether to keep previously opened popups open
    */
   @ApiStatus.Experimental
@@ -2124,7 +2133,11 @@ public abstract class DialogWrapper {
 
   private void updateSize() {
     if (myActualSize == null && !myErrorText.isVisible()) {
-      myActualSize = getSize();
+      Dimension actualSize = getSize();
+      myActualSize = actualSize;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Updated the actual size to " + actualSize + " because the error text is invisible");
+      }
     }
   }
 

@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 /**
  * @author zolotov
  */
-public class GebTestNGTestMemberContributor extends NonCodeMembersContributor {
+public final class GebTestNGTestMemberContributor extends NonCodeMembersContributor {
 
   @Override
   protected String getParentClassName() {

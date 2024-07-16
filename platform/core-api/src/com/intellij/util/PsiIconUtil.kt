@@ -2,31 +2,38 @@
 package com.intellij.util
 
 import com.intellij.ide.IconProvider
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbService.Companion.isDumbAware
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Iconable.IconFlags
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
 object PsiIconUtil {
+
   @JvmStatic
-  @Suppress("IdentifierGrammar")
-  fun getProvidersIcon(element: PsiElement, @IconFlags flags: Int): Icon? {
-    val isDumb = DumbService.getInstance(element.getProject()).isDumb
-    for (provider in IconProvider.EXTENSION_POINT_NAME.getIterable()) {
-      if (provider == null || (isDumb && !isDumbAware(provider))) {
-        continue
-      }
-      try {
-        provider.getIcon(element, flags)?.let {
-          return it
+  fun getIconFromProviders(element: PsiElement, @IconFlags flags: Int): Icon? {
+    for (provider in IconProvider.EXTENSION_POINT_NAME.extensionList) {
+      val icon = kotlin.runCatching {
+        provider.getIcon(element, flags)
+      }.getOrLogException {
+        if (it !is IndexNotReadyException) {
+          LOG.warn("IconProvider $provider threw an exception", it)
         }
       }
-      catch (_: IndexNotReadyException) {
-
+      if (icon != null) {
+        return icon
       }
     }
     return null
   }
+
+  @JvmStatic
+  @Suppress("IdentifierGrammar")
+  @Deprecated("Use `getIconFromProviders` instead", ReplaceWith("getIconFromProviders"))
+  fun getProvidersIcon(element: PsiElement, @IconFlags flags: Int): Icon? {
+    return getIconFromProviders(element, flags)
+  }
 }
+
+private val LOG = logger<PsiIconUtil>()

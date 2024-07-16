@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -28,11 +28,10 @@ public final class PyRuntimeDocstringFormatter {
   private static final Logger LOG = Logger.getInstance(PyStructuredDocstringFormatter.class);
   private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
-  @Nullable
-  public static String runExternalTool(@NotNull final Module module,
-                                       @NotNull final DocStringFormat format,
-                                       @NotNull final String input,
-                                       @NotNull final List<String> formatterFlags) {
+  public static @Nullable String runExternalTool(final @NotNull Module module,
+                                                 final @NotNull DocStringFormat format,
+                                                 final @NotNull String input,
+                                                 final @NotNull List<String> formatterFlags) {
     final Sdk sdk;
     final String missingInterpreterMessage;
     if (format == DocStringFormat.EPYTEXT) {

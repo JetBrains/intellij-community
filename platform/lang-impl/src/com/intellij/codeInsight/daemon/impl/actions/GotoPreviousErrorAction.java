@@ -7,6 +7,9 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler;
+import com.intellij.codeInsight.daemon.impl.GotoNextErrorUtilsKt;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -14,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoPreviousErrorAction extends BaseCodeInsightAction implements DumbAware {
+
   public GotoPreviousErrorAction() {
     super(false);
   }
@@ -25,7 +29,18 @@ public class GotoPreviousErrorAction extends BaseCodeInsightAction implements Du
 
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {
-    return new GotoNextErrorHandler(false);
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
+    return new GotoNextErrorHandler(false, GotoNextErrorUtilsKt.getTrafficHighlightSeverity(dataContext));
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    GotoNextErrorUtilsKt.reportTrafficHighlightStatistic(e, false);
+    super.actionPerformed(e);
   }
 
   @Override

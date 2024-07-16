@@ -39,6 +39,10 @@ interface JetBrainsClientDownloaderConfigurationProvider {
     val thinClientDownloadLatestBuildFromCDNForSnapshotValue: Boolean?
       get() = System.getenv(THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY)?.toBoolean()
 
+    const val THIN_CLIENT_CLIENT_CACHES_DIR_KEY = "THIN_CLIENT_CLIENT_CACHES_DIR"
+    val thinClientClientCachesDirValue: String?
+      get() = System.getenv(THIN_CLIENT_CLIENT_CACHES_DIR_KEY)
+
     val customPropertiesAreSet
       get() = thinClientDownloadUrlValue != null && thinClientDownloadLatestBuildFromCDNForSnapshotValue != null && thinClientVerifySignatureValue != null
   }
@@ -74,14 +78,21 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override val jreDownloadUrl: URI
     get() = RemoteDevSystemSettings.getJreDownloadUrl().value
 
-  override val clientCachesDir: Path get () {
-    val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
-    if (downloadDestination.value != null) {
-      return Path(downloadDestination.value)
-    }
+  override val clientCachesDir: Path
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientClientCachesDirValue
+      if (envVar != null) {
+        return Path(envVar)
+      }
+      else {
+        val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
+        if (downloadDestination.value != null) {
+          return Path(downloadDestination.value)
+        }
 
-    return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
-  }
+        return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
+      }
+    }
 
   override val clientVersionManagementEnabled: Boolean
     get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled()
@@ -161,7 +172,6 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
       "-Didea.suppress.statistics.report=true",
       "-Drsch.send.usage.stat=false",
       "-Duse.linux.keychain=false",
-      "-Dide.show.tips.on.startup.default.value=false",
       "-Didea.is.internal=true",
       "-DcodeWithMe.memory.only.certificate=true", // system keychain
       "-Dide.slow.operations.assertion=false",
@@ -216,14 +226,16 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     return server.address
   }
 
-  fun serveFile(file: Path) {
+  fun serveFile(file: Path, httpPath: String = file.name) {
     require(file.exists())
     require(file.isRegularFile())
 
     val server = tarGzServer
     require(server != null)
 
-    server.createContext("/${file.name}", HttpHandler { httpExchange ->
+    thisLogger().info("Serving file $file from ${server.address}")
+
+    server.createContext("/$httpPath", HttpHandler { httpExchange ->
       httpExchange.sendResponseHeaders(200, file.fileSize())
       httpExchange.responseBody.use { responseBody ->
         file.inputStream().use {

@@ -47,6 +47,7 @@ public class TargetElementUtil  {
    */
   public static final int LOOKUP_ITEM_ACCEPTED = 0x08;
 
+  @Contract(pure = true)
   public static TargetElementUtil getInstance() {
     return ApplicationManager.getApplication().getService(TargetElementUtil.class);
   }

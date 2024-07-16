@@ -1,15 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
-import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import com.intellij.util.KeyedLazyInstanceEP
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellType
 
+@ApiStatus.Experimental
 interface TerminalShellSupport {
-  val promptLanguage: Language
+  val promptContentElementType: IElementType
 
   /**
    * The character that used to continue the command on the next line.
@@ -39,7 +40,11 @@ interface TerminalShellSupport {
       ExtensionPointName.create("org.jetbrains.plugins.terminal.shellSupport")
 
     fun findByShellType(type: ShellType): TerminalShellSupport? {
-      return EP_NAME.extensionList.find { it.key.lowercase() == type.toString().lowercase() }?.instance
+      return findByShellName(type.toString())
+    }
+
+    fun findByShellName(shellName: String): TerminalShellSupport? {
+      return EP_NAME.extensionList.find { it.key.lowercase() == shellName.lowercase() }?.instance
     }
   }
 }

@@ -199,7 +199,7 @@ public final class NewRunConfigurationPopup {
 
       @Override
       public @NotNull NodeDescriptor<?> createDescriptor(@NotNull Object element, @Nullable NodeDescriptor parentDescriptor) {
-        return treePopupFactory.createDescriptor(project, element, parentDescriptor, NodeDescriptor.DEFAULT_WEIGHT);
+        return treePopupFactory.createDescriptor(project, element, parentDescriptor, NodeDescriptor.getDefaultWeight());
       }
 
       @Override

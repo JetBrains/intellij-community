@@ -174,7 +174,7 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
   private static boolean isGroupFiltered(Condition<? super AnAction> condition, KeymapGroup keymapGroup) {
     final EmptyAction emptyAction = new EmptyAction();
     if (condition != null && !condition.value(emptyAction) && keymapGroup instanceof Group group) {
-      return group.getSize() > 1 || condition.value(new EmptyAction(group.getName(), null, null));
+      return group.getSize() > 1 || condition.value(EmptyAction.createEmptyAction(group.getName(), null, false));
     }
     return true;
   }

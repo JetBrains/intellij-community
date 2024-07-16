@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.testIntegration;
 
 import com.intellij.openapi.util.Pair;
@@ -32,9 +32,8 @@ public final class PyTestFinder implements TestFinder {
     return PsiTreeUtil.getParentOfType(element, PyClass.class, PyFunction.class);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
+  public @NotNull Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
     PyDocStringOwner source = findSourceElement(element);
     if (source == null) return Collections.emptySet();
 
@@ -74,9 +73,8 @@ public final class PyTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithProximities, true);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
+  public @NotNull Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
     final PyFunction sourceFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     final PyClass source = PsiTreeUtil.getParentOfType(element, PyClass.class);
     if (sourceFunction == null && source == null) return Collections.emptySet();

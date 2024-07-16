@@ -102,5 +102,7 @@ internal class CreatePropertyAction(
     override fun isConstant(): Boolean = false
 
     override fun getInitializer(): JvmValue? = null
+
+    override fun isStartTemplate(): Boolean = request.isStartTemplate
   }
 }

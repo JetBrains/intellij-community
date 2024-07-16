@@ -7,9 +7,6 @@ import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -103,7 +100,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   protected void addProjectSpecificAction(final @NotNull ProjectSpecificAction projectSpecificAction) {
-    addAll(projectSpecificAction.getChildren(null));
+    addAll(projectSpecificAction.getChildren(ActionManager.getInstance()));
   }
 
   protected abstract static class Customization<T> {
@@ -156,7 +153,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       step.setProjectStep(Objects.requireNonNull(myProjectStep));
 
       ProjectSpecificAction projectSpecificAction = new ProjectSpecificAction(generator, step);
-      return projectSpecificAction.getChildren(null);
+      return projectSpecificAction.getChildren(ActionManager.getInstance());
     }
 
     protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {
@@ -260,6 +257,8 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
+
+    LightweightNewProjectWizardCollector.logProjectGenerated(project, generator != null ? generator.getClass() : null);
     return project;
   }
 

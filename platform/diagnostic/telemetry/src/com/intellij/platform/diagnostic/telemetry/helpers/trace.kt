@@ -15,6 +15,7 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import io.opentelemetry.semconv.SemanticAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
 import kotlin.coroutines.CoroutineContext
@@ -26,6 +27,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  *
  * See [span concept](https://opentelemetry.io/docs/concepts/signals/traces/#spans) for more details on span nesting.
  */
+@Internal
 inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
   return startSpan().useWithoutActiveScope { span ->
     span.makeCurrent().use {
@@ -40,6 +42,7 @@ inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
  *
  * See [span concept](https://opentelemetry.io/docs/concepts/signals/traces/#spans) for more details on span nesting.
  */
+@Internal
 inline fun <T> Span.use(operation: (Span) -> T): T {
   return useWithoutActiveScope {
     makeCurrent().use {
@@ -48,6 +51,7 @@ inline fun <T> Span.use(operation: (Span) -> T): T {
   }
 }
 
+@Internal
 suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = EmptyCoroutineContext,
                                                 crossinline operation: suspend CoroutineScope.(Span) -> T): T {
   val span = startSpan()
@@ -70,6 +74,7 @@ suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = Empt
   }
 }
 
+@Internal
 fun <T> computeWithSpanAttribute(tracer: IJTracer,
                                  spanName: String,
                                  attributeName: String,
@@ -82,6 +87,7 @@ fun <T> computeWithSpanAttribute(tracer: IJTracer,
   }
 }
 
+@Internal
 fun <T> computeWithSpanAttributes(tracer: IJTracer,
                                   spanName: String,
                                   attributeGenerator: (T) -> Map<String, String>,
@@ -95,20 +101,24 @@ fun <T> computeWithSpanAttributes(tracer: IJTracer,
   }
 }
 
+@Internal
 inline fun <T> computeWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> T): T {
   return tracer.spanBuilder(spanName).use(operation)
 }
 
+@Internal
 internal fun <T> computeWithSpanIgnoreThrows(tracer: Tracer,
                                              spanName: String,
                                              operation: ThrowableNotNullFunction<Span, T, out Throwable>): T {
   return tracer.spanBuilder(spanName).use(operation::`fun`)
 }
 
+@Internal
 internal fun runWithSpanIgnoreThrows(tracer: Tracer, spanName: String, operation: ThrowableConsumer<Span, out Throwable>) {
   tracer.spanBuilder(spanName).use(operation::consume)
 }
 
+@Internal
 fun runWithSpan(tracer: Tracer, spanName: String, operation: Consumer<Span>) {
   tracer.spanBuilder(spanName).use(operation::accept)
 }
@@ -117,6 +127,7 @@ fun runWithSpan(tracer: Tracer, spanName: String, operation: Consumer<Span>) {
  * Does not activate the span scope, so **new spans created inside will not be linked to the started span**.
  * Consider using [use] to also activate the scope.
  */
+@Internal
 inline fun <T> SpanBuilder.useWithoutActiveScope(operation: (Span) -> T): T {
   return startSpan().useWithoutActiveScope(operation)
 }
@@ -125,6 +136,7 @@ inline fun <T> SpanBuilder.useWithoutActiveScope(operation: (Span) -> T): T {
  * Does not activate the span scope, so **new spans created inside will not be linked to [this] span**.
  * Consider using [use] to also activate the scope.
  */
+@Internal
 inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
   try {
     return operation(this)

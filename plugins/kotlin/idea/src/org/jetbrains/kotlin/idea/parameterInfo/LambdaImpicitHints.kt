@@ -3,15 +3,12 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hints.InlayInfo
-import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiComment
-import com.intellij.psi.TokenType
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
+import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
 import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isUnit
@@ -48,16 +45,4 @@ fun provideLambdaImplicitHints(lambda: KtLambdaExpression): List<InlayInfoDetail
     } else null
 
     return listOfNotNull(implicitReceiverHint, singleParameterHint)
-}
-
-internal fun ASTNode.isFollowedByNewLine(): Boolean {
-    for (sibling in siblings()) {
-        if (sibling.elementType != TokenType.WHITE_SPACE && sibling.psi !is PsiComment) {
-            continue
-        }
-        if (sibling.elementType == TokenType.WHITE_SPACE && sibling.textContains('\n')) {
-            return true
-        }
-    }
-    return false
 }

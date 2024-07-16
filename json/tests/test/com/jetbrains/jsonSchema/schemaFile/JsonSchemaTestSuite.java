@@ -3,9 +3,7 @@ package com.jetbrains.jsonSchema.schemaFile;
 
 import com.jetbrains.jsonSchema.*;
 import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTest;
-import com.jetbrains.jsonSchema.impl.JsonBySchemaCompletionTest;
-import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTest;
-import com.jetbrains.jsonSchema.impl.JsonSchemaReadTest;
+import com.jetbrains.jsonSchema.impl.*;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -22,6 +20,8 @@ public final class JsonSchemaTestSuite {
     suite.addTestSuite(JsonSchemaSelfHighlightingTest.class);
     suite.addTestSuite(JsonBySchemaCompletionTest.class);
     suite.addTestSuite(JsonBySchemaHeavyCompletionTest.class);
+    suite.addTestSuite(JsonBySchemaNestedCompletionTest.class);
+    suite.addTestSuite(JsonBySchemaHeavyNestedCompletionTest.class);
     suite.addTestSuite(JsonSchemaReadTest.class);
     suite.addTestSuite(JsonSchemaFileResolveTest.class);
     suite.addTestSuite(JsonSchemaPerformanceTest.class);

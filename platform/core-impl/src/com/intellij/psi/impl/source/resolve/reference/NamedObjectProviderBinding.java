@@ -7,42 +7,46 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SharedProcessingContext;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author maxim
  */
 public abstract class NamedObjectProviderBinding implements ProviderBinding {
-  private final Map<String, List<@NotNull ProviderInfo<ElementPattern<?>>>> myNamesToProvidersMap = new HashMap<>(5);
-  private final Map<String, List<@NotNull ProviderInfo<ElementPattern<?>>>> myNamesToProvidersMapInsensitive = new HashMap<>(5);
+  /**
+   * arrays inside these maps must be copy-on-write to avoid data races, since they can be read concurrently,
+   * via {@link #addAcceptableReferenceProviders}
+   */
+  private final Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> myNamesToProvidersMap = new ConcurrentHashMap<>(5);
+  private final Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> myNamesToProvidersMapInsensitive = new ConcurrentHashMap<>(5);
 
+  synchronized
   public void registerProvider(@NonNls String @NotNull [] names,
                                @NotNull ElementPattern<?> filter,
                                boolean caseSensitive,
                                @NotNull PsiReferenceProvider provider,
                                double priority) {
-    Map<String, List<ProviderInfo<ElementPattern<?>>>> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
+    Map<String, @NotNull ProviderInfo<ElementPattern<?>>[]> map = caseSensitive ? myNamesToProvidersMap : myNamesToProvidersMapInsensitive;
 
     for (String attributeName : names) {
       String key = caseSensitive ? attributeName : StringUtil.toLowerCase(attributeName);
-      List<ProviderInfo<ElementPattern<?>>> psiReferenceProviders = map.get(key);
+      ProviderInfo<ElementPattern<?>>[] psiReferenceProviders = map.get(key);
 
-      if (psiReferenceProviders == null) {
-        map.put(key, psiReferenceProviders = new SmartList<>());
-      }
+      ProviderInfo<ElementPattern<?>> newInfo = new ProviderInfo<>(provider, filter, priority);
+      ProviderInfo<ElementPattern<?>>[] newProviders = psiReferenceProviders == null ? new ProviderInfo[]{newInfo} : ArrayUtil.append(psiReferenceProviders, newInfo);
 
-      psiReferenceProviders.add(new ProviderInfo<>(provider, filter, priority));
+      map.put(key, newProviders);
     }
   }
 
@@ -52,19 +56,28 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
                                               @NotNull PsiReferenceService.Hints hints) {
     String name = getName(position);
     if (name != null) {
-      addMatchingProviders(position, ContainerUtil.notNullize(myNamesToProvidersMap.get(name)), list, hints);
-      addMatchingProviders(position, ContainerUtil.notNullize(myNamesToProvidersMapInsensitive.get(StringUtil.toLowerCase(name))), list, hints);
+      addMatchingProviders(position, myNamesToProvidersMap.get(name), list, hints);
+      addMatchingProviders(position, myNamesToProvidersMapInsensitive.get(StringUtil.toLowerCase(name)), list, hints);
     }
   }
 
+  synchronized
   @Override
   public void unregisterProvider(@NotNull PsiReferenceProvider provider) {
-    for (List<ProviderInfo<ElementPattern<?>>> list : myNamesToProvidersMap.values()) {
-      list.removeIf(trinity -> trinity.provider.equals(provider));
+    for (Map.Entry<String, @NotNull ProviderInfo<ElementPattern<?>>[]> entry : myNamesToProvidersMap.entrySet()) {
+      entry.setValue((ProviderInfo<ElementPattern<?>>[])removeFromArray(provider, entry.getValue()));
     }
-    for (List<ProviderInfo<ElementPattern<?>>> list : myNamesToProvidersMapInsensitive.values()) {
-      list.removeIf(trinity -> trinity.provider.equals(provider));
+    for (Map.Entry<String, @NotNull ProviderInfo<ElementPattern<?>>[]> entry : myNamesToProvidersMapInsensitive.entrySet()) {
+      entry.setValue((ProviderInfo<ElementPattern<?>>[])removeFromArray(provider, entry.getValue()));
     }
+  }
+
+  static @NotNull ProviderInfo<?> @NotNull [] removeFromArray(@NotNull PsiReferenceProvider provider, @NotNull ProviderInfo<?> @NotNull [] array) {
+    int i = ContainerUtil.indexOf(array, trinity -> trinity.provider.equals(provider));
+    if (i != -1) {
+      return ArrayUtil.remove(array, i, ProviderInfo.ARRAY_FACTORY);
+    }
+    return array;
   }
 
   boolean isEmpty() {
@@ -74,9 +87,10 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   protected abstract @Nullable String getName(@NotNull PsiElement position);
 
   static void addMatchingProviders(@NotNull PsiElement position,
-                                   @NotNull List<? extends @NotNull ProviderInfo<ElementPattern<?>>> providerList,
+                                   @NotNull ProviderInfo<ElementPattern<?>> @Nullable [] providerList,
                                    @NotNull Collection<? super ProviderInfo<ProcessingContext>> output,
                                    @NotNull PsiReferenceService.Hints hints) {
+    if (providerList == null) return;
     SharedProcessingContext sharedProcessingContext = new SharedProcessingContext();
 
     for (ProviderInfo<ElementPattern<?>> info : providerList) {

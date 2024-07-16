@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.shortenRefs;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -24,6 +25,12 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/bulk")
         public static class Bulk extends AbstractFirShortenRefsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
             }
@@ -47,6 +54,12 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/calls")
         public static class Calls extends AbstractFirShortenRefsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
             }
@@ -210,6 +223,12 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/fakeRootPackage")
         public static class FakeRootPackage extends AbstractFirShortenRefsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
             }
@@ -223,6 +242,12 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/quailfiers")
         public static class Quailfiers extends AbstractFirShortenRefsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
             }
@@ -271,6 +296,12 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/shortenAndImport")
         public static class ShortenAndImport extends AbstractFirShortenRefsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
             }
@@ -284,6 +315,12 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/starImport")
         public static class StarImport extends AbstractFirShortenRefsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
             }
@@ -302,6 +339,12 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/shortenRefsFir/types")
         public static class Types extends AbstractFirShortenRefsTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
             }
@@ -421,6 +464,12 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/shortenRefs/this")
     public static class This extends AbstractFirShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestWithMuting, this, testDataFilePath);
         }

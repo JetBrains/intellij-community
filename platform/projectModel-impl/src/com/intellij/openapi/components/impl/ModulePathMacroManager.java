@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.serviceContainer.NonInjectable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -59,6 +60,7 @@ public class ModulePathMacroManager extends PathMacroManager {
     return result;
   }
 
+  @ApiStatus.Internal
   public void onImlFileMoved() {
     resetCachedReplacePathMap();
   }

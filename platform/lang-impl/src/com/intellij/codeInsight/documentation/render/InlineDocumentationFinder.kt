@@ -19,7 +19,14 @@ interface InlineDocumentationFinder {
     @JvmStatic fun getInstance(project: Project?): InlineDocumentationFinder? = project?.getService(InlineDocumentationFinder::class.java)
   }
 
-  fun getInlineDocumentation(item: DocRenderItem): InlineDocumentation?
+  fun getInlineDocumentation(item: DocRenderItem): InlineDocumentation? {
+    if (item.highlighter.isValid) {
+      val psiDocumentManager = PsiDocumentManager.getInstance(item.editor.project ?: return null)
+      val file = psiDocumentManager.getPsiFile(item.editor.document) ?: return null
+      return findInlineDocumentation(file, item.highlighter.textRange)
+    }
+    return null
+  }
   fun getInlineDocumentationTarget(item: DocRenderItem): DocumentationTarget?
 }
 
@@ -28,14 +35,6 @@ interface InlineDocumentationFinder {
  */
 @ApiStatus.Internal
 class InlineDocumentationFinderImpl : InlineDocumentationFinder {
-  override fun getInlineDocumentation(item: DocRenderItem): InlineDocumentation? {
-    if (item.highlighter.isValid) {
-      val psiDocumentManager = PsiDocumentManager.getInstance(item.editor.project ?: return null)
-      val file = psiDocumentManager.getPsiFile(item.editor.document) ?: return null
-      return findInlineDocumentation(file, item.highlighter.textRange)
-    }
-    return null
-  }
 
   override fun getInlineDocumentationTarget(item: DocRenderItem): DocumentationTarget? {
     val documentation = getInlineDocumentation(item)

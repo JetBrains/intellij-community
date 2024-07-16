@@ -29,6 +29,10 @@ interface ModuleBridge : ModuleEx {
    */
   var diff: MutableEntityStorage?
 
+  /**
+   * This is an internal function used by the platform to update the module instance when it's renamed.
+   * To rename a module, use [com.intellij.openapi.module.ModifiableModuleModel.renameModule].
+   */
   fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean)
 
   fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl)

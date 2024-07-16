@@ -4,9 +4,11 @@ package git4idea;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Comparator;
 
 /**
  * The base class for named git references, like branches and tags.
@@ -15,6 +17,11 @@ public abstract class GitReference implements Comparable<GitReference> {
 
   public static final HashingStrategy<String> BRANCH_NAME_HASHING_STRATEGY =
     SystemInfoRt.isFileSystemCaseSensitive ? HashingStrategy.canonical() : HashingStrategy.caseInsensitive();
+
+  public static final Comparator<@NotNull String> REFS_NAMES_COMPARATOR = (name1, name2) -> {
+    boolean ignoreCase = !SystemInfo.isFileSystemCaseSensitive;
+    return NaturalComparator.naturalCompare(name1, name2, ignoreCase, false);
+  };
 
   protected final @NotNull String myName;
 
@@ -56,6 +63,6 @@ public abstract class GitReference implements Comparable<GitReference> {
   @Override
   public int compareTo(GitReference o) {
     // NB: update overridden comparators on modifications
-    return o == null ? 1 : StringUtil.compare(getFullName(), o.getFullName(), SystemInfo.isFileSystemCaseSensitive);
+    return o == null ? 1 : REFS_NAMES_COMPARATOR.compare(getFullName(), o.getFullName());
   }
 }

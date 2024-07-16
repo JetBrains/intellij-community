@@ -19,7 +19,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConjunctionPredicate implements PsiElementPredicate {
@@ -33,6 +33,6 @@ class ConjunctionPredicate implements PsiElementPredicate {
     if (!tokenType.equals(JavaTokenType.ANDAND) && !tokenType.equals(JavaTokenType.OROR)) {
       return false;
     }
-    return !PsiUtilCore.hasErrorElementChild(expression);
+    return !PsiTreeUtil.hasErrorElements(expression);
   }
 }

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author Brice Dutheil
  * @author Hamlet D'Arcy
  */
-public class SplitIfIntention extends GrPsiUpdateIntention {
+public final class SplitIfIntention extends GrPsiUpdateIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement andElement, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {

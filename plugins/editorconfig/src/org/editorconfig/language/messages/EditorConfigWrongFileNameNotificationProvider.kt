@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.messages
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.util.function.Function
 import javax.swing.JComponent
+import javax.swing.event.HyperlinkEvent
 
 private const val DISABLE_KEY = "editorconfig.wrong.name.notification.disabled"
 
@@ -31,23 +34,23 @@ internal class EditorConfigWrongFileNameNotificationProvider : EditorNotificatio
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
     if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
     if (nameMatches(file)) return null
-    val renameRunnable = createRenameRunnable(project, file)
-    return Function { createNotificationPanel(file, it, project, renameRunnable) }
+    val renameAction = createRenameAction(project, file)
+    return Function { createNotificationPanel(file, it, project, renameAction) }
   }
 
   private fun createNotificationPanel(file: VirtualFile,
                                       fileEditor: FileEditor,
                                       project: Project,
-                                      renameRunnable: Runnable?): EditorNotificationPanel? {
+                                      renameAction: EditorNotificationPanel.ActionHandler?): EditorNotificationPanel? {
     if (fileEditor !is TextEditor) return null
     val editor = fileEditor.editor
     if (editor.getUserData(HIDDEN_KEY) != null) return null
-    return buildPanel(editor, file, project, renameRunnable)
+    return buildPanel(editor, file, project, renameAction)
   }
 
-  private fun createRenameRunnable(project: Project, file: VirtualFile): Runnable? {
+  private fun createRenameAction(project: Project, file: VirtualFile): EditorNotificationPanel.ActionHandler? {
     if (findEditorConfig(file) == null) {
-      return Runnable {
+      val fn = Runnable {
         if (runReadAction { findEditorConfig(file) } != null) {
           file.parent.findChild(EditorConfigFileConstants.FILE_NAME)
           val message = EditorConfigBundle["notification.error.file.already.exists"]
@@ -65,16 +68,29 @@ internal class EditorConfigWrongFileNameNotificationProvider : EditorNotificatio
 
         update(file, project)
       }
+      return object : EditorNotificationPanel.ActionHandler {
+        override fun handlePanelActionClick(panel: EditorNotificationPanel, event: HyperlinkEvent) {
+          fn.run()
+        }
+
+        override fun handleQuickFixClick(editor: Editor, psiFile: PsiFile) {
+          fn.run()
+        }
+
+        override fun generatePreview(editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+          return IntentionPreviewInfo.rename(psiFile, EditorConfigFileConstants.FILE_NAME)
+        }
+      }
     }
     return null
   }
 
-  private fun buildPanel(editor: Editor, file: VirtualFile, project: Project, renameRunnable: Runnable?): EditorNotificationPanel {
+  private fun buildPanel(editor: Editor, file: VirtualFile, project: Project, renameAction: EditorNotificationPanel.ActionHandler?): EditorNotificationPanel {
     val result = EditorNotificationPanel(editor, null, null, EditorNotificationPanel.Status.Warning)
 
-    if (renameRunnable != null) {
+    if (renameAction != null) {
       val rename = EditorConfigBundle["notification.action.rename"]
-      result.createActionLabel(rename, renameRunnable)
+      result.createActionLabel(rename, renameAction, true)
     }
 
     val hide = EditorConfigBundle["notification.action.hide.once"]

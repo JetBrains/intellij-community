@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.startup
 
 import com.intellij.execution.*
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder.Companion.create
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -33,9 +33,9 @@ private suspend fun beforeRunAsync(project: Project) {
   }
 }
 
-internal class ProjectStartupRunner : ProjectActivity {
+private class ProjectStartupRunner : ProjectActivity {
   override suspend fun execute(project: Project) {
-    val projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project)
+    val projectStartupTaskManager = project.serviceAsync<ProjectStartupTaskManager>()
     if (projectStartupTaskManager.isEmpty) {
       return
     }

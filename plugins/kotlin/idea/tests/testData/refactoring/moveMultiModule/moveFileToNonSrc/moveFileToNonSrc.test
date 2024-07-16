@@ -1,5 +1,7 @@
 {
   "mainFile": "A/src/test/foo.kt",
   "type": "MOVE_FILES",
-  "targetDirectory": "A/notSrc"
+  "targetDirectory": "A/notSrc",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
 }

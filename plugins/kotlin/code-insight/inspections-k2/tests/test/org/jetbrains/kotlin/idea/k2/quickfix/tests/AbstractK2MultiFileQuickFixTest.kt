@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.psi.KtFile
 
 
 abstract class AbstractK2MultiFileQuickFixTest: AbstractQuickFixMultiFileTest() {
-    override fun isFirPlugin() = true
 
     override fun checkForUnexpectedErrors(file: KtFile) {}
 }

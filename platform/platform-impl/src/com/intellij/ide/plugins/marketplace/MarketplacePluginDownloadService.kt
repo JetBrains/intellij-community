@@ -62,7 +62,7 @@ open class MarketplacePluginDownloadService {
   private val objectMapper by lazy { ObjectMapper() }
 
   @Throws(IOException::class)
-  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
+  open fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?): File {
     val file = getPluginTempFile()
     return HttpRequests
       .request(pluginUrl)
@@ -79,13 +79,13 @@ open class MarketplacePluginDownloadService {
           else {
             val contentDisposition: String? = request.connection.getHeaderField("Content-Disposition")
             val url = request.connection.url.toString()
-            guessPluginFile(contentDisposition, url, file, pluginUrl)
+            guessPluginFilenameAndRenameDownloadedFile(contentDisposition, url, file, pluginUrl)
           }
         })
   }
 
   @Throws(IOException::class)
-  fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator): File {
+  fun downloadPluginViaBlockMap(pluginUrl: String, prevPlugin: Path, indicator: ProgressIndicator?): File {
     val prevPluginArchive = getPrevPluginArchive(prevPlugin)
     if (!prevPluginArchive.exists()) {
       LOG.info(IdeBundle.message("error.file.not.found.message", prevPluginArchive.toString()))
@@ -142,7 +142,7 @@ open class MarketplacePluginDownloadService {
         renameFileToZipRoot(file)
       }
       else {
-        guessPluginFile(guessFileParameters.contentDisposition, guessFileParameters.url, file, pluginUrl)
+        guessPluginFilenameAndRenameDownloadedFile(guessFileParameters.contentDisposition, guessFileParameters.url, file, pluginUrl)
       }
     }
     catch (e: HttpRequests.HttpStatusException) {
@@ -156,8 +156,8 @@ open class MarketplacePluginDownloadService {
   private fun processBlockmapDownloadProblem(
     exception: Exception,
     pluginUrl: String,
-    indicator: ProgressIndicator,
-    printStackTrace: Boolean = false
+    indicator: ProgressIndicator?,
+    printStackTrace: Boolean = false,
   ): File {
     val message = IdeBundle.message("error.download.plugin.via.blockmap", pluginUrl)
     if (printStackTrace) {
@@ -188,7 +188,7 @@ open class MarketplacePluginDownloadService {
   }
 }
 
-private fun guessPluginFile(contentDisposition: String?, url: String, file: File, pluginUrl: String): File {
+private fun guessPluginFilenameAndRenameDownloadedFile(contentDisposition: String?, url: String, file: File, pluginUrl: String): File {
   val fileName: String = guessFileName(contentDisposition, url, file, pluginUrl)
   val newFile = File(file.parentFile, fileName)
   FileUtil.rename(file, newFile)

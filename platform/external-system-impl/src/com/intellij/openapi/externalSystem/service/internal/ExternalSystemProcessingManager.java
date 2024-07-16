@@ -57,7 +57,7 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
 
   public ExternalSystemProcessingManager() {
     Application app = ApplicationManager.getApplication();
-    myFacadeManager = app.getService(ExternalSystemFacadeManager.class);
+    myFacadeManager = ExternalSystemFacadeManager.getInstance();
     if (app.isUnitTestMode()) {
       return;
     }
@@ -134,11 +134,6 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
     if (myAlarm.isEmpty()) {
       myAlarm.addRequest(() -> update(), TOO_LONG_EXECUTION_MS);
     }
-  }
-
-  @Override
-  public void onStart(@NotNull ExternalSystemTaskId id) {
-    myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
   }
 
   @Override

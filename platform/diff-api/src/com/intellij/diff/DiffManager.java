@@ -37,6 +37,7 @@ import java.awt.*;
  * @see DiffContentFactory
  * @see DiffRequestChain
  * @see com.intellij.diff.impl.CacheDiffRequestProcessor
+ * @see com.intellij.openapi.vcs.changes.EditorTabDiffPreview
  */
 public abstract class DiffManager {
   @NotNull

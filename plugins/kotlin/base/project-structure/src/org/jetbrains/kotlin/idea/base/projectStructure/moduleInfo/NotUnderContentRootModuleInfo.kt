@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.NonSourceModuleInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
@@ -14,16 +13,11 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
-import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo as OldNotUnderContentRootModuleInfo
 
 class NotUnderContentRootModuleInfo(
     override val project: Project,
     file: KtFile?
-) : OldNotUnderContentRootModuleInfo(), IdeaModuleInfo, NonSourceModuleInfoBase {
-    @Deprecated("Backing 'KtFile' expected")
-    @ApiStatus.ScheduledForRemoval
-    constructor(project: Project) : this(project, null)
-
+) : IdeaModuleInfo, NonSourceModuleInfoBase {
     private val filePointer: SmartPsiElementPointer<KtFile>? = file?.let { SmartPointerManager.createPointer(it.originalFile as KtFile) }
 
     val file: KtFile?

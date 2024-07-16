@@ -3,7 +3,7 @@ package com.intellij.platform.runtime.repository
 
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.createParentDirectories
 import org.intellij.lang.annotations.Language
@@ -15,10 +15,10 @@ fun DirectoryContentBuilder.xml(name: String, @Language("XML") content: String) 
   file(name, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n$content")
 }
 
-fun createRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescriptor, bootstrapModuleName: String? = null): RuntimeModuleRepository {
+fun createRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescriptor): RuntimeModuleRepository {
   val moduleDescriptorsJarPath = basePath.resolve("module-descriptors.jar")
-  RuntimeModuleRepositorySerialization.saveToJar(descriptors.asList(), bootstrapModuleName, moduleDescriptorsJarPath, 0)
-  return RuntimeModuleRepositoryImpl(moduleDescriptorsJarPath)
+  return RuntimeModuleRepositoryImpl(moduleDescriptorsJarPath, 
+                                     RawRuntimeModuleRepositoryData(descriptors.associateBy { it.id }, basePath, null))
 }
 
 fun writePluginXml(resourceRoot: Path, @Language("XM") content: String) {

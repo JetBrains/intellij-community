@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
@@ -407,12 +407,10 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     if (object instanceof TreePath path) {
       object = path.getLastPathComponent();
     }
-    if (object instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
+    if (object instanceof DefaultMutableTreeNode node) {
       object = node.getUserObject();
     }
-    if (object instanceof FilteringTreeStructure.FilteringNode) {
-      FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
+    if (object instanceof FilteringTreeStructure.FilteringNode node) {
       object = node.getDelegate();
     }
     return object instanceof MyNode

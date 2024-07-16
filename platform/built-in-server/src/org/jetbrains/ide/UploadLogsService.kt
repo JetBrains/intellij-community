@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.CollectZippedLogsAction
 import com.intellij.ide.actions.ReportFeedbackService
-import com.intellij.ide.logsUploader.LogsPacker
+import com.intellij.ide.logsUploader.LogPacker
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
@@ -59,7 +59,7 @@ class UploadLogsService : RestService() {
           withBackgroundProgress(project, IdeBundle.message("collect.upload.logs.progress.title"), true) {
             try {
               val byteOut = BufferExposingByteArrayOutputStream()
-              val uploadedID = LogsPacker.uploadLogs(project)
+              val uploadedID = LogPacker.uploadLogs(project)
               JsonFactory().createGenerator(byteOut).useDefaultPrettyPrinter().use { writer ->
                 writer.obj {
                   writer.writeStringField("Upload_id", uploadedID)

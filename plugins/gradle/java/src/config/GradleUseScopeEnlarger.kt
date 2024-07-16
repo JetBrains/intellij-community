@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiReference
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UseScopeEnlarger
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -43,6 +44,10 @@ class GradleUseScopeEnlarger : UseScopeEnlarger() {
 
       if (!isInBuildSrc(project, virtualFile) && !isInGradleDistribution(project, virtualFile)) return null
 
+      val useScope = element.useScope
+      if (useScope is LocalSearchScope && useScope.virtualFiles.singleOrNull() == virtualFile) {
+        return null
+      }
 
       return GradleBuildscriptSearchScope(element.project)
     }

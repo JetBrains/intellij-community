@@ -69,6 +69,11 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     return container;
   }
 
+  @NotNull
+  public XEvaluationOrigin getEvaluationOrigin() {
+    return XEvaluationOrigin.WATCH;
+  }
+
   protected void evaluated() {
   }
 
@@ -116,13 +121,21 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
       node.setPresentation(AllIcons.Debugger.Db_watch, EMPTY_PRESENTATION, false);
     }
 
-    private class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {
+    private class MyEvaluationCallback extends XEvaluationCallbackBase implements XEvaluationCallbackWithOrigin, Obsolescent {
       @NotNull private final XValueNode myNode;
       @NotNull private final XValuePlace myPlace;
 
       MyEvaluationCallback(@NotNull XValueNode node, @NotNull XValuePlace place) {
         myNode = node;
         myPlace = place;
+      }
+
+      @Override
+      public XEvaluationOrigin getOrigin() {
+        if (myNode instanceof WatchNodeImpl watchNode) {
+          return watchNode.getEvaluationOrigin();
+        }
+        return XEvaluationOrigin.UNSPECIFIED_WATCH;
       }
 
       @Override

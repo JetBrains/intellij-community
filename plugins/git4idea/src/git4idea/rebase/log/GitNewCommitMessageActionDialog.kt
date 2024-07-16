@@ -1,25 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingActionBase.Companion.findContainingBranches
 import org.jetbrains.annotations.Nls
-import javax.swing.BorderFactory
 import javax.swing.JComponent
 
 internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.MultipleCommitEditingData>(
@@ -65,23 +62,13 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     return null
   }
 
-  override fun createCenterPanel(): BorderLayoutPanel {
-    return JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-      .addToTop(
-        JBUI.Panels.simplePanel()
-          .addToCenter(JBLabel(dialogLabel))
-          .addToRight(createToolbar())
-      )
-      .addToCenter(commitEditor)
-  }
-
-  private fun createToolbar(): JComponent {
-    val actionGroup = ActionManager.getInstance().getAction("Git.Reword.ToolbarActions") as ActionGroup
-    val toolbar = ActionManager.getInstance().createActionToolbar("GitNewCommitMessageActionDialog", actionGroup, true)
-    toolbar.setReservePlaceAutoPopupIcon(false)
-    toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder())
-    toolbar.setTargetComponent(commitEditor)
-    return toolbar.getComponent()
+  override fun createCenterPanel(): JComponent {
+    return panel {
+      commitMessageWithLabelAndToolbar(commitEditor, dialogLabel)
+    }.also {
+      // Temporary workaround for IDEA-302779
+      it.minimumSize = JBUI.size(400, 120)
+    }
   }
 
   override fun getPreferredFocusedComponent() = commitEditor.editorField
@@ -98,13 +85,6 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     }
     editor.text = originMessage
     editor.editorField.setCaretPosition(0)
-    editor.editorField.addSettingsProvider { editorEx ->
-      // display at least several rows for one-line messages
-      val MIN_ROWS = 3
-      if ((editorEx as EditorImpl).visibleLineCount < MIN_ROWS) {
-        verticalStretch = 1.5F
-      }
-    }
     return editor
   }
 
@@ -130,4 +110,18 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     return commitEditor.comment != originMessage
   }
 
+}
+
+internal fun Panel.commitMessageWithLabelAndToolbar(commitMessage: CommitMessage, label: @NlsContexts.Label String) {
+  row {
+    label(label).also { it.component.labelFor = commitMessage.editorField }
+      .resizableColumn()
+      .align(Align.FILL)
+    cell(commitMessage.createToolbar(true))
+  }
+  row {
+    cell(commitMessage)
+      .resizableColumn()
+      .align(Align.FILL)
+  }.resizableRow()
 }

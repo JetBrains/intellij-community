@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -310,7 +310,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
       return null;
     }
     final PsiReferenceExpression initialMethodExpression = initialCall.getMethodExpression();
-    @NonNls final String initialCallName = initialMethodExpression.getReferenceName();
+    final @NonNls String initialCallName = initialMethodExpression.getReferenceName();
     if (!HardcodedMethodConstants.ITERATOR.equals(initialCallName) && !"listIterator".equals(initialCallName)) {
       return null;
     }
@@ -361,10 +361,9 @@ public final class ForCanBeForeachInspection extends BaseInspection {
     return ExpressionUtils.isReferenceTo(qualifier, iterator);
   }
 
-  @Nullable
-  private static PsiReferenceExpression getVariableReferenceFromCondition(PsiExpression condition,
-                                                                          PsiVariable variable,
-                                                                          PsiElement secondDeclaredElement) {
+  private static @Nullable PsiReferenceExpression getVariableReferenceFromCondition(PsiExpression condition,
+                                                                                    PsiVariable variable,
+                                                                                    PsiElement secondDeclaredElement) {
     final PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiBinaryExpression.class);
     if (binaryExpression == null) return null;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
@@ -418,8 +417,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
     }
   }
 
-  @Nullable
-  private static Holder getCollectionFromSizeComparison(PsiExpression condition, PsiVariable variable, PsiElement secondDeclaredElement) {
+  private static @Nullable Holder getCollectionFromSizeComparison(PsiExpression condition, PsiVariable variable, PsiElement secondDeclaredElement) {
     condition = PsiUtil.skipParenthesizedExprDown(condition);
     if (!(condition instanceof PsiBinaryExpression binaryExpression)) {
       return null;
@@ -459,11 +457,9 @@ public final class ForCanBeForeachInspection extends BaseInspection {
     return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_LIST);
   }
 
-  @Nullable
-  private static Holder getCollectionFromListMethodCall(PsiExpression expression, String methodName, PsiElement secondDeclaredElement) {
+  private static @Nullable Holder getCollectionFromListMethodCall(PsiExpression expression, String methodName, PsiElement secondDeclaredElement) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (secondDeclaredElement != null && !secondDeclaredElement.equals(target)) {
         return null;
@@ -505,16 +501,13 @@ public final class ForCanBeForeachInspection extends BaseInspection {
         qualifierExpression instanceof PsiSuperExpression) {
       return new Holder(methodExpression);
     }
-    if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+    if (!(qualifierExpression instanceof PsiReferenceExpression referenceExpression)) {
       return null;
     }
-    final PsiReferenceExpression referenceExpression =
-      (PsiReferenceExpression)qualifierExpression;
     final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiVariable)) {
+    if (!(target instanceof PsiVariable variable)) {
       return null;
     }
-    final PsiVariable variable = (PsiVariable)target;
     return new Holder(variable, methodExpression);
   }
 
@@ -540,8 +533,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ForLoopReplaceableByForEach";
   }
 
@@ -551,8 +543,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("for.can.be.foreach.problem.descriptor");
   }
 
@@ -566,8 +557,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
     return new ForCanBeForeachVisitor();
   }
 
-  @Nullable
-  static PsiType getContentType(PsiType type, String containerClassName) {
+  static @Nullable PsiType getContentType(PsiType type, String containerClassName) {
     final PsiType parameterType = PsiUtil.substituteTypeParameter(type, containerClassName, 0, true);
     return GenericsUtil.getVariableTypeByExpressionType(parameterType);
   }
@@ -652,7 +642,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
       return false;
     }
     final PsiReferenceExpression reference = callExpression.getMethodExpression();
-    @NonNls final String referenceName = reference.getReferenceName();
+    final @NonNls String referenceName = reference.getReferenceName();
     if (!HardcodedMethodConstants.NEXT.equals(referenceName)) {
       return false;
     }
@@ -666,8 +656,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
       .byName("value", "item", "element").generate(true);
   }
 
-  @Nullable
-  static PsiStatement getFirstStatement(PsiStatement body) {
+  static @Nullable PsiStatement getFirstStatement(PsiStatement body) {
     if (!(body instanceof PsiBlockStatement block)) {
       return body;
     }
@@ -675,8 +664,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
     return ControlFlowUtils.getFirstStatementInBlock(codeBlock);
   }
 
-  @NotNull
-  private static String getVariableReferenceText(PsiReferenceExpression reference, PsiVariable variable, PsiElement context) {
+  private static @NotNull String getVariableReferenceText(PsiReferenceExpression reference, PsiVariable variable, PsiElement context) {
     final String text = reference.getText();
     final PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(context.getProject());
     PsiExpression qualifier = reference.getQualifierExpression();
@@ -711,7 +699,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
       if (iteratorUsed || numCallsToIteratorNext > 1) return;
       if (expression.getArgumentList().isEmpty()) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        @NonNls final String methodName = methodExpression.getReferenceName();
+        final @NonNls String methodName = methodExpression.getReferenceName();
         if (HardcodedMethodConstants.NEXT.equals(methodName)) {
           final PsiExpression qualifier = methodExpression.getQualifierExpression();
           if (ExpressionUtils.isReferenceTo(qualifier, iterator) && isExecutedExactlyOnce(expression)) {
@@ -1009,8 +997,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("foreach.replace.quickfix");
     }
 
@@ -1085,7 +1072,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
       final PsiStatement firstStatement = getFirstStatement(body);
       final boolean isDeclaration = isListElementDeclaration(firstStatement, listVariable, indexVariable);
       final String contentVariableName;
-      @NonNls final String finalString;
+      final @NonNls String finalString;
       final PsiStatement statementToSkip;
       if (isDeclaration) {
         final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)firstStatement;
@@ -1117,9 +1104,9 @@ public final class ForCanBeForeachInspection extends BaseInspection {
         statementToSkip = null;
       }
       final CommentTracker ct = new CommentTracker();
-      @NonNls final StringBuilder newStatement = new StringBuilder("for(");
+      final @NonNls StringBuilder newStatement = new StringBuilder("for(");
       newStatement.append(finalString).append(parameterType.getCanonicalText()).append(' ').append(contentVariableName).append(": ");
-      @NonNls final String listName;
+      final @NonNls String listName;
       if (listReference == null) {
         listName = ct.text(qualifier);
       }
@@ -1158,8 +1145,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
       }
     }
 
-    @Nullable
-    private static PsiVariable getIndexVariable(@NotNull PsiForStatement forStatement) {
+    private static @Nullable PsiVariable getIndexVariable(@NotNull PsiForStatement forStatement) {
       final PsiStatement initialization = forStatement.getInitialization();
       if (!(initialization instanceof PsiDeclarationStatement)) {
         return null;
@@ -1209,7 +1195,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
 
       final boolean isDeclaration = isIteratorNextDeclaration(firstStatement, iterator, contentType);
       final PsiStatement statementToSkip;
-      @NonNls final String finalString;
+      final @NonNls String finalString;
       final String contentVariableName;
       if (isDeclaration) {
         final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)firstStatement;
@@ -1236,7 +1222,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
       }
       final String contentTypeString = iteratorContentType.getCanonicalText();
       final CommentTracker ct = new CommentTracker();
-      @NonNls final StringBuilder newStatement = new StringBuilder();
+      final @NonNls StringBuilder newStatement = new StringBuilder();
       newStatement.append("for(");
       newStatement.append(finalString);
       newStatement.append(contentTypeString);
@@ -1290,7 +1276,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
       final PsiStatement firstStatement = getFirstStatement(body);
       final boolean isDeclaration = isArrayElementDeclaration(firstStatement, arrayVariable, indexVariable);
       final String contentVariableName;
-      @NonNls final String finalString;
+      final @NonNls String finalString;
       final PsiStatement statementToSkip;
       if (isDeclaration) {
         final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)firstStatement;
@@ -1334,7 +1320,7 @@ public final class ForCanBeForeachInspection extends BaseInspection {
         statementToSkip = null;
       }
       final CommentTracker ct = new CommentTracker();
-      @NonNls final StringBuilder newStatement = new StringBuilder();
+      final @NonNls StringBuilder newStatement = new StringBuilder();
       newStatement.append("for(");
       newStatement.append(finalString);
       newStatement.append(componentType.getCanonicalText());

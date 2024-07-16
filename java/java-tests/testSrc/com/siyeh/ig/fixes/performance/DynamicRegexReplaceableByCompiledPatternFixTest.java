@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.performance;
 
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
@@ -9,17 +10,20 @@ import com.siyeh.ig.performance.DynamicRegexReplaceableByCompiledPatternInspecti
 
 public class DynamicRegexReplaceableByCompiledPatternFixTest extends IGQuickFixesTestCase {
 
+  private DynamicRegexReplaceableByCompiledPatternInspection myInspection;
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new DynamicRegexReplaceableByCompiledPatternInspection());
+    myInspection = new DynamicRegexReplaceableByCompiledPatternInspection();
+    myFixture.enableInspections(myInspection);
     myRelativePath = "performance/replace_with_compiled_pattern";
     myDefaultHint = InspectionGadgetsBundle.message("dynamic.regex.replaceable.by.compiled.pattern.quickfix");
   }
 
   public void testLiteral() { doTest(); }
   public void testLiteralLiteral() { doTest(); }
-  public void testReplaceAll() { doTest("Fix all 'Dynamic regular expression could be replaced by compiled 'Pattern'' problems in file"); }
+  public void testReplaceAll() { doTest(InspectionsBundle.message("fix.all.inspection.problems.in.file", myInspection.getDisplayName())); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {

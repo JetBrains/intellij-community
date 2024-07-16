@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.search.refIndex;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -28,6 +29,12 @@ public abstract class KotlinCompilerReferenceByReferenceFirTestGenerated extends
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../tests/testData/compilerIndexByReference/library/any")
             public static class TestHashCode extends AbstractKotlinCompilerReferenceByReferenceFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -40,11 +47,44 @@ public abstract class KotlinCompilerReferenceByReferenceFirTestGenerated extends
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../tests/testData/compilerIndexByReference/library/long")
+        public abstract static class Long extends AbstractKotlinCompilerReferenceByReferenceFirTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../tests/testData/compilerIndexByReference/library/long/class")
+            public abstract static class Class extends AbstractKotlinCompilerReferenceByReferenceFirTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../tests/testData/compilerIndexByReference/library/long/class")
+                public static class TestClass extends AbstractKotlinCompilerReferenceByReferenceFirTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("class")
+                    public void testClass() throws Exception {
+                        runTest("../tests/testData/compilerIndexByReference/library/long/class/class/");
+                    }
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../tests/testData/compilerIndexByReference/library/object")
         public abstract static class Object extends AbstractKotlinCompilerReferenceByReferenceFirTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../tests/testData/compilerIndexByReference/library/object")
             public static class TestHashCode extends AbstractKotlinCompilerReferenceByReferenceFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -52,6 +92,48 @@ public abstract class KotlinCompilerReferenceByReferenceFirTestGenerated extends
                 @TestMetadata("hashCode")
                 public void testHashCode() throws Exception {
                     runTest("../tests/testData/compilerIndexByReference/library/object/hashCode/");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../tests/testData/compilerIndexByReference/library/string_")
+        public abstract static class String_ extends AbstractKotlinCompilerReferenceByReferenceFirTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../tests/testData/compilerIndexByReference/library/string_")
+            public static class TestClass extends AbstractKotlinCompilerReferenceByReferenceFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("class")
+                public void testClass() throws Exception {
+                    runTest("../tests/testData/compilerIndexByReference/library/string_/class/");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../tests/testData/compilerIndexByReference/library/string_")
+            public static class TestLength extends AbstractKotlinCompilerReferenceByReferenceFirTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("length")
+                public void testLength() throws Exception {
+                    runTest("../tests/testData/compilerIndexByReference/library/string_/length/");
                 }
             }
         }

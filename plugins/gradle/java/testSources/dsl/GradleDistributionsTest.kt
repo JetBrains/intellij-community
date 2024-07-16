@@ -18,7 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradleDistributionsTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distributions container`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "<caret>distributions") {
@@ -28,7 +28,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distributions call`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "<caret>distributions {}") {
@@ -38,7 +38,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distributions closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions { <caret> }") {
@@ -48,7 +48,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution via unqualified property reference`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions { <caret>foo }") {
@@ -58,7 +58,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution via unqualified method call`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions { <caret>foo {} }") {
@@ -68,7 +68,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution closure delegate in unqualified method call`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions { foo { <caret> } }") {
@@ -78,7 +78,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution member via unqualified method call closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions { foo { <caret>${getDistributionBaseNameMethod()} } }") {
@@ -89,7 +89,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution via qualified property reference`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions.<caret>foo") {
@@ -99,7 +99,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution via qualified method call`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions.<caret>foo {}") {
@@ -109,7 +109,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution closure delegate in qualified method call`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions.foo { <caret> }") {
@@ -119,7 +119,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution member via qualified method call closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions.foo { <caret>${getDistributionBaseNameMethod()} }") {
@@ -130,7 +130,7 @@ class GradleDistributionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test distribution contents closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     test(gradleVersion, FIXTURE_BUILDER) {
       testBuildscript(decorator, "distributions { foo { contents { <caret> } } }") {

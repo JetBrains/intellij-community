@@ -8,8 +8,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
@@ -21,44 +19,46 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 import static java.awt.EventQueue.isDispatchThread;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public abstract class Invoker implements Disposable {
   private static final int THRESHOLD = Integer.MAX_VALUE;
-  private static final Logger LOG = Logger.getInstance(Invoker.class);
+  static final Logger LOG = Logger.getInstance(Invoker.class);
   private static final AtomicInteger UID = new AtomicInteger();
-  private final Map<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
+  final InvokerDelegate delegate;
   private final AtomicInteger count = new AtomicInteger();
   private final ThreeState useReadAction;
-  private final String description;
   private volatile boolean disposed;
 
-  private Invoker(@NotNull String prefix, @NotNull String parentName, @NotNull ThreeState useReadAction) {
+  private Invoker(@NotNull InvokerDelegate delegate, @NotNull ThreeState useReadAction) {
+    this.delegate = delegate;
+    Disposer.register(this, this.delegate);
+    this.useReadAction = useReadAction;
+  }
+
+  private static @NotNull String newDescription(@NotNull String prefix, @NotNull String parentName, @NotNull ThreeState useReadAction) {
+    final String description;
     String readActionDescriptionPart = useReadAction != ThreeState.UNSURE ? ".ReadAction=" + useReadAction : "";
     description = "Invoker." + UID.getAndIncrement() + "." + prefix + readActionDescriptionPart + ": " + parentName;
-    this.useReadAction = useReadAction;
+    return description;
   }
 
   @Override
   public String toString() {
-    return description;
+    return delegate.getDescription();
   }
 
   @Override
   public void dispose() {
     disposed = true;
-    while (!indicators.isEmpty()) {
-      indicators.keySet().forEach(AsyncPromise::cancel);
-    }
   }
 
   /**
@@ -164,7 +164,7 @@ public abstract class Invoker implements Disposable {
     return disposed ? 0 : count.get();
   }
 
-  abstract void offer(@NotNull Runnable runnable, int delay);
+  abstract void offer(@NotNull Runnable runnable, int delay, Promise<?> promise);
 
   /**
    * @param task    a task to execute on the valid thread
@@ -174,7 +174,7 @@ public abstract class Invoker implements Disposable {
   private void offerSafely(@NotNull Task<?, ?> task, int attempt, int delay) {
     try {
       count.incrementAndGet();
-      offer(() -> invokeSafely(task, attempt), delay);
+      offer(() -> invokeSafely(task, attempt), delay, task.promise);
     }
     catch (RejectedExecutionException exception) {
       count.decrementAndGet();
@@ -191,7 +191,10 @@ public abstract class Invoker implements Disposable {
     try (AccessToken ignored = ClientId.withClientId(task.clientId)) {
       try {
         if (task.canInvoke(disposed)) {
-          if (!startTask(task, attempt)) return;
+          if (!delegate.run(task, task.promise)) {
+            offerRestart(task, attempt);
+            return;
+          }
           if (task instanceof Task.Async<?> t) {
             Promise<?> incomplete = t.setDone();
             if (incomplete != null) {
@@ -226,20 +229,6 @@ public abstract class Invoker implements Disposable {
     finally {
       task.promise.setError(throwable);
     }
-  }
-
-  private boolean startTask(@NotNull Task<?, ?> task, int attempt) {
-    if (getApplication() == null) {
-      task.run(); // is not interruptible in tests without application
-    }
-    else if (useReadAction != ThreeState.YES || isDispatchThread()) {
-      ProgressManager.getInstance().runProcess(task, indicator(task.promise));
-    }
-    else if (!runInReadActionWithWriteActionPriority(task, indicator(task.promise))) {
-      offerRestart(task, attempt);
-      return false;
-    }
-    return true;
   }
 
   /**
@@ -416,18 +405,6 @@ public abstract class Invoker implements Disposable {
     }
   }
 
-
-  private @NotNull ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
-    ProgressIndicatorBase indicator = indicators.get(promise);
-    if (indicator == null) {
-      indicator = new ProgressIndicatorBase(true, false);
-      ProgressIndicatorBase old = indicators.put(promise, indicator);
-      if (old != null) LOG.error("the same task is running in parallel");
-      promise.onProcessed(done -> indicators.remove(promise).cancel());
-    }
-    return indicator;
-  }
-
   /**
    * This class is the {@code Invoker} in the Event Dispatch Thread,
    * which is the only one valid thread for this invoker.
@@ -441,7 +418,7 @@ public abstract class Invoker implements Disposable {
      */
     @Deprecated(forRemoval = true)
     public EDT(@NotNull Disposable parent) {
-      super("EDT", parent.toString(), ThreeState.UNSURE);
+      super(InvokerService.getInstance().forEdt(newDescription("EDT", parent.toString(), ThreeState.UNSURE)), ThreeState.UNSURE);
       Disposer.register(parent, this);
     }
 
@@ -451,19 +428,13 @@ public abstract class Invoker implements Disposable {
     }
 
     @Override
-    void offer(@NotNull Runnable runnable, int delay) {
-      if (delay > 0) {
-        EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay, MILLISECONDS);
-      }
-      else {
-        EdtExecutorService.getInstance().execute(runnable);
-      }
+    void offer(@NotNull Runnable runnable, int delay, Promise<?> promise) {
+      delegate.offer(runnable, delay, promise);
     }
   }
 
   public static final class Background extends Invoker {
     private final Set<Thread> threads = ConcurrentCollectionFactory.createConcurrentSet();
-    private final ScheduledExecutorService executor;
 
     /**
      * Creates the invoker of user read actions on background threads.
@@ -476,19 +447,20 @@ public abstract class Invoker implements Disposable {
      */
     @Deprecated(forRemoval = true)
     public Background(@NotNull Disposable parent, int maxThreads) {
-      this(parent, ThreeState.YES, maxThreads);
+      this(parent, true, maxThreads);
     }
 
-    private Background(@NotNull Disposable parent, @NotNull ThreeState useReadAction, int maxThreads) {
-      super(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", String.valueOf(parent.toString()), useReadAction);
-      executor = AppExecutorUtil.createBoundedScheduledExecutorService(toString(), maxThreads);
+    private Background(@NotNull Disposable parent, boolean useReadAction, int maxThreads) {
+      super(
+        InvokerService.getInstance().forBgt(
+          newDescription(maxThreads != 1 ? "Pool(" + maxThreads + ")" : "Thread", String.valueOf(parent.toString()),
+                         useReadAction ? ThreeState.YES : ThreeState.NO),
+          useReadAction,
+          maxThreads
+        ),
+        useReadAction ? ThreeState.YES : ThreeState.NO
+      );
       Disposer.register(parent, this);
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      executor.shutdown();
     }
 
     @Override
@@ -497,8 +469,8 @@ public abstract class Invoker implements Disposable {
     }
 
     @Override
-    void offer(@NotNull Runnable runnable, int delay) {
-      schedule(executor, () -> {
+    void offer(@NotNull Runnable runnable, int delay, Promise<?> promise) {
+      delegate.offer(() -> {
         Thread thread = Thread.currentThread();
         if (!threads.add(thread)) {
           LOG.error("current thread is already used");
@@ -513,16 +485,7 @@ public abstract class Invoker implements Disposable {
             }
           }
         }
-      }, delay);
-    }
-  }
-
-  private static void schedule(ScheduledExecutorService executor, Runnable runnable, int delay) {
-    if (delay > 0) {
-      executor.schedule(runnable, delay, MILLISECONDS);
-    }
-    else {
-      executor.execute(runnable);
+      }, delay, promise);
     }
   }
 
@@ -532,18 +495,18 @@ public abstract class Invoker implements Disposable {
   }
 
   public static @NotNull Invoker forBackgroundPoolWithReadAction(@NotNull Disposable parent) {
-    return new Background(parent, ThreeState.YES, 8);
+    return new Background(parent, true, 8);
   }
 
   public static @NotNull Invoker forBackgroundPoolWithoutReadAction(@NotNull Disposable parent) {
-    return new Background(parent, ThreeState.NO, 8);
+    return new Background(parent, false, 8);
   }
 
   public static @NotNull Invoker forBackgroundThreadWithReadAction(@NotNull Disposable parent) {
-    return new Background(parent, ThreeState.YES, 1);
+    return new Background(parent, true, 1);
   }
 
   public static @NotNull Invoker forBackgroundThreadWithoutReadAction(@NotNull Disposable parent) {
-    return new Background(parent, ThreeState.NO, 1);
+    return new Background(parent, false, 1);
   }
 }

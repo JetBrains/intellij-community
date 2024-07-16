@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,10 +18,12 @@ import java.util.*;
  * It's recommended to have at least one {@link #byName(String...)} call with at least one non-null candidate as the last resort.
  */
 public final class VariableNameGenerator {
+
   private final @NotNull JavaCodeStyleManager myManager;
   private final @NotNull PsiElement myContext;
   private final @NotNull VariableKind myKind;
   private final @NonNls Set<String> candidates = new LinkedHashSet<>();
+  private final @NonNls Set<String> skipNames = new HashSet<>();
 
   /**
    * Constructs a new generator
@@ -92,6 +95,16 @@ public final class VariableNameGenerator {
   }
 
   /**
+   * @param names which generator will not use
+   * @return this generator
+   */
+  @Contract("_->this")
+  public VariableNameGenerator skipNames(@NotNull Collection<@NotNull String> names) {
+    skipNames.addAll(names);
+    return this;
+  }
+
+  /**
    * Generates and returns the unique name
    * @param lookForward whether further conflicting declarations should be considered 
    * @return a generated variable name
@@ -101,7 +114,7 @@ public final class VariableNameGenerator {
     String suffixed = null;
     @NonNls final Set<String> candidates = this.candidates.isEmpty() ? Collections.singleton("v") : this.candidates;
     for (String candidate : candidates) {
-      String name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward);
+      String name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward, skipNames);
       if (name.equals(candidate)) return name;
       if (suffixed == null) {
         suffixed = name;
@@ -120,12 +133,13 @@ public final class VariableNameGenerator {
       if (myContext instanceof PsiNameIdentifierOwner owner && candidate.equals(owner.getName())) {
         name = candidate;
       } else {
-        name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward);
+        name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward, skipNames);
       }
       if (name.equals(candidate)) result.add(name);
       else suffixed.add(name);
     }
     result.addAll(suffixed);
+
     return result;
   }
 }

@@ -11,7 +11,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
 internal object JdkComboBoxCollector: CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 2)
+  private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 3)
   private const val UNKNOWN_VENDOR = "unknown"
   private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
     .mapNotNull { it.displayName }
@@ -40,6 +40,11 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
     JDK_REGISTERED.log(variant, version)
   }
 
+  fun jdkDownloaded(item: JdkItem) {
+    val vendor = KNOWN_VENDORS.firstOrNull { item.fullPresentationText.contains(it) } ?: UNKNOWN_VENDOR
+    JDK_DOWNLOADED.log(vendor, findSdkVersion(item.presentableMajorVersionString))
+  }
+
   fun noJdkSelected() {
     NO_JDK_SELECTED.log()
   }
@@ -48,19 +53,10 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
     null -> -1
     else -> {
       val matchResult = when {
-        "GraalVM" in sdkVersionString -> Regex("Java ([0-9]+)(?:[.0-9]+)?").find(sdkVersionString)
-        else -> Regex("([0-9]+)(?:[.0-9]+)?").find(sdkVersionString)
+        "GraalVM" in sdkVersionString -> Regex("Java ([0-9]+)").find(sdkVersionString)
+        else -> Regex("([0-9]+)").find(sdkVersionString)
       }
       matchResult?.groups?.get(1)?.value?.toInt() ?: -1
     }
-  }
-
-  fun jdkDownloaded(item: JdkItem) {
-    val vendor = when (item.product.vendor) {
-      in KNOWN_VENDORS -> item.product.vendor
-      else -> UNKNOWN_VENDOR
-    }
-
-    JDK_DOWNLOADED.log(vendor, findSdkVersion(item.presentableMajorVersionString))
   }
 }

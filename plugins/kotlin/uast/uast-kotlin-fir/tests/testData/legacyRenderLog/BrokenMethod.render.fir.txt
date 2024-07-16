@@ -21,7 +21,7 @@ public final class BrokenMethodKt {
                 public fun equals(@org.jetbrains.annotations.Nullable other: java.lang.Object) : boolean = UastEmptyExpression
                 public static final class Companion {
                     public final fun doStuff1(@org.jetbrains.annotations.NotNull $this$doStuff1: java.lang.Object) : Used {
-                        return <init>(this)
+                        return Used(this)
                     }
                     private fun Companion() = UastEmptyExpression
                 }

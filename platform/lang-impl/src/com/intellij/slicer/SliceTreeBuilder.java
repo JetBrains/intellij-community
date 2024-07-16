@@ -19,7 +19,7 @@ public final class SliceTreeBuilder {
 
   public static final Comparator<NodeDescriptor<?>> SLICE_NODE_COMPARATOR = (o1, o2) -> {
     if (!(o1 instanceof SliceNode node1) || !(o2 instanceof SliceNode node2)) {
-      return AlphaComparator.INSTANCE.compare(o1, o2);
+      return AlphaComparator.getInstance().compare(o1, o2);
     }
     SliceUsage usage1 = node1.getValue();
     SliceUsage usage2 = node2.getValue();

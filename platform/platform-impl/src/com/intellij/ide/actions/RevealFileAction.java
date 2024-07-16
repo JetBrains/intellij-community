@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.idea.ActionsBundle;
@@ -12,7 +10,6 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -42,21 +39,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.stream.Stream;
+
+import static java.util.Objects.requireNonNullElseGet;
 
 /**
  * This helpful action opens a file or directory in a system file manager.
  *
  * @see ShowFilePathAction
  */
-public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification {
+public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification.Disabled {
   private static final Logger LOG = Logger.getInstance(RevealFileAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
@@ -82,11 +79,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   @Override
   public void update(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    e.getPresentation().setEnabledAndVisible(isSupported() && getFile(e) != null &&
-                                             (!ActionPlaces.isPopupPlace(e.getPlace()) ||
-                                              editor == null ||
-                                              !editor.getSelectionModel().hasSelection() ||
-                                              EditorUtil.contextMenuInvokedOutsideOfSelection(e)));
+    e.getPresentation().setEnabledAndVisible(
+      isSupported() &&
+      getFile(e) != null &&
+      (!ActionPlaces.isPopupPlace(e.getPlace()) ||
+       editor == null ||
+       !editor.getSelectionModel().hasSelection() ||
+       EditorUtil.contextMenuInvokedOutsideOfSelection(e)));
     e.getPresentation().setText(getActionName(e.getPlace()));
   }
 
@@ -101,12 +100,6 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     if (file != null) {
       openFile(file.toNioPath());
     }
-  }
-
-  @NotNull
-  @Override
-  public ActionRemoteBehavior getBehavior() {
-    return ActionRemoteBehavior.Disabled;
   }
 
   private static @Nullable VirtualFile getFile(AnActionEvent e) {
@@ -149,7 +142,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
            SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
            skipDetection ? IdeBundle.message("action.file.manager.text") :
-           Objects.requireNonNullElseGet(Holder.fileManagerName, () -> IdeBundle.message("action.file.manager.text"));
+           requireNonNullElseGet(Holder.fileManagerName, () -> IdeBundle.message("action.file.manager.text"));
   }
 
   public static @Nullable VirtualFile findLocalFile(@Nullable VirtualFile file) {
@@ -175,7 +168,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
    * (note that some platforms do not support the file highlighting).
    */
   public static void openFile(@NotNull Path file) {
-    Path parent = file.toAbsolutePath().getParent();
+    var parent = file.toAbsolutePath().getParent();
     if (parent != null) {
       doOpen(parent, file);
     }
@@ -243,8 +236,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       });
     }
     else {
-      Messages.showErrorDialog(IdeBundle.message("message.this.action.isn.t.supported.on.the.current.platform"),
-                               IdeBundle.message("dialog.title.cannot.open.file"));
+      Messages.showErrorDialog(IdeBundle.message("message.action.not.supported"), IdeBundle.message("dialog.title.cannot.open.file"));
     }
   }
 
@@ -257,9 +249,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
       if (toSelect == null) {
         var res = Shell32.INSTANCE.ShellExecute(null, "explore", dir, null, null, WinUser.SW_NORMAL);
         if (res.intValue() <= 32) {
-          var err = Kernel32.INSTANCE.GetLastError();
-          LOG.warn("ShellExecute(" + dir + "): " + res.intValue() + ": " + err + ": " + Kernel32Util.formatMessageFromLastErrorCode(err));
-          openViaExplorerCall(dir, toSelect);
+          LOG.warn("ShellExecute(" + dir + "): " + res.intValue() + " GetLastError=" + Kernel32.INSTANCE.GetLastError());
+          openViaExplorerCall(dir, null);
         }
       }
       else {
@@ -269,7 +260,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         try {
           var res = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
           if (!WinError.S_OK.equals(res)) {
-            LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(res.intValue()) + ": " + Kernel32Util.formatMessage(res));
+            LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(res.intValue()));
             openViaExplorerCall(dir, toSelect);
           }
         }
@@ -298,16 +289,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       try {
-        CapturingProcessHandler handler;
-        if (SystemInfo.isWindows) {
-          assert command.length == 1 : Arrays.toString(command);
-          Process process = Runtime.getRuntime().exec(command[0]);  // no quoting/escaping is needed
-          handler = new CapturingProcessHandler.Silent(process, null, command[0]);
-        }
-        else {
-          handler = new CapturingProcessHandler.Silent(new GeneralCommandLine(command));
-        }
-        handler.runProcess(10000, false).checkSuccess(LOG);
+        var process = SystemInfo.isWindows ? Runtime.getRuntime().exec(command[0]) : new ProcessBuilder(command).start();
+        new CapturingProcessHandler.Silent(process, null, command[0])
+          .runProcess(10000, false)
+          .checkSuccess(LOG);
       }
       catch (Exception e) {
         LOG.warn(e);
@@ -324,14 +309,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     static {
       String fmApp = null, fmName = null;
       if (SystemInfo.hasXdgMime()) {
-        var desktopEntryName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-        if (desktopEntryName != null && desktopEntryName.endsWith(".desktop")) {
-          var desktopFile = Stream.of(getXdgDataDirectories().split(":"))
-            .map(dir -> Path.of(dir, "applications", desktopEntryName))
-            .filter(Files::exists)
-            .findFirst();
-          if (desktopFile.isPresent()) {
-            try {
+        try (var reader = new ProcessBuilder("xdg-mime", "query", "default", "inode/directory").start().inputReader()) {
+          var desktopEntryName = reader.readLine();
+          if (desktopEntryName != null && desktopEntryName.endsWith(".desktop")) {
+            var desktopFile = Stream.of(getXdgDataDirectories().split(":"))
+              .map(dir -> Path.of(dir, "applications", desktopEntryName))
+              .filter(Files::exists)
+              .findFirst();
+            if (desktopFile.isPresent()) {
               var lines = Files.readAllLines(desktopFile.get());
               fmApp = lines.stream()
                 .filter(line -> line.startsWith("Exec="))
@@ -343,10 +328,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
                 .map(line -> line.substring(5))
                 .findFirst().orElse(null);
             }
-            catch (InvalidPathException | IOException e) {
-              LOG.error(e);
-            }
           }
+        }
+        catch (Exception e) {
+          LOG.info(e);
         }
       }
       fileManagerApp = fmApp;

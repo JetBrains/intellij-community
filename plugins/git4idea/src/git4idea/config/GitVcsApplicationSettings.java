@@ -26,6 +26,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     public boolean STAGING_AREA_ENABLED = false;
     public boolean COMBINED_STASHES_AND_SHELVES_ENABLED = false;
     public boolean COMPARE_WITH_LOCAL_IN_STASHES_ENABLED = true;
+    public boolean SPLIT_DIFF_PREVIEW_IN_STASHES_ENABLED = true;
 
     public boolean SHOW_DROP_COMMIT_DIALOG = true;
   }
@@ -109,6 +110,14 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setCompareWithLocalInStashesEnabled(boolean isEnabled) {
     myState.COMPARE_WITH_LOCAL_IN_STASHES_ENABLED = isEnabled;
+  }
+
+  public boolean isSplitDiffPreviewInStashesEnabled() {
+    return myState.SPLIT_DIFF_PREVIEW_IN_STASHES_ENABLED;
+  }
+
+  public void setSplitDiffPreviewInStashesEnabled(boolean isEnabled) {
+    myState.SPLIT_DIFF_PREVIEW_IN_STASHES_ENABLED = isEnabled;
   }
 
   public boolean isShowDropCommitDialog() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services.artifactory;
 
 import com.google.gson.Gson;
@@ -27,15 +27,13 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
 
   private final Gson gson = new Gson();
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return "Artifactory";
   }
 
-  @NotNull
   @Override
-  public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ArtifactoryModel.RepositoryType[] repos = gson.fromJson(
@@ -62,9 +60,8 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
     return new RemoteRepositoryDescription(repo.key, ObjectUtils.notNull(repo.description, repo.key), repo.url);
   }
 
-  @NotNull
   @Override
-  public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  public @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
@@ -86,8 +83,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
     }
   }
 
-  @NotNull
-  private List<RepositoryArtifactDescription> searchArchives(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  private @NotNull List<RepositoryArtifactDescription> searchArchives(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException {
     final String packaging = StringUtil.notNullize(template.getPackaging());
     final ArrayList<RepositoryArtifactDescription> artifacts = new ArrayList<>();
@@ -113,8 +109,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
     return artifacts;
   }
 
-  @NotNull
-  private List<RepositoryArtifactDescription> searchArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  private @NotNull List<RepositoryArtifactDescription> searchArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException {
     final String packaging = StringUtil.notNullize(template.getPackaging());
     final ArrayList<RepositoryArtifactDescription> artifacts = new ArrayList<>();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -33,8 +33,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   ));
 
   @Override
-  @Nullable
-  public PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+  public @Nullable PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     PsiFile file = context.getFile();
     int offset = context.getOffset();
     final PyArgumentList argumentList = PyParameterInfoUtils.findArgumentList(file, offset, -1);
@@ -58,8 +57,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   }
 
   @Override
-  @Nullable
-  public PyArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
+  public @Nullable PyArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
     return PyParameterInfoUtils.findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
   }
 

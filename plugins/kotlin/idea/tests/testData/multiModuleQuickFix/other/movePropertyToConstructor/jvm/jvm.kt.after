@@ -1,5 +1,4 @@
 // "Move to constructor" "true"
-// IGNORE_K2
 
 actual class SimpleWConstructor(val b: String = "") {
 }

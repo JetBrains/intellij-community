@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.ide.projectView.PresentationData
@@ -17,9 +17,11 @@ import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
-  override fun modify(parent: AbstractTreeNode<*>,
-                      children: Collection<AbstractTreeNode<*>>,
-                      settings: ViewSettings): Collection<AbstractTreeNode<*>> {
+  override fun modify(
+    parent: AbstractTreeNode<*>,
+    children: Collection<AbstractTreeNode<*>>,
+    settings: ViewSettings,
+  ): Collection<AbstractTreeNode<*>> {
     val project = parent.project ?: return children
     val manager = MavenProjectsManager.getInstance(project)
     if (!manager.isMavenizedProject) {
@@ -31,11 +33,9 @@ class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
         var childToAdd = child
         if (child is PsiFileNode) {
           if (child.virtualFile != null && MavenUtil.isPotentialPomFile(child.virtualFile!!.name)) {
-            val mavenProject = manager.findProject(child.virtualFile!!)
-            if (mavenProject != null) {
+            manager.findProject(child.virtualFile!!)?.let { mavenProject ->
               childToAdd = MavenPomFileNode(project, child.value, settings, manager.isIgnored(mavenProject))
             }
-
           }
         }
         modifiedChildren.add(childToAdd)
@@ -45,23 +45,26 @@ class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
     return children
   }
 
-  private inner class MavenPomFileNode(project: Project?,
-                                       value: PsiFile,
-                                       viewSettings: ViewSettings?,
-                                       val myIgnored: Boolean) : PsiFileNode(project, value, viewSettings) {
+  private inner class MavenPomFileNode(
+    project: Project?,
+    value: PsiFile,
+    viewSettings: ViewSettings?,
+    val isIgnored: Boolean,
+  ) : PsiFileNode(project, value, viewSettings) {
     val strikeAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, NamedColorUtil.getInactiveTextColor())
     override fun updateImpl(data: PresentationData) {
-      if (myIgnored) {
-        data.addText(value.name, strikeAttributes)
+      if (isIgnored) {
+        data.addText(value!!.name, strikeAttributes)
       }
       super.updateImpl(data)
     }
 
     @Suppress("DEPRECATION")
     override fun getTestPresentation(): String {
-      if (myIgnored) {
+      if (isIgnored) {
         return "-MavenPomFileNode:" + super.getTestPresentation() + " (ignored)"
-      } else {
+      }
+      else {
         return "-MavenPomFileNode:" + super.getTestPresentation()
       }
     }

@@ -4,22 +4,22 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.function.Supplier;
 
 public final class FileStatusFactory {
-  public static final String FILESTATUS_COLOR_KEY_PREFIX = "FILESTATUS_";
-
   private static final FileStatusFactory ourInstance = new FileStatusFactory();
 
   public static @NotNull FileStatusFactory getInstance() {
     return ourInstance;
+  }
+
+  @Internal
+  public static String getFilestatusColorKeyPrefix() {
+    return "FILESTATUS_";
   }
 
   /**
@@ -63,7 +63,7 @@ public final class FileStatusFactory {
     @Nullable Color color,
     @Nullable PluginId pluginId
   ) {
-    ColorKey colorKey = ColorKey.createColorKey(FILESTATUS_COLOR_KEY_PREFIX + id, color);
+    ColorKey colorKey = ColorKey.createColorKey(getFilestatusColorKeyPrefix() + id, color);
     FileStatusImpl result = new FileStatusImpl(id, colorKey, description);
     myStatuses.putValue(pluginId, result);
     return result;
@@ -78,5 +78,8 @@ public final class FileStatusFactory {
 
   synchronized void onPluginUnload(@NotNull PluginId pluginId) {
     myStatuses.remove(pluginId);
+  }
+
+  private FileStatusFactory() {
   }
 }

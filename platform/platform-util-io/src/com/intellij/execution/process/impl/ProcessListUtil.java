@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -19,6 +19,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,10 @@ public final class ProcessListUtil {
   public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,command");
 
   private static final String PARENT_PID_PREFIX = "PPid:";
+
+  private ProcessListUtil() {
+    // Nothing.
+  }
 
   public static ProcessInfo @NotNull [] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
@@ -190,10 +195,12 @@ public final class ProcessListUtil {
                                                                 full -> parseMacOutput(commandOnly, full, getCurrentUser())));
   }
 
+  @ApiStatus.Internal
   public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
     return parseMacOutput(commandOnly, full, null);
   }
 
+  @ApiStatus.Internal
   public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly,
                                                            @NotNull String full,
                                                            @Nullable String currentUser) {
@@ -222,10 +229,16 @@ public final class ProcessListUtil {
     return result;
   }
 
+  /**
+   * @deprecated The method seems to be not used, but it can be hypothetically used in some unpublished third-party plugin.
+   */
+  @ApiStatus.Internal
+  @Deprecated
   public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
     return parseLinuxOutputMacStyle(commandOnly, full, null);
   }
 
+  @ApiStatus.Internal
   public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly,
                                                                      @NotNull String full,
                                                                      @Nullable String currentUser) {

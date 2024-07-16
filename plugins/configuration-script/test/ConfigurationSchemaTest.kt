@@ -1,5 +1,6 @@
 package com.intellij.configurationScript
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
@@ -150,7 +151,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
     val schemaObject = JsonSchemaReader.readFromFile(project, schemaFile)
     assertThat(schemaObject).isNotNull
 
-    return JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element!!, element)
+    return JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element!!, element, CompletionType.BASIC)
   }
 }
 

@@ -18,6 +18,8 @@ import java.util.Map;
 
 import static com.intellij.psi.impl.source.BasicElementTypes.*;
 
+//suppress to be clear, what type is used
+@SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
 public abstract class AbstractBasicJavaFileHighlighter extends SyntaxHighlighterBase {
   private final Map<IElementType, TextAttributesKey> ourMap1;
   private final Map<IElementType, TextAttributesKey> ourMap2;

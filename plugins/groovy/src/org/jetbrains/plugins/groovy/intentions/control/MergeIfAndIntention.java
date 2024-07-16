@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ConditionalUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
-public class MergeIfAndIntention extends GrPsiUpdateIntention {
+public final class MergeIfAndIntention extends GrPsiUpdateIntention {
 
 
   @Override

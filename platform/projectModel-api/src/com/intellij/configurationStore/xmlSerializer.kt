@@ -34,6 +34,7 @@ fun Element.deserializeInto(bean: Any) {
   jdomSerializer.deserializeInto(obj = bean, element = this)
 }
 
+@ApiStatus.Internal
 @JvmOverloads
 fun <T : Any> deserializeAndLoadState(
   component: PersistentStateComponent<T>,
@@ -50,6 +51,7 @@ fun serializeObjectInto(o: Any, target: Element, filter: SerializationFilter? = 
   jdomSerializer.serializeObjectInto(o, target, filter)
 }
 
+@ApiStatus.Internal
 fun serializeStateInto(component: PersistentStateComponent<*>, element: Element) {
   component.state?.let {
     jdomSerializer.serializeObjectInto(it, element)

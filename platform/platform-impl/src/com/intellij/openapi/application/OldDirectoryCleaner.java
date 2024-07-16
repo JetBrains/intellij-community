@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowLogAction;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -30,7 +29,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.io.jackson.JacksonUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.IoErrorText;
-import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +40,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -93,8 +90,8 @@ public final class OldDirectoryCleaner {
 
   @RequiresBackgroundThread
   public void seekAndDestroy(@Nullable Project project, @Nullable ProgressIndicator indicator) {
-    ConfigDirsSearchResult result = ConfigImportHelper.findConfigDirectories(PathManager.getConfigDir());
-    List<DirectoryGroup> groups = collectDirectoryData(result, indicator);
+    var result = ConfigImportHelper.findConfigDirectories(PathManager.getConfigDir());
+    var groups = collectDirectoryData(result, indicator);
     if (myLogger.isDebugEnabled()) {
       myLogger.debug("configs: " + result.getPaths());
       myLogger.debug("groups: " + groups);
@@ -117,8 +114,7 @@ public final class OldDirectoryCleaner {
     }
   }
 
-  private record DirectoryGroup(@NlsSafe String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete,
-                                boolean isInstalled) {
+  private record DirectoryGroup(@NlsSafe String name, List<Path> directories, long lastUpdated, long size, int entriesToDelete, boolean isInstalled) {
     @Override
     public String toString() {
       return "{" + directories + ' ' + lastUpdated + '}';
@@ -126,26 +122,25 @@ public final class OldDirectoryCleaner {
   }
 
   private List<DirectoryGroup> collectDirectoryData(ConfigDirsSearchResult result, @Nullable ProgressIndicator indicator) {
-    List<Path> configs = result.getPaths();
-    List<DirectoryGroup> groups = new ArrayList<>(configs.size());
-    String productInfoFileName = SystemInfo.isMac ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME;
+    var configPaths = result.getPaths();
+    var groups = new ArrayList<DirectoryGroup>(configPaths.size());
+    var productInfoFileName = SystemInfo.isMac ? ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC : ApplicationEx.PRODUCT_INFO_FILE_NAME;
 
-    for (Path config : configs) {
-      List<Path> directories = result.findRelatedDirectories(config, myBestBefore != 0);
+    for (var configPath : configPaths) {
+      var directories = result.findRelatedDirectories(configPath, myBestBefore != 0);
       if (directories.isEmpty()) continue;
 
-      String nameAndVersion = result.getNameAndVersion(config);
+      var nameAndVersion = result.getNameAndVersion(configPath);
       long lastUpdated = 0, size = 0;
       int entriesToDelete = 0;
-      boolean isInstalled = false;
-      for (Path directory : directories) {
-        CollectingVisitor visitor = new CollectingVisitor(indicator);
+      var isInstalled = false;
+      for (var directory : directories) {
+        var visitor = new StatsCollectingVisitor(indicator);
         try {
           Files.walkFileTree(directory, visitor);
-          Path homeDir = Path.of(Files.readString(directory.resolve(ApplicationEx.LOCATOR_FILE_NAME)));
+          var homeDir = Path.of(Files.readString(directory.resolve(ApplicationEx.LOCATOR_FILE_NAME)));
           if (Files.exists(homeDir)) {
-            try (Reader reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName));
-                 JsonParser parser = new JsonFactory().createParser(reader)) {
+            try (var reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName)); var parser = new JsonFactory().createParser(reader)) {
               if (nameAndVersion.equals(JacksonUtil.readSingleField(parser, "dataDirectoryName"))) {
                 isInstalled = true;
               }
@@ -171,35 +166,34 @@ public final class OldDirectoryCleaner {
     return groups;
   }
 
-  private static final class CollectingVisitor extends SimpleFileVisitor<Path> {
+  private static final class StatsCollectingVisitor extends NioFiles.StatsCollectingVisitor {
     private final @Nullable ProgressIndicator indicator;
     long lastUpdated = 0, size = 0;
     int entriesToDelete = 0;
 
-    CollectingVisitor(@Nullable ProgressIndicator indicator) {
+    StatsCollectingVisitor(@Nullable ProgressIndicator indicator) {
       this.indicator = indicator;
     }
 
     @Override
-    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+    protected void countDirectory(Path dir, BasicFileAttributes attrs) {
+      if (indicator != null) indicator.checkCanceled();
       lastUpdated = Math.max(lastUpdated, attrs.lastModifiedTime().toMillis());
       entriesToDelete++;
-      return FileVisitResult.CONTINUE;
     }
 
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+    protected void countFile(Path file, BasicFileAttributes attrs) {
       if (indicator != null) indicator.checkCanceled();
       lastUpdated = Math.max(lastUpdated, attrs.lastModifiedTime().toMillis());
       size += attrs.size();
       entriesToDelete++;
-      return FileVisitResult.CONTINUE;
     }
   }
 
   private void deleteCowardly(List<DirectoryGroup> groups) {
-    for (DirectoryGroup group : groups) {
-      for (Path directory : group.directories) {
+    for (var group : groups) {
+      for (var directory : group.directories) {
         myLogger.info("deleting " + directory);
         try {
           NioFiles.deleteRecursively(directory);
@@ -212,10 +206,11 @@ public final class OldDirectoryCleaner {
   }
 
   private void confirmAndDelete(Project project, List<DirectoryGroup> groups) {
-    MenuDialog dialog = new MenuDialog(project, groups);
+    var dialog = new MenuDialog(project, groups);
     if (dialog.showAndGet()) {
-      List<DirectoryGroup> selectedGroups = dialog.getSelectedGroups();
+      var selectedGroups = dialog.getSelectedGroups();
       if (!selectedGroups.isEmpty()) {
+        //noinspection UsagesOfObsoleteApi
         new Task.Backgroundable(project, message("old.dirs.delete.progress")) {
           private Path currentRoot;
           private int progress = 0;
@@ -224,10 +219,10 @@ public final class OldDirectoryCleaner {
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.setIndeterminate(false);
             int total = selectedGroups.stream().mapToInt(g -> g.entriesToDelete).sum();
-            List<String> errors = new ArrayList<>();
+            var errors = new ArrayList<String>();
 
-            for (DirectoryGroup group : selectedGroups) {
-              for (Path directory : group.directories) {
+            for (var group : selectedGroups) {
+              for (var directory : group.directories) {
                 indicator.checkCanceled();
                 indicator.setText(directory.toString());
                 if (myLogger.isDebugEnabled()) myLogger.debug("deleting " + directory);
@@ -247,7 +242,7 @@ public final class OldDirectoryCleaner {
             }
 
             if (!errors.isEmpty()) {
-              @NlsSafe String content = String.join("<br>", errors);
+              @NlsSafe var content = String.join("<br>", errors);
               NotificationGroupManager.getInstance().getNotificationGroup("leftover.ide.directories")
                 .createNotification(message("old.dirs.delete.error"), content, NotificationType.WARNING)
                 .addAction(ShowLogAction.notificationAction())
@@ -276,27 +271,27 @@ public final class OldDirectoryCleaner {
 
     @Override
     protected JComponent createCenterPanel() {
-      JBTable table = new JBTable(myModel);
+      var table = new JBTable(myModel);
       table.setShowGrid(false);
       table.getColumnModel().getColumn(0).setPreferredWidth(JBUI.scale(30));
       table.getColumnModel().getColumn(1).setPreferredWidth(JBUI.scale(300));
       table.getColumnModel().getColumn(2).setPreferredWidth(JBUI.scale(120));
       table.getColumnModel().getColumn(3).setPreferredWidth(JBUI.scale(120));
-      JBEmptyBorder border = JBUI.Borders.empty(0, 5);
-      DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
+      var border = JBUI.Borders.empty(0, 5);
+      var renderer = new DefaultTableCellRenderer() {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
-          JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, selected, focused, row, col);
+          var label = (JLabel)super.getTableCellRendererComponent(table, value, selected, focused, row, col);
           label.setBorder(border);
-          label.setHorizontalAlignment(col == 1 ? SwingConstants.LEFT : SwingConstants.RIGHT);
+          label.setHorizontalAlignment(col == 1 ? LEFT : RIGHT);
           if (row >= 0) {
-            DirectoryGroup group = myModel.myGroups.get(row);
+            var group = myModel.myGroups.get(row);
             if (col == 1) {
-              @NlsSafe String paths = group.directories.stream().map(Path::toString).collect(Collectors.joining("<br>", "<html>", "</html>"));
+              @NlsSafe var paths = group.directories.stream().map(Path::toString).collect(Collectors.joining("<br>", "<html>", "</html>"));
               label.setToolTipText(paths);
             }
             else if (col == 2) {
-              @NlsSafe String isoDate = FileTime.fromMillis(group.lastUpdated).toString();
+              @NlsSafe var isoDate = FileTime.fromMillis(group.lastUpdated).toString();
               label.setToolTipText(isoDate);
             }
           }
@@ -310,9 +305,9 @@ public final class OldDirectoryCleaner {
       table.getColumnModel().getColumn(3).setHeaderRenderer(renderer);
       table.getColumnModel().getColumn(3).setCellRenderer(renderer);
       myModel.addTableModelListener(e -> updateOkButton());
-      JPanel panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
+      var panel = new JPanel(new BorderLayout(0, JBUI.scale(5)));
       panel.add(new JBLabel(message("old.dirs.dialog.text")), BorderLayout.NORTH);
-      JBScrollPane tableScroll = new JBScrollPane(table);
+      var tableScroll = new JBScrollPane(table);
       table.setFillsViewportHeight(true);
       panel.add(tableScroll, BorderLayout.CENTER);
       return panel;

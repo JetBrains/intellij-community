@@ -32,6 +32,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.trySendBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 
@@ -140,6 +141,7 @@ suspend fun <T> withBackgroundProgressContext(
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use withBackgroundProgress")
 suspend fun <T> withBackgroundProgressContext(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
@@ -203,6 +205,7 @@ fun <T> Lifetime.startUnderBackgroundProgressAsync(
 ): Deferred<T> = startBackgroundAsync { withBackgroundProgressContext(title, canBeCancelled, project, action) }
 
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use startWithBackgroundProgressAsync")
 fun <T> Lifetime.startUnderBackgroundProgressAsync(
   @Nls(capitalization = Nls.Capitalization.Sentence) title: String,
@@ -454,6 +457,7 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use progress reporter api")
   inline fun withText(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
     val oldText = indicator.text
@@ -466,6 +470,7 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use progress reporter api")
   inline fun withDetails(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
     val oldText = indicator.text2

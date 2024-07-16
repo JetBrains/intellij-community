@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,8 +14,8 @@ import java.util.List;
  */
 public class ExternalLibraryDescriptor {
   private static final Logger LOG = Logger.getInstance(ExternalLibraryDescriptor.class);
-  @NotNull private final String myLibraryGroupId;
-  @NotNull private final String myLibraryArtifactId;
+  private final @NotNull String myLibraryGroupId;
+  private final @NotNull String myLibraryArtifactId;
   private final String myMinVersion;
   private final String myMaxVersion;
   private final String myPreferredVersion;
@@ -86,43 +86,35 @@ public class ExternalLibraryDescriptor {
     }
   }
 
-  @NotNull
-  public String getLibraryGroupId() {
+  public @NotNull String getLibraryGroupId() {
     return myLibraryGroupId;
   }
 
-  @NotNull
-  public String getLibraryArtifactId() {
+  public @NotNull String getLibraryArtifactId() {
     return myLibraryArtifactId;
   }
 
-  @Nullable
-  public String getMinVersion() {
+  public @Nullable String getMinVersion() {
     return myMinVersion;
   }
 
-  @Nullable
-  public String getMaxVersion() {
+  public @Nullable String getMaxVersion() {
     return myMaxVersion;
   }
 
-  @Nullable
-  public String getPreferredVersion() {
+  public @Nullable String getPreferredVersion() {
     return myPreferredVersion;
   }
 
-  @Nullable
-  public DependencyScope getPreferredScope() {
+  public @Nullable DependencyScope getPreferredScope() {
     return myPreferredScope;
   }
 
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myLibraryArtifactId;
   }
 
-  @NotNull
-  public List<String> getLibraryClassesRoots() {
+  public @NotNull List<String> getLibraryClassesRoots() {
     return Collections.emptyList();
   }
 }

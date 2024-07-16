@@ -39,7 +39,7 @@ class Test2 {
   public static void main(IJ s, J<String> j) {
     s.f("");
 
-    <error descr="Static method may be invoked on containing interface class only">j.j("");</error>
+    <error descr="Static method may only be called on its containing interface">j.j("");</error>
   }
 
 }

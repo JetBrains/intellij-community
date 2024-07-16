@@ -24,8 +24,8 @@ project.commonMain
 project.commonTest
     commonMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}} (TEST)
 
 project.jvmMain
     commonMain (refines, COMPILE)
@@ -164,8 +164,8 @@ project.nativeTest
     commonTest (refines, TEST)
     nativeMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}} (TEST)
 
 
 Test configuration:

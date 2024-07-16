@@ -25,6 +25,8 @@ import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.psi.impl.source.BasicElementTypes.*;
 
+//suppress to be clear, what type is used
+@SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
 @ApiStatus.Experimental
 public class BasicPrattExpressionParser {
   static final int FORBID_LAMBDA_MASK = 0x1;

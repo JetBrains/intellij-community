@@ -278,8 +278,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
   @Nullable
   private Boolean isNodeSelected(final DefaultMutableTreeNode o) {
     final Object userObject = o.getUserObject();
-    if (userObject instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)userObject;
+    if (userObject instanceof PsiMethod method) {
       return MethodParameterInjection.isInjectable(method.getReturnType(), method.getProject()) ? myData.get(method).isReturnFlag() : null;
     }
     else if (userObject instanceof PsiParameter parameter) {
@@ -374,19 +373,17 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
     }
   }
 
-  private static class MyView extends TreeTableView implements DataProvider {
+  private static class MyView extends TreeTableView implements UiDataProvider {
     MyView(ListTreeTableModelOnColumns treeTableModel) {
       super(treeTableModel);
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        Object userObject = TreeUtil.getUserObject(ContainerUtil.getFirstItem(getSelection()));
-        return userObject instanceof PsiElement ? userObject : null;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      Object userObject = TreeUtil.getUserObject(ContainerUtil.getFirstItem(getSelection()));
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        return userObject instanceof PsiElement o ? o : null;
+      });
     }
   }
 

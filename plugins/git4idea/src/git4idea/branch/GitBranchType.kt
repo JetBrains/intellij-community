@@ -4,8 +4,24 @@ package git4idea.branch
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.ide.util.treeView.PathElementIdProvider
 import git4idea.GitBranch
+import git4idea.GitReference
+import git4idea.GitTag
+import git4idea.branch.GitBranchType.LOCAL
+import git4idea.branch.GitBranchType.REMOTE
 
-enum class GitBranchType(private val myName: String) : BranchType, PathElementIdProvider {
+interface GitRefType : BranchType, PathElementIdProvider {
+  companion object {
+    fun of(reference: GitReference): GitRefType {
+      return when (reference) {
+        is GitBranch -> if (reference.isRemote) REMOTE else LOCAL
+        is GitTag -> return GitTagType
+        else -> throw IllegalArgumentException()
+      }
+    }
+  }
+}
+
+enum class GitBranchType(private val myName: String) : GitRefType {
   LOCAL("LOCAL"), REMOTE("REMOTE");
 
   override fun getName(): String {
@@ -13,8 +29,16 @@ enum class GitBranchType(private val myName: String) : BranchType, PathElementId
   }
 
   override fun getPathElementId(): String = myName
+}
 
-  companion object {
-    fun of(branch: GitBranch) = if (branch.isRemote) REMOTE else LOCAL
-  }
+object GitTagType : GitRefType {
+  override fun getName(): String = "TAG"
+  override fun getPathElementId(): String = name
+}
+
+
+object TagsNode : GitRefType {
+  const val NAME = "TAGS"
+  override fun getName(): String = NAME
+  override fun getPathElementId(): String = NAME
 }

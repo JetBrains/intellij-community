@@ -7,7 +7,6 @@ import com.intellij.util.containers.withAll
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
-import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -85,6 +84,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.grazie",
   "intellij.featuresTrainer",
   "intellij.searchEverywhereMl",
+  "intellij.marketplaceMl",
   "intellij.platform.tracing.ide",
   "intellij.toml",
   KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
@@ -145,8 +145,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       layout.withModule("intellij.java.rt", "idea_rt.jar")
       // for compatibility with user projects which refer to IDEA_HOME/lib/annotations.jar
       layout.withProjectLibrary("jetbrains-annotations", "annotations.jar")
-      // for compatibility with user projects which refer to IDEA_HOME/lib/junit.jar
-      layout.withProjectLibrary("JUnit3", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
 
       layout.withoutProjectLibrary("Ant")
       // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
@@ -157,6 +155,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       // this library is placed into subdirectory of the 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
 
+      layout.withoutProjectLibrary("jetbrains.qodana.cloud.kotlin.client")
       layout.withoutProjectLibrary("jetbrains.qodana.publisher")
       layout.withoutProjectLibrary("jetbrains.qodana.sarif.converter")
       layout.withoutProjectLibrary("jetbrains.qodana.web.ui")

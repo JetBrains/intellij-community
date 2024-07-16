@@ -18,4 +18,3 @@ fun test() {
     J()
     J(false)
 }
-// IGNORE_K2

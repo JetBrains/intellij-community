@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.codeInsight.unwrap;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/removeExpression")
     public static class RemoveExpression extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestExpressionRemover, this, testDataFilePath);
         }
@@ -54,6 +61,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/unwrapThen")
     public static class UnwrapThen extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestThenUnwrapper, this, testDataFilePath);
         }
@@ -77,6 +90,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/unwrapElse")
     public static class UnwrapElse extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestElseUnwrapper, this, testDataFilePath);
         }
@@ -100,6 +119,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/removeElse")
     public static class RemoveElse extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestElseRemover, this, testDataFilePath);
         }
@@ -113,6 +138,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/unwrapLoop")
     public static class UnwrapLoop extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestLoopUnwrapper, this, testDataFilePath);
         }
@@ -136,6 +167,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/unwrapTry")
     public static class UnwrapTry extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestTryUnwrapper, this, testDataFilePath);
         }
@@ -159,6 +196,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/unwrapCatch")
     public static class UnwrapCatch extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCatchUnwrapper, this, testDataFilePath);
         }
@@ -182,6 +225,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/removeCatch")
     public static class RemoveCatch extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCatchRemover, this, testDataFilePath);
         }
@@ -195,6 +244,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/unwrapFinally")
     public static class UnwrapFinally extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestFinallyUnwrapper, this, testDataFilePath);
         }
@@ -218,6 +273,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/removeFinally")
     public static class RemoveFinally extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestFinallyRemover, this, testDataFilePath);
         }
@@ -236,6 +297,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/unwrapLambda")
     public static class UnwrapLambda extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestLambdaUnwrapper, this, testDataFilePath);
         }
@@ -299,6 +366,12 @@ public abstract class UnwrapRemoveTestGenerated extends AbstractUnwrapRemoveTest
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/unwrapAndRemove/unwrapFunctionParameter")
     public static class UnwrapFunctionParameter extends AbstractUnwrapRemoveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestFunctionParameterUnwrapper, this, testDataFilePath);
         }

@@ -1,10 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.editor
 
+import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
 import com.intellij.diff.util.Range
+import com.intellij.openapi.actionSystem.Constraints
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.ex.DocumentTracker
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
+import com.intellij.openapi.vcs.ex.LstRange
 import com.intellij.ui.JBColor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withContext
 import java.awt.Color
 
 object ReviewInEditorUtil {
@@ -51,4 +64,59 @@ object ReviewInEditorUtil {
     }
     return result
   }
+
+  suspend fun trackDocumentDiffSync(originalContent: CharSequence, document: Document, changesCollector: (List<Range>) -> Unit): Nothing {
+    val reviewHeadDocument = LineStatusTrackerBase.createVcsDocument(originalContent)
+    trackDocumentDiffSync(reviewHeadDocument, document, changesCollector)
+  }
+
+  suspend fun trackDocumentDiffSync(originalDocument: Document, currentDocument: Document, changesCollector: (List<Range>) -> Unit): Nothing {
+    withContext(Dispatchers.Main.immediate) {
+      val documentTracker = DocumentTracker(originalDocument, currentDocument)
+      val trackerHandler = object : DocumentTracker.Handler {
+        override fun afterBulkRangeChange(isDirty: Boolean) {
+          val trackerRanges = documentTracker.blocks.map { it.range }
+          changesCollector(trackerRanges)
+        }
+      }
+
+      try {
+        documentTracker.addHandler(trackerHandler)
+        trackerHandler.afterBulkRangeChange(true)
+        awaitCancellation()
+      }
+      finally {
+        Disposer.dispose(documentTracker)
+      }
+    }
+  }
+
+  /**
+   * Sets up an inspection widget action group for review in editor
+   * Suspends until canceled
+   *
+   * @throws IllegalStateException when the actions were not set up
+   */
+  suspend fun showReviewToolbar(vm: CodeReviewInEditorViewModel, editor: Editor): Nothing {
+    withContext(Dispatchers.Main) {
+      val toolbarActionGroup = DefaultActionGroup(
+        CodeReviewInEditorToolbarActionGroup(vm),
+        Separator.getInstance()
+      )
+
+      val editorMarkupModel = editor.markupModel as? EditorMarkupModel
+      if (editorMarkupModel == null) {
+        error("Editor markup model is not available")
+      }
+      editorMarkupModel.addInspectionWidgetAction(toolbarActionGroup, Constraints.FIRST)
+      try {
+        awaitCancellation()
+      }
+      finally {
+        editorMarkupModel.removeInspectionWidgetAction(toolbarActionGroup)
+      }
+    }
+  }
 }
+
+fun Range.asLst(): LstRange = LstRange(start2, end2, start1, end1)

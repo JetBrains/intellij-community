@@ -20,6 +20,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import javax.swing.*;
 /**
  * @author Dennis.Ushakov
  */
+@ApiStatus.Internal
 public class AdjustAutotestDelayActionGroup extends ActionGroup {
   public static final int MAX_DELAY = 10;
   private final DataContext myDataContext;

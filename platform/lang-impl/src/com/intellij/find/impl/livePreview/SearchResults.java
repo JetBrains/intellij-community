@@ -7,6 +7,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -28,6 +29,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -275,58 +278,67 @@ public class SearchResults implements DocumentListener, CaretListener {
 
     /**
      * Merges the given {@link SearchArea} with the current one.
-     * <p/>
-     * If the given areas intersect - union area will be returned.
-     * If the given areas have no intersection - area contains all the given areas will be returned.
-     *
-     * @param area the area to merge with the current
-     * @return a new merged area
      */
-    public @NotNull SearchArea merge(@NotNull SearchArea area) {
-      int[] startOffsets1 = startOffsets;
-      int[] endOffsets1 = endOffsets;
+    public @NotNull SearchArea union(@NotNull SearchArea area) {
+      int[] mergedStartOffsets = ArrayUtil.mergeArrays(startOffsets, area.startOffsets);
+      int[] mergedEndOffsets = ArrayUtil.mergeArrays(endOffsets, area.endOffsets);
+      Arrays.sort(mergedStartOffsets);
+      Arrays.sort(mergedEndOffsets);
 
-      int[] startOffsets2 = area.startOffsets;
-      int[] endOffsets2 = area.endOffsets;
+      final IntList resultStartOffsets = new IntArrayList(mergedStartOffsets.length);
+      final IntList resultEndOffsets = new IntArrayList(mergedStartOffsets.length);
 
-      List<TextRange> notIntersectedRanges = new ArrayList<>();
+      new Object() {
+        int counter = 0;
+        int startsIndex = 0;
+        int endsIndex = 0;
 
-      for (int i1 = 0; i1 < startOffsets1.length; i1++) {
-        int startOffset1 = startOffsets1[i1];
-        int endOffset1 = endOffsets1[i1];
-        TextRange range1 = new TextRange(startOffset1, endOffset1);
-
-        boolean intersects = false;
-        for (int i2 = 0; i2 < startOffsets2.length; i2++) {
-          int startOffset2 = startOffsets2[i2];
-          int endOffset2 = endOffsets2[i2];
-          TextRange range2 = new TextRange(startOffset2, endOffset2);
-
-          if (range1.intersects(range2)) {
-            TextRange union = range1.union(range2);
-            startOffsets2[i2] = union.getStartOffset();
-            endOffsets2[i2] = union.getEndOffset();
-            intersects = true;
-            break;
+        void run() {
+          while (startsIndex < mergedStartOffsets.length ||
+                 endsIndex < mergedEndOffsets.length) {
+            if (endsIndex == mergedEndOffsets.length) {
+              Logger.getInstance(SearchArea.class).error(String.format("Merging invalid SearchArea: %s - %s", this, area));
+              nextStart();
+            }
+            else if (startsIndex == mergedStartOffsets.length) {
+              nextEnd();
+            }
+            else {
+              int start = mergedStartOffsets[startsIndex];
+              int end = mergedEndOffsets[endsIndex];
+              if (start <= end) {
+                nextStart();
+              }
+              else {
+                nextEnd();
+              }
+            }
           }
         }
 
-        if (!intersects) {
-          notIntersectedRanges.add(range1);
+        void nextStart() {
+          if (counter == 0) {
+            int startOffset = mergedStartOffsets[startsIndex];
+            resultStartOffsets.add(startOffset);
+          }
+          counter++;
+          startsIndex++;
         }
-      }
 
-      int[] notIntersectedStartOffsets = new int[notIntersectedRanges.size()];
-      int[] notIntersectedEndOffsets = new int[notIntersectedRanges.size()];
-      for (int i = 0; i < notIntersectedRanges.size(); i++) {
-        notIntersectedStartOffsets[i] = notIntersectedRanges.get(i).getStartOffset();
-        notIntersectedEndOffsets[i] = notIntersectedRanges.get(i).getEndOffset();
-      }
+        void nextEnd() {
+          counter--;
+          if (counter == 0) {
+            int endOffset = mergedEndOffsets[endsIndex];
+            resultEndOffsets.add(endOffset);
+          }
+          if (counter < 0) {
+            Logger.getInstance(SearchArea.class).error(String.format("Merging invalid SearchArea: %s - %s", this, area));
+          }
+          endsIndex++;
+        }
+      }.run();
 
-      int[] mergedStartOffsets = ArrayUtil.mergeArrays(notIntersectedStartOffsets, startOffsets2);
-      int[] mergedEndOffsets = ArrayUtil.mergeArrays(notIntersectedEndOffsets, endOffsets2);
-
-      return create(mergedStartOffsets, mergedEndOffsets);
+      return create(resultStartOffsets.toIntArray(), resultEndOffsets.toIntArray());
     }
   }
 
@@ -366,7 +378,7 @@ public class SearchResults implements DocumentListener, CaretListener {
         searchArea = searchAreaFromEP;
       }
       else {
-        searchArea = searchArea.merge(searchAreaFromEP);
+        searchArea = searchArea.union(searchAreaFromEP);
       }
     }
 

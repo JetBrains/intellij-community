@@ -161,6 +161,10 @@ public final class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspe
       return false;
     }
     final PsiClass memberClass = member.getContainingClass();
+    if (member instanceof PsiMethod && memberClass != null && memberClass.isInterface() &&
+        !PsiTreeUtil.isAncestor(memberClass, referenceElement, true)) {
+      return false;
+    }
     if (target instanceof PsiField && containingClass == memberClass) {
       final TextRange referenceElementTextRange = referenceElement.getTextRange();
       if (referenceElementTextRange == null) {

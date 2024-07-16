@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +30,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   private final PyDebugProcess myDebugProcess;
   private boolean myNeedsMore = false;
   private boolean firstExecution = true;
-  @NotNull private final PythonConsoleView myConsoleView;
+  private final @NotNull PythonConsoleView myConsoleView;
   private boolean isExecuting = false;
 
   public PythonDebugConsoleCommunication(@NotNull Project project,
@@ -51,9 +51,8 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     }
   }
 
-  @NotNull
   @Override
-  public List<PydevCompletionVariant> getCompletions(String text, String actualToken) throws Exception {
+  public @NotNull List<PydevCompletionVariant> getCompletions(String text, String actualToken) throws Exception {
     return myDebugProcess.getCompletions(actualToken);
   }
 

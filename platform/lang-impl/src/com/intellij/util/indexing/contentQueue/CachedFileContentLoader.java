@@ -3,8 +3,10 @@ package com.intellij.util.indexing.contentQueue;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public interface CachedFileContentLoader {
   @NotNull
   CachedFileContent loadContent(@NotNull VirtualFile file) throws ProcessCanceledException,

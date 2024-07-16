@@ -21,6 +21,9 @@ abstract class DiffVirtualFileBase(name: String) :
 
   override fun toString(): String = "${javaClass.name}@${Integer.toHexString(hashCode())}"
 
+  /**
+   * See [DiffEditorEscapeAction]
+   */
   open fun createEscapeHandler(): AnAction? {
     return getUserData(ESCAPE_HANDLER)
   }

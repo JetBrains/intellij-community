@@ -9,10 +9,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
-import com.intellij.refactoring.suggested.endOffset
+import com.intellij.psi.util.endOffset
 import com.jetbrains.python.PythonTokenSetContributor
 import com.jetbrains.python.psi.*
-
 
 class PythonLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.PYTHON

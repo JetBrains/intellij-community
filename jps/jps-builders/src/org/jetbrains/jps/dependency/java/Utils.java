@@ -8,32 +8,68 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.impl.Containers;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
+/**
+ * This class provides commonly used graph traversal methods.
+ */
 public final class Utils {
-
-  private final @NotNull DifferentiateContext myContext;
   private final @NotNull Graph myGraph;
-  private final @Nullable Graph myDelta;
+  private final @Nullable Delta myDelta;
 
+  private final @NotNull Predicate<? super NodeSource> mySourcesFilter;
+  private final @NotNull Predicate<? super ReferenceID> myIsNodeDeleted;
   private final @NotNull BackDependencyIndex myDirectSubclasses;
+  private final @Nullable BackDependencyIndex myDeltaDirectSubclasses;
 
+  /**
+   * Use this constructor for traversal during differentiate operation
+   * @param context differentiate context
+   * @param isDelta false, if new nodes in Delta should be taken into account, false otherwise
+   */
   public Utils(@NotNull DifferentiateContext context, boolean isDelta) {
-    myContext = context;
-    myGraph = context.getGraph();
-    myDelta = isDelta? context.getDelta() : null;
+    this(context.getGraph(), isDelta? context.getDelta() : null, context.getParams().affectionFilter(), context::isDeleted);
+  }
+
+  /**
+   * Use this constructor for ordinary graph traversal to explore currently stored dependencies
+   * @param graph the graph to be explored
+   * @param sourceFilter NodeSource filter limiting the scope of traversal. Usually this is used to limit the sources set to some scope defined by some external layout, (i.e. a module structure)
+   */
+  public Utils(@NotNull Graph graph, @NotNull Predicate<? super NodeSource> sourceFilter) {
+    this(graph, null, sourceFilter, id -> false);
+  }
+
+  /**
+   * The base constructor defining all necessary traversal parameters
+   * @param graph the graph to be explored
+   * @param delta the optional delta graph containing new nodes which are not yet integrated into the graph
+   * @param sourceFilter NodeSource filter limiting the scope of traversal. Usually this is used to limit the sources set to some scope defined by some external layout, (i.e. a module structure)
+   * @param isNodeDeleted predicate to test if some node currently existing in the graph will be deleted after changes from Delta are applied to the graph
+   */
+  public Utils(@NotNull Graph graph, @Nullable Delta delta, @NotNull Predicate<? super NodeSource> sourceFilter, @NotNull Predicate<? super ReferenceID> isNodeDeleted) {
+    myGraph = graph;
+    myDelta = delta;
+    mySourcesFilter = sourceFilter;
+    myIsNodeDeleted = isNodeDeleted;
     myDirectSubclasses = Objects.requireNonNull(myGraph.getIndex(SubclassesIndex.NAME));
+    myDeltaDirectSubclasses = myDelta != null? Objects.requireNonNull(myDelta.getIndex(SubclassesIndex.NAME)) : null;
   }
 
   public Iterable<NodeSource> getNodeSources(ReferenceID nodeId) {
-    Iterable<NodeSource> sources = myDelta != null? myDelta.getSources(nodeId) : null;
-    return sources != null? sources : filter(myGraph.getSources(nodeId), myContext.getParams().affectionFilter()::test);
+    if (myDelta != null) {
+      Iterable<NodeSource> _src = myDelta.getSources(nodeId);
+      Iterable<NodeSource> deltaSources = _src instanceof Set? _src : collect(_src, new HashSet<>()) /*ensure Set data structure*/;
+      Set<NodeSource> deleted = myDelta.getDeletedSources();
+      return flat(deltaSources, filter(myGraph.getSources(nodeId), src -> !contains(deltaSources, src) && !deleted.contains(src) && mySourcesFilter.test(src)));
+    }
+    return filter(myGraph.getSources(nodeId), mySourcesFilter::test);
   }
 
   public Iterable<JvmClass> getClassesByName(@NotNull String name) {
@@ -88,23 +124,43 @@ public final class Utils {
    * @param id a node reference ID
    * @return all nodes with the given ReferenceID. Nodes in the returned collection will have the same ReferenceID, but may be associated with different sources
    */
-  public <T extends JVMClassNode<T, ?>> Iterable<T> getNodes(@NotNull ReferenceID id, Class<T> selector) {
+  public <T extends Node<T, ?>> Iterable<T> getNodes(@NotNull ReferenceID id, Class<T> selector) {
+    return getNodesImpl(id, selector, false);
+  }
+
+  /**
+   * @param id a node reference ID
+   * @return all nodes with the given ReferenceID that have been compiled in the current compilation session (defined by the DifferentiateContext).
+   */
+  public <T extends Node<T, ?>> Iterable<T> getCompiledNodes(@NotNull ReferenceID id, Class<T> selector) {
+    return getNodesImpl(id, selector, true);
+  }
+
+  private <T extends Node<T, ?>> @NotNull Iterable<T> getNodesImpl(@NotNull ReferenceID id, Class<T> selector, boolean fromDeltaOnly) {
     if (id instanceof JvmNodeReferenceID && "".equals(((JvmNodeReferenceID)id).getNodeName())) {
       return Collections.emptyList();
     }
-    Predicate<? super NodeSource> srcFilter = myContext.getParams().affectionFilter();
     Iterable<T> allNodes;
     if (myDelta != null) {
-      Set<NodeSource> deltaSources = collect(myDelta.getSources(id), new HashSet<>());
-      allNodes = flat(
-        flat(map(deltaSources, src -> myDelta.getNodes(src, selector))), flat(map(filter(myGraph.getSources(id), src -> !deltaSources.contains(src) && srcFilter.test(src)), src -> myGraph.getNodes(src, selector)))
-      );
+      Iterable<NodeSource> deltaSrc = myDelta.getSources(id);
+      Iterable<NodeSource> deltaSources = fromDeltaOnly? deltaSrc : deltaSrc instanceof Set? deltaSrc : collect(deltaSrc, new HashSet<>()) /*ensure Set data structure*/;
+      Iterable<T> deltaNodes = flat(map(deltaSources, src -> myDelta.getNodes(src, selector)));
+      if (fromDeltaOnly) {
+        allNodes = deltaNodes;
+      }
+      else {
+        Set<NodeSource> deleted = myDelta.getDeletedSources();
+        allNodes = flat(
+          deltaNodes, flat(map(filter(myGraph.getSources(id), src -> !contains(deltaSources, src) && !deleted.contains(src) && mySourcesFilter.test(src)), src -> myGraph.getNodes(src, selector)))
+        );
+      }
     }
     else {
-      allNodes = flat(map(filter(myGraph.getSources(id), srcFilter::test), src -> myGraph.getNodes(src, selector)));
+      allNodes = fromDeltaOnly? Collections.emptyList() : flat(map(filter(myGraph.getSources(id), mySourcesFilter::test), src -> myGraph.getNodes(src, selector)));
     }
-    return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new Iterators.BooleanFunction<>() {
+    return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new BooleanFunction<>() {
       Set<T> visited;
+
       @Override
       public boolean fun(T t) {
         if (visited == null) {
@@ -113,6 +169,10 @@ public final class Utils {
         return visited.add(t);
       }
     });
+  }
+
+  public Iterable<ReferenceID> allDirectSupertypes(ReferenceID classId) {
+    return classId instanceof JvmNodeReferenceID? map(allDirectSupertypes((JvmNodeReferenceID)classId), id -> id) : Collections.emptyList();
   }
 
   public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {
@@ -132,12 +192,29 @@ public final class Utils {
 
   @NotNull
   public Iterable<ReferenceID> withAllSubclasses(ReferenceID from) {
-    return recurse(from, myDirectSubclasses::getDependencies, true);
+    return recurse(from, this::directSubclasses, true);
   }
 
   @NotNull
   public Iterable<ReferenceID> allSubclasses(ReferenceID from) {
-    return recurse(from, myDirectSubclasses::getDependencies, false);
+    return recurse(from, this::directSubclasses, false);
+  }
+
+  @NotNull
+  public Iterable<ReferenceID> directSubclasses(ReferenceID from) {
+    if (myDeltaDirectSubclasses != null) {
+      BooleanFunction<ReferenceID> subClassFilter = sub -> {
+        if (myIsNodeDeleted.test(sub)) {
+          return false;
+        }
+        Iterable<JvmClass> justCompiled = getCompiledNodes(sub, JvmClass.class);
+        // If the class has just been compiled and is stored in the delta, need to ensure the class is still a subclass of the given class
+        return isEmpty(justCompiled) || contains(flat(map(justCompiled, cl -> map(cl.getSuperTypes(), st -> new JvmNodeReferenceID(st)))), from);
+      };
+
+      return unique(flat(filter(myDirectSubclasses.getDependencies(from), subClassFilter), myDeltaDirectSubclasses.getDependencies(from)));
+    }
+    return myDirectSubclasses.getDependencies(from);
   }
 
   public Set<JvmNodeReferenceID> collectSubclassesWithoutField(JvmNodeReferenceID classId, JvmField field) {
@@ -153,8 +230,8 @@ public final class Utils {
     Predicate<ReferenceID> containsMember = id -> isEmpty(filter(getNodes(id, JvmClass.class), cls -> isEmpty(filter(membersGetter.apply(cls), isSame::test))));
     //stop further traversal, if nodes corresponding to the subclassName contain matching member
     Iterable<JvmNodeReferenceID> result = getNodesData(
-      (ReferenceID)classId,
-      id -> myDirectSubclasses.getDependencies(id),
+      classId,
+      this::directSubclasses,
       id -> id instanceof JvmNodeReferenceID && !containsMember.test(id)? (JvmNodeReferenceID)id : null,
       Objects::nonNull,
       false
@@ -188,7 +265,7 @@ public final class Utils {
       new SmartList<>()
     ) : Collections.emptyList();
     return flat(
-      getNodesData(fromCls, cl -> flat(map(myDirectSubclasses.getDependencies(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> isEmpty(result), false)
+      getNodesData(fromCls, cl -> flat(map(directSubclasses(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> isEmpty(result), false)
     );
   }
 
@@ -341,8 +418,8 @@ public final class Utils {
     return k -> cache.computeIfAbsent(k, f);
   }
 
-  public static <V> Iterators.Provider<V> lazyValue(Iterators.Provider<V> provider) {
-    return new Iterators.Provider<>() {
+  public static <V> Supplier<V> lazyValue(Supplier<V> provider) {
+    return new Supplier<>() {
       private Object[] computed;
 
       @Override

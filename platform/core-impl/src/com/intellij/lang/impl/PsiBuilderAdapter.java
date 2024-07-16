@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class PsiBuilderAdapter implements PsiBuilder {
   protected final PsiBuilder myDelegate;
 
@@ -113,6 +115,16 @@ public class PsiBuilderAdapter implements PsiBuilder {
   }
 
   @Override
+  public boolean isWhitespaceOrComment(@NotNull IElementType token) {
+    return myDelegate.isWhitespaceOrComment(token);
+  }
+
+  @Override
+  public void rawAdvanceLexer(int steps) {
+    myDelegate.rawAdvanceLexer(steps);
+  }
+
+  @Override
   public void setDebugMode(final boolean dbgMode) {
     myDelegate.setDebugMode(dbgMode);
   }
@@ -125,6 +137,11 @@ public class PsiBuilderAdapter implements PsiBuilder {
   @Override
   public @Nullable LighterASTNode getLatestDoneMarker() {
     return myDelegate.getLatestDoneMarker();
+  }
+
+  @Override
+  public @NotNull List<? extends Production> getProductions() {
+    return myDelegate.getProductions();
   }
 
   @Override

@@ -16,17 +16,14 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.NonPhysicalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
@@ -108,7 +105,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     if (file instanceof VirtualFileWindow window) {
       file = window.getDelegate();
     }
-    VirtualFile originalFile = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : null;
+    VirtualFile originalFile = ObjectUtils.doIfNotNull(file, VirtualFileUtil::originalFile);
     if (Comparing.equal(originalFile, file)) originalFile = null;
 
     if (file != null) {

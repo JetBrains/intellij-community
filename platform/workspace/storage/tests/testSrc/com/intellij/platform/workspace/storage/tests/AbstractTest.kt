@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,7 +19,7 @@ class AbstractTest {
     }
 
     assertTrue(entity.children.isNotEmpty())
-    assertEquals("ChildData", (entity.children.single() as ChildFirstEntity).firstData)
+    assertEquals("ChildData", (entity.children.single() as ChildFirstEntity.Builder).firstData)
   }
 
   @Test
@@ -29,7 +29,7 @@ class AbstractTest {
     }
 
     assertTrue(entity.children.isNotEmpty())
-    assertEquals("ChildData", (entity.children.single() as ChildFirstEntity).commonData)
+    assertEquals("ChildData", (entity.children.single() as ChildFirstEntity.Builder).commonData)
   }
 
   @Test

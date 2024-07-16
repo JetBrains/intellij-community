@@ -3,6 +3,4 @@ package org.jetbrains.kotlin.idea.k2.debugger.test.cases
 
 import org.jetbrains.kotlin.idea.debugger.test.AbstractKotlinExceptionFilterTest
 
-abstract class AbstractK2KotlinExceptionFilterTest : AbstractKotlinExceptionFilterTest() {
-    override fun isFirPlugin(): Boolean = true
-}
+abstract class AbstractK2KotlinExceptionFilterTest : AbstractKotlinExceptionFilterTest()

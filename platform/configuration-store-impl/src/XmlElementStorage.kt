@@ -35,6 +35,7 @@ import java.io.Writer
 import javax.xml.stream.XMLStreamException
 import kotlin.math.min
 
+@ApiStatus.Internal
 abstract class XmlElementStorage protected constructor(
   @JvmField val fileSpec: String,
   @JvmField protected val rootElementName: String?,

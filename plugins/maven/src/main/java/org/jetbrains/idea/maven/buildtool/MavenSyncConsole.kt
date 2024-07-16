@@ -30,6 +30,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.maven.buildtool.quickfix.MavenFullSyncQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OffMavenOfflineModeQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
@@ -93,7 +94,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
       .withRestartAction(restartAction)
     descriptor.isActivateToolWindowWhenFailed = explicit
     descriptor.isActivateToolWindowWhenAdded = false
-    descriptor.isNavigateToError = if (explicit) ThreeState.YES else ThreeState.UNSURE
+    descriptor.isNavigateToError = if (explicit) ThreeState.YES else ThreeState.NO
 
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name)))
     debugLog("maven sync: started importing $myProject")
@@ -163,9 +164,9 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   }
 
   @Synchronized
-  fun finishImport() {
+  fun finishImport(showFullSyncQuickFix: Boolean = false) {
     debugLog("Maven sync: finishImport")
-    doFinish()
+    doFinish(showFullSyncQuickFix)
   }
 
   fun terminated(exitCode: Int) = doIfImportInProcess {
@@ -292,7 +293,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   }
 
   @Synchronized
-  private fun doFinish() {
+  private fun doFinish(showFullSyncQuickFix: Boolean = false) {
     if (syncTransactionStarted) {
       debugLog("Maven sync: sync transaction is still not finished, postpone build finish event")
       return
@@ -304,8 +305,24 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
                                                       if (hasErrors) FailureResultImpl() else DerivedResultImpl()))
 
     attachOfflineQuickFix()
+    if (showFullSyncQuickFix) {
+      attachFullSyncQuickFix()
+    }
     finished = true
     started = false
+  }
+
+  private fun attachFullSyncQuickFix() {
+    try {
+      mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
+        override val title: String = "Incremental Sync Finished"
+        override val description: String = "Incremental sync finished. If there is something wrong with the project model, <a href=\"${MavenFullSyncQuickFix.ID}\">run full sync</a>\n"
+        override val quickFixes: List<BuildIssueQuickFix> = listOf(MavenFullSyncQuickFix())
+        override fun getNavigatable(project: Project): Navigatable? = null
+      }, MessageEvent.Kind.INFO))
+    }
+    catch (ignore: Exception) {
+    }
   }
 
   private fun attachOfflineQuickFix() {
@@ -316,14 +333,12 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
           override val title: String = "Dependency Resolution Failed"
           override val description: String = "<a href=\"${OffMavenOfflineModeQuickFix.ID}\">Switch Off Offline Mode</a>\n"
           override val quickFixes: List<BuildIssueQuickFix> = listOf(OffMavenOfflineModeQuickFix())
-
           override fun getNavigatable(project: Project): Navigatable? = null
         }, MessageEvent.Kind.ERROR))
       }
     }
     catch (ignore: Exception) {
     }
-
   }
 
   @Synchronized
@@ -349,6 +364,14 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     val key = getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
     startTask(mySyncId, key)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(key, buildIssue, MessageEvent.Kind.ERROR))
+  }
+
+  @Synchronized
+  fun showBuildIssue(buildIssue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcess {
+    hasErrors =  hasErrors || kind == MessageEvent.Kind.ERROR
+    val key = getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
+    startTask(mySyncId, key)
+    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(key, buildIssue, kind))
   }
 
   @Synchronized
@@ -464,9 +487,9 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
   @ApiStatus.Experimental
   @Synchronized
-  fun finishTransaction() {
+  fun finishTransaction(showFullSyncQuickFix: Boolean) {
     syncTransactionStarted = false
-    finishImport()
+    finishImport(showFullSyncQuickFix)
   }
 
   companion object {

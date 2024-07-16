@@ -6,6 +6,5 @@
               extensions="ipynb"
               implementationClass="com.intellij.jupyter.core.jupyter.JupyterFileType"
               fieldName="INSTANCE"/>
-    <iconMapper mappingFile="JupyterCoreIconMappings.json"/>
   </extensions>
 </idea-plugin>

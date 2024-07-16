@@ -94,7 +94,7 @@ public final class PreferencesReadUtil {
   /**
    * @deprecated use {@link TextMateBundleReader#readSnippets()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static TextMateSnippet loadSnippet(@NotNull File snippetFile, @NotNull Plist plist, @NotNull Interner<CharSequence> interner) {
     return snippetFile.getName().endsWith("." + Constants.SUBLIME_SNIPPET_EXTENSION)

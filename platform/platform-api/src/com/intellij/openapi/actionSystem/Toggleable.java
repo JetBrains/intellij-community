@@ -17,10 +17,9 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
+
+import javax.swing.*;
 
 /**
  * A marker interface for the action which could be toggled between "selected" and "not selected" states.
@@ -56,5 +55,26 @@ public interface Toggleable {
    */
   static void setSelected(@NotNull Presentation presentation, boolean selected) {
     presentation.putClientProperty(SELECTED_KEY, selected);
+  }
+
+  /**
+   * Sets the selected state of for the given component.
+   * @param component the component to update
+   * @param selected whether the component should be painted as selected, use null to reset to the default behavior
+   */
+  static void setSelected(@NotNull JComponent component, @Nullable Boolean selected) {
+    component.putClientProperty(SELECTED_KEY, selected);
+    component.repaint();
+  }
+
+  /**
+   * Checks whether given component is in the "selected" state
+   * @param component component to check
+   * @return selected whether the component should be painted as selected, or null if component should follow the default behavior
+   */
+  static @Nullable Boolean isSelected(@NotNull JComponent component) {
+    Object value = component.getClientProperty(SELECTED_KEY);
+    if (value instanceof Boolean isSelected) return isSelected;
+    return null;
   }
 }

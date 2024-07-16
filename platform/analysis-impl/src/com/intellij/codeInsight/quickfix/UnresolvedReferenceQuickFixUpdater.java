@@ -51,7 +51,7 @@ public interface UnresolvedReferenceQuickFixUpdater {
   void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull List<? extends HighlightInfo> infos);
 
   /**
-   * Start background computation of quick fixes for unresolved references in the {code file} at the current caret offset
+   * Start background computation of quick fixes for unresolved references in the {@code file} at the current caret offset
    */
   void startComputingNextQuickFixes(@NotNull PsiFile file, @NotNull Editor editor, @NotNull ProperTextRange visibleRange);
 }

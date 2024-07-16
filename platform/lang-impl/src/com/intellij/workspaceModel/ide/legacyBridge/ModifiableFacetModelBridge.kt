@@ -2,7 +2,9 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.facet.ModifiableFacetModel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ModifiableFacetModelBridge : ModifiableFacetModel {
   fun prepareForCommit()
 }

@@ -8,7 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.ui.SimpleTextAttributes
 
-internal class VisualFormattingSchemesCombo(project: Project) : SchemesCombo<CodeStyleScheme>() {
+class VisualFormattingSchemesCombo(project: Project) : SchemesCombo<CodeStyleScheme>() {
   private val codeStyleSchemesModel = CodeStyleSchemesModel(project)
   override fun supportsProjectSchemes(): Boolean = true
 

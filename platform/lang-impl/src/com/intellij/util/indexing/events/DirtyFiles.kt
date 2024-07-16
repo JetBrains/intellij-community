@@ -43,13 +43,7 @@ class DirtyFiles {
   }
 
   fun removeProject(project: Project) {
-    while (true) {
-      // todo: this is a temp fix for the problem in LightPlatformTestCase where
-      //  project is registered in FileBasedIndexImpl two times.
-      //  First time via LightProjectDescriptor.setUpProject
-      //  Second time via ((TestProjectManager)ProjectManagerEx.getInstanceEx()).openProject(project)
-      if (!myDirtyFiles.removeIf { it.first == project }) break;
-    }
+    myDirtyFiles.removeIf { it.first == project }
   }
 
   fun removeFile(fileId: Int) {
@@ -59,8 +53,10 @@ class DirtyFiles {
     }
   }
 
-  fun addProject(project: Project) {
-    myDirtyFiles.add(Pair(project, ProjectDirtyFiles()))
+  fun addProject(project: Project): ProjectDirtyFiles {
+    val files = ProjectDirtyFiles()
+    myDirtyFiles.add(Pair(project, files))
+    return files
   }
 
   fun getProjects(): List<Project> {
@@ -77,7 +73,7 @@ class DirtyFiles {
 
   fun getProjectDirtyFiles(project: Project?): ProjectDirtyFiles? {
     if (project == null) return myDirtyFilesWithoutProject
-    return myDirtyFiles.first { it.first == project }.second
+    return myDirtyFiles.firstOrNull { it.first == project }?.second
   }
 }
 
@@ -88,6 +84,18 @@ class ProjectDirtyFiles {
   fun containsFile(fileId: Int) = filesSet.get(fileId)
   fun removeFile(fileId: Int) = filesSet.clear(fileId)
   fun clear() = filesSet.clear()
+
+  fun addFiles(fileIds: Collection<Int>) {
+    for (fileId in fileIds) {
+      addFile(fileId)
+    }
+  }
+
+  fun removeFiles(fileIds: Collection<Int>) {
+    for (fileId in fileIds) {
+      removeFile(fileId)
+    }
+  }
 
   fun addAllTo(set: IntSet) {
     for (fileId in 0 until filesSet.size()) {

@@ -10,17 +10,15 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
 
 /**
  * Describes additional data stored in [Module][com.intellij.openapi.module.Module] instance.
  */
-@ApiStatus.Internal
+@Internal
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
-  val module: ModuleEntity
-
   val rootManagerTagCustomData: @NonNls String?
 
   /**
@@ -28,20 +26,26 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
    */
   val customModuleOptions: Map<@NonNls String, @NonNls String>
 
+  val module: ModuleEntity
+
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleCustomImlDataEntity, WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var rootManagerTagCustomData: String?
-    override var customModuleOptions: Map<String, String>
+    var rootManagerTagCustomData: String?
+    var customModuleOptions: Map<String, String>
+    var module: ModuleEntity.Builder
   }
 
   companion object : EntityType<ModuleCustomImlDataEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(customModuleOptions: Map<String, String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
+    operator fun invoke(
+      customModuleOptions: Map<String, String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.customModuleOptions = customModuleOptions
       builder.entitySource = entitySource
@@ -54,10 +58,16 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleCustomImlDataEntity, modification: ModuleCustomImlDataEntity.Builder.() -> Unit): ModuleCustomImlDataEntity = modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
+@Internal
+fun MutableEntityStorage.modifyModuleCustomImlDataEntity(
+  entity: ModuleCustomImlDataEntity,
+  modification: ModuleCustomImlDataEntity.Builder.() -> Unit,
+): ModuleCustomImlDataEntity {
+  return modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.customImlData: @Child ModuleCustomImlDataEntity?
   by WorkspaceEntity.extension()
 
@@ -65,25 +75,29 @@ val ModuleEntity.customImlData: @Child ModuleCustomImlDataEntity?
  * Describes [explicit module group][com.intellij.openapi.module.ModuleManager.getModuleGroupPath]. Note that explicit module groups are
  * deprecated, so this entity should be used for compatibility with old code only.
  */
-@ApiStatus.Internal
+@Internal
 interface ModuleGroupPathEntity : WorkspaceEntity {
   val module: ModuleEntity
 
   val path: List<@NonNls String>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleGroupPathEntity, WorkspaceEntity.Builder<ModuleGroupPathEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ModuleGroupPathEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var path: MutableList<String>
+    var module: ModuleEntity.Builder
+    var path: MutableList<String>
   }
 
   companion object : EntityType<ModuleGroupPathEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(path: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
+    operator fun invoke(
+      path: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.path = path.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -96,17 +110,23 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleGroupPathEntity, modification: ModuleGroupPathEntity.Builder.() -> Unit): ModuleGroupPathEntity = modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
+@Internal
+fun MutableEntityStorage.modifyModuleGroupPathEntity(
+  entity: ModuleGroupPathEntity,
+  modification: ModuleGroupPathEntity.Builder.() -> Unit,
+): ModuleGroupPathEntity {
+  return modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.groupPath: @Child ModuleGroupPathEntity?
   by WorkspaceEntity.extension()
 
 /**
  * Describes options for a [Module][com.intellij.openapi.module.Module] imported from some external project system (Maven, Gradle).
  */
-@ApiStatus.Internal
+@Internal
 interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
   val module: ModuleEntity
 
@@ -119,24 +139,27 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
   val externalSystemModuleType: String?
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ExternalSystemModuleOptionsEntity, WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var externalSystem: String?
-    override var externalSystemModuleVersion: String?
-    override var linkedProjectPath: String?
-    override var linkedProjectId: String?
-    override var rootProjectPath: String?
-    override var externalSystemModuleGroup: String?
-    override var externalSystemModuleType: String?
+    var module: ModuleEntity.Builder
+    var externalSystem: String?
+    var externalSystemModuleVersion: String?
+    var linkedProjectPath: String?
+    var linkedProjectId: String?
+    var rootProjectPath: String?
+    var externalSystemModuleGroup: String?
+    var externalSystemModuleType: String?
   }
 
   companion object : EntityType<ExternalSystemModuleOptionsEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExternalSystemModuleOptionsEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -148,34 +171,44 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ExternalSystemModuleOptionsEntity, modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit): ExternalSystemModuleOptionsEntity = modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
+@Internal
+fun MutableEntityStorage.modifyExternalSystemModuleOptionsEntity(
+  entity: ExternalSystemModuleOptionsEntity,
+  modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit,
+): ExternalSystemModuleOptionsEntity {
+  return modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.exModuleOptions: @Child ExternalSystemModuleOptionsEntity?
   by WorkspaceEntity.extension()
 
 /**
  * Provides reference to [production module][com.intellij.openapi.roots.TestModuleProperties.getProductionModule].
  */
-@ApiStatus.Internal
+@Internal
 interface TestModulePropertiesEntity : WorkspaceEntity {
   val module: ModuleEntity
   val productionModuleId: ModuleId
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : TestModulePropertiesEntity, WorkspaceEntity.Builder<TestModulePropertiesEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<TestModulePropertiesEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var productionModuleId: ModuleId
+    var module: ModuleEntity.Builder
+    var productionModuleId: ModuleId
   }
 
   companion object : EntityType<TestModulePropertiesEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(productionModuleId: ModuleId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TestModulePropertiesEntity {
+    operator fun invoke(
+      productionModuleId: ModuleId,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.productionModuleId = productionModuleId
       builder.entitySource = entitySource
@@ -187,9 +220,15 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: TestModulePropertiesEntity, modification: TestModulePropertiesEntity.Builder.() -> Unit): TestModulePropertiesEntity = modifyEntity(TestModulePropertiesEntity.Builder::class.java, entity, modification)
+@Internal
+fun MutableEntityStorage.modifyTestModulePropertiesEntity(
+  entity: TestModulePropertiesEntity,
+  modification: TestModulePropertiesEntity.Builder.() -> Unit,
+): TestModulePropertiesEntity {
+  return modifyEntity(TestModulePropertiesEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.testProperties: @Child TestModulePropertiesEntity?
   by WorkspaceEntity.extension()

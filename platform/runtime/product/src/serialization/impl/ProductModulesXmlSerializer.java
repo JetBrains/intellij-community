@@ -2,6 +2,7 @@
 package com.intellij.platform.runtime.product.serialization.impl;
 
 import com.intellij.platform.runtime.product.ModuleImportance;
+import com.intellij.platform.runtime.product.serialization.RawIncludedFromData;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.product.serialization.RawProductModules;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
@@ -12,9 +13,7 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public final class ProductModulesXmlSerializer {
   public static @NotNull RawProductModules parseModuleXml(@NotNull InputStream inputStream) throws XMLStreamException {
@@ -24,26 +23,32 @@ public final class ProductModulesXmlSerializer {
     String moduleName = null;
     List<RawIncludedRuntimeModule> rootMainGroupModules = new ArrayList<>();
     List<RuntimeModuleId> bundledPluginMainModules = new ArrayList<>();
-    List<RuntimeModuleId> includedFrom = new ArrayList<>();
-    String parentTag = null;
+    List<RawIncludedFromData> includedFrom = new ArrayList<>();
+    RuntimeModuleId includedFromModule = null;
+    Set<RuntimeModuleId> withoutModules = new LinkedHashSet<>();
+    String secondLevelTag = null;
+    String thirdLevelTag = null;
     while (reader.hasNext()) {
       int event = reader.next();
       if (event == XMLStreamConstants.START_ELEMENT) {
         level++;
         String tagName = reader.getLocalName();
         if (level == 2) {
-          parentTag = tagName;
+          secondLevelTag = tagName;
         }
-        else if (level == 3 && tagName.equals("module")) {
-          if (reader.getAttributeCount() > 0) {
-            String attributeName = reader.getAttributeLocalName(0);
-            if (!"importance".equals(attributeName)) {
-              throw new XMLStreamException("Unexpected attribute '" + attributeName + "'");
+        else if (level == 3) {
+          thirdLevelTag = tagName;
+          if (tagName.equals("module")) {
+            if (reader.getAttributeCount() > 0) {
+              String attributeName = reader.getAttributeLocalName(0);
+              if (!"importance".equals(attributeName)) {
+                throw new XMLStreamException("Unexpected attribute '" + attributeName + "'");
+              }
+              importance = ModuleImportance.valueOf(reader.getAttributeValue(0).toUpperCase(Locale.US));
             }
-            importance = ModuleImportance.valueOf(reader.getAttributeValue(0).toUpperCase(Locale.US));
-          }
-          else {
-            importance = ModuleImportance.FUNCTIONAL;
+            else {
+              importance = ModuleImportance.FUNCTIONAL;
+            }
           }
         }
       }
@@ -59,21 +64,37 @@ public final class ProductModulesXmlSerializer {
             throw new XMLStreamException("Module name is not specified");
           }
           RuntimeModuleId moduleId = RuntimeModuleId.raw(moduleName);
-          if ("main-root-modules".equals(parentTag)) {
+          if ("main-root-modules".equals(secondLevelTag)) {
             assert importance != null;
             rootMainGroupModules.add(new RawIncludedRuntimeModule(moduleId, importance));
           }
-          else if ("bundled-plugins".equals(parentTag)) {
+          else if ("bundled-plugins".equals(secondLevelTag)) {
             bundledPluginMainModules.add(moduleId);
           }
-          else if ("include".equals(parentTag)) {
-            includedFrom.add(moduleId);
+          else if ("include".equals(secondLevelTag)) {
+            if ("from-module".equals(thirdLevelTag)) {
+              includedFromModule = moduleId;
+            }
+            else if ("without-module".equals(thirdLevelTag)) {
+              withoutModules.add(moduleId);
+            }
+            else {
+              throw new XMLStreamException("Unexpected sub tag in 'include': " + secondLevelTag);
+            }
           }
           else {
-            throw new XMLStreamException("Unexpected second-level tag " + parentTag);
+            throw new XMLStreamException("Unexpected second-level tag " + secondLevelTag);
           }
           moduleName = null;
           importance = null;
+        }
+        else if (level == 1 && "include".equals(secondLevelTag)) {
+          if (includedFromModule == null) {
+            throw new XMLStreamException("'from-module' tag for 'include' is not specified");
+          }
+          includedFrom.add(new RawIncludedFromData(includedFromModule, withoutModules));
+          includedFromModule = null;
+          withoutModules = new LinkedHashSet<>();
         }
         if (level == 0) {
           break;

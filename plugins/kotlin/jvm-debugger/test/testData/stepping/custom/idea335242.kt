@@ -19,5 +19,3 @@ inline fun foo(a: Boolean, b: Boolean, c: Boolean) {
 inline fun <T, R> T.letIf(condition: Boolean, block: (T) -> R?): R? {
     return if (condition) block(this) else null
 }
-
-// IGNORE_K2

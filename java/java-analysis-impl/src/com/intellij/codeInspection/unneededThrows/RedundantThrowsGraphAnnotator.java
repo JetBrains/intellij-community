@@ -2,11 +2,14 @@
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
 public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
   private final RefManager myRefManager;
@@ -17,14 +20,20 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
 
   @Override
   public void onInitialize(RefElement refElement) {
-    if (refElement instanceof RefMethodImpl) {
+    if (refElement instanceof RefMethodImpl methodImpl) {
       if (refElement.getPsiElement() instanceof PsiMethod method) {
         final PsiCodeBlock body = method.getBody();
         if (body == null) return;
 
-        final Collection<PsiClassType> exceptionTypes = getUnhandledExceptions(body, method, method.getContainingClass());
+        UnhandledExceptions exceptions = UnhandledExceptions.ofMethod(method);
+        if (exceptions.hasUnresolvedCalls()) {
+          PsiClassType throwableType = JavaPsiFacade.getElementFactory(method.getProject())
+            .createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, method.getResolveScope());
+          methodImpl.updateThrowsList(throwableType);
+        }
+        final Collection<PsiClassType> exceptionTypes = exceptions.exceptions();
         for (final PsiClassType exceptionType : exceptionTypes) {
-          ((RefMethodImpl)refElement).updateThrowsList(exceptionType);
+          methodImpl.updateThrowsList(exceptionType);
         }
       }
     }
@@ -56,22 +65,5 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
         }
       });
     }
-  }
-
-  public static Set<PsiClassType> getUnhandledExceptions(PsiCodeBlock body, PsiMethod method, PsiClass containingClass) {
-    Collection<PsiClassType> types = ExceptionUtil.collectUnhandledExceptions(body, method, false);
-    Set<PsiClassType> unhandled = new HashSet<>(types);
-    if (method.isConstructor()) {
-      // there may be field initializer throwing exception
-      // that exception must be caught in the constructor
-      PsiField[] fields = containingClass.getFields();
-      for (final PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        PsiExpression initializer = field.getInitializer();
-        if (initializer == null) continue;
-        unhandled.addAll(ExceptionUtil.collectUnhandledExceptions(initializer, field));
-      }
-    }
-    return unhandled;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.openapi.util.IntRef;
@@ -8,10 +8,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.util.io.blobstorage.ByteBufferWriter;
-import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
-import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+import com.intellij.util.io.blobstorage.*;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
@@ -39,7 +36,7 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storag
  * of responsibilities -- i.e. extracting all storage-specific functionality under common interface,
  * and implement adapters for different storages.
  */
-public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobStorage {
+public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobStorage, BlobStorageStatistics {
 
   /** First header int32, used to recognize this storage's file type */
   protected static final int MAGIC_WORD = IOUtil.asciiToMagicWord("SBlS");
@@ -51,22 +48,22 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   /* ======== Persistent format: =================================================================== */
 
   // Persistent format: (header) (records)*
-  //  header: storageVersion[int32], safeCloseMagic[int32] ...monitoring fields... dataFormatVersion[int32]
+  //  header: see HeaderLayout for details
   //  record:
   //          recordHeader: recordType[int8], capacity, length?, redirectTo?, recordData[length]?
   //                        First byte of header contains the record type, which defines other header
   //                        fields & their length. A lot of bits wiggling are used to compress header
   //                        into as few bytes as possible -- see RecordLayout for details.
-  //
-  //  1. capacity is the allocated size of the record payload _excluding_ header, so
+  //  Glossary:
+  //  1. capacity: is the _allocated_ size of the record _excluding_ header, so
   //     nextRecordOffset = currentRecordOffset + recordHeader + recordCapacity
   //     (and recordHeader size depends on a record type, which is encoded in a first header byte)
   //
   //  2. actualLength (<=capacity) is the actual size of record payload written into the record, so
   //     recordData[0..actualLength) contains actual data, and recordData[actualLength..capacity)
-  //     contains trash.
+  //     contains garbage.
   //
-  //  3. redirectTo is a 'forwarding pointer' for records that were moved (e.g. re-allocated).
+  //  3. redirectTo: a 'forwarding pointer' for records that were moved (e.g. re-allocated).
   //
   //  4. records are always allocated on a single page: i.e. record never breaks a page boundary.
   //     If a record doesn't fit the current page, it is moved to another page (remaining space on
@@ -212,26 +209,6 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   }
 
   @Override
-  public <Out> Out readRecord(final int recordId,
-                              final @NotNull ByteBufferReader<Out> reader) throws IOException {
-    return readRecord(recordId, reader, null);
-  }
-
-  @Override
-  public int writeToRecord(final int recordId,
-                           final @NotNull ByteBufferWriter writer,
-                           final int expectedRecordSizeHint) throws IOException {
-    return writeToRecord(recordId, writer, expectedRecordSizeHint, /* leaveRedirectOnRecordRelocation: */ false);
-  }
-
-  @Override
-  public int writeToRecord(final int recordId,
-                           final @NotNull ByteBufferWriter writer) throws IOException {
-    return writeToRecord(recordId, writer, /*expectedRecordSizeHint: */ -1);
-  }
-
-
-  @Override
   public boolean isRecordActual(int recordActualLength) {
     return recordActualLength >= 0;
   }
@@ -260,22 +237,27 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
     return recordsAllocated.get() - recordsDeleted.get() - recordsRelocated.get();
   }
 
+  @Override
   public int recordsAllocated() {
     return recordsAllocated.get();
   }
 
+  @Override
   public int recordsRelocated() {
     return recordsRelocated.get();
   }
 
+  @Override
   public int recordsDeleted() {
     return recordsDeleted.get();
   }
 
+  @Override
   public long totalLiveRecordsPayloadBytes() {
     return totalLiveRecordsPayloadBytes.get();
   }
 
+  @Override
   public long totalLiveRecordsCapacityBytes() {
     return totalLiveRecordsCapacityBytes.get();
   }

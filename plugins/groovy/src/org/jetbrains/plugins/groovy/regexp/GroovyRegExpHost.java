@@ -31,7 +31,7 @@ import java.util.EnumSet;
 /**
  * @author Bas Leijdekkers
  */
-public class GroovyRegExpHost extends JavaRegExpHost {
+public final class GroovyRegExpHost extends JavaRegExpHost {
 
   @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {

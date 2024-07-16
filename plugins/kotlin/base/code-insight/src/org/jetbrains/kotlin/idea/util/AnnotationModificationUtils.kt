@@ -91,6 +91,6 @@ private fun isAnnotationWithClassId(entry: KtAnnotationEntry, classId: ClassId, 
     if (entry.shortName != classId.shortClassName) return false
     if (!withResolve) return true
     return analyze(entry) {
-        entry.typeReference?.getKtType()?.isClassTypeWithClassId(classId) == true
+        entry.typeReference?.type?.isClassType(classId) == true
     }
 }

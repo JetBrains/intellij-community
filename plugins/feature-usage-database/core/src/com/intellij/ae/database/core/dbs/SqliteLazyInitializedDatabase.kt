@@ -56,6 +56,8 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   private val actionsBeforeDatabaseDisposal = mutableListOf<suspend (isFinal: Boolean) -> Unit>()
   private val closeDispatcher = Dispatchers.IO.limitedParallelism(1)
 
+  private val loggingAttempt = AtomicInteger(0)
+
   init {
     if (System.getProperty("ae.database.fullLock")?.toBoolean() == true) {
       myConnection.set(State.Locked)
@@ -82,16 +84,21 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
   private var isFinalClosed = false
   private suspend fun CoroutineScope.mainClosingLogic(timeout: Duration, reason: String, isFinal: Boolean) {
+    val shouldLog = isFinal || loggingAttempt.getAndIncrement() % 10 == 0
     if (isFinalClosed) {
       logger.info("Close database for reason \"${reason}\" ignored: already closed.")
     }
 
-    logger.info("Starting saving database (reason: $reason)")
+    if (shouldLog) {
+      logger.info("Starting saving database (reason: $reason)")
+    }
     try {
       withTimeout(timeout) {
         withContext(closeDispatcher) {
-          closeDatabaseImpl(isFinal)?.join()
-          logger.info("Saving completed (reason: $reason)")
+          closeDatabaseImpl(isFinal, shouldLog)?.join()
+          if (shouldLog) {
+            logger.info("Saving completed (reason: $reason)")
+          }
         }
       }
     }
@@ -126,7 +133,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   }
 
   @Suppress("OPT_IN_USAGE")
-  private fun closeDatabaseImpl(isFinal: Boolean): Job? {
+  private fun closeDatabaseImpl(isFinal: Boolean, shouldLog: Boolean): Job? {
     // service scope is dead at this point, need to use GlobalScope
     // todo: not true on temp close
     fun launchJob(action: suspend CoroutineScope.() -> Unit): Job =
@@ -141,7 +148,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
             val connection = getConn2(this)
             if (connection != null) {
               logger.info("Connection opened, performing termination.")
-              close(connection, isFinal = true)
+              close(connection, isFinal = true, shouldLog = shouldLog)
             } else {
               logger.info("Connection open failure.")
             }
@@ -149,7 +156,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
         }
         is State.Active -> {
           val job = launchJob {
-            close(state.def.await(), isFinal)
+            close(state.def.await(), isFinal, shouldLog = shouldLog)
           }
           val newState = State.Cancelling(state.def, job)
           if (myConnection.compareAndSet(state, newState)) {
@@ -242,13 +249,17 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     }
   }
 
-  private suspend fun close(connectionHolder: ConnectionHolder, isFinal: Boolean) {
-    logger.info("close start")
+  private suspend fun close(connectionHolder: ConnectionHolder, isFinal: Boolean, shouldLog: Boolean) {
+    if (shouldLog) {
+      logger.info("close start")
+    }
     connectionHolder.connection.use {
       doExecuteBeforeConnectionClosed(isFinal)
     }
     check(connectionHolder.connection.isClosed)
-    logger.info("close end")
+    if (shouldLog) {
+      logger.info("close end")
+    }
   }
 
   private fun createDatabasePath(): Path? {

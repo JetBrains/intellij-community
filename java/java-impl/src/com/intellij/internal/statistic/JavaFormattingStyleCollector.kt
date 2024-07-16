@@ -19,7 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
  * USE com.intellij.psi.codeStyle.GenerateJavaFormattingStyleCollector
  */
 class JavaFormattingStyleCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("java.code.style", 1)
+  private val GROUP = EventLogGroup("java.code.style", 2)
 
   override fun getGroup(): EventLogGroup {
     return GROUP
@@ -459,6 +459,8 @@ class JavaFormattingStyleCollector : ProjectUsagesCollector() {
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.SPACE_INSIDE_ONE_LINE_ENUM_BRACES }, "JAVA_SPACE_INSIDE_ONE_LINE_ENUM_BRACES")
 
+    addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT }, "JAVA_SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT")
+
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.NEW_LINE_WHEN_BODY_IS_PRESENTED }, "JAVA_NEW_LINE_WHEN_BODY_IS_PRESENTED")
 
     addMetricIfDiffersCustom(result, javaSettings, defaultJavaSettings, { s -> s.LAYOUT_STATIC_IMPORTS_SEPARATELY }, "JAVA_LAYOUT_STATIC_IMPORTS_SEPARATELY")
@@ -747,6 +749,7 @@ private val ALLOWED_NAMES = listOf(
   "JAVA_CLASS_NAMES_IN_JAVADOC",
   "JAVA_SPACE_BEFORE_COLON_IN_FOREACH",
   "JAVA_SPACE_INSIDE_ONE_LINE_ENUM_BRACES",
+  "JAVA_SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT",
   "JAVA_NEW_LINE_WHEN_BODY_IS_PRESENTED",
   "JAVA_LAYOUT_STATIC_IMPORTS_SEPARATELY",
   "JAVA_USE_FQ_CLASS_NAMES",

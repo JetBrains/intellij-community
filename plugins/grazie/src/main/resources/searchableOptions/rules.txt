@@ -58,6 +58,7 @@ $500 (dollars)
 'the reason... is because'
 'themself'
 'they ware' vs 'they were'
+'they' at SENT_END
 'this' vs. 'these'
 'to both ...' with more than two items
 'to' + non-base form
@@ -77,9 +78,12 @@ $500 (dollars)
 ..., than (then)
 ..., than, ... (then)
 ...because your Mac has been signed-out (signed out) from iCloud
+...but the high-demand (high demand) meant it sold out quickly
 ...if user(s) open the card by clicking on the error?
 ...is a major cause of death and affect(s) approximately 795,000
 ...the situation in the (*omit the*) Ukraine
+...the vocal tract is partially or completed (completely) closed
+...with citations (citation) numbers that are sequential
 ...you vary (very) much
 1-litre/1-liter
 1. Redundancy (General)
@@ -146,6 +150,7 @@ Articles: a + uncountable noun
 Articles: article missing before a countable noun
 Articles: unnecessary indefinite article before an uncountable noun
 Ascetic acid v acetic acid
+Ass vs As
 Assassin's Creed
 AstraZeneca
 At 7 clock (o'clock)
@@ -165,7 +170,8 @@ Bitcoin
 Black Lives Matter
 Black Sea
 Blue-ray (Blu-ray)
-British words easily confused in American English
+Bob's and I's (my) car
+British words easily confused in American English: $match
 Britney Spears misspellings
 But when I write, I like to use a pens (a pen|pens) and paper
 C.O.P.D (COPD)
@@ -179,9 +185,9 @@ Cap Coral
 Capitalization of words derived from proper nouns
 Capitalize file extensions
 Carnegie Mellon
-Change two hyphens to en or em dash
+Change two hyphens to em dash
 Chat GPT (ChatGPT)
-Checks for wrong words/phrases
+Check for wrong words/phrases: $match
 Checks if hyphenated words were spelled with dashes (e.g., 'T — shirt' instead 'T-shirt').
 Checks if the two types of apostrophes (' and ’) are used consistently in a text.
 Checks that a sentence starts with an uppercase letter
@@ -484,11 +490,13 @@ Harper's Bazaar
 Has (as) far as I can tell
 Have a bless (blessed) day
 Hawaiian
+He (The|Her) question is whether we can extract...
 He bought one that work (works) underwater
 He complaint/restraint (complained/restrained)
 He doesn't live here, do(es) he?
 He going (He is going)
 He has a hart (heart) of a lion
+He has much (a lot of) money
 He has uses (used) the switch
 He is about to (be) executed
 He is never be (He has never been)
@@ -512,7 +520,7 @@ How's the whether (weather)?
 Hyphen in 'click through rate'
 Hyphen in 'must have/see'
 Hyphen, n-dash and m-dash
-Hyphenated words, e.g., 'case-sensitive' instead of 'case sensitive'
+Hyphenated words: $match
 Hyphens in 'pre- and post-noun'
 I (if)
 I (was) born in the USA
@@ -528,6 +536,7 @@ I am worry (worried)
 I as (was) looking
 I belive (believe)
 I can no (not) speak English
+I can' (can't) wait until tomorrow
 I crave for () chocolate
 I did no (not) have
 I didn't saw (see)
@@ -535,6 +544,7 @@ I didn't spoke (speak)
 I don't know how to (*missing verb*) it
 I don't wanna to travel (want to travel)
 I dont't (don't)
+I eat an apple a days (day)
 I em (am)
 I emphasis (emphasize)
 I enrolled international school
@@ -567,7 +577,9 @@ I saw it and I (0) should have said something to you
 I staid (stayed) at home
 I thin (think)
 I think Jack and Elon has (have) been on this...
+I told her (to) break a leg
 I use have …
+I vs It
 I vs in
 I vs is
 I vs me
@@ -581,6 +593,7 @@ I will put it a side (aside) for later
 I won't (want) to be
 I wonder where they're (they are).
 I work (I have worked|I have been working) here since 2002
+I would appreciate (it) if
 I would won't (want)
 I'l (I'll) etc.
 I'm avoiding to register (registering) for classes because I've had a bad experience
@@ -591,6 +604,8 @@ I'm haven't (I haven't)
 I'm might (I might) be
 I'm not very experienced too (either)
 I'm note (not) sure
+I'm working full(-)time
+I've (I have) two tickets to see the Dodgers tonight
 I've go to (I've got to)
 I(,) for one(,) think
 I/you/... thing (think)
@@ -598,6 +613,7 @@ IN PRP then (than) IN PRP
 IN VBZ they're (their) NN
 Id would (I would)
 If it (it is) ok for you
+If you read a lot, you’ll learn a lot, and vice a versa (vice versa)
 Ill (I'll)
 Im am (I am)
 Impossible dates (April 31st, etc.)
@@ -665,6 +681,7 @@ Let's go to the movie some time (sometime)
 Let's talk on skype (Skype)
 Light-year as a unit of time
 LinkedIn
+Lmk if that fits your schedule ass (as) well
 Lockheed Martin
 Long Island iced tea
 Looks good form (for) me
@@ -709,6 +726,7 @@ Missing noun after an adjective
 Missing noun: 'The is the'
 Missing past tense for 'used to...'
 Missing past tense with '...last year/month/etc.'
+Missing period after an abbreviation
 Missing possessive: This weeks (week's) meeting
 Missing possessive: Todays (today's) meeting
 Missing preposition
@@ -728,6 +746,7 @@ Missing whitespace before a parenthesis
 Missing: 't
 Misspellings of 'Papua New Guinea'
 Misused phrase: 'ever so often (every so often)'
+Moist vs. Most
 Moore's Law
 Most of our times (time)
 Mount Fuji
@@ -772,6 +791,7 @@ PayPal
 Persona non grata
 Phillips (Philips) Arena
 Pilates
+Please do this by expire (expiring|the expiration)
 Please(d) to meet you
 Plural form of numbers in 'two dozens of' (two dozen)
 Plural of Pokémon
@@ -803,6 +823,7 @@ Possibly needless 'that'
 Potentially missing comma after year
 PowerShell
 Preposition + who (whom)
+Profanity
 Profanity
 Progressive forms of non-progressive verbs (doubt, believe, understand)
 Pronoun + noun
@@ -872,9 +893,15 @@ Sound (sounds) great
 Space character at the beginning of paragraph
 Space character at the end of paragraph
 SpaceX
+Spelling mistakes in proper nouns (2 tokens)
+Spelling mistakes in proper nouns (3 tokens)
+Spelling mistakes in proper nouns (4 tokens)
 Spelling of English contractions
 Spiderman
 Starting sentence with 'The truth/fact is'.
+Statistical Style Analysis: Overused Adjective
+Statistical Style Analysis: Overused Noun
+Statistical Style Analysis: Overused Verb
 Studies like this relies (rely) on current data
 Style: 'possible' after 'possibility'
 Subject-verb agreement
@@ -882,6 +909,7 @@ Subject-verb agreement error after conjunction
 Subject-verb agreement plural
 Successive sentences beginning with the same word
 Such torn foolery (tomfoolery) is inexcusable
+Suggest diacritics for '$match'
 Suggest shorter ways to negate words (not common vs uncommon)
 Suggest synonyms for repeated words.
 Suggests or checks conversion of units to their metric equivalents.
@@ -898,7 +926,9 @@ Thank (Thanks)
 Thank you much
 Thanks (Thank) you
 Thanks (for) your help
+Thanks for contacting us (reaching out to us)
 Thanks for let (letting)
+Thanks for taking me a long (along) for the ride
 Thanks in advanced (advance)
 That being sad (said)
 That cool (That is cool)
@@ -932,6 +962,7 @@ Third World
 This (These) two are happy
 This (These) types of projects
 This is has (has/is)
+This is the most frequent errors (error)
 This tools (These tools)
 This weeks' (week's)
 This will allow (allows) them to bloom...
@@ -943,6 +974,7 @@ Tom like (likes|liked) the sun
 Touch point (Touchpoint)
 Translation error: a gesture of greeting
 Translation errors: by/for example
+Twitter (X)
 Two consecutive articles, e.g. 'the a'
 Two consecutive spaces
 Two modal verbs in a row (could should)
@@ -955,6 +987,7 @@ Unite State -> United States
 Unites (United)
 Unnecessary comma: 'Bob(,) and I'
 Unpaired braces, brackets, quotation marks and similar symbols
+Unpaired quotation marks
 Untied (United) States
 Ur (You're)
 Ursula von der Leyen
@@ -1027,7 +1060,6 @@ WordPress
 Wordiness: in a ... manner
 Wordiness: very small
 Words that doesn't (don't)
-Words with diacritics
 Worlds (World's) Best
 Write on my page
 Wrong apostrophe character
@@ -1117,10 +1149,13 @@ accused of a charge (charged with)
 accustomed to
 active vs activate
 ad (and)
+ad nauseaum (nauseam)
 ad nauseum (nauseam)
 ad vs as
 add an additional (add)
+add salt to injury (insult to injury)
 add-no (add-on)
+addend vs attend
 addicting (addictive)
 adequate enough (adequate)
 adjective vs. adverb
@@ -1194,6 +1229,7 @@ anyways (anyway)
 apart form (apart from)
 apart of (a part of, apart from)
 approximately about
+are (you) allowed to
 are able to (can)
 are still the some (same)
 are vs our
@@ -1222,10 +1258,13 @@ assist, assistance (help)
 associate together (associate)
 at a lose (at a loss)
 at all times (always)
+at anytime (any time)
 at the present time, at this time, at this point in time, at the moment (now, currently)
 at the reigns (reins)
 at vs as
 at your earliest convenience (as soon as you can)
+attache -> attach
+attorney generals (attorneys general)
 au [astronomical unit] (Au=gold)
 august (August)
 autobiography of a life (autobiography)
@@ -1279,6 +1318,7 @@ belief (believe)
 believe (belief)
 bended (bent)
 beside vs besides
+besides (beside) the point
 best ever (best)
 bestest (best)
 bet vs best
@@ -1291,6 +1331,7 @@ biography of her life (biography)
 bis vs bus
 bitter in taste (bitter)
 bivouac camp (bivouac)
+black hat (black-hat) hacker
 blend together (blend)
 blood born vs blood-borne
 blow (below)
@@ -1310,6 +1351,7 @@ brew haha (brouhaha)
 brief moment/summary (moment/summary)
 bring SOMEBODY in/to
 brother-in-laws (brothers-in-law)
+brows vs browse
 brussel (brussels) sprout
 bu (by, bus, but)
 buenos días
@@ -1332,6 +1374,7 @@ can (do) anything for you
 can able to (can)
 can backup (back up)
 can be access (accessed)
+can be seem (seen)
 can blackout (black out)
 can checkin (check in)
 can checkout (check out)
@@ -1347,6 +1390,7 @@ capitalize proper names, geographic terms, historic episodes...
 car pool (carpool)
 car vs care
 carries vs caries
+case and (in) point
 casted (cast)
 cause vs course
 chalk full (chock-full)
@@ -1380,7 +1424,7 @@ comma between 'then' and 'when'
 comma between independent clauses
 comma between independent clauses
 common (commonly) used
-commonly confused words (proscribe/prescribe, heroine/heroin etc.)
+commonly confused words: $match
 commute back and forth (commute)
 comparison 'as ... as' (no comparative/superlative)
 comparisons NNS then (than)
@@ -1443,6 +1487,7 @@ cumber some (cumbersome)
 curator on/of
 curios vs curious
 currently
+curse vs. course
 cursing (coursing) through veins
 custom build (custom-build)
 cyber security (cybersecurity)
@@ -1590,6 +1635,7 @@ fall season (fall)
 famous celebrity (celebrity)
 far be it for me (far be it from me)
 fare vs fair
+fast paste (paced)
 fastly (quickly)
 fee vs free
 feed back (feedback)
@@ -1621,6 +1667,7 @@ food born vs foodborne
 foot ball (football)
 foot print (footprint)
 football teem (football team)
+for (a) while
 for (the) inconvenience
 for all intensive purposes (for all intents and purposes)
 for all intents and purposes (omit)
@@ -1657,6 +1704,7 @@ frisbee (Frisbee)
 fro (for)
 from X - Y (from X to Y)
 from than (then) on
+from the get go (get-go)
 from/form
 full compliment (complement) of
 full fill (fulfill)
@@ -1665,6 +1713,7 @@ further more (furthermore)
 gameboy (game boy)
 gardener (garter) snake
 gather up (gather)
+gave vs. have
 genera vs general
 general public (public)
 get together (get-together)
@@ -1697,6 +1746,7 @@ grand vs grant
 grasping for straws (grasping at straws)
 grate (great)
 grave yard (graveyard)
+greats vs greets
 grill (grilled) cheese
 ground floor/first floor
 gues vs guess
@@ -1714,6 +1764,7 @@ handover (hand over)
 hands free (hands-free)
 hangout (hang out)
 happed vs happened
+happy to (be/have/see) your
 hard (heart)
 hard working (hardworking)
 hardly never (ever)
@@ -1724,8 +1775,10 @@ has been adder (added)
 has it advantages → has its advantages
 has ought (ought)
 hast o (has to)
+hat vs had
 hat vs that
 have a (I) been
+have a look → take a look
 have a shower → take a shower
 have a tendency (tends)
 have bean (been)
@@ -1797,6 +1850,7 @@ homo (Homo) erectus
 homo (Homo) sapiens
 honest truth (truth)
 honesty vs honestly
+hope vs hop
 house hold (household)
 hover board (hoverboard)
 how (are) you doing'
@@ -1811,9 +1865,11 @@ hyphen in 'opt in/out'
 hyphen in 'same day delivery'
 hyphen in 'write up'
 hyphens in 'all-you-can-eat'
+hyphens in 'chicken-and-egg'
 i vs. I
 i.e.
 id (ID / I'd)
+id vs is
 idk (IDK)
 if (of)
 if (we/they/you) need something
@@ -1894,6 +1950,7 @@ isen't → isn't
 isn'r (isn't)
 it (is)
 it drys (dries)
+it is (a) pleasure to
 it is ... to doing (do)
 it is no (not/now)
 it it (it is)
@@ -1906,10 +1963,11 @@ it vs si
 it vs. if
 it would (be) appreciated
 it'a (it's)
+it's are (it is)
 it's depending on (it depends on)
+it's is (it is)
 its (possessive) JJS NN
 its JJ NN (possessive)
-its is (it is)
 its vs it is
 its vs. it's
 jailbreaked (jailbroke)
@@ -1927,6 +1985,7 @@ knot (not)
 know (now)
 know vs known
 ladies and gentleman (gentlemen)
+lager vs larger
 laid (lay) ahead
 land lord (landlord)
 land lover (landlubber)
@@ -1939,6 +1998,7 @@ laying (lying) around
 lays (lies) atop
 lead roll (role)
 lear vs learn
+leas vs least
 led (LED)
 left over → leftover
 legal term: informations
@@ -1947,6 +2007,7 @@ lending vs. landing
 les vs. less
 less (fewer) dollars
 less/more ... then (than)
+lest vs last
 let em (me) know
 let is (us) know
 let's (lets)
@@ -1979,6 +2040,7 @@ luck vs lick
 luv (love)
 ma vs my
 mach vs much
+machine leaning (learning)
 mad vs made
 made (did) a mistake
 mah (my)
@@ -2076,6 +2138,7 @@ missing hyphen in 'all knowing'
 missing hyphen in 'all time high'
 missing hyphen in 'all-wheel'
 missing hyphen in 'anti-Semitism'
+missing hyphen in 'break out'
 missing hyphen in 'built in'
 missing hyphen in 'call to action'
 missing hyphen in 'catch-all'
@@ -2095,6 +2158,7 @@ missing hyphen in 'for-profit'
 missing hyphen in 'force feed'
 missing hyphen in 'four car garage'
 missing hyphen in 'go to'
+missing hyphen in 'green lights'
 missing hyphen in 'guilt trip'
 missing hyphen in 'hands on'
 missing hyphen in 'high end'
@@ -2156,6 +2220,7 @@ missing hyphen in 'year over year'
 missing hyphen in adjectives with 'non/anti'
 missing hyphens in 'all-in-one'
 missing hyphens in 'day to day'
+missing hyphens in 'denial of service'
 missing hyphens in 'head-to-head'
 missing hyphens in 'know it all'
 missing hyphens in 'soon to be'
@@ -2219,6 +2284,7 @@ nip it in the butt (nip it in the bud)
 nit vs not
 no (now) on
 no comma before indirect question
+no comma in 'reason, why'
 no haggle (no-haggle)
 no vs know
 no vs not
@@ -2243,6 +2309,8 @@ note taking (note-taking)
 note vs not
 now a days (nowadays)
 now and days (nowadays)
+now-a-day (nowadays)
+now-a-days (nowadays)
 number (of) years
 number + (th, nd, st, rd)
 number or (of)
@@ -2267,6 +2335,7 @@ on (one) of the most/least/...
 on (the) website
 on a daily base (basis)
 on a few occasions (occasionally)
+on a whole another (nother/different)
 on a x basis
 on behave (on behalf)
 on boarding (onboarding)
@@ -2332,6 +2401,7 @@ over time (overtime)
 overdue vs overdo
 overnight instead of 'over night'
 overt he (over the)
+oxford (Oxford) comma
 park way (parkway)
 parmesan (Parmesan)
 passer by (passer-by)
@@ -2348,6 +2418,7 @@ pedal to the medal (metal)
 peddle (paddle/pedal)
 pee-configured (pre-configured)
 people + 3rd person verb
+per cent (percent)
 per say (per se)
 per vs pre
 perfect tense + since
@@ -2369,6 +2440,7 @@ pleas vs please
 please (pleased) to
 please + wrong verb form
 please be prepare (prepared)
+please do not (feed) the cat
 please not (note) that
 please not do this (please don't do this)
 plural subjects
@@ -2406,6 +2478,8 @@ question as to whether, question of whether (question whether)
 qui bono (cui bono)
 quite / quiet
 rain bow (rainbow)
+rainbow(-)colored leaves
+rally vs really
 rater vs rather
 rather/other/different then (than)
 ration or ratio
@@ -2415,6 +2489,7 @@ read only (read-only)
 really, very, quite, extremely, severely (use sparingly)
 realms (realm) of possibility
 reap what you sew (sow)
+rearranges final comma in reported speech
 reason why (reason)
 red vs read
 redundant apostrophe
@@ -2422,6 +2497,7 @@ redundant determiner
 redundant determiner: 'in (an) alphabetical order
 redundant punctuation
 redundant verb after verb
+redundant verb in 'there's has'
 regard as being (regard as)
 reigns (reins) of power
 relay vs rely
@@ -2435,10 +2511,12 @@ responds vs. response
 retards (regards)
 return back (return)
 right (rite) of passage
+right in (up) my alley
 right over (over)
 ring (wring) its neck
 rite vs right
 rite vs write
+road block (roadblock)
 road vs rode
 road-to-market (route-to-market)
 rod (wrought) iron
@@ -2451,6 +2529,7 @@ round a bout (round a bouts)
 route (root) of the problem
 royal air force (Royal Air Force)
 royal mail (Royal Mail)
+ruff vs rough
 runnner-up
 rustic country (rustic)
 safe guard (safeguard)
@@ -2461,6 +2540,7 @@ salsa sauce (salsa)
 sate (state)
 save (safe)
 say (tell) me what's wrong
+say sorry (apologize)
 sceptic (septic)
 score card (scorecard)
 scree vs. screen
@@ -2497,6 +2577,7 @@ short cut (shortcut)
 should be do (done)
 shout vs should
 show case (showcase)
+showed vs. shown
 shutdown (shut down)
 side (site)
 side kick (sidekick)
@@ -2585,6 +2666,7 @@ suppose (supposed) to
 swim suit (swimsuit)
 sworn affidavit (affidavit)
 t he (the)
+t o (to)
 t-bone (T-bone)
 tab vs tap
 tail gate (tailgate)
@@ -2604,6 +2686,7 @@ tattle-tail (tattle-tale)
 tech vs teach
 telephone/... poll (pole)
 temporary bivouac (bivouac)
+tender hooks (tenterhooks)
 tent vs tend
 testes (tested)
 thank (thanks) in advance
@@ -2693,9 +2776,11 @@ through (throw) away
 through out (throughout)
 throws (throes)
 thru / through
+thu vs thus
 thunder storm (thunderstorm)
 tis (this)
 to VB its NN (possessive)
+to after modal verbs
 to also (to) go
 to backout (back out)
 to bath (bathe)
@@ -2710,6 +2795,7 @@ to sent (send)
 to the manor (manner) born
 to vs two
 to walk passed (past)
+to worried (worry) about
 to/two (too) late/soon/much
 to/will before withdrawn
 tome (time)
@@ -2739,6 +2825,7 @@ tread vs treat
 treasure trough (trove)
 tree (three)
 trite (tried) and true
+trojan (Trojan) horse
 trouble maker (troublemaker)
 trough vs through
 true to her words (word)
@@ -2751,6 +2838,7 @@ turn it of (off)
 turn of (off)
 twitter (Twitter)
 two of my friend (friends)
+two peas in a pot (pod)
 two state (two-state) solution
 two tank's (tanks)
 type of (omit)
@@ -2761,6 +2849,7 @@ under cover (undercover)
 under wear (underwear)
 undos (undoes)
 unexpected noun after 'to'
+unicode (Unicode)
 until such time as (until)
 up date (update)
 up to data (date)
@@ -2842,6 +2931,7 @@ where as/by (whereas/whereby)
 where/when
 whet vs what
 which include but are not limited too (to)
+which vs wish
 whim (wing) and a prayer
 whip cream (whipped cream)
 whit vs white
@@ -2899,6 +2989,7 @@ wort vs worth
 worth (worse) than
 worth while (worthwhile)
 worthwhile is weak
+would be nice, if (no comma)
 would never done (have done)
 woun't → wouldn't, won't
 wrack (rack) one's brain about

@@ -2,7 +2,6 @@
 package org.jetbrains.jps.model.artifact.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -14,7 +13,9 @@ import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase;
 
-public class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsArtifactImpl<P>> implements JpsArtifact {
+import java.util.Objects;
+
+class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsArtifactImpl<P>> implements JpsArtifact {
   private static final JpsElementChildRole<JpsCompositePackagingElement>
     ROOT_ELEMENT_CHILD_ROLE = JpsElementChildRoleBase.create("root element");
   private final JpsArtifactType<P> myArtifactType;
@@ -22,7 +23,7 @@ public class JpsArtifactImpl<P extends JpsElement> extends JpsNamedCompositeElem
   private boolean myBuildOnMake;
 
 
-  public JpsArtifactImpl(@NotNull String name, @NotNull JpsCompositePackagingElement rootElement, @NotNull JpsArtifactType<P> type, @NotNull P properties) {
+  JpsArtifactImpl(@NotNull String name, @NotNull JpsCompositePackagingElement rootElement, @NotNull JpsArtifactType<P> type, @NotNull P properties) {
     super(name);
     myArtifactType = type;
     myContainer.setChild(ROOT_ELEMENT_CHILD_ROLE, rootElement);

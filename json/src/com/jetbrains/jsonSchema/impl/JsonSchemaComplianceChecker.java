@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -19,7 +20,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class JsonSchemaComplianceChecker {
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
@@ -59,7 +63,7 @@ public final class JsonSchemaComplianceChecker {
     if (firstProp != null) {
       final JsonPointerPosition position = myWalker.findPosition(firstProp.getDelegate(), true);
       if (position == null || position.isEmpty()) return;
-      final MatchResult result = new JsonSchemaResolver(project, myRootSchema, position).detailedResolve();
+      final MatchResult result = new JsonSchemaResolver(project, myRootSchema, position, firstProp.getNameValueAdapter()).detailedResolve();
       for (JsonValueAdapter value : firstProp.getValues()) {
         createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, value, result, myOptions));
       }
@@ -79,7 +83,7 @@ public final class JsonSchemaComplianceChecker {
     }
     if (rootToCheck != null) {
       Project project = element.getProject();
-      final MatchResult matchResult = new JsonSchemaResolver(project, myRootSchema).detailedResolve();
+      final MatchResult matchResult = new JsonSchemaResolver(project, myRootSchema, new JsonPointerPosition(), rootToCheck).detailedResolve();
       createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, rootToCheck, matchResult, myOptions));
     }
   }
@@ -150,11 +154,8 @@ public final class JsonSchemaComplianceChecker {
   private boolean checkIfAlreadyProcessed(@NotNull PsiElement property) {
     Set<PsiElement> data = mySession.getUserData(ANNOTATED_PROPERTIES);
     if (data == null) {
-      data = new HashSet<>();
-      mySession.putUserData(ANNOTATED_PROPERTIES, data);
+      data = mySession.putUserDataIfAbsent(ANNOTATED_PROPERTIES, ConcurrentCollectionFactory.createConcurrentSet());
     }
-    if (data.contains(property)) return true;
-    data.add(property);
-    return false;
+    return !data.add(property);
   }
 }

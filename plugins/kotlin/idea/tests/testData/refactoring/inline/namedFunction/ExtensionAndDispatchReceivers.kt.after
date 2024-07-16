@@ -7,3 +7,5 @@ class ExtContext {
         val v = extended.extMember + ctxMember
     }
 }
+
+// IGNORE_K2

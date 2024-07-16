@@ -1,0 +1,3 @@
+com/google/gson/stream/JsonWriter
+it/unimi/dsi/fastutil/ints/Int2IntMap
+it/unimi/dsi/fastutil/ints/IntList

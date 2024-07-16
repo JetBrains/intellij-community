@@ -21,8 +21,9 @@ class SearchEverywhereMlServiceImpl : SearchEverywhereMlService by RANKING_SERVI
                               indexes: IntArray,
                               selectedItems: List<Any>,
                               elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                              closePopup: Boolean) {
-    RANKING_SERVICE.onItemSelected(project, tabId, indexes, selectedItems, elementsProvider, closePopup)
-    ITEM_SELECTED_LISTENERS.forEach { it.onItemSelected(project, tabId, indexes, selectedItems, elementsProvider, closePopup) }
+                              closePopup: Boolean,
+                              query: String) {
+    RANKING_SERVICE.onItemSelected(project, tabId, indexes, selectedItems, elementsProvider, closePopup, query)
+    ITEM_SELECTED_LISTENERS.forEach { it.onItemSelected(project, tabId, indexes, selectedItems, elementsProvider, closePopup, query) }
   }
 }

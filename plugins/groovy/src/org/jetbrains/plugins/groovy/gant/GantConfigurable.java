@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
 
-public class GantConfigurable extends SdkHomeConfigurable implements Configurable.NoScroll {
+public final class GantConfigurable extends SdkHomeConfigurable implements Configurable.NoScroll {
 
   public GantConfigurable(Project project) {
     super(project, GroovyBundle.message("configurable.GantConfigurable.display.name"));

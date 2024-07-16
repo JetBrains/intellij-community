@@ -333,7 +333,6 @@ class B implements AnnotationBuilder {
       annotation.setUnresolvedReference(unresolvedReference);
     }
     myHolder.add(annotation);
-    myHolder.queueToUpdateIncrementally();
     myHolder.annotationCreatedFrom(this);
   }
 

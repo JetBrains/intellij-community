@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.SmartList
 import kotlin.io.path.invariantSeparatorsPathString
 
 internal class SchemeFileTracker<T : Scheme, M : T>(
@@ -24,7 +23,7 @@ internal class SchemeFileTracker<T : Scheme, M : T>(
   private val applicator = SchemeChangeApplicator(schemeManager)
 
   override fun after(events: List<VFileEvent>) {
-    val list = SmartList<SchemeChangeEvent<T,M>>()
+    val list = ArrayList<SchemeChangeEvent<T, M>>()
     for (event in events) {
       if (event.requestor is SchemeManagerImpl<*, *>) {
         continue

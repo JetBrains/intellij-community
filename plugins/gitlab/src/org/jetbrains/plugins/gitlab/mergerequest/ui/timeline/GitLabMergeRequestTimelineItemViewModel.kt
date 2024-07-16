@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
+import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -8,7 +9,8 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -23,7 +25,53 @@ import java.net.URL
 import java.util.*
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
-  data class Immutable(val item: GitLabMergeRequestTimelineItem.Immutable) : GitLabMergeRequestTimelineItemViewModel
+  sealed class Immutable(
+    private val project: Project,
+    private val mr: GitLabMergeRequest,
+    private val model: GitLabMergeRequestTimelineItem.Immutable
+  ) : GitLabMergeRequestTimelineItemViewModel {
+    val date = model.date
+    val actor = model.actor
+
+    val contentHtml: String? by lazy {
+      (model as? GitLabMergeRequestTimelineItem.SystemNote)?.content?.let {
+        GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it)
+      }
+    }
+
+    companion object {
+      fun fromModel(
+        project: Project,
+        mr: GitLabMergeRequest,
+        model: GitLabMergeRequestTimelineItem.Immutable
+      ): Immutable = when (model) {
+        is GitLabMergeRequestTimelineItem.StateEvent -> StateEvent(project, mr, model)
+        is GitLabMergeRequestTimelineItem.LabelEvent -> LabelEvent(project, mr, model)
+        is GitLabMergeRequestTimelineItem.MilestoneEvent -> MilestoneEvent(project, mr, model)
+        is GitLabMergeRequestTimelineItem.SystemNote -> SystemNote(project, mr, model)
+      }
+    }
+  }
+
+  class StateEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.StateEvent)
+    : Immutable(project, mr, model) {
+    val event = model.event
+  }
+
+  class LabelEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.LabelEvent)
+    : Immutable(project, mr, model) {
+    val event = model.event
+  }
+
+  class MilestoneEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.MilestoneEvent)
+    : Immutable(project, mr, model) {
+    val event = model.event
+  }
+
+  class SystemNote(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.SystemNote)
+    : Immutable(project, mr, model) {
+    val content = model.content
+  }
 
   class Discussion(
     project: Project,
@@ -65,10 +113,13 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
       if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
     override val reactionsVm: GitLabReactionsViewModel? = null
 
-    override val body: Flow<String> = note.body
-    override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)
+    override val body: StateFlow<String> = note.body
+    override val bodyHtml: StateFlow<String> = body.mapStateInNow(cs) {
+      GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it)
+    }
 
-    override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
+    override val discussionState: StateFlow<GitLabDiscussionStateContainer> =
+      MutableStateFlow(GitLabDiscussionStateContainer.DEFAULT)
 
     val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
       note.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }

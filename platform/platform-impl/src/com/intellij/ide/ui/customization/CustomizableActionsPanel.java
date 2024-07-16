@@ -5,25 +5,31 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -33,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
@@ -45,8 +53,9 @@ import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 public class CustomizableActionsPanel {
   private final JPanel myPanel = new BorderLayoutPanel(5, 5);
   protected JTree myActionsTree;
-  private final JPanel myTopPanel = new BorderLayoutPanel();
+  private final JPanel myTopPanel = new JPanel(new GridLayout());
   protected CustomActionsSchema mySelectedSchema;
+  private final Computable<Integer> myPreferredHeightProvider;
 
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
@@ -59,29 +68,47 @@ public class CustomizableActionsPanel {
     myActionsTree.setShowsRootHandles(true);
     myActionsTree.setCellRenderer(createDefaultRenderer());
     RowsDnDSupport.install(myActionsTree, model);
-
-    patchActionsTreeCorrespondingToSchema(root);
+    PopupHandler.installPopupMenu(myActionsTree, createPopupActionGroup(), ActionPlaces.CUSTOMIZE_ACTIONS_PANEL);
 
     TreeExpansionMonitor.install(myActionsTree);
-    myTopPanel.add(setupFilterComponent(myActionsTree), BorderLayout.WEST);
-    myTopPanel.add(createToolbar(), BorderLayout.CENTER);
+    JComponent filter = setupFilterComponent(myActionsTree);
+    myPreferredHeightProvider = new Computable<>() {
+      @Override
+      public Integer compute() {
+        return filter.getPreferredSize().height;
+      }
+    };
+
+    CustomizationActionPanelLayoutUtilsKt.setupTopPanelLayout(myTopPanel, createToolbar(), filter);
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myActionsTree), BorderLayout.CENTER);
   }
 
-  private ActionToolbarImpl createToolbar() {
-    ActionGroup addGroup = new DefaultActionGroup(new AddActionActionTreeSelectionAction()/*, new AddGroupAction()*/, new AddSeparatorAction());
-    addGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.add.action.group"));
-    addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
-    addGroup.setPopup(true);
-    ActionGroup restoreGroup = getRestoreGroup();
+  private ActionGroup createPopupActionGroup() {
+    return new DefaultActionGroup(new EditIconAction(), new RemoveAction(), new Separator(), new AddActionBelowSelectionAction(), new AddSeparatorAction());
+  }
+
+  private JComponent createToolbar() {
+    JPanel container = new JPanel(new BorderLayout());
+
+    ActionToolbarImpl addGroupToolbar = (ActionToolbarImpl)ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(new AddActionActionTreeSelectionAction()), true);
+    addGroupToolbar.setTargetComponent(myPanel);
+    addGroupToolbar.setActionButtonBorder(new JBEmptyBorder(0));
+    addGroupToolbar.setBorder(new JBEmptyBorder(0));
+    container.add(addGroupToolbar, BorderLayout.WEST);
+
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
-      .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(addGroup, new RemoveAction(), new EditIconAction(), new MoveUpAction(), new MoveDownAction(), restoreGroup), true);
+      .createActionToolbar(ActionPlaces.TOOLBAR,
+                           new DefaultActionGroup(new EditIconAction(), new MoveUpAction(), new MoveDownAction(), new Separator(),
+                                                  new RemoveAction(), getRestoreGroup()), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     toolbar.setTargetComponent(myTopPanel);
-    return toolbar;
+    container.add(toolbar, BorderLayout.CENTER);
+
+    return container;
   }
 
   protected @NotNull ActionGroup getRestoreGroup() {
@@ -122,6 +149,7 @@ public class CustomizableActionsPanel {
         mySpeedSearch.getComponent().repaint();
       }
     };
+    filterComponent.setMaximumSize(new Dimension(300, 300));
     JTextField textField = filterComponent.getTextEditor();
     int[] keyCodes = {KeyEvent.VK_HOME, KeyEvent.VK_END, KeyEvent.VK_UP, KeyEvent.VK_DOWN};
     for (int keyCode : keyCodes) {
@@ -141,6 +169,7 @@ public class CustomizableActionsPanel {
 
   private void addCustomizedAction(ActionUrl url) {
     mySelectedSchema.addAction(url);
+    onModified();
   }
 
   private static boolean isMoveSupported(JTree tree, int dir) {
@@ -235,7 +264,10 @@ public class CustomizableActionsPanel {
     }
     TreeUtil.selectPaths(myActionsTree, toTreePaths(root, selectedIds));
     TreeUtil.ensureSelection(myActionsTree);
+    onModified();
   }
+
+  protected void onModified() { }
 
   private static List<String> toActionIDs(List<? extends TreePath> paths) {
     return ContainerUtil.map(paths, path -> getActionId((DefaultMutableTreeNode)path.getLastPathComponent()));
@@ -255,7 +287,13 @@ public class CustomizableActionsPanel {
   }
 
   public boolean isModified() {
-    CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
+    return isModified(true);
+  }
+
+  boolean isModified(boolean optimized) {
+    if (optimized) {
+      CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
+    }
     return CustomActionsSchema.getInstance().isModified(mySelectedSchema);
   }
 
@@ -265,6 +303,7 @@ public class CustomizableActionsPanel {
       mySelectedSchema.fillCorrectedActionGroups(root);
     }
     ((DefaultTreeModel)myActionsTree.getModel()).reload();
+    onModified();
   }
 
   private static final class TreePathStringFunction implements Function<TreePath, String> {
@@ -415,6 +454,86 @@ public class CustomizableActionsPanel {
     return true;
   }
 
+  private static void changePathInActionsTree(@NotNull JTree tree, @NotNull ActionUrl url) {
+    int actionType = url.getActionType();
+    if (actionType == ADDED) {
+      addPathToActionsTree(tree, url);
+    }
+    else if (actionType == DELETED) {
+      removePathFromActionsTree(tree, url);
+    }
+    else if (actionType == MOVE) {
+      movePathInActionsTree(tree, url);
+    }
+  }
+
+  private static @Nullable DefaultMutableTreeNode addPathToActionsTree(@NotNull JTree tree, @NotNull ActionUrl url) {
+    TreePath treePath = CustomizationUtil.getTreePath(tree, url);
+    if (treePath == null) return null;
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+    int absolutePosition = url.getAbsolutePosition();
+    if (node.getChildCount() >= absolutePosition && absolutePosition >= 0) {
+      DefaultMutableTreeNode newNode;
+      if (url.getComponent() instanceof Group o) {
+        newNode = ActionsTreeUtil.createNode(o);
+      }
+      else {
+        newNode = new DefaultMutableTreeNode(url.getComponent());
+      }
+      node.insert(newNode, absolutePosition);
+      return newNode;
+    }
+    return null;
+  }
+
+  private static void removePathFromActionsTree(@NotNull JTree tree, @NotNull ActionUrl url) {
+    Object component = url.getComponent();
+    if (component == null) return;
+    TreePath treePath = CustomizationUtil.getTreePath(tree, url);
+    if (treePath == null) return;
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+    int absolutePosition = url.getAbsolutePosition();
+    if (node.getChildCount() > absolutePosition && absolutePosition >= 0) {
+      DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(absolutePosition);
+      Object userObj = child.getUserObject();
+      if (component.equals(userObj instanceof Pair<?, ?> pair ? pair.first : userObj)) {
+        node.remove(child);
+      }
+    }
+  }
+
+  private static void movePathInActionsTree(@NotNull JTree tree, @NotNull ActionUrl url) {
+    TreePath treePath = CustomizationUtil.getTreePath(tree, url);
+    Object pathComponent = treePath == null ? null : treePath.getLastPathComponent();
+    DefaultMutableTreeNode parent = pathComponent instanceof DefaultMutableTreeNode o ? o : null;
+    if (parent == null) return;
+    int absolutePosition = url.getAbsolutePosition();
+    int initialPosition = url.getInitialPosition();
+    Object component = url.getComponent();
+    if (parent.getChildCount() > absolutePosition && absolutePosition >= 0) {
+      if (parent.getChildCount() > initialPosition && initialPosition >= 0) {
+        final DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(initialPosition);
+        Object userObj = child.getUserObject();
+        if (component != null && component.equals(userObj instanceof Pair<?, ?> pair ? pair.first : userObj)) {
+          parent.remove(child);
+          parent.insert(child, absolutePosition);
+        }
+      }
+    }
+  }
+
+  private static @NotNull ArrayList<String> getGroupPath(final TreePath treePath, boolean includeSelf) {
+    ArrayList<String> result = new ArrayList<>();
+    int length = treePath.getPath().length - (includeSelf ? 0 : 1);
+    for (int i = 0; i < length; i++) {
+      Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
+      if (o instanceof Group) {
+        result.add(((Group)o).getName());
+      }
+    }
+    return result;
+  }
+
   private final class EditIconDialog extends DialogWrapper {
     private final DefaultMutableTreeNode myNode;
     private final boolean isNodeInsideMenu;
@@ -466,6 +585,10 @@ public class CustomizableActionsPanel {
       super(text);
     }
 
+    private TreeSelectionAction(@NotNull Supplier<String> text, @Nullable Icon icon) {
+      super(text, icon);
+    }
+
     private TreeSelectionAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, @Nullable Icon icon) {
       super(text, description, icon);
     }
@@ -501,9 +624,13 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private final class AddActionActionTreeSelectionAction extends TreeSelectionAction {
-    private AddActionActionTreeSelectionAction() {
-      super(IdeBundle.messagePointer("button.add.action"));
+  private abstract class AddActionActionBase extends TreeSelectionAction {
+    private AddActionActionBase(@NotNull Supplier<String> text) {
+      super(text);
+    }
+
+    private AddActionActionBase(@NotNull Supplier<String> text, @Nullable Icon icon) {
+      super(text, icon);
     }
 
     @Override
@@ -561,6 +688,67 @@ public class CustomizableActionsPanel {
     }
   }
 
+  private final class AddActionActionTreeSelectionAction extends AddActionActionBase implements CustomComponentAction {
+    private AddActionActionTreeSelectionAction() {
+      super(IdeBundle.messagePointer("group.customizations.add.action.button"));
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      JButton button = new JButton(presentation.getText()) {
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension size = super.getPreferredSize();
+          if (myPreferredHeightProvider != null) size.height = myPreferredHeightProvider.compute();
+          return size;
+        }
+      };
+
+      button.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          performAction(button, place, presentation);
+        }
+      });
+
+      return button;
+    }
+
+    @Override
+    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+      component.setEnabled(presentation.isEnabled());
+    }
+
+    void performAction(JComponent component, String place, Presentation presentation) {
+      DataContext dataContext = ActionToolbar.getDataContextFor(component);
+      AnActionEvent event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext);
+
+      if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
+        ActionUtil.performActionDumbAwareWithCallbacks(this, event);
+      }
+    }
+  }
+
+  private final class AddActionBelowSelectionAction extends AddActionActionBase {
+    private AddActionBelowSelectionAction() {
+      super(IdeBundle.messagePointer("group.customizations.add.action.below"), AllIcons.General.Add);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)myActionsTree.getLeadSelectionPath().getLastPathComponent();
+      boolean isGroup = CustomizationUtil.getGroupForNode(node) != null;
+
+      if (isGroup) {
+        e.getPresentation().setText(IdeBundle.messagePointer("group.customizations.add.action.group"));
+      }
+      else {
+        e.getPresentation().setText(IdeBundle.messagePointer("group.customizations.add.action.below"));
+      }
+    }
+  }
+
   private static boolean isInsideMenu(TreePath path) {
     if (path.getPathCount() < 2) return false;
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getPathComponent(1);
@@ -574,7 +762,7 @@ public class CustomizableActionsPanel {
 
   private final class AddSeparatorAction extends TreeSelectionAction {
     private AddSeparatorAction() {
-      super(IdeBundle.messagePointer("button.add.separator"));
+      super(IdeBundle.messagePointer("button.add.separator"), AllIcons.General.SeparatorH);
     }
 
     @Override
@@ -692,7 +880,7 @@ public class CustomizableActionsPanel {
 
   private final class RemoveAction extends TreeSelectionAction {
     private RemoveAction() {
-      super(IdeBundle.messagePointer("button.remove"), Presentation.NULL_STRING, AllIcons.General.Remove);
+      super(IdeBundle.messagePointer("button.remove"), Presentation.NULL_STRING, AllIcons.Actions.GC);
       ShortcutSet shortcutSet = KeymapUtil.filterKeyStrokes(CommonShortcuts.getDelete(),
                                                             KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                                                             KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0));
@@ -868,6 +1056,7 @@ public class CustomizableActionsPanel {
       final List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myActionsTree);
       patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
       restorePathsAfterTreeOptimization(treePaths);
+      onModified();
     }
 
     @Override

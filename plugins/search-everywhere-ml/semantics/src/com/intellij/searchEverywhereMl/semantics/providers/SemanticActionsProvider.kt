@@ -19,9 +19,11 @@ abstract class SemanticActionsProvider(
 
   override fun isEnabled(): Boolean = SearchEverywhereSemanticSettings.getInstance().enabledInActionsTab
 
-  override suspend fun createItemDescriptors(name: String,
-                                             similarityScore: Double,
-                                             pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+  override suspend fun createItemDescriptors(
+    name: String,
+    similarityScore: Double,
+    pattern: String
+  ): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     val action = actionManager.getAction(name) ?: return emptyList()
     val actionWrapper = GotoActionModel.ActionWrapper(
       action, actionModel.getGroupMapping(action), MatchMode.NAME, presentationProvider(action))

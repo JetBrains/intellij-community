@@ -19,7 +19,10 @@ import java.util.List;
 public final class CustomConfigFiles {
   private static final List<String> FILE_NAMES = List.of(
     EarlyAccessRegistryManager.fileName,
-    DisabledPluginsState.DISABLED_PLUGINS_FILENAME
+    DisabledPluginsState.DISABLED_PLUGINS_FILENAME,
+    // Without this, building the `ultimate` project will fail with a `cannot find jdk` message in P3 mode.
+    // This is a temporary hack until it is fixed properly to be able to work in P3 mode with the ultimate repository.
+    "options/jdk.table.xml"
   );
   
   /**
@@ -30,6 +33,7 @@ public final class CustomConfigFiles {
       Path sourceFile = originalConfigDir.resolve(fileName);
       Path targetFile = currentConfigDir.resolve(fileName);
       if (Files.exists(sourceFile)) {
+        Files.createDirectories(targetFile.getParent());
         Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
       }
       else {

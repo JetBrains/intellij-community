@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
@@ -13,9 +13,8 @@ final class RedundantStringOperationMerger extends InspectionElementsMergerBase 
   private static final String OLD_MERGER_NAME = "RedundantStringOperation";
   private static final Set<String> OLD_SOURCE_NAMES = Set.of("StringToString", "SubstringZero", "ConstantStringIntern");
 
-  @NotNull
   @Override
-  public String getMergedToolName() {
+  public @NotNull String getMergedToolName() {
     return "StringOperationCanBeSimplified";
   }
 
@@ -27,9 +26,8 @@ final class RedundantStringOperationMerger extends InspectionElementsMergerBase 
 
     if (sourceToolName.equals(OLD_MERGER_NAME)) {//need to merge initial tools to get merged redundant string operations
       return new InspectionElementsMergerBase(){
-        @NotNull
         @Override
-        public String getMergedToolName() {
+        public @NotNull String getMergedToolName() {
           return OLD_MERGER_NAME;
         }
 

@@ -95,7 +95,7 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   @Nullable
   protected EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
     FileType fileType = getFileType();
-    return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(
+    return FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType).getEditorHighlighter(
       ProjectUtil.guessCurrentProject(getPanel()), fileType, null, scheme);
   }
 

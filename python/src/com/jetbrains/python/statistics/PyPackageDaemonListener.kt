@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiManager
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -55,8 +56,12 @@ class PackageDaemonTaskExecutor(private val cs: CoroutineScope) {
         }
 
         val psiFile = PsiManager.getInstance(project).findFile(vFile) ?: return@readAction emptyList()
-        if (psiFile !is PyFile) return@readAction emptyList()
-        val module = ModuleUtil.findModuleForFile(psiFile) ?: return@readAction emptyList()
+        val viewProvider = psiFile.viewProvider
+        val pyPsiFile = if (viewProvider is MultiplePsiFilesPerDocumentFileViewProvider) {
+          viewProvider.allFiles.firstOrNull { it is PyFile }
+        } else psiFile
+        if (pyPsiFile !is PyFile) return@readAction emptyList()
+        val module = ModuleUtil.findModuleForFile(pyPsiFile) ?: return@readAction emptyList()
         val sdk = PythonSdkUtil.findPythonSdk(module)
         val interpreterType = sdk?.interpreterType ?: InterpreterType.REGULAR
         val interpreterTarget = sdk?.executionType ?: InterpreterTarget.LOCAL
@@ -67,7 +72,7 @@ class PackageDaemonTaskExecutor(private val cs: CoroutineScope) {
           packagesFromPackageManager.associate { it.name to it.version }
         } ?: emptyMap()
 
-        psiFile.children.filterIsInstance<PyImportStatementBase>().mapNotNull { import ->
+        pyPsiFile.children.filterIsInstance<PyImportStatementBase>().mapNotNull { import ->
           // all imports from the same statement should start with the same module
           import.fullyQualifiedObjectNames.firstOrNull()?.let { firstModule ->
             val packageName = PyPsiPackageUtil.moduleToPackageName(firstModule.split('.').first())
@@ -76,7 +81,8 @@ class PackageDaemonTaskExecutor(private val cs: CoroutineScope) {
               version = packages2Versions[packageName] ?: "0.0",
               interpreterTypeValue = interpreterType.value,
               targetTypeValue = interpreterTarget.value,
-              hasSdk = sdk != null
+              hasSdk = sdk != null,
+              fileTypeName = psiFile.fileType.name
             )
           }
         }

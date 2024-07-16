@@ -8,7 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.BeanConfigurable;
 
 @State(name = "PropertiesFoldingSettings", storages = @Storage("editor.xml"))
-public class PropertiesFoldingOptionsProvider extends BeanConfigurable<PropertiesFoldingSettings> implements CodeFoldingOptionsProvider {
+public final class PropertiesFoldingOptionsProvider extends BeanConfigurable<PropertiesFoldingSettings> implements CodeFoldingOptionsProvider {
 
   public PropertiesFoldingOptionsProvider() {
     super(PropertiesFoldingSettings.getInstance(), PropertiesFileType.INSTANCE.getDescription());

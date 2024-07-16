@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyUnsynchronizedMethodOverridesSynchronizedMethodInspection extends BaseInspection {
+public final class GroovyUnsynchronizedMethodOverridesSynchronizedMethodInspection extends BaseInspection {
 
   @Override
   @Nullable

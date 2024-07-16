@@ -20,15 +20,15 @@ internal var deserialization = false
 object MetadataDiffTestResolver: EntityTypesResolver {
   private val pluginPrefix = "PLUGIN___"
 
-  override fun getPluginId(clazz: Class<*>): String = pluginPrefix + clazz.name
+  override fun getPluginIdAndModuleId(clazz: Class<*>): Pair<String, String?> = pluginPrefix + clazz.name to null
 
-  override fun resolveClass(name: String, pluginId: String?): Class<*> {
+  override fun resolveClass(name: String, pluginId: String?, moduleId: String?): Class<*> {
     return resolveClass(
       if (deserialization) name.replaceCacheVersion() else name
     )
   }
 
-  override fun getClassLoader(pluginId: String?): ClassLoader? {
+  override fun getClassLoader(pluginId: String?, moduleId: String?): ClassLoader? {
     return javaClass.classLoader
   }
 

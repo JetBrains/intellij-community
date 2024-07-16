@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
@@ -108,8 +108,7 @@ public final class RedundantLengthCheckInspection extends AbstractBaseJavaLocalI
     };
   }
 
-  @Nullable
-  public static PsiExpression getValueComparedWithZero(@NotNull PsiBinaryExpression binOp) {
+  public static @Nullable PsiExpression getValueComparedWithZero(@NotNull PsiBinaryExpression binOp) {
     PsiExpression rOperand = binOp.getROperand();
     if (rOperand == null) return null;
     PsiExpression lOperand = binOp.getLOperand();

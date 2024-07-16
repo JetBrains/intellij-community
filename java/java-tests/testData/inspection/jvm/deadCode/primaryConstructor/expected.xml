@@ -11,6 +11,6 @@
     <file>TC.kt</file>
     <line>1</line>
     <entry_point TYPE="method" FQNAME="TC java.lang.String name()" />
-    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;An instantiation is not reachable from entry points.&lt;/li&gt;&lt;/ul&gt;</description>
+    <description>&lt;ul&gt;&lt;li&gt;Method owner class is never instantiated OR&lt;/li&gt;&lt;li&gt;All instantiations are not reachable from the entry points.&lt;/li&gt;&lt;/ul&gt;</description>
   </problem>
 </problems>

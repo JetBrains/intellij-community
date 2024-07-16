@@ -304,7 +304,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   private static boolean isDumbEnough(@NotNull PostfixTemplate template, @NotNull PsiElement context) {
     DumbService dumbService = DumbService.getInstance(context.getProject());
-    return !dumbService.isDumb() || DumbService.isDumbAware(template);
+    return dumbService.isUsableInCurrentContext(template);
   }
 
   @NotNull

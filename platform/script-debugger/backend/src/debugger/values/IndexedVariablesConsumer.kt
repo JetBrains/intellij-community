@@ -15,8 +15,10 @@
  */
 package org.jetbrains.debugger.values
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.Variable
 
+@ApiStatus.Internal
 abstract class IndexedVariablesConsumer {
   // null if array is not sparse
   abstract fun consumeRanges(ranges: IntArray?)

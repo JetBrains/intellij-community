@@ -4,11 +4,11 @@ package com.intellij.ui.popup
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.PillBorder
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -23,22 +23,14 @@ import javax.swing.*
 open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
                                  actionGroup: ActionGroup,
                                  dataContext: DataContext,
-                                 showNumbers: Boolean,
-                                 useAlphaAsNumbers: Boolean,
-                                 showDisabledActions: Boolean,
-                                 honorActionMnemonics: Boolean,
+                                 actionPlace: String,
+                                 presentationFactory: PresentationFactory,
+                                 options: ActionPopupOptions,
                                  disposeCallback: Runnable?,
-                                 maxRowCount: Int,
-                                 preselectActionCondition: Condition<AnAction>?,
-                                 actionPlace: String?,
-                                 autoSelection: Boolean,
-                                 val getState: (AnAction) -> @Nls String?) :
-  PopupFactoryImpl.ActionGroupPopup(title, actionGroup, dataContext, showNumbers,
-                                    useAlphaAsNumbers,
-                                    showDisabledActions, honorActionMnemonics,
-                                    disposeCallback, maxRowCount,
-                                    preselectActionCondition,
-                                    actionPlace, autoSelection) {
+                                 val getState: (AnAction) -> @Nls String?
+) : PopupFactoryImpl.ActionGroupPopup(null, title, actionGroup, dataContext,
+                                      actionPlace, presentationFactory,
+                                      options, disposeCallback) {
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
     return if (step is ListPopupStep<*>) {

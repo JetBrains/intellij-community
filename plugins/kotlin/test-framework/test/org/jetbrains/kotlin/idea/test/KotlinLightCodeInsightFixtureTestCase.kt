@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -45,6 +45,8 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
+import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -57,6 +59,7 @@ import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
@@ -103,7 +106,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         super.setUp()
         enableKotlinOfficialCodeStyle(project)
 
-        if (!isFirPlugin) {
+        if (pluginMode == KotlinPluginMode.K1) {
             // We do it here to avoid possible initialization problems
             // UnusedSymbolInspection() calls IDEA UnusedDeclarationInspection() in static initializer,
             // which in turn registers some extensions provoking "modifications aren't allowed during highlighting"
@@ -174,6 +177,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     override fun tearDown() {
         runAll(
             { mockLibraryFacility?.tearDown(module) },
+            { KotlinSdkType.removeKotlinSdkInTests() },
             { runCatching { project }.getOrNull()?.let { disableKotlinOfficialCodeStyle(it) } },
             { super.tearDown() },
         )
@@ -441,7 +445,8 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     return false
 }
 
-fun configureRegistryAndRun(fileText: String, body: () -> Unit) {
+fun configureRegistryAndRun(project: Project, fileText: String, body: () -> Unit) {
+    KotlinHighlightingSuspender.getInstance(project) // register Registry listener, otherwise registry changes wouldn't be picked up by ElementAnnotator
     val registers = InTextDirectivesUtils.findListWithPrefixes(fileText, "// REGISTRY:")
         .map { it.split(' ') }
         .map { Registry.get(it.first()) to it.last() }
@@ -602,7 +607,7 @@ fun createTextEditorBasedDataContext(
     caret: Caret,
     additionalSteps: SimpleDataContext.Builder.() -> SimpleDataContext.Builder = { this },
 ): DataContext {
-    val parentContext = CaretSpecificDataContext.create(EditorUtil.getEditorDataContext(editor), caret)
+    val parentContext = EditorActionHandler.caretDataContext(EditorUtil.getEditorDataContext(editor), caret)
     assertEquals(project, parentContext.getData(CommonDataKeys.PROJECT))
     assertEquals(editor, parentContext.getData(CommonDataKeys.EDITOR))
     return SimpleDataContext.builder()

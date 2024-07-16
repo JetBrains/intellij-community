@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -18,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
@@ -243,10 +241,6 @@ interface Row {
     return actionsButton(*actions, actionPlace = actionPlace, icon = icon)
   }
 
-  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar>
-
   @Deprecated("Use another segmentedButton method instead. API is different and text value must be assigned in new version of renderer",
               level = DeprecationLevel.HIDDEN)
   @ApiStatus.Experimental
@@ -258,15 +252,6 @@ interface Row {
    */
   @ApiStatus.Experimental
   fun <T> segmentedButton(items: Collection<T>, renderer: SegmentedButton.ItemPresentation.(T) -> Unit): SegmentedButton<T>
-
-  /**
-   * Creates JBTabbedPane which shows only tabs without tab content. To add a new tab call something like
-   * ```
-   * JBTabbedPane.addTab(tab.name, JPanel())
-   * ```
-   */
-  @ApiStatus.Experimental
-  fun tabbedPaneHeader(items: Collection<String> = emptyList()): Cell<JBTabbedPane>
 
   fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
 

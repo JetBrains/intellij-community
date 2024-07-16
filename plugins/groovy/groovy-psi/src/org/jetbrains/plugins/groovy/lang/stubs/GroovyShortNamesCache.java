@@ -30,7 +30,7 @@ import java.util.*;
 
 import static com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys.CLASS_SHORT_NAMES;
 
-public class GroovyShortNamesCache extends PsiShortNamesCache {
+public final class GroovyShortNamesCache extends PsiShortNamesCache {
   private final Project myProject;
   private volatile TopLevelFQNames myTopLevelFQNames;
   private volatile TopLevelFQNames myTopLevelScriptFQNames;

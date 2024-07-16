@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.refactoring.suggested.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
+import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.base.codeInsight.process
@@ -25,7 +25,7 @@ internal class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
         KotlinCallProcessor.process(elements) { target ->
             val symbol = target.symbol
 
-            if (symbol is KtFunctionSymbol && symbol.isSuspend) {
+            if (symbol is KaNamedFunctionSymbol && symbol.isSuspend) {
                 val name = symbol.name.asString()
                 val isOperator = symbol.isOperator
 
@@ -37,7 +37,7 @@ internal class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
                 }
 
                 result += SuspendCallLineMarkerInfo(target.anchorLeaf, message, declarationName, symbol.psi?.createSmartPointer())
-            } else if (symbol is KtKotlinPropertySymbol && symbol.callableIdIfNonLocal == COROUTINE_CONTEXT_CALLABLE_ID) {
+            } else if (symbol is KaKotlinPropertySymbol && symbol.callableId == COROUTINE_CONTEXT_CALLABLE_ID) {
                 val message = KotlinLineMarkersBundle.message("line.markers.coroutine.context.call.description")
                 result += SuspendCallLineMarkerInfo(target.anchorLeaf, message, symbol.name.asString(), symbol.psi?.createSmartPointer())
             }

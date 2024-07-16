@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
@@ -49,7 +49,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private JButton myHelpButton;
   protected JPanel myContentPanel;
   protected TallImageComponent myIcon;
-  private Component myCurrentStepComponent;
+  private Component currentStepComponent;
   private JBCardLayout.SwipeDirection myTransitionDirection = JBCardLayout.SwipeDirection.AUTO;
   private final Map<Component, String> myComponentToIdMap = new HashMap<>();
   private final StepListener myStepListener = new StepListener() {
@@ -246,33 +246,33 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   public static final class TallImageComponent extends OpaquePanel {
-    private Icon myIcon;
+    private Icon icon;
 
     private TallImageComponent(Icon icon) {
-      myIcon = icon;
+      this.icon = icon;
     }
 
     @Override
     protected void paintChildren(Graphics g) {
-      if (myIcon == null) return;
+      if (icon == null) return;
 
       paintIcon(g);
     }
 
     public void paintIcon(Graphics g) {
-      if (myIcon == null) {
+      if (icon == null) {
         return;
       }
-      final BufferedImage image = ImageUtil.createImage(g, myIcon.getIconWidth(), myIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      final BufferedImage image = ImageUtil.createImage(g, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D gg = image.createGraphics();
-      myIcon.paintIcon(this, gg, 0, 0);
+      icon.paintIcon(this, gg, 0, 0);
 
       final Rectangle bounds = g.getClipBounds();
-      int y = myIcon.getIconHeight()-1;
+      int y = icon.getIconHeight() - 1;
       while (y < bounds.y + bounds.height) {
         g.drawImage(image,
                     bounds.x, y, bounds.x + bounds.width, y + 1,
-                    0, myIcon.getIconHeight() - 1, bounds.width, myIcon.getIconHeight(), this);
+                    0, icon.getIconHeight() - 1, bounds.width, icon.getIconHeight(), this);
 
         y++;
       }
@@ -282,19 +282,19 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     public void setIcon(Icon icon) {
-      myIcon = icon;
+      this.icon = icon;
       revalidate();
       repaint();
     }
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(myIcon != null ? myIcon.getIconWidth() : 0, 0);
+      return new Dimension(icon != null ? icon.getIconWidth() : 0, 0);
     }
 
     @Override
     public Dimension getMinimumSize() {
-      return new Dimension(myIcon != null ? myIcon.getIconWidth() : 0, 0);
+      return new Dimension(icon != null ? icon.getIconWidth() : 0, 0);
     }
   }
 
@@ -463,9 +463,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     final Step step = mySteps.get(myCurrentStep);
     LOG.assertTrue(step != null);
     step._init();
-    myCurrentStepComponent = step.getComponent();
-    LOG.assertTrue(myCurrentStepComponent != null);
-    showStepComponent(myCurrentStepComponent);
+    currentStepComponent = step.getComponent();
+    LOG.assertTrue(currentStepComponent != null);
+    showStepComponent(currentStepComponent);
 
     Icon icon = step.getIcon();
     if (icon != null) {
@@ -475,7 +475,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    UiNotifyConnector.doWhenFirstShown(myCurrentStepComponent, () -> {
+    UiNotifyConnector.doWhenFirstShown(currentStepComponent, () -> {
       requestFocusTo(getPreferredFocusedComponent());
     });
   }
@@ -572,7 +572,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   public Component getCurrentStepComponent() {
-    return myCurrentStepComponent;
+    return currentStepComponent;
   }
 
   protected void helpAction() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -16,11 +16,13 @@ import com.intellij.util.indexing.IndexId;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.ObservableDoubleMeasurement;
+import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -47,6 +49,7 @@ import static java.util.stream.Collectors.toSet;
  * Be cautious with enabling detailed (per lookup) reporting: index lookup is one of the most frequent calls
  * in the platform API, hence detailed (per lookup) reporting produces quite a lot of data.
  */
+@Internal
 public final class IndexLookupTimingsReporting {
   private static final Logger LOG = Logger.getInstance(IndexLookupTimingsReporting.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(10));
@@ -278,7 +281,6 @@ public final class IndexLookupTimingsReporting {
       protected final ThreadLocal<T> currentTraceHolder;
 
       protected @Nullable IndexId<?, ?> indexId;
-      protected @Nullable Project project;
 
       protected long lookupStartedAtMs;
       protected boolean lookupFailed;
@@ -316,7 +318,6 @@ public final class IndexLookupTimingsReporting {
       protected void setupTraceBeforeStart(final @NotNull IndexId<?, ?> indexId,
                                            final @Nullable T parentTrace) {
         this.indexId = indexId;
-        this.project = null;
         this.lookupFailed = false;
         this.totalKeysIndexed = -1;
         this.lookupResultSize = -1;
@@ -358,7 +359,6 @@ public final class IndexLookupTimingsReporting {
         }
         finally {
           //indexId = null; //intentionally not clear it to provide a bit more debugging info
-          project = null;//avoid keeping reference to project in a thread-locals
 
           if (parentTrace != null) {
             currentTraceHolder.set(parentTrace);
@@ -385,10 +385,9 @@ public final class IndexLookupTimingsReporting {
       /* === Additional info about what was lookup-ed, and context/environment: ================================================ */
 
 
+      //FIXME: remove this method -- we don't use the project info
+      //       or store project.locationHash instead of project ref?
       public T withProject(final @Nullable Project project) {
-        if (traceWasStarted()) {
-          this.project = project;
-        }
         return typeSafeThis();
       }
 
@@ -416,7 +415,6 @@ public final class IndexLookupTimingsReporting {
       public String toString() {
         return getClass().getSimpleName() +
                "{indexId=" + indexId +
-               ", project=" + project +
                ", depth=" + depth +
                ", is started? =" + traceWasStarted() +
                ", lookupStartedAtMs=" + lookupStartedAtMs +
@@ -514,8 +512,6 @@ public final class IndexLookupTimingsReporting {
       protected void reportDetailedDataToFUS(final long lookupFinishedAtMs) {
         final long lookupDurationMs = lookupFinishedAtMs - lookupStartedAtMs;
         EVENT_INDEX_ALL_KEYS_LOOKUP.log(
-          project,
-
           FIELD_INDEX_ID.with(indexId.getName()),
 
           //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
@@ -609,8 +605,6 @@ public final class IndexLookupTimingsReporting {
       @Override
       protected void reportDetailedDataToFUS(final long lookupFinishedAtMs) {
         EVENT_INDEX_LOOKUP_ENTRIES_BY_KEYS.log(
-          project,
-
           FIELD_INDEX_ID.with(indexId.getName()),
 
           FIELD_UP_TO_DATE_CHECK_DURATION_MS.with(
@@ -726,8 +720,6 @@ public final class IndexLookupTimingsReporting {
       @Override
       protected void reportDetailedDataToFUS(long lookupFinishedAtMs) {
         EVENT_STUB_INDEX_LOOKUP_ENTRIES_BY_KEY.log(
-          project,
-
           FIELD_INDEX_ID.with(indexId.getName()),
 
           FIELD_UP_TO_DATE_CHECK_DURATION_MS.with(
@@ -1011,17 +1003,17 @@ public final class IndexLookupTimingsReporting {
     private static final Recorder stubEntriesLookupDurationsMsHisto = new Recorder(MAX_TRACKABLE_DURATION_MS, /* significant digits = */ 2);
 
 
-    private final ObservableDoubleMeasurement allKeysTotalLookups;
+    private final ObservableLongMeasurement allKeysTotalLookups;
     private final ObservableDoubleMeasurement allKeysLookupDurationAvg;
     private final ObservableDoubleMeasurement allKeysLookupDuration90P;
     private final ObservableDoubleMeasurement allKeysLookupDurationMax;
 
-    private final ObservableDoubleMeasurement entriesTotalLookups;
+    private final ObservableLongMeasurement entriesTotalLookups;
     private final ObservableDoubleMeasurement entriesLookupDurationAvg;
     private final ObservableDoubleMeasurement entriesLookupDuration90P;
     private final ObservableDoubleMeasurement entriesLookupDurationMax;
 
-    private final ObservableDoubleMeasurement stubsTotalLookups;
+    private final ObservableLongMeasurement stubsTotalLookups;
     private final ObservableDoubleMeasurement stubsLookupDurationAvg;
     private final ObservableDoubleMeasurement stubsLookupDuration90P;
     private final ObservableDoubleMeasurement stubsLookupDurationMax;
@@ -1032,17 +1024,24 @@ public final class IndexLookupTimingsReporting {
     private IndexOperationToOTelMetricsReporter() {
       final Meter meter = TelemetryManager.getInstance().getMeter(Indexes);
 
-      allKeysTotalLookups = meter.gaugeBuilder("Indexes.allKeys.lookups").buildObserver();
+      //RC: It is important to use 'gauge', NOT 'counter' for the metrics below. This is because 'counters' requires
+      //    reporting cumulative total since the _session start_, while we report values accumulated only _between_
+      //    the reporting points, not accumulated since JVM start -- i.e. we reset most of the accumulators to 0
+      //    in .drainValuesToOTel().
+      //    The only exception is xxxLookups counters -- we don't reset them, keep the value accumulating since session
+      //    start -- i.e. it is the natural Counter (AT-534)
+
+      allKeysTotalLookups = meter.counterBuilder("Indexes.allKeys.lookups").buildObserver();
       allKeysLookupDurationAvg = meter.gaugeBuilder("Indexes.allKeys.lookupDurationAvgMs").buildObserver();
       allKeysLookupDuration90P = meter.gaugeBuilder("Indexes.allKeys.lookupDuration90PMs").buildObserver();
       allKeysLookupDurationMax = meter.gaugeBuilder("Indexes.allKeys.lookupDurationMaxMs").buildObserver();
 
-      entriesTotalLookups = meter.gaugeBuilder("Indexes.entries.lookups").buildObserver();
+      entriesTotalLookups = meter.counterBuilder("Indexes.entries.lookups").buildObserver();
       entriesLookupDurationAvg = meter.gaugeBuilder("Indexes.entries.lookupDurationAvgMs").buildObserver();
       entriesLookupDuration90P = meter.gaugeBuilder("Indexes.entries.lookupDuration90PMs").buildObserver();
       entriesLookupDurationMax = meter.gaugeBuilder("Indexes.entries.lookupDurationMaxMs").buildObserver();
 
-      stubsTotalLookups = meter.gaugeBuilder("Indexes.stubs.lookups").buildObserver();
+      stubsTotalLookups = meter.counterBuilder("Indexes.stubs.lookups").buildObserver();
       stubsLookupDurationAvg = meter.gaugeBuilder("Indexes.stubs.lookupDurationAvgMs").buildObserver();
       stubsLookupDuration90P = meter.gaugeBuilder("Indexes.stubs.lookupDuration90PMs").buildObserver();
       stubsLookupDurationMax = meter.gaugeBuilder("Indexes.stubs.lookupDurationMaxMs").buildObserver();
@@ -1057,25 +1056,28 @@ public final class IndexLookupTimingsReporting {
 
     //cached interval histograms:
     private transient Histogram allKeysIntervalHisto;
+    private long allKeysLookups = 0;
     private transient Histogram entriesIntervalHisto;
+    private long entriesLookups = 0;
     private transient Histogram stubsIntervalHisto;
+    private long stubsLookups = 0;
 
 
     private void drainValuesToOTel() {
       allKeysIntervalHisto = allKeysLookupDurationMsHisto.getIntervalHistogram(allKeysIntervalHisto);
-      allKeysTotalLookups.record(allKeysIntervalHisto.getTotalCount());
+      allKeysTotalLookups.record(allKeysLookups);
       allKeysLookupDurationAvg.record(allKeysIntervalHisto.getMean());
       allKeysLookupDuration90P.record(allKeysIntervalHisto.getValueAtPercentile(90));
       allKeysLookupDurationMax.record(allKeysIntervalHisto.getMaxValue());
 
       entriesIntervalHisto = entriesLookupDurationsMsHisto.getIntervalHistogram(entriesIntervalHisto);
-      entriesTotalLookups.record(entriesIntervalHisto.getTotalCount());
+      entriesTotalLookups.record(entriesLookups);
       entriesLookupDurationAvg.record(entriesIntervalHisto.getMean());
       entriesLookupDuration90P.record(entriesIntervalHisto.getValueAtPercentile(90));
       entriesLookupDurationMax.record(entriesIntervalHisto.getMaxValue());
 
       stubsIntervalHisto = stubEntriesLookupDurationsMsHisto.getIntervalHistogram(stubsIntervalHisto);
-      stubsTotalLookups.record(stubsIntervalHisto.getTotalCount());
+      stubsTotalLookups.record(stubsLookups);
       stubsLookupDurationAvg.record(stubsIntervalHisto.getMean());
       stubsLookupDuration90P.record(stubsIntervalHisto.getValueAtPercentile(90));
       stubsLookupDurationMax.record(stubsIntervalHisto.getMaxValue());
@@ -1083,14 +1085,17 @@ public final class IndexLookupTimingsReporting {
 
     public void reportAllKeysLookup(final long clampedDurationMs) {
       allKeysLookupDurationMsHisto.recordValue(clampedDurationMs);
+      allKeysLookups++;
     }
 
     public void reportEntryLookup(final long clampedDurationMs) {
       entriesLookupDurationsMsHisto.recordValue(clampedDurationMs);
+      entriesLookups++;
     }
 
     public void recordStubEntryLookup(final long clampedDurationMs) {
       stubEntriesLookupDurationsMsHisto.recordValue(clampedDurationMs);
+      stubsLookups++;
     }
 
     @Override

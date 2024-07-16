@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.execution.impl
@@ -19,7 +19,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -53,11 +55,14 @@ import com.intellij.util.ModalityUiUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -104,7 +109,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     @JvmStatic
     fun canRunConfiguration(configuration: RunnerAndConfigurationSettings, executor: Executor): Boolean {
       try {
-        ApplicationManager.getApplication().assertIsNonDispatchThread()
+        ThreadingAssertions.assertBackgroundThread()
         configuration.checkSettings(executor)
       }
       catch (ignored: IndexNotReadyException) {
@@ -160,10 +165,11 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
-  // See also notYetAppliedInitialSelectedConfigurationId, which helps when the initially selected RC is stored in some arbitrary *.run.xml file in project
+  // See also notYetAppliedInitialSelectedConfigurationId,
+  // which helps when the initially selected RC is stored in some arbitrary *.run.xml file in a project
   protected open var selectedConfigurationId: String? = null
   // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace and from .idea/runConfigurations.
-  // This var helps if initially selected RC is a one from such file.
+  // This var helps if initially selected RC is a one from such a file.
   // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
   private var notYetAppliedInitialSelectedConfigurationId: String? = null
   private var selectedRCSetupScheduled: Boolean = false
@@ -177,7 +183,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
   private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
-  // templates should be first because to migrate old before run list to effective, we need to get template before run task
+  // templates should be first, because to migrate old before a run list to effective, we need to get template before a run task
   private val workspaceSchemeManagerProvider = SchemeManagerIprProvider("configuration", Comparator { n1, n2 ->
     val w1 = getNameWeight(n1)
     val w2 = getNameWeight(n2)
@@ -189,26 +195,31 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     }
   })
 
-  internal val schemeManagerIprProvider: SchemeManagerIprProvider? = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
+  internal val schemeManagerIprProvider: SchemeManagerIprProvider? =
+    if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
   private val templateDifferenceHelper = TemplateDifferenceHelper(this)
 
   @Suppress("LeakingThis")
-  private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace",
-                                                                                        RunConfigurationSchemeManager(this, templateDifferenceHelper,
-                                                                                                                      isShared = false,
-                                                                                                                      isWrapSchemeIntoComponentElement = false),
-                                                                                        streamProvider = workspaceSchemeManagerProvider,
-                                                                                        isAutoSave = false)
+  private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create(
+    directoryName = "workspace",
+    processor = RunConfigurationSchemeManager(this, templateDifferenceHelper,
+                                              isShared = false,
+                                              isWrapSchemeIntoComponentElement = false),
+    streamProvider = workspaceSchemeManagerProvider,
+    isAutoSave = false,
+  )
 
   @Suppress("LeakingThis")
-  private val projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations",
-                                                                                      RunConfigurationSchemeManager(this, templateDifferenceHelper,
-                                                                                                                    isShared = true,
-                                                                                                                    isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
-                                                                                      schemeNameToFileName = OLD_NAME_CONVERTER,
-                                                                                      streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
+  private val projectSchemeManager = SchemeManagerFactory.getInstance(project).create(
+    directoryName = "runConfigurations",
+    processor = RunConfigurationSchemeManager(this, templateDifferenceHelper,
+                                              isShared = true,
+                                              isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
+    schemeNameToFileName = OLD_NAME_CONVERTER,
+    streamProvider = sharedStreamProvider ?: schemeManagerIprProvider,
+  )
 
   @Suppress("unused")
   internal val dotIdeaRunConfigurationsPath: String
@@ -237,7 +248,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         iconAndInvalidCache.clear()
-        // must be on unload and not before, since load must not be able to use unloaded plugin classes
+        // must be on unloaded and not before, since a load must not be able to use unloaded plugin classes
         reloadSchemes()
       }
     })
@@ -383,6 +394,14 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
+  private fun loadRunConfigsFromArbitraryFiles() {
+    (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Default) {
+      readAction {
+        updateRunConfigsFromArbitraryFiles(emptyList(), loadFileWithRunConfigs(project))
+      }
+    }
+  }
+
   // Paths in <code>deletedFilePaths</code> and <code>updatedFilePaths</code> may be not related to the project, use ProjectIndex.isInContent() when needed
   internal fun updateRunConfigsFromArbitraryFiles(deletedFilePaths: Collection<String>, updatedFilePaths: Collection<String>) {
     val oldSelectedId = selectedConfigurationId
@@ -408,8 +427,10 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
           if (!selectedRCSetupScheduled && (notYetAppliedInitialSelectedConfigurationId == runConfig.uniqueID ||
                                             notYetAppliedInitialSelectedConfigurationId == "" && runConfig.type.isManaged)) {
             selectedRCSetupScheduled = true
-            // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
-            // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
+            // The Project is being loaded.
+            // Finally, we can set the right RC as 'selected' in the RC combo box.
+            // Need to set selectedConfiguration in EDT
+            // to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
             StartupManager.getInstance(project).runAfterOpened {
               ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed, Runnable {
                 // Empty string means that there's no information about initially selected RC in workspace.xml
@@ -423,7 +444,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
           }
         }
         else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
-          // don't loose currently selected RC in case of any external changes in the file
+          // don't loosely currently select RC in case of any external changes in the file
           selectedConfigurationId = oldSelectedId
         }
       }
@@ -537,13 +558,13 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
       lock.write {
         recentlyUsedTemporaries.remove(settings)
         recentlyUsedTemporaries.add(0, settings)
-        trimUsagesListToLimit()
+        trimUsageListToLimit()
       }
     }
   }
 
   // call only under write lock
-  private fun trimUsagesListToLimit() {
+  private fun trimUsageListToLimit() {
     while (recentlyUsedTemporaries.size > config.recentsLimit) {
       recentlyUsedTemporaries.removeAt(recentlyUsedTemporaries.size - 1)
     }
@@ -552,7 +573,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   fun checkRecentsLimit() {
     var removed: MutableList<RunnerAndConfigurationSettings>? = null
     lock.write {
-      trimUsagesListToLimit()
+      trimUsageListToLimit()
 
       var excess = idToSettings.values.count { it.isTemporary } - config.recentsLimit
       if (excess <= 0) {
@@ -724,7 +745,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   }
 
   /**
-   * used by MPS. Do not use if not approved.
+   * Used by MPS. Do not use if not approved.
    */
   fun reloadSchemes() {
     var arbitraryFilePaths: Collection<String>
@@ -745,9 +766,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   }
 
   private fun reloadRunConfigsFromArbitraryFiles(filePaths: Collection<String>) {
-    for (filePath in filePaths) {
-      updateRunConfigsFromArbitraryFiles(emptyList(), filePaths)
-    }
+    updateRunConfigsFromArbitraryFiles(emptyList(), filePaths)
   }
 
   @VisibleForTesting
@@ -801,9 +820,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
     ProgramRunner.PROGRAM_RUNNER_EP.addExtensionPointListener(object : ExtensionPointListener<ProgramRunner<*>> {
       override fun extensionRemoved(extension: ProgramRunner<*>, pluginDescriptor: PluginDescriptor) {
-        for (runnerAndConfigurationSettings in allSettings) {
-          val settingsImpl = runnerAndConfigurationSettings as RunnerAndConfigurationSettingsImpl
-          settingsImpl.handleRunnerRemoved(extension)
+        for (settings in allSettings) {
+          (settings as RunnerAndConfigurationSettingsImpl).handleRunnerRemoved(extension)
         }
       }
     }, this)
@@ -812,6 +830,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   override fun noStateLoaded() {
     val isFirstLoadState = isFirstLoadState.getAndSet(false)
     if (isFirstLoadState) {
+      loadRunConfigsFromArbitraryFiles()
       onFirstLoadingStarted()
     }
 
@@ -827,8 +846,9 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   override fun loadState(parentNode: Element) {
     config.migrateToAdvancedSettings()
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
-    val oldSelectedConfigurationId = if (!isFirstLoadState) selectedConfigurationId else null
+    val oldSelectedConfigurationId = if (isFirstLoadState) null else selectedConfigurationId
     if (isFirstLoadState) {
+      loadRunConfigsFromArbitraryFiles()
       onFirstLoadingStarted()
     }
     else {
@@ -844,23 +864,23 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
           if (schemeKey == null) {
             schemeKey = "<template>"
           }
-          schemeKey += ", type: ${it}"
+          schemeKey += ", type: $it"
         }
       }
       else {
         val typeId = element.getAttributeValue("type")
         if (typeId == null) {
-          LOG.warn("typeId is null for '${schemeKey}'")
+          LOG.warn("typeId is null for '$schemeKey'")
         }
-        schemeKey = "${typeId ?: "unknown"}-${schemeKey}"
+        schemeKey = "${typeId ?: "unknown"}-$schemeKey"
       }
 
-      // in case if broken configuration, do not fail, just generate name
+      // in case if broken configuration, do not fail, generate name
       if (schemeKey == null) {
         schemeKey = nameGenerator.generateUniqueName("Unnamed")
       }
       else {
-        schemeKey = "${schemeKey!!}, factoryName: ${element.getAttributeValue("factoryName", "")}"
+        schemeKey = "$schemeKey!!, factoryName: ${element.getAttributeValue("factoryName", "")}"
         nameGenerator.addExistingName(schemeKey!!)
       }
       schemeKey!!
@@ -1277,7 +1297,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     removeConfigurations(_toRemove = toRemove, deleteFileIfStoredInArbitraryFile = true)
   }
 
-  internal fun removeConfigurations(_toRemove: Collection<RunnerAndConfigurationSettings>,
+  internal fun removeConfigurations(@Suppress("LocalVariableName") _toRemove: Collection<RunnerAndConfigurationSettings>,
                                     deleteFileIfStoredInArbitraryFile: Boolean = true,
                                     onSchemeManagerDeleteEvent: Boolean = false) {
     if (_toRemove.isEmpty()) {
@@ -1329,8 +1349,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
       }
 
       for (settings in runConfigsToRemoveButNotYetRemoved) {
-        // At this point runConfigsToRemoveButNotYetRemoved contains entries that haven't been there in idToSettings map at all.
-        // This may happen, for example, if some Run Configuration appears twice or more in a *.run.xml file (e.g. as a merge result).
+        // At this point, runConfigsToRemoveButNotYetRemoved contains entries that haven't been there in idToSettings map at all.
+        // This may happen, for example, if some Run Configuration appears twice or more in a *.run.xml file (e.g., as a merge result).
         removeSettingsFromCorrespondingManager(settings as RunnerAndConfigurationSettingsImpl, deleteFileIfStoredInArbitraryFile)
       }
     }
@@ -1403,7 +1423,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 const val PROJECT_RUN_MANAGER_COMPONENT_NAME = "ProjectRunConfigurationManager"
 
 @Service(Service.Level.PROJECT)
-@State(name = PROJECT_RUN_MANAGER_COMPONENT_NAME, useLoadedStateAsExisting = false /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */)
+@State(name = PROJECT_RUN_MANAGER_COMPONENT_NAME, useLoadedStateAsExisting = false /* ProjectRunConfigurationManager is used only for IPR,
+avoid relative cost call getState */)
 private class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
   val lastLoadedState = AtomicReference<Element>()
 

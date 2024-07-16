@@ -3,6 +3,7 @@ package com.intellij.ide.bookmark
 
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.pom.Navigatable
+import org.jetbrains.annotations.Nls
 
 interface Bookmark : Navigatable {
   /**
@@ -21,6 +22,13 @@ interface Bookmark : Navigatable {
    * @see com.intellij.openapi.wm.ToolWindowId.BOOKMARKS
    */
   fun createNode(): AbstractTreeNode<*>
+
+  /**
+   * @return [BookmarkGroup.getDescription] that will be set for new bookmarks.
+   */
+  fun prepareDefaultDescription(): @Nls String? {
+    return null
+  }
 
   /**
    * @return a hash code value for this bookmark

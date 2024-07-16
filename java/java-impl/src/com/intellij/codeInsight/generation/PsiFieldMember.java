@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.psi.*;
@@ -22,9 +22,8 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
     super(psiMember, substitutor, PsiFormatUtil.formatVariable(psiMember, FIELD_OPTIONS, PsiSubstitutor.EMPTY));
   }
 
-  @Nullable
   @Override
-  public GenerationInfo generateGetter() throws IncorrectOperationException {
+  public @Nullable GenerationInfo generateGetter() throws IncorrectOperationException {
     final GenerationInfo[] infos = generateGetters(getElement().getContainingClass());
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
@@ -39,9 +38,8 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
     return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(field, true, false));
   }
 
-  @Nullable
   @Override
-  public GenerationInfo generateSetter() throws IncorrectOperationException {
+  public @Nullable GenerationInfo generateSetter() throws IncorrectOperationException {
     final GenerationInfo[] infos = generateSetters(getElement().getContainingClass());
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
@@ -71,8 +69,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
     return methods.isEmpty() ? null : methods.toArray(GenerationInfo.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static PsiMethod createMethodIfNotExists(PsiClass aClass, final PsiMethod template) {
+  private static @Nullable PsiMethod createMethodIfNotExists(PsiClass aClass, final PsiMethod template) {
     PsiMethod existing = aClass.findMethodBySignature(template, false);
     return existing == null || !existing.isPhysical() ? template : null;
   }

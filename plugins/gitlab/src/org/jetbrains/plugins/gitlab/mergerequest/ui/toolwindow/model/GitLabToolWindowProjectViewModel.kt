@@ -91,7 +91,7 @@ private constructor(parentCs: CoroutineScope,
       repository = projectName,
       avatarIconsProvider = avatarIconProvider,
       tokenRefreshFlow = connection.tokenRefreshFlow,
-      loaderSupplier = { filtersValue -> connection.projectData.mergeRequests.getListLoader(filtersValue.toSearchQuery()) }
+      loaderSupplier = { cs, filtersValue -> connection.projectData.mergeRequests.getListLoaderIn(cs, filtersValue.toSearchQuery()) }
     )
   }
 
@@ -166,6 +166,12 @@ private constructor(parentCs: CoroutineScope,
 
   fun findMergeRequestDetails(mrIid: String): GitLabMergeRequestDetails? =
     connection.projectData.mergeRequests.findCachedDetails(mrIid)
+
+  fun reloadMergeRequestDetails(mergeRequestId: String) {
+    cs.launch {
+      connection.projectData.mergeRequests.reloadMergeRequest(mergeRequestId)
+    }
+  }
 
   init {
     cs.launchNow {

@@ -62,10 +62,10 @@ SHELL_SCRIPT
                   PsiElement(RAW_STRING)(''s/^/OUTPUT  : /'')
             PsiElement())(')')
       PsiWhiteSpace(' ')
-      NUMBER
-        PsiElement(int)('2')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
+          NUMBER
+            PsiElement(int)('2')
           PsiElement(>)('>')
           PsiWhiteSpace(' ')
           PROCESS_SUBSTITUTION

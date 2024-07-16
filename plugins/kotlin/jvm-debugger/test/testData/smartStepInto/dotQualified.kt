@@ -4,10 +4,9 @@ fun foo() {
 }
 
 class A {
-    fun f1(): Int = 1
+    fun f1(x: Int): Int = 1
 }
 
-fun f2() {}
+fun f2(): Int = 2
 
-// EXISTS: f1(), f2()
-// IGNORE_K2
+// EXISTS: f1(Int), f2()

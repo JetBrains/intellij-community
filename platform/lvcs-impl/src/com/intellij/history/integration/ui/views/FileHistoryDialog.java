@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
@@ -148,7 +149,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
           revisions = LocalHistoryCounter.INSTANCE.logFilter(myProject, myModel.getKind(), () -> {
             return model.filterContents(filter);
           });
-        } else {
+        }
+        else {
           revisions = Collections.emptySet();
         }
         decorator.stopLoading();
@@ -170,33 +172,42 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private void updateEditorSearch() {
     Editor editor = findLeftEditor();
     if (editor == null) return;
-    String filter = mySearchTextArea.getTextArea().getText();
+    updateEditorSearch(myProject, mySearchTextArea.getTextArea(), editor);
+  }
+
+  public static void updateEditorSearch(@NotNull Project project, @NotNull JTextComponent searchTextComponent, @NotNull Editor editor) {
+    String filter = searchTextComponent.getText();
     EditorSearchSession session = EditorSearchSession.get(editor);
     if (StringUtil.isEmpty(filter)) {
       if (session != null) {
-        boolean focused = mySearchTextArea.getTextArea().isFocusOwner();
+        boolean focused = searchTextComponent.isFocusOwner();
         session.close();
         if (focused) {
-          IdeFocusManager.getInstance(myProject).requestFocus(mySearchTextArea.getTextArea(), false);
+          IdeFocusManager.getInstance(project).requestFocus(searchTextComponent, false);
         }
       }
       return;
     }
     if (session == null) {
-      session = EditorSearchSession.start(editor, myProject);
+      session = EditorSearchSession.start(editor, project);
+      editor.getCaretModel().moveToOffset(0);
       session.searchForward();
     }
     session.setTextInField(filter);
   }
 
   private @Nullable Editor findLeftEditor() {
-    DiffSplitter splitter = UIUtil.findComponentOfType(myDiffPanel.getComponent(), DiffSplitter.class);
+    return findLeftEditor(myDiffPanel.getComponent());
+  }
+
+  public static @Nullable Editor findLeftEditor(JComponent component) {
+    DiffSplitter splitter = UIUtil.findComponentOfType(component, DiffSplitter.class);
     JComponent editorPanel;
     if (splitter != null) {
       editorPanel = splitter.getFirstComponent();
     }
     else {
-      editorPanel = UIUtil.findComponentOfType(myDiffPanel.getComponent(), UnifiedDiffPanel.class);
+      editorPanel = UIUtil.findComponentOfType(component, UnifiedDiffPanel.class);
     }
     EditorComponentImpl comp = editorPanel == null ? null : UIUtil.findComponentOfType(editorPanel, EditorComponentImpl.class);
     return comp == null ? null : comp.getEditor();

@@ -41,29 +41,31 @@ class KeymapPane(val keymap: Keymap) {
       update()
     }
 
-  private val background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
+  private val backgroundColor = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
 
   private val activeBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.SELECTED_BORDER_COLOR,
-                                           { background }, RoundedPanel.RADIUS)
+                                           RoundedPanel.RADIUS)
 
   private val regularBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.THICKNESS, RoundedPanel.BORDER_COLOR,
-                                            { background }, RoundedPanel.RADIUS)
+                                            RoundedPanel.RADIUS)
 
 
-  val mainPanel = JPanel()
+  val mainPanel = RoundedPanel.createRoundedPane()
 
   private val keyMapGridBagLayout = GridBagLayout()
   val pane = JPanel(BorderLayout()).apply {
     add(mainPanel.apply {
-      layout = VerticalLayout(0)
-      border = regularBorder
+      contentPanel.apply {
+        background = backgroundColor
+        layout = VerticalLayout(0)
+        border = regularBorder
 
-      add(JLabel(keymap.name).apply {
-        font = JBFont.label().asBold()
-        border = JBUI.Borders.empty(13, 0)
-        horizontalAlignment = SwingConstants.CENTER
-        minimumSize = Dimension(0, 0)
-      })
+        add(JLabel(keymap.name).apply {
+          font = JBFont.label().asBold()
+          border = JBUI.Borders.empty(13, 0)
+          horizontalAlignment = SwingConstants.CENTER
+          minimumSize = Dimension(0, 0)
+        })
 
       add(JPanel(keyMapGridBagLayout).apply {
         isOpaque = false
@@ -72,61 +74,60 @@ class KeymapPane(val keymap: Keymap) {
         gbc1.insets = JBUI.insetsBottom(14)
         gbc1.gridy = 0
 
-        keymap.shortcut.forEach {
-          gbc1.weightx = 1.0
-          gbc1.weighty = 0.0
-          gbc1.gridx = 0
-          gbc1.anchor = GridBagConstraints.CENTER
-          gbc1.fill = GridBagConstraints.HORIZONTAL
-          val name = JLabel(it.name)
-          add(name, gbc1)
+          keymap.shortcut.forEach {
+            gbc1.weightx = 1.0
+            gbc1.weighty = 0.0
+            gbc1.gridx = 0
+            gbc1.anchor = GridBagConstraints.CENTER
+            gbc1.fill = GridBagConstraints.HORIZONTAL
+            val name = JLabel(it.name)
+            add(name, gbc1)
 
-          gbc1.gridx = 1
-          gbc1.weightx = 0.0
-          gbc1.weighty = 0.0
-          gbc1.fill = GridBagConstraints.NONE
+            gbc1.gridx = 1
+            gbc1.weightx = 0.0
+            gbc1.weighty = 0.0
+            gbc1.fill = GridBagConstraints.NONE
 
-          val keyPanel = JPanel(VerticalLayout(0)).apply {
-            isOpaque = false
-            add(object : JLabel(it.value) {
-              override fun paintComponent(g: Graphics?) {
-                super.paintComponent(g)
+            val keyPanel = JPanel(VerticalLayout(0)).apply {
+              isOpaque = false
+              add(object : JLabel(it.value) {
+                override fun paintComponent(g: Graphics?) {
+                  super.paintComponent(g)
 
-                val fm = getFontMetrics(font)
-                if (g !is Graphics2D) {
-                  return
+                  val fm = getFontMetrics(font)
+                  if (g !is Graphics2D) {
+                    return
+                  }
+                  UISettings.setupAntialiasing(g)
+
+                  val textWidth = fm.stringWidth(text)
+                  var availableWidth = width - insets.right - insets.left
+                  icon?.let {
+                    availableWidth -= iconTextGap + it.iconWidth
+                  }
+
+                  toolTipText = if (textWidth > availableWidth) {
+                    text
+                  }
+                  else null
                 }
-                UISettings.setupAntialiasing(g)
 
-                val textWidth = fm.stringWidth(text)
-                var availableWidth = width - insets.right - insets.left
-                icon?.let {
-                  availableWidth -= iconTextGap + it.iconWidth
-                }
+              }.apply {
+                font = JBFont.medium()
+                border = JBUI.Borders.empty(0, 4)
+                maximumSize = Dimension(JBUI.scale(85), maximumSize.height)
+              })
+              border = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, KEY_BACKGROUND, 7)
+            }
+            border = JBUI.Borders.empty(0, 8)
 
-                toolTipText = if (textWidth > availableWidth) {
-                  text
-                }
-                else null
-              }
+            names.add(ShortcutItem(name, keyPanel))
+            add(keyPanel, gbc1)
+            gbc1.gridy += 1
 
-            }.apply {
-              font = JBFont.medium()
-              border = JBUI.Borders.empty(0, 4)
-              maximumSize = Dimension(JBUI.scale(85), maximumSize.height)
-            })
-            border = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, KEY_BACKGROUND, { KEY_BACKGROUND }, 7)
           }
-          border = JBUI.Borders.empty(0, 8)
-         // minimumSize = Dimension(JBUI.scale(110), minimumSize.height)
-
-          names.add(ShortcutItem(name, keyPanel))
-          add(keyPanel, gbc1)
-          gbc1.gridy += 1
-
-        }
-      })
-
+        })
+      }
     }, BorderLayout.CENTER)
     add(jRadioButton, BorderLayout.SOUTH)
   }

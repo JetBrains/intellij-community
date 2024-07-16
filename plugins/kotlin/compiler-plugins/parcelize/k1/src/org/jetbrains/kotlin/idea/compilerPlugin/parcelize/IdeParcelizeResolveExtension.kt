@@ -3,9 +3,10 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.parcelize.ParcelizeResolveExtension
 
-class IdeParcelizeResolveExtension : ParcelizeResolveExtension() {
+class IdeParcelizeResolveExtension : ParcelizeResolveExtension(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES) {
     override fun isAvailable(element: PsiElement): Boolean {
         return ParcelizeAvailability.isAvailable(element)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Lists;
@@ -25,7 +25,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -53,8 +54,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
    * @param importStatementBase statement to fix
    * @return pack of fixes
    */
-  @NotNull
-  public static Collection<LocalQuickFix> generateFixes(@NotNull final PyImportStatementBase importStatementBase) {
+  public static @NotNull Collection<LocalQuickFix> generateFixes(final @NotNull PyImportStatementBase importStatementBase) {
     final List<String> names = importStatementBase.getFullyQualifiedObjectNames();
     final List<LocalQuickFix> result = new ArrayList<>(names.size());
     if (importStatementBase instanceof PyFromImportStatement && names.isEmpty()) {
@@ -73,20 +73,18 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
    * @param importStatementBase statement to fix
    * @param qualifiedName       name should be fixed (one of {@link PyImportStatementBase#getFullyQualifiedObjectNames()})
    */
-  private GenerateBinaryStubsFix(@NotNull final PyImportStatementBase importStatementBase, @NotNull final String qualifiedName) {
+  private GenerateBinaryStubsFix(final @NotNull PyImportStatementBase importStatementBase, final @NotNull String qualifiedName) {
     myQualifiedName = qualifiedName;
     mySdk = getPythonSdk(importStatementBase);
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyBundle.message("sdk.gen.stubs.for.binary.modules", myQualifiedName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyBundle.message("QFIX.generate.binary.stubs");
   }
 
@@ -96,7 +94,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
     final Backgroundable backgroundable = getFixTask(file);
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundable, new BackgroundableProcessIndicator(backgroundable));
@@ -109,8 +107,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
    * @param fileToRunTaskIn file where task should run
    * @return task itself
    */
-  @NotNull
-  public Backgroundable getFixTask(@NotNull final PsiFile fileToRunTaskIn) {
+  public @NotNull Backgroundable getFixTask(final @NotNull PsiFile fileToRunTaskIn) {
     final Project project = fileToRunTaskIn.getProject();
     final String folder = fileToRunTaskIn.getContainingDirectory().getVirtualFile().getCanonicalPath();
     return new Task.Backgroundable(project, PyBundle.message("QFIX.generating.skeletons.for.binary.module"), false) {
@@ -169,7 +166,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
     return true;
   }
 
-  private static boolean isFromGiRepository(@NotNull final String qualifiedName) {
+  private static boolean isFromGiRepository(final @NotNull String qualifiedName) {
     return qualifiedName.startsWith("gi.repository");
   }
 
@@ -179,7 +176,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
    * @param importStatementBase statement to fix
    * @return true if this fix could work
    */
-  public static boolean isApplicable(@NotNull final PyImportStatementBase importStatementBase) {
+  public static boolean isApplicable(final @NotNull PyImportStatementBase importStatementBase) {
     if (importStatementBase.getFullyQualifiedObjectNames().isEmpty() &&
         !(importStatementBase instanceof PyFromImportStatement && ((PyFromImportStatement)importStatementBase).isStarImport())) {
       return false;
@@ -188,7 +185,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
     return isGtk(importStatementBase);
   }
 
-  private static boolean isGtk(@NotNull final PyImportStatementBase importStatementBase) {
+  private static boolean isGtk(final @NotNull PyImportStatementBase importStatementBase) {
     if (importStatementBase instanceof PyFromImportStatement) {
       final QualifiedName qName = ((PyFromImportStatement)importStatementBase).getImportSourceQName();
       if (qName != null && qName.matches("gi", "repository")) {
@@ -198,8 +195,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
     return false;
   }
 
-  @Nullable
-  private static Sdk getPythonSdk(@NotNull final PsiElement element) {
+  private static @Nullable Sdk getPythonSdk(final @NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     return (module == null) ? null : PythonSdkUtil.findPythonSdk(module);
   }

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
+import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.returnIfNoDescriptorForDeclarationException
@@ -114,7 +115,12 @@ fun KtElement.safeAnalyze(
 ): BindingContext = try {
     analyze(resolutionFacade, bodyResolveMode)
 } catch (e: Exception) {
-    e.returnIfNoDescriptorForDeclarationException { BindingContext.EMPTY }
+    try {
+      e.returnIfNoDescriptorForDeclarationException { BindingContext.EMPTY }
+    } catch (e: Exception) {
+        KotlinFailureCollector.recordGeneralFrontEndFailureEvent(this.containingKtFile)
+        throw e
+    }
 }
 
 @JvmOverloads
@@ -170,7 +176,7 @@ fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(
 fun KtExpression.computeTypeInfoInContext(
     scope: LexicalScope,
     contextExpression: KtExpression = this,
-    trace: BindingTrace = BindingTraceContext(),
+    trace: BindingTrace = BindingTraceContext(this.project),
     dataFlowInfo: DataFlowInfo = DataFlowInfo.EMPTY,
     expectedType: KotlinType = TypeUtils.NO_EXPECTED_TYPE,
     isStatement: Boolean = false,
@@ -188,7 +194,7 @@ fun KtExpression.computeTypeInfoInContext(
 fun KtExpression.analyzeInContext(
     scope: LexicalScope,
     contextExpression: KtExpression = this,
-    trace: BindingTrace = BindingTraceContext(),
+    trace: BindingTrace = BindingTraceContext(this.project),
     dataFlowInfo: DataFlowInfo = DataFlowInfo.EMPTY,
     expectedType: KotlinType = TypeUtils.NO_EXPECTED_TYPE,
     isStatement: Boolean = false,
@@ -212,7 +218,7 @@ fun KtExpression.analyzeInContext(
 fun KtExpression.computeTypeInContext(
     scope: LexicalScope,
     contextExpression: KtExpression = this,
-    trace: BindingTrace = BindingTraceContext(),
+    trace: BindingTrace = BindingTraceContext(this.project),
     dataFlowInfo: DataFlowInfo = DataFlowInfo.EMPTY,
     expectedType: KotlinType = TypeUtils.NO_EXPECTED_TYPE
 ): KotlinType? = computeTypeInfoInContext(scope, contextExpression, trace, dataFlowInfo, expectedType).type

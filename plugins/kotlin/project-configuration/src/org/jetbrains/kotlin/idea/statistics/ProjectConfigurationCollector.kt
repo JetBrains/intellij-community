@@ -57,7 +57,7 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
         }
     }
 
-    private val GROUP = EventLogGroup("kotlin.project.configuration", 10)
+    private val GROUP = EventLogGroup("kotlin.project.configuration", 11)
 
     private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
     private val platformField = EventFields.String("platform", composePlatformFields())
@@ -69,7 +69,18 @@ internal class ProjectConfigurationCollector : ProjectUsagesCollector() {
 
     private fun composePlatformFields(): List<String> {
         return listOf(
-            listOf("jvm", "jvm.android", "js", "wasm", "common", "native.unknown", "unknown"),
+            listOf(
+                "jvm",
+                "jvm.android",
+                "js",
+                "wasm",
+                "wasm.js",
+                "wasm.wasi",
+                "wasm.unknown",
+                "common",
+                "native.unknown",
+                "unknown"
+            ),
             KonanTarget.predefinedTargets.keys.map { "native.$it" }
         ).flatten()
     }

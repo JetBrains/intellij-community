@@ -25,7 +25,7 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MarkdownStripTrailingSpacesFilterFactory extends StripTrailingSpacesFilterFactory {
+public final class MarkdownStripTrailingSpacesFilterFactory extends StripTrailingSpacesFilterFactory {
 
   @NotNull
   @Override

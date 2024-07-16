@@ -33,7 +33,12 @@ interface InlineCompletionElementManipulator {
    *
    * @see InlineCompletionSuggestionUpdateManager
    */
-  fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement?
+  fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement? {
+    return substring(element, 1, element.text.length)
+  }
+
+  @ApiStatus.Experimental
+  fun substring(element: InlineCompletionElement, startOffset: Int, endOffset: Int): InlineCompletionElement? = null
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<InlineCompletionElementManipulator>(
@@ -57,8 +62,12 @@ class InlineCompletionGrayTextElementManipulator : InlineCompletionElementManipu
     return element is InlineCompletionGrayTextElement
   }
 
-  override fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement? {
-    return if (element.text.length > 1) InlineCompletionGrayTextElement(element.text.drop(1)) else null
+  override fun substring(element: InlineCompletionElement, startOffset: Int, endOffset: Int): InlineCompletionElement? {
+    element as InlineCompletionGrayTextElement
+    if (startOffset >= endOffset) {
+      return null
+    }
+    return InlineCompletionGrayTextElement(element.text.substring(startOffset, endOffset))
   }
 }
 
@@ -67,9 +76,12 @@ class InlineCompletionColorTextElementManipulator : InlineCompletionElementManip
     return element is InlineCompletionColorTextElement && element !is InlineCompletionGrayTextElement
   }
 
-  override fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement? {
+  override fun substring(element: InlineCompletionElement, startOffset: Int, endOffset: Int): InlineCompletionElement? {
     element as InlineCompletionColorTextElement
-    return if (element.text.length > 1) InlineCompletionColorTextElement(element.text.drop(1), element.getColor) else null
+    if (startOffset >= endOffset) {
+      return null
+    }
+    return InlineCompletionColorTextElement(element.text.substring(startOffset, endOffset), element.getColor)
   }
 }
 
@@ -78,8 +90,11 @@ class InlineCompletionTextElementManipulator : InlineCompletionElementManipulato
     return element is InlineCompletionTextElement && element !is InlineCompletionColorTextElement
   }
 
-  override fun truncateFirstSymbol(element: InlineCompletionElement): InlineCompletionElement? {
+  override fun substring(element: InlineCompletionElement, startOffset: Int, endOffset: Int): InlineCompletionElement? {
     element as InlineCompletionTextElement
-    return if (element.text.length > 1) InlineCompletionTextElement(element.text.drop(1), element.getAttributes) else null
+    if (startOffset >= endOffset) {
+      return null
+    }
+    return InlineCompletionTextElement(element.text.substring(startOffset, endOffset), element.getAttributes)
   }
 }

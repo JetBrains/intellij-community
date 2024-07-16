@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class JsonStructureViewBuilderFactory implements PsiStructureViewFactory {
+public final class JsonStructureViewBuilderFactory implements PsiStructureViewFactory {
 
   public JsonStructureViewBuilderFactory() {
     JsonCustomStructureViewFactory.EP_NAME.addChangeListener(

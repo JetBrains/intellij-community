@@ -18,6 +18,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,11 +28,12 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -75,6 +77,12 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   public static final Key<String> DEBUGGER_DISPATCH_ADDR_KEY = Key.create("DEBUGGER_DISPATCH_ADDR");
   @ApiStatus.Internal
   public static final Key<Integer> BUILD_PROCESS_DEBUGGER_PORT_KEY = Key.create("BUILD_PROCESS_DEBUGGER_PORT");
+  @ApiStatus.Internal
+  public static final @NotNull Key<ExternalSystemTaskNotificationListener> TASK_NOTIFICATION_LISTENER_KEY =
+    Key.create("TASK_NOTIFICATION_LISTENER");
+
+  private static final @NotNull String DEFAULT_TASK_PREFIX = ": ";
+  private static final @NotNull String DEFAULT_TASK_POSTFIX = "";
 
   @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
   @NotNull private final Project myProject;
@@ -186,13 +194,12 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmParametersSetup, myConfiguration);
     copyUserDataTo(task);
     addDebugUserDataTo(task);
+    ExternalSystemTaskNotificationListener listener = myEnv.getUserData(TASK_NOTIFICATION_LISTENER_KEY);
+    if (listener != null) {
+      ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(task.getId(), listener);
+    }
 
-    final String executionName = StringUtil.isNotEmpty(mySettings.getExecutionName())
-                                 ? mySettings.getExecutionName()
-                                 : StringUtil.isNotEmpty(myConfiguration.getName())
-                                   ? myConfiguration.getName() : AbstractExternalSystemTaskConfigurationType.generateName(
-                                   myProject, externalSystemId, mySettings.getExternalProjectPath(),
-                                   mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
+    final String executionName = getExecutionName(externalSystemId);
 
     final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
     final ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
@@ -247,9 +254,23 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       actionGroup.addAll(taskState.createCustomActions(processHandler, consoleView, executor));
     }
 
-    DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
+    DefaultExecutionResult executionResult = new DefaultExecutionResult(
+      executionConsole, processHandler, actionGroup.getChildren(ActionManager.getInstance()));
     executionResult.setRestartActions(restartActions);
     return executionResult;
+  }
+
+  private @NotNull @Nls String getExecutionName(@NotNull ProjectSystemId externalSystemId) {
+    if (StringUtil.isNotEmpty(mySettings.getExecutionName())) {
+      return mySettings.getExecutionName();
+    }
+    if (StringUtil.isNotEmpty(myConfiguration.getName())) {
+      return myConfiguration.getName();
+    }
+    return AbstractExternalSystemTaskConfigurationType.generateName(myProject, externalSystemId, mySettings.getExternalProjectPath(),
+                                                                    mySettings.getTaskNames(), mySettings.getExecutionName(),
+                                                                    DEFAULT_TASK_PREFIX, DEFAULT_TASK_POSTFIX
+    );
   }
 
   private void executeTask(@NotNull ExternalSystemExecuteTaskTask task,
@@ -278,7 +299,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     processHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
 
     try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(task.getId(), progressListener, false)) {
-      ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
+      ExternalSystemTaskNotificationListener taskListener = new ExternalSystemTaskNotificationListener() {
         @Override
         public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
           if (progressListener != null) {

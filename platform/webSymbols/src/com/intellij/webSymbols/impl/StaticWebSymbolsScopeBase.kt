@@ -10,6 +10,7 @@ import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.SearchMap
+import com.intellij.webSymbols.webTypes.WebTypesSymbolBase
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
@@ -165,6 +166,8 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
     val pattern: WebSymbolsPattern?
     val framework: FrameworkId?
     fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): WebSymbol
+    fun matchContext(context: WebSymbolsContext): Boolean =
+      framework == null || context.framework == null || context.framework == framework
   }
 
   private inner class ContributionSearchMap(namesProvider: WebSymbolNamesProvider)
@@ -176,7 +179,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
 
     override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol> {
       val cache = getQueryExecutorContributionsCache(params.queryExecutor)
-      return filter { params.framework == null || it.framework == null || it.framework == params.framework }
+      return filter { it.matchContext(params.queryExecutor.context) }
         .map { cache.getOrCreateSymbol(it) }
     }
 

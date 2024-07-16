@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -8,7 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A way to provide additional colors to color schemes.
- * https://youtrack.jetbrains.com/issue/IDEA-98261
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/color-scheme-management.html#providing-attributes-for-specific-schemes">Color Scheme Management (IntelliJ Platform Docs)</a>
  */
 public final class AdditionalTextAttributesEP implements PluginAware {
   private AdditionalTextAttributesEP() {

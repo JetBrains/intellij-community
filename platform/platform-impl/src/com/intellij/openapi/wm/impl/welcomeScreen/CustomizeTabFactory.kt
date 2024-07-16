@@ -199,7 +199,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
 
       header(IdeBundle.message("welcome.screen.color.theme.header"), true)
       row(IdeBundle.message("combobox.look.and.feel")) {
-        val themeBuilder = comboBox(LafComboBoxModelWrapper(laf.lafComboBoxModel))
+        val themeBuilder = comboBox(LafComboBoxModelWrapper { laf.lafComboBoxModel })
           .bindItem(lafProperty)
           .accessibleName(IdeBundle.message("welcome.screen.color.theme.header"))
         themeBuilder.component.isSwingPopup = false
@@ -246,12 +246,21 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
           }.onReset {
             colorAndFontsOptions.reset()
           }.enabledIf(syncThemeAndEditorSchemePredicate.not())
+
+          syncThemeAndEditorSchemePredicate.addListener { isSyncOn ->
+            if (isSyncOn) {
+              colorAndFontsOptions.reset()
+            }
+          }
         }
 
         parentDisposable.whenDisposed {
           colorAndFontsOptions.disposeUIResources()
         }
       }
+
+      header(IdeBundle.message("title.language.and.region"))
+      LanguageAndRegionUi.createContent(this, propertyGraph, parentDisposable, lafConnection)
 
       header(IdeBundle.message("title.accessibility"))
 

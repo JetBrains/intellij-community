@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.TextRange;
@@ -17,15 +17,13 @@ public class PsiLabelReference implements PsiReference {
     myIdentifier = identifier;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myStatement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     int start = myIdentifier.getStartOffsetInParent();
     return new TextRange(start, myIdentifier.getTextLength() + start);
   }
@@ -41,9 +39,8 @@ public class PsiLabelReference implements PsiReference {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getElement().getText();
   }
 

@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.history.VcsFileRevision
-import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFileHistoryHandler.Rename
@@ -18,6 +17,7 @@ import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.keysToSet
+import com.intellij.vcs.log.visible.isAll
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
@@ -57,25 +57,26 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
   }
 
   @Throws(VcsException::class)
-  override fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, commitCount: Int): List<VcsFileRevisionEx> {
+  override fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, commitCount: Int, consumer: (VcsFileRevision) -> Unit) {
     throwIfFiltersNotSupported(root, hash, filters)
 
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root) ?: return emptyList()
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root) ?: return
     val parser = GitFileHistory.createLogParser(project)
     val handler = GitLineHandler(project, root, GitCommand.LOG)
     handler.setStdoutSuppressed(true)
-    handler.addParameters("--name-status", parser.pretty, "--encoding=UTF-8", "--max-count=$commitCount")
+    handler.addParameters("--name-status", parser.pretty, "--encoding=UTF-8")
+    if (!isAll(commitCount)) {
+      handler.addParameters("--max-count=$commitCount")
+    }
     handler.addParameters(GitLogProvider.getBranchLikeFilterParameters(repository, filters, null))
     handler.endOptions()
     handler.addRelativePaths(filePath)
 
-    val result = mutableListOf<VcsFileRevisionEx>()
     val splitter = GitLogOutputSplitter(handler, parser) { record ->
-      result.add(GitFileHistory.createGitFileRevision(project, root, record, filePath))
+      consumer(GitFileHistory.createGitFileRevision(project, root, record, filePath))
     }
     Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
     splitter.reportErrors()
-    return result
   }
 
   @Throws(VcsException::class)

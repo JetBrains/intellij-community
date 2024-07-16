@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.psi.MultiRangeReference
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
@@ -33,20 +34,23 @@ internal class ElementAnnotator(
         diagnostics: Collection<Diagnostic>,
         highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>?,
         calculatingInProgress: Boolean
-    ) = diagnostics.groupBy { it.factory }
-        .forEach {
-            val sameTypeDiagnostics = it.value
-            val presentationInfo = presentationInfo(sameTypeDiagnostics)
-            if (presentationInfo != null) {
-                val fixesMap =
-                    if (calculatingInProgress) {
-                        Fe10QuickFixProvider.getInstance(element.project).createPostponedUnresolvedReferencesQuickFixes(sameTypeDiagnostics)
-                    } else {
-                        createFixesMap(sameTypeDiagnostics)
-                    }
-                presentationInfo.processDiagnostics(holder, sameTypeDiagnostics, highlightInfoByDiagnostic, fixesMap, calculatingInProgress)
+    ) {
+        diagnostics.groupBy { it.factory }
+            .forEach {
+                val sameTypeDiagnostics = it.value
+                val presentationInfo = presentationInfo(sameTypeDiagnostics)
+                if (presentationInfo != null) {
+                    val fixesMap =
+                        if (calculatingInProgress) {
+                            Fe10QuickFixProvider.getInstance(element.project)
+                                .createPostponedUnresolvedReferencesQuickFixes(sameTypeDiagnostics)
+                        } else {
+                            createFixesMap(sameTypeDiagnostics)
+                        }
+                    presentationInfo.processDiagnostics(holder, sameTypeDiagnostics, highlightInfoByDiagnostic, fixesMap, calculatingInProgress)
+                }
             }
-        }
+    }
 
     private fun presentationInfo(diagnostics: Collection<Diagnostic>): AnnotationPresentationInfo? {
         if (diagnostics.isEmpty() || !diagnostics.any { it.isValid }) return null
@@ -160,12 +164,13 @@ internal class ElementAnnotator(
     }
 
     companion object {
-        val LOG = Logger.getInstance(ElementAnnotator::class.java)
+        private val LOG: Logger = Logger.getInstance(ElementAnnotator::class.java)
 
-        val suppressDeprecatedAnnotationRegistryKey = Registry.get("kotlin.highlighting.suppress.deprecated")
-        var suppressDeprecatedAnnotation = suppressDeprecatedAnnotationRegistryKey.asBoolean()
+        internal val suppressDeprecatedAnnotationRegistryKey: RegistryValue = Registry.get("kotlin.highlighting.suppress.deprecated")
+        @Volatile
+        private var suppressDeprecatedAnnotation: Boolean = false
 
-        fun updateSuppressDeprecatedAnnotationValue() {
+        internal fun updateSuppressDeprecatedAnnotationValue() {
             suppressDeprecatedAnnotation = suppressDeprecatedAnnotationRegistryKey.asBoolean()
         }
     }

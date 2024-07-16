@@ -15,7 +15,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
-  @NonNls String DEFAULT_SCHEME_NAME = "Default";
+
+  static @NonNls @NotNull String getDefaultSchemeName() {
+    return EditorColorsManager.getDefaultSchemeName();
+  }
 
   void setName(String name);
 

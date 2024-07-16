@@ -11,6 +11,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
@@ -20,7 +21,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -33,6 +33,8 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -58,6 +60,7 @@ import java.util.regex.Pattern;
 
 public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
   private final boolean myIgnoreSameLineLocations;
+  private volatile String myMethodName = null;
 
   static final Logger LOG = Logger.getInstance(LineBreakpoint.class);
 
@@ -280,9 +283,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Nullable
   private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     final int dollarIndex = className.indexOf("$");
     final String topLevelClassName = dollarIndex >= 0 ? className.substring(0, dollarIndex) : className;
-    return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+    return ReadAction.compute(() -> {
       final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Found " + classes.length + " classes " + topLevelClassName + " in scope " + scope);
@@ -347,7 +351,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       final int columnNumber = getColumnNumberOrZero();
       String className = getClassName();
       final boolean hasClassInfo = className != null && !className.isEmpty();
-      final String methodName = getMethodName();
+      final String methodName = myMethodName;
       final String displayName = methodName != null ? methodName + "()" : null;
       final boolean hasMethodInfo = displayName != null;
       if (hasClassInfo || hasMethodInfo) {
@@ -497,8 +501,16 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     return canAdd[0];
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  @Override
+  public void reload() {
+    super.reload();
+    myMethodName = computeMethodName();
+  }
+
   @Nullable
-  public String getMethodName() {
+  protected String computeMethodName() {
     SourcePosition position = getSourcePosition();
     if (position != null) {
       return findOwnerMethod(position.getFile(), position.getOffset());

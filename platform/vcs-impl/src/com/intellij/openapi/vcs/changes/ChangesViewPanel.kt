@@ -7,11 +7,9 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.*
 import com.intellij.ui.IdeBorderFactory.createBorder
-import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
-import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -40,7 +38,8 @@ class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
     if (newValue != null) centerPanel.addToBottom(newValue)
   }
 
-  private val centerPanel = simplePanel(createScrollPane(changesView)).andTransparent()
+  private val changesScrollPane = createScrollPane(changesView)
+  private val centerPanel = simplePanel(changesScrollPane).andTransparent()
 
   init {
     addToCenter(centerPanel)
@@ -56,14 +55,12 @@ class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
     toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
-      val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
-      centerPanel.border = createBorder(JBColor.border(), sideBorder)
+      ScrollableContentBorder.setup(changesScrollPane, Side.TOP, centerPanel)
       addToTop(toolbar.component)
     }
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
-      val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.LEFT
-      centerPanel.border = createBorder(JBColor.border(), sideBorder)
+      ScrollableContentBorder.setup(changesScrollPane, Side.LEFT, centerPanel)
       addToLeft(toolbar.component)
     }
   }

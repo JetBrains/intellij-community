@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyMethodWithMoreThanThreeNegationsInspection extends BaseInspection {
+public final class GroovyMethodWithMoreThanThreeNegationsInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {

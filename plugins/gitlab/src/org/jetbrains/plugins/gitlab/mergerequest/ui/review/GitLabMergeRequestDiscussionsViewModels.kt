@@ -59,7 +59,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestDiscussionsViewModels {
 
-  private val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review Discussions"))
+  private val cs = parentCs.childScope("GitLab Merge Request Review Discussions", Dispatchers.Default)
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .throwFailure()
@@ -69,7 +69,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   override val draftNotes: DraftNotesFlow = mergeRequest.draftNotes
     .throwFailure()
     .mapFiltered { it.discussionId == null }
-    .mapModelsToViewModels { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest.glProject) }
+    .mapModelsToViewModels { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest) }
     .modelFlow(cs, LOG)
 
 

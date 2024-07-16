@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.codeInsight.lookup.LookupManagerListener
@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
@@ -27,11 +28,16 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.util.LocalTimeCounter.currentTime
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.queueTracked
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.streams.asStream
@@ -49,12 +55,12 @@ class AutoImportProjectTracker(
   private val settings = AutoImportProjectTrackerSettings.getInstance(project)
   private val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
 
-  private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
+  private val projectDataStates = ConcurrentHashMap<ExternalSystemProjectId, ProjectDataState>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
   private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
   private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
   private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
-  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, false, null, serviceDisposable)
+  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, true, null, serviceDisposable)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
   private fun createProjectChangesListener() =
@@ -116,14 +122,16 @@ class AutoImportProjectTracker(
     currentActivity.updateAndGet {
       it ?: ProjectInitializationDiagnosticService.registerTracker(project, "AutoImportProjectTracker.schedule")
     }
-    dispatcher.queue(PriorityEatUpdate(priority) {
-      if (dispatchIterations - 1 > 0) {
-        schedule(priority, dispatchIterations - 1, action)
-      }
-      else {
-        action()
-        if (dispatcher.isEmpty) {
-          currentActivity.getAndSet(null)?.activityFinished()
+    dispatcher.queueTracked(PriorityEatUpdate(priority) {
+      project.trackActivityBlocking(ExternalSystemActivityKey) {
+        if (dispatchIterations - 1 > 0) {
+          schedule(priority, dispatchIterations - 1, action)
+        }
+        else {
+          action()
+          if (dispatcher.isEmpty) {
+            currentActivity.getAndSet(null)?.activityFinished()
+          }
         }
       }
     })
@@ -250,19 +258,30 @@ class AutoImportProjectTracker(
   }
 
   override fun getState(): State {
-    val projectSettingsTrackerStates = projectDataMap.asSequence()
-      .map { (id, data) -> id.getState() to data.getState() }
-      .toMap()
-    return State(projectSettingsTrackerStates)
+    val systemStates = TreeMap<String, TreeMap<String, ProjectDataState>>()
+    for ((projectId, projectData) in projectDataMap) {
+      val (systemId, externalProjectPath) = projectId
+      val projectStates = systemStates.computeIfAbsent(systemId.id) { TreeMap() }
+      projectStates[externalProjectPath] = ProjectDataState(
+        projectData.status.isDirty(),
+        projectData.settingsTracker.getState()
+      )
+    }
+    return State(systemStates)
   }
 
   override fun loadState(state: State) {
-    projectStates.putAll(state.projectSettingsTrackerStates)
+    for ((systemId, systemData) in state.projectData) {
+      for ((externalProjectPath, projectData) in systemData) {
+        val projectId = ExternalSystemProjectId(ProjectSystemId(systemId), externalProjectPath)
+        projectDataStates[projectId] = projectData
+      }
+    }
     projectDataMap.forEach { (id, data) -> loadState(id, data) }
   }
 
   private fun loadState(projectId: ExternalSystemProjectId, projectData: ProjectData) {
-    val projectState = projectStates.remove(projectId.getState())
+    val projectState = projectDataStates.remove(projectId)
     val settingsTrackerState = projectState?.settingsTracker
     if (settingsTrackerState == null || projectState.isDirty) {
       projectData.status.markDirty(currentTime(), EXTERNAL)
@@ -273,23 +292,14 @@ class AutoImportProjectTracker(
     projectData.settingsTracker.refreshChanges()
   }
 
-  override fun initializeComponent() {
-    LOG.debug("Project tracker initialization")
-    ApplicationManager.getApplication().messageBus.connect(serviceDisposable)
-      .subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
-    project.messageBus.connect(serviceDisposable)
-      .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
-    dispatcher.setRestartTimerOnAdd(true)
-    dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
-    dispatcher.activate()
-  }
-
   @TestOnly
-  fun getActivatedProjects() =
-    projectDataMap.values
+  fun getActivatedProjects(): Set<ExternalSystemProjectId> {
+    return projectDataMap.values
+      .asSequence()
       .filter { it.isActivated }
       .map { it.projectAware.projectId }
       .toSet()
+  }
 
   @TestOnly
   fun setDispatcherMergingSpan(delay: Int) {
@@ -297,33 +307,38 @@ class AutoImportProjectTracker(
   }
 
   init {
+    LOG.debug("Project tracker initialization")
+
     projectReloadOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
     projectReloadOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
     projectChangeOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
     projectChangeOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
     isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { scheduleChangeProcessing() }
     settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) { scheduleChangeProcessing() }
-    asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }
     projectReloadOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project reload start event") }
     projectReloadOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project reload finish event") }
     projectChangeOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project change start event") }
     projectChangeOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project change finish event") }
     isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) { LOG.debug("Detected project lookup start event") }
     isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { LOG.debug("Detected project lookup finish event") }
+
+    dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
+    asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }
+
+    dispatcher.setRestartTimerOnAdd(true)
+
+    application.messageBus.connect(serviceDisposable)
+      .subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
+    project.messageBus.connect(serviceDisposable)
+      .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
   }
 
-  private fun ProjectData.getState() = State.Project(status.isDirty(), settingsTracker.getState())
-
-  private fun ProjectSystemId.getState() = id
-
-  private fun ExternalSystemProjectId.getState() = State.Id(systemId.getState(), externalProjectPath)
-
   private data class ProjectData(
-    val status: ProjectStatus,
-    val activationProperty: MutableBooleanProperty,
-    val projectAware: ExternalSystemProjectAware,
-    val settingsTracker: ProjectSettingsTracker,
-    val parentDisposable: Disposable
+    @JvmField val status: ProjectStatus,
+    @JvmField val activationProperty: MutableBooleanProperty,
+    @JvmField val projectAware: ExternalSystemProjectAware,
+    @JvmField val settingsTracker: ProjectSettingsTracker,
+    @JvmField val parentDisposable: Disposable
   ) {
     var isActivated by activationProperty
 
@@ -334,13 +349,16 @@ class AutoImportProjectTracker(
     }
   }
 
-  data class State(var projectSettingsTrackerStates: Map<Id, Project> = emptyMap()) {
-    data class Id(var systemId: String? = null, var externalProjectPath: String? = null)
-    data class Project(
-      var isDirty: Boolean = false,
-      var settingsTracker: ProjectSettingsTracker.State? = null
-    )
-  }
+  @Serializable
+  data class State(
+    @JvmField val projectData: Map<String, Map<String, ProjectDataState>> = emptyMap()
+  )
+
+  @Serializable
+  data class ProjectDataState(
+    @JvmField val isDirty: Boolean = false,
+    @JvmField val settingsTracker: ProjectSettingsTracker.State? = null
+  )
 
   private data class ProjectReloadContext(
     override val isExplicitReload: Boolean,
@@ -352,7 +370,6 @@ class AutoImportProjectTracker(
 
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport")
 
-    @JvmStatic
     fun getInstance(project: Project): AutoImportProjectTracker {
       return ExternalSystemProjectTracker.getInstance(project) as AutoImportProjectTracker
     }
@@ -381,7 +398,6 @@ class AutoImportProjectTracker(
      * Note: project tracker automatically enabled out of tests
      */
     @TestOnly
-    @JvmStatic
     fun enableAutoReloadInTests(parentDisposable: Disposable) {
       enableAutoReloadProperty.set(true, parentDisposable)
     }
@@ -391,17 +407,15 @@ class AutoImportProjectTracker(
      * Note: async processing enabled out of tests
      */
     @TestOnly
-    @JvmStatic
     fun enableAsyncAutoReloadInTests(parentDisposable: Disposable) {
       asyncChangesProcessingProperty.set(true, parentDisposable)
     }
 
     /**
      * Ignores once disable auto-reload registry.
-     * Make sense only in pair with registry key `external.system.auto.import.disabled`.
+     * Make sense only in a pair with registry key `external.system.auto.import.disabled`.
      */
     @ApiStatus.Internal
-    @JvmStatic
     fun onceIgnoreDisableAutoReloadRegistry() {
       onceIgnoreDisableAutoReloadRegistryProperty.set(true)
     }

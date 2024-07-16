@@ -15,11 +15,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.performance.CollectionsListSettings;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
@@ -275,7 +275,7 @@ public final class CollectionAddAllCanBeReplacedWithConstructorInspection extend
             ((PsiDeclarationStatement)variable.getParent()).getDeclaredElements().length == 1) {
           PsiElement scope = PsiTreeUtil.getParentOfType(expressionStatement, PsiMember.class, PsiStatement.class, PsiLambdaExpression.class);
           if (scope != null &&
-              ReferencesSearch.search(variable).allMatch(ref -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
+              ContainerUtil.and(VariableAccessUtils.getVariableReferences(variable), ref -> PsiTreeUtil.isAncestor(scope, ref, true))) {
             PsiDeclarationStatement newDeclaration =
               JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiTypes.intType(), null, methodCallExpression);
             PsiVariable newVariable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(variable);

@@ -5,8 +5,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import kotlin.collections.CollectionsKt;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public final class AdditionalIndexedRootsScope extends GlobalSearchScope {
   private final GlobalSearchScope myBaseScope;
   private final @NotNull IndexableFileSet myFileSet;

@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection
 
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.annotations.*
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -15,7 +16,7 @@ internal object WasExperimentalOptInsNecessityChecker {
     private val VERSION_ARGUMENT = Name.identifier("version")
 
     fun getNecessaryOptInsFromWasExperimental(
-        annotations: KtAnnotationsList,
+        annotations: KaAnnotationList,
         moduleApiVersion: ApiVersion,
     ): Collection<ClassId> {
         val wasExperimental = annotations.findAnnotation(StandardClassIds.Annotations.WasExperimental)
@@ -27,26 +28,31 @@ internal object WasExperimentalOptInsNecessityChecker {
         return getWasExperimentalAnnotationMarkerClassArgument(wasExperimental)
     }
 
-    private fun getSinceKotlinAnnotationApiVersionArgumentIfPresent(annotations: KtAnnotationsList): ApiVersion? {
+    private fun getSinceKotlinAnnotationApiVersionArgumentIfPresent(annotations: KaAnnotationList): ApiVersion? {
         val sinceKotlin = annotations.findAnnotation(StandardClassIds.Annotations.SinceKotlin) ?: return null
         return sinceKotlin.argumentByName(VERSION_ARGUMENT)
-            ?.asSafely<KtConstantAnnotationValue>()
-            ?.constantValue
-            ?.asSafely<KtConstantValue.KtStringConstantValue>()
+            ?.asSafely<KaAnnotationValue.ConstantValue>()
+            ?.value
+            ?.asSafely<KaConstantValue.StringValue>()
             ?.let { ApiVersion.parse(it.value) }
     }
 
-    private fun getWasExperimentalAnnotationMarkerClassArgument(annotation: KtAnnotationApplicationWithArgumentsInfo): Collection<ClassId> {
+    private fun getWasExperimentalAnnotationMarkerClassArgument(annotation: KaAnnotation): Collection<ClassId> {
         return annotation.argumentByName(OptInNames.WAS_EXPERIMENTAL_ANNOTATION_CLASS)
-            ?.asSafely<KtArrayAnnotationValue>()
+            ?.asSafely<KaAnnotationValue.ArrayValue>()
             ?.values
-            ?.mapNotNull { (it as? KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue)?.classId }
+            ?.mapNotNull { computeAnnotationMarkerClassId(it) }
             ?: emptyList()
     }
 
-    private fun KtAnnotationsList.findAnnotation(classId: ClassId): KtAnnotationApplicationWithArgumentsInfo? =
+    private fun computeAnnotationMarkerClassId(value: KaAnnotationValue): ClassId? {
+        val type = (value as? KaAnnotationValue.ClassLiteralValue)?.type as? KaClassType ?: return null
+        return type.classId.takeIf { !it.isLocal }
+    }
+
+    private fun KaAnnotationList.findAnnotation(classId: ClassId): KaAnnotation? =
         annotationsByClassId(classId).firstOrNull()
 
-    private fun KtAnnotationApplicationWithArgumentsInfo.argumentByName(name: Name): KtAnnotationValue? =
+    private fun KaAnnotation.argumentByName(name: Name): KaAnnotationValue? =
         arguments.firstOrNull { it.name == name }?.expression
 }

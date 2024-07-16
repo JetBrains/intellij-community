@@ -3,6 +3,7 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -20,7 +21,9 @@ import static com.jetbrains.python.PyTokenTypes.*;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonFormattingModelBuilder implements FormattingModelBuilder, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;
-  static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.getInstance().getStatementTokens();
+  static final TokenSet STATEMENT_OR_DECLARATION = Cancellation.forceNonCancellableSectionInClassInitializer(
+    () -> PythonDialectsTokenSetProvider.getInstance().getStatementTokens()
+  );
   private static final TokenSet STAR_PATTERNS = TokenSet.create(SINGLE_STAR_PATTERN, DOUBLE_STAR_PATTERN);
   private static final TokenSet EXPRESSIONS_WITH_COLON = TokenSet.create(KEY_VALUE_EXPRESSION, KEY_VALUE_PATTERN, LAMBDA_EXPRESSION);
 

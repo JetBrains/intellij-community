@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.ide.IdleTracker
@@ -55,9 +55,13 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
 
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
-      val versionToUpdate = project.service<GitNewVersionChecker>().newAvailableVersion
+      val versionChecker = project.service<GitNewVersionChecker>()
+      val versionToUpdate = versionChecker.newAvailableVersion
       if (versionToUpdate.isNotNull) {
-        downloadAndInstallGit(project, onSuccess = ::markAsRead)
+        downloadAndInstallGit(project, onSuccess = {
+          versionChecker.reset()
+          markAsRead()
+        })
       }
     }
   }
@@ -79,6 +83,10 @@ internal class GitNewVersionChecker(project: Project, cs: CoroutineScope) {
 
   init {
     checkNewVersionPeriodicallyOnIdle(project, cs)
+  }
+
+  internal fun reset() {
+    newAvailableVersion = null
   }
 
   @OptIn(FlowPreview::class)

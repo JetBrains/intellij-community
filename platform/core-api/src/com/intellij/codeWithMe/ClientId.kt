@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeWithMe
 
+import com.intellij.concurrency.client.*
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
@@ -24,9 +25,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 import java.util.function.Function
-import java.util.function.Supplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -108,7 +107,7 @@ data class ClientId(val value: String) {
      * Controls propagation behavior. When false, decorateRunnable does nothing.
      */
     @JvmStatic
-    var propagateAcrossThreads: Boolean = false
+    var propagateAcrossThreads: Boolean by ::propagateClientIdAcrossThreads
 
     /**
      * The ID considered local to this process. All other IDs (except for null) are considered remote
@@ -134,7 +133,7 @@ data class ClientId(val value: String) {
     @JvmStatic
     val isCurrentlyUnderLocalId: Boolean
       get() {
-        val clientIdValue = currentClientIdString
+        val clientIdValue = getCurrentIdValidated()
         return clientIdValue == null || clientIdValue == localId.value || fakeLocalIds.contains(clientIdValue)
       }
 
@@ -162,7 +161,7 @@ data class ClientId(val value: String) {
     // optimization method for avoiding allocating ClientId in the hot path
     fun getCurrentValue(): String {
       val service = getCachedService()
-      return if (service == null) localId.value else currentClientIdString ?: localId.value
+      return if (service == null) localId.value else getCurrentIdValidated() ?: localId.value
     }
 
     /**
@@ -170,7 +169,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     val currentOrNull: ClientId?
-      get() = currentClientIdString?.let(::ClientId)
+      get() = getCurrentIdValidated()?.let(::ClientId)
 
     /**
      * Overrides the ID of the owner of CWM/RD session.
@@ -250,6 +249,19 @@ data class ClientId(val value: String) {
       finally {
         currentClientIdString = oldClientIdValue
       }
+    }
+
+    private fun getCurrentIdValidated(): String? {
+      val currentValue = currentClientIdString
+      if (currentValue != null) {
+        val service = getCachedService()
+        if (service != null && !service.isValid(ClientId(currentValue))) {
+          getClientIdLogger().trace { "Invalid ClientId $currentValue replaced with null at ${Throwable().fillInStackTrace()}" }
+          currentClientIdString = null
+          return null
+        }
+      }
+      return currentValue
     }
 
     class ClientIdAccessToken(private val oldClientIdValue: String?) : AccessToken() {
@@ -347,77 +359,32 @@ data class ClientId(val value: String) {
 
     @JvmStatic
     fun <T> decorateFunction(action: () -> T): () -> T {
-      if (propagateAcrossThreads) return action
-      val currentId = currentOrNull
-      return {
-        withClientId(currentId) {
-          return@withClientId action()
-        }
-      }
+      return captureClientId(action)
     }
 
     @JvmStatic
     fun decorateRunnable(runnable: Runnable): Runnable {
-      if (!propagateAcrossThreads) {
-        return runnable
-      }
-
-      val currentId = currentOrNull
-      return Runnable {
-        withClientId(currentId) { runnable.run() }
-      }
+      return captureClientIdInRunnable(runnable)
     }
 
     @JvmStatic
     fun <T> decorateCallable(callable: Callable<T>): Callable<T> {
-      if (!propagateAcrossThreads) {
-        return callable
-      }
-      val currentId = currentOrNull
-      return Callable { withClientId(currentId) { callable.call() } }
+      return captureClientIdInCallable(callable)
     }
 
     @JvmStatic
     fun <T, R> decorateFunction(function: Function<T, R>): Function<T, R> {
-      if (!propagateAcrossThreads) return function
-      val currentId = currentOrNull
-      return Function { withClientId(currentId) { function.apply(it) } }
-    }
-
-    @JvmStatic
-    fun <T> decorateSupplier(supplier: Supplier<T>): Supplier<T> {
-      if (!propagateAcrossThreads) return supplier
-      val currentId = currentOrNull
-      return Supplier {
-        withClientId(currentId) {
-          supplier.get()
-        }
-      }
-    }
-
-    @JvmStatic
-    fun <T> decorateConsumer(consumer: Consumer<T>): Consumer<T> {
-      if (!propagateAcrossThreads) return consumer
-      val currentId = currentOrNull
-      return Consumer { t ->
-        withClientId(currentId) {
-          consumer.accept(t)
-        }
-      }
+      return captureClientIdInFunction(function)
     }
 
     @JvmStatic
     fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
-      if (!propagateAcrossThreads) return biConsumer
-      val currentId = currentOrNull
-      return BiConsumer { t, u -> withClientId(currentId) { biConsumer.accept(t, u) } }
+      return captureClientIdInBiConsumer(biConsumer)
     }
 
     @JvmStatic
     fun <T> decorateProcessor(processor: Processor<T>): Processor<T> {
-      if (!propagateAcrossThreads) return processor
-      val currentId = currentOrNull
-      return Processor { withClientId(currentId) { processor.process(it) } }
+      return captureClientIdInProcessor(processor)
     }
 
     fun coroutineContext(): CoroutineContext = currentOrNull?.asContextElement() ?: EmptyCoroutineContext
@@ -462,14 +429,6 @@ private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContex
 
   object Key : CoroutineContext.Key<ClientIdElement2>
 }
-
-// TODO: it's a temporary solution that solves stofl problem
-private val threadLocalClientIdString = ThreadLocal.withInitial<String?> { null }
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
-var currentClientIdString: String?
-  get() = threadLocalClientIdString.get()
-  set(value) = threadLocalClientIdString.set(value)
 
 @ApiStatus.Internal
 fun ClientId.asContextElement2(): CoroutineContext.Element {

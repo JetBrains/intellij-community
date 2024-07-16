@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
-public class GrJoinBlockStatementHandler implements JoinLinesHandlerDelegate {
+public final class GrJoinBlockStatementHandler implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
     if (!(file instanceof GroovyFileBase)) return CANNOT_JOIN;

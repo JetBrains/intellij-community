@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 import java.util.function.Supplier
 
-private const val BUNDLE: @NonNls String = "com.intellij.commandInterface.CommandInterfaceBundle"
+private const val BUNDLE: @NonNls String = "messages.CommandInterfaceBundle"
 
 internal object CommandInterfaceBundle : DynamicBundle(BUNDLE) {
 

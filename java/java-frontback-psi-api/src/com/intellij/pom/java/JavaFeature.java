@@ -28,6 +28,7 @@ public enum JavaFeature {
   BIN_LITERALS(LanguageLevel.JDK_1_7, "feature.binary.literals"),
   UNDERSCORES(LanguageLevel.JDK_1_7, "feature.underscores.in.literals"),
   STRING_SWITCH(LanguageLevel.JDK_1_7, "feature.string.switch"),
+  OBJECTS_CLASS(LanguageLevel.JDK_1_7, "feature.objects.class"),
   STREAM_OPTIONAL(LanguageLevel.JDK_1_8, "feature.stream.and.optional.api", true),
   /**
    * java.util.Arrays.setAll, java.util.Collection#removeIf, java.util.List.sort(Comparator),
@@ -96,6 +97,10 @@ public enum JavaFeature {
    */
   RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each",
                               LanguageLevel.JDK_20_PREVIEW),
+  /**
+   * Implementation for java 23
+   */
+  PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_X, "feature.primitive.types.in.patterns"),
   ;
 
   private final @NotNull LanguageLevel myLevel;

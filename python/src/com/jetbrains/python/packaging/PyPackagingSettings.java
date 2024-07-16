@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.Disposable;
@@ -22,9 +22,8 @@ public class PyPackagingSettings implements PersistentStateComponent<PyPackaging
     return project.getService(PyPackagingSettings.class);
   }
 
-  @Nullable
   @Override
-  public PyPackagingSettings getState() {
+  public @Nullable PyPackagingSettings getState() {
     return this;
   }
 
@@ -38,8 +37,7 @@ public class PyPackagingSettings implements PersistentStateComponent<PyPackaging
    * @return first item in {@code versions} if {@link PyPackagingSettings#earlyReleasesAsUpgrades} is true,
    * first non-pre- and non-developmental release otherwise.
    */
-  @Nullable
-  public String selectLatestVersion(@NotNull List<String> versions) {
+  public @Nullable String selectLatestVersion(@NotNull List<String> versions) {
     if (!earlyReleasesAsUpgrades) {
       return StreamEx
         .of(versions)

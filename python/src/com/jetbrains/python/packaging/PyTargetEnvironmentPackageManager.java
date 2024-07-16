@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,7 +59,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     getPythonProcessResult(pythonExecution, true, true, helpersAwareTargetRequest.getTargetEnvironmentRequest());
   }
 
-  PyTargetEnvironmentPackageManager(@NotNull final Sdk sdk) {
+  PyTargetEnvironmentPackageManager(final @NotNull Sdk sdk) {
     super(sdk);
   }
 
@@ -169,9 +168,8 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
   }
 
 
-  @Nullable
   @Override
-  public List<PyPackage> getPackages() {
+  public @Nullable List<PyPackage> getPackages() {
     if (!Registry.is("python.use.targets.api")) {
       return Collections.emptyList();
     }
@@ -217,8 +215,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
   }
 
   @Override
-  @NotNull
-  public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
+  public @NotNull String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
     final Sdk sdk = getSdk();
     final LanguageLevel languageLevel = getOrRequestLanguageLevelForSdk(sdk);
 
@@ -254,11 +251,10 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     return languageLevel.isPython2() || languageLevel.isOlderThan(LanguageLevel.PYTHON37);
   }
 
-  @NotNull
-  private String getPythonProcessResult(@NotNull PythonExecution pythonExecution,
-                                        boolean askForSudo,
-                                        boolean showProgress,
-                                        @NotNull TargetEnvironmentRequest targetEnvironmentRequest) throws ExecutionException {
+  private @NotNull String getPythonProcessResult(@NotNull PythonExecution pythonExecution,
+                                                 boolean askForSudo,
+                                                 boolean showProgress,
+                                                 @NotNull TargetEnvironmentRequest targetEnvironmentRequest) throws ExecutionException {
     ProcessOutputWithCommandLine result = getPythonProcessOutput(pythonExecution, askForSudo, showProgress, targetEnvironmentRequest);
     String path = result.getExePath();
     List<String> args = result.getArgs();
@@ -274,11 +270,10 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     return processOutput.getStdout();
   }
 
-  @NotNull
-  private PyTargetEnvironmentPackageManager.ProcessOutputWithCommandLine getPythonProcessOutput(@NotNull PythonExecution pythonExecution,
-                                                                                                boolean askForSudo,
-                                                                                                boolean showProgress,
-                                                                                                @NotNull TargetEnvironmentRequest targetEnvironmentRequest)
+  private @NotNull PyTargetEnvironmentPackageManager.ProcessOutputWithCommandLine getPythonProcessOutput(@NotNull PythonExecution pythonExecution,
+                                                                                                         boolean askForSudo,
+                                                                                                         boolean showProgress,
+                                                                                                         @NotNull TargetEnvironmentRequest targetEnvironmentRequest)
     throws ExecutionException {
     // TODO [targets] Use `showProgress = true`
     // TODO [targets] Use `workingDir`
@@ -337,11 +332,10 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     return new ProcessOutputWithCommandLine(helperPath, args, result);
   }
 
-  @NotNull
-  private Process createProcess(@NotNull TargetEnvironment targetEnvironment,
-                                @NotNull TargetedCommandLine targetedCommandLine,
-                                boolean askForSudo,
-                                @Nullable ProgressIndicator indicator) throws ExecutionException {
+  private @NotNull Process createProcess(@NotNull TargetEnvironment targetEnvironment,
+                                         @NotNull TargetedCommandLine targetedCommandLine,
+                                         boolean askForSudo,
+                                         @Nullable ProgressIndicator indicator) throws ExecutionException {
     if (askForSudo) {
       if (!(targetEnvironment instanceof LocalTargetEnvironment)) {
         // TODO [targets] Execute process on non-local target using sudo
@@ -357,8 +351,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     return targetEnvironment.createProcess(targetedCommandLine, Objects.requireNonNullElseGet(indicator, EmptyProgressIndicator::new));
   }
 
-  @NotNull
-  private static Process executeOnLocalMachineWithSudo(@NotNull GeneralCommandLine localCommandLine) throws ExecutionException {
+  private static @NotNull Process executeOnLocalMachineWithSudo(@NotNull GeneralCommandLine localCommandLine) throws ExecutionException {
     try {
       return ExecUtil.sudo(localCommandLine, PySdkBundle.message("python.sdk.packaging.enter.your.password.to.make.changes"));
     }
@@ -369,8 +362,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     }
   }
 
-  @NotNull
-  private HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() throws ExecutionException {
+  private @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() throws ExecutionException {
     HelpersAwareTargetEnvironmentRequest request = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(getSdk(),
                                                                                                                          ProjectManager.getInstance()
                                                                                                                            .getDefaultProject());
@@ -380,8 +372,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     return request;
   }
 
-  @NotNull
-  private static HelperPackage getPipHelperPackage() {
+  private static @NotNull HelperPackage getPipHelperPackage() {
     return new PythonHelper.ScriptPythonHelper(PIP_WHEEL_NAME + "/" + PyPackageUtil.PIP,
                                                PythonHelpersLocator.getHelpersRoot(),
                                                Collections.emptyList());

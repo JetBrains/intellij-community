@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -9,6 +9,11 @@ import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
@@ -22,10 +27,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
-  @Nullable
+public class TestRunLineMarkerProvider extends RunLineMarkerContributor implements DumbAware {
+
+  private static final Logger LOG = Logger.getInstance(TestRunLineMarkerProvider.class);
+
+
   @Override
-  public Info getInfo(@NotNull PsiElement e) {
+  public @Nullable Info getInfo(@NotNull PsiElement e) {
     if (isIdentifier(e)) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass psiClass) {
@@ -46,12 +54,14 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
     return null;
   }
 
-  private static boolean isIgnoredForGradleConfiguration(@Nullable PsiClass psiClass, @Nullable PsiMethod psiMethod) {
-    if (psiClass == null || psiMethod == null) return false;
-    RunnerAndConfigurationSettings currentConfiguration = RunManager.getInstance(psiClass.getProject()).getSelectedConfiguration();
-    if (currentConfiguration == null) return false;
-    ConfigurationType configurationType = currentConfiguration.getType();
-    if (!configurationType.getId().equals("GradleRunConfiguration")) return false;
+  /**
+   * Gradle can't run ignored methods while IDEA runner can, so when using a Gradle configuration, we don't want to show the line marker for
+   * ignored methods.
+   */
+  private static boolean isIgnoredForGradleConfiguration(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod) {
+    if (!isGradleConfiguration(psiClass)) return false;
+    //now gradle doesn't support dumb mode
+    if (DumbService.getInstance(psiClass.getProject()).isDumb()) return true;
     for (TestFramework testFramework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       if (testFramework.isTestClass(psiClass) && testFramework.isIgnoredMethod(psiMethod)) {
         return true;
@@ -60,9 +70,25 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
     return false;
   }
 
+  private static boolean isGradleConfiguration(@NotNull PsiClass psiClass) {
+    RunnerAndConfigurationSettings currentConfiguration = RunManager.getInstance(psiClass.getProject()).getSelectedConfiguration();
+    if (currentConfiguration == null) return false;
+    ConfigurationType configurationType = currentConfiguration.getType();
+    return configurationType.getId().equals("GradleRunConfiguration");
+  }
+
   private static boolean isTestClass(PsiClass clazz) {
-    TestFramework framework = TestFrameworks.detectFramework(clazz);
-    return framework != null && framework.isTestClass(clazz);
+    if (clazz == null) return false;
+    try {
+      return DumbService.getInstance(clazz.getProject()).computeWithAlternativeResolveEnabled(() -> {
+        TestFramework framework = TestFrameworks.detectFramework(clazz);
+        return framework != null && framework.isTestClass(clazz);
+      });
+    }
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return false;
+    }
   }
 
   private static boolean isTestMethod(PsiClass containingClass, PsiMethod method) {
@@ -71,9 +97,9 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
     return framework != null && framework.isTestMethod(method, false);
   }
 
-  @NotNull
-  private static Info getInfo(TestStateStorage.Record state, boolean isClass, int order) {
-    return new Info(getTestStateIcon(state, isClass), ExecutorAction.getActions(order), element -> ExecutionBundle.message("run.text"));
+  private static @NotNull Info getInfo(TestStateStorage.Record state, boolean isClass, int order) {
+    AnAction[] actions = ExecutorAction.getActions(order);
+    return new Info(getTestStateIcon(state, isClass), actions, element -> ExecutionBundle.message("run.text"));
   }
 
   protected boolean isIdentifier(PsiElement e) {

@@ -99,7 +99,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor<?>> {
     }
     if (descriptor1 == null) return -1;
     if (descriptor2 == null) return 1;
-    return AlphaComparator.INSTANCE.compare(descriptor1, descriptor2);
+    return AlphaComparator.getInstance().compare(descriptor1, descriptor2);
   }
 
   private NodeDescriptor<?> getUpdatedDescriptor(NodeDescriptor<?> descriptor) {

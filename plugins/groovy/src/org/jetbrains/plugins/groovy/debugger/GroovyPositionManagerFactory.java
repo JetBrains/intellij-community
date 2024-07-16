@@ -20,7 +20,7 @@ import com.intellij.debugger.PositionManagerFactory;
 import com.intellij.debugger.engine.DebugProcess;
 import org.jetbrains.annotations.NotNull;
 
-public class GroovyPositionManagerFactory extends PositionManagerFactory {
+public final class GroovyPositionManagerFactory extends PositionManagerFactory {
   @Override
   public PositionManager createPositionManager(@NotNull DebugProcess process) {
     return new GroovyPositionManager(process);

@@ -19,6 +19,16 @@ public interface PsiScopeProcessor {
    */
   boolean execute(@NotNull PsiElement element, @NotNull ResolveState state);
 
+  /**
+   * Called if the reference is imported but unresolved, so the target may not exist 
+   * due to incomplete project setup.
+   *
+   * @return false to stop processing.
+   */
+  default boolean executeForUnresolved() {
+    return true;
+  }
+
   default @Nullable <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }

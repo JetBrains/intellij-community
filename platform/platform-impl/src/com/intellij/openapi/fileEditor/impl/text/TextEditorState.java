@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.editor.Document;
@@ -24,7 +24,7 @@ public final class TextEditorState implements FileEditorState {
    * State, which describes how an editor is folded.
    */
   private @Nullable CodeFoldingState myFoldingState;
-  private Supplier<? extends CodeFoldingState> myDelayedFoldInfoProducer;
+  private Supplier<? extends CodeFoldingState> delayedFoldInfoProducer;
 
   /**
    * Folding state is more complex than, say, line/column number, that's why it's a deserialization can be performed only when
@@ -36,21 +36,21 @@ public final class TextEditorState implements FileEditorState {
    * @param producer  delayed folding info producer
    */
   void setDelayedFoldState(@NotNull Supplier<? extends CodeFoldingState> producer) {
-    myDelayedFoldInfoProducer = producer;
+    delayedFoldInfoProducer = producer;
   }
 
   @Nullable
   Supplier<? extends CodeFoldingState> getDelayedFoldState() {
-    return myDelayedFoldInfoProducer;
+    return delayedFoldInfoProducer;
   }
 
   @Nullable
   CodeFoldingState getFoldingState() {
     // Assuming single-thread access here.
-    if (myFoldingState == null && myDelayedFoldInfoProducer != null) {
-      myFoldingState = myDelayedFoldInfoProducer.get();
+    if (myFoldingState == null && delayedFoldInfoProducer != null) {
+      myFoldingState = delayedFoldInfoProducer.get();
       if (myFoldingState != null) {
-        myDelayedFoldInfoProducer = null;
+        delayedFoldInfoProducer = null;
       }
     }
     return myFoldingState;
@@ -58,7 +58,7 @@ public final class TextEditorState implements FileEditorState {
 
   void setFoldingState(@Nullable CodeFoldingState foldingState) {
     myFoldingState = foldingState;
-    myDelayedFoldInfoProducer = null;
+    delayedFoldInfoProducer = null;
   }
 
   @Override

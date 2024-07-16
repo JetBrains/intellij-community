@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -22,7 +21,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
@@ -33,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,7 +78,6 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   }
 
   init {
-    registerExtraEditorDataProvider(TextEditorPsiDataProvider(), null)
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
         if (this@TestEditorManagerImpl.project === project) {
@@ -105,18 +101,16 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   }
 
   override fun openFile(file: VirtualFile, window: EditorWindow?, options: FileEditorOpenOptions): FileEditorComposite {
-    return openFileInCommand(OpenFileDescriptor(project, file), options)
+    return doOpenFile(descriptor = OpenFileDescriptor(project, file), options = options)
   }
 
   override suspend fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite {
     val descriptor = OpenFileDescriptor(project, file)
-    val composite = openFileImpl3(descriptor, options)
-    val editors = composite.allEditors
-    for (i in editors.indices) {
-      val editor = editors[i]
+    val composite = openFileImpl3(openFileDescriptor = descriptor, options = options)
+    for ((editor, provider) in composite.allEditorsWithProviders) {
       if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
         if (editor.canNavigateTo(descriptor)) {
-          setSelectedEditor(descriptor.file, composite.allProviders.get(i).editorTypeId)
+          setSelectedEditor(descriptor.file, provider.editorTypeId)
           editor.navigateTo(descriptor)
         }
         break
@@ -138,14 +132,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     val fileEditor: FileEditor
     val editor: Editor?
     if (provider != null && provider.accept(project, file)) {
-      if (provider is AsyncFileEditorProvider) {
-        fileEditor = runWithModalProgressBlocking(project, "") {
-          (provider as AsyncFileEditorProvider).createEditorBuilder(project = project, file = file, document = null)
-        }.build()
-      }
-      else {
-        fileEditor = provider.createEditor(project, file)
-      }
+      fileEditor = provider.createEditor(project, file)
       if (fileEditor is TextEditor) {
         editor = fileEditor.editor
         TextEditorProvider.putTextEditor(editor, fileEditor)
@@ -284,8 +271,6 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   override val activeWindow: CompletableFuture<EditorWindow?>
     get() = CompletableFuture.completedFuture(null)
 
-  override fun unsplitWindow() {}
-
   override fun unsplitAllWindow() {}
 
   override val windows: Array<EditorWindow>
@@ -315,17 +300,28 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return allClientFileEditorManagers.any { it.isFileOpen(file) }
   }
 
+  override fun getEditorList(file: VirtualFile): List<FileEditor> {
+    return listOf(getSelectedEditor(file) ?: return emptyList())
+  }
+
   override fun getEditors(file: VirtualFile): Array<FileEditor> {
     return arrayOf(getSelectedEditor(file) ?: return FileEditor.EMPTY_ARRAY)
   }
 
-  override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
+  override fun getAllEditorList(file: VirtualFile): MutableList<FileEditor> {
     val result = ArrayList<FileEditor>()
-    result.addAll(getEditors(file))
+    result.addAll(getEditorList(file))
     for (clientManager in allClientFileEditorManagers) {
       result.addAll(clientManager.getEditors(file))
     }
-    return result.toArray(FileEditor.EMPTY_ARRAY)
+    return result
+  }
+
+  override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
+    val list = getAllEditorList(file)
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
+    return if (list.isEmpty()) FileEditor.EMPTY_ARRAY else (list as java.util.Collection<FileEditor>).toArray(FileEditor.EMPTY_ARRAY)
+
   }
 
   override fun getOpenFilesWithRemotes(): List<VirtualFile> {
@@ -437,7 +433,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = project.getServices(ClientFileEditorManager::class.java, ClientKind.REMOTE)
 
   override fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor? {
-    for (editor in openFileInCommand(descriptor, FileEditorOpenOptions(requestFocus = focusEditor)).allEditors) {
+    for ((editor, _) in doOpenFile(descriptor, FileEditorOpenOptions(requestFocus = focusEditor)).allEditorsWithProviders) {
       if (editor is TextEditor) {
         return editor.editor
       }
@@ -445,22 +441,18 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return null
   }
 
-  private fun openFileInCommand(descriptor: FileEditorNavigatable, options: FileEditorOpenOptions): FileEditorComposite {
-    var result: FileEditorComposite? = null
-    CommandProcessor.getInstance().executeCommand(project, {
-      val composite = openFileImpl3(descriptor, options)
-      for ((i, editor) in composite.allEditors.withIndex()) {
-        if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
-          if (editor.canNavigateTo(descriptor)) {
-            setSelectedEditor(file = descriptor.file, fileEditorProviderId = composite.allProviders.get(i).editorTypeId)
-            editor.navigateTo(descriptor)
-          }
-          break
+  private fun doOpenFile(descriptor: FileEditorNavigatable, options: FileEditorOpenOptions): FileEditorComposite {
+    val composite = openFileImpl3(descriptor, options)
+    for ((editor, provider) in composite.allEditorsWithProviders) {
+      if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
+        if (editor.canNavigateTo(descriptor)) {
+          setSelectedEditor(file = descriptor.file, fileEditorProviderId = provider.editorTypeId)
+          editor.navigateTo(descriptor)
         }
+        break
       }
-      result = composite
-    }, "", null)
-    return result!!
+    }
+    return composite
   }
 
   private fun doOpenTextEditor(descriptor: FileEditorNavigatable): Editor {
@@ -485,7 +477,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   }
 
   override fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): List<FileEditor> {
-    return openFileInCommand(descriptor, options = FileEditorOpenOptions(requestFocus = focusEditor)).allEditors
+    return doOpenFile(descriptor, options = FileEditorOpenOptions(requestFocus = focusEditor)).allEditors
   }
 
   override fun getProject(): Project = project
@@ -494,7 +486,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     get() = null
 
   override fun getEditorsWithProviders(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    return EditorComposite.retrofit(getComposite(file))
+    return retrofitEditorComposite(getComposite(file))
   }
 
   override fun getComposite(file: VirtualFile): FileEditorComposite? {

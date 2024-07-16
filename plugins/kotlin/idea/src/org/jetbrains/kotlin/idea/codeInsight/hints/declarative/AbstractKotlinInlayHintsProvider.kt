@@ -15,10 +15,11 @@ import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.codeInsight.hints.HintType
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetail
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
+import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.idea.codeInsight.hints.NamedInlayInfoOption
 import org.jetbrains.kotlin.idea.codeInsight.hints.NoInlayInfoOption
 import org.jetbrains.kotlin.idea.codeInsight.hints.PsiInlayInfoDetail

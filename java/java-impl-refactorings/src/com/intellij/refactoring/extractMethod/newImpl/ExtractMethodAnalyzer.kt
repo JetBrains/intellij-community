@@ -4,16 +4,14 @@ package com.intellij.refactoring.extractMethod.newImpl
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiTypesUtil
-import com.intellij.psi.util.PsiUtil
-import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.psi.util.*
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findRequiredTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getReturnedExpression
@@ -28,7 +26,6 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.FlowOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.Processor
 import java.util.*
 
@@ -216,6 +213,7 @@ internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<In
     val returnedExpressions = PsiUtil.findReturnStatements(method).mapNotNull(PsiReturnStatement::getReturnValue)
     val resultNullability = CodeFragmentAnalyzer.inferNullability(returnedExpressions)
     ExtractMethodHelper.addNullabilityAnnotation(method.returnTypeElement, resultNullability)
+    GenerateMembersUtil.sortModifiers(method, null)
   }
   val parameters = method.parameterList.parameters
   inputParameters

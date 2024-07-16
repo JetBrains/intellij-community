@@ -88,6 +88,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     @JvmField
     var USE_TABBED_WELCOME_SCREEN: Boolean = java.lang.Boolean.parseBoolean(System.getProperty("use.tabbed.welcome.screen", "true"))
     const val BOTTOM_PANEL: String = "BOTTOM_PANEL"
+    const val CUSTOM_HEADER: String = "CUSTOM_HEADER"
 
     @JvmField
     val DEFAULT_HEIGHT: Int = if (USE_TABBED_WELCOME_SCREEN) 650 else 460
@@ -126,6 +127,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       header = DefaultFrameHeader(this, isForDockContainerProvider = false)
       content.setContent(getCustomContentHolder(this, screen.welcomePanel, header!!))
+      layeredPane.putClientProperty(CUSTOM_HEADER, header)
     }
     else {
       createWelcomeMenuBar(this, coroutineScope)

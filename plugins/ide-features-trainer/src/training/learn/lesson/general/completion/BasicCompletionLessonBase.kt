@@ -1,11 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.lesson.general.completion
 
-import training.dsl.LessonContext
-import training.dsl.LessonSample
-import training.dsl.LessonUtil
+import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
-import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.util.isToStringContains
@@ -86,7 +83,7 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
         stateCheck {
           editor.document.text == result2
         }
-        restoreByUi()
+        restoreByUi(delayMillis = defaultRestoreDelay)
         test {
           ideFrame {
             jListContains(item2Completion).item(item2Completion).doubleClick()

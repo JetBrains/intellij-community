@@ -22,7 +22,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.formatter.IndentRangesCalculator
 
 
-class NodeIndentRangesCalculator(private val node: ASTNode) {
+internal class NodeIndentRangesCalculator(private val node: ASTNode) {
 
   fun calculateExtraRanges(): List<TextRange> {
     val document = retrieveDocument(node)

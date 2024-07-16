@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.FixWithConsent
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
 import com.intellij.openapi.roots.ui.configuration.SdkLookup
@@ -121,6 +122,7 @@ class UnknownAlternativeSdkResolver(private val project: Project) {
       throw object : CantRunException(builder.toString()), HyperlinkListener {
         override fun hyperlinkUpdate(e: HyperlinkEvent) {
           if (e.eventType != HyperlinkEvent.EventType.ACTIVATED) return
+          if (fix is FixWithConsent) fix.giveConsent()
           fix.applySuggestionAsync(project)
         }
       }

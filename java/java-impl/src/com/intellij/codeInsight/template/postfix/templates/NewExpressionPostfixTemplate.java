@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.*;
@@ -13,7 +13,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,17 +51,28 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
     super("new", "new T()", selectorAllExpressionsWithCurrentOffset(CONSTRUCTOR));
   }
 
-  @Nullable
   @Override
-  public String getTemplateString(@NotNull PsiElement element) {
+  public @Nullable String getTemplateString(@NotNull PsiElement element) {
     return element instanceof PsiMethodCallExpression ? "new $expr$" : "new $expr$($END$)";
   }
 
   @Override
   public void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     if (expression instanceof PsiReferenceExpression ref) {
-      JavaResolveResult result = ref.advancedResolve(true);
+      JavaResolveResult result = DumbService.getInstance(expression.getProject())
+        .withAlternativeResolveEnabled(() -> ref.advancedResolve(true));
       PsiElement element = result.getElement();
+      
+      if (element == null) {
+        String name = ref.getReferenceName();
+        if (name != null && ref.getQualifierExpression() == null) {
+          PsiClass[] classes = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+            () -> PsiShortNamesCache.getInstance(ref.getProject()).getClassesByName(name, ref.getResolveScope()));
+          if (classes.length == 1) {
+            element = classes[0];
+          }
+        }
+      }
 
       if (element instanceof PsiClass psiClass) {
         WriteAction.run(() -> insertConstructorCallWithSmartBraces(expression, editor, psiClass));
@@ -67,6 +80,11 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
       }
     }
     super.expandForChooseExpression(expression, editor);
+  }
+
+  @Override
+  protected PsiElement getElementToRemove(PsiElement expr) {
+    return expr;
   }
 
   public void insertConstructorCallWithSmartBraces(@NotNull PsiElement expression,
@@ -90,11 +108,10 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
     item.handleInsert(createInsertionContext(editor, file, item, startOffset));
   }
 
-  @NotNull
-  private static InsertionContext createInsertionContext(@NotNull Editor editor,
-                                                         @NotNull PsiFile file,
-                                                         @NotNull JavaPsiClassReferenceElement item,
-                                                         int startOffset) {
+  private static @NotNull InsertionContext createInsertionContext(@NotNull Editor editor,
+                                                                  @NotNull PsiFile file,
+                                                                  @NotNull JavaPsiClassReferenceElement item,
+                                                                  int startOffset) {
     Document document = editor.getDocument();
     final OffsetMap offsetMap = new OffsetMap(document);
     final InsertionContext insertionContext = new InsertionContext(offsetMap,

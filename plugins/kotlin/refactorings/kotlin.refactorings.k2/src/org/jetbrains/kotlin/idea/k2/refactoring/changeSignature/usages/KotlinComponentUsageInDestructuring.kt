@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.utils.ifEmpty
 
 internal class KotlinComponentUsageInDestructuring(element: KtDestructuringDeclarationEntry) :
   UsageInfo(element), KotlinBaseChangeSignatureUsage {
-    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,
@@ -40,8 +40,7 @@ internal class KotlinComponentUsageInDestructuring(element: KtDestructuringDecla
                         val nameValidator = KotlinDeclarationNameValidator(
                             ktCallableDeclaration,
                             true,
-                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                            this@analyze,
+                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                         )
                         appendFixedText("val (")
                         for (i in 0..lastIndex) {
@@ -54,7 +53,7 @@ internal class KotlinComponentUsageInDestructuring(element: KtDestructuringDecla
                             if (oldIndex >= 0 && oldIndex < currentEntries.size) {
                                 appendChildRange(PsiChildRange.singleElement(currentEntries[oldIndex]))
                             } else {
-                                appendFixedText(KotlinNameSuggester.suggestNameByName(paramInfo.name, nameValidator))
+                                appendFixedText(KotlinNameSuggester.suggestNameByName(paramInfo.name) { nameValidator.validate(it) })
                             }
                         }
                         appendFixedText(")")

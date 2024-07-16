@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -14,15 +14,13 @@ interface ClassReferencePointer {
 
   static ClassReferencePointer constant(@NotNull PsiJavaCodeReferenceElement ref) {
     return new ClassReferencePointer() {
-      @NotNull
       @Override
-      public PsiJavaCodeReferenceElement retrieveReference() {
+      public @NotNull PsiJavaCodeReferenceElement retrieveReference() {
         return ref;
       }
 
-      @NotNull
       @Override
-      public PsiJavaCodeReferenceElement retrieveNonNullReference() {
+      public @NotNull PsiJavaCodeReferenceElement retrieveNonNullReference() {
         return ref;
       }
     };

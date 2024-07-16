@@ -7,7 +7,11 @@ import io.kinference.core.data.tensor.KITensor
 import io.kinference.core.data.tensor.asTensor
 import io.kinference.data.ONNXData
 import io.kinference.model.Model
-import io.kinference.ndarray.arrays.*
+import io.kinference.ndarray.arrays.FloatNDArray
+import io.kinference.ndarray.arrays.IntNDArray
+import io.kinference.ndarray.arrays.NDArrayCore
+import io.kinference.ndarray.arrays.NumberNDArray
+import io.kinference.utils.inlines.InlineInt
 
 /**
  * Wrapper around a transformer neural network that applies it to encoded texts
@@ -32,7 +36,7 @@ class LocalEmbeddingNetwork(
   @Suppress("Unused") // useful for older versions of kinference where operators for mean pooling are not supported
   private suspend fun meanPooling(lastHiddenState: FloatNDArray, attentionMask: NumberNDArray): FloatNDArray {
     val attentionMaskPointer = (attentionMask as IntNDArray).array.pointer()
-    val floatAttentionMask = FloatNDArray(attentionMask.shape) {
+    val floatAttentionMask = FloatNDArray(attentionMask.shape) { _: InlineInt ->
       attentionMaskPointer.getAndIncrement().toFloat()
     }
 

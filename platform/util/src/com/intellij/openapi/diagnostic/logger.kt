@@ -2,13 +2,25 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.CancellationException
 
-inline fun <reified T : Any> T.thisLogger(): Logger = Logger.getInstance(T::class.java)
-
+/**
+ * Returns a logger that corresponds to the [T] class.
+ */
 inline fun <reified T : Any> logger(): Logger = Logger.getInstance(T::class.java)
+
+/**
+ * Returns a logger that corresponds to the [T] class inferred from the receiver.
+ *
+ * A shortcut to [logger] to avoid writing the type parameter by hand.
+ *
+ * Note: this method only uses [this] value to infer the type parameter [T].
+ * It does not use the **actual** runtime class (`this::class`) of the receiver value.
+ */
+inline fun <reified T : Any> T.thisLogger(): Logger = Logger.getInstance(T::class.java)
 
 /**
  * Returns a logger that corresponds to the class of the caller method.
@@ -55,6 +67,20 @@ inline fun Logger.trace(@NonNls lazyMessage: () -> String) {
   }
 }
 
+/* Cannot name it `trace` due to the clash with the function above */
+inline fun Logger.traceThrowable(lazyThrowable: () -> Throwable) {
+  if (isTraceEnabled) {
+    return trace(lazyThrowable())
+  }
+}
+
+inline fun <T : Any> Logger.ifTraceEnabled(lazyValue: () -> T): T? {
+  if (isTraceEnabled) {
+    return lazyValue()
+  }
+  return null
+}
+
 /** Consider using [Result.getOrLogException] for more straight-forward API instead. */
 inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   return runCatching {
@@ -63,12 +89,19 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
 }
 
 fun <T> Result<T>.getOrLogException(logger: Logger): T? {
+  return getOrLogException {
+    logger.error(it)
+  }
+}
+
+@Internal
+inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? {
   return onFailure { e ->
     if (e is ProcessCanceledException || e is CancellationException) {
       throw e
     }
     else {
-      logger.error(e)
+      log(e)
     }
   }.getOrNull()
 }

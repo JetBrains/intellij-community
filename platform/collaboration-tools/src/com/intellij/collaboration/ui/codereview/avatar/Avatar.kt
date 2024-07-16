@@ -17,12 +17,17 @@ object Avatar {
 
     /**
      * Usages:
-     * 1. Сode reviews list
-     * 2. Reviewer's selector
-     * 3. Details
-     * 4. Replies
+     * 1. Reviewer's selector
+     * 2. Replies
      */
     const val BASE: Int = 20
+
+    /**
+     * Usages:
+     * 1. Сode reviews list
+     * 2. Details
+     */
+    const val OUTLINED: Int = 18
 
     /**
      * Usages:

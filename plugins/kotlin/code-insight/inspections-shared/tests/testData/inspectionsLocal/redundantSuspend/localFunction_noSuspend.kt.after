@@ -1,0 +1,8 @@
+fun test() {
+    fun localFirst() {}
+
+    fun localSecond() {
+        localFirst()
+    }
+}
+

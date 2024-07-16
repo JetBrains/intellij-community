@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.CommonBundle;
@@ -32,7 +32,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -51,7 +50,7 @@ import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
  * @author Jeka
  * @author Konstantin Bulenkov
  */
-public final class ThreadDumpPanel extends JPanel implements DataProvider {
+public final class ThreadDumpPanel extends JPanel implements UiDataProvider {
   private static final Icon PAUSE_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Pause, Daemon_sign});
   private static final Icon LOCKED_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Debugger.MuteBreakpoints, Daemon_sign});
   private static final Icon RUNNING_ICON_DAEMON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.Actions.Resume, Daemon_sign});
@@ -162,13 +161,9 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
-      return myExporterToTextFile;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myExporterToTextFile);
   }
 
   private void updateThreadList() {
@@ -423,9 +418,8 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
       myThreadStates = threadStates;
     }
 
-    @NotNull
     @Override
-    public String getReportText() {
+    public @NotNull String getReportText() {
       StringBuilder sb = new StringBuilder();
       for (ThreadState state : myThreadStates) {
         sb.append(state.getStackTrace()).append("\n\n");
@@ -433,12 +427,10 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
       return sb.toString();
     }
 
-    @NonNls
-    private static final String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
+    private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
 
-    @NotNull
     @Override
-    public String getDefaultFilePath() {
+    public @NotNull String getDefaultFilePath() {
       VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir != null) {
         return baseDir.getPresentableUrl() + File.separator + DEFAULT_REPORT_FILE_NAME;

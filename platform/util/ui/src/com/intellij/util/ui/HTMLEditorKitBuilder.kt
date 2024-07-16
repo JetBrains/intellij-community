@@ -9,7 +9,9 @@ import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
 
 /**
- * Convenient way to create [HTMLEditorKit] to be used in [javax.swing.JEditorPane] and similar
+ * Convenient way to create [HTMLEditorKit] to be used in [javax.swing.JEditorPane] and similar.
+ *
+ * Consider using [com.intellij.ui.components.JBHtmlPane] for better HTML support and styling.
  */
 class HTMLEditorKitBuilder {
   private var viewFactory: ViewFactory = ExtendableHTMLViewFactory.DEFAULT
@@ -17,6 +19,7 @@ class HTMLEditorKitBuilder {
   private var needGapsBetweenParagraphs = false
   private var loadCssFromFile = true
   private var fontResolver: CSSFontResolver? = null
+  private var underlinedHoveredHyperlink = true
 
   /**
    * Allows replacing default [ExtendableHTMLViewFactory] extensions
@@ -78,10 +81,15 @@ class HTMLEditorKitBuilder {
     fontResolver = resolver
   }
 
+  fun withUnderlinedHoveredHyperlink(flag: Boolean): HTMLEditorKitBuilder = apply {
+    underlinedHoveredHyperlink = flag
+  }
+
   fun build(): HTMLEditorKit {
     val styleSheet = overriddenRootStyle ?: createHtmlStyleSheet()
     return JBHtmlEditorKit(viewFactory, styleSheet, !loadCssFromFile).apply {
-      if (fontResolver != null) setFontResolver(fontResolver)
+      if (fontResolver != null) { setFontResolver(fontResolver) }
+      setUnderlineHoveredHyperlink(underlinedHoveredHyperlink)
     }
   }
 

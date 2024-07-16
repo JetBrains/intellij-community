@@ -3,7 +3,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightInfoProcessor;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -131,7 +131,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
       editor.commit();
 
       return TextEditorHighlightingPassRegistrarEx.getInstanceEx(project)
-        .instantiateMainPasses(psiFile, document, new DefaultHighlightInfoProcessor()).toArray(HighlightingPass.EMPTY_ARRAY);
+        .instantiateMainPasses(psiFile, document, HighlightInfoProcessor.getEmpty()).toArray(HighlightingPass.EMPTY_ARRAY);
     };
   }
 

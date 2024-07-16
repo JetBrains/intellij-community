@@ -59,7 +59,8 @@ from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import (
     trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning)
 from _pydevd_frame_eval.pydevd_frame_eval_main import (
-    frame_eval_func, dummy_trace_dispatch, show_frame_eval_warning)
+    frame_eval_func, clear_thread_local_info, dummy_trace_dispatch,
+    show_frame_eval_warning)
 from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import enable_pep669_monitoring
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_utils import save_main_module, is_current_thread_main_thread, \
@@ -385,7 +386,12 @@ def stoptrace():
 
             kill_all_pydev_threads()
 
+            set_global_debugger(None)
+
         connected = False
+
+    if clear_thread_local_info is not None:
+        clear_thread_local_info()
 
 
 #=======================================================================================================================
@@ -1953,7 +1959,6 @@ def settrace_forked():
     from _pydevd_bundle.pydevd_constants import GlobalDebuggerHolder
     GlobalDebuggerHolder.global_dbg = None
 
-    from _pydevd_frame_eval.pydevd_frame_eval_main import clear_thread_local_info
     host, port = dispatch()
 
     import pydevd_tracing

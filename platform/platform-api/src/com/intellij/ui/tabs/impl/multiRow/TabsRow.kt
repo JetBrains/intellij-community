@@ -1,16 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.multiRow
 
 import com.intellij.ui.tabs.TabInfo
 import java.awt.Rectangle
 
 abstract class TabsRow(val infos: List<TabInfo>, val withTitle: Boolean, val withEntryPointToolbar: Boolean) {
-  fun layoutRow(data: MultiRowPassInfo, y: Int) {
+  internal fun layoutRow(data: MultiRowPassInfo, y: Int) {
     val tabsRange = layoutTitleAndEntryPoint(data, y)
     layoutTabs(data, tabsRange.first, y, tabsRange.last - tabsRange.first)
   }
 
-  protected abstract fun layoutTabs(data: MultiRowPassInfo, x: Int, y: Int, maxLength: Int)
+  internal abstract fun layoutTabs(data: MultiRowPassInfo, x: Int, y: Int, maxLength: Int)
 
   private fun layoutTitleAndEntryPoint(data: MultiRowPassInfo, y: Int): IntRange {
     val tabs = data.tabs

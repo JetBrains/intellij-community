@@ -323,9 +323,8 @@ class MavenAnnotationProcessorConfigurator : MavenImporter("org.apache.maven.plu
     var moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName)
 
     if (moduleProfile == null) {
-      moduleProfile = ProcessorConfigProfileImpl(moduleProfileName)
+      moduleProfile = compilerConfiguration.addNewProcessorProfile(moduleProfileName)
       moduleProfile.setEnabled(true)
-      compilerConfiguration.addModuleProcessorProfile(moduleProfile)
     }
     if (!moduleProfile.isEnabled) return null
 

@@ -5,17 +5,32 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.sequenceOfNotNull
-import com.jetbrains.jsonSchema.impl.light.JSON_DOLLAR_ID
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject
+import com.jetbrains.jsonSchema.impl.RootJsonSchemaObject
 import com.jetbrains.jsonSchema.impl.light.SCHEMA_ROOT_POINTER
 import com.jetbrains.jsonSchema.impl.light.X_INTELLIJ_LANGUAGE_INJECTION
+import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
+import com.jetbrains.jsonSchema.impl.light.versions.computeJsonSchemaVersion
+import org.jetbrains.annotations.ApiStatus
 
 private val IDS_MAP_KEY = Key<Map<String, String>>("ids")
+private val DYNAMIC_ANCHORS_MAP_KEY = Key<Map<String, String>>("dynamicAnchors")
 private val INJECTIONS_MAP_KEY = Key<Boolean>("injections")
 
-internal class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: VirtualFile?)
-  : JsonSchemaObjectBackedByJacksonBase(rootNode, SCHEMA_ROOT_POINTER) {
+@ApiStatus.Internal
+class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: VirtualFile?)
+  : JsonSchemaObjectBackedByJacksonBase(rootNode, SCHEMA_ROOT_POINTER), RootJsonSchemaObject<JsonNode, JsonSchemaObjectBackedByJacksonBase> {
 
-  internal val schemaObjectFactory = JsonSchemaObjectBackedByJacksonFactory(this)
+  private val schemaObjectFactory = JsonSchemaObjectBackedByJacksonFactory(this)
+  override val schemaInterpretationStrategy: JsonSchemaInterpretationStrategy = computeJsonSchemaVersion(schema)
+
+  override fun getChildSchemaObjectByName(parentSchemaObject: JsonSchemaObjectBackedByJacksonBase, vararg childNodeRelativePointer: String): JsonSchemaObjectBackedByJacksonBase? {
+    return schemaObjectFactory.getChildSchemaObjectByName(parentSchemaObject, *childNodeRelativePointer)
+  }
+
+  override fun getSchemaObjectByAbsoluteJsonPointer(jsonPointer: String): JsonSchemaObject? {
+    return schemaObjectFactory.getSchemaObjectByAbsoluteJsonPointer(jsonPointer)
+  }
 
   fun checkHasInjections(): Boolean {
     return getOrComputeValue(INJECTIONS_MAP_KEY) {
@@ -41,21 +56,27 @@ internal class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schem
   }
 
   override fun resolveId(id: String): String? {
-    return getOrComputeValue(IDS_MAP_KEY) {
+    val schemaFeature = schemaInterpretationStrategy.idKeyword ?: return null
+    return collectValuesWithKey(schemaFeature, IDS_MAP_KEY)[id]
+  }
+
+  override fun resolveDynamicAnchor(anchor: String): String? {
+    val schemaFeature = schemaInterpretationStrategy.dynamicAnchorKeyword ?: return null
+    return collectValuesWithKey(schemaFeature, DYNAMIC_ANCHORS_MAP_KEY)[anchor]
+  }
+
+  private fun collectValuesWithKey(expectedKey: String, storeIn: Key<Map<String, String>>): Map<String, String> {
+    return getOrComputeValue(storeIn) {
       indexSchema(rawSchemaNode) { node, parentPointer ->
-        if (!node.isTextual) return@indexSchema null
+        if (!node.isTextual || parentPointer.lastOrNull() != expectedKey) return@indexSchema null
 
-        if (parentPointer.lastOrNull() == JSON_DOLLAR_ID) {
-          val leafNodeText = node.asText()
-          val jsonPointer = parentPointer.take(parentPointer.size - 1)
-            .joinToString(prefix = "/", separator = "/", transform = ::escapeForbiddenJsonPointerSymbols)
+        val leafNodeText = node.asText()
+        val jsonPointer = parentPointer.take(parentPointer.size - 1)
+          .joinToString(prefix = "/", separator = "/", transform = ::escapeForbiddenJsonPointerSymbols)
 
-          leafNodeText to jsonPointer
-        }
-        else
-          null
+        leafNodeText to jsonPointer
       }.toMap()
-    }[id]
+    }
   }
 
   private fun <T : Any> indexSchema(root: JsonNode, parentPointer: List<String> = emptyList(), retrieveDataFromNode: (JsonNode, List<String>) -> T?): Sequence<T> {

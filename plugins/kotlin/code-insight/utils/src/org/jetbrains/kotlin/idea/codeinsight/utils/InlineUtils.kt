@@ -1,32 +1,32 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import com.intellij.psi.util.*
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
 fun isInlinedArgument(argument: KtFunction): Boolean = getInlineArgumentSymbol(argument) != null
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
-fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
-    if (argument !is KtFunctionLiteral && argument !is KtNamedFunction) return null
+fun getInlineArgumentSymbol(argument: KtExpression): KaValueParameterSymbol? {
+    if (argument !is KtFunctionLiteral && argument !is KtNamedFunction && argument !is KtCallableReferenceExpression) return null
 
     val (symbol, argumentSymbol) = getCallExpressionSymbol(argument)
         ?: getDefaultArgumentSymbol(argument)
         ?: return null
 
-    if ((symbol is KtFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {
+    if ((symbol is KaNamedFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {
         if (argumentSymbol.isNoinline) return null
         val parameterType = argumentSymbol.returnType
         if (!parameterType.isMarkedNullable
@@ -39,52 +39,55 @@ fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
 }
 
 
-context(KtAnalysisSession)
+context(KaSession)
 @ApiStatus.Internal
-fun getFunctionSymbol(argument: KtFunction): KtFunctionLikeSymbol? = getCallExpressionSymbol(argument)?.first
+fun getFunctionSymbol(argument: KtExpression): KaFunctionSymbol? = getCallExpressionSymbol(argument)?.first
     ?: getDefaultArgumentSymbol(argument)?.first
 
-context(KtAnalysisSession)
-private fun getDefaultArgumentSymbol(argument: KtFunction): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+context(KaSession)
+private fun getDefaultArgumentSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaValueParameterSymbol>? {
+    if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parameter = argument.parentOfType<KtParameter>() ?: return null
     val lambdaExpression = argument.parent as? KtLambdaExpression ?: return null
     if (parameter.defaultValue != lambdaExpression) return null
     val function = parameter.parentOfType<KtNamedFunction>() ?: return null
     val symbol = function.getFunctionLikeSymbol()
-    val argumentSymbol = parameter.getParameterSymbol() as? KtValueParameterSymbol ?: return null
+    val argumentSymbol = parameter.getParameterSymbol() as? KaValueParameterSymbol ?: return null
     return symbol to argumentSymbol
 }
 
-context(KtAnalysisSession)
-private fun getCallExpressionSymbol(argument: KtFunction): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+context(KaSession)
+@ApiStatus.Internal
+fun getCallExpressionSymbol(argument: KtExpression): Pair<KaFunctionSymbol, KaValueParameterSymbol>? {
+    if (argument !is KtFunction && argument !is KtCallableReferenceExpression) return null
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
-    val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
+    val parentCall = parentCallExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
     val symbol = parentCall.partiallyAppliedSymbol.symbol
     val valueArgument = parentCallExpression.getContainingValueArgument(argument) ?: return null
     val argumentSymbol = parentCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return null
     return symbol to argumentSymbol
 }
 
-context(KtAnalysisSession)
-private fun isArrayGeneratorConstructorCall(symbol: KtFunctionLikeSymbol): Boolean {
-    fun checkParameters(symbol: KtFunctionLikeSymbol): Boolean {
+context(KaSession)
+private fun isArrayGeneratorConstructorCall(symbol: KaFunctionSymbol): Boolean {
+    fun checkParameters(symbol: KaFunctionSymbol): Boolean {
         return symbol.valueParameters.size == 2
                 && symbol.valueParameters[0].returnType.isInt
                 && symbol.valueParameters[1].returnType.isFunctionType
     }
 
-    if (symbol is KtConstructorSymbol) {
-        val classId = symbol.containingClassIdIfNonLocal
+    if (symbol is KaConstructorSymbol) {
+        val classId = symbol.containingClassId
         val isArrayClass = classId == StandardClassIds.Array
                 || classId in StandardClassIds.elementTypeByPrimitiveArrayType
                 || classId in StandardClassIds.elementTypeByUnsignedArrayType
 
         return isArrayClass && checkParameters(symbol)
-    } else if (symbol is KtFunctionSymbol && symbol.isExtension) {
+    } else if (symbol is KaNamedFunctionSymbol && symbol.isExtension) {
         val receiverType = symbol.receiverType
-        return receiverType is KtNonErrorClassType
+        return receiverType is KaClassType
                 && receiverType.classId in StandardClassIds.elementTypeByUnsignedArrayType
-                && symbol.callableIdIfNonLocal?.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
+                && symbol.callableId?.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
                 && checkParameters(symbol)
     }
 

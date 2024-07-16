@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -34,7 +34,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract @IntentionName String getText(String varName);
 
-  private boolean isAvailableInContext(@NotNull final PsiJavaCodeReferenceElement element) {
+  private boolean isAvailableInContext(final @NotNull PsiJavaCodeReferenceElement element) {
     PsiElement parent = element.getParent();
 
     if (myKind == CreateClassKind.ANNOTATION) {
@@ -123,7 +123,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
     final PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null ||
         (!element.getManager().isInProject(element) && !ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(element)))) {
@@ -158,18 +158,15 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.class.from.usage.family");
   }
 
-  @Nullable
-  protected PsiJavaCodeReferenceElement getRefElement() {
+  protected @Nullable PsiJavaCodeReferenceElement getRefElement() {
     return myRefElement.getElement();
   }
 
-  @Nullable
-  protected String getSuperClassName(final PsiJavaCodeReferenceElement element) {
+  protected @Nullable String getSuperClassName(final PsiJavaCodeReferenceElement element) {
     String superClassName = null;
     PsiElement parent = element.getParent();
     final PsiElement ggParent = parent.getParent();

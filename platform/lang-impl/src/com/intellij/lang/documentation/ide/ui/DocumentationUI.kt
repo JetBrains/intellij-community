@@ -81,7 +81,10 @@ internal class DocumentationUI(
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
     switcher = createSwitcher()
     switcherToolbarComponent = switcher.createToolbar().component.apply {
-      border = JBUI.Borders.empty(5, DocumentationHtmlUtil.contentOuterPadding - 4, 0, 0)
+      border = JBUI.Borders.empty(DocumentationHtmlUtil.spaceBeforeParagraph,
+                                  DocumentationHtmlUtil.contentOuterPadding - 4,
+                                  0,
+                                  DocumentationHtmlUtil.contentOuterPadding - 4)
     }
     val textTrimmer = SwingTextTrimmer.createCenterTrimmer(0.8f)
     locationLabel = object : JLabel() {
@@ -90,7 +93,7 @@ internal class DocumentationUI(
     }.apply {
       iconTextGap = 6
       border = JBUI.Borders.empty(
-        0,
+        DocumentationHtmlUtil.spaceBeforeParagraph,
         LineTooltipRenderer.CONTENT_PADDING,
         2 + DocumentationHtmlUtil.contentOuterPadding, DocumentationHtmlUtil.contentOuterPadding)
       putClientProperty(SwingTextTrimmer.KEY, textTrimmer)
@@ -165,7 +168,7 @@ internal class DocumentationUI(
 
   fun trackDocumentationBackgroundChange(disposable: Disposable, onChange: (Color) -> Unit) {
     val job = cs.launch {
-      editorPane.editorBackgroundFlow.collectLatest {
+      editorPane.backgroundFlow.collectLatest {
         withContext(Dispatchers.EDT) {
           onChange(it)
         }
@@ -200,7 +203,7 @@ internal class DocumentationUI(
     val visible = switcher.elements.count() > 1
     switcherToolbarComponent.isVisible = visible
     editorPane.border = JBUI.Borders.emptyTop(
-      if (visible) 5 else 10
+      if (visible) 0 else DocumentationHtmlUtil.contentOuterPadding - DocumentationHtmlUtil.spaceBeforeParagraph
     )
   }
 
@@ -280,13 +283,14 @@ internal class DocumentationUI(
       locationLabel.text = ""
       locationLabel.isVisible = false
     }
-    check(myContentUpdates.tryEmit(when (newContentKind) {
-      ContentKind.InfoMessage -> ContentUpdateKind.InfoMessage
-      ContentKind.DocumentationPage -> if (oldContentKind != newContentKind)
-        ContentUpdateKind.DocumentationPageOpened
-      else
-        ContentUpdateKind.DocumentationPageNavigated
-    }))
+    check(myContentUpdates.tryEmit(
+      when (newContentKind) {
+        ContentKind.InfoMessage -> ContentUpdateKind.InfoMessage
+        ContentKind.DocumentationPage -> if (oldContentKind != newContentKind)
+          ContentUpdateKind.DocumentationPageOpened
+        else
+          ContentUpdateKind.DocumentationPageNavigated
+      }))
     return true
   }
 

@@ -3,7 +3,8 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
@@ -18,9 +19,7 @@ import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -32,7 +31,7 @@ import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
+class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   companion object {
     @JvmStatic
     val activeFrame: Window?
@@ -57,14 +56,16 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
 
-  @Internal
+  @ApiStatus.Internal
   var mouseReleaseCountSinceLastActivated = 0
 
   private var isDisposed = false
 
-  override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    frameHelper?.uiDataSnapshot(sink)
+  }
 
-  interface FrameHelper : DataProvider {
+  interface FrameHelper : UiDataProvider {
     val accessibleName: @Nls String?
     val project: Project?
     val helper: IdeFrame
@@ -106,14 +107,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
       }
     }
 
-    if (maximized && StartupUiUtil.isXToolkit() && X11UiUtil.isInitialized()
-        && (state and Frame.ICONIFIED == 0) && isShowing) {
-      // Ubuntu (and may be other linux distros) doesn't set maximized correctly if the frame is MAXIMIZED_VERT already. Use X11 API
-      X11UiUtil.setMaximized(this, true)
-    }
-    else {
-      super.setExtendedState(state)
-    }
+    super.setExtendedState(state)
   }
 
   override fun paint(g: Graphics) {

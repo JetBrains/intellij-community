@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ public final class CompositeSoftWrapPainter implements SoftWrapPainter {
    * <p/>
    * Target value (if any) is assumed to be in hex format.
    */
+  @ApiStatus.Internal
   public static final String CUSTOM_BEFORE_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.before.code";
 
   /**
@@ -37,6 +39,7 @@ public final class CompositeSoftWrapPainter implements SoftWrapPainter {
    * <p/>
    * Target value (if any) is assumed to be in hex format.
    */
+  @ApiStatus.Internal
   public static final String CUSTOM_AFTER_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.after.code";
 
   private static final Logger LOG = Logger.getInstance(CompositeSoftWrapPainter.class);

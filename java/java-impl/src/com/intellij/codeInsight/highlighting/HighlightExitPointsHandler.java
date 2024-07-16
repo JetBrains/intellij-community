@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -62,8 +62,7 @@ public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase
     }
   }
 
-  @Nullable
-  private static PsiElement getExitTarget(PsiStatement exitStatement) {
+  private static @Nullable PsiElement getExitTarget(PsiStatement exitStatement) {
     if (exitStatement instanceof PsiReturnStatement) {
       return PsiTreeUtil.getParentOfType(exitStatement, PsiMethod.class);
     }

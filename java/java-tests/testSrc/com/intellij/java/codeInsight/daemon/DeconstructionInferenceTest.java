@@ -18,12 +18,12 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_21;
   }
-  
+
   public void testSimple() {
     // Examples from JEP 432
     myFixture.configureByText("Test.java", """
       record Box<T>(T t) {}
-            
+      
       class X {
         static void test1(Box<String> bo) {
           if (bo instanceof Box<String>(var s)) {
@@ -55,7 +55,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.configureByText("Test.java", """
       interface I<T> {}
       record Box<T>(T t) implements I<T> {}
-            
+      
       class X {
         String test(I<String> i) {
           return switch(i) {
@@ -72,7 +72,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
   public void testSubType() {
     myFixture.configureByText("Test.java", """
       import java.util.function.Supplier;
-            
+      
       record Box<T>(T get) implements Supplier<T> {}
 
       class Test {
@@ -127,11 +127,11 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
   public void testNestedInFor() {
     myFixture.configureByText("Test.java", """
       import java.util.List;
-            
+      
       public class Test {
           record Record<T>(T x) {
           }
-            
+      
           public static void test2(List<Record<? extends Record<? extends String>>> records) {
               for (Record(Record(var x)) : records) {
                   System.out.println(x.isEmpty());
@@ -147,7 +147,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       public class Test {
         interface BaseRecord<T> {}
         record ExtendedRecord1<T extends CharSequence> (T a,T b) implements BaseRecord<T>{}
-        
+      
         public static void wildcardWiderBound0(BaseRecord<?> variable1) {
            if (variable1 instanceof ExtendedRecord1(var a, var b)) {
                System.out.println(a + " " + b.length());
@@ -169,7 +169,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       
       interface I<T> {}
       record Empty<T extends CharSequence>() implements I<T> {}
-            
+      
       class X {
         void test(I<Integer> obj) {
           if (<error descr="Inconvertible types; cannot cast 'I<java.lang.Integer>' to 'Empty'">obj instanceof Empty()</error>) {}
@@ -185,7 +185,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       
       interface I<A, B> {}
       record R<T>(T t) implements I<T, T> {}
-            
+      
       class X {
         void test(I<String, String> obj) {
           if (obj instanceof R(var s)) { s.trim(); }
@@ -203,9 +203,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       import java.io.Serializable;
       import java.util.List;
       import java.util.function.Supplier;
-            
+      
       record Box<T extends CharSequence>(T get) implements Supplier<T>, Serializable {}
-            
+      
       class ClassTest {
         <T extends Serializable & Supplier<String>> void typeArg(T t) {
           // TODO: wrong error; looks like a problem in isUncheckedCast, not inference-related
@@ -239,15 +239,15 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       """);
     myFixture.checkHighlighting();
   }
-  
+
   public void testCaptured() {
     myFixture.configureByText("Test.java", """
       import java.io.Serializable;
       import java.util.List;
       import java.util.function.Supplier;
-            
+      
       record Box<T extends CharSequence>(T get) implements Supplier<T>, Serializable {}
-            
+      
       class ClassTest {
           void test(List<? extends Supplier<String>> s) {
               if (s.get(0) instanceof Box(var x)) {
@@ -258,7 +258,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       """);
     myFixture.checkHighlighting();
   }
-  
+
 
   public void testImplementsGenericInterface() {
     // Example from JLS 18.5.5 
@@ -268,7 +268,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       record Mapper<T>(T in, T out) implements UnaryOperator<T> {
           public T apply(T arg) { return in.equals(arg) ? out : null; }
       }
-            
+      
       void test(UnaryOperator<? extends CharSequence> op) {
           if (op instanceof Mapper(var in, var out)) {
               boolean shorter = out.length() < in.length();
@@ -284,9 +284,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
   public void testForEach() {
     myFixture.configureByText("Test.java", """
       import java.util.List;
-            
+      
       record Box<T>(T t) {}
-            
+      
       class X {
         void test(List<Box<String>> list) {
           for(Box(var text) : list){
@@ -297,5 +297,33 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       """);
     myFixture.enableInspections(new RawUseOfParameterizedTypeInspection());
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_X, () -> myFixture.checkHighlighting());
+  }
+
+  public void testRawPattern() {
+    myFixture.configureByText("Test.java", """
+      class X {
+        public static boolean test() {
+            GenericRecord i = new GenericRecord(0);
+            return i instanceof GenericRecord(int a);
+        }
+      
+        record GenericRecord<T extends Long>(int i) {
+        }
+      
+        record GenericRecord2<T extends Number>(T i) {
+        }
+      
+        public static boolean test2() {
+            GenericRecord2 i = new GenericRecord2(0L);
+            return i instanceof GenericRecord2(<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Number'">String a</error>);
+        }
+    
+        public static boolean test3() {
+            GenericRecord2 i = new GenericRecord2(0L);
+            return i instanceof GenericRecord2(Long a);
+        }
+      
+      }""");
+    myFixture.checkHighlighting();
   }
 }

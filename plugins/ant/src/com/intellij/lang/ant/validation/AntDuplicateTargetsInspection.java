@@ -26,7 +26,7 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AntDuplicateTargetsInspection extends AntInspection {
+public final class AntDuplicateTargetsInspection extends AntInspection {
 
   private static final @NonNls String SHORT_NAME = "AntDuplicateTargetsInspection";
 

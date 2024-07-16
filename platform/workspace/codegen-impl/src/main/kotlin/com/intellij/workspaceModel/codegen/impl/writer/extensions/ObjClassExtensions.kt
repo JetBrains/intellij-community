@@ -1,17 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.extensions
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.codegen.impl.writer.QualifiedName
+import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityWithSymbolicId
-import com.intellij.workspaceModel.codegen.impl.writer.fqn
 
 internal val ObjClass<*>.javaFullName: QualifiedName
   get() = fqn(module.name, name)
 
 internal val ObjClass<*>.javaBuilderName: String
   get() = "$name.Builder"
+
+internal val ObjClass<*>.javaBuilderFqnName: QualifiedName
+  get() = fqn(module.name, "$name.Builder")
 
 internal val ObjClass<*>.javaImplName: String
   get() = "${name.replace(".", "")}Impl"
@@ -48,6 +50,12 @@ internal val ObjClass<*>.allFieldsWithComputable: List<OwnProperty<*, *>>
     return fieldsByName.values.toList()
   }
 
+internal val ObjClass<*>.additionalAnnotations: String
+  get() {
+    val hasInternalAnnotation = annotations.any { it.fqName == Internal.decoded }
+    return if (hasInternalAnnotation) "@${Internal}" else ""
+  }
+
 private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String, OwnProperty<*, *>>, withComputable: Boolean) {
   for (superType in objClass.superTypes) {
     if (superType is ObjClass<*>) {
@@ -55,7 +63,10 @@ private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String
     }
   }
   for (field in objClass.fields) {
-    if (withComputable || field.valueKind !is ObjProperty.ValueKind.Computable) {
+    if (withComputable
+      || field.valueKind !is ObjProperty.ValueKind.Computable
+      || field.name == "symbolicId" // symbolicId is a computable field, but still we'd like to know it's type
+    ) {
       fieldsByName.remove(field.name)
       fieldsByName[field.name] = field
     }

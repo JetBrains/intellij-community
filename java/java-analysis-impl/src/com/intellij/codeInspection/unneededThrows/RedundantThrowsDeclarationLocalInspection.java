@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -308,7 +309,9 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       final PsiCodeBlock body = method.getBody();
       if (body == null) return true;
 
-      final Set<PsiClassType> unhandled = RedundantThrowsGraphAnnotator.getUnhandledExceptions(body, method, containingClass);
+      UnhandledExceptions exceptions = UnhandledExceptions.ofMethod(method);
+      if (exceptions.hasUnresolvedCalls()) return true;
+      final Set<PsiClassType> unhandled = exceptions.exceptions();
 
       return ContainerUtil.exists(unhandled, myType::isAssignableFrom);
     }
@@ -323,7 +326,6 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
         final PsiSearchHelper.SearchCostResult search = searchHelper.isCheapEnoughToSearch(method.getName(),
                                                                                            (GlobalSearchScope)method.getUseScope(),
-                                                                                           null,
                                                                                            null);
         if (search == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
         if (search == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;

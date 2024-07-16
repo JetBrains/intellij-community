@@ -92,8 +92,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     if (myModules.size() == 1) {
       Module module = ContainerUtil.getFirstItem(myModules);
       assert module != null;
@@ -103,8 +102,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("orderEntry.fix.family.add.module.dependency");
   }
 
@@ -183,8 +181,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
     return Messages.showOkCancelDialog(project, message, title, Messages.getWarningIcon()) == Messages.OK;
   }
 
-  @NotNull
-  private String getModuleName(@NotNull Module module) {
+  private @NotNull String getModuleName(@NotNull Module module) {
     final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(module, myScope == TEST);
     if (javaModule != null && PsiNameHelper.isValidModuleName(javaModule.getName(), javaModule)) {
       return javaModule.getName();

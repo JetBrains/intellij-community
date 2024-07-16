@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.test.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.psi.KtFunction
 
 class KotlinTypeAliasNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() {
-    override val pluginKind: KotlinPluginMode
+    override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
     fun testSimple() = test("String", "StringAlias")

@@ -13,20 +13,20 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript.TestGradleBuildScriptBuilder
 
-
-fun settingsScript(
+private fun settingsScript(
   useKotlinDsl: Boolean = false,
   configure: GradleSettingScriptBuilder<*>.() -> Unit
 ) = GradleSettingScriptBuilder.create(useKotlinDsl)
   .apply(configure)
   .generate()
 
-fun buildScript(
+private fun buildScript(
   gradleVersion: GradleVersion,
   useKotlinDsl: Boolean = false,
   configure: GradleBuildScriptBuilder<*>.() -> Unit
-) = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl)
+) = TestGradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl)
   .apply(configure)
   .generate()
 

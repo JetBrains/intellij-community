@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -15,6 +15,9 @@ import java.util.Arrays;
 import java.util.BitSet;
 
 public final class Diff {
+
+  private Diff() { }
+
   private static final LoggerRt LOG = LoggerRt.getInstance(Diff.class);
 
   public static @Nullable Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) throws FilesTooBigForDiffException {

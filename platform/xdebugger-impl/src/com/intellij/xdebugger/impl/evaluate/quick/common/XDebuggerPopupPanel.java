@@ -107,7 +107,7 @@ public abstract class XDebuggerPopupPanel {
 
     var toolbarImpl = new ActionToolbarImpl(actionsPlace, wrappedActions, true);
     toolbarImpl.setTargetComponent(null);
-    for (AnAction action : wrappedActions.getChildren(null)) {
+    for (AnAction action : wrappedActions.getChildren(ActionManager.getInstance())) {
       action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
     }
 
@@ -131,7 +131,7 @@ public abstract class XDebuggerPopupPanel {
                                          @NotNull String actionsPlace,
                                          @Nullable Component toolbarActionsDataProvider) {
     DefaultActionGroup wrappedActions = new DefaultActionGroup();
-    for (AnAction action : toolbarActions.getChildren(null)) {
+    for (AnAction action : toolbarActions.getChildren(ActionManager.getInstance())) {
       ActionWrapper actionLink = new ActionWrapper(action, actionsPlace);
       actionLink.setDataProvider(toolbarActionsDataProvider);
       wrappedActions.add(actionLink);
@@ -184,12 +184,20 @@ public abstract class XDebuggerPopupPanel {
 
   private static class ActionLinkButton extends AnActionLink {
 
+    final Component contextComponent;
+
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
-                     @Nullable DataProvider contextComponent) {
+                     @Nullable Component contextComponent) {
       super(StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)), action);
-      setDataProvider(contextComponent);
+      this.contextComponent = contextComponent;
       setFont(UIUtil.getToolTipFont());
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      DataSink.uiDataSnapshot(sink, contextComponent);
     }
   }
 
@@ -247,9 +255,7 @@ public abstract class XDebuggerPopupPanel {
 
       myDelegate.applyTextOverride(myActionPlace, presentation);
 
-      DataProvider dataProvider = myProvider instanceof DataProvider ? (DataProvider)myProvider : null;
-
-      ActionLinkButton button = new ActionLinkButton(this, presentation, dataProvider);
+      ActionLinkButton button = new ActionLinkButton(this, presentation, myProvider);
       ClientProperty.put(button, InplaceEditor.IGNORE_MOUSE_EVENT, true);
       JPanel actionPanel = createCustomToolbarComponent(this, button);
 

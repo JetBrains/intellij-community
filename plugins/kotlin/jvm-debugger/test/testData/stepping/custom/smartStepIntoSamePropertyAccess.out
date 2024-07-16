@@ -1,0 +1,13 @@
+LineBreakpoint created at smartStepIntoSamePropertyAccess.kt:19
+LineBreakpoint created at smartStepIntoSamePropertyAccess.kt:25
+Run Java
+Connected to the target VM
+smartStepIntoSamePropertyAccess.kt:19
+smartStepIntoSamePropertyAccess.kt:6
+smartStepIntoSamePropertyAccess.kt:7
+smartStepIntoSamePropertyAccess.kt:25
+smartStepIntoSamePropertyAccess.kt:6
+smartStepIntoSamePropertyAccess.kt:9
+Disconnected from the target VM
+
+Process finished with exit code 0

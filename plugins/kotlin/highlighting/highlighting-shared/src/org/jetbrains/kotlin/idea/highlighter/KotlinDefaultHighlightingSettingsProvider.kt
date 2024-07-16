@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 
 var VirtualFile.isKotlinDecompiledFile: Boolean by NotNullableUserDataProperty(Key.create("IS_KOTLIN_DECOMPILED_FILE"), false)
 
@@ -27,11 +28,15 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
         return when {
             psiFile is KtFile ->
                 when {
+                    psiFile.isScript() && ScriptDependenciesProvider.getInstance(project)?.getScriptConfiguration(psiFile) == null ->
+                        FileHighlightingSetting.SKIP_HIGHLIGHTING
+
                     psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION
                     !KotlinSupportAvailability.isSupported(psiFile) -> FileHighlightingSetting.SKIP_HIGHLIGHTING
                     RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
                     else -> null
                 }
+
             file.isKotlinDecompiledFile -> FileHighlightingSetting.SKIP_HIGHLIGHTING
             else -> null
         }

@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StoragePathMacros
@@ -11,10 +13,10 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.outputStream
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.io.path.exists
 
 internal fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path) {
   // first, process all known in advance components, because later all not known component names will be moved to misc.xml
@@ -120,8 +122,8 @@ internal fun moveComponentConfiguration(defaultProject: Project,
     }
   }
 
-  (defaultProject.actualComponentManager as ComponentManagerImpl).processAllImplementationClasses { aClass, _ ->
-    processComponents(aClass)
+  (defaultProject.actualComponentManager as ComponentManagerImpl).processAllHolders { _, componentClass, _ ->
+    processComponents(componentClass)
   }
 
   // fileResolver may return the same file for different storage names (e.g., for .ipr)
@@ -157,7 +159,7 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   }
 
   var wrapper = Element("project").setAttribute("version", "4")
-  if (file.exists()) {
+  if (Files.exists(file)) {
     try {
       wrapper = JDOMUtil.load(file)
     }

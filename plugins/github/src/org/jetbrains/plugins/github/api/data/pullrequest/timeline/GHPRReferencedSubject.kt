@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 
@@ -11,11 +12,11 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
   JsonSubTypes.Type(name = "Issue", value = GHPRReferencedSubject.Issue::class),
   JsonSubTypes.Type(name = "PullRequest", value = GHPRReferencedSubject.PullRequest::class)
 )
-sealed class GHPRReferencedSubject(val title: String, val number: Long, val url: String) {
+sealed class GHPRReferencedSubject(val title: @Nls String, val number: Long, val url: String) {
 
-  class Issue(title: String, number: Long, url: String, val state: GithubIssueState)
+  class Issue(title: @Nls String, number: Long, url: String, val state: GithubIssueState)
     : GHPRReferencedSubject(title, number, url)
 
-  class PullRequest(title: String, number: Long, url: String, val state: GHPullRequestState, val isDraft: Boolean)
+  class PullRequest(title: @Nls String, number: Long, url: String, val state: GHPullRequestState, val isDraft: Boolean)
     : GHPRReferencedSubject(title, number, url)
 }

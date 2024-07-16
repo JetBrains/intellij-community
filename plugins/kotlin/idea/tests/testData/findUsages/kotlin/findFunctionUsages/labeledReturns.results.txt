@@ -1,4 +1,2 @@
 Function call 12 foo(fun(): Boolean { return@foo false })
 Function call 8 foo {
-Unclassified 12 foo(fun(): Boolean { return@foo false })
-Unclassified 9 return@foo false

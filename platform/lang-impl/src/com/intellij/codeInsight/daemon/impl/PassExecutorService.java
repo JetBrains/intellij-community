@@ -41,6 +41,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -368,13 +369,13 @@ final class PassExecutorService implements Disposable {
       myThreadsToStartCountdown = threadsToStartCountdown;
       myUpdateProgress = progressIndicator;
       myOpenTelemetryContext = openTelemetryContext;
-      myContext = ThreadContext.currentThreadContext().minusKey(kotlinx.coroutines.Job.Key);
+      myContext = Propagation.createChildContext().getContext();
     }
 
     @Override
     public void run() {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
-        try {
+        try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
           ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> doRun());
         }
         catch (ApplicationUtil.CannotRunReadActionException e) {
@@ -402,7 +403,7 @@ final class PassExecutorService implements Disposable {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
           try {
-            if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(myPass)) {
+            if (!DumbService.getInstance(myProject).isUsableInCurrentContext(myPass)) {
               return;
             }
 
@@ -417,7 +418,7 @@ final class PassExecutorService implements Disposable {
                     myPass.collectInformation(myUpdateProgress);
                   }
                 }
-                catch (ProcessCanceledException | CancellationException e) {
+                catch (CancellationException e) {
                   cancelled = true;
                   throw e;
                 }
@@ -534,8 +535,8 @@ final class PassExecutorService implements Disposable {
   private void repaintErrorStripeAndIcon(@NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor textEditor) {
       Editor editor = textEditor.getEditor();
-      DefaultHighlightInfoProcessor.repaintErrorStripeAndIcon(editor, myProject,
-                                                              PsiDocumentManager.getInstance(myProject).getCachedPsiFile(editor.getDocument()));
+      DaemonCodeAnalyzerImpl.repaintErrorStripeAndIcon(editor, myProject,
+                                                       PsiDocumentManager.getInstance(myProject).getCachedPsiFile(editor.getDocument()));
     }
   }
 

@@ -25,8 +25,11 @@ sealed class InlineCompletionEventType {
   class Request @ApiStatus.Internal constructor(
     val lastInvocation: Long,
     val request: InlineCompletionRequest,
-    val provider: Class<out InlineCompletionProvider>
-  ) : InlineCompletionEventType()
+    val provider: Class<out InlineCompletionProvider>,
+  ) : InlineCompletionEventType() {
+    val requestId: Long
+      get() = request.requestId
+  }
 
   /**
    * This event is triggered when a provider either returned no variants, either all the returned variants are empty.
@@ -52,7 +55,15 @@ sealed class InlineCompletionEventType {
   /**
    * This event is triggered when an inline completion session is cleared for any reason (see [finishType]).
    */
-  class Hide @ApiStatus.Internal constructor(val finishType: FinishType, val isCurrentlyDisplaying: Boolean) : InlineCompletionEventType()
+  class Hide @ApiStatus.Internal constructor(
+    val finishType: FinishType,
+    @Deprecated("""
+      This value delegates to InlineCompletionContext.isCurrentlyDisplaying(). 
+      In cases of invalidation (e.g., mismatched typing), the context is already cleared, causing the method to return false, 
+      which can be misleading. 
+      Please use other methods of the listener to determine whether completion is or was being shown.""")
+    val isCurrentlyDisplaying: Boolean
+  ) : InlineCompletionEventType()
 
   /**
    * This event is triggered in one of the following cases:
@@ -101,10 +112,12 @@ sealed class InlineCompletionEventType {
 
   /**
    * This event is triggered when a variant is updated upon some event.
-   * [lengthChange] indicates the difference between the new length of text and the old length.
+   * * [lengthChange] indicates the difference between the new length of text and the old length.
+   * * [elements] indicates the list of new elements after update.
    */
   class Change @ApiStatus.Internal constructor(
     override val variantIndex: Int,
+    @ApiStatus.Internal val elements: List<InlineCompletionElement>,
     val lengthChange: Int
   ) : PerVariantEventType() {
 

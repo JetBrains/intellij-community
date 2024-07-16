@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.CommonBundle;
@@ -41,6 +41,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,7 @@ import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 // TODO: support merge request chains
 // idea - to keep in memory all viewers that were modified (so binary conflict is not the case and OOM shouldn't be too often)
 // suspend() / resume() methods for viewers? To not interfere with MergeRequest lifecycle: single request -> single viewer -> single applyResult()
+@ApiStatus.Internal
 public abstract class MergeRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(MergeRequestProcessor.class);
 
@@ -208,7 +211,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         public void actionPerformed(@NotNull AnActionEvent e) {
           resolveAction.actionPerformed(null);
         }
-      }.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, getRootPane(), this);
+      }.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), getRootPane(), this);
     }
 
     List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);
@@ -219,14 +222,24 @@ public abstract class MergeRequestProcessor implements Disposable {
     JPanel buttonsPanel = new NonOpaquePanel(new BorderLayout());
     buttonsPanel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
 
-    if (leftActions.size() > 0) {
+    if (!leftActions.isEmpty()) {
       buttonsPanel.add(createButtonsPanel(leftActions, rootPane), BorderLayout.WEST);
     }
-    if (rightActions.size() > 0) {
+    if (!rightActions.isEmpty()) {
       buttonsPanel.add(createButtonsPanel(rightActions, rootPane), BorderLayout.EAST);
     }
 
+    BorderLayoutPanel toolbarPanel = createFeedbackToolbarPanel();
+
+    buttonsPanel.add(toolbarPanel, BorderLayout.CENTER);
     myButtonsPanel.setContent(buttonsPanel);
+  }
+
+  private @NotNull BorderLayoutPanel createFeedbackToolbarPanel() {
+    AnAction action = ActionManager.getInstance().getAction("Diff.Conflicts.Feedback");
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("FeedbackToolbar", (ActionGroup)action, true);
+    actionToolbar.setTargetComponent(myMainPanel);
+    return new BorderLayoutPanel().addToRight(actionToolbar.getComponent());
   }
 
   @NotNull
@@ -249,8 +262,6 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     List<AnAction> contextActions = myContext.getUserData(DiffUserDataKeys.CONTEXT_ACTIONS);
     DiffUtil.addActionBlock(group, contextActions);
-
-    DiffUtil.addActionBlock(group, ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
     return group;
   }

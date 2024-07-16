@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.openapi.util.TextRange;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A command to update the references to the declaration if possible. A common use-case is to
- * invoke "change signature" refactoring automatically. May do nothing, if particular language,
+ * invoke "change signature" refactoring automatically. May do nothing if a particular language
  * or particular kind of declaration change is not supported. The command should follow actual
  * text update in the file via {@link ModUpdateFileText}.
  *

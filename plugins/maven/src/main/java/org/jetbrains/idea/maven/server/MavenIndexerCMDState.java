@@ -131,8 +131,8 @@ public class MavenIndexerCMDState extends CommandLineState {
     params.setMainClass("org.jetbrains.idea.maven.server.indexer.MavenServerIndexerMain");
     params.getClassPath().add(PathUtil.getJarPathForClass(StringUtilRt.class));//util-rt
     params.getClassPath().add(PathUtil.getJarPathForClass(NotNull.class));//annotations-java5
-    params.getClassPath().add(PathUtil.getJarPathForClass(Element.class));//JDOM
     params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(myDistribution));
+    params.getClassPath().add(PathUtil.getJarPathForClass(Element.class));//JDOM
     return params;
   }
 

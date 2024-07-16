@@ -20,9 +20,12 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.GitVcsDirtyScope;
 import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitSubmodule;
+import git4idea.repo.GitSubmoduleKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -52,10 +55,19 @@ public final class GitChangeProvider implements ChangeProvider {
       LOG.debug("initial dirty scope: ", dirtyScope);
       GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
 
+      Map<GitRepository, GitSubmodule> knownSubmodules = new HashMap<>();
+      for (GitRepository repository : GitRepositoryManager.getInstance(project).getRepositories()) {
+        Collection<GitRepository> submodules = GitSubmoduleKt.getDirectSubmodules(repository);
+        for (GitRepository submodule : submodules) {
+          knownSubmodules.put(submodule, new GitSubmodule(submodule, repository));
+        }
+      }
+
       List<FilePath> newDirtyPaths = new ArrayList<>();
       NonChangedHolder holder = new NonChangedHolder(project, addGate);
 
-      Map<VirtualFile, RootDirtySet> dirtyPaths = GitStagingAreaHolder.collectDirtyPathsPerRoot(dirtyScope);
+      Map<VirtualFile, RootDirtySet> dirtyPaths =
+        GitStagingAreaHolder.collectDirtyPathsPerRoot((GitVcsDirtyScope)dirtyScope, knownSubmodules);
       LOG.debug("after adding nested vcs roots to dirt: ", dirtyPaths);
 
       for (Map.Entry<VirtualFile, RootDirtySet> entry : dirtyPaths.entrySet()) {
@@ -67,6 +79,8 @@ public final class GitChangeProvider implements ChangeProvider {
         if (repo == null) continue;
 
         GitStagingAreaHolder stageAreaHolder = repo.getStagingAreaHolder();
+
+        boolean wasEmptyStaging = stageAreaHolder.isEmpty();
         List<GitFileStatus> newChanges = stageAreaHolder.refresh(rootDirtyPaths);
 
         GitChangesCollector collector = GitChangesCollector.collect(project, repo, newChanges);
@@ -92,6 +106,11 @@ public final class GitChangeProvider implements ChangeProvider {
           }
         }
 
+        GitSubmodule asSubmodule = knownSubmodules.get(repo);
+        if (asSubmodule != null) {
+          updateDirtyPathsForSubmodule(asSubmodule, wasEmptyStaging, dirtyPaths, newDirtyPaths);
+        }
+
         BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).repositoryUpdated(repo);
       }
       holder.feedBuilder(dirtyScope, builder);
@@ -102,6 +121,36 @@ public final class GitChangeProvider implements ChangeProvider {
       isRefreshInProgress = false;
       BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).progressStopped();
     }
+  }
+
+  private static void updateDirtyPathsForSubmodule(@NotNull GitSubmodule submodule,
+                                                   boolean wasEmptyStaging,
+                                                   @NotNull Map<VirtualFile, RootDirtySet> dirtyPaths,
+                                                   @NotNull List<FilePath> newDirtyPaths) {
+    GitRepository submoduleRepo = submodule.getRepository();
+    GitRepository parentRepo = submodule.getParent();
+
+    VirtualFile submoduleRoot = submoduleRepo.getRoot();
+    VirtualFile parentRoot = parentRepo.getRoot();
+
+    boolean isEmptyStaging = submoduleRepo.getStagingAreaHolder().isEmpty();
+    if (isEmptyStaging == wasEmptyStaging) return;
+
+    FilePath submoduleRootPath = VcsUtil.getFilePath(submoduleRoot);
+
+    RootDirtySet parentDirtySet = dirtyPaths.get(parentRoot);
+    if (parentDirtySet != null && parentDirtySet.belongsTo(submoduleRootPath)) return; // parent repo was refreshed
+
+    // we store submodules as non-directory FilePath records
+    FilePath submoduleRootPathAsFile = VcsUtil.getFilePath(submoduleRootPath.getPath(), false);
+    GitFileStatus record = parentRepo.getStagingAreaHolder().findRecord(submoduleRootPathAsFile);
+    if (record != null && record.getStagedStatus() != null) return; // no need to refresh if there are staged changes
+
+    boolean parentThinksSubmoduleUnchanged = record == null;
+    if (parentThinksSubmoduleUnchanged == isEmptyStaging) return; // parent repo agrees
+
+    // refresh parent repo (and the submodule as a whole - which is costly)
+    newDirtyPaths.add(submoduleRootPath);
   }
 
   private static final class NonChangedHolder {

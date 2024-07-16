@@ -9,10 +9,10 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingVie
 import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -105,13 +105,7 @@ private abstract class NewGitLabNoteViewModelBase(
 ) : AbstractGitLabNoteEditingViewModel(project, parentCs, initialText), NewGitLabNoteViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
 
-  override val usedAsDraftSubmitActionLast: StateFlow<Boolean> = channelFlow {
-    val disposable = Disposer.newDisposable()
-    preferences.addListener(disposable) {
-      trySend(it.usedAsDraftSubmitActionLast)
-    }
-    awaitClose { Disposer.dispose(disposable) }
-  }.stateIn(cs, SharingStarted.Lazily, preferences.usedAsDraftSubmitActionLast)
+  override val usedAsDraftSubmitActionLast: StateFlow<Boolean> = preferences.usedAsDraftSubmitActionLastState
 
   override fun submit() {
     submit {

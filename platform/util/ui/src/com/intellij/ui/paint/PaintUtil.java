@@ -409,4 +409,17 @@ public final class PaintUtil {
   public static @NotNull Point2D insets2offset(@Nullable Insets in) {
     return in == null ? new Point2D.Double(0, 0) : new Point2D.Double(in.left, in.top);
   }
+
+  /**
+   * Calculates the width of the specified text string when drawn using the provided Graphics context and FontMetrics.
+   * This method provides a more accurate measurement compared to the metrics.stringWidth(...) method, as it takes into account the Graphics context.
+   *
+   * @param text    The text string whose width needs to be calculated.
+   * @param g       The Graphics context used for rendering the text.
+   * @param metrics The FontMetrics object associated with the font used for rendering the text.
+   * @return The width of the text string in pixels when drawn using the specified Graphics context and FontMetrics.
+   */
+  public static int getStringWidth(String text, Graphics g, FontMetrics metrics) {
+    return metrics.getStringBounds(text, g).getBounds().width;
+  }
 }

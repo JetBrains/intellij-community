@@ -18,6 +18,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSyncListener
+import org.jetbrains.idea.maven.utils.MavenLog
 
 @ApiStatus.Internal
 class MavenProjectAware(
@@ -37,15 +38,18 @@ class MavenProjectAware(
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
+    MavenLog.LOG.debug("MavenProjectAware.reloadProject")
     ApplicationManager.getApplication().invokeAndWait {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
     if (context.hasUndefinedModifications) {
+      MavenLog.LOG.debug("MavenProjectAware.reloadProject - context.hasUndefinedModifications=true")
       manager.findAllAvailablePomFilesIfNotMavenized()
       val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, undefined modifications", context.isExplicitReload)
       manager.scheduleUpdateAllMavenProjects(spec)
     }
     else {
+      MavenLog.LOG.debug("MavenProjectAware.reloadProject - context.hasUndefinedModifications=false")
       val settingsFilesContext = context.settingsFilesContext
 
       val filesToUpdate = mutableListOf<VirtualFile>()

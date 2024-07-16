@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileManager;
@@ -15,9 +17,7 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public final class JavacProtoUtil {
   public static JavacRemoteProto.Message.Request createCancelRequest() {
     return JavacRemoteProto.Message.Request.newBuilder().setRequestType(JavacRemoteProto.Message.Request.Type.CANCEL).build();

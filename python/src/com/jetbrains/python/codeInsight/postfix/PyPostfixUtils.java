@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
@@ -25,16 +25,14 @@ public final class PyPostfixUtils {
   }
 
   public static final PostfixTemplatePsiInfo PY_PSI_INFO = new PostfixTemplatePsiInfo() {
-    @NotNull
     @Override
-    public PsiElement createExpression(@NotNull PsiElement context, @NotNull String prefix, @NotNull String suffix) {
+    public @NotNull PsiElement createExpression(@NotNull PsiElement context, @NotNull String prefix, @NotNull String suffix) {
       String text = prefix + context.getText() + suffix;
       return PyElementGenerator.getInstance(context.getProject()).createExpressionFromText(LanguageLevel.forElement(context), text);
     }
 
-    @NotNull
     @Override
-    public PsiElement getNegatedExpression(@NotNull PsiElement element) {
+    public @NotNull PsiElement getNegatedExpression(@NotNull PsiElement element) {
       String newText = element instanceof PyBinaryExpression ? "(" + element.getText() + ")" : element.getText();
       return PyElementGenerator.getInstance(element.getProject()).
         createExpressionFromText(LanguageLevel.forElement(element), "not " + newText);

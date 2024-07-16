@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightTypeElement
 import org.jetbrains.annotations.ApiStatus
@@ -56,6 +57,8 @@ class UastKotlinPsiVariable private constructor(
     override fun getType(): PsiType = psiType
 
     override fun getText(): String = ktElement.text
+
+    override fun getTextRange(): TextRange = ktElement.textRange
 
     override fun getParent() = psiParent
 

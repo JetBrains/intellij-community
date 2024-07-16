@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.library.sdk;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -26,10 +27,12 @@ public interface JpsSdk<P extends JpsElement> extends JpsElement {
 
   String getHomePath();
 
+  @ApiStatus.Internal
   void setHomePath(String homePath);
 
   String getVersionString();
 
+  @ApiStatus.Internal
   void setVersionString(String versionString);
 
   JpsSdkType<P> getSdkType();

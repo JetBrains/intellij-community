@@ -126,7 +126,7 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         if (isOnTheFly) {
           final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
           final PsiSearchHelper.SearchCostResult cost =
-            searchHelper.isCheapEnoughToSearch(className, scope, null, null);
+            searchHelper.isCheapEnoughToSearch(className, scope, null);
           if (cost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
             return;
           }

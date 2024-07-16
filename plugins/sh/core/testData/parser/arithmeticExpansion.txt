@@ -1,0 +1,58 @@
+SHELL_SCRIPT
+  COMMANDS_LIST
+    SHELL_COMMAND
+      ARITHMETIC_EXPANSION
+        PsiElement(()('(')
+        PsiElement(()('(')
+        COMPARISON_EXPRESSION
+          LITERAL_EXPRESSION
+            NUMBER
+              PsiElement(int)('1')
+          PsiWhiteSpace(' ')
+          PsiElement(>)('>')
+          PsiWhiteSpace(' ')
+          LITERAL_EXPRESSION
+            NUMBER
+              PsiElement(int)('2')
+        PsiElement())(')')
+        PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SUBSHELL_COMMAND
+      PsiElement(()('(')
+      PsiWhiteSpace(' ')
+      COMPOUND_LIST
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              REDIRECTION
+                NUMBER
+                  PsiElement(int)('1')
+                PsiWhiteSpace(' ')
+                PsiElement(>)('>')
+                PsiWhiteSpace(' ')
+                NUMBER
+                  PsiElement(int)('2')
+          PsiElement())(')')
+      PsiElement())(')')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SUBSHELL_COMMAND
+      PsiElement(()('(')
+      COMPOUND_LIST
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              REDIRECTION
+                NUMBER
+                  PsiElement(int)('1')
+                PsiWhiteSpace(' ')
+                PsiElement(>)('>')
+                PsiWhiteSpace(' ')
+                NUMBER
+                  PsiElement(int)('2')
+          PsiElement())(')')
+      PsiWhiteSpace(' ')
+      PsiElement())(')')

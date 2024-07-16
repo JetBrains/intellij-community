@@ -58,6 +58,12 @@ object GitHostingUrlUtil {
     return true
   }
 
+  @JvmStatic
+  fun matchHost(serverUri: URI, gitRemoteUrl: String): Boolean {
+    val remoteUri = getUriFromRemoteUrl(gitRemoteUrl) ?: return false
+    return serverUri.host.equals(remoteUri.host, true)
+  }
+
   @ApiStatus.Internal
   suspend fun <S : ServerPath> findServerAt(log: Logger, coordinates: GitRemoteUrlCoordinates, serverCheck: suspend (URI) -> S?): S? {
     val uri = getUriFromRemoteUrl(coordinates.url)

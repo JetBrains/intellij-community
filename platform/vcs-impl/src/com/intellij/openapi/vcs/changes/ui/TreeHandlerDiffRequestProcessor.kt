@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.diagnostic.Checks.fail
@@ -11,8 +11,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
-import com.intellij.openapi.vcs.changes.actions.diff.COMBINED_DIFF_PREVIEW_MODEL
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Companion.prepareCombinedDiffModelRequests
+import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromWrappers
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -20,6 +19,8 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.util.ui.update.Update
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -54,6 +55,8 @@ open class TreeHandlerChangesTreeTracker(
   protected val updateWhileShown: Boolean = false
 ) {
   private val isCombinedViewer = editorViewer is CombinedDiffComponentProcessor
+  private val isForceKeepCurrentFileWhileFocused = editorViewer is ChangeViewDiffRequestProcessor &&
+                                                   editorViewer.forceKeepCurrentFileWhileFocused()
 
   private val updatePreviewQueue = MergingUpdateQueue("TreeHandlerChangesTreeTracker", 100, true, editorViewer.component, editorViewer.disposable).apply {
     setRestartTimerOnAdd(true)
@@ -81,6 +84,16 @@ open class TreeHandlerChangesTreeTracker(
     }
     tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, changeListener)
     Disposer.register(disposable) { tree.removePropertyChangeListener(JTree.TREE_MODEL_PROPERTY, changeListener) }
+
+    if (isForceKeepCurrentFileWhileFocused) {
+      val focusListener = object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent?) {
+          updatePreviewLater(UpdateType.ON_SELECTION_CHANGE)
+        }
+      }
+      tree.addFocusListener(focusListener)
+      Disposer.register(disposable) { tree.removeFocusListener(focusListener) }
+    }
 
     if (updateWhileShown) {
       UiNotifyConnector.installOn(editorViewer.component, object : Activatable {
@@ -121,8 +134,8 @@ open class TreeHandlerChangesTreeTracker(
         refreshCombinedDiffProcessor(tree, editorViewer, handler, onlyBlockSelection)
       }
       is ChangeViewDiffRequestProcessor -> {
-        val keepOldSelectedDiffContent = updateType == UpdateType.ON_MODEL_CHANGE
-        editorViewer.refresh(keepOldSelectedDiffContent)
+        val fromModelRefresh = updateType == UpdateType.ON_MODEL_CHANGE
+        editorViewer.refresh(fromModelRefresh)
       }
       else -> fail(editorViewer)
     }
@@ -154,9 +167,12 @@ open class TreeHandlerChangesTreeTracker(
         return updateType == UpdateType.ON_MODEL_CHANGE &&
                eatenUpdate.updateType == UpdateType.ON_SELECTION_CHANGE
       }
-      else {
+      else if (isForceKeepCurrentFileWhileFocused) {
         return updateType == UpdateType.ON_SELECTION_CHANGE &&
                eatenUpdate.updateType == UpdateType.ON_MODEL_CHANGE
+      }
+      else {
+        return true
       }
     }
   }
@@ -179,16 +195,10 @@ abstract class TreeHandlerEditorDiffPreview(
   }
 
   override fun createViewer(): DiffEditorViewer {
-    val place = "ChangesTreeDiffPreview"
-    val processor = if (CombinedDiffRegistry.isEnabled()) {
-      CombinedDiffManager.getInstance(tree.project).createProcessor(place)
-    }
-    else {
-      TreeHandlerDiffRequestProcessor(place, tree, handler)
-    }
-    TreeHandlerChangesTreeTracker(tree, processor, handler).track()
-    return processor
+    return createDefaultViewer("ChangesTreeDiffPreview")
   }
+
+  protected fun createDefaultViewer(place: String) = createDefaultViewer(tree, handler, place)
 
   final override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer> {
     return handler.collectDiffProducers(tree, selectedOnly)
@@ -204,13 +214,26 @@ abstract class TreeHandlerEditorDiffPreview(
   }
 
   abstract fun getEditorTabName(wrapper: Wrapper?): String?
+
+  companion object {
+    fun createDefaultViewer(changesTree: ChangesTree, previewHandler: ChangesTreeDiffPreviewHandler, place: String): DiffEditorViewer {
+      val processor = if (CombinedDiffRegistry.isEnabled()) {
+        CombinedDiffManager.getInstance(changesTree.project).createProcessor(place)
+      }
+      else {
+        TreeHandlerDiffRequestProcessor(place, changesTree, previewHandler)
+      }
+      TreeHandlerChangesTreeTracker(changesTree, processor, previewHandler).track()
+      return processor
+    }
+  }
 }
 
 
 abstract class ChangesTreeDiffPreviewHandler {
-  abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<Wrapper>
+  abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
-  abstract fun iterateAllChanges(tree: ChangesTree): Iterable<Wrapper>
+  abstract fun iterateAllChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
   abstract fun selectChange(tree: ChangesTree, change: Wrapper)
 
@@ -227,7 +250,7 @@ abstract class ChangesTreeDiffPreviewHandler {
   }
 }
 
-object DefaultChangesTreeDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
+abstract class ChangesTreeDiffPreviewHandlerBase : ChangesTreeDiffPreviewHandler() {
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     return collectWrappers(VcsTreeModelData.selected(tree))
   }
@@ -236,14 +259,18 @@ object DefaultChangesTreeDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
     return collectWrappers(VcsTreeModelData.all(tree))
   }
 
-  private fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper> {
-    return treeModelData.iterateUserObjects(Change::class.java)
-      .map { ChangeViewDiffRequestProcessor.ChangeWrapper(it) }
-  }
+  protected abstract fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper>
 
   override fun selectChange(tree: ChangesTree, change: Wrapper) {
     val node = TreeUtil.findNodeWithObject(tree.root, change.userObject) ?: return
     TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
+  }
+}
+
+object DefaultChangesTreeDiffPreviewHandler : ChangesTreeDiffPreviewHandlerBase() {
+  override fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper> {
+    return treeModelData.iterateUserObjects(Change::class.java)
+      .map { ChangeViewDiffRequestProcessor.ChangeWrapper(it) }
   }
 }
 
@@ -269,7 +296,7 @@ private fun refreshCombinedDiffProcessor(tree: ChangesTree,
 
     val changes = handler.iterateAllChanges(tree).toList()
     if (changes.isNotEmpty()) {
-      processor.setBlocks(prepareCombinedDiffModelRequests(tree.project, changes))
+      processor.setBlocks(prepareCombinedBlocksFromWrappers(tree.project, changes))
     }
   }
 }
@@ -278,10 +305,6 @@ private fun getCurrentSelectionInCombinedDiffProcessor(tree: ChangesTree,
                                                        processor: CombinedDiffComponentProcessor,
                                                        handler: ChangesTreeDiffPreviewHandler): Wrapper? {
   val combinedDiffViewer = processor.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-  val diffPreviewModel = processor.context.getUserData(COMBINED_DIFF_PREVIEW_MODEL)
-
-  val previewModelSelection = diffPreviewModel?.selected
-  if (previewModelSelection != null) return previewModelSelection
 
   val prevSelectedBlockId = combinedDiffViewer?.getCurrentBlockId() as? CombinedPathBlockId
   if (prevSelectedBlockId != null) {

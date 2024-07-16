@@ -56,10 +56,8 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             }
 
             val serializedArguments = entity.compilerArguments
-            _compilerArguments = if (serializedArguments.isNotEmpty()) {
-                CompilerArgumentsSerializer.deserializeFromString(serializedArguments)
-            } else {
-                null
+            _compilerArguments = serializedArguments?.let {
+                CompilerArgumentsSerializer.deserializeFromString(it)
             }
 
             return _compilerArguments
@@ -90,9 +88,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
                 return _compilerSettings
             }
 
-            val compilerSettingsData = entity.compilerSettings
-            if (!compilerSettingsData.isInitialized) return null
-
+            val compilerSettingsData = entity.compilerSettings ?: return null
             _compilerSettings = compilerSettingsData.toCompilerSettings { newSettings ->
                 entity.compilerSettings = newSettings.toCompilerSettingsData()
                 updateMergedArguments()
@@ -103,9 +99,8 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         set(value) {
             entity.compilerSettings = value.toCompilerSettingsData()
             updateMergedArguments()
-            _compilerSettings = value?.unfrozen()
+            _compilerSettings = null
         }
-
 
     private var _dependsOnModuleNames: List<String> = entity.dependsOnModuleNames
     override var dependsOnModuleNames: List<String>
@@ -183,7 +178,7 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         get() = _productionOutputPath
         set(value) {
             _productionOutputPath = value
-            entity.productionOutputPath = value ?: ""
+            entity.productionOutputPath = value
         }
 
     private var _pureKotlinSourceFolders: List<String> = entity.pureKotlinSourceFolders
@@ -204,24 +199,24 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
 
     override var targetPlatform: TargetPlatform?
         get() {
-            val args = compilerArguments
             val deserializedTargetPlatform =
-                entity.targetPlatform.takeIf { it.isNotEmpty() }.deserializeTargetPlatformByComponentPlatforms()
-            val singleSimplePlatform = deserializedTargetPlatform?.componentPlatforms?.singleOrNull()
+                entity.targetPlatform?.deserializeTargetPlatformByComponentPlatforms() ?: return null
+            val args = compilerArguments
+            val singleSimplePlatform = deserializedTargetPlatform.componentPlatforms.singleOrNull()
             if (args != null && singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull()) {
                 return IdePlatformKind.platformByCompilerArguments(args)
             }
             return deserializedTargetPlatform
         }
         set(value) {
-            entity.targetPlatform = value?.serializeComponentPlatforms() ?: ""
+            entity.targetPlatform = value?.serializeComponentPlatforms()
         }
 
     private var _testOutputPath: String? = entity.testOutputPath
     override var testOutputPath: String?
         get() = _testOutputPath
         set(value) {
-            entity.testOutputPath = value ?: ""
+            entity.testOutputPath = value
             _testOutputPath = value
         }
 }

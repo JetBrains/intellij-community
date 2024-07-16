@@ -23,7 +23,7 @@ internal class TextFieldsPanel: UISandboxPanel {
       row("Text field 2:") {
         textField()
           .align(AlignX.FILL)
-          .comment("horizontalAlign(HorizontalAlign.FILL)")
+          .comment("align(AlignX.FILL)")
       }
       row("Int text field 1:") {
         intTextField()

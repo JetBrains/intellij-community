@@ -31,7 +31,7 @@ internal suspend fun doPropagationTest(submit: (() -> Unit) -> Unit) {
  * Regular IDE unit tests are executed in EDT, so this function takes care of launching coroutine code without
  * blocking the event loop.
  */
-internal fun doPropagationApplicationTest(propagateCancellation: Boolean = false, action: suspend () -> Unit) {
+internal fun doPropagationApplicationTest(action: suspend () -> Unit) {
   ApplicationManager.getApplication().assertIsNonDispatchThread()
   runWithContextPropagationEnabled {
     val test = {
@@ -41,10 +41,6 @@ internal fun doPropagationApplicationTest(propagateCancellation: Boolean = false
         }
       }
     }
-    if (propagateCancellation) {
-      runWithCancellationPropagationEnabled(test)
-    } else {
-      test()
-    }
+    test()
   }
 }

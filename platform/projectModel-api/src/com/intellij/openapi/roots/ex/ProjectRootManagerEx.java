@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -35,8 +36,10 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
 
   public abstract void makeRootsChange(@NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo changes);
 
+  @ApiStatus.Internal
   public abstract @NotNull AutoCloseable withRootsChange(@NotNull RootsChangeRescanningInfo changes);
 
+  @ApiStatus.Internal
   public abstract @NotNull List<VirtualFile> markRootsForRefresh();
 
   public abstract void mergeRootsChangesDuring(@NotNull Runnable runnable);

@@ -16,7 +16,7 @@ interface IndentHandler {
     fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange>
 }
 
-internal var PsiElement.trimIndent: String? by UserDataProperty(InjectionMeta.INJECTION_INDENT)
+internal var PsiElement.trimIndent: String? by UserDataProperty(InjectionMeta.getInjectionIndent())
 
 @ApiStatus.Internal
 object NoIndentHandler: IndentHandler {

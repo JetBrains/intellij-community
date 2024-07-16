@@ -38,6 +38,7 @@ object LoggingTestUtils {
             return null;
           }
           public void warning(String msg) {}
+          public void fine(String msg) {}
           public boolean isLoggable(Level level) {}
         }
       """.trimIndent())
@@ -70,11 +71,14 @@ object LoggingTestUtils {
           void fatal(String message, Object... params);
           void error(Supplier<?> var1, Throwable var2);
           void info(String message, Supplier<?>... params);
+          void log(Level level, String message, Object... params);
           LogBuilder atInfo();
           LogBuilder atDebug();
           LogBuilder atWarn();
           LogBuilder atFatal();
           LogBuilder atError();
+          LogBuilder atTrace();
+          LogBuilder atLevel(Level level);
           boolean isInfoEnabled(){return true;}
         }
       """.trimIndent())
@@ -105,6 +109,16 @@ object LoggingTestUtils {
           void log(String format, Supplier<?>... params);
         }
       """.trimIndent())
+    fixture.addClass("""
+      package org.apache.logging.log4j;
+      public enum Level {
+         OFF,
+         INFO,
+         FATAL,
+         ERROR,
+         ALL
+      }
+    """.trimIndent())
   }
 
   fun addIdeaLog(fixture: JavaCodeInsightTestFixture) {
@@ -151,8 +165,20 @@ public interface Logger {
            LoggingEventBuilder atInfo(); 
            LoggingEventBuilder atDebug(); 
            LoggingEventBuilder atWarn(); 
-           LoggingEventBuilder atError(); 
+           LoggingEventBuilder atError();
+           LoggingEventBuilder atTrace();
         }
+      """.trimIndent())
+    fixture.addClass("""
+        package net.logstash.logback.argument;
+        public final class StructuredArguments {
+          public static StructuredArgument kv(Object... object){
+            return new StructuredArgument();}
+        }
+      """.trimIndent())
+    fixture.addClass("""
+        package net.logstash.logback.argument;
+        public class StructuredArgument{}
       """.trimIndent())
   }
 }

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DebuggerCopyPastePreprocessor implements CopyPastePreProcessor {
+public final class DebuggerCopyPastePreprocessor implements CopyPastePreProcessor {
   public static final Key<Boolean> REMOVE_NEWLINES_ON_PASTE = new Key<>("REMOVE_NEWLINES_ON_PASTE");
 
   @Nullable

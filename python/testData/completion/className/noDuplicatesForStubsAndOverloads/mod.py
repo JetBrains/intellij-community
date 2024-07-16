@@ -1,2 +1,2 @@
-def my_func(*args, **kwargs):
+def func(*args, **kwargs):
     pass

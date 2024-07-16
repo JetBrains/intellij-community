@@ -14,7 +14,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -831,7 +831,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     String text = FileUtil.loadFile(new File(path));
     PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
     String message = "Source file size: " + text.length();
-    PlatformTestUtil.newPerformanceTest(message, () -> myBuilder.buildStubTree(file)).start();
+    PerformanceTestUtil.newPerformanceTest(message, () -> myBuilder.buildStubTree(file)).start();
   }
 
   private void doTest(/*@Language("JAVA")*/ String source, @Language("TEXT") String expected) {

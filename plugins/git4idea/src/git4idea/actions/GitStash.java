@@ -6,7 +6,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
 import git4idea.stash.GitStashOperations;
-import git4idea.ui.GitStashDialog;
+import git4idea.stash.GitStashUtils;
+import git4idea.stash.ui.GitStashDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -19,13 +20,16 @@ public class GitStash extends GitRepositoryAction {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(GitBundle.message("stash.error.can.not.stash.changes.now"))) {
       return;
     }
-    GitStashDialog d = new GitStashDialog(project, gitRoots, defaultRoot);
-    if (!d.showAndGet()) {
-      return;
-    }
-    d.logUsage();
+    GitStashDialog dialog = new GitStashDialog(project, gitRoots, defaultRoot);
+    if (!dialog.showAndGet()) return;
 
-    GitStashOperations.runStashInBackground(project, Collections.singleton(d.getGitRoot()), root -> d.handler());
+    VirtualFile selectedRoot = dialog.getSelectedRoot();
+    String message = dialog.getMessage();
+    boolean keepIndex = dialog.getKeepIndex();
+
+    GitStashOperations.runStashInBackground(project, Collections.singleton(selectedRoot), root -> {
+      return GitStashUtils.createStashHandler(project, root, keepIndex, message);
+    });
   }
 
   @Override

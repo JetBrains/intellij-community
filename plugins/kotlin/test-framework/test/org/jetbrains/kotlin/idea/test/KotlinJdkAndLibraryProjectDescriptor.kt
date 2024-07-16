@@ -37,9 +37,7 @@ open class KotlinJdkAndLibraryProjectDescriptor(
             }
         }
 
-        javaLanguageVersion?.let {
-            model.getModuleExtension(LanguageLevelModuleExtension::class.java).setLanguageLevel(it);
-        }
+        model.getModuleExtension(LanguageLevelModuleExtension::class.java).setLanguageLevel(javaLanguageVersion ?: LanguageLevel.HIGHEST);
     }
 
     companion object {

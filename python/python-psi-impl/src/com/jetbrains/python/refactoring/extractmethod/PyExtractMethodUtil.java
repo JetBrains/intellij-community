@@ -213,7 +213,7 @@ public final class PyExtractMethodUtil {
     final List<PsiElement> scope = new ArrayList<>();
     if (owner instanceof PyFunction pyFunction) {
       scope.add(pyFunction.getStatementList());
-      final PyClass containingClass = ((PyFunction)owner).getContainingClass();
+      final PyClass containingClass = pyFunction.getContainingClass();
       if (containingClass != null) {
         for (PyFunction function : containingClass.getMethods()) {
           if (!function.equals(owner) && !function.equals(generatedMethod)) {

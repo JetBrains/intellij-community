@@ -3,8 +3,8 @@ package org.intellij.plugins.markdown.model.psi.headers.html
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
 import com.intellij.psi.xml.XmlAttributeValue
-import com.intellij.refactoring.suggested.startOffset
 
 /**
  * Veto default rename for element attribute value.

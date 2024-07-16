@@ -8,13 +8,16 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import git4idea.GitTag
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.toolbar.GitToolbarWidgetAction
+import icons.DvcsImplIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -22,7 +25,6 @@ import javax.swing.Icon
 /**
  * Supplies a branch presentation to [git4idea.ui.toolbar.GitToolbarWidgetAction]
  */
-@ApiStatus.Internal
 interface GitCurrentBranchPresenter {
   companion object {
     private val EP_NAME = ExtensionPointName<GitCurrentBranchPresenter>("Git4Idea.gitCurrentBranchPresenter")
@@ -34,16 +36,24 @@ interface GitCurrentBranchPresenter {
 
   fun getPresentation(repository: GitRepository): Presentation?
 
-  data class Presentation(
-    val icon: Icon?,
-    val text: @Nls String,
-    val description: @Nls String?,
-    val syncStatus: GitBranchSyncStatus = GitBranchSyncStatus.SYNCED
-  )
+  interface Presentation {
+    val icon: Icon?
+    val text: @Nls String
+    val description: @Nls String?
+    val syncStatus: GitBranchSyncStatus
+  }
+
+  @ApiStatus.Internal
+  data class PresentationData(
+    override val icon: Icon?,
+    override val text: @Nls String,
+    override val description: @Nls String?,
+    override val syncStatus: GitBranchSyncStatus = GitBranchSyncStatus.SYNCED,
+  ) : Presentation
 }
 
 private fun getDefaultPresentation(repository: GitRepository): GitCurrentBranchPresenter.Presentation {
-  return GitCurrentBranchPresenter.Presentation(
+  return GitCurrentBranchPresenter.PresentationData(
     repository.calcIcon(),
     calcText(repository),
     repository.calcTooltip(),
@@ -59,18 +69,29 @@ private fun calcText(repository: GitRepository): @NlsSafe String =
                                              GitBranchPopupActions.BRANCH_NAME_LENGTH_DELTA)
   })
 
-private fun GitRepository.calcIcon(): Icon? = if (state != Repository.State.NORMAL) AllIcons.General.Warning else null
-
-private fun GitRepository.calcTooltip(): @NlsContexts.Tooltip String {
-  if (state == Repository.State.DETACHED) {
-    return GitBundle.message("git.status.bar.widget.tooltip.detached")
+private fun GitRepository.calcIcon(): Icon? {
+  if (state == Repository.State.NORMAL) {
+    return null
   }
-
-  var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(),
-                                   GitBranchUtil.getBranchNameOrRev(this))
-  if (!GitUtil.justOneGitRepository(project)) {
-    message += "\n"
-    message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
+  if (state == Repository.State.DETACHED && GitRefUtil.getCurrentReference(this) is GitTag) {
+    return DvcsImplIcons.BranchLabel
   }
-  return message
+  return AllIcons.General.Warning
+}
+
+private fun GitRepository.calcTooltip(): @NlsContexts.Tooltip String? {
+  val repoInfo = info
+  return when {
+    repoInfo.state == Repository.State.DETACHED -> GitBundle.message("git.status.bar.widget.tooltip.detached")
+    repoInfo.state == Repository.State.REBASING -> GitBundle.message("git.status.bar.widget.tooltip.rebasing")
+    repoInfo.currentBranch != null -> {
+      var message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", GitVcs.DISPLAY_NAME.get(), repoInfo.currentBranch.name)
+      if (!GitUtil.justOneGitRepository(project)) {
+        message += "\n"
+        message += DvcsBundle.message("tooltip.branch.widget.root.name.text", root.name)
+      }
+      message
+    }
+    else -> null
+  }
 }

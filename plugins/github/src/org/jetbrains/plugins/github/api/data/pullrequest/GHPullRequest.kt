@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api.data.pullrequest
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
@@ -34,7 +33,6 @@ class GHPullRequest(id: String,
                     val baseRefName: String,
                     val baseRefOid: String,
                     val baseRepository: GHRepository?,
-                    baseRef: BaseRef?,
                     val headRefName: String,
                     val headRefOid: String,
                     val headRepository: GHRepository?,
@@ -42,9 +40,6 @@ class GHPullRequest(id: String,
   : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, updatedAt,
                        assignees, labels, reviewRequests, reviewThreads,
                        reviews, mergeable, viewerCanUpdate, viewerCanReact, viewerDidAuthor, reactions) {
-
-  @JsonIgnore
-  val baseRefUpdateRule: GHRefUpdateRule? = baseRef?.refUpdateRule
 
   data class BaseRef(val refUpdateRule: GHRefUpdateRule?)
 

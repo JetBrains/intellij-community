@@ -3,8 +3,6 @@ package com.intellij.json.codeinsight;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.json.JsonBundle;
@@ -14,12 +12,14 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.json.jsonLines.JsonLinesFileType;
 import com.intellij.json.psi.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -100,23 +100,24 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     return result.toString();
   }
 
-  private static final class AddDoubleQuotesFix implements LocalQuickFix {
+  private static final class AddDoubleQuotesFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return JsonBundle.message("quickfix.add.double.quotes.desc");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final String rawText = element.getText();
       if (element instanceof JsonLiteral || element instanceof JsonReferenceExpression) {
         String content = JsonPsiUtil.stripQuotes(rawText);
         if (element instanceof JsonStringLiteral && rawText.startsWith("'")) {
           content = escapeSingleQuotedStringContent(content);
         }
-        final PsiElement replacement = new JsonElementGenerator(project).createValue("\"" + content + "\"");
-        CodeStyleManager.getInstance(project).performActionWithFormatterDisabled((Runnable)() -> element.replace(replacement));
+        TextRange range = element.getTextRange();
+        // Replace in document to avoid reformat
+        element.getContainingFile().getFileDocument()
+          .replaceString(range.getStartOffset(), range.getEndOffset(), "\"" + content + "\"");
       }
       else {
         Logger.getInstance(JsonStandardComplianceInspection.class)

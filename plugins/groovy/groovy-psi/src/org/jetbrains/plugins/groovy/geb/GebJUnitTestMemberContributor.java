@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
-public class GebJUnitTestMemberContributor extends NonCodeMembersContributor {
+public final class GebJUnitTestMemberContributor extends NonCodeMembersContributor {
 
   @Override
   protected String getParentClassName() {

@@ -148,7 +148,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
     if (hasParameterAddedRemovedOrReordered(oldSignature, newSignature)) return updateUsagesData
 
     val updateOverridesData = if (canHaveOverrides)
-      updateUsagesData.copy(nameOfStuffToUpdate = if (declaration.hasModifierProperty(PsiModifier.ABSTRACT)) RefactoringBundle.message(
+      updateUsagesData.copy(nameOfStuffToUpdate = if (declaration.explicitAbstract()) RefactoringBundle.message(
         "suggested.refactoring.implementations")
       else RefactoringBundle.message("suggested.refactoring.overrides"))
     else

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManage
 import java.util.Arrays;
 import java.util.Objects;
 
-final class ShTerminalRunner implements ShRunner {
+public class ShTerminalRunner implements ShRunner {
 
   @Override
   public void run(@NotNull Project project,
@@ -39,7 +39,7 @@ final class ShTerminalRunner implements ShRunner {
     }
 
     ContentManager contentManager = window.getContentManager();
-    Pair<Content, TerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
+    Pair<Content, TerminalWidget> pair = getSuitableProcess(project, contentManager, workingDirectory);
     if (pair == null) {
       terminalToolWindowManager.createShellWidget(workingDirectory, title, activateToolWindow, activateToolWindow)
         .sendCommandToExecute(command);
@@ -59,23 +59,25 @@ final class ShTerminalRunner implements ShRunner {
     return window != null && window.isAvailable();
   }
 
-  private static @Nullable Pair<Content, TerminalWidget> getSuitableProcess(@NotNull ContentManager contentManager,
-                                                                            @NotNull String workingDirectory) {
+  private @Nullable Pair<Content, TerminalWidget> getSuitableProcess(@NotNull Project project,
+                                                                     @NotNull ContentManager contentManager,
+                                                                     @NotNull String workingDirectory) {
     Content selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
-      Pair<Content, TerminalWidget> pair = getSuitableProcess(selectedContent, workingDirectory);
+      Pair<Content, TerminalWidget> pair = getSuitableProcess(project, selectedContent, workingDirectory);
       if (pair != null) return pair;
     }
 
     return Arrays.stream(contentManager.getContents())
-      .map(content -> getSuitableProcess(content, workingDirectory))
+      .map(content -> getSuitableProcess(project, content, workingDirectory))
       .filter(Objects::nonNull)
       .findFirst()
       .orElse(null);
   }
 
-  private static @Nullable Pair<Content, TerminalWidget> getSuitableProcess(@NotNull Content content,
-                                                                            @NotNull String workingDirectory) {
+  protected @Nullable Pair<Content, TerminalWidget> getSuitableProcess(@NotNull Project project,
+                                                                       @NotNull Content content,
+                                                                       @NotNull String workingDirectory) {
     TerminalWidget widget = TerminalToolWindowManager.findWidgetByContent(content);
     if (widget == null || (widget instanceof JBTerminalWidget && !(widget instanceof ShellTerminalWidget))) {
       return null;

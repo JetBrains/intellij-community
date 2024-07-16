@@ -1,7 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +14,19 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaInspectionTestCase {
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    changeToWarning();
+  }
+
+  private void changeToWarning() {
+    HighlightDisplayKey displayKey = HighlightDisplayKey.find(getInspection().getShortName());
+    Project project = getProject();
+    InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile();
+    currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, project);
+  }
 
   public void testLoggerInitializedWithForeignClass() {
     doTest();
@@ -23,6 +41,7 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
     final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
     inspection.ignoreNonPublicClasses = true;
     myFixture.enableInspections(inspection);
+    changeToWarning();
     doTest();
   }
 

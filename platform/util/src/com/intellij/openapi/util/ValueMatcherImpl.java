@@ -26,7 +26,7 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
   }
 
   @Override
-  public @NotNull <TT> ValueKey.BeforeThen<T, TT> ifEq(@NotNull ValueKey<TT> key) {
+  public <TT> ValueKey.@NotNull BeforeThen<? extends T, TT> ifEq(@NotNull ValueKey<? extends TT> key) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");
@@ -78,7 +78,7 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
   }
 
   @Override
-  public @NotNull ValueKey.BeforeThen<T, T1> or(@NotNull ValueKey<T1> key) {
+  public ValueKey.@NotNull BeforeThen<T, T1> or(@NotNull ValueKey<? extends T1> key) {
     switch (myState) {
       case FINISHED:
         throw new IllegalStateException("Matching is already finished");

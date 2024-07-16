@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("NavigationUtil")
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
@@ -13,8 +13,11 @@ import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.CommandProcessorEx
+import com.intellij.openapi.command.UndoConfirmationPolicy
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -25,17 +28,16 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
@@ -44,15 +46,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.JBColor
-import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.Processor
 import com.intellij.util.SlowOperations
 import com.intellij.util.TextWithIcon
-import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -149,25 +151,57 @@ fun openFileWithPsiElement(element: PsiElement, searchForOpen: Boolean, requestF
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true)
   }
 
-  val resultRef = Ref<Boolean>()
+  var resultRef: Boolean? = null
   // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
   CommandProcessor.getInstance().executeCommand(element.project, {
     if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
       val navigationItem = element as NavigationItem
       if (navigationItem.canNavigate()) {
         navigationItem.navigate(requestFocus)
-        resultRef.set(true)
+        resultRef = true
       }
       else {
-        resultRef.set(false)
+        resultRef = false
       }
     }
   }, "", null)
-  if (!resultRef.isNull) {
-    return resultRef.get()
+  resultRef?.let {
+    return it
   }
   element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
   return false
+}
+
+internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
+  val openAsNative = shouldOpenAsNative(element)
+  if (searchForOpen) {
+    element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
+  }
+  else {
+    element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true)
+  }
+
+  val commandProcessor = (serviceAsync<CommandProcessor>() as CommandProcessorEx)
+  return withContext(Dispatchers.EDT) {
+    blockingContext {
+      // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
+      val commandHandle = commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@blockingContext false
+      try {
+        if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
+          val navigationItem = element as NavigationItem
+          if (navigationItem.canNavigate()) {
+            navigationItem.navigate(requestFocus)
+            return@blockingContext true
+          }
+        }
+      }
+      finally {
+        commandProcessor.finishCommand(commandHandle, null)
+        element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null)
+      }
+      false
+    }
+  }
 }
 
 private fun shouldOpenAsNative(element: PsiElement): Boolean {
@@ -190,50 +224,18 @@ private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean
 
 private fun doActivatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
   @Suppress("NAME_SHADOWING")
-  var element = element
-  if (!element.isValid) {
-    return false
-  }
+  val element = element.takeIf { it.isValid }?.navigationElement ?: return false
+  val vFile = element.containingFile?.takeIf { it.isValid }?.virtualFile ?: return false
+  val range = element.textRange ?: return false
 
-  element = element.navigationElement
-  val file = element.containingFile
-  if (file == null || !file.isValid) {
-    return false
-  }
-
-  val vFile = file.virtualFile ?: return false
-  val project = element.project
-  return activateFileIfOpen(project = project,
-                            vFile = vFile,
-                            range = element.textRange,
-                            searchForOpen = searchForOpen,
-                            requestFocus = requestFocus)
-}
-
-private fun activateFileIfOpen(
-  project: Project,
-  vFile: VirtualFile,
-  range: TextRange?,
-  searchForOpen: Boolean,
-  requestFocus: Boolean
-): Boolean {
-  EDT.assertIsEdt()
-  if (!EditorHistoryManager.getInstance(project).hasBeenOpen(vFile)) {
-    return false
-  }
-
-  val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+  val fileEditorManager = FileEditorManagerEx.getInstanceEx(element.project)
   val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
   val openOptions = FileEditorOpenOptions(requestFocus = requestFocus, reuseOpen = searchForOpen)
   if (!wasAlreadyOpen) {
     fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
   }
 
-  if (range == null) {
-    return false
-  }
-
-  for (editor in fileEditorManager.getEditors(vFile)) {
+  for (editor in fileEditorManager.getEditorList(vFile)) {
     if (editor is TextEditor) {
       val text = editor.editor
       val offset = text.caretModel.offset
@@ -241,38 +243,6 @@ private fun activateFileIfOpen(
         if (wasAlreadyOpen) {
           // select the file
           fileEditorManager.openFile(file = vFile, window = null, options = openOptions)
-        }
-        return true
-      }
-    }
-  }
-  return false
-}
-
-@ApiStatus.Internal
-suspend fun activateFileIfOpen(project: Project, vFile: VirtualFile, range: TextRange?, openOptions: FileEditorOpenOptions): Boolean {
-  if (!EditorHistoryManager.getInstance(project).hasBeenOpen(vFile)) {
-    return false
-  }
-
-  val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-  val wasAlreadyOpen = fileEditorManager.isFileOpen(vFile)
-  if (!wasAlreadyOpen) {
-    fileEditorManager.openFile(file = vFile, options = openOptions)
-  }
-
-  if (range == null) {
-    return false
-  }
-
-  for (editor in fileEditorManager.getEditorList(vFile)) {
-    if (editor is TextEditor) {
-      val text = editor.editor
-      val offset = readAction { text.caretModel.offset }
-      if (range.containsOffset(offset)) {
-        if (wasAlreadyOpen) {
-          // select the file
-          fileEditorManager.openFile(file = vFile, options = openOptions)
         }
         return true
       }
@@ -474,7 +444,8 @@ private fun getPsiElementPopup(elements: List<Any?>,
         @Suppress("MissingAccessibleContext")
         val panel = JPanel(BorderLayout())
         panel.add(component, BorderLayout.CENTER)
-        val sep = object : SeparatorWithText() {
+        @Suppress("DEPRECATION")
+        val sep = object : com.intellij.ui.SeparatorWithText() {
           override fun paintComponent(g: Graphics) {
             g.color = JBColor(Color.WHITE, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
             g.fillRect(0, 0, width, height)
@@ -521,13 +492,14 @@ private fun getMnemonic(item: Any?, itemMap: Map<PsiElement, GotoRelatedItem?>):
   return (if (item is GotoRelatedItem) item else itemMap.get(item))!!.mnemonic
 }
 
-fun collectRelatedItems(contextElement: PsiElement, dataContext: DataContext?): List<GotoRelatedItem> {
+/**
+ * Query all [GotoRelatedProvider]s for their related items.
+ */
+fun collectRelatedItems(contextElement: PsiElement, dataContext: DataContext): List<GotoRelatedItem> {
   val items = LinkedHashSet<GotoRelatedItem>()
   GO_TO_EP_NAME.forEachExtensionSafe { provider ->
     items.addAll(provider.getItems(contextElement))
-    if (dataContext != null) {
-      items.addAll(provider.getItems(dataContext))
-    }
+    items.addAll(provider.getItems(dataContext))
   }
   val result = items.toTypedArray<GotoRelatedItem>()
   Arrays.sort(result) { i1, i2 ->

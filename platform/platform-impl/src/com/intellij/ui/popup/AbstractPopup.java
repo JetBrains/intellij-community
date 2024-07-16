@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -316,7 +316,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     myCancelKeyEnabled = cancelKeyEnabled;
     myLocateByContent = locateByContent;
-    myLocateWithinScreen = placeWithinScreenBounds;
+    myLocateWithinScreen = placeWithinScreenBounds && !StartupUiUtil.isWaylandToolkit();
     myAlpha = alpha;
     myMaskProvider = maskProvider;
     myInStack = inStack;
@@ -533,7 +533,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @Nullable
-  protected static Window getCurrentWindow(@NotNull Project project) {
+  public static Window getCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     WindowManagerEx manager = getWndManager();
@@ -956,9 +956,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public boolean canClose() {
     return
-      !anyModalWindowsKeepPopupOpen() &&
+      (!anyModalWindowsKeepPopupOpen() &&
       (myCallBack == null || myCallBack.compute().booleanValue()) &&
-      !preventImmediateClosingAfterOpening();
+      !preventImmediateClosingAfterOpening()) ||
+      myDisposed; // check for myDisposed last to allow `myCallBack` to be executed
   }
 
   boolean anyModalWindowsKeepPopupOpen() {
@@ -1205,11 +1206,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myPopupType = getMostSuitablePopupType();
     myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
     Component popupOwner = myOwner;
-    if (popupOwner instanceof RootPaneContainer && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
+    if (popupOwner instanceof RootPaneContainer root && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
       // JDK uses cached heavyweight popup for a window ancestor
-      RootPaneContainer root = (RootPaneContainer)popupOwner;
       popupOwner = root.getRootPane();
       LOG.debug("popup owner fixed for JDK cache");
+    }
+    if (StartupUiUtil.isWaylandToolkit()) {
+      // targetBounds are "screen" coordinates, which in Wayland means that they
+      // are relative to the nearest toplevel (Window).
+      // But popups in Wayland are expected to be relative to popup's "owner";
+      // let's re-set the owner to be that window.
+      popupOwner = popupOwner instanceof Window
+                   ? popupOwner
+                   : SwingUtilities.getWindowAncestor(popupOwner);
+      // The Wayland server may refuse to show a popup whose top-left corner
+      // is located outside of parent window's bounds
+      Rectangle okBounds = new Rectangle();
+      okBounds.width = popupOwner.getWidth() + targetBounds.width;
+      okBounds.height = popupOwner.getHeight() + targetBounds.height;
+      ScreenUtil.moveToFit(targetBounds, okBounds, new Insets(0, 0, 1, 1));
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
@@ -1414,6 +1429,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static void fitToVisibleArea(Rectangle targetBounds) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // Wrt screen edges, only the Wayland server can reliably position popups
+
     Point topLeft = new Point(targetBounds.x, targetBounds.y);
     Point bottomRight = new Point((int)targetBounds.getMaxX(), (int)targetBounds.getMaxY());
     Rectangle topLeftScreen = ScreenUtil.getScreenRectangle(topLeft);
@@ -1669,7 +1686,18 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void pack(boolean width, boolean height) {
-    if (!isVisible() || !width && !height || isBusy()) return;
+    Dimension size = calculateSizeForPack(width, height);
+    if (size == null) return;
+
+    final Window window = getContentWindow(myContent);
+    if (window != null) {
+      window.setSize(size);
+    }
+  }
+
+  @Nullable
+  protected Dimension calculateSizeForPack(boolean width, boolean height) {
+    if (!isVisible() || !width && !height || isBusy()) return null;
 
     Dimension size = getSize();
     Dimension prefSize = myContent.computePreferredSize();
@@ -1701,10 +1729,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
       }
     }
-    final Window window = getContentWindow(myContent);
-    if (window != null) {
-      window.setSize(size);
-    }
+
+    return size;
   }
 
   public JComponent getComponent() {
@@ -1718,6 +1744,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void dispose() {
     ThreadingAssertions.assertEventDispatchThread();
+
+    if (myDisposed) {
+      return;
+    }
+    myDisposed = true;
+
     if (myState == State.SHOWN) {
       LOG.debug("shown popup must be cancelled");
       cancel();
@@ -1728,11 +1760,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     debugState("dispose popup", State.INIT, State.CANCEL);
     myState = State.DISPOSE;
-
-    if (myDisposed) {
-      return;
-    }
-    myDisposed = true;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("start disposing " + myContent);
@@ -1821,7 +1848,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
-  public static class MyContentPanel extends JPanel implements DataProvider {
+  public static class MyContentPanel extends JPanel implements UiCompatibleDataProvider {
     private @Nullable DataProvider myDataProvider;
 
     public MyContentPanel(@NotNull PopupBorder border) {
@@ -1843,8 +1870,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      return myDataProvider != null ? myDataProvider.getData(dataId) : null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      DataSink.uiDataSnapshot(sink, myDataProvider);
     }
 
     public void setDataProvider(@Nullable DataProvider dataProvider) {
@@ -2008,10 +2035,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @Override
-  public void setSize(final @NotNull Dimension size) {
+  public void setSize(@NotNull Dimension size) {
+    setSize(null, size);
+  }
+
+  @Override
+  public void setSize(@Nullable Point location, @NotNull Dimension size) {
     // do not update the bounds programmatically if the user moves or resizes the popup
     if (!isBusy()) {
-      setBounds(null, new Dimension(size));
+      setBounds(location, new Dimension(size));
       if (myPopup != null) Optional.ofNullable(getContentWindow(myContent)).ifPresent(Container::validate); // to adjust content size
     }
   }
@@ -2523,9 +2555,21 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
    */
   private boolean isCancelNeeded(@NotNull WindowEvent event, @Nullable Window popup) {
     Window window = event.getWindow(); // the activated or focused window
-    return window == null ||
-           popup == null ||
-           !SwingUtilities.isDescendingFrom(window, popup) && (myFocusable || !SwingUtilities.isDescendingFrom(popup, window));
+    if (window == null || popup == null) return true;
+
+    if (SwingUtilities.isDescendingFrom(window, popup) || (!myFocusable && SwingUtilities.isDescendingFrom(popup, window))) {
+      return false;
+    }
+
+    // On Wayland focus gets temporarily transferred to popup's owner while the popup is being
+    // interactively moved.
+    // This is not a reason for cancelling the popup.
+    if (StartupUiUtil.isWaylandToolkit()) {
+      Window popupOwner = popup.getOwner();
+      return !Objects.equals(window, popupOwner);
+    }
+
+    return true;
   }
 
   private @Nullable Point getStoredLocation() {

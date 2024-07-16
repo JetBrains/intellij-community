@@ -1,17 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.content;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator;
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
-import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,6 +23,7 @@ import java.util.Arrays;
 /**
  * Implementation on top of DurableEnumerator
  */
+@ApiStatus.Internal
 public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEnumerator, CleanableStorage {
 
   //TODO RC: current implementation relies on knowledge of append-only-log record format -- header size, page
@@ -100,7 +103,7 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
 
   @Override
   public int recordsCount() throws IOException {
-    return ((ScannableDataEnumeratorEx)enumerator).recordsCount();
+    return ((ScannableDataEnumeratorEx<byte[]>)enumerator).recordsCount();
   }
 
   @Override
@@ -124,20 +127,21 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
   }
 
   /** hashId = (0, 1, 2 ... ) */
-  private int enumeratorIdToHashId(int enumeratorId) {
+  @VisibleForTesting
+  public int enumeratorIdToHashId(int enumeratorId) {
     if (enumeratorId == NULL_ID) {
       return NULL_ID;
     }
 
     int logHeaderSize = AppendOnlyLogOverMMappedFile.HeaderLayout.HEADER_SIZE;
-    int offset = (enumeratorId - 1) + logHeaderSize;
+    long offset = (((long)enumeratorId - 1) << 2) + logHeaderSize;
 
-    int pageNo = offset / pageSize;
+    int pageNo = (int)(offset / pageSize);
     if (pageNo == 0) {
-      return (enumeratorId - 1) / HASH_RECORD_LENGTH + 1;
+      return (int)((offset - logHeaderSize) / HASH_RECORD_LENGTH + 1);
     }
     else {
-      int offsetOnPage = offset % pageSize;
+      int offsetOnPage = (int)(offset % pageSize);
       int recordsOnPage = pageSize / HASH_RECORD_LENGTH;
       int recordsOnFirstPage = (pageSize - logHeaderSize) / HASH_RECORD_LENGTH;
       return recordsOnPage * (pageNo - 1)
@@ -147,7 +151,8 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     }
   }
 
-  private int hashIdToEnumeratorId(int hashId) {
+  @VisibleForTesting
+  public int hashIdToEnumeratorId(int hashId) {
     if (hashId == NULL_ID) {
       return NULL_ID;
     }
@@ -158,13 +163,13 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     int recordsOnFirstPage = (pageSize - logHeaderSize) / HASH_RECORD_LENGTH;
 
     if (recordNo < recordsOnFirstPage) {
-      return recordNo * HASH_RECORD_LENGTH + 1;
+      return ((recordNo * HASH_RECORD_LENGTH) >> 2) + 1;
     }
     else {
       int pageNo = (recordNo - recordsOnFirstPage) / recordsOnPage + 1;
       int recordOnPage = (recordNo - recordsOnFirstPage) % recordsOnPage;
 
-      return (pageNo * pageSize - logHeaderSize) + recordOnPage * HASH_RECORD_LENGTH + 1;
+      return (int)((((pageNo * (long)pageSize - logHeaderSize) + recordOnPage * HASH_RECORD_LENGTH) >> 2) + 1);
     }
   }
 
@@ -205,7 +210,7 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
 
     @Override
     public byte[] read(@NotNull ByteBuffer input) throws IOException {
-      byte[] hash = new byte[ContentHashEnumerator.SIGNATURE_LENGTH];
+      byte[] hash = new byte[SIGNATURE_LENGTH];
       input.get(hash);
       return hash;
     }

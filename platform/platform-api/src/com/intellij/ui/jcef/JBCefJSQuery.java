@@ -243,7 +243,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
       CefMessageRouter.CefMessageRouterConfig config = new CefMessageRouter.CefMessageRouterConfig();
       config.jsQueryFunction = myFuncName;
       config.jsCancelFunction = "cefQuery_cancel_" + postfix;
-      myRouter = CefMessageRouter.create(config);
+      myRouter = JBCefApp.getInstance().createMessageRouter(config);
       client.getCefClient().addMessageRouter(myRouter);
     }
   }

@@ -1,24 +1,30 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
- * A support service to execute {@link ModCommand} in context of desktop IDE
+ * A support service to execute {@link ModCommand} in the context of a desktop IDE.
  */
 public interface ModCommandExecutor {
   /**
    * Executes given {@link ModCommand} interactively (may require user input, navigate into editors, etc.).
-   * Must be executed inside command (see {@link com.intellij.openapi.command.CommandProcessor}) and without write lock.
+   * Must be executed inside command (see {@link CommandProcessor}) and without write lock.
    *
    * @param context current context
    * @param command a command to execute
@@ -29,7 +35,7 @@ public interface ModCommandExecutor {
 
   /**
    * Executes given {@link ModCommand} in batch (applies default options, do not navigate)
-   * Must be executed inside command (see {@link com.intellij.openapi.command.CommandProcessor}) and without write lock.
+   * Must be executed inside command (see {@link CommandProcessor}) and without write lock.
    *
    * @param context current context
    * @param command a command to execute
@@ -63,6 +69,36 @@ public interface ModCommandExecutor {
   }
 
   /**
+   * Fetch the command from the supplier in the background and execute it interactively.
+   * The action is performed synchronously in EDT and can be canceled by the user if background computation takes a long time.
+   * The {@linkplain CommandProcessor command} will be created automatically, if necessary.
+   * 
+   * @param context action context
+   * @param title user-visible title to display if background computation takes a long time.
+   * @param editor context editor, if known
+   * @param commandSupplier a side-effect-free function to produce a {@link ModCommand}
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt
+  static void executeInteractively(@NotNull ActionContext context,
+                                   @Nls String title,
+                                   @Nullable Editor editor,
+                                   @NotNull Supplier<@NotNull ModCommand> commandSupplier) {
+    ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(commandSupplier::get).executeSynchronously(),
+      title, true, context.project());
+    if (command != null) {
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      if (commandProcessor.getCurrentCommand() == null) {
+        commandProcessor.executeCommand(context.project(), 
+                                        () -> getInstance().executeInteractively(context, command, editor), title, null);
+      } else {
+        getInstance().executeInteractively(context, command, editor);
+      }
+    }
+  }
+
+  /**
    * Result of batch execution
    */
   sealed interface BatchExecutionResult {
@@ -81,23 +117,23 @@ public interface ModCommandExecutor {
   
   enum Result implements BatchExecutionResult {
     /**
-     * Action was successfully executed
+     * Action was successfully executed.
      */
     SUCCESS,
     /**
-     * Action is interactive only, thus produces no effect
+     * Action is interactive only, thus produces no effect.
      */
     INTERACTIVE,
     /**
-     * Action has no effect
+     * Action has no effect.
      */
     NOTHING,
     /**
-     * Action was aborted
+     * Action was aborted.
      */
     ABORT,
     /**
-     * Conflicts should be displayed and confirmed
+     * Conflicts should be displayed and confirmed.
      */
     CONFLICTS;
 
@@ -115,7 +151,7 @@ public interface ModCommandExecutor {
   }
 
   /**
-   * Indicates that the action execution was unsuccessful
+   * Indicates that the action execution was unsuccessful.
    * @param message user-readable error message
    */
   record Error(@NotNull @NlsContexts.Tooltip String message) implements BatchExecutionResult {

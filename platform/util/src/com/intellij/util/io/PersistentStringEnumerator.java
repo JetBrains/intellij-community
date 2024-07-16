@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ public class PersistentStringEnumerator extends PersistentEnumerator<String> imp
     this(file, null);
   }
 
+  @Internal
   public PersistentStringEnumerator(@NotNull Path file, @Nullable StorageLockContext storageLockContext) throws IOException {
     this(file, 1024 * 4, storageLockContext);
   }
@@ -26,12 +28,14 @@ public class PersistentStringEnumerator extends PersistentEnumerator<String> imp
     this(file, initialSize, null);
   }
 
+  @Internal
   public PersistentStringEnumerator(@NotNull Path file,
                                     final int initialSize,
                                     @Nullable StorageLockContext lockContext) throws IOException {
     this(file, initialSize, false, lockContext);
   }
 
+  @Internal
   public PersistentStringEnumerator(@NotNull Path file,
                                      final int initialSize,
                                      boolean cacheLastMappings,

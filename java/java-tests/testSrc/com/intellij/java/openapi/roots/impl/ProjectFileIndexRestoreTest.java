@@ -7,8 +7,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.JavaProjectTestCase;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +45,7 @@ public class ProjectFileIndexRestoreTest extends JavaProjectTestCase {
     myTestDirPath = testDir.getPath();
 
     // to not interfere with previous test firing vfs events
-    VirtualFileManager.getInstance().syncRefresh();
+    VfsTestUtil.syncRefresh();
   }
 
   public void testDeepDeleteAndRecreate() throws IOException {

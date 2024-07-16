@@ -3,25 +3,15 @@ package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
-import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
-import com.intellij.util.UriUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,32 +20,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-import static com.intellij.openapi.util.NotNullLazyValue.lazy;
 import static java.util.Objects.requireNonNullElseGet;
 
 final class NewFileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
-  @SuppressWarnings("SpellCheckingInspection") private static final String ZIP_FS_TYPE = "zipfs";
-
   private final FileChooserDescriptor myDescriptor;
   private Project myProject;
   private FileChooserPanelImpl myPanel;
-  private final NotNullLazyValue<VirtualFileSystem> myLocalFs =
-    lazy(() -> ApplicationManager.getApplication() != null ? StandardFileSystems.local() : new CoreLocalFileSystem());
-  private final NotNullLazyValue<VirtualFileSystem> myJarFs =
-    lazy(() -> ApplicationManager.getApplication() != null ? StandardFileSystems.jar() : new CoreJarFileSystem());
-  private @Nullable List<VirtualFile> myResults;
+  private final FileChooserDialogHelper myHelper;
+  private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
   NewFileChooserDialogImpl(FileChooserDescriptor descriptor, @Nullable Component parent, @Nullable Project project) {
     super(project, parent, true, IdeModalityType.IDE);
     myDescriptor = descriptor;
     myProject = project;
+    myHelper = new FileChooserDialogHelper(descriptor);
     setTitle(requireNonNullElseGet(descriptor.getTitle(), () -> UIBundle.message("file.chooser.default.title")));
     init();
   }
@@ -65,18 +47,17 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     if (myProject == null) myProject = project;
     myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect.length > 0 ? toSelect[0] : null));
     show();
-    var chosenFiles = myResults != null ? VfsUtilCore.toVirtualFileArray(myResults) : VirtualFile.EMPTY_ARRAY;
-    FileChooserUsageCollector.log(this, myDescriptor, chosenFiles);
-    return chosenFiles;
+    FileChooserUsageCollector.log(this, myDescriptor, myChosenFiles);
+    return myChosenFiles;
   }
 
   @Override
-  public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<? super List<VirtualFile>> callback) {
+  public void choose(@Nullable VirtualFile toSelect, @SuppressWarnings("UsagesOfObsoleteApi") @NotNull Consumer<? super List<VirtualFile>> callback) {
     myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect));
     show();
-    FileChooserUsageCollector.log(this, myDescriptor, myResults != null ? myResults.toArray(VirtualFile.EMPTY_ARRAY) : VirtualFile.EMPTY_ARRAY);
-    if (myResults != null) {
-      callback.consume(myResults);
+    FileChooserUsageCollector.log(this, myDescriptor, myChosenFiles);
+    if (myChosenFiles.length != 0) {
+      callback.consume(List.of(myChosenFiles));
     }
     else if (callback instanceof FileChooser.FileChooserConsumer) {
       ((FileChooser.FileChooserConsumer)callback).cancelled();
@@ -107,60 +88,12 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
       return;
     }
 
-    var results = new ArrayList<VirtualFile>();
-    var misses = new ArrayList<@NlsSafe String>();
-    for (Path path : paths) {
-      var file = toVirtualFile(path);
-      var adjusted = file != null && file.isValid() ? myDescriptor.getFileToSelect(file) : null;
-      if (adjusted != null) {
-        results.add(adjusted);
-      }
-      else {
-        misses.add(path.toUri().toString());
-      }
-    }
+    myChosenFiles = myHelper.selectedFiles(paths, myPanel, getTitle());
+    if (myChosenFiles.length == 0) return;
 
-    if (!misses.isEmpty()) {
-      var urls = misses.stream().map(s -> "&nbsp;&nbsp;&nbsp;" + s).collect(Collectors.joining("<br>"));
-      var message = UIBundle.message("file.chooser.vfs.lookup", urls);
-      Messages.showErrorDialog(myPanel, message, getTitle());
-      return;
-    }
-
-    try {
-      myDescriptor.validateSelectedFiles(VfsUtilCore.toVirtualFileArray(results));
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog(myPanel, e.getMessage(), getTitle());
-      return;
-    }
-
-    myResults = results;
-    FileChooserUtil.updateRecentPaths(myProject, results.get(0));
+    FileChooserUtil.updateRecentPaths(myProject, myChosenFiles[0]);
 
     super.doOKAction();
-  }
-
-  private @Nullable VirtualFile toVirtualFile(Path path) {
-    if (path.getFileSystem() == FileSystems.getDefault()) {
-      return myLocalFs.get().refreshAndFindFileByPath(path.toString());
-    }
-
-    try {
-      var store = path.getFileSystem().getFileStores().iterator().next();
-      if (ZIP_FS_TYPE.equals(store.type())) {
-        var localPath = UriUtil.trimTrailingSlashes(store.name());
-        var localFile = toVirtualFile(Path.of(localPath));
-        if (localFile != null) {
-          return myJarFs.get().refreshAndFindFileByPath(localFile.getPath() + '!' + path);
-        }
-      }
-    }
-    catch (Exception e) {
-      Logger.getInstance(NewFileChooserDialogImpl.class).warn(e);
-    }
-
-    return null;
   }
 
   @Override

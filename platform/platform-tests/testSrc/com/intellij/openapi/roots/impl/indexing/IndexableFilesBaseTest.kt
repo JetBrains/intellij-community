@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.ide.scratch.RootType
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -65,12 +67,24 @@ abstract class IndexableFilesBaseTest {
   @Before
   fun setUp() {
     runWriteAction {
-      (RootType.ROOT_EP.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
-      (IndexableSetContributor.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
-      (AdditionalLibraryRootsProvider.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
+      // we cannot use ExtensionTestUtil.maskExtensions as it's a single-use operation and some tests need to use it
+      temporarilyCleanupExtension(RootType.ROOT_EP)
+      temporarilyCleanupExtension(IndexableSetContributor.EP_NAME)
+      temporarilyCleanupExtension(AdditionalLibraryRootsProvider.EP_NAME)
     }
 
     IndexingTestUtil.waitUntilIndexesAreReady(project)
+  }
+
+  private fun <T : Any> temporarilyCleanupExtension(point: ExtensionPointName<T>) {
+    val extensionPoint = point.point as ExtensionPointImpl<*>
+    val adapters = ArrayList<ExtensionComponentAdapter>()
+    extensionPoint.unregisterExtensions({ _, adapter -> adapters.add(adapter); false }, false)
+    disposableRule.register {
+      runWriteAction {
+        adapters.forEach { extensionPoint.addExtensionAdapter(it) }
+      }
+    }
   }
 
   protected fun assertIndexableFiles(vararg expectedFiles: VirtualFile) {

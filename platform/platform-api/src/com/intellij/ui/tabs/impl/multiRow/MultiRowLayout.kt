@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("removal", "DEPRECATION", "ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl.multiRow
@@ -9,13 +9,17 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.LayoutPassInfo
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.table.TableLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.math.abs
 
-abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
-                              protected val showPinnedTabsSeparately: Boolean) : TableLayout(tabs) {
-  protected var prevLayoutPassInfo: MultiRowPassInfo? = null
+@ApiStatus.Internal
+sealed class MultiRowLayout(
+  protected val tabs: JBTabsImpl,
+  protected val showPinnedTabsSeparately: Boolean,
+) : TableLayout(tabs) {
+  internal var prevLayoutPassInfo: MultiRowPassInfo? = null
 
   override fun layoutTable(visibleInfos: List<TabInfo>): LayoutPassInfo {
     tabs.resetLayout(true)
@@ -32,7 +36,7 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
       data.rows.addAll(rows)
       layoutRows(data)
 
-      val topRowInd = if (tabs.position == JBTabsPosition.top) 0 else rows.size - 1
+      val topRowInd = if (tabs.tabsPosition == JBTabsPosition.top) 0 else rows.size - 1
       data.tabsRectangle = Rectangle(toFitRec.x, getRowY(data, topRowInd), toFitRec.width, data.rowCount * data.rowHeight)
     }
 
@@ -44,7 +48,7 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
     return data
   }
 
-  protected abstract fun splitToRows(data: MultiRowPassInfo): List<TabsRow>
+  internal abstract fun splitToRows(data: MultiRowPassInfo): List<TabsRow>
 
   private fun layoutRows(data: MultiRowPassInfo) {
     for ((index, row) in data.rows.withIndex()) {
@@ -54,7 +58,7 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
   }
 
   private fun getRowY(data: MultiRowPassInfo, row: Int): Int {
-    return when (tabs.position) {
+    return when (tabs.tabsPosition) {
       JBTabsPosition.top -> {
         data.toFitRec.y + row * data.rowHeight
       }
@@ -68,12 +72,12 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
   private fun layoutTabComponent(data: MultiRowPassInfo, info: TabInfo) {
     val toolbar = tabs.infoToToolbar.get(info)
 
-    val componentY = when (tabs.position) {
+    val componentY = when (tabs.tabsPosition) {
       JBTabsPosition.top -> data.rowCount * data.rowHeight
       JBTabsPosition.bottom -> 0
       else -> error("MultiRowLayout is not supported for vertical placements")
     }
-    val componentHeight = when (tabs.position) {
+    val componentHeight = when (tabs.tabsPosition) {
       JBTabsPosition.top -> tabs.height  // it will be adjusted inside JBTabsImpl.layoutComp
       JBTabsPosition.bottom -> tabs.height - data.rowCount * data.rowHeight
       else -> error("MultiRowLayout is not supported for vertical placements")
@@ -141,11 +145,11 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
 
     var component = tabs.getComponentAt(point)
     if (component is JBTabsImpl) {
-      for (i in 0 until data.myVisibleInfos.size - 1) {
-        val firstInfo = data.myVisibleInfos[i]
-        val secondInfo = data.myVisibleInfos[i + 1]
-        val first = tabs.infoToLabel.get(firstInfo)!!
-        val second = tabs.infoToLabel.get(secondInfo)!!
+      for (i in 0 until data.visibleInfos.size - 1) {
+        val firstInfo = data.visibleInfos[i]
+        val secondInfo = data.visibleInfos[i + 1]
+        val first = tabs.getTabLabel(firstInfo)!!
+        val second = tabs.getTabLabel(secondInfo)!!
         val firstBounds = first.bounds
         val secondBounds = second.bounds
         val between = firstBounds.maxX < point.x
@@ -168,12 +172,12 @@ abstract class MultiRowLayout(protected val tabs: JBTabsImpl,
 
     if (component is TabLabel) {
       val info = component.info
-      val index = data.myVisibleInfos.indexOf(info)
+      val index = data.visibleInfos.indexOf(info)
       if (!tabs.isDropTarget(info)) {
-        val dropTargetBefore = data.myVisibleInfos.subList(0, index + 1).any { tabs.isDropTarget(it) }
+        val dropTargetBefore = data.visibleInfos.subList(0, index + 1).any { tabs.isDropTarget(it) }
         result = index - if (dropTargetBefore) 1 else 0
       }
-      else if (index < data.myVisibleInfos.size) {
+      else if (index < data.visibleInfos.size) {
         result = index
       }
     }

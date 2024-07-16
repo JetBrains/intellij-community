@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 
 
-public class DuplicateMnemonicInspection extends BaseFormInspection {
+public final class DuplicateMnemonicInspection extends BaseFormInspection {
   private static final ThreadLocal<HashMap<IRootContainer, MnemonicMap>> myContainerMnemonicMap = ThreadLocal.withInitial(HashMap::new);
 
   public DuplicateMnemonicInspection() {

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service(Service.Level.PROJECT)
-public final class SelectInManager  {
+public final class SelectInManager {
   private final Project myProject;
   /**
    * @deprecated Use {@link #getProject()} instead

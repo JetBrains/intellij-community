@@ -50,9 +50,6 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.PACKAGE_KEYWORD:
         return findChildByType(JavaTokenType.PACKAGE_KEYWORD);
 
@@ -64,6 +61,9 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
 
       case ChildRole.MODIFIER_LIST:
         return findChildByType(JavaElementType.MODIFIER_LIST);
+
+      default:
+        return null;
     }
   }
 

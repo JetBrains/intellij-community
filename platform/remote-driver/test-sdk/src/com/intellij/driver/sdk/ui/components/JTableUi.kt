@@ -9,8 +9,8 @@ import org.intellij.lang.annotations.Language
 fun Finder.table(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JTable']",
                                                                JTableUiComponent::class.java)
 
-class JTableUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy {  driver.new(JTableFixtureRef::class, robotService.robot, component) }
+open class JTableUiComponent(data: ComponentData) : UiComponent(data) {
+  private val fixture by lazy { driver.new(JTableFixtureRef::class, robot, component) }
 
   // content()[ROW][COLUMN]
   fun content(): Map<Int, Map<Int, String>> = fixture.collectItems()

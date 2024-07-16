@@ -9,12 +9,12 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.*
@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
@@ -66,31 +67,31 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected val visibleScope = basicContext.visibleScope
 
 
-    protected val scopeNameFilter: KtScopeNameFilter =
+    protected val scopeNameFilter: (Name) -> Boolean =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
-    context(KtAnalysisSession)
-    protected fun addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
-        if (symbol !is KtNamedSymbol) return
+    context(KaSession)
+    protected fun addSymbolToCompletion(expectedType: KaType?, symbol: KaSymbol) {
+        if (symbol !is KaNamedSymbol) return
 
         lookupElementFactory
             .createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
             .let(sink::addElement)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     protected fun addClassifierSymbolToCompletion(
-        symbol: KtClassifierSymbol,
+        symbol: KaClassifierSymbol,
         context: WeighingContext,
         symbolOrigin: CompletionSymbolOrigin,
         importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol),
     ) {
-        if (symbol !is KtNamedSymbol) return
+        if (symbol !is KaNamedSymbol) return
 
         val lookup = with(lookupElementFactory) {
             when (symbol) {
-                is KtClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
-                is KtTypeParameterSymbol -> createLookupElement(symbol, importStrategyDetector)
+                is KaClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
+                is KaTypeParameterSymbol -> createLookupElement(symbol, importStrategyDetector)
             }
         } ?: return
 
@@ -98,19 +99,20 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         sink.addElement(lookup)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     protected fun addCallableSymbolToCompletion(
         context: WeighingContext,
-        signature: KtCallableSignature<*>,
+        signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
         priority: ItemPriority? = null,
-        explicitReceiverTypeHint: KtType? = null,
+        explicitReceiverTypeHint: KaType? = null,
     ) {
         val symbol = signature.symbol
         val name = when (symbol) {
-            is KtNamedSymbol -> symbol.name
-            is KtConstructorSymbol -> (symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.name
+            is KaNamedSymbol -> symbol.name
+            is KaConstructorSymbol -> (symbol.containingDeclaration as? KaNamedClassOrObjectSymbol)?.name
             else -> null
         } ?: return
 
@@ -167,7 +169,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     }
 }
 
-internal fun <C : KotlinRawPositionContext> KtAnalysisSession.complete(
+internal fun <C : KotlinRawPositionContext> KaSession.complete(
     contextContributor: FirCompletionContributor<C>,
     positionContext: C,
     weighingContext: WeighingContext,

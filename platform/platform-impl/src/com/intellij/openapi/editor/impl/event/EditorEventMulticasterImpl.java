@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -60,6 +61,7 @@ public final class EditorEventMulticasterImpl implements EditorEventMulticasterE
     document.addEditReadOnlyListener(myEditReadOnlyMulticaster.getMulticaster());
   }
 
+  @ApiStatus.Internal
   public void registerEditor(@NotNull EditorEx editor) {
     editor.addEditorMouseListener(myEditorMouseMulticaster.getMulticaster());
     editor.addEditorMouseListener(new EditorMouseListener() {

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -9,11 +10,17 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.jcef.JBCefApp
+import com.intellij.ui.jcef.JBCefClient
 import com.intellij.ui.jcef.JCEFHtmlPanel
-import com.intellij.util.SlowOperations
 import com.intellij.util.application
 import com.intellij.util.net.NetUtils
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
@@ -28,22 +35,25 @@ import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import org.intellij.plugins.markdown.ui.actions.changeFontSize
 import org.intellij.plugins.markdown.ui.preview.*
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.*
+import org.intellij.plugins.markdown.util.MarkdownApplicationScope
+import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.awt.BorderLayout
 import java.net.URL
+import javax.swing.JComponent
+import kotlin.time.Duration.Companion.milliseconds
 
 class MarkdownJCEFHtmlPanel(
-  private val _project: Project?,
-  private val _virtualFile: VirtualFile?
-): JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
-  constructor(): this(null, null)
+  private val project: Project?,
+  private val virtualFile: VirtualFile?
+) : JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
+  constructor() : this(null, null)
 
   private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
 
-  private var projectRoot: VirtualFile? = null
-  private val fileSchemeResourcesProcessor: ResourceProvider
-
   private val resourceProvider = MyAggregatingResourceProvider()
-  private val browserPipe = JcefBrowserPipeImpl(
+  private val browserPipe: BrowserPipe = JcefBrowserPipeImpl(
     this,
     injectionAllowedUrls = listOf(PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName))
   )
@@ -97,39 +107,46 @@ class MarkdownJCEFHtmlPanel(
     """
   }
 
-  private fun loadIndexContent() {
+  private suspend fun loadIndexContent() {
     reloadExtensions()
-    loadURL(PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName))
+    waitForPageLoad(PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName))
   }
 
-  @Volatile
-  private var delayedContent: String? = null
-  private var firstUpdate = true
   private var previousRenderClosure: String = ""
 
-  init {
-    if (_virtualFile != null && _project != null) {
-      // Will be fixed in IDEA-340851
-      SlowOperations.allowSlowOperations<Throwable> {
-        projectRoot = ProjectFileIndex.getInstance(_project).getContentRootForFile(_virtualFile)
-      }
-    }
-    fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(_virtualFile, projectRoot)
+  private val coroutineScope = project?.let(MarkdownPluginScope::createChildScope) ?: MarkdownApplicationScope.createChildScope()
 
+  private sealed interface PreviewRequest {
+    data class Update(
+      val content: String,
+      val initialScrollOffset: Int,
+      val document: VirtualFile?
+    ) : PreviewRequest
+
+    data class ReloadWithOffset(val offset: Int) : PreviewRequest
+  }
+
+  private val updateViewRequests = MutableSharedFlow<PreviewRequest>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  private val projectRoot = coroutineScope.async(context = Dispatchers.Default) {
+    if (virtualFile != null && project != null) {
+      readAction { ProjectFileIndex.getInstance(project).getContentRootForFile(virtualFile) }
+    } else null
+  }
+
+  private val panelComponent by lazy { createComponent() }
+
+  override fun getComponent(): JComponent {
+    return panelComponent
+  }
+
+  init {
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
     Disposer.register(this, browserPipe)
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
-    Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(fileSchemeResourcesProcessor))
+
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
-    browserPipe.subscribe(JcefBrowserPipeImpl.WINDOW_READY_EVENT, object : BrowserPipe.Handler {
-      override fun processMessageReceived(data: String): Boolean {
-        delayedContent?.let {
-          cefBrowser.executeJavaScript(it, null, 0)
-          delayedContent = null
-        }
-        return false
-      }
-    })
+    jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
 
     browserPipe.subscribe(SET_SCROLL_EVENT, object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
@@ -142,10 +159,30 @@ class MarkdownJCEFHtmlPanel(
       changeFontSize(settings.state.fontSize)
     })
 
-    loadIndexContent()
+    coroutineScope.launch {
+      val projectRoot = projectRoot.await()
+      val fileSchemeResourcesProcessor = createFileSchemeResourcesProcessor(projectRoot)
+
+      loadIndexContent()
+      updateViewRequests.debounce(20.milliseconds).collectLatest { request ->
+        when (request) {
+          is PreviewRequest.Update -> {
+            val (html, initialScrollOffset, document) = request
+            val baseFile = document?.parent
+            val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
+            val renderClosure = builder.generateRenderClosure()
+            updateDom(renderClosure, initialScrollOffset, previousRenderClosure.isEmpty())
+          }
+          is PreviewRequest.ReloadWithOffset -> {
+            loadIndexContent()
+            updateDom(previousRenderClosure, request.offset, firstUpdate = true)
+          }
+        }
+      }
+    }
   }
 
-  private fun updateDom(renderClosure: String, initialScrollOffset: Int) {
+  private suspend fun updateDom(renderClosure: String, initialScrollOffset: Int, firstUpdate: Boolean) {
     previousRenderClosure = renderClosure
     // language=JavaScript
     val scrollCode = when {
@@ -155,40 +192,46 @@ class MarkdownJCEFHtmlPanel(
     // language=JavaScript
     val code = """
       (function() {
-        const action = () => {
-          console.time("incremental-dom-patch");
-          const render = $previousRenderClosure;
-          // noinspection JSCheckFunctionSignatures
-          IncrementalDOM.patch(document.body, () => render());
-          $scrollCode
-          if (IncrementalDOM.notifications.afterPatchListeners) {
-            IncrementalDOM.notifications.afterPatchListeners.forEach(listener => listener());
+        return new Promise( resolve => {
+          const action = () => {
+            console.time("incremental-dom-patch");
+            const render = $renderClosure;
+            // noinspection JSCheckFunctionSignatures
+            IncrementalDOM.patch(document.body, () => render());
+            $scrollCode
+            if (IncrementalDOM.notifications.afterPatchListeners) {
+              IncrementalDOM.notifications.afterPatchListeners.forEach(listener => listener());
+            }
+            console.timeEnd("incremental-dom-patch");
+          };
+          if (document.readyState === "loading" || document.readyState === "uninitialized") {
+            document.addEventListener("DOMContentLoaded", () => action(), { once: true });
+          } else {
+            action();
           }
-          console.timeEnd("incremental-dom-patch");
-        };
-        if (document.readyState === "loading" || document.readyState === "uninitialized") {
-          document.addEventListener("DOMContentLoaded", () => action(), { once: true });
-        } else {
-          action();
-        }
+          resolve();
+        });
       })();
-    """
-    delayedContent = code
-    executeJavaScript(code)
+    """.trimIndent()
+    executeCancellableJavaScript(code)
   }
 
   override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
-    val baseFile = document?.parent
-    val builder = IncrementalDOMBuilder(html, baseFile, projectRoot, fileSchemeResourcesProcessor)
-    updateDom(builder.generateRenderClosure(), initialScrollOffset)
-    firstUpdate = false
+    check(updateViewRequests.tryEmit(PreviewRequest.Update(content = html, initialScrollOffset, document)))
+  }
+
+  @ApiStatus.Internal
+  @TestOnly
+  suspend fun setHtmlAndWait(html: String) {
+    loadIndexContent()
+
+    val builder = IncrementalDOMBuilder(html, null, null, null)
+    val renderClosure = readAction { builder.generateRenderClosure() }
+    updateDom(renderClosure, 0, false)
   }
 
   override fun reloadWithOffset(offset: Int) {
-    delayedContent = null
-    firstUpdate = true
-    loadIndexContent()
-    updateDom(previousRenderClosure, offset)
+    check(updateViewRequests.tryEmit(PreviewRequest.ReloadWithOffset(offset)))
   }
 
   override fun dispose() {
@@ -197,6 +240,7 @@ class MarkdownJCEFHtmlPanel(
     }
     currentExtensions = emptyList()
     scrollListeners.clear()
+    coroutineScope.cancel()
     super.dispose()
   }
 
@@ -204,16 +248,16 @@ class MarkdownJCEFHtmlPanel(
   override fun getBrowserPipe(): BrowserPipe = browserPipe
 
   @ApiStatus.Experimental
-  override fun getProject(): Project? = _project
+  override fun getProject(): Project? = project
 
   @ApiStatus.Experimental
-  override fun getVirtualFile(): VirtualFile? = _virtualFile
+  override fun getVirtualFile(): VirtualFile? = virtualFile
 
   override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {
     scrollListeners.add(listener)
   }
 
-  override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener?) {
+  override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {
     scrollListeners.remove(listener)
   }
 
@@ -225,6 +269,28 @@ class MarkdownJCEFHtmlPanel(
     val horizontal = JBCefApp.normalizeScaledSize(horizontalUnits)
     val vertical = JBCefApp.normalizeScaledSize(verticalUnits)
     executeJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
+  }
+
+  private fun createComponent(): JComponent {
+    val component = super.getComponent()
+    if (project == null || virtualFile == null) return component
+
+    val panel = JBLoadingPanel(BorderLayout(), this)
+    coroutineScope.async(context = Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+      panel.startLoading()
+      panel.add(component)
+      projectRoot.await()
+      panel.stopLoading()
+    }
+    return panel
+  }
+
+  private fun createFileSchemeResourcesProcessor(projectRoot: VirtualFile?): ResourceProvider? {
+    if (projectRoot == null) return null
+
+    val fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(virtualFile, projectRoot)
+    Disposer.register(this@MarkdownJCEFHtmlPanel, PreviewStaticServer.instance.registerResourceProvider(fileSchemeResourcesProcessor))
+    return fileSchemeResourcesProcessor
   }
 
   private inner class MyAggregatingResourceProvider : ResourceProvider {
@@ -245,16 +311,8 @@ class MarkdownJCEFHtmlPanel(
     }
   }
 
-  private inner class MyFilteringRequestHandler: CefRequestHandlerAdapter() {
-    override fun getResourceRequestHandler(
-      browser: CefBrowser?,
-      frame: CefFrame?,
-      request: CefRequest,
-      isNavigation: Boolean,
-      isDownload: Boolean,
-      requestInitiator: String?,
-      disableDefaultHandling: BoolRef?
-    ): CefResourceRequestHandler? {
+  private inner class MyFilteringRequestHandler : CefRequestHandlerAdapter() {
+    override fun getResourceRequestHandler(browser: CefBrowser?, frame: CefFrame?, request: CefRequest, isNavigation: Boolean, isDownload: Boolean, requestInitiator: String?, disableDefaultHandling: BoolRef?): CefResourceRequestHandler? {
       if (Registry.`is`("markdown.experimental.allow.external.requests", true)) {
         return null
       }
@@ -312,7 +370,7 @@ class MarkdownJCEFHtmlPanel(
 
     private fun isOffScreenRendering(): Boolean = Registry.`is`("ide.browser.jcef.markdownView.osr.enabled")
 
-    private object ProhibitingResourceRequestHandler: CefResourceRequestHandlerAdapter() {
+    private object ProhibitingResourceRequestHandler : CefResourceRequestHandlerAdapter() {
       override fun onBeforeResourceLoad(browser: CefBrowser?, frame: CefFrame?, request: CefRequest): Boolean {
         return true
       }

@@ -21,11 +21,11 @@ import org.jetbrains.jps.model.JpsFileTypesConfiguration;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
-public final class JpsFileTypesConfigurationImpl extends JpsElementBase<JpsFileTypesConfigurationImpl> implements JpsFileTypesConfiguration {
+final class JpsFileTypesConfigurationImpl extends JpsElementBase<JpsFileTypesConfigurationImpl> implements JpsFileTypesConfiguration {
   public static final JpsElementChildRole<JpsFileTypesConfiguration> ROLE = JpsElementChildRoleBase.create("file types");
   private String myIgnoredPatternString;
 
-  public JpsFileTypesConfigurationImpl() {
+  JpsFileTypesConfigurationImpl() {
     this("CVS;.DS_Store;.svn;.pyc;.pyo;*.pyc;*.pyo;.git;*.hprof;_svn;.hg;*.lib;*~;__pycache__;.bundle;vssver.scc;vssver2.scc;*.rbc;");
   }
 

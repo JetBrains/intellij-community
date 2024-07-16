@@ -57,11 +57,16 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
 public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollapseSupport {
+
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
   public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER =
     Key.create("allows to filter single child nodes which should not be auto-expanded");
+
+  @ApiStatus.Internal
+  public static final int HORIZONTAL_SELECTION_OFFSET = 12;
+
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -287,7 +292,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
                 is("ide.experimental.ui.tree.selection") &&
                 !(tree instanceof PlainSelectionTree) &&
                 (selected || row == TreeHoverListener.getHoveredRow(tree))) {
-              int borderOffset = JBUI.scale(12);
+              int borderOffset = JBUI.scale(HORIZONTAL_SELECTION_OFFSET);
               Control control = getControl(c, path);
               int rendererOffset = painter.getRendererOffset(control, depth, leaf);
               int controlOffset = painter.getControlOffset(control, depth, leaf);
@@ -441,6 +446,15 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     super.toggleExpandState(path);
   }
 
+  @ApiStatus.Internal
+  public boolean isLocationInExpandControl(@NotNull Point location) {
+    var tree = getTree();
+    if (tree == null) return false;
+    var path = getClosestPathForLocation(tree, location.x, location.y);
+    if (path == null) return false;
+    return isLocationInExpandControl(path, location.x, location.y);
+  }
+
   @Override
   protected boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
     JTree tree = getTree();
@@ -510,10 +524,11 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     else if (is("ide.tree.experimental.preferred.width", true)) {
       Rectangle paintBounds = tree.getVisibleRect();
       Insets insets = tree.getInsets();
+      int visibleRowCount = tree.getVisibleRowCount();
       if (paintBounds.isEmpty()) {
         // no valid bounds yet, fall back to something that will work at least, mimic DefaultTreeUI
         paintBounds.width = 1 + insets.left + insets.right;
-        paintBounds.height = tree.getRowHeight() * tree.getVisibleRowCount() + insets.top + insets.bottom;
+        paintBounds.height = tree.getRowHeight() * visibleRowCount + insets.top + insets.bottom;
       }
       JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
       if (pane != null) {
@@ -529,6 +544,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
         Rectangle buffer = new Rectangle();
         int maxPaintX = paintBounds.x + paintBounds.width;
         int maxPaintY = paintBounds.y + paintBounds.height;
+        int rowsUsed = 0;
         for (; path != null; path = cache.getPathForRow(++row)) {
           Rectangle bounds = cache.getBounds(path, buffer);
           if (bounds == null) {
@@ -537,7 +553,13 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
             continue;
           }
           width = Math.max(width, bounds.x + bounds.width);
-          if ((bounds.y + bounds.height) >= maxPaintY) break;
+          ++rowsUsed;
+          if (
+            (bounds.y + bounds.height) >= maxPaintY &&
+            (visibleRowCount <= 0 || rowsUsed >= visibleRowCount)
+          ) {
+            break;
+          }
         }
         width += insets.left + insets.right;
         if (width < maxPaintX) {

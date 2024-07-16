@@ -101,15 +101,24 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
     }
 
     override fun configureModule(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>?) {
-        super.configureModule(module, collector, writeActions)
+        configureModuleAndGetResult(module, collector, writeActions)
+    }
 
-        val callable = addStdlibToJavaModuleInfoLazy(module, collector) ?: return
+    override fun configureModuleAndGetResult(
+        module: Module,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>?
+    ): Boolean {
+        val configured = super.configureModuleAndGetResult(module, collector, writeActions)
+
+        val callable = addStdlibToJavaModuleInfoLazy(module, collector) ?: return configured
 
         if (writeActions != null) {
             writeActions.add(callable)
         } else {
             callable()
         }
+        return configured
     }
 
     companion object {

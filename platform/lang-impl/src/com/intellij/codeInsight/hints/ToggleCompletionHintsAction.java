@@ -11,13 +11,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public final class ToggleCompletionHintsAction extends ToggleAction implements ActionRemoteBehaviorSpecification {
-
-  @NotNull
-  @Override
-  public ActionRemoteBehavior getBehavior() {
-    return ActionRemoteBehavior.BackendOnly;
-  }
+public final class ToggleCompletionHintsAction extends ToggleAction implements ActionRemoteBehaviorSpecification.BackendOnly {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

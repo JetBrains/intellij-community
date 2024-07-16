@@ -10,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
@@ -440,4 +441,4 @@ internal suspend fun ensureFilesWritable(project: Project, files: Collection<Vir
 }
 
 internal val useBackgroundSave: Boolean
-  get() = Registry.`is`("ide.background.save.settings", false)
+  get() = Registry.`is`("ide.background.save.settings", true)

@@ -3,12 +3,14 @@ package com.intellij.platform.workspace.storage.impl.serialization
 
 import com.intellij.platform.workspace.storage.EntityTypesResolver
 
-
 internal typealias PluginId = String?
+internal typealias ModuleId = String?
 
-internal data class TypeInfo(val fqName: String, val pluginId: PluginId)
+internal data class TypeInfo(val fqName: String, val pluginId: PluginId, val moduleId: ModuleId)
 
 internal data class SerializableEntityId(val arrayId: Int, val type: TypeInfo)
 
-internal fun getTypeInfo(clazz: Class<*>, interner: StorageInterner, typesResolver: EntityTypesResolver): TypeInfo =
-  interner.intern(TypeInfo(clazz.name, typesResolver.getPluginId(clazz)))
+internal fun getTypeInfo(clazz: Class<*>, interner: StorageInterner, typesResolver: EntityTypesResolver): TypeInfo {
+  val (pluginId, moduleId) = typesResolver.getPluginIdAndModuleId(clazz)
+  return interner.intern(TypeInfo(clazz.name, pluginId, moduleId))
+}

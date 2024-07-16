@@ -7,9 +7,11 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.IndentGuideDescriptor;
 import com.intellij.openapi.editor.IndentsModel;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class EmptyIndentsModel implements IndentsModel {
   @Override
   public IndentGuideDescriptor getCaretIndentGuide() {

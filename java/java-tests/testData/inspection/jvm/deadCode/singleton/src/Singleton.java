@@ -1,7 +1,7 @@
 public class Singleton {
    private static Singleton ourInstance = new Singleton();
 
-   public Singleton getInstance() {
+   public static Singleton getInstance() {
       return ourInstance;
    }
 }

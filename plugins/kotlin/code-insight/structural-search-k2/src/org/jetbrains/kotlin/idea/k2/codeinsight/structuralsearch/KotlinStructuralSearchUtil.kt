@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch
 import com.intellij.psi.PsiComment
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtClassTypeQualifierRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -27,13 +27,14 @@ internal fun getCommentText(comment: PsiComment): String {
     }
 }
 
-context(KtAnalysisSession)
-internal fun KtType.renderNames(): Array<String> = arrayOf(
-    render(KtTypeRendererForSource.WITH_SHORT_NAMES.with {
-        classIdRenderer = KtClassTypeQualifierRenderer.WITH_SHORT_NAMES
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+internal fun KaType.renderNames(): Array<String> = arrayOf(
+    render(KaTypeRendererForSource.WITH_SHORT_NAMES.with {
+        classIdRenderer = KaClassTypeQualifierRenderer.WITH_SHORT_NAMES
     }, Variance.INVARIANT),
-    render(KtTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
-    render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+    render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT),
+    render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
 )
 
 internal fun String.removeTypeParameters(): String {
@@ -44,11 +45,11 @@ internal fun String.removeTypeParameters(): String {
 internal val MatchingHandler.withinHierarchyTextFilterSet: Boolean
     get() = this is SubstitutionHandler && (this.isSubtype || this.isStrictSubtype)
 
-context(KtAnalysisSession)
-fun KtExpression.findDispatchReceiver(): KtType? {
-    val symbol = resolveCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
-    val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return null
-    val classId = containingClass.classIdIfNonLocal ?: return null
+context(KaSession)
+fun KtExpression.findDispatchReceiver(): KaType? {
+    val symbol = resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
+    val containingClass = symbol.containingDeclaration as? KaClassSymbol ?: return null
+    val classId = containingClass.classId ?: return null
     val fromKotlinPkg = classId.packageFqName.asString().startsWith("kotlin")
     val isFunctionCall = classId.relativeClassName.asString().startsWith("Function")
     if (fromKotlinPkg && isFunctionCall) return null // if function is function local return null

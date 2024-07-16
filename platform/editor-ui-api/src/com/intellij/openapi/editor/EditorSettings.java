@@ -1,17 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.NonExtendable
 public interface EditorSettings {
   boolean isRightMarginShown();
   void setRightMarginShown(boolean val);
+  
+  boolean isHighlightSelectionOccurrences();
+  void setHighlightSelectionOccurrences(boolean val);
 
   boolean isWhitespacesShown();
   void setWhitespacesShown(boolean val);
@@ -52,6 +57,9 @@ public interface EditorSettings {
 
   boolean isLineNumbersShown();
   void setLineNumbersShown(boolean val);
+
+  boolean isLineNumbersAfterIcons();
+  void setLineNumbersAfterIcons(boolean val);
 
   int getAdditionalLinesCount();
   void setAdditionalLinesCount(int additionalLinesCount);

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.actions;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
+import com.intellij.ide.actions.WeighingNewActionGroup;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.actionSystem.*;
@@ -107,7 +108,7 @@ final class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTyp
       if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && checkPackageExists(dir)) {
         for (GroovySourceFolderDetector detector : GroovySourceFolderDetector.EP_NAME.getExtensions()) {
           if (detector.isGroovySourceFolder(dir)) {
-            presentation.setWeight(Presentation.HIGHER_WEIGHT);
+            presentation.putClientProperty(WeighingNewActionGroup.WEIGHT_KEY, WeighingNewActionGroup.HIGHER_WEIGHT);
             break;
           }
         }

@@ -4,7 +4,7 @@ package com.intellij.ide.startup.importSettings.providers.vscode
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.TransferableIdeId
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
 import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeSettingsProcessor.Companion.vsCodeHome
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser

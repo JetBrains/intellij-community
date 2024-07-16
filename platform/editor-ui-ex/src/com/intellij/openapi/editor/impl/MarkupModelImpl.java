@@ -100,7 +100,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     PersistentRangeHighlighterImpl highlighter = PersistentRangeHighlighterImpl.create(
       this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false);
-    return addRangeHighlighter(highlighter, changeAction);
+    addRangeHighlighter(highlighter, changeAction);
+    return highlighter;
   }
 
   // NB: Can return invalid highlighters
@@ -130,17 +131,16 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     RangeHighlighterImpl highlighter = isPersistent ?
       PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributesKey, true)
       : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false);
-    return addRangeHighlighter(highlighter, changeAttributesAction);
+    addRangeHighlighter(highlighter, changeAttributesAction);
+    return highlighter;
   }
 
-  private @NotNull RangeHighlighterEx addRangeHighlighter(@NotNull RangeHighlighterImpl highlighter,
-                                                          @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
+  private void addRangeHighlighter(@NotNull RangeHighlighterImpl highlighter, @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     myCachedHighlighters = null;
     if (changeAttributesAction != null) {
       highlighter.changeAttributesNoEvents(changeAttributesAction);
     }
     fireAfterAdded(highlighter);
-    return highlighter;
   }
 
   @Override

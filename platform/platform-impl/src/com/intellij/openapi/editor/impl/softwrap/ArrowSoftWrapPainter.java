@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ArrowPainter;
 import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -17,6 +18,7 @@ import java.awt.*;
  * of defensive programming - there is unlikely case that local client environment doesn't have a font that is able to
  * represent target unicode symbol. We draw an arrow manually then (platform-independent approach).
  */
+@ApiStatus.Internal
 public final class ArrowSoftWrapPainter implements SoftWrapPainter {
 
   private final HeightProvider myHeightProvider = new HeightProvider();

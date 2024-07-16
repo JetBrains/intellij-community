@@ -12,18 +12,15 @@ import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheServiceImpl
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 
 abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest() {
-    override fun isFirPlugin(): Boolean {
-        return true
-    }
 
     override fun getTestDataDirectory(): File {
         return KotlinRoot.DIR.resolve("fir/tests/testData/resolve/anchors")

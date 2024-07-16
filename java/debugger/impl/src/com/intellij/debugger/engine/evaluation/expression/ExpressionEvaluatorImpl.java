@@ -70,4 +70,8 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
       }
     }
   }
+
+  public boolean isExternalEvaluator() {
+    return myEvaluator instanceof ExternalExpressionEvaluator;
+  }
 }

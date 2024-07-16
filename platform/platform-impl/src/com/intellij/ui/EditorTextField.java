@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -7,8 +7,9 @@ import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -16,6 +17,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -33,6 +35,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -62,6 +65,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -73,11 +78,12 @@ import java.util.Set;
 /**
  * Use {@code editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);} to disable search/replace component.
  */
-public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
+public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, UiCompatibleDataProvider, TextAccessor,
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
   private static final Key<LineSeparator> LINE_SEPARATOR_KEY = Key.create("ETF_LINE_SEPARATOR");
   private static final Key<Boolean> MANAGED_BY_FIELD = Key.create("MANAGED_BY_FIELD");
+  private static final Logger LOG = Logger.getInstance(EditorTextField.class);
 
   private Document myDocument;
   private final Project myProject;
@@ -109,6 +115,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private Disposable myDisposable;
   private Disposable myManualDisposable;
   private boolean myInHierarchy;
+  private @Nls String myAccessibleName;
 
   public EditorTextField() {
     this("");
@@ -605,13 +612,11 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   void releaseEditorLater() {
-    // releasing an editor implies removing it from a component hierarchy
-    // invokeLater is required because releaseEditor() may be called from
-    // removeNotify(), so we need to let swing complete its removeNotify() chain
-    // and only then execute another removal from the hierarchy. Otherwise
-    // swing goes nuts because of nested removals and indices get corrupted
+    // releasing an editor implies removing it from a component hierarchy invokeLater is required because releaseEditor() may be called from
+    // removeNotify(), so we need to let swing complete its removeNotify() chain and only then execute another removal from the hierarchy.
+    // Otherwise, swing goes nuts because of nested removals and indices get corrupted
     if (scheduleEditorRelease()) {
-      ApplicationManager.getApplication().invokeLater(() -> releaseScheduledEditors(), ModalityState.stateForComponent(this));
+      ApplicationManager.getApplication().invokeLater(this::releaseScheduledEditors, ModalityState.stateForComponent(this));
     }
   }
 
@@ -667,6 +672,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     Project project = getProjectIfValid();
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final long stamp = LocalTimeCounter.currentTime();
+    if (myFileType == null) {
+      LOG.error("Provide not-null FileType");
+      myFileType = FileTypes.PLAIN_TEXT;
+    }
     final PsiFile psiFile = factory.createFileFromText("Dummy." + myFileType.getDefaultExtension(), myFileType, "", stamp, true, false);
     return PsiDocumentManager.getInstance(project).getDocument(psiFile);
   }
@@ -724,6 +733,21 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.setPlaceholder(myHintText);
       editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
 
+      String accessibleName = myAccessibleName;
+      // Fallback to using the label as accessible name, similar to AccessibleJComponent.getAccessibleName.
+      if (accessibleName == null) {
+          Object label = getClientProperty("labeledBy");
+          if (label instanceof Accessible a) {
+            AccessibleContext ac = a.getAccessibleContext();
+            if (ac != null) {
+              accessibleName = ac.getAccessibleName();
+            }
+          }
+      }
+      if (accessibleName != null) {
+        editor.getContentComponent().getAccessibleContext().setAccessibleName(accessibleName);
+      }
+
       initOneLineMode(editor);
 
       if (myIsRendererWithSelection) {
@@ -766,7 +790,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void updateBorder(final @NotNull EditorEx editor) {
     if (editor.isOneLineMode()
-        && !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
+        && !Boolean.TRUE.equals(getClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY))
         && (SwingUtilities.getAncestorOfClass(JTable.class, this) == null || Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor")))) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
@@ -1080,20 +1104,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
     EditorEx editor = getEditor(false);
     if (editor != null && editor.isRendererMode()) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return editor.getCopyProvider();
-      }
-      return null;
+      sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
     }
-
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return editor;
-    }
-
-    return null;
+    sink.set(CommonDataKeys.EDITOR, editor);
   }
 
   public void setFileType(@NotNull FileType fileType) {
@@ -1166,5 +1182,28 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (editor != null) return editor.getContentComponent();
       return aContainer;
     }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJPanel() {
+        @Override
+        public String getAccessibleName() {
+          // Accessible name is not needed on the wrapper, only on the editor component itself. Otherwise, it may be read twice.
+          return null;
+        }
+
+        @Override
+        public void setAccessibleName(@Nls String s) {
+          myAccessibleName = s;
+          EditorEx editor = getEditor(false);
+          if (editor != null) {
+            editor.getContentComponent().getAccessibleContext().setAccessibleName(s);
+          }
+        }
+      };
+    }
+    return accessibleContext;
   }
 }

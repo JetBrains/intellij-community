@@ -42,13 +42,12 @@ public final class MoveCommentToSeparateLineIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new CommentOnLineWithSourcePredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  public void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiComment comment = (PsiComment)element;
     final PsiWhiteSpace whitespace;
     while (true) {

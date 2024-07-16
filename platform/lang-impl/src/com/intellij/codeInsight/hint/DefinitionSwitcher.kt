@@ -23,7 +23,7 @@ private const val NAVIGATION_PLACE = "DefinitionChooser"
 class DefinitionSwitcher<T>(elements: Array<T>,
                             private val component: JComponent,
                             private val onUpdate: (T)-> Unit) {
-  var elements = elements
+  var elements: Array<T> = elements
     set(value) {
       field = value
       maxLabelSize = getMaxLabelSize()

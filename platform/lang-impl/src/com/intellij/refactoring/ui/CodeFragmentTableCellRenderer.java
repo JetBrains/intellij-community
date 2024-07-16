@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
@@ -69,7 +70,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
       editorTextField.ensureWillComputePreferredSize();
     }
 
-    editorTextField.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+    editorTextField.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.TRUE);
     editorTextField.setBorder((hasFocus || isSelected) ? BorderFactory.createLineBorder(table.getSelectionBackground()) : JBUI.Borders.empty(1));
     if (isSelected && document != null) {
       final Color bg = table.getSelectionBackground();

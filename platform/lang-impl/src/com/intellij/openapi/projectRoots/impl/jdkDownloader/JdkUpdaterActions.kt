@@ -4,15 +4,16 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.Alarm
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-
 
 @Service(Service.Level.APP)
 class JdkUpdaterNotifications : Disposable {
@@ -30,9 +31,9 @@ class JdkUpdaterNotifications : Disposable {
           pendingNotifications.values.sortedBy { it.persistentId }.map { it.updateAction }
         }
 
-        invokeLater {
+        ApplicationManager.getApplication().invokeLater({
           SettingsEntryPointAction.updateState()
-        }
+        }, ModalityState.nonModal())
       }
     })
   }
@@ -72,6 +73,7 @@ class JdkUpdaterNotifications : Disposable {
   fun getActions() : List<JdkUpdateNotification.JdkUpdateSuggestionAction> = pendingActionsCopy
 }
 
-class JdkSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
-  override fun getUpdateActions(context: DataContext): List<JdkUpdateNotification.JdkUpdateSuggestionAction> = service<JdkUpdaterNotifications>().getActions()
+internal class JdkSettingsActionRegistryActionProvider : SettingsEntryPointAction.ActionProvider {
+  override fun getUpdateActions(context: DataContext): List<JdkUpdateNotification.JdkUpdateSuggestionAction> =
+    service<JdkUpdaterNotifications>().getActions()
 }

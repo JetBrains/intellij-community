@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -12,7 +12,10 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.io.*
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
+import com.intellij.util.io.write
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
@@ -37,8 +40,14 @@ class ProjectInspectionManagerTest {
   val initInspectionRule = InitInspectionRule()
 
   private fun doTest(task: suspend (Project) -> Unit) {
-    runBlocking {
-      loadAndUseProjectInLoadComponentStateMode(tempDirManager, { Paths.get(it.path) }, task)
+    runBlocking(Dispatchers.Default) {
+      createOrLoadProject(
+        tempDirManager = tempDirManager,
+        projectCreator = { Path.of(it.path) },
+        task = task,
+        runPostStartUpActivities = true,
+        loadComponentState = true,
+      )
     }
   }
 

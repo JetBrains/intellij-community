@@ -390,8 +390,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask<?>> ext
       myCheckbox.setSelected(descriptor.isChecked());
       myCheckbox.setEnabled(true);
 
-      if (descriptor instanceof ConfigurationTypeDescriptor) {
-        ConfigurationTypeDescriptor configurationTypeDescriptor = (ConfigurationTypeDescriptor)descriptor;
+      if (descriptor instanceof ConfigurationTypeDescriptor configurationTypeDescriptor) {
         myLabel.setFont(tree.getFont());
         myLabel.setText(configurationTypeDescriptor.getConfigurationType().getDisplayName());
         myLabel.setIcon(configurationTypeDescriptor.getIcon());

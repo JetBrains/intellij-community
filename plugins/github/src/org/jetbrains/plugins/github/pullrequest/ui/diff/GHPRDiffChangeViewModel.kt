@@ -18,12 +18,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
@@ -54,14 +55,13 @@ internal class GHPRDiffChangeViewModelImpl(
   private val threadsVms: GHPRThreadsViewModels,
   private val discussionsViewOption: StateFlow<DiscussionsViewOption>
 ) : GHPRDiffChangeViewModel {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = threadsVms.canComment
 
   private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewThreadDiffViewModel.MappingData>> =
-    dataProvider.reviewData.createThreadsRequestsFlow()
-      .computationState()
+    dataProvider.reviewData.threadsComputationFlow
       .transformConsecutiveSuccesses(false) {
         combine(this, discussionsViewOption) { threads, viewOption ->
           threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
@@ -115,10 +115,12 @@ internal class GHPRDiffChangeViewModelImpl(
 
   override fun markViewed() {
     if (!diffData.isCumulative) return
-    val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
-    val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, change.filePath)
-
-    dataProvider.viewedStateData.updateViewedState(repositoryRelativePath, true)
+    cs.launch {
+      val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
+      val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, change.filePath)
+      // TODO: handle error
+      dataProvider.viewedStateData.updateViewedState(listOf(repositoryRelativePath), true)
+    }
   }
 }
 

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.util.ui.withTranslated
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.Point

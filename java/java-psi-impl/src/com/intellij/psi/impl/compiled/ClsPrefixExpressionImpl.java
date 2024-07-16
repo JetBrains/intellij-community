@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,21 +18,18 @@ class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpress
     myOperand = ClsParsingUtil.psiToClsExpression(operand, this);
   }
 
-  @NotNull
   @Override
-  public PsiExpression getOperand() {
+  public @NotNull PsiExpression getOperand() {
     return myOperand;
   }
 
-  @NotNull
   @Override
-  public PsiJavaToken getOperationSign() {
+  public @NotNull PsiJavaToken getOperationSign() {
     return myOperator;
   }
 
-  @NotNull
   @Override
-  public IElementType getOperationTokenType() {
+  public @NotNull IElementType getOperationTokenType() {
     return myOperator.getTokenType();
   }
 

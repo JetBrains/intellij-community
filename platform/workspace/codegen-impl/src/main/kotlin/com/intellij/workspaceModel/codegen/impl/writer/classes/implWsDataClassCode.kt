@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -7,9 +7,8 @@ import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.metadata.fullName
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.fields.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldCode
-import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldInitializedCode
-import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 
 /**
  * - Soft links
@@ -25,16 +24,12 @@ val ObjClass<*>.isEntityWithSymbolicId: Boolean
   }
 
 fun ObjClass<*>.implWsDataClassCode(): String {
-  val entityDataBaseClass = if (isEntityWithSymbolicId) {
-    "${WorkspaceEntityData}.WithCalculableSymbolicId<$javaFullName>()"
-  }
-  else {
-    "${WorkspaceEntityData}<$javaFullName>()"
-  }
+  val entityDataBaseClass = "${WorkspaceEntityData}<$javaFullName>()"
   val hasSoftLinks = hasSoftLinks()
   val softLinkable = if (hasSoftLinks) SoftLinkable else null
   return lines {
-    section("$generatedCodeVisibilityModifier class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
+    line("@OptIn($WorkspaceEntityInternalApi::class)")
+    section("internal class $javaDataName : ${sups(entityDataBaseClass, softLinkable?.encodedString)}") label@{
 
       listNl(allFields.noRefs().noEntitySource().noSymbolicId()) { implWsDataFieldCode }
 
@@ -46,7 +41,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         "override fun wrapAsModifiable(diff: ${MutableEntityStorage}): ${WorkspaceEntity.Builder}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
         line("modifiable.diff = diff")
-        line("modifiable.snapshot = diff")
         line("modifiable.id = createEntityId()")
         line("return modifiable")
       }
@@ -84,44 +78,12 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         }
       }
 
-      if (isEntityWithSymbolicId) {
-        val symbolicIdField = fields.first { it.name == "symbolicId" }
-        val valueKind = symbolicIdField.valueKind
-        val methodBody = (valueKind as ObjProperty.ValueKind.Computable).expression
-        if (methodBody.contains("return")) {
-          if (methodBody.startsWith("{")) {
-            line("override fun symbolicId(): ${SymbolicEntityId}<*> $methodBody \n")
-          } else {
-            sectionNl("override fun symbolicId(): ${SymbolicEntityId}<*>") {
-                line(methodBody)
-            }
-          }
-        } else {
-          sectionNl("override fun symbolicId(): ${SymbolicEntityId}<*>") {
-            if (methodBody.startsWith("=")) {
-              line("return ${methodBody.substring(2)}")
-            }
-            else {
-              line("return $methodBody")
-            }
-          }
-        }
-      }
-
       // --- getEntityInterface method
       sectionNl("override fun getEntityInterface(): Class<out ${WorkspaceEntity}>") {
         line("return $name::class.java")
       }
 
-      sectionNl("override fun serialize(ser: ${EntityInformation.Serializer})") {
-        //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, SerializatorVisitor(this@sectionNl))
-      }
-
-      sectionNl("override fun deserialize(de: ${EntityInformation.Deserializer})") {
-        //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
-      }
-
-      sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity}>): $WorkspaceEntity") {
+      sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity.Builder}<*>>): ${WorkspaceEntity.Builder}<*>") {
         val noRefs = allFields.noRefs().noSymbolicId()
         val mandatoryFields = allFields.mandatoryFields()
         val constructor = mandatoryFields.joinToString(", ") { it.name }.let { if (it.isNotBlank()) "($it)" else "" }
@@ -134,9 +96,9 @@ fun ObjClass<*>.implWsDataClassCode(): String {
           allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
             val parentType = it.valueType
             if (parentType is ValueType.Optional) {
-              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
+              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaBuilderTypeWithGeneric}>().singleOrNull()")
             } else {
-              line("parents.filterIsInstance<${parentType.javaType}>().singleOrNull()?.let { this.${it.name} = it }")
+              line("parents.filterIsInstance<${parentType.javaBuilderTypeWithGeneric}>().singleOrNull()?.let { this.${it.name} = it }")
             }
           }
         }

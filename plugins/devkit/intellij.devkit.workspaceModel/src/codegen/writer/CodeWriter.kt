@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.devkit.workspaceModel.CodegenJarLoader
 import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
@@ -12,25 +13,25 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.engine.*
+import kotlinx.coroutines.delay
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
+import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
@@ -39,6 +40,7 @@ import java.io.IOException
 import java.net.URL
 import java.util.*
 import java.util.jar.Manifest
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<CodeWriter>()
 
@@ -47,7 +49,8 @@ object CodeWriter {
   suspend fun generate(
     project: Project, module: Module, sourceFolder: VirtualFile,
     processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean,
-    targetFolderGenerator: () -> VirtualFile?
+    targetFolderGenerator: () -> VirtualFile?,
+    existingTargetFolder: () -> VirtualFile?
   ) {
     val sourceFilePerObjModule = HashMap<String, VirtualFile>()
     val ktClasses = HashMap<String, KtClass>()
@@ -69,6 +72,7 @@ object CodeWriter {
     }
     if (ktClasses.isEmpty()) return
 
+    waitSmartMode(project)
     val classLoader = CodegenJarLoader.getInstance(project).getClassLoader()
     val serviceLoader = ServiceLoader.load(CodeGenerator::class.java, classLoader).findFirst()
     if (serviceLoader.isEmpty) error("Can't load generator")
@@ -91,6 +95,11 @@ object CodeWriter {
 
         if (generatedCode.isEmpty() || problems.any { it.level == GenerationProblem.Level.ERROR }) {
           LOG.info("Not found types for generation")
+          val genFolder = existingTargetFolder.invoke()
+          if (genFolder != null) {
+            indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
+            removeGeneratedCode(ktClasses, genFolder)
+          }
           return@runWriteActionWithCancellableProgressInDispatchThread
         }
 
@@ -101,8 +110,6 @@ object CodeWriter {
         }
 
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
-        val psiFactory = KtPsiFactory(project)
-
         removeGeneratedCode(ktClasses, genFolder)
 
         val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
@@ -112,7 +119,14 @@ object CodeWriter {
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
         indicator.isIndeterminate = false
 
+        val settings = CodeStyle.getSettings(project)
+        val kotlinSettings = settings.getCustomSettings(KotlinCodeStyleSettings::class.java)
+        val oldValue = kotlinSettings.NAME_COUNT_TO_USE_STAR_IMPORT
+        kotlinSettings.NAME_COUNT_TO_USE_STAR_IMPORT = Int.MAX_VALUE
+        CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged()
+
         generatedCode.forEachIndexed { i, code ->
+          val psiFactory = KtPsiFactory(project)
           indicator.fraction = 0.15 + 0.1 * i / generatedCode.size
           when (code) {
             is ObjModuleFileGeneratedCode ->
@@ -160,8 +174,24 @@ object CodeWriter {
           indicator.fraction = 0.95 + 0.05 * i / filesWithGeneratedRegions.size
           reformatCodeInGeneratedRegions(file, classes.mapNotNull { it.body?.node } + listOf(file.node))
         }
+
+        kotlinSettings.NAME_COUNT_TO_USE_STAR_IMPORT = oldValue
+        CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged()
       }
     }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
+  }
+
+  // Documentation for IndexNotReadyException says that it's enough to run completeJustSubmittedTasks only once
+  //  however, in practive this is not enough
+  private suspend fun waitSmartMode(project: Project) {
+    for (i in 1..100) {
+      if (i == 99) error("99 updates")
+      if (DumbService.isDumb(project)) {
+        DumbService.getInstance(project).completeJustSubmittedTasks()
+        delay(1.seconds)
+      }
+      else break
+    }
   }
 
   private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {
@@ -232,7 +262,7 @@ object CodeWriter {
       processAbstractTypes = processAbstractTypes,
       module.project
     )
-    return packages.map { metaModelProvider.getObjModule(it, module) }
+    return packages.filter { it != "" }.map { metaModelProvider.getObjModule(it, module) }
   }
 
   private fun generate(codeGenerator: CodeGenerator, objModules: List<CompiledObjModule>,
@@ -281,7 +311,8 @@ object CodeWriter {
     val sourceFile = sourceFilePerObjModule[packageFqnName]!!
     val targetDirectory = getPsiDirectory(project, genFolder, sourceFolder, sourceFile)
 
-    val implImports = Imports(packageFqnName)
+    val implPackageFqnName = "$packageFqnName.impl"
+    val implImports = Imports(implPackageFqnName)
     val implFile = psiFactory.createFile("${code.fileName}.kt", implImports.findAndRemoveFqns(code.generatedCode))
 
     targetDirectory.findFile(implFile.name)?.delete()
@@ -313,7 +344,9 @@ object CodeWriter {
     if (implementationClassText != null) {
       val sourceFile = apiClass.containingFile.virtualFile
       val targetDirectory = getPsiDirectory(project, genFolder, sourceFolder, sourceFile)
-      val implImports = Imports(apiFile.packageFqName.asString())
+
+      val implPackageFqnName = "${apiFile.packageFqName.asString()}.impl"
+      val implImports = Imports(implPackageFqnName)
       val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
       copyHeaderComment(apiFile, implFile)
       apiClass.containingKtFile.importDirectives.mapNotNull { it.importPath }.forEach { import ->
@@ -329,7 +362,8 @@ object CodeWriter {
 
   private fun getPsiDirectory(project: Project, genFolder: VirtualFile, sourceFolder: VirtualFile, sourceFile: VirtualFile): PsiDirectory {
     val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceFolder, '/')
-    val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
+    // We store entities' implementation in impl package
+    val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath/impl")
     return PsiManager.getInstance(project).findDirectory(packageFolder)!!
   }
 
@@ -393,6 +427,7 @@ object CodeWriter {
 
   private fun reformatCodeInGeneratedRegions(file: PsiFile, nodes: List<ASTNode>) {
     val generatedRegions = nodes.flatMap { findGeneratedRegions(it) }
+    if (generatedRegions.isEmpty()) return
     val regions = generatedRegions.map { TextRange.create(it.first.startOffset, it.second.startOffset + it.second.textLength) }
     CodeStyleManager.getInstance(file.project).reformatText(file, joinAdjacentRegions(regions))
   }

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.Nls
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
@@ -13,10 +14,14 @@ import javax.swing.JComponent
  * To open any JComponent in editor tab you can call
  * JComponentEditorProvider.openEditor(project, "Title", jComponent)
  */
-class JComponentFileEditor(private val file: VirtualFile, private val component: JComponent) : UserDataHolderBase(), FileEditor {
+class JComponentFileEditor(private val file: VirtualFile,
+                           private val component: JComponent,
+                           private val name: @Nls String) : UserDataHolderBase(), FileEditor {
+  constructor(file: VirtualFile, component: JComponent) : this(file, component, file.name)
+
   override fun getComponent(): JComponent = this.component
   override fun getPreferredFocusedComponent(): JComponent = this.component
-  override fun getName(): String = file.name
+  override fun getName(): String = name
   override fun setState(state: FileEditorState) {}
   override fun isModified(): Boolean = false
   override fun isValid(): Boolean = true

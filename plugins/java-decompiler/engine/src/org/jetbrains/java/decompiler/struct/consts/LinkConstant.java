@@ -1,16 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.consts;
 
+import org.jetbrains.java.decompiler.code.CodeConstants;
+
 public class LinkConstant extends PooledConstant {
   public int index1, index2;
-  public String classname;
-  public String elementname;
+  public String className;
+  public String elementName;
   public String descriptor;
 
-  public LinkConstant(int type, String classname, String elementname, String descriptor) {
+  public LinkConstant(int type, String className, String elementName, String descriptor) {
     super(type);
-    this.classname = classname;
-    this.elementname = elementname;
+    this.className = className;
+    this.elementName = elementName;
     this.descriptor = descriptor;
 
     initConstant();
@@ -23,39 +25,40 @@ public class LinkConstant extends PooledConstant {
   }
 
   private void initConstant() {
-    if (type == CONSTANT_Methodref ||
-        type == CONSTANT_InterfaceMethodref ||
-        type == CONSTANT_InvokeDynamic ||
-        (type == CONSTANT_MethodHandle && index1 != CONSTANT_MethodHandle_REF_getField && index1 != CONSTANT_MethodHandle_REF_putField)) {
+    if (type == CodeConstants.CONSTANT_Methodref ||
+        type == CodeConstants.CONSTANT_InterfaceMethodref ||
+        type == CodeConstants.CONSTANT_InvokeDynamic ||
+        (type == CodeConstants.CONSTANT_MethodHandle && index1 != CodeConstants.CONSTANT_MethodHandle_REF_getField &&
+         index1 != CodeConstants.CONSTANT_MethodHandle_REF_putField)) {
       int parenth = descriptor.indexOf(')');
       if (descriptor.length() < 2 || parenth < 0 || descriptor.charAt(0) != '(') {
         throw new IllegalArgumentException("Invalid descriptor: " + descriptor +
-                                           "; type = " + type + "; classname = " + classname + "; elementname = " + elementname);
+                                           "; type = " + type + "; className = " + className + "; elementName = " + elementName);
       }
     }
   }
 
   @Override
   public void resolveConstant(ConstantPool pool) {
-    if (type == CONSTANT_NameAndType) {
-      elementname = pool.getPrimitiveConstant(index1).getString();
+    if (type == CodeConstants.CONSTANT_NameAndType) {
+      elementName = pool.getPrimitiveConstant(index1).getString();
       descriptor = pool.getPrimitiveConstant(index2).getString();
     }
-    else if (type == CONSTANT_MethodHandle) {
+    else if (type == CodeConstants.CONSTANT_MethodHandle) {
       LinkConstant ref_info = pool.getLinkConstant(index2);
 
-      classname = ref_info.classname;
-      elementname = ref_info.elementname;
+      className = ref_info.className;
+      elementName = ref_info.elementName;
       descriptor = ref_info.descriptor;
     }
     else {
-      if (type != CONSTANT_InvokeDynamic && type != CONSTANT_Dynamic) {
-        classname = pool.getPrimitiveConstant(index1).getString();
+      if (type != CodeConstants.CONSTANT_InvokeDynamic && type != CodeConstants.CONSTANT_Dynamic) {
+        className = pool.getPrimitiveConstant(index1).getString();
       }
 
-      LinkConstant nametype = pool.getLinkConstant(index2);
-      elementname = nametype.elementname;
-      descriptor = nametype.descriptor;
+      LinkConstant nameType = pool.getLinkConstant(index2);
+      elementName = nameType.elementName;
+      descriptor = nameType.descriptor;
     }
 
     initConstant();
@@ -67,8 +70,8 @@ public class LinkConstant extends PooledConstant {
     if (!(o instanceof LinkConstant cn)) return false;
 
     return this.type == cn.type &&
-           this.elementname.equals(cn.elementname) &&
+           this.elementName.equals(cn.elementName) &&
            this.descriptor.equals(cn.descriptor) &&
-           (this.type != CONSTANT_NameAndType || this.classname.equals(cn.classname));
+           (this.type != CodeConstants.CONSTANT_NameAndType || this.className.equals(cn.className));
   }
 }

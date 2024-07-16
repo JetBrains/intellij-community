@@ -16,15 +16,38 @@
 package com.intellij.openapi.diff;
 
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class LineTokenizerTest extends TestCase {
   public void test() {
-    assertThat(new LineTokenizer("a\nb\n\rc\rd\r\n").execute()).containsExactly("a\n", "b\n", "c\n", "d\n");
-    assertThat(new LineTokenizer("a\nb").execute()).containsExactly("a\n", "b");
     LineTokenizer lineTokenizer = new LineTokenizer("a\n\r\r\nb");
-    assertThat(lineTokenizer.execute()).containsExactly("a\n", "\n", "b");
+    lineTokenizer.execute();
     assertEquals("\n\r", lineTokenizer.getLineSeparator());
+
+    assertTokensAre("a\n\r\r\nb",
+                    "a\n", "\n", "b");
+    assertTokensAre("a\nb\n\rc\rd\r\n",
+                    "a\n", "b\n", "c\n", "d\n");
+    assertTokensAre("a\nb",
+                    "a\n", "b");
+
+    assertTokensAre("");
+    assertTokensAre(" ",
+                    " ");
+    assertTokensAre("\n",
+                    "\n");
+    assertTokensAre("\r",
+                    "\n");
+    assertTokensAre("a\n\n\n",
+                    "a\n", "\n", "\n");
+    assertTokensAre("a\r\r\r",
+                    "a\n", "\n", "\n");
+  }
+
+  private static void assertTokensAre(@NotNull String input, String... expected) {
+    String[] actual = new LineTokenizer(input).execute();
+    assertThat(actual).containsExactly(expected);
   }
 }

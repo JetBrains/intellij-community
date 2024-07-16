@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "false"
+// "Add non-null asserted (i!!) call" "false"
 // ACTION: Add 'i =' to argument
 // ACTION: Change parameter 'i' type of function 'other' to 'Int?'
 // ACTION: Create function 'other'

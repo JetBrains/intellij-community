@@ -36,6 +36,10 @@ public final class DocumentationSettings {
     return ClientDocumentationSettings.getCurrentInstance().getInlineCodeHighlightingMode();
   }
 
+  public static boolean autoShowQuickDocInModalDialogs() {
+    return ClientDocumentationSettings.getCurrentInstance().autoShowQuickDocInModalDialogs();
+  }
+
   /**
    * Allows reducing saturation of highlighting colors in order to lower distraction from the main code.
    * Here 100 is the normal saturation (bright tones) and 0 is zero saturation (grey tones)

@@ -5,9 +5,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.codeInsight.isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
@@ -18,19 +18,19 @@ internal object K2SoftDeprecationWeigher {
     private var LookupElement.isSoftDeprecated: Boolean
             by NotNullableUserDataProperty(Key("KOTLIN_SOFT_DEPRECATED"), false)
 
-    context(KtAnalysisSession)
+    context(KaSession)
 fun addWeight(
         lookupElement: LookupElement,
-        symbol: KtSymbol,
+        symbol: KaSymbol,
         languageVersionSettings: LanguageVersionSettings
     ) {
-        val callableSymbol = symbol as? KtCallableSymbol ?: return
+        val callableSymbol = symbol as? KaCallableSymbol ?: return
         lookupElement.isSoftDeprecated = isLibrarySoftDeprecatedMethod(callableSymbol, languageVersionSettings) ||
                 isEnumValuesSoftDeprecatedMethod(callableSymbol, languageVersionSettings)
     }
 
-    private fun isLibrarySoftDeprecatedMethod(symbol: KtCallableSymbol, languageVersionSettings: LanguageVersionSettings): Boolean {
-        val fqName = symbol.callableIdIfNonLocal?.asSingleFqName()
+    private fun isLibrarySoftDeprecatedMethod(symbol: KaCallableSymbol, languageVersionSettings: LanguageVersionSettings): Boolean {
+        val fqName = symbol.callableId?.asSingleFqName()
         return fqName != null &&
                 SoftDeprecationWeigher.isSoftDeprecatedFqName(fqName, languageVersionSettings)
     }
@@ -39,9 +39,9 @@ fun addWeight(
      * Lower soft-deprecated `Enum.values()` method in completion.
      * See [KT-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
      */
-    context(KtAnalysisSession)
+    context(KaSession)
 private fun isEnumValuesSoftDeprecatedMethod(
-        symbol: KtCallableSymbol,
+        symbol: KaCallableSymbol,
         languageVersionSettings: LanguageVersionSettings
     ): Boolean {
         return languageVersionSettings.isEnumValuesSoftDeprecateEnabled()

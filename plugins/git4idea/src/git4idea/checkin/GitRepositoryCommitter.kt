@@ -13,8 +13,8 @@ import com.intellij.vcs.commit.CommitExceptionWithActions
 import com.intellij.vcs.commit.isAmendCommitMode
 import com.intellij.vcs.commit.isCleanupCommitMessage
 import com.intellij.vcs.log.VcsUser
-import git4idea.checkin.GitCheckinEnvironment.COMMIT_DATE_FORMAT
-import git4idea.checkin.GitCheckinEnvironment.runWithMessageFile
+import git4idea.checkin.GitCheckinEnvironment.Companion.COMMIT_DATE_FORMAT
+import git4idea.checkin.GitCheckinEnvironment.Companion.runWithMessageFile
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -47,8 +47,9 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
   val root: VirtualFile get() = repository.root
 
   @Throws(VcsException::class)
-  fun commitStaged(commitMessage: String) =
+  fun commitStaged(commitMessage: String) {
     runWithMessageFile(project, root, commitMessage) { messageFile -> commitStaged(messageFile) }
+  }
 
   @Throws(VcsException::class)
   fun commitStaged(messageFile: File) {

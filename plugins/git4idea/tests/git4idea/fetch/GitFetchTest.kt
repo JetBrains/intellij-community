@@ -33,7 +33,7 @@ class GitFetchTest : GitPlatformTest() {
 
     cd(repo)
     assertEquals("The latest commit on origin/master is incorrect", hash, log("--pretty=%H -1 origin/master"))
-    assertSuccessfulNotification("<b>Fetch Successful</b>")
+    assertSuccessfulNotification("Fetch successful", "")
   }
 
   fun `test fetch specific remote`() {
@@ -48,7 +48,7 @@ class GitFetchTest : GitPlatformTest() {
 
     cd(repo)
     assertEquals("The latest commit on second/master is incorrect", hash1, log("--pretty=%H -1 second/master"))
-    assertSuccessfulNotification("<b>Fetch Successful</b>")
+    assertSuccessfulNotification("Fetch successful", "")
   }
 
   fun `test fetch all remotes`() {
@@ -64,7 +64,7 @@ class GitFetchTest : GitPlatformTest() {
     cd(repo)
     assertEquals("The latest commit on second/master is incorrect", hash1, log("--pretty=%H -1 second/master"))
     assertEquals("The latest commit on origin/master is incorrect", hash2, log("--pretty=%H -1 origin/master"))
-    assertSuccessfulNotification("<b>Fetch Successful</b>")
+    assertSuccessfulNotification("Fetch successful", "")
   }
 
   private fun prepareSecondRemote() : GitRemote {

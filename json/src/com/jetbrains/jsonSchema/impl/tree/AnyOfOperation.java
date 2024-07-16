@@ -6,6 +6,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.SchemaResolveState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -14,8 +15,8 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder.andGro
 public class AnyOfOperation extends Operation {
   private final JsonSchemaService myService;
 
-  public AnyOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service) {
-    super(sourceNode);
+  public AnyOfOperation(@NotNull JsonSchemaObject sourceNode, JsonSchemaService service, @Nullable JsonSchemaNodeExpansionRequest expansionRequest) {
+    super(sourceNode, expansionRequest);
     myService = service;
   }
 
@@ -23,7 +24,7 @@ public class AnyOfOperation extends Operation {
   public void map(final @NotNull Set<JsonSchemaObject> visited) {
     var anyOf = mySourceNode.getAnyOf();
     assert anyOf != null;
-    myChildOperations.addAll(ContainerUtil.map(anyOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
+    myChildOperations.addAll(ContainerUtil.map(anyOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService, myExpansionRequest)));
   }
 
   @Override

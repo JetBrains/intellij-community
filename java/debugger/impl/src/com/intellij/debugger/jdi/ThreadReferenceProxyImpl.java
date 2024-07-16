@@ -6,6 +6,7 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.engine.DebuggerDiagnosticsUtil;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -19,10 +20,12 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -41,6 +44,11 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private ThreeState myResumeOnHotSwap = ThreeState.UNSURE;
 
   private final EventDispatcher<ThreadListener> myListeners = EventDispatcher.create(ThreadListener.class);
+
+  private volatile boolean myIsEvaluating = false;
+
+  // This counter can go negative value if the engine stops the whole JVM, but resumed this particular thread
+  public int myModelSuspendCount = 0;
 
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
     int res = Boolean.compare(th2.isSuspended(), th1.isSuspended());
@@ -99,7 +107,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public void suspend() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
-      getThreadReference().suspend();
+      suspendImpl();
     }
     catch (ObjectCollectedException ignored) {
     }
@@ -107,10 +115,17 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     myListeners.getMulticaster().threadSuspended();
   }
 
+  @ApiStatus.Internal
+  public void suspendImpl() {
+    myModelSuspendCount++;
+    getThreadReference().suspend();
+  }
+
   @NonNls
   public String toString() {
     try {
-      return name() + ": " + DebuggerUtilsEx.getThreadStatusText(status());
+      String name = DebuggerDiagnosticsUtil.needAnonymizedReports() ? ("Thread(uniqueID=" + getThreadReference().uniqueID() + ")") : name();
+      return name + ": " + DebuggerUtilsEx.getThreadStatusText(status());
     }
     catch (ObjectCollectedException ignored) {
       return "[thread collected]";
@@ -120,13 +135,18 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   public void resume() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //JDI clears all caches on thread resume !!
-    final ThreadReference threadRef = getThreadReference();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("before resume" + threadRef);
+      LOG.debug("before resume" + getThreadReference());
     }
     getVirtualMachineProxy().clearCaches();
-    DebuggerUtilsAsync.resume(threadRef);
+    resumeImpl();
     myListeners.getMulticaster().threadResumed();
+  }
+
+  @ApiStatus.Internal
+  public void resumeImpl() {
+    myModelSuspendCount--;
+    DebuggerUtilsAsync.resume(getThreadReference());
   }
 
   @Override
@@ -220,6 +240,9 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       ThreadReference threadReference = getThreadReference();
       return DebuggerUtilsAsync.frameCount(threadReference)
         .exceptionally(throwable -> {
+          if (throwable instanceof CancellationException cancellationException) {
+            throw cancellationException;
+          }
           Throwable unwrap = DebuggerUtilsAsync.unwrap(throwable);
           if (unwrap instanceof ObjectCollectedException) {
             return 0;
@@ -446,8 +469,43 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return myResumeOnHotSwap.toBoolean();
   }
 
+  public int getWholeSuspendModelNumber() {
+    return myModelSuspendCount + getVirtualMachine().getModelSuspendCount();
+  }
+
+  @ApiStatus.Internal
+  public void threadWasSuspended() {
+    myModelSuspendCount++;
+  }
+
+  @ApiStatus.Internal
+  public void threadWasResumed() {
+    myModelSuspendCount--;
+  }
+
   public void addListener(ThreadListener listener, Disposable disposable) {
     myListeners.addListener(listener, disposable);
+  }
+
+  public void removeListener(ThreadListener listener) {
+    myListeners.removeListener(listener);
+  }
+
+
+  @ApiStatus.Internal
+  public boolean isEvaluating() {
+    return myIsEvaluating;
+  }
+
+  @ApiStatus.Internal
+  public void setEvaluating(boolean evaluating) {
+    myIsEvaluating = evaluating;
+    if (evaluating) {
+      threadWasResumed();
+    }
+    else {
+      threadWasSuspended();
+    }
   }
 
   public interface ThreadListener extends EventListener{

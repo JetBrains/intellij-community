@@ -29,7 +29,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImpo
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
+public final class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
   private static Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages) {
     Set<GroovyFile> files = new HashSet<>();
     for (UsageInfo usage : usages) {

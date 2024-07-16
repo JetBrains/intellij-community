@@ -56,8 +56,7 @@ public final class InnerClassMayBeStaticInspection extends BaseInspection {
     new OrderedSet<>(Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED));
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("inner.class.may.be.static.problem.descriptor");
   }
 
@@ -85,8 +84,7 @@ public final class InnerClassMayBeStaticInspection extends BaseInspection {
   private static class InnerClassMayBeStaticFix extends ModCommandBatchQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("make.static.quickfix");
     }
 

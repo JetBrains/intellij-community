@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -31,7 +31,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   private static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
   private static final Logger LOG = Logger.getInstance(AbstractTreeNode.class);
-  private AbstractTreeNode<?> myParent;
+  private AbstractTreeNode<?> parent;
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
@@ -97,7 +97,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     fgColor = fgColor == null ? status.getColor() : fgColor;
 
     if (valueIsCut()) {
-      fgColor = CopyPasteManager.CUT_COLOR;
+      fgColor = CopyPasteManager.getCutColor();
     }
 
     if (presentation.getForcedTextForeground() == null) {
@@ -166,16 +166,16 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   public final AbstractTreeNode getParent() {
-    return myParent;
+    return parent;
   }
 
   public final void setParent(AbstractTreeNode parent) {
-    myParent = parent;
+    this.parent = parent;
   }
 
   @Override
-  public final NodeDescriptor getParentDescriptor() {
-    return myParent;
+  public final NodeDescriptor<?> getParentDescriptor() {
+    return parent;
   }
 
   public final T getValue() {
@@ -194,7 +194,6 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   protected void recordValueSetTrace(boolean nullValue) {
-
   }
 
   /**
@@ -339,5 +338,4 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     }
 
   }
-
 }

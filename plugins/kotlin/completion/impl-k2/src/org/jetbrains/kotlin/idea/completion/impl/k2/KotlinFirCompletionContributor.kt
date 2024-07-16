@@ -10,7 +10,8 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -94,7 +95,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun complete(
         basicContext: FirBasicCompletionContext,
         positionContext: KotlinRawPositionContext,
@@ -111,7 +112,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     private inline fun analyzeInContext(
         basicContext: FirBasicCompletionContext,
         positionContext: KotlinRawPositionContext,
-        action: KtAnalysisSession.() -> Unit
+        action: KaSession.() -> Unit
     ) {
         analyze(basicContext.fakeKtFile) {
             when (positionContext) {
@@ -124,14 +125,16 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaAnalysisApiInternals::class)
     private fun recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
         val originalFile = basicCompletionContext.originalKtFile
         val fakeFile = basicCompletionContext.fakeKtFile
         fakeFile.recordOriginalKtFile(originalFile)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaAnalysisApiInternals::class)
     private fun recordOriginalDeclaration(basicContext: FirBasicCompletionContext, declaration: KtDeclaration) {
         try {
             declaration.recordOriginalDeclaration(PsiTreeUtil.findSameElementInCopy(declaration, basicContext.originalKtFile))

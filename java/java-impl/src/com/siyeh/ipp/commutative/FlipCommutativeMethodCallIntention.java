@@ -36,7 +36,7 @@ public final class FlipCommutativeMethodCallIntention extends MCIntention {
   protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     assert methodName != null;
     if ("equals".equals(methodName) || "equalsIgnoreCase".equals(methodName)) {
       return IntentionPowerPackBundle.message(
@@ -49,13 +49,12 @@ public final class FlipCommutativeMethodCallIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new FlipCommutativeMethodCallPredicate();
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression expression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression argument = argumentList.getExpressions()[0];

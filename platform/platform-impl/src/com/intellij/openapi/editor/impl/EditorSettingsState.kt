@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.lang.Language
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
@@ -13,7 +14,8 @@ import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
-import com.intellij.openapi.editor.impl.stickyLines.StickyLineComponent.Companion.EDITOR_LANGUAGE
+import com.intellij.openapi.editor.impl.stickyLines.StickyLinesLanguageSupport
+import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineComponent.Companion.EDITOR_LANGUAGE
 import com.intellij.openapi.editor.state.CustomOutValueModifier
 import com.intellij.openapi.editor.state.ObservableState
 import com.intellij.openapi.editor.state.ObservableStateListener
@@ -79,6 +81,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myLineMarkerAreaShown: Boolean by property(true)
   var myAllowSingleLogicalLineFolding: Boolean by property(false)
   var myAutoCodeFoldingEnabled: Boolean by property(true)
+  var myAreLineNumbersAfterIcons: Boolean by property { EditorSettingsExternalizable.getInstance().isLineNumbersAfterIcons }
 
   // These come from CodeStyleSettings.
   var myUseTabCharacter: Boolean by property {
@@ -125,6 +128,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
     if (editor != null && rightMargin == CodeStyleConstraints.MAX_RIGHT_MARGIN) false
     else EditorSettingsExternalizable.getInstance().isRightMarginShown
   }
+  var myIsHighlightSelectionOccurrences: Boolean by property { EditorSettingsExternalizable.getInstance().isHighlightSelectionOccurrences }
   var myVerticalScrollOffset: Int by property { EditorSettingsExternalizable.getInstance().verticalScrollOffset }
 
 
@@ -177,11 +181,12 @@ class EditorSettingsState(private val editor: EditorImpl?,
   var myStickyLinesShown: Boolean by property { EditorSettingsExternalizable.getInstance().areStickyLinesShown() }
   var myStickyLinesShownForLanguage: Boolean by property {
     this.language?.let {
-      EditorSettingsExternalizable.getInstance().areStickyLinesShownFor(it.id)
+      val lang = project?.service<StickyLinesLanguageSupport>()?.supportedLang(it) ?: it
+      EditorSettingsExternalizable.getInstance().areStickyLinesShownFor(lang.id)
     }
     // Return true to avoid the late appearance of the sticky panel.
-    // Even if the actual value for the language is false,
-    // the panel won't be shown because breadcrumbs' provider respects the settings
+    // If the actual value for the language is false,
+    // the editor removes all lines from the sticky model later
     ?: true
   }
   var myStickyLinesLimit: Int by property { EditorSettingsExternalizable.getInstance().stickyLineLimit }
@@ -337,6 +342,7 @@ class EditorSettingsState(private val editor: EditorImpl?,
   private fun onLanguageChanged() {
     refresh(::softMargins)
     refresh(::rightMargin)
+    refresh(::myStickyLinesShownForLanguage)
     editor?.putUserData(EDITOR_LANGUAGE, language)
   }
 }

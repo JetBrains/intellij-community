@@ -308,6 +308,7 @@
     </action>
     <action id="Forward">
         <keyboard-shortcut first-keystroke="shift ctrl minus" />
+        <mouse-shortcut keystroke="button5"/>
     </action>
     <action id="Generate">
         <keyboard-shortcut first-keystroke="ctrl enter" />

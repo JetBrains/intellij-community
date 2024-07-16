@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
@@ -10,14 +10,14 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.jetbrains.jdi.ClassTypeImpl
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
-import org.jetbrains.kotlin.idea.debugger.core.isOnSuspensionPoint
+import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Type
 
@@ -32,6 +32,13 @@ open class KotlinRequestHint(
     private val myInlineFilter = createKotlinInlineFilter(suspendContext)
     override fun isTheSameFrame(context: SuspendContextImpl) =
         super.isTheSameFrame(context) && (myInlineFilter === null || !myInlineFilter.isNestedInline(context))
+
+    override fun getNextStepDepth(context: SuspendContextImpl): Int {
+        if (needTechnicalStepInto(context)) {
+            return StepRequest.STEP_INTO
+        }
+        return super.getNextStepDepth(context)
+    }
 
     override fun doStep(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl?, stepThread: ThreadReferenceProxyImpl?, size: Int, depth: Int, commandToken: Any?) {
         if (depth == StepRequest.STEP_OUT) {
@@ -48,6 +55,33 @@ open class KotlinRequestHint(
             }
         }
         super.doStep(debugProcess, suspendContext, stepThread, size, depth, commandToken)
+    }
+}
+
+class KotlinStepOutRequestHint(
+    private val returnAfterSuspendIndex: Int,
+    stepThread: ThreadReferenceProxyImpl,
+    suspendContext: SuspendContextImpl,
+    stepSize: Int,
+    depth: Int,
+    filter: MethodFilter?,
+    parentHint: RequestHint?
+): KotlinRequestHint(stepThread, suspendContext, stepSize, depth, filter, parentHint) {
+    override fun getNextStepDepth(context: SuspendContextImpl): Int {
+        val currentLocation = context.location
+        if (currentLocation != null) {
+            /*
+               If the coroutine suspends, then the suspending function returns COROUTINE_SUSPENDED:
+               if (foo(arg) == COROUTINE_SUSPENDED) {
+                  return COROUTINE_SUSPENDED // returnAfterSuspendIndex
+               }
+               If the execution reaches this suspend return instruction, the coroutine was suspended ->
+               resume and wait till the resume breakpoint set at the caller method is reached.
+             */
+            if (currentLocation.codeIndex() < returnAfterSuspendIndex) return StepRequest.STEP_OVER
+            if (currentLocation.codeIndex() == returnAfterSuspendIndex.toLong()) return RESUME
+        }
+        return super.getNextStepDepth(context)
     }
 }
 
@@ -75,22 +109,30 @@ class KotlinStepOverRequestHint(
 
     private val startLocation = LocationData.create(suspendContext.getLocationCompat())
 
+    private var hasBeenAtSuspensionSwitcher = false
+
     override fun getNextStepDepth(context: SuspendContextImpl): Int {
         try {
             val frameProxy = context.frameProxy ?: return STOP
             if (isTheSameFrame(context)) {
                 if (frameProxy.isOnSuspensionPoint()) {
-                    // Coroutine will sleep now so we can't continue stepping.
-                    // Let's put a run-to-cursor breakpoint and resume the debugger.
-                    return if (!installCoroutineResumedBreakpoint(context)) STOP else RESUME
+                    isIgnoreFilters = true
+                    hasBeenAtSuspensionSwitcher = true
+                    return StepRequest.STEP_OVER
                 }
 
                 val location = frameProxy.safeLocation()
                 val isAcceptable = location != null && filter.locationMatches(context, location)
                 return if (isAcceptable) STOP else StepRequest.STEP_OVER
             } else if (isSteppedOut) {
+                if (hasBeenAtSuspensionSwitcher) {
+                    return RESUME
+                }
                 val location = frameProxy.safeLocation()
 
+                if (needTechnicalStepInto(context)) {
+                    return StepRequest.STEP_INTO
+                }
                 processSteppingFilters(context, location)?.let { return it }
 
                 val method = location?.safeMethod()
@@ -145,15 +187,6 @@ class KotlinStepOverRequestHint(
 
         return endArgs[endArgs.size - 1].descriptor == "Ljava/lang/Object;"
     }
-
-    private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl): Boolean {
-        val frameProxy = context.frameProxy ?: return false
-        val location = frameProxy.safeLocation() ?: return false
-        val method = location.safeMethod() ?: return false
-
-        context.debugProcess.cancelRunToCursorBreakpoint()
-        return CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(context, location, method)
-    }
 }
 
 interface StopOnReachedMethodFilter
@@ -173,6 +206,13 @@ class KotlinStepIntoRequestHint(
     override fun getNextStepDepth(context: SuspendContextImpl): Int {
         try {
             val frameProxy = context.frameProxy ?: return STOP
+            if (isTheSameFrame(context)) {
+                if (frameProxy.isOnSuspensionPoint()) {
+                    // Coroutine will sleep now so we can't continue stepping.
+                    // Let's put a run-to-cursor breakpoint and resume the debugger.
+                    return if (!CoroutineBreakpointFacility.installResumeBreakpointInCurrentMethod(context)) STOP else RESUME
+                }
+            }
             val location = frameProxy.safeLocation()
             // Continue stepping into if we are at a compiler generated fake line number.
             if (location != null && isKotlinFakeLineNumber(location)) {
@@ -199,4 +239,28 @@ class KotlinStepIntoRequestHint(
         }
         return STOP
     }
+}
+
+private fun needTechnicalStepInto(context: SuspendContextImpl): Boolean {
+    val location = context.location ?: return false
+
+    if (!location.isInKotlinSources()) {
+        return false
+    }
+
+    if (location.method()?.name() == "invoke" &&
+        (location.declaringType() as? ClassTypeImpl)?.superclass()?.name() == "kotlin.coroutines.jvm.internal.SuspendLambda") {
+        return true
+    }
+
+    if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !isOneLineMethod(location)) {
+        return true
+    }
+
+    //stepped out from suspend function
+    val method = location.safeMethod()
+    if (method != null && isInvokeSuspendMethod(method) && location.safeLineNumber() < 0) {
+        return true
+    }
+    return false
 }

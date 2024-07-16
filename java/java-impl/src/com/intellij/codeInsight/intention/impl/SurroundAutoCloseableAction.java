@@ -1,16 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.modcommand.*;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -253,18 +252,17 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
     }
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.surround.resource.with.ARM.block");
   }
 
-  public static final class Template implements SurroundDescriptor, Surrounder {
+  public static final class Template extends ModCommandSurrounder implements SurroundDescriptor {
     private final Surrounder[] mySurrounders = {this};
 
     @Override
     public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
-      if (!PsiUtil.isLanguageLevel7OrHigher(file)) return PsiElement.EMPTY_ARRAY;
+      if (!PsiUtil.isAvailable(JavaFeature.TRY_WITH_RESOURCES, file)) return PsiElement.EMPTY_ARRAY;
       PsiElement element = file.findElementAt(endOffset);
       PsiElement target = findExpression(element);
       if (target == null) {
@@ -293,15 +291,12 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
       return elements.length == 1 && (findExpression(elements[0]) != null || findVariable(elements[0]) != null);
     }
 
-    @Nullable
     @Override
-    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
+    public @NotNull ModCommand surroundElements(@NotNull ActionContext context, @NotNull PsiElement @NotNull [] elements) {
       if (elements.length == 1) {
-        ActionContext context = ActionContext.from(editor, elements[0].getContainingFile());
-        ModCommand command = new SurroundAutoCloseableAction().perform(context, elements[0]);
-        ModCommandExecutor.getInstance().executeInteractively(context, command, editor);
+        return new SurroundAutoCloseableAction().perform(context, elements[0]);
       }
-      return null;
+      return ModCommand.nop();
     }
   }
 }

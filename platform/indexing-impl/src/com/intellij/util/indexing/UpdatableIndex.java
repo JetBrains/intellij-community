@@ -6,6 +6,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
+@Internal
 public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends InvertedIndex<Key, Value, Input>{
 
   boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws
@@ -33,7 +35,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   /**
    * @deprecated use {@linkplain #setIndexedStateForFileOnFileIndexMetaData(int, Object, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileIndexMetaData data) {
     throw new IllegalStateException("Please override setIndexedStateForFileOnFileIndexMetaData(int, FileIndexMetaData, boolean)");
   }
@@ -47,7 +49,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   /**
    * @deprecated use {@linkplain #setIndexedStateForFile(int, IndexedFile, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
     throw new IllegalStateException("Please override setIndexedStateForFile(int, IndexedFile, boolean)");
   }

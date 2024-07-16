@@ -22,7 +22,6 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.intellij.lang.annotations.Pattern;
@@ -45,8 +44,7 @@ public final class LocalVariableHidingMemberVariableInspection extends BaseInspe
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "LocalVariableHidesMemberVariable";
   }
 
@@ -56,8 +54,7 @@ public final class LocalVariableHidingMemberVariableInspection extends BaseInspe
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message("local.variable.hides.member.variable.problem.descriptor", aClass.getName());
   }
@@ -69,10 +66,9 @@ public final class LocalVariableHidingMemberVariableInspection extends BaseInspe
       checkbox("m_ignoreStaticMethods", InspectionGadgetsBundle.message("local.variable.hides.member.variable.ignore.option")));
   }
 
-  @Nullable
-  static PsiClass findSurroundingClassWithHiddenField(PsiVariable variable,
-                                                      boolean ignoreInvisibleFields,
-                                                      boolean ignoreStaticHidingInstance) {
+  static @Nullable PsiClass findSurroundingClassWithHiddenField(PsiVariable variable,
+                                                                boolean ignoreInvisibleFields,
+                                                                boolean ignoreStaticHidingInstance) {
     PsiClass aClass = ClassUtils.getContainingClass(variable);
     final String variableName = variable.getName();
     if (variableName == null) {

@@ -20,7 +20,6 @@ UFile (package = )
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (toRegex))
-                        USimpleNameReferenceExpression (identifier = toRegex, resolvesTo = null)
     UClass (name = MyReceiverAnnotation)
         UAnnotationMethod (name = name)
             UPolyadicExpression (operator = +)

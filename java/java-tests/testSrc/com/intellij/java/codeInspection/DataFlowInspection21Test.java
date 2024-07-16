@@ -116,7 +116,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testReadResolve() { doTest(); }
   public void testReadResolve2() { doTest(); }
   public void testDifferentTypesButNullable() { doTest(); }
-
+  public void testInstanceOfWidening() { doTest(); }
+  public void testSwitchPatternInGuard() { doTest(); }
   public void testForEachPattern() {
     myFixture.addClass("""
                          package org.jetbrains.annotations;
@@ -126,4 +127,9 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
                          }""");
     doTest();
   }
+
+  public void testArrayElementWrappedInPureMethod() { doTest(); }
+  public void testArrayAddedIntoCollection() { doTest(); }
+  
+  public void testInstanceOfPatternAffectNullity() { doTest(); }
 }

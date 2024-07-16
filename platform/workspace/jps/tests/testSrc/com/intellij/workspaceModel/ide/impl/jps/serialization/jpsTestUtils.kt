@@ -12,7 +12,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.JDOMUtil
@@ -28,7 +28,6 @@ import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -43,14 +42,13 @@ import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.function.Supplier
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -129,9 +127,19 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation,
   }
 }
 
+@TestOnly
 fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
   val writer = JpsFileContentWriterImpl(configLocation)
   saveAllEntities(storage, writer)
+  val modulePathMapping = this.moduleSerializers.keys.filterIsInstance<ExternalModuleImlFileEntitiesSerializer>()
+    .associate { it.fileUrl.url to it.modulePath.path }
+  writer.writeFiles(modulePathMapping)
+}
+
+@TestOnly
+fun JpsProjectSerializersImpl.saveAffectedEntities(storage: EntityStorage, affectedEntitySources: Set<EntitySource>, configLocation: JpsProjectConfigLocation) {
+  val writer = JpsFileContentWriterImpl(configLocation)
+  saveAffectedEntities(storage, affectedEntitySources, writer)
   val modulePathMapping = this.moduleSerializers.keys.filterIsInstance<ExternalModuleImlFileEntitiesSerializer>()
     .associate { it.fileUrl.url to it.modulePath.path }
   writer.writeFiles(modulePathMapping)
@@ -248,17 +256,6 @@ fun JpsProjectSerializersImpl.checkConsistency(configLocation: JpsProjectConfigL
 
 internal fun File.asConfigLocation(virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation = toConfigLocation(toPath(),
                                                                                                                            virtualFileManager)
-
-internal fun toConfigLocation(file: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectConfigLocation {
-  if (FileUtil.extensionEquals(file.fileName.toString(), "ipr")) {
-    val iprFile = file.toVirtualFileUrl(virtualFileManager)
-    return JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
-  }
-  else {
-    val projectDir = file.toVirtualFileUrl(virtualFileManager)
-    return JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
-  }
-}
 
 internal class JpsFileContentWriterImpl(private val configLocation: JpsProjectConfigLocation) : JpsFileContentWriter {
   private val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element?>>()
@@ -382,8 +379,8 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   val changedSources = changesList.flatMapTo(HashSet()) { changes ->
     changes.flatMap { change ->
       when (change) {
-        is EntityChange.Added -> listOf(change.entity)
-        is EntityChange.Removed -> listOf(change.entity)
+        is EntityChange.Added -> listOf(change.newEntity)
+        is EntityChange.Removed -> listOf(change.oldEntity)
         is EntityChange.Replaced -> listOf(change.oldEntity, change.newEntity)
       }
     }.map { it.entitySource }
@@ -442,10 +439,10 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
 
     // Entity source for global entities
     val virtualFileManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
-    val globalLibrariesFile = virtualFileManager.getOrCreateFromUri("$testDir/options/applicationLibraries.xml")
+    val globalLibrariesFile = virtualFileManager.getOrCreateFromUrl("$testDir/options/applicationLibraries.xml")
     val libraryEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 
-    val globalSdkFile = virtualFileManager.getOrCreateFromUri("$testDir/options/jdk.table.xml")
+    val globalSdkFile = virtualFileManager.getOrCreateFromUrl("$testDir/options/jdk.table.xml")
     val sdkEntitySource = JpsGlobalFileEntitySource(globalSdkFile)
     action(libraryEntitySource, sdkEntitySource)
 

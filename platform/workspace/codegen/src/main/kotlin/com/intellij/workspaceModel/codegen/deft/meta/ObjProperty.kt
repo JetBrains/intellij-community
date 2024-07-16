@@ -58,4 +58,6 @@ interface ExtProperty<T : Obj, V> : ObjProperty<T, V> {
   override val receiver: ObjClass<T>
 
   val moduleLocalId: Int
+
+  val annotations: List<ObjAnnotation>
 }

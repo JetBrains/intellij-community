@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
@@ -329,8 +329,7 @@ public final class CreateFromUsageUtils {
    * @param resolveScope type resolve scope
    * @return a type suitable for parameter declaration; java.lang.Object if supplied argument type is null
    */
-  @NotNull
-  public static PsiType getParameterTypeByArgumentType(@Nullable PsiType argType,
+  public static @NotNull PsiType getParameterTypeByArgumentType(@Nullable PsiType argType,
                                                        @NotNull PsiManager psiManager,
                                                        @NotNull GlobalSearchScope resolveScope) {
     if (argType instanceof PsiDisjunctionType) {
@@ -345,10 +344,9 @@ public final class CreateFromUsageUtils {
     return argType;
   }
 
-  @Nullable
-  public static PsiClass createClass(final PsiJavaCodeReferenceElement referenceElement,
-                                     final CreateClassKind classKind,
-                                     final String superClassName) {
+  public static @Nullable PsiClass createClass(final PsiJavaCodeReferenceElement referenceElement,
+                                               final CreateClassKind classKind,
+                                               final String superClassName) {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "You must not run createClass() from under write action";
     final String name = referenceElement.getReferenceName();
 
@@ -409,8 +407,7 @@ public final class CreateFromUsageUtils {
     return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
   }
 
-  @Nullable
-  private static PsiPackage findTargetPackage(PsiElement qualifierElement, PsiManager manager, PsiFile sourceFile) {
+  private static @Nullable PsiPackage findTargetPackage(PsiElement qualifierElement, PsiManager manager, PsiFile sourceFile) {
     PsiPackage aPackage = null;
     if (qualifierElement instanceof PsiPackage) {
       aPackage = (PsiPackage)qualifierElement;
@@ -450,12 +447,12 @@ public final class CreateFromUsageUtils {
   }
 
   public static PsiClass createClass(final CreateClassKind classKind,
-                                      final PsiDirectory directory,
-                                      final String name,
-                                      final PsiManager manager,
-                                      @NotNull final PsiElement contextElement,
-                                      final PsiFile sourceFile,
-                                      final String superClassName) {
+                                     final PsiDirectory directory,
+                                     final String name,
+                                     final PsiManager manager,
+                                     final @NotNull PsiElement contextElement,
+                                     final PsiFile sourceFile,
+                                     final String superClassName) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     final PsiElementFactory factory = facade.getElementFactory();
 
@@ -800,8 +797,7 @@ public final class CreateFromUsageUtils {
 
       PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<>() {
         @Override
-        @Nullable
-        public PsiType visitType(@NotNull PsiType type) {
+        public @Nullable PsiType visitType(@NotNull PsiType type) {
           if (PsiTypes.nullType().equals(type) || PsiTypes.voidType().equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
@@ -1004,12 +1000,11 @@ public final class CreateFromUsageUtils {
     return false;
   }
 
-  @Nullable
-  private static String getQualifiedName(final PsiClass aClass) {
+  private static @Nullable String getQualifiedName(final PsiClass aClass) {
     return ReadAction.compute(aClass::getQualifiedName);
   }
 
-  private static boolean hasCorrectModifiers(@Nullable final PsiMember member, final boolean staticAccess) {
+  private static boolean hasCorrectModifiers(final @Nullable PsiMember member, final boolean staticAccess) {
     if (member == null) {
       return false;
     }
@@ -1083,8 +1078,7 @@ public final class CreateFromUsageUtils {
       return set.toArray(LookupElement.EMPTY_ARRAY);
     }
 
-    @Nullable
-    protected Set<String> getPeerNames(PsiElement elementAt) {
+    protected @Nullable Set<String> getPeerNames(PsiElement elementAt) {
       PsiElement parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class, PsiRecordHeader.class);
       if (parameterList == null) {
         if (elementAt == null) return null;
@@ -1111,9 +1105,8 @@ public final class CreateFromUsageUtils {
       return parameterNames;
     }
 
-    @NotNull
     @Override
-    public LookupFocusDegree getLookupFocusDegree() {
+    public @NotNull LookupFocusDegree getLookupFocusDegree() {
       return LookupFocusDegree.UNFOCUSED;
     }
   }

@@ -25,7 +25,7 @@ class GitLabReactionsViewModelImpl(
   private val note: GitLabMergeRequestNote,
   private val currentUser: GitLabUserDTO
 ) : GitLabReactionsViewModel {
-  private val cs = parentCs.childScope(CoroutineName("GitLab Reactions View Model"))
+  private val cs = parentCs.childScope("GitLab Reactions View Model")
 
   override val availableParsedEmojis: Deferred<List<ParsedGitLabEmoji>> = projectData.emojis
 

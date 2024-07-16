@@ -3,6 +3,7 @@ package com.intellij.ui.popup.list
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupStep
@@ -44,10 +45,14 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
 
     val res: MutableList<InlineActionDescriptor> = mutableListOf()
 
-    res.addAll(myStep.getInlineItems(element).map {
-      item: ActionItem -> InlineActionDescriptor(createInlineActionRunnable(item, event), !item.isKeepPopupOpen)
-    })
-    if (hasMoreButton(element)) res.add(InlineActionDescriptor(createNextStepRunnable(element), false))
+    myStep.getInlineItems(element).forEach { item ->
+      res.add(InlineActionDescriptor(
+        createInlineActionRunnable(item, event), item.keepPopupOnPerform))
+    }
+    if (hasMoreButton(element)) {
+      res.add(InlineActionDescriptor(
+        createNextStepRunnable(element), KeepPopupOnPerform.Always))
+    }
     return res
   }
 

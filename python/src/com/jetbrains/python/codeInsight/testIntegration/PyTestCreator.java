@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.testIntegration;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,7 +55,7 @@ public final class PyTestCreator implements TestCreator {
    *
    * @return file with test
    */
-  static PsiFile generateTestAndNavigate(@NotNull final PsiElement anchor, @NotNull final PyTestCreationModel creationModel) {
+  static PsiFile generateTestAndNavigate(final @NotNull PsiElement anchor, final @NotNull PyTestCreationModel creationModel) {
     final Project project = anchor.getProject();
     return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
       () -> ApplicationManager.getApplication().runWriteAction((Computable<PsiFile>)() -> {
@@ -76,8 +76,7 @@ public final class PyTestCreator implements TestCreator {
    *
    * @return newly created test class
    */
-  @NotNull
-  static PyElement generateTest(@NotNull final PsiElement anchor, @NotNull final PyTestCreationModel model) {
+  static @NotNull PyElement generateTest(final @NotNull PsiElement anchor, final @NotNull PyTestCreationModel model) {
     final Project project = anchor.getProject();
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 

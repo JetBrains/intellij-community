@@ -6,7 +6,7 @@ import org.eclipse.aether.artifact.Artifact;
 import java.util.Map;
 import java.util.Objects;
 
-class ArtifactData {
+public class ArtifactData {
   private final String artifactId;
   private final String groupId;
   private final String version;

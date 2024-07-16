@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor
 import com.intellij.openapi.project.Project
 import com.intellij.refactoring.BaseRefactoringProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveMembersRefactoringProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 
 sealed class K2MoveDescriptor(
     open val project: Project,
@@ -36,7 +36,7 @@ sealed class K2MoveDescriptor(
     /**
      * A file member moves is when the user moves the members inside the files, not considering the files themselves.
      */
-    class Members(
+    class Declarations(
         override val project: Project,
         override val source: K2MoveSourceDescriptor.ElementSource,
         override val target: K2MoveTargetDescriptor.File,
@@ -45,7 +45,7 @@ sealed class K2MoveDescriptor(
         searchReferences: Boolean
     ) : K2MoveDescriptor(project, source, target, searchForText, searchInComments, searchReferences) {
         override fun refactoringProcessor(): BaseRefactoringProcessor {
-            return K2MoveMembersRefactoringProcessor(this)
+            return K2MoveDeclarationsRefactoringProcessor(this)
         }
     }
 }

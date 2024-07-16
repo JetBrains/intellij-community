@@ -18,7 +18,7 @@ import kotlinx.serialization.json.put
 
 @Service
 @State(name = "TipsFeedback", storages = [Storage(value = "tips-feedback.xml", roamingType = RoamingType.DISABLED)])
-class TipsFeedback : SimplePersistentStateComponent<TipsFeedback.State>(State()) {
+internal class TipsFeedback : SimplePersistentStateComponent<TipsFeedback.State>(State()) {
   private val timeScopeForResultCollectionInDays = 120
 
   fun getLikenessState(tipId: String): Boolean? {

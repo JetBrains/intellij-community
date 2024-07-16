@@ -4,7 +4,8 @@
  */
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
-import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -52,5 +53,6 @@ fun List<OutputFile>.filterCodeFragmentClassFiles(): List<OutputFile> {
     return filter { isCodeFragmentClassPath(it.relativePath) }
 }
 
-val KtCompiledFile.isCodeFragmentClassFile: Boolean
+@KaExperimentalApi
+val KaCompiledFile.isCodeFragmentClassFile: Boolean
     get() = isCodeFragmentClassPath(path)

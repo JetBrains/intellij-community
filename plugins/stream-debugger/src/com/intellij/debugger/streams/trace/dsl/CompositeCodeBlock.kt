@@ -6,7 +6,7 @@ package com.intellij.debugger.streams.trace.dsl
  */
 interface CompositeCodeBlock : CodeBlock {
   override fun add(block: CodeBlock) {
-    block.getStatements().forEach({ addStatement(it) })
+    block.getStatements().forEach { addStatement(it) }
   }
 
   fun addStatement(statement: Convertable)

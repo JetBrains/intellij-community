@@ -21,13 +21,15 @@ public class TextSplitter extends BaseSplitter {
 
   private static final String letter = "(\\p{L}\\p{Mn}*)";
   private static final String xmlEntity = "(&.+?;)";
+  private static final String rightSingleQuotationMark = "\\u2019";
+
   // using possessive quantifiers ++ and *+ to avoid SOE on large inputs
   // see https://blog.sonarsource.com/crafting-regexes-to-avoid-stack-overflows/
   private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile(
     xmlEntity + "|" +
     "(#|0x\\d*)?" + // an optional prefix
     letter + "++" + // some letters
-    "('" + letter + ")?" + // if there's an apostrophe, it should be followed by a letter
+    "(['" + rightSingleQuotationMark + "]" + letter + ")?" + // if there's an apostrophe, it should be followed by a letter
     "(_|" + letter + ")*+" // more letters and underscores
   );
   @Override

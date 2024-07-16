@@ -122,7 +122,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
       for (ExternalAnnotator<?,?> annotator : annotators) {
         progress.checkCanceled();
 
-        if (dumbService.isDumb() && !DumbService.isDumbAware(annotator)) {
+        if (!dumbService.isUsableInCurrentContext(annotator)) {
           continue;
         }
         Object collectedInfo = null;
@@ -238,7 +238,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
       .toList();
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
     // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
-    BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), myHighlightingSession);
+    BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), getHighlightingSession());
     DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
     myHighlightInfos = highlights;
   }

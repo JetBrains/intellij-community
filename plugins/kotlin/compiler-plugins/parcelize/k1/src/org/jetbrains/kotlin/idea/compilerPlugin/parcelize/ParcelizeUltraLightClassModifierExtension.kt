@@ -14,7 +14,9 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.parcelize.ParcelizeSyntheticComponent
+import org.jetbrains.kotlin.parcelize.isParcelize
 import org.jetbrains.kotlin.parcelize.serializers.ParcelizeExtensionBase
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -35,7 +37,7 @@ class ParcelizeUltraLightClassModifierExtension : ParcelizeExtensionBase, UltraL
         val descriptorValue = descriptor.value ?: return null
         val parcelizeClass = (descriptorValue as? ClassDescriptor) ?: descriptorValue.containingDeclaration as? ClassDescriptor
 
-        if (parcelizeClass == null || !parcelizeClass.isParcelizeClassDescriptor) {
+        if (parcelizeClass == null || !parcelizeClass.isParcelizeClassDescriptor(ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES)) {
             return null
         }
 

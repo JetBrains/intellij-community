@@ -17,15 +17,19 @@ public abstract class AbstractCoverageProjectViewNodeDecorator implements Projec
    * @deprecated use {@link #AbstractCoverageProjectViewNodeDecorator()} instead
    */
   @Deprecated
-  public AbstractCoverageProjectViewNodeDecorator(@NotNull Project project) {
+  public AbstractCoverageProjectViewNodeDecorator(@SuppressWarnings("unused") @NotNull Project project) {
   }
 
+  /**
+   * @deprecated Use {@link CoverageDataManager#getInstance(Project)} directly.
+   */
   @SuppressWarnings("MethodMayBeStatic")
-  @Nullable
-  protected final CoverageDataManager getCoverageDataManager(@NotNull Project project) {
+  @Deprecated
+  protected final @Nullable CoverageDataManager getCoverageDataManager(@NotNull Project project) {
     return CoverageDataManager.getInstance(project);
   }
 
+  @SuppressWarnings("unused")
   protected static void appendCoverageInfo(ColoredTreeCellRenderer cellRenderer, @Nls String coverageInfo) {
     if (coverageInfo != null) {
       cellRenderer.append(" (" + coverageInfo + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);

@@ -1,17 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.code;
 
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-public class Instruction implements CodeConstants {
+public class Instruction {
   public static Instruction create(int opcode, boolean wide, int group, int bytecodeVersion, int[] operands) {
-    if (opcode >= opc_ifeq && opcode <= opc_if_acmpne ||
-        opcode == opc_ifnull || opcode == opc_ifnonnull ||
-        opcode == opc_jsr || opcode == opc_jsr_w ||
-        opcode == opc_goto || opcode == opc_goto_w) {
+    if (opcode >= CodeConstants.opc_ifeq && opcode <= CodeConstants.opc_if_acmpne ||
+        opcode == CodeConstants.opc_ifnull || opcode == CodeConstants.opc_ifnonnull ||
+        opcode == CodeConstants.opc_jsr || opcode == CodeConstants.opc_jsr_w ||
+        opcode == CodeConstants.opc_goto || opcode == CodeConstants.opc_goto_w) {
       return new JumpInstruction(opcode, group, wide, bytecodeVersion, operands);
     }
-    else if (opcode == opc_tableswitch || opcode == opc_lookupswitch) {
+    else if (opcode == CodeConstants.opc_tableswitch || opcode == CodeConstants.opc_lookupswitch) {
       return new SwitchInstruction(opcode, group, wide, bytecodeVersion, operands);
     }
     else {
@@ -53,10 +53,10 @@ public class Instruction implements CodeConstants {
   }
 
   public boolean canFallThrough() {
-    return opcode != opc_goto && opcode != opc_goto_w && opcode != opc_ret &&
-           !(opcode >= opc_ireturn && opcode <= opc_return) &&
-           opcode != opc_athrow &&
-           opcode != opc_jsr && opcode != opc_tableswitch && opcode != opc_lookupswitch;
+    return opcode != CodeConstants.opc_goto && opcode != CodeConstants.opc_goto_w && opcode != CodeConstants.opc_ret &&
+           !(opcode >= CodeConstants.opc_ireturn && opcode <= CodeConstants.opc_return) &&
+           opcode != CodeConstants.opc_athrow &&
+           opcode != CodeConstants.opc_jsr && opcode != CodeConstants.opc_tableswitch && opcode != CodeConstants.opc_lookupswitch;
   }
 
   @Override

@@ -2,15 +2,15 @@
 package com.intellij.platform.workspace.storage.metadata.exceptions
 
 
-public abstract class MissingMetadataException(message: String): Exception(message)
+internal abstract class MissingMetadataException(message: String): Exception(message)
 
 
-public class MissingTypeMetadataException(fqName: String): MissingMetadataException("Metadata for the $fqName was not collected. ${runGeneratorMessage(fqName)}")
+internal class MissingTypeMetadataException(fqName: String): MissingMetadataException("Metadata for the $fqName was not collected. ${runGeneratorMessage(fqName)}")
 
-public class MissingTypeMetadataHashException(fqName: String): MissingMetadataException("Metadata hash for the $fqName was not collected. ${runGeneratorMessage(fqName)}")
+internal class MissingTypeMetadataHashException(fqName: String): MissingMetadataException("Metadata hash for the $fqName was not collected. ${runGeneratorMessage(fqName)}")
 
 
-public class MissingMetadataStorage(metadataStorageFqn: String, typeFqn: String):
+internal class MissingMetadataStorage(metadataStorageFqn: String, typeFqn: String):
   Exception("Metadata storage $metadataStorageFqn was not found. ${runGeneratorMessage(typeFqn)}")
 
 private fun runGeneratorMessage(typeFqn: String): String = "Please run the generator for the class $typeFqn"

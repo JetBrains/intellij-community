@@ -12,7 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
 import java.util.Collection;
 
-public class GrFullClassNameStringIndex extends StringStubIndexExtension<PsiClass> {
+public final class GrFullClassNameStringIndex extends StringStubIndexExtension<PsiClass> {
   public static final StubIndexKey<String, PsiClass> KEY = StubIndexKey.createIndexKey("gr.class.fqn.s");
 
   @Override

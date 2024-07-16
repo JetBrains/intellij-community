@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-public class GrVariableJoinLinesHandler extends GrJoinLinesHandlerBase {
+public final class GrVariableJoinLinesHandler extends GrJoinLinesHandlerBase {
   @Override
   public int tryJoinStatements(@NotNull GrStatement first, @NotNull GrStatement second) {
     if (first instanceof GrVariableDeclaration && !((GrVariableDeclaration)first).isTuple() && second instanceof GrAssignmentExpression) {

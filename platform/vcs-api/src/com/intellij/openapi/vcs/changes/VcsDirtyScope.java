@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -69,18 +68,6 @@ public abstract class VcsDirtyScope {
    * @return a directories that are recursively dirty.
    */
   public abstract Set<FilePath> getRecursivelyDirtyDirectories();
-
-  /**
-   * @deprecated Prefer not walking the VFS, or using {@link com.intellij.openapi.vcs.impl.VcsRootIterator} directly if necessary.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void iterate(Processor<? super FilePath> iterator);
-
-  /**
-   * @deprecated Prefer not walking the VFS, or using {@link com.intellij.openapi.vcs.impl.VcsRootIterator} directly if necessary.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void iterateExistingInsideScope(Processor<? super VirtualFile> vf);
 
   public abstract boolean isEmpty();
 

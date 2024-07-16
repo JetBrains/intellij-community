@@ -17,6 +17,7 @@ package com.intellij.ide.util.treeView
 
 import com.intellij.testFramework.FlyIdeaTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.tree.TreeSmartSelectProvider
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
@@ -54,7 +55,9 @@ class TreeSmartSelectTest : FlyIdeaTestCase() {
   }
 
   fun DefaultMutableTreeNode.select() {
-    myTree.selectionPath = TreePath(myModel.getPathToRoot(this))
+    runInEdtAndWait {
+      myTree.selectionPath = TreePath(myModel.getPathToRoot(this))
+    }
   }
 
   fun testSelectionIncrease() {
@@ -113,10 +116,14 @@ class TreeSmartSelectTest : FlyIdeaTestCase() {
   }
 
   private fun increaseSelection() {
-    myProvider.increaseSelection(myTree)
+    runInEdtAndWait {
+      myProvider.increaseSelection(myTree)
+    }
   }
   private fun decreaseSelection() {
-    myProvider.decreaseSelection(myTree)
+    runInEdtAndWait {
+      myProvider.decreaseSelection(myTree)
+    }
   }
 
   private fun assertTree(expected: String) {

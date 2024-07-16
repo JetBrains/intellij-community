@@ -11,11 +11,11 @@ import com.intellij.ide.startup.importSettings.data.Multiple
 import com.intellij.ide.startup.importSettings.models.*
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.text.nullize
 import javax.swing.Icon
 import javax.swing.KeyStroke
@@ -119,7 +119,7 @@ private class DemoShortcut(override val name: String, shortcut: Any) : ChildSett
   override val leftComment = null
   override val rightComment = run {
     fun getKeyStrokeText(keyStroke: KeyStroke) =
-      if (SystemInfo.isMac) MacKeymapUtil.getKeyStrokeText(keyStroke)
+      if (ClientSystemInfo.isMac()) MacKeymapUtil.getKeyStrokeText(keyStroke)
       else KeymapUtil.getKeystrokeText(keyStroke)
 
     when (shortcut) {
@@ -133,7 +133,7 @@ private class DemoShortcut(override val name: String, shortcut: Any) : ChildSett
       is DummyKeyboardShortcut -> buildString {
         append(shortcut.firstKeyStroke)
         shortcut.secondKeyStroke?.let {
-          if (!SystemInfo.isMac) append("+")
+          if (!ClientSystemInfo.isMac()) append("+")
           append(shortcut.secondKeyStroke)
         }
       }

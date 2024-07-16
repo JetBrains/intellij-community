@@ -18,7 +18,9 @@ import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   private val libraryTableDelegate = GlobalLibraryTableDelegate(this, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))
 

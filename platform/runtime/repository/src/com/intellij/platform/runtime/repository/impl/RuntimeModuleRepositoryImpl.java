@@ -26,9 +26,14 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   private final Map<String, RuntimeModuleId> myInternedModuleIds;
 
   public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsJarPath) {
+    this(descriptorsJarPath, null);
+  }
+
+  public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsJarPath, @Nullable RawRuntimeModuleRepositoryData preloadedMainData) {
     myDescriptorsJarPath = descriptorsJarPath;
     myResolveResults = new ConcurrentHashMap<>();
     myInternedModuleIds = new ConcurrentHashMap<>();
+    myMainData = preloadedMainData;
   }
 
   @Override

@@ -7,18 +7,22 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoIntegerType
 import kotlinx.serialization.protobuf.ProtoPacked
 import kotlinx.serialization.protobuf.ProtoType
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 @Serializable
 class AnyValue(
   @JvmField val string: String? = null,
 )
 
+@Internal
 @Serializable
 class KeyValue(
   @JvmField val key: String,
   @JvmField val value: AnyValue,
 )
 
+@Internal
 @Suppress("unused")
 @Serializable
 class Resource(
@@ -30,12 +34,14 @@ class Resource(
 // https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-protobuf/kotlinx.serialization.protobuf/-proto-buf/
 
 // https://github.com/open-telemetry/opentelemetry-proto/blob/v1.0.0/opentelemetry/proto/trace/v1/trace.proto
+@Internal
 @Serializable
 class TracesData(
   @ProtoPacked
   @JvmField val resourceSpans: List<ResourceSpans> = emptyList()
 )
 
+@Internal
 @Serializable
 class ResourceSpans(
   @JvmField val resource: Resource? = null,
@@ -44,6 +50,7 @@ class ResourceSpans(
   @JvmField val schemaUrl: String? = null,
 )
 
+@Internal
 @Serializable
 class ScopeSpans(
   @JvmField val scope: InstrumentationScope? = null,
@@ -52,6 +59,7 @@ class ScopeSpans(
   @JvmField val schemaUrl: String? = null,
 )
 
+@Internal
 @Serializable
 class Span(
   @JvmField val traceId: ByteArray,
@@ -71,11 +79,13 @@ class Span(
 )
 
 @Suppress("unused")
+@Internal
 @Serializable
 enum class SpanKind {
   SPAN_KIND_UNSPECIFIED, SPAN_KIND_INTERNAL, SPAN_KIND_SERVER, SPAN_KIND_CLIENT, SPAN_KIND_PRODUCER, SPAN_KIND_CONSUMER
 }
 
+@Internal
 @Serializable
 class InstrumentationScope(
   @JvmField val name: String = "",

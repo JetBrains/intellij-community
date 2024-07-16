@@ -15,12 +15,15 @@
  */
 package com.intellij.coverage;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
  */
 public final class DefaultCoverageFileProvider implements CoverageFileProvider{
+  @ApiStatus.Internal
   public static final String DEFAULT_LOCAL_PROVIDER_KEY = DefaultCoverageFileProvider.class.getName();
 
   private final File myFile;

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
@@ -16,7 +17,6 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ThrowableRunnable;
-import groovy.lang.Reference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -54,7 +54,7 @@ public class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   }
 
   public void testInjectorsAreNotRunInEdt() {
-    final Reference<Boolean> injectorCalled = new Reference<>(false);
+    final Ref<Boolean> injectorCalled = new Ref<>(false);
     LanguageInjector injector = (host, injectionPlacesRegistrar) -> {
       injectorCalled.set(true);
       ApplicationManager.getApplication().assertIsNonDispatchThread();

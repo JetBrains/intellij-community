@@ -38,7 +38,10 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
@@ -803,24 +806,21 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
-  private class MyDataProviderWrapper extends JPanel implements DataProvider {
+  private class MyDataProviderWrapper extends JPanel implements UiDataProvider {
     MyDataProviderWrapper(final JComponent component) {
       super(new BorderLayout());
       add(component, BorderLayout.CENTER);
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
-      return ValueKey.match(dataId)
-        .ifEq(LangDataKeys.MODULE_CONTEXT_ARRAY).thenGet(this::getModuleContexts)
-        .ifEq(LangDataKeys.MODULE_CONTEXT).thenGet(() -> getSelectedModule())
-        .ifEq(LangDataKeys.MODIFIABLE_MODULE_MODEL).thenGet(() -> myContext.myModulesConfigurator.getModuleModel())
-        .ifEq(PlatformCoreDataKeys.SELECTED_ITEM).thenGet(() -> getSelectedObject())
-        .orNull();
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(LangDataKeys.MODULE_CONTEXT_ARRAY, getModuleContexts());
+      sink.set(LangDataKeys.MODULE_CONTEXT, getSelectedModule());
+      sink.set(LangDataKeys.MODIFIABLE_MODULE_MODEL, myContext.myModulesConfigurator.getModuleModel());
+      sink.set(PlatformCoreDataKeys.SELECTED_ITEM, getSelectedObject());
     }
 
-    private Module[] getModuleContexts() {
+    private Module @Nullable [] getModuleContexts() {
       final TreePath[] paths = myTree.getSelectionPaths();
       Set<Module> modules = new LinkedHashSet<>();
       if (paths != null) {

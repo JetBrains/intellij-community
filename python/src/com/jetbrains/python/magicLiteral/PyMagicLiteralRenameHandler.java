@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.magicLiteral;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -21,8 +21,7 @@ public final class PyMagicLiteralRenameHandler implements RenameHandler {
    * @return string literal under data context or null if not a literal.
    * This method is fast, so it can safely be used at {@link #isAvailableOnDataContext(DataContext)}
    */
-  @Nullable
-  private static PyStringLiteralExpression getStringLiteral(@NotNull final DataContext dataContext) {
+  private static @Nullable PyStringLiteralExpression getStringLiteral(final @NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
@@ -40,8 +39,7 @@ public final class PyMagicLiteralRenameHandler implements RenameHandler {
     return null;
   }
 
-  @Nullable
-  private static PsiElement getElement(PsiFile file, Editor editor) {
+  private static @Nullable PsiElement getElement(PsiFile file, Editor editor) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getCurrentCaret().getOffset());
     StringLiteralExpression stringLiteral = PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class, false,
                                                                         PyFStringFragment.class);
@@ -52,12 +50,12 @@ public final class PyMagicLiteralRenameHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
+  public boolean isAvailableOnDataContext(final @NotNull DataContext dataContext) {
     return getStringLiteral(dataContext) != null;
   }
 
   @Override
-  public boolean isRenaming(@NotNull final DataContext dataContext) {
+  public boolean isRenaming(final @NotNull DataContext dataContext) {
     final PyStringLiteralExpression literal = getStringLiteral(dataContext);
     return !((literal == null) || !PyMagicLiteralTools.couldBeMagicLiteral(literal));
   }

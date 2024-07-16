@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -16,10 +16,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.execution.ParametersListUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -105,6 +102,7 @@ public final class ParametersList implements Cloneable {
   }
 
   @NotNull
+  @ApiStatus.Experimental
   public List<CompositeParameterTargetedValue> getTargetedList() {
     if (myGroups.isEmpty()) {
       return Collections.unmodifiableList(myParameters);
@@ -136,6 +134,7 @@ public final class ParametersList implements Cloneable {
     addAt(0, parameter);
   }
 
+  @ApiStatus.Experimental
   public void prepend(@Nullable CompositeParameterTargetedValue parameterTargetedValue) {
     myParameters.add(0, parameterTargetedValue);
   }
@@ -157,6 +156,7 @@ public final class ParametersList implements Cloneable {
     myParameters.add(createExpandedLocalValue(parameter));
   }
 
+  @ApiStatus.Experimental
   public void add(@Nullable CompositeParameterTargetedValue parameterTargetedValue){
     if (parameterTargetedValue == null) return;
     myParameters.add(parameterTargetedValue);

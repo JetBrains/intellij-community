@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
@@ -18,6 +18,7 @@ import com.intellij.util.Urls;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.builtInWebServer.BuiltInServerOptions;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 
@@ -60,8 +61,8 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
             if (scheme == null) return href;
             String[] parts = href.substring(2).split("/", 2);
             if (parts.length != 2) return href;
-            Url relativeUrl = Urls.newUrl(scheme, parts[0], parts[1]);
-            return relativeUrl.toString();
+            Url relativeUrl = Urls.newUrl(scheme, parts[0], '/' + parts[1]);
+            return relativeUrl.toDecodedForm();
           }
           else if (href.startsWith("/")) {
             Url rootUrl = Urls.parse(root, false);
@@ -70,7 +71,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
             String authority = rootUrl.getAuthority();
             if (scheme == null || authority == null) return href;
             Url relativeUrl = Urls.newUrl(scheme, authority, href);
-            return relativeUrl.toString();
+            return relativeUrl.toDecodedForm();
           }
           else {
             String nakedRoot = ourHtmlFileSuffix.matcher(root).replaceAll("/");
@@ -93,15 +94,12 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return myReferenceConverters;
   }
 
-  @Nls
-  @Nullable
-  public static String filterInternalDocInfo(@Nls String text) {
+  public static @Nls @Nullable String filterInternalDocInfo(@Nls String text) {
     return text == null ? null : PlatformDocumentationUtil.fixupText(text);
   }
 
-  @Nullable
   @Override
-  public String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
+  public @Nullable String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
     String externalDoc = null;
     myElement = element;
 
@@ -151,9 +149,13 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return externalDoc;
   }
 
-  @NotNull
   @Override
-  protected ParseSettings getParseSettings(@NotNull String url) {
+  protected @NotNull ParseSettings getParseSettings(@NotNull String url) {
     return url.endsWith(JavaDocumentationProvider.PACKAGE_SUMMARY_FILE) ? ourPackageInfoSettings : super.getParseSettings(url);
+  }
+
+  @TestOnly
+  public void setElement(PsiElement element) {
+    myElement = element;
   }
 }

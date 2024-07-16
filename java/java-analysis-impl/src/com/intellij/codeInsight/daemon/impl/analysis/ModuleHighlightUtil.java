@@ -221,6 +221,9 @@ final class ModuleHighlightUtil {
       PsiJavaModule target = ref.resolve();
       if (target == null) {
         if (ref.multiResolve(true).length == 0) {
+          if (IncompleteModelUtil.isIncompleteModel(statement)) {
+            return IncompleteModelUtil.getPendingReferenceHighlightInfo(refElement);
+          }
           String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
           return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message);
         }

@@ -11,13 +11,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -27,7 +25,7 @@ internal abstract class AbstractForbidRenamingSymbolByReferenceHandler : RenameH
     val file = CommonDataKeys.PSI_FILE.getData(dataContext) ?: return false
     val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return false
     val refExpression = file.findElementForRename<KtSimpleNameExpression>(editor.caretModel.offset) ?: return false
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     allowAnalysisOnEdt {
       analyze(refExpression) {
         val target = refExpression.mainReference.resolveToSymbol() ?: return false
@@ -36,8 +34,8 @@ internal abstract class AbstractForbidRenamingSymbolByReferenceHandler : RenameH
     }
   }
 
-  context(KtAnalysisSession)
-  abstract fun shouldForbidRenaming(symbol: KtSymbol): Boolean
+  context(KaSession)
+  abstract fun shouldForbidRenaming(symbol: KaSymbol): Boolean
 
   abstract fun getErrorMessage(): @DialogMessage String
 

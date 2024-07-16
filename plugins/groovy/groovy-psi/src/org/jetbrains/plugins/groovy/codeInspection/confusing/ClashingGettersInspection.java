@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * @author Max Medvedev
  */
-public class ClashingGettersInspection extends BaseInspection {
+public final class ClashingGettersInspection extends BaseInspection {
 
   @Override
   @Nullable

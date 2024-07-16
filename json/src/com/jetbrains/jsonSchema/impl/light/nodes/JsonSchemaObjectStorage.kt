@@ -20,10 +20,12 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileState
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 
 @Service(Service.Level.PROJECT)
-internal class JsonSchemaObjectStorage {
+@ApiStatus.Internal
+class JsonSchemaObjectStorage {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): JsonSchemaObjectStorage {

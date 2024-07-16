@@ -105,17 +105,6 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     switchLafAndUpdateUI(lafManager, laf, async, false, false);
   }
 
-  /**
-   * @deprecated use {@link #switchLafAndUpdateUI(LafManager, UIManager.LookAndFeelInfo, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void switchLafAndUpdateUI(final @NotNull LafManager lafMan,
-                                          @NotNull UIManager.LookAndFeelInfo lf,
-                                          boolean async,
-                                          boolean force) {
-    switchLafAndUpdateUI(lafMan, (UIThemeLookAndFeelInfo)lf, async, force, false);
-  }
-
   @ApiStatus.Internal
   public static void switchLafAndUpdateUI(final @NotNull LafManager lafManager,
                                           @NotNull UIThemeLookAndFeelInfo lf,

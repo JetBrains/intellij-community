@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
+import org.jetbrains.kotlin.idea.gradleJava.getDefinitionsTemplateClasspath
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -105,7 +106,7 @@ class Imported(
             builder.useCustomScriptDefinition()
         }
 
-        builder.addTemplateClassesRoots(GradleScriptDefinitionsContributor.getDefinitionsTemplateClasspath(data.gradleHome))
+        builder.addTemplateClassesRoots(getDefinitionsTemplateClasspath(data.gradleHome))
 
         data.models.forEach { script ->
             val definition = definitions?.let { selectScriptDefinition(script, it) }

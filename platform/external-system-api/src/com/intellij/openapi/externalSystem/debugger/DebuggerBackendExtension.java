@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.debugger;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -7,13 +7,14 @@ import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 /**
- * Provides ability to preconfigure tasks run by external system and to attach them with debugger.
+ * Provides an ability to preconfigure tasks run by external system and to attach them with debugger.
  */
 public interface DebuggerBackendExtension {
   ExtensionPointName<DebuggerBackendExtension> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.debuggerBackend");
@@ -21,8 +22,8 @@ public interface DebuggerBackendExtension {
 
   String id();
 
-  default List<String> initializationCode(@NotNull String dispatchPort, @NotNull String parameters) {
-    return new ArrayList();
+  default List<String> initializationCode(@Nullable Project project, @NotNull String dispatchPort, @NotNull String parameters) {
+    return new ArrayList<>();
   }
 
   RunnerAndConfigurationSettings debugConfigurationSettings(@NotNull Project project,
@@ -30,7 +31,7 @@ public interface DebuggerBackendExtension {
                                                             @NotNull String processParameters);
 
   default HashMap<String, String> splitParameters(@NotNull String processParameters) {
-    HashMap<String, String> result = new HashMap();
+    HashMap<String, String> result = new HashMap<>();
 
     final String[] envVars = processParameters.split(ForkedDebuggerHelper.PARAMETERS_SEPARATOR);
     for (String envVar : envVars) {

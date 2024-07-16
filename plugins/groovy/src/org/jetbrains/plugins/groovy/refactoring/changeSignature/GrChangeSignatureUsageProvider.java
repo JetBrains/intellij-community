@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
 
-public class GrChangeSignatureUsageProvider implements ChangeSignatureUsageProvider {
+public final class GrChangeSignatureUsageProvider implements ChangeSignatureUsageProvider {
   private static final Logger LOG = Logger.getInstance(GrChangeSignatureUsageProvider.class);
 
   @Override

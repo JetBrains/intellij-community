@@ -32,6 +32,8 @@ import java.awt.event.ItemListener;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt.checkConflictsInteractively;
+
 public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
     private JPanel contentPane;
     private TitledSeparator inputParametersPanel;
@@ -181,7 +183,7 @@ public class KotlinIntroduceTypeAliasDialog extends DialogWrapper {
     @Override
     protected void doOKAction() {
         MultiMap<PsiElement, String> conflicts = IntroduceTypeAliasImplKt.validate(currentDescriptor).getConflicts();
-        KotlinRefactoringUtilKt.checkConflictsInteractively(
+        checkConflictsInteractively(
                 project,
                 conflicts,
                 new Function0<>() {

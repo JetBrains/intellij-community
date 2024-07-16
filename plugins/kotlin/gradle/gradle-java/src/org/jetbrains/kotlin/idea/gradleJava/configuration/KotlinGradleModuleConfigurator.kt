@@ -53,8 +53,9 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
         collector: NotificationMessageCollector,
         changedFiles: ChangedConfiguratorFiles,
         addVersion: Boolean
-    ) {
-        super.configureModule(module, file, isTopLevelProjectFile, ideKotlinVersion, jvmTarget, collector, changedFiles, addVersion)
+    ): Boolean {
+        val configured =
+            super.configureModule(module, file, isTopLevelProjectFile, ideKotlinVersion, jvmTarget, collector, changedFiles, addVersion)
 
         val moduleGroup = module.getWholeModuleGroup()
         for (sourceModule in moduleGroup.allModules()) {
@@ -62,6 +63,7 @@ class KotlinGradleModuleConfigurator : KotlinWithGradleConfigurator() {
                 break
             }
         }
+        return configured
     }
 
     companion object {

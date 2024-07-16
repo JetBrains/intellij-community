@@ -14,10 +14,24 @@ class FileLinkWithSpacesQuickFixTest: LightPlatformCodeInsightFixture4TestCase()
   }
 
   @Test
+  fun `test complex file link with spaces`() {
+    val content = "[](some path/some file.md)"
+    val after = "[](some%20path/some%20file.md)"
+    doTest(content, after, createFixText("some%20path/some%20file.md"))
+  }
+
+  @Test
   fun `test file link with spaces and header reference`() {
     val content = "[](some file link.md#with-header-reference)"
     val after = "[](some%20file%20link.md#with-header-reference)"
     doTest(content, after, createFixText("some%20file%20link.md"))
+  }
+
+  @Test
+  fun `test complex file link with spaces and header reference`() {
+    val content = "[](some path/some file link.md#with-header-reference)"
+    val after = "[](some%20path/some%20file%20link.md#with-header-reference)"
+    doTest(content, after, createFixText("some%20path/some%20file%20link.md"))
   }
 
   private fun createFixText(replacement: String): String {

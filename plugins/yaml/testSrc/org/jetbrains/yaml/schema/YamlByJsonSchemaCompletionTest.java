@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.jsonSchema.impl.JsonBySchemaCompletionBaseTest;
@@ -17,13 +19,13 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
   }
 
   public void testTopLevel() throws Exception {
-    testBySchema("{\"properties\": {\"prima\": {}, \"proto\": {}, \"primus\": {}}}", "proto: 5\n<caret>", "yml",
+    testBySchema("{\"properties\": {\"prima\": {}, \"proto\": {}, \"primus\": {}}}", "proto: 5\n<caret>", "someFile.yml",
                  "prima", "primus");
   }
 
   public void testNested() throws Exception {
     testBySchema("{\"properties\": {\"prima\": {\"properties\": {\"proto\": {}, \"primus\": {}}}}}",
-       "prima:\n  <caret>", "yml",
+       "prima:\n  <caret>", "someFile.yml",
                  "primus", "proto");
   }
 
@@ -48,7 +50,7 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
                          }
                        }
                      }
-                   }""", "colorMap:\n  - <caret>", "yml", "hue", "saturation", "value");
+                   }""", "colorMap:\n  - <caret>", "someFile.yml", "hue", "saturation", "value");
   }
 
   public void testEnumInArray() throws Exception {
@@ -62,7 +64,7 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
                          }
                        }
                      }
-                   }""", "colorMap:\n  - <caret>", "yml", "blue", "red", "white");
+                   }""", "colorMap:\n  - <caret>", "someFile.yml", "blue", "red", "white");
   }
 
   public void testBeforeProps() throws Exception {
@@ -85,7 +87,7 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
                        item1: 1
                        item3: 3
                        <caret>
-                       item5: 5""", "yml", "item2", "item4", "item6");
+                       item5: 5""", "someFile.yml", "item2", "item4", "item6");
   }
 
   public void testPropInArray() throws Exception {
@@ -94,11 +96,19 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
       provider:
         - select: A
           <caret>
-        - select: B""", "yml", "var_a_1", "var_a_2");
+        - select: B""",
+     "someFile.yml",
+     LookupElement::getLookupString,
+     CompletionType.SMART,
+     "var_a_1", "var_a_2");
     testBySchema(schemaText, """
       provider:
         - select: A
         - select: B
-          <caret>""", "yml", "var_b_1", "var_b_2", "var_b_3");
+          <caret>""",
+     "someFile.yml",
+     LookupElement::getLookupString,
+     CompletionType.SMART,
+     "var_b_1", "var_b_2", "var_b_3");
   }
 }

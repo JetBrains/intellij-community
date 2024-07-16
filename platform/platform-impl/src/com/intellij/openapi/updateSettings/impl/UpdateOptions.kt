@@ -16,6 +16,9 @@ class UpdateOptions : BaseState() {
   @get:OptionTag("CHECK_NEEDED")
   var isCheckNeeded: Boolean by property(true)
 
+  @get:OptionTag("PLUGINS_AUTO_UPDATE")
+  var isPluginsAutoUpdateEnabled: Boolean by property(false)
+
   @get:OptionTag("PLUGINS_CHECK_NEEDED")
   var isPluginsCheckNeeded: Boolean by property(true)
 

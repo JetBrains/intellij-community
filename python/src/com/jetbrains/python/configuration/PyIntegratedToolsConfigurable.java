@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
@@ -62,8 +62,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JComboBox<DocStringFormat> myDocstringFormatComboBox;
   private PyTestRunConfigurationsModel myModel;
   private final PyPackageRequirementsSettings myPackagingSettings;
-  @Nullable private final Module myModule;
-  @NotNull private final Project myProject;
+  private final @Nullable Module myModule;
+  private final @NotNull Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
   private TextFieldWithBrowseButton myWorkDir;
   private JCheckBox txtIsRst;
@@ -117,8 +117,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myPipEnvPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.pipenv")));
   }
 
-  @NotNull
-  private String getRequirementsPath() {
+  private @NotNull String getRequirementsPath() {
     final String path = myPackagingSettings.getRequirementsPath();
     if (myModule != null && myPackagingSettings.isDefaultPath() && !PyPackageUtil.hasRequirementsTxt(myModule)) {
       return "";
@@ -133,9 +132,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myErrorPanel.add(facetErrorPanel.getComponent(), BorderLayout.CENTER);
 
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
-      @NotNull
       @Override
-      public ValidationResult check() {
+      public @NotNull ValidationResult check() {
         final Sdk sdk = PythonSdkUtil.findPythonSdk(myModule);
         if (sdk != null) {
           var factory = myModel.getSelected();
@@ -172,9 +170,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   }
 
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return PyBundle.message("configurable.PyIntegratedToolsConfigurable.display.name");
   }
 
@@ -303,9 +300,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     }
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "PyIntegratedToolsConfigurable";
   }
 }

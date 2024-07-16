@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring.suggested
 
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.refactoring.suggested.SuggestedRefactoringState
 import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
@@ -12,6 +14,8 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactoringSupport) :
   SuggestedRefactoringStateChanges(refactoringSupport) {
   override fun createInitialState(anchor: PsiElement): SuggestedRefactoringState? {
+    //todo make SuggestedRefactoringSupport dumbAware
+    if (DumbService.isDumb(anchor.project)) return null
     val state = super.createInitialState(anchor) ?: return null
     if (anchor is PsiMember && isDuplicate(anchor, state.oldSignature)) return null
     return state
@@ -22,7 +26,10 @@ class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactor
     val name = member.name!!
     when (member) {
       is PsiMethod -> {
-        return psiClass.findMethodsByName(name, false)
+        return (if (psiClass is PsiExtensibleClass)
+          psiClass.ownMethods.filter { it.name == name }.toTypedArray()
+        else
+          psiClass.findMethodsByName(name, false))
           .any {
             if (it == member) return@any false
             val otherSignature = signature(it, null) ?: return@any false
@@ -31,7 +38,8 @@ class JavaSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefactor
       }
 
       is PsiField -> {
-        return psiClass.fields.any { it != member && it.name == name }
+        return (if (psiClass is PsiExtensibleClass) psiClass.ownFields else psiClass.fields.toList())
+          .any { it != member && it.name == name }
       }
 
       else -> return false
@@ -97,7 +105,7 @@ private fun PsiParameter.extractParameterData(): Parameter? {
 }
 
 internal fun PsiMethod.signature(): Signature? {
-  val visibility = this.visibility()
+  val visibility = this.explicitVisibility()
   val parameters = this.parameterList.parameters.map { it.extractParameterData() ?: return null }
   val annotations = this.extractAnnotations()
   val exceptions = this.extractExceptions()

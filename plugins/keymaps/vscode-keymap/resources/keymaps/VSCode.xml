@@ -23,6 +23,7 @@
   <action id="Arrangement.Rule.Match.Condition.Move.Up" />
   <action id="Back">
     <keyboard-shortcut first-keystroke="alt left" />
+    <mouse-shortcut keystroke="button4"/>
   </action>
   <action id="BaseOnThisFunction" />
   <action id="BraceOrQuoteOut">
@@ -243,6 +244,7 @@
   </action>
   <action id="Forward">
     <keyboard-shortcut first-keystroke="alt right" />
+    <mouse-shortcut keystroke="button5"/>
   </action>
   <action id="Generate.Missing.Members.ES6" />
   <action id="Generate.Missing.Members.TypeScript" />

@@ -29,10 +29,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.FixtureRuleKt;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.PathKt;
@@ -282,6 +279,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     File file = new File(parentDir.getPath(), "Foo.java");
     FileUtil.writeToFile(file, "class Foo {}");
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     assertFalse(count0 == getJavaTracker().getModificationCount());
@@ -297,6 +295,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     File file = new File(parentDir.getPath() + "/foo", "Foo.java");
     FileUtil.writeToFile(file, "package foo; class Foo {}");
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
     assertFalse(count0 == getJavaTracker().getModificationCount());
@@ -401,6 +400,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     Path file = ProjectKt.getStateStore(getProject()).getProjectBasePath().resolve(fileName);
     PathKt.write(file, text);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return PsiManager.getInstance(getProject()).findFile(virtualFile);
   }
 

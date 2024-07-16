@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spi.parsing;
 
 import com.intellij.core.JavaPsiBundle;
@@ -27,18 +27,16 @@ public final class SPIParserDefinition implements ParserDefinition {
   private static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
   private static final Logger LOG = Logger.getInstance(SPIParserDefinition.class);
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new SPILexer();
   }
 
   @Override
   public @NotNull PsiParser createParser(Project project) {
     return new PsiParser() {
-      @NotNull
       @Override
-      public ASTNode parse(IElementType root, PsiBuilder builder) {
+      public @NotNull ASTNode parse(IElementType root, PsiBuilder builder) {
         final PsiBuilder.Marker rootMarker = builder.mark();
         final PsiBuilder.Marker propertiesList = builder.mark();
         while (!builder.eof()) {
@@ -56,27 +54,23 @@ public final class SPIParserDefinition implements ParserDefinition {
     return SPI_FILE_ELEMENT_TYPE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return WHITE_SPACES;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.create(JavaTokenType.END_OF_LINE_COMMENT);
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     final IElementType elementType = node.getElementType();
     if (elementType == SPIElementTypes.PROVIDERS_LIST) {
       return new SPIClassProvidersElementList(node);

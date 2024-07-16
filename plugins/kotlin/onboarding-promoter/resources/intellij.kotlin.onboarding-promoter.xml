@@ -1,8 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.training.promoter">
   <dependencies>
-    <plugin id="training"/>
     <plugin id="org.jetbrains.kotlin"/>
     <module name="kotlin.features-trainer"/>
+    <module name="intellij.java.featuresTrainer"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <startPagePromoter id="JavaOrKotlinOnboardingTourPromoter"

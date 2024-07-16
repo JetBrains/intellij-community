@@ -5,10 +5,10 @@ import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
+import com.intellij.vcs.log.graph.api.printer.GraphPrintElement
 import com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.parser.LinearGraphParser
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import org.junit.Assert.assertEquals
@@ -18,9 +18,7 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
 
   class TestPrintElementPresentationManager : PrintElementPresentationManager {
 
-    override fun isSelected(printElement: PrintElementWithGraphElement): Boolean {
-      return false
-    }
+    override fun isSelected(printElement: GraphPrintElement): Boolean = false
 
     override fun getColorId(element: GraphElement): Int {
       if (element is GraphNode) {

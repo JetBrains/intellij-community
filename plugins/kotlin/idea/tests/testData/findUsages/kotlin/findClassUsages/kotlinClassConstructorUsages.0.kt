@@ -17,3 +17,4 @@ open class <caret>Server() {
     }
 }
 
+// ISSUE: KTIJ-29704

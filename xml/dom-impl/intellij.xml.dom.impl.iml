@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.xml.dom" exported="" />
-    <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
@@ -19,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.libraries.cglib" />
   </component>
   <component name="copyright">
     <Base>

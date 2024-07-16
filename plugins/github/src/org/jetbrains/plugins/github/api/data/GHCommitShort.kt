@@ -9,7 +9,6 @@ open class GHCommitShort(id: String,
                          oid: String,
                          abbreviatedOid: String,
                          val url: String,
-                         val messageHeadlineHTML: @NlsSafe String,
+                         val messageHeadline: @NlsSafe String,
                          val author: GHGitActor?)
-  : GHCommitHash(id, oid, abbreviatedOid) {
-}
+  : GHCommitHash(id, oid, abbreviatedOid)

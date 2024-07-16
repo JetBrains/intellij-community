@@ -161,7 +161,7 @@ class KotlinConsoleRunner(
         commandHistory.listeners.add(historyKeyListener)
 
         val executeAction = KtExecuteCommandAction(consoleView.virtualFile)
-        executeAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, consoleView.consoleEditor.component)
+        executeAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), consoleView.consoleEditor.component)
 
         val consoleContributor = ScriptDefinitionContributor.find<ConsoleScriptDefinitionContributor>(project)!!
         consoleContributor.registerDefinition(consoleScriptDefinition)

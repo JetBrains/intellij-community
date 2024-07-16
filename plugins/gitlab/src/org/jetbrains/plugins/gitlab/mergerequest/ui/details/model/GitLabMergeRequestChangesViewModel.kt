@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesContainer
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelDelegate
@@ -15,10 +16,9 @@ import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
-internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommit> {
+internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitViewModel> {
   /**
    * View model of a current change list
    */
@@ -34,53 +34,58 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   parentCs: CoroutineScope,
   mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestChangesViewModel,
-    CodeReviewChangesViewModel<GitLabCommit> {
-  private val cs = parentCs.childScope()
+    CodeReviewChangesViewModel<GitLabCommitViewModel> {
+  private val cs = parentCs.childScope(javaClass.name)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val changesContainer: Flow<Result<GitLabChangesContainer>> = mergeRequest.changes.mapLatest {
+  private val changesContainer: StateFlow<Result<GitLabChangesContainer>?> = mergeRequest.changes.mapLatest {
     runCatchingUser {
       GitLabChangesContainer(it.getParsedChanges())
     }
-  }
+  }.stateInNow(cs, null)
 
-  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) { changesContainer, changeList ->
+  private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changesContainer, changeList ->
     changesContainer as GitLabChangesContainer
 
     GitLabMergeRequestChangeListViewModelImpl(project, this, mergeRequest, changesContainer.changes, changeList)
   }
 
-  override val reviewCommits: SharedFlow<List<GitLabCommit>> =
-    mergeRequest.changes.map { it.commits.await() }.modelFlow(cs, LOG)
+  override val reviewCommits: SharedFlow<List<GitLabCommitViewModel>> =
+    mergeRequest.changes
+      .map { it.commits.await().map { commit -> GitLabCommitViewModel(project, mergeRequest, commit) } }
+      .modelFlow(cs, LOG)
 
   override val selectedCommitIndex: SharedFlow<Int> = reviewCommits.combine(delegate.selectedCommit) { commits, sha ->
     if (sha == null) -1
     else commits.indexOfFirst { it.sha == sha }
   }.modelFlow(cs, LOG)
 
-  override val selectedCommit: SharedFlow<GitLabCommit?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
+  override val selectedCommit: SharedFlow<GitLabCommitViewModel?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
     index.takeIf { it >= 0 }?.let { commits[it] }
   }.modelFlow(cs, LOG)
 
   override val changeListVm: StateFlow<ComputedResult<GitLabMergeRequestChangeListViewModelImpl>> = delegate.changeListVm
 
   override fun selectCommit(index: Int) {
-    delegate.selectCommit(index)
+    delegate.selectCommit(index)?.selectChange(null)
   }
 
   override fun selectNextCommit() {
-    delegate.selectNextCommit()
+    delegate.selectNextCommit()?.selectChange(null)
   }
 
   override fun selectPreviousCommit() {
-    delegate.selectPreviousCommit()
+    delegate.selectPreviousCommit()?.selectChange(null)
   }
 
   override fun selectChange(change: RefComparisonChange) {
-    delegate.selectChange(change)
+    val commit = changesContainer.value?.getOrNull()?.let {
+      it.commitsByChange[change]
+    }
+    delegate.selectCommit(commit)?.selectChange(change)
   }
 
-  override fun commitHash(commit: GitLabCommit): String = commit.shortId
+  override fun commitHash(commit: GitLabCommitViewModel): String = commit.shortId
 }
 
 internal class GitLabChangesContainer(

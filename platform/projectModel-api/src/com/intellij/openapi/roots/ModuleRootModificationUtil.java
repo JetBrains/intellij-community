@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.function.Function;
 
 public final class ModuleRootModificationUtil {
+  private ModuleRootModificationUtil() { 
+  }
+
   public static void addContentRoot(@NotNull Module module, @NotNull String path) {
     updateModel(module, model -> model.addContentEntry(VfsUtilCore.pathToUrl(path)));
   }

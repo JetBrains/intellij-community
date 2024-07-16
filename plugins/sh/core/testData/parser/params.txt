@@ -1228,37 +1228,38 @@ SHELL_SCRIPT
               SUBSHELL_COMMAND
                 PsiElement(()('(')
                 COMPOUND_LIST
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
+                  PIPELINE_COMMAND_LIST
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('grep')
+                      PsiWhiteSpace(' ')
                       LITERAL
-                        PsiElement(word)('grep')
+                        PsiElement(word)('-v')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(RAW_STRING)(''^#'')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        VARIABLE
+                          PsiElement(var)('$usrcff')
+                        PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
-                    LITERAL
-                      PsiElement(word)('-v')
+                    PsiElement(|)('|')
                     PsiWhiteSpace(' ')
-                    STRING
-                      PsiElement(RAW_STRING)(''^#'')
-                    PsiWhiteSpace(' ')
-                    STRING
-                      PsiElement(OPEN_QUOTE)('"')
-                      VARIABLE
-                        PsiElement(var)('$usrcff')
-                      PsiElement(CLOSE_QUOTE)('"')
-                  PsiWhiteSpace(' ')
-                  PsiElement(|)('|')
-                  PsiWhiteSpace(' ')
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
-                      LITERAL
-                        PsiElement(word)('grep')
-                    PsiWhiteSpace(' ')
-                    STRING
-                      PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(STRING_CONTENT)(' ')
-                      VARIABLE
-                        PsiElement(var)('$name')
-                      PsiElement(STRING_CONTENT)('(')
-                      PsiElement(CLOSE_QUOTE)('"')
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('grep')
+                      PsiWhiteSpace(' ')
+                      STRING
+                        PsiElement(OPEN_QUOTE)('"')
+                        PsiElement(STRING_CONTENT)(' ')
+                        VARIABLE
+                          PsiElement(var)('$name')
+                        PsiElement(STRING_CONTENT)('(')
+                        PsiElement(CLOSE_QUOTE)('"')
                 PsiElement())(')')
               PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
@@ -1377,61 +1378,62 @@ SHELL_SCRIPT
                     SUBSHELL_COMMAND
                       PsiElement(()('(')
                       COMPOUND_LIST
-                        SIMPLE_COMMAND
-                          GENERIC_COMMAND_DIRECTIVE
+                        PIPELINE_COMMAND_LIST
+                          SIMPLE_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
+                              LITERAL
+                                PsiElement(word)('grep')
+                            PsiWhiteSpace(' ')
                             LITERAL
-                              PsiElement(word)('grep')
+                              PsiElement(word)('-v')
+                            PsiWhiteSpace(' ')
+                            STRING
+                              PsiElement(RAW_STRING)(''^#'')
+                            PsiWhiteSpace(' ')
+                            STRING
+                              PsiElement(OPEN_QUOTE)('"')
+                              VARIABLE
+                                PsiElement(var)('$usrcff')
+                              PsiElement(CLOSE_QUOTE)('"')
                           PsiWhiteSpace(' ')
-                          LITERAL
-                            PsiElement(word)('-v')
+                          PsiElement(|)('|')
                           PsiWhiteSpace(' ')
-                          STRING
-                            PsiElement(RAW_STRING)(''^#'')
-                          PsiWhiteSpace(' ')
-                          STRING
-                            PsiElement(OPEN_QUOTE)('"')
-                            VARIABLE
-                              PsiElement(var)('$usrcff')
-                            PsiElement(CLOSE_QUOTE)('"')
-                        PsiWhiteSpace(' ')
-                        PsiElement(|)('|')
-                        PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND
-                          GENERIC_COMMAND_DIRECTIVE
+                          SIMPLE_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
+                              LITERAL
+                                PsiElement(word)('grep')
+                            PsiWhiteSpace(' ')
                             LITERAL
-                              PsiElement(word)('grep')
+                              PsiElement(word)('-v')
+                            PsiWhiteSpace(' ')
+                            STRING
+                              PsiElement(RAW_STRING)(''^service'')
                           PsiWhiteSpace(' ')
-                          LITERAL
-                            PsiElement(word)('-v')
+                          PsiElement(|)('|')
                           PsiWhiteSpace(' ')
-                          STRING
-                            PsiElement(RAW_STRING)(''^service'')
-                        PsiWhiteSpace(' ')
-                        PsiElement(|)('|')
-                        PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND
-                          GENERIC_COMMAND_DIRECTIVE
+                          SIMPLE_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
+                              LITERAL
+                                PsiElement(word)('grep')
+                            PsiWhiteSpace(' ')
                             LITERAL
-                              PsiElement(word)('grep')
+                              PsiElement(word)('-v')
+                            PsiWhiteSpace(' ')
+                            STRING
+                              PsiElement(RAW_STRING)(''^group'')
                           PsiWhiteSpace(' ')
-                          LITERAL
-                            PsiElement(word)('-v')
+                          PsiElement(|)('|')
                           PsiWhiteSpace(' ')
-                          STRING
-                            PsiElement(RAW_STRING)(''^group'')
-                        PsiWhiteSpace(' ')
-                        PsiElement(|)('|')
-                        PsiWhiteSpace(' ')
-                        SIMPLE_COMMAND
-                          GENERIC_COMMAND_DIRECTIVE
-                            LITERAL
-                              PsiElement(word)('grep')
-                          PsiWhiteSpace(' ')
-                          STRING
-                            PsiElement(OPEN_QUOTE)('"')
-                            VARIABLE
-                              PsiElement(var)('$addr')
-                            PsiElement(CLOSE_QUOTE)('"')
+                          SIMPLE_COMMAND
+                            GENERIC_COMMAND_DIRECTIVE
+                              LITERAL
+                                PsiElement(word)('grep')
+                            PsiWhiteSpace(' ')
+                            STRING
+                              PsiElement(OPEN_QUOTE)('"')
+                              VARIABLE
+                                PsiElement(var)('$addr')
+                              PsiElement(CLOSE_QUOTE)('"')
                       PsiElement())(')')
                     PsiElement(CLOSE_QUOTE)('"')
                 PsiElement(\n)('\n')

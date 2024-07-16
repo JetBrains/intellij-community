@@ -17,13 +17,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlin.properties.Delegates
 
-fun ChangesTree.setupCodeReviewProgressModel(parent: Disposable, model: CodeReviewProgressTreeModel<*>) {
-  val nodeRenderer = ChangesBrowserNodeRenderer(project, { isShowFlatten }, false)
-  cellRenderer = CodeReviewProgressRenderer(nodeRenderer, model::getState)
-
-  model.addChangeListener(parent) { repaint() }
-}
-
 fun ChangesTree.setupCodeReviewProgressModel(model: CodeReviewProgressTreeModel<*>) {
   val nodeRenderer = ChangesBrowserNodeRenderer(project, { isShowFlatten }, false)
   cellRenderer = CodeReviewProgressRenderer(nodeRenderer, model::getState)

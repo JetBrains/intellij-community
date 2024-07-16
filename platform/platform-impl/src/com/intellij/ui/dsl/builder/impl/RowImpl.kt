@@ -3,12 +3,9 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -22,12 +19,14 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.components.*
+import com.intellij.ui.dsl.builder.components.DslLabel
+import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
+import com.intellij.util.IconUtil
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
@@ -214,13 +213,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar> {
-    val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
-    val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
-    toolbar.targetComponent = null // any data context is supported, suppress warning
-    return cell(toolbar)
-  }
-
   override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T> {
     return segmentedButtonImpl(items) {
       text = renderer.invoke(it)
@@ -240,14 +232,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     result.items = items
     cells.add(result)
     return result
-  }
-
-  override fun tabbedPaneHeader(items: Collection<String>): Cell<JBTabbedPane> {
-    val tabbedPaneHeader = TabbedPaneHeader()
-    for (item in items) {
-      tabbedPaneHeader.add(item, JPanel())
-    }
-    return cell(tabbedPaneHeader)
   }
 
   override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {
@@ -300,7 +284,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun icon(icon: Icon): CellImpl<JLabel> {
-    return cell(JBLabel(icon))
+    val label = JBLabel(icon)
+    label.disabledIcon = IconUtil.desaturate(icon)
+    return cell(label)
   }
 
   override fun contextHelp(description: String, title: String?): CellImpl<JLabel> {

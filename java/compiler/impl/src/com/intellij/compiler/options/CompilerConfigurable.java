@@ -10,13 +10,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class CompilerConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
+public class CompilerConfigurable implements SearchableConfigurable.Parent {
   static final String CONFIGURABLE_ID = "project.propCompiler";
 
-  private final CompilerUIConfigurable myCompilerUIConfigurable;
+  private final CompilerUIConfigurableKt myCompilerUIConfigurable;
 
   public CompilerConfigurable(Project project) {
-    myCompilerUIConfigurable = new CompilerUIConfigurable(project);
+    myCompilerUIConfigurable = new CompilerUIConfigurableKt(project);
   }
 
   @Override
@@ -70,7 +70,8 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     return new Configurable[0];
   }
 
-  @NotNull CompilerUIConfigurable getCompilerUIConfigurable() {
+  @NotNull
+  CompilerUIConfigurableKt getCompilerUIConfigurable() {
     return myCompilerUIConfigurable;
   }
 }

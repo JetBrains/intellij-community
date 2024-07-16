@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.current
-import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
@@ -16,15 +16,11 @@ import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ThreadingSupport
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport
 import com.intellij.openapi.application.impl.InvocationUtil
 import com.intellij.openapi.application.impl.RwLockHolder
-import com.intellij.openapi.application.isNewLockEnabled
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -210,20 +206,18 @@ class IdeEventQueue private constructor() : EventQueue() {
     return focusEventList.joinToString(separator = ", ") { event -> "[${event.id}; ${event.source.javaClass.name}]" }
   }
 
-  private fun getLastFocusGainedEvent(): AWTEvent? = focusEventList.lastOrNull { it.id == FocusEvent.FOCUS_GAINED }
-
-  private fun ifFocusEventsInTheQueue(yes: (AWTEvent) -> Unit, no: Runnable) {
-    val lastFocusGainedEvent = getLastFocusGainedEvent()
-    if (lastFocusGainedEvent != null) {
+  private inline fun ifFocusEventsInTheQueue(yes: (AWTEvent) -> Unit, no: Runnable) {
+    val lastFocusGainedEvent = focusEventList.lastOrNull { it.id == FocusEvent.FOCUS_GAINED }
+    if (lastFocusGainedEvent == null) {
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
+      EdtInvocationManager.invokeLaterIfNeeded(no)
+    }
+    else {
       Logs.FOCUS_AWARE_RUNNABLES_LOG.debug {
         "Focus event list (trying to execute runnable): ${runnablesWaitingForFocusChangeState()}\n" +
         "runnable saved for : [${lastFocusGainedEvent.id}; ${lastFocusGainedEvent.source}] -> ${no.javaClass.name}"
       }
       yes(lastFocusGainedEvent)
-    }
-    else {
-      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
-      EdtInvocationManager.invokeLaterIfNeeded(no)
     }
   }
 
@@ -350,42 +344,44 @@ class IdeEventQueue private constructor() : EventQueue() {
       val runnable = InvocationUtil.extractRunnable(event)
       val runnableClass = runnable?.javaClass ?: Runnable::class.java
       val processEventRunnable = Runnable {
-        val progressManager = ProgressManager.getInstanceOrNull()
-        try {
-          runCustomProcessors(finalEvent, preProcessors)
-          performActivity(finalEvent) {
-            if (progressManager == null) {
-              _dispatchEvent(finalEvent)
-            }
-            else {
-              progressManager.computePrioritized(ThrowableComputable {
+        withAttachedClientId(event).use {
+          val progressManager = ProgressManager.getInstanceOrNull()
+          try {
+            runCustomProcessors(finalEvent, preProcessors)
+            performActivity(finalEvent) {
+              if (progressManager == null) {
                 _dispatchEvent(finalEvent)
-                null
-              })
+              }
+              else {
+                progressManager.computePrioritized(ThrowableComputable {
+                  _dispatchEvent(finalEvent)
+                  null
+                })
+              }
             }
           }
-        }
-        catch (t: Throwable) {
-          processException(t)
-        }
-        finally {
-          isInInputEvent = wasInputEvent
-          trueCurrentEvent = oldEvent
-          if (currentSequencedEvent === finalEvent) {
-            currentSequencedEvent = null
+          catch (t: Throwable) {
+            processException(t)
           }
-          runCustomProcessors(finalEvent, postProcessors)
-          if (finalEvent is KeyEvent) {
-            maybeReady()
+          finally {
+            isInInputEvent = wasInputEvent
+            trueCurrentEvent = oldEvent
+            if (currentSequencedEvent === finalEvent) {
+              currentSequencedEvent = null
+            }
+            runCustomProcessors(finalEvent, postProcessors)
+            if (finalEvent is KeyEvent) {
+              maybeReady()
+            }
+            if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
+              eventWatcher.logTimeMillis(if (runnableClass == Runnable::class.java) finalEvent.toString() else runnableClass.name,
+                                         startedAt,
+                                         runnableClass)
+            }
           }
-          if (eventWatcher != null && runnable != null && !InvocationUtil.isFlushNow(runnable)) {
-            eventWatcher.logTimeMillis(if (runnableClass == Runnable::class.java) finalEvent.toString() else runnableClass.name,
-                                       startedAt,
-                                       runnableClass)
+          if (isFocusEvent(finalEvent)) {
+            onFocusEvent(finalEvent)
           }
-        }
-        if (isFocusEvent(finalEvent)) {
-          onFocusEvent(finalEvent)
         }
       }
 
@@ -571,7 +567,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     if (e is WindowEvent) {
-      processAppActivationEvent(e)
+      // Activation can call methods which needs WriteIntent, like saving project
+      threadingSupport.runWriteIntentReadAction<Unit, Throwable> { processAppActivationEvent(e) }
     }
     if (dispatchByCustomDispatchers(e)) {
       return
@@ -581,8 +578,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> threadingSupport.runWithImplicitRead { dispatchMouseEvent(e) }
-      e is KeyEvent -> threadingSupport.runWithImplicitRead { dispatchKeyEvent(e) }
+      e is MouseEvent -> threadingSupport.runWriteIntentReadAction<Unit, Throwable> { dispatchMouseEvent(e) }
+      e is KeyEvent -> threadingSupport.runWriteIntentReadAction<Unit, Throwable> { dispatchKeyEvent(e) }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {
@@ -837,19 +834,12 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
     }
     eventsPosted.incrementAndGet()
-    // We don't 'attach' current client id to PeerEvent instances for two reasons.
-    // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
-    // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
-    // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
-    // and changes the overall events' processing order.
-    val passClientId = event is InvocationEvent && event !is PeerEvent
-    if (passClientId && !isCurrentlyUnderLocalId) {
-      // only do wrapping trickery with non-local events to preserve correct behavior -
-      // local events will get dispatched under local ID anyway
-      val clientId = current
-      super.postEvent(InvocationEvent(event.source) { withClientId(clientId).use { dispatchEvent(event) } })
+
+    attachClientIdIfNeeded(event)?.let {
+      super.postEvent(it)
       return true
     }
+
     if (event is KeyEvent) {
       keyboardEventPosted.incrementAndGet()
     }
@@ -858,6 +848,29 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
     super.postEvent(event)
     return true
+  }
+
+  private fun attachClientIdIfNeeded(event: AWTEvent): AWTEvent? {
+    if (!ClientId.propagateAcrossThreads) {
+      return null
+    }
+    // We don't 'attach' current client id to PeerEvent instances for two reasons.
+    // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
+    // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
+    // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
+    // and changes the overall events' processing order.
+    if (event is InvocationEvent && event !is PeerEvent) {
+      val clientId = current
+      return InvocationEvent(event.source) { withClientId(clientId).use { dispatchEvent(event) } }
+    }
+    if (event.id in ComponentEvent.COMPONENT_FIRST..ComponentEvent.COMPONENT_LAST) {
+      return ComponentEventWithClientId((event as ComponentEvent).component, event.id, current)
+    }
+    return null
+  }
+
+  private fun withAttachedClientId(event: AWTEvent): AccessToken {
+    return if (event is ComponentEventWithClientId) withClientId(event.clientId) else AccessToken.EMPTY_ACCESS_TOKEN
   }
 
   @Deprecated("Does nothing currently")
@@ -930,7 +943,7 @@ typealias PostEventHook = (event: AWTEvent) -> Boolean
 
 private val DISPATCHER_EP = ExtensionPointName<IdeEventQueue.EventDispatcher>("com.intellij.ideEventQueueDispatcher")
 
-private const val defaultEventWithWrite = true
+private const val defaultEventWithWrite = false
 
 private val isSkipMetaPressOnLinux = java.lang.Boolean.getBoolean("keymap.skip.meta.press.on.linux")
 
@@ -1019,7 +1032,8 @@ internal fun performActivity(e: AWTEvent, runnable: () -> Unit) {
     runnable()
   }
   else {
-    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnable)
+    val runnableWithWIL = {  WriteIntentReadAction.run(runnable) }
+    transactionGuard.performActivity(isInputEvent(e) || e is ItemEvent || e is FocusEvent, runnableWithWIL)
   }
 }
 
@@ -1227,6 +1241,8 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     return !dispatch
   }
 }
+
+private class ComponentEventWithClientId(source: Component, id: Int, val clientId: ClientId) : ComponentEvent(source, id)
 
 @Suppress("SpellCheckingInspection")
 private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {

@@ -182,7 +182,8 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     }
     val groups = findGroupsToAdd(bookmark) ?: return
     val group = chooseGroupToAdd(groups) ?: return
-    group.add(bookmark, type, null)
+    val description = bookmark.prepareDefaultDescription()
+    group.add(bookmark, type, description)
   }
 
   private fun findGroupsToAdd(bookmark: Bookmark) = synchronized(notifier) {

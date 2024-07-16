@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.plugin.artifacts
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.testFramework.io.ExternalResourcesChecker
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativeHostSupportDetector
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
@@ -10,9 +11,7 @@ import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_RELEASE_CDN_URL
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
-import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.io.IOException
@@ -21,7 +20,7 @@ import java.nio.file.Paths
 
 object TestKotlinArtifacts {
     private val kotlinCLibrariesVersion by lazy {
-        val libraryNameToGetVersionFrom = "kotlinc_high_level_api.xml"
+        val libraryNameToGetVersionFrom = "kotlinc_analysis_api.xml"
         KotlinMavenUtils.findLibraryVersion(libraryNameToGetVersionFrom)
     }
 
@@ -66,8 +65,11 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibJdk8: File by lazy { getJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJdk8Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJs: File by lazy { getKlib("kotlin-stdlib-js") }
+    // The latest published kotlin-stdlib-js with both .knm and .kjsm roots
+    @JvmStatic val kotlinStdlibJsLegacyJar: File by lazy { downloadOrReportUnavailability("kotlin-stdlib-js", "1.9.22") }
     @JvmStatic val kotlinDomApiCompat: File by lazy { getKlib("kotlin-dom-api-compat") }
     @JvmStatic val kotlinStdlibWasmJs: File by lazy { getKlib("kotlin-stdlib-wasm-js") }
+    @JvmStatic val kotlinStdlibWasmWasi: File by lazy { getKlib("kotlin-stdlib-wasm-wasi") }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
     @JvmStatic val kotlinTest: File by lazy { getJar("kotlin-test") }
     @JvmStatic val kotlinTestJs: File by lazy { getKlib("kotlin-test-js") }
@@ -80,6 +82,9 @@ object TestKotlinArtifacts {
     @JvmStatic val jetbrainsAnnotations: File by lazy { getLibraryFile("org.jetbrains", "annotations", "jetbrains_annotations.xml") }
     @JvmStatic val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
     @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
+    @JvmStatic val kotlinxCoroutines: File by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("kotlinx.coroutines.CoroutineScope"))!!.toFile()
+    }
 
     /**
      * @throws org.jetbrains.kotlin.konan.target.TargetSupportException on access from an inappropriate host.
@@ -130,12 +135,12 @@ object TestKotlinArtifacts {
     }
 
     @Throws(TargetSupportException::class)
-    private fun getNativeLib(
+    fun getNativeLib(
         version: String = KotlinNativeVersion.resolvedKotlinNativeVersion,
         platform: String = HostManager.platformName(),
         library: String
     ): File {
-        if (!isNativeHostSupported())
+        if (!KotlinNativeHostSupportDetector.isNativeHostSupported() && platform == HostManager.platformName())
             throw TargetSupportException("kotlin-native-prebuilt can't be downloaded as it doesn't exist for the host: ${platform}")
 
         val baseDir = File(PathManager.getCommunityHomePath()).resolve("out")
@@ -160,30 +165,7 @@ object TestKotlinArtifacts {
         return if (libFile.exists()) libFile else
             throw IOException("Library doesn't exist: $libPath")
     }
-
-    private fun isNativeHostSupported(): Boolean {
-        val currentHost = HostManager.host
-        if (currentHost !in supportedNativeHosts) return false
-        // Because of the workaround in org.jetbrains.kotlin.konan.target.HostManager,
-        // returned host architecture can be incorrect and should be checked separately.
-        // E.g., on Linux ARM64 hosts HostManager.host currently falls back to Linux X64.
-        if (currentHost.architecture != expectedArchitectureByHostArchString[HostManager.hostArchOrNull()]) return false
-        return true
-    }
 }
-
-// Set of hosts for which K/N prebuilt can be downloaded
-private val supportedNativeHosts: Set<KonanTarget> = setOf(
-    KonanTarget.MACOS_X64,
-    KonanTarget.MACOS_ARM64,
-    KonanTarget.LINUX_X64,
-    KonanTarget.MINGW_X64,
-)
-
-private val expectedArchitectureByHostArchString: Map<String, Architecture> = mapOf(
-    "x86_64" to Architecture.X64,
-    "aarch64" to Architecture.ARM64,
-)
 
 @JvmOverloads
 fun downloadOrReportUnavailability(artifactId: String, version: String, suffix: String = ".jar"): File =

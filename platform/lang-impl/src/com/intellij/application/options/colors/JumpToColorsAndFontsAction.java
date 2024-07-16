@@ -8,6 +8,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -212,7 +213,7 @@ public final class JumpToColorsAndFontsAction extends DumbAwareAction {
   private static boolean openSettingsAndSelectKey(@NotNull Project project,
                                                   @NotNull ColorAndFontDescriptorsProvider page,
                                                   @NotNull AttributesDescriptor descriptor) {
-    return selectOrEditColor(id -> CommonDataKeys.PROJECT.is(id) ? project : null,
+    return selectOrEditColor(SimpleDataContext.getProjectContext(project),
                              descriptor.getDisplayName(), page.getDisplayName());
   }
 }

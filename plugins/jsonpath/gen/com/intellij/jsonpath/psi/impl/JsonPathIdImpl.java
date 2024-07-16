@@ -8,10 +8,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.jsonpath.psi.JsonPathTypes.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.jsonpath.psi.JsonPathIdMixin;
 import com.intellij.jsonpath.psi.*;
 
-public class JsonPathIdImpl extends ASTWrapperPsiElement implements JsonPathId {
+public class JsonPathIdImpl extends JsonPathIdMixin implements JsonPathId {
 
   public JsonPathIdImpl(@NotNull ASTNode node) {
     super(node);

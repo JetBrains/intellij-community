@@ -7,12 +7,16 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 
-public abstract class KotlinTestWithEnvironment extends KotlinTestWithEnvironmentManagement {
+public abstract class KotlinTestWithEnvironment extends KotlinTestWithEnvironmentManagement
+        implements ExpectedPluginModeProvider {
+
     private KotlinCoreEnvironment environment;
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp();
+        ExpectedPluginModeProviderKt.setUpWithKotlinPlugin(this,
+                                                           getTestRootDisposable(),
+                                                           super::setUp);
         environment = createEnvironment();
     }
 

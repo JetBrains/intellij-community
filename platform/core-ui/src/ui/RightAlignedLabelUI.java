@@ -52,7 +52,7 @@ public final class RightAlignedLabelUI extends BasicLabelUI {
    * The JComponents orientation (LEADING/TRAILING) will also be taken
    * into account and translated into LEFT/RIGHT values accordingly.
    */
-  public static String layoutCompoundLabel(JComponent c,
+  private static String layoutCompoundLabel(JComponent c,
     FontMetrics fm,
     @NlsContexts.Label String text,
     Icon icon,
@@ -113,7 +113,7 @@ public final class RightAlignedLabelUI extends BasicLabelUI {
    * horizontalAlignment (they will default to CENTER).
    * Use the other version of layoutCompoundLabel() instead.
    */
-  public static String layoutCompoundLabel(
+  private static String layoutCompoundLabel(
     FontMetrics fm,
     @NlsContexts.Label String text,
     Icon icon,

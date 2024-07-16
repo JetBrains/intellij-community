@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class NoLabelForInspection extends BaseFormInspection {
+public final class NoLabelForInspection extends BaseFormInspection {
   public NoLabelForInspection() {
     super("NoLabelFor");
   }

@@ -33,8 +33,11 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
 
   @Override
   protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
+    String prefix = "prefix";
+    //it can help for dumb mode or incomplete mode
+    if (null != psiAnnotation.findDeclaredAttributeValue(prefix)) return true;
     // old version of @FieldNameConstants has attributes "prefix" and "suffix", the new one not
-    return null != psiAnnotation.findAttributeValue("prefix");
+    return null != psiAnnotation.findAttributeValue(prefix);
   }
 
   @Override

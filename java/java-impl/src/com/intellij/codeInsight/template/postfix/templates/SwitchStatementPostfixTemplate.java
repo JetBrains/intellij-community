@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
+import com.intellij.codeInsight.generation.surroundWith.JavaExpressionModCommandSurrounder;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -19,7 +20,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -56,40 +56,38 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     super("switch", "switch(expr)", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, selectorTopmost(SWITCH_TYPE));
   }
 
-  @NotNull
   @Override
-  protected Surrounder getSurrounder() {
-    return new JavaExpressionSurrounder() {
+  protected @NotNull Surrounder getSurrounder() {
+    return new JavaExpressionModCommandSurrounder() {
       @Override
       public boolean isApplicable(PsiExpression expr) {
         return expr.isPhysical() && SWITCH_TYPE.value(expr);
       }
 
       @Override
-      public TextRange surroundExpression(Project project, Editor editor, PsiExpression expr) throws IncorrectOperationException {
+      protected void surroundExpression(@NotNull ActionContext context, @NotNull PsiExpression expr, @NotNull ModPsiUpdater updater) {
+        Project project = context.project();
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
         PsiElement parent = expr.getParent();
+        updater.select(TextRange.from(context.offset(), 0));
         if (parent instanceof PsiExpressionStatement) {
           PsiSwitchStatement switchStatement = (PsiSwitchStatement)factory.createStatementFromText("switch(1){case 1:}", null);
-          return postprocessSwitch(editor, expr, codeStyleManager, parent, switchStatement);
+          postprocessSwitch(updater, expr, codeStyleManager, parent, switchStatement);
         }
         else if (PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, expr)) {
           PsiSwitchExpression switchExpression = (PsiSwitchExpression)factory.createExpressionFromText("switch(1){case 1->1;}", null);
-          return postprocessSwitch(editor, expr, codeStyleManager, expr, switchExpression);
+          postprocessSwitch(updater, expr, codeStyleManager, expr, switchExpression);
         }
-
-        return TextRange.from(editor.getCaretModel().getOffset(), 0);
       }
 
-      @NotNull
-      private static TextRange postprocessSwitch(Editor editor,
-                                                 PsiExpression expr,
-                                                 CodeStyleManager codeStyleManager,
-                                                 PsiElement toReplace,
-                                                 PsiSwitchBlock switchBlock) {
-
+      private static void postprocessSwitch(@NotNull ModPsiUpdater updater,
+                                            PsiExpression expr,
+                                            CodeStyleManager codeStyleManager,
+                                            PsiElement toReplace,
+                                            PsiSwitchBlock switchBlock) {
+        Document document = expr.getContainingFile().getFileDocument();
         switchBlock = (PsiSwitchBlock)codeStyleManager.reformat(switchBlock);
         PsiExpression selectorExpression = switchBlock.getExpression();
         if (selectorExpression != null) {
@@ -103,11 +101,10 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
           body = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(body);
           if (body != null) {
             TextRange range = body.getStatements()[0].getTextRange();
-            editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-            return TextRange.from(range.getStartOffset(), 0);
+            document.deleteString(range.getStartOffset(), range.getEndOffset());
+            updater.select(TextRange.from(range.getStartOffset(), 0));
           }
         }
-        return TextRange.from(editor.getCaretModel().getOffset(), 0);
       }
 
       @Override
@@ -145,9 +142,8 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
         return and(super.getFilters(offset), getPsiErrorFilter());
       }
 
-      @NotNull
       @Override
-      public Function<PsiElement, String> getRenderer() {
+      public @NotNull Function<PsiElement, String> getRenderer() {
         return JavaPostfixTemplatesUtils.getRenderer();
       }
 

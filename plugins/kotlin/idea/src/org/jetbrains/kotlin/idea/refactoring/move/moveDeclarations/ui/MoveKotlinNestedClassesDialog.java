@@ -214,7 +214,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
                 declaration -> {
                     if (!(declaration instanceof KtClassOrObject classOrObject)) return null;
 
-                  if (classOrObject instanceof KtClass && ((KtClass) classOrObject).isInner()) return null;
+                    if (classOrObject instanceof KtClass && ((KtClass) classOrObject).isInner()) return null;
                     if (classOrObject instanceof KtObjectDeclaration && ((KtObjectDeclaration) classOrObject).isCompanion()) {
                         return null;
                     }

@@ -31,6 +31,11 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
+
+  @Override
   @NotNull
   public Collection<AbstractTreeNode<?>> getChildren() {
     List<AbstractTreeNode<?>> children = new ArrayList<>();

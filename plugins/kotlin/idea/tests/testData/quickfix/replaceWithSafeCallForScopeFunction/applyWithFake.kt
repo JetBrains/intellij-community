@@ -1,6 +1,6 @@
 // "Replace scope function with safe (?.) call" "false"
 // WITH_STDLIB
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (b!!) call
 // ACTION: Enable option 'Implicit receivers and parameters' for 'Lambdas' inlay hints
 // ACTION: Introduce local variable
 // ACTION: Replace with safe (?.) call

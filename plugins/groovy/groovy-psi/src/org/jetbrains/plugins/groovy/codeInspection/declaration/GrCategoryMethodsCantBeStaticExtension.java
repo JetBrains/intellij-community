@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 
-public class GrCategoryMethodsCantBeStaticExtension implements Condition<PsiElement> {
+public final class GrCategoryMethodsCantBeStaticExtension implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement t) {
     if (t instanceof GrMethod) {

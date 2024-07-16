@@ -10,6 +10,7 @@ import com.intellij.util.QueryFactory
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.psi.KtClass
 
 private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters>() {
     init {
@@ -22,7 +23,7 @@ private val EVERYTHING_BUT_KOTLIN = object : QueryFactory<PsiClass, DirectClassI
 internal class DirectKotlinClassDelegatedSearcher : Searcher<DirectKotlinClassInheritorsSearch.SearchParameters, PsiElement> {
     @RequiresReadLock
     override fun collectSearchRequest(parameters: DirectKotlinClassInheritorsSearch.SearchParameters): Query<out PsiElement>? {
-        val baseClass = parameters.ktClass
+        val baseClass = parameters.ktClass as? KtClass ?: return null
         if (baseClass.isEnum()) {
             //enum inheritors may be found in the same class only, kotlin class
             return null

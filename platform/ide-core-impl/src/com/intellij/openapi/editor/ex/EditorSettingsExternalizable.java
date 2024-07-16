@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.ide.GeneralSettings;
@@ -18,30 +18,32 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.*;
 
-@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
+@State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   /**
    * @deprecated Use {@link PropNames#PROP_IS_VIRTUAL_SPACE} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final @NonNls String PROP_VIRTUAL_SPACE = PropNames.PROP_IS_VIRTUAL_SPACE;
   /**
    * @deprecated Use {@link PropNames#PROP_BREADCRUMBS_PER_LANGUAGE} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final @NonNls String PROP_BREADCRUMBS_PER_LANGUAGE = PropNames.PROP_BREADCRUMBS_PER_LANGUAGE;
 
   /**
    * @deprecated Use {@link PropNames#PROP_ENABLE_RENDERED_DOC} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final @NonNls String PROP_DOC_COMMENT_RENDERING = PropNames.PROP_ENABLE_RENDERED_DOC;
 
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
@@ -75,6 +77,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
+    public boolean ARE_LINE_NUMBERS_AFTER_ICONS = false;
     public @NotNull EditorSettings.LineNumerationType LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
     public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
@@ -92,6 +95,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
+    public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = false;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
     public boolean IS_INNER_WHITESPACES_SHOWN = true;
@@ -136,7 +140,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       return mapLanguageBreadcrumbs;
     }
 
-    @SuppressWarnings("unused")
     public Map<String, Boolean> getLanguageStickyLines() {
       return mapLanguageStickyLines;
     }
@@ -238,6 +241,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     parseRawSoftWraps();
   }
 
+  @Override
+  public void noStateLoaded() {
+    loadState(new OptionSet());
+  }
+
   private void parseRawSoftWraps() {
     myPlacesToUseSoftWraps.clear();
 
@@ -300,6 +308,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     if (old == val) return;
     myOptions.ARE_LINE_NUMBERS_SHOWN = val;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_LINE_NUMBERS_SHOWN, old, val);
+  }
+
+  public boolean isLineNumbersAfterIcons() {
+    return myOptions.ARE_LINE_NUMBERS_AFTER_ICONS;
   }
 
   public EditorSettings.LineNumerationType getLineNumeration() {
@@ -403,18 +415,23 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public boolean isBreadcrumbsShownFor(String languageID) {
     Boolean visible = myOptions.mapLanguageBreadcrumbs.get(languageID);
     if (visible == null) {
-      Boolean defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
-      if (defaultVisible == null) {
-        for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensionList()) {
-          for (Language language : provider.getLanguages()) {
-            myDefaultBreadcrumbVisibility.put(language.getID(), provider.isShownByDefault());
-          }
-        }
-        defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
-      }
+      Boolean defaultVisible = getDefaultBreadcrumbVisibility(languageID);
       return defaultVisible == null || defaultVisible;
     }
     return visible;
+  }
+
+  private @Nullable Boolean getDefaultBreadcrumbVisibility(@NotNull String languageID) {
+    Boolean defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
+    if (defaultVisible == null) {
+      for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensionList()) {
+        for (Language language : provider.getLanguages()) {
+          myDefaultBreadcrumbVisibility.put(language.getID(), provider.isShownByDefault());
+        }
+      }
+      defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
+    }
+    return defaultVisible;
   }
 
   public void resetDefaultBreadcrumbVisibility() {
@@ -423,6 +440,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public boolean hasBreadcrumbSettings(String languageID) {
     return myOptions.mapLanguageBreadcrumbs.containsKey(languageID);
+  }
+
+  @ApiStatus.Internal
+  public boolean hasDefaultBreadcrumbSettings(String languageID) {
+    return getDefaultBreadcrumbVisibility(languageID) != null;
   }
 
   /**
@@ -512,6 +534,17 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     if (old == val) return;
     myOptions.IS_FULL_LINE_HEIGHT_CURSOR = val;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FULL_LINE_HEIGHT_CURSOR, old, val);
+  }
+  
+  public boolean isHighlightSelectionOccurrences() {
+    return myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES;
+  }
+  
+  public void setHighlightSelectionOccurrences(boolean val) {
+    boolean old = myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES;
+    if (old == val) return;
+    myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES, old, val);
   }
 
   public boolean isCaretRowShown() {
@@ -1097,6 +1130,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_CARET_BLINKING_PERIOD = "caretBlinkingPeriod";
     public static final @NonNls String PROP_IS_RIGHT_MARGIN_SHOWN = "isRightMarginShown";
     public static final @NonNls String PROP_ARE_LINE_NUMBERS_SHOWN = "areLineNumbersShown";
+    public static final @NonNls String PROP_ARE_LINE_NUMBERS_AFTER_ICONS = "areLineNumbersAfterIcons";
     public static final @NonNls String PROP_LINE_NUMERATION = "lineNumeration";
     public static final @NonNls String PROP_ARE_GUTTER_ICONS_SHOWN = "areGutterIconsShown";
     public static final @NonNls String PROP_IS_FOLDING_OUTLINE_SHOWN = "isFoldingOutlineShown";
@@ -1114,6 +1148,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_SMART_HOME = "smartHome";
     public static final @NonNls String PROP_IS_BLOCK_CURSOR = "isBlockCursor";
     public static final @NonNls String PROP_IS_FULL_LINE_HEIGHT_CURSOR = "isFullLineHeightCursor";
+    public static final @NonNls String PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES = "isHighlightSelectionOccurrences";
     public static final @NonNls String PROP_IS_WHITESPACES_SHOWN = "isWhitespacesShown";
     public static final @NonNls String PROP_IS_LEADING_WHITESPACES_SHOWN = "isLeadingWhitespacesShown";
     public static final @NonNls String PROP_IS_INNER_WHITESPACES_SHOWN = "isInnerWhitespacesShown";

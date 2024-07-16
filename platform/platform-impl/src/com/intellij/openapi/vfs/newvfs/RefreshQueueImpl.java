@@ -206,6 +206,13 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     return !refreshQueue.mySessions.isEmpty() || !refreshQueue.myQueue.isEmpty();
   }
 
+  @ApiStatus.Internal
+  @TestOnly
+  public static boolean isEventProcessingInProgress() {
+    var refreshQueue = (RefreshQueueImpl)getInstance();
+    return !refreshQueue.myEventProcessingQueue.isEmpty();
+  }
+
   @TestOnly
   public static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
     assert ApplicationManager.getApplication().isUnitTestMode();

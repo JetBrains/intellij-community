@@ -23,7 +23,6 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ import java.util.function.Function;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
-public class OverheadView extends BorderLayoutPanel implements Disposable, DataProvider {
+public class OverheadView extends BorderLayoutPanel implements Disposable, UiDataProvider {
   @NotNull private final DebugProcessImpl myProcess;
 
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
@@ -143,25 +142,13 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     return myTable;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      var selectedBreakpoints = getSelectedBreakpoints(); // gather in EDT
-      return (DataProvider)realDataId -> getSlowData(selectedBreakpoints, realDataId);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Object getSlowData(@NotNull List<XBreakpoint> selected, @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      List<Navigatable> navigatables = mapNotNull(selected, XBreakpoint::getNavigatable);
-      if (!navigatables.isEmpty()) {
-        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    var selection = getSelectedBreakpoints();
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      List<Navigatable> navigatables = mapNotNull(selection, XBreakpoint::getNavigatable);
+      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    });
   }
 
   private static class EnabledColumnInfo extends ColumnInfo<OverheadProducer, Boolean> {

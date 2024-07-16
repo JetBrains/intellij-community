@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
 import com.intellij.analysis.AnalysisScope;
@@ -36,8 +36,7 @@ public final class PackageNamingConventionInspection extends PackageGlobalInspec
   /**
    * @noinspection PublicField
    */
-  @NonNls
-  public String m_regex = DEFAULT_REGEX;
+  public @NonNls String m_regex = DEFAULT_REGEX;
 
   /**
    * @noinspection PublicField
@@ -56,7 +55,7 @@ public final class PackageNamingConventionInspection extends PackageGlobalInspec
                                                            @NotNull AnalysisScope analysisScope,
                                                            @NotNull InspectionManager inspectionManager,
                                                            @NotNull GlobalInspectionContext globalInspectionContext) {
-    @NonNls final String name = StringUtil.getShortName(refPackage.getQualifiedName());
+    final @NonNls String name = StringUtil.getShortName(refPackage.getQualifiedName());
     if (DEFAULT_NAME.equals(name)) {
       return null;
     }
@@ -121,8 +120,7 @@ public final class PackageNamingConventionInspection extends PackageGlobalInspec
   }
 
   @Override
-  @Nullable
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalPackageNamingConventionInspection(this);
   }
 
@@ -132,9 +130,8 @@ public final class PackageNamingConventionInspection extends PackageGlobalInspec
       super(inspection);
     }
 
-    @NotNull
     @Override
-    protected String buildErrorString(Object... infos) {
+    protected @NotNull String buildErrorString(Object... infos) {
       final String name = (String)infos[0];
       if (name.length() < mySettingsDelegate.m_minLength) {
         return InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.short", name);

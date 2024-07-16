@@ -1,68 +1,71 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight">
+  <dependencies>
+    <module name="kotlin.refactorings.k2"/>
+  </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinIfConditionFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinIfConditionFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinMissingIfBranchFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingIfBranchFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinWhileConditionFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinWhileConditionFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinForConditionFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinForConditionFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinMissingForOrWhileBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingForOrWhileBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinWhenSubjectCaretFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinWhenSubjectCaretFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinMissingWhenBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingWhenBodyFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinMissingWhenEntryBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingWhenEntryBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinDoWhileFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinDoWhileFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinFunctionParametersFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFunctionParametersFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinFunctionDeclarationBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFunctionDeclarationBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinPropertySetterParametersFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinPropertySetterParametersFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinPropertyAccessorBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinPropertyAccessorBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinTryBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinTryBodyFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinCatchParameterFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinCatchParameterFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinCatchBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinCatchBodyFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinFinallyBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFinallyBodyFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtLastLambdaParameterFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinClassInitializerFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinClassInitializerFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
@@ -70,7 +73,7 @@
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinValueArgumentListFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinValueArgumentListFixer"/>
 
   </extensions>
 
@@ -112,14 +115,137 @@
     <platform.backend.documentation.inlineDocumentationProvider
             implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinInlineDocumentationProvider"/>
     <lang.jvm.actions.jvmElementActionsFactory
-            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinElementActionsFactory"/>
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2ElementActionsFactory"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider
-            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinCreateFromUsageQuickFixProvider"/>
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUnresolvedReferenceQuickFixProvider"/>
 
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
                         serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2ReferenceImporterFacility"/>
 
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2NameValidatorProviderImpl"/>
+
+    <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinCopyPasteReferenceProcessor"/>
+
     <registryKey key="kotlin.k2.allow.constant.computation.on.EDT" defaultValue="true" description="When enabled, error about analysis on EDT is disabled"/>
+
+    <registryKey key="kotlin.k2.kmp.enabled"
+                 description="Enable KMP support in the Kotlin K2 plugin for all platforms"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.kmp.wasm.enabled"
+                 description="Enable KMP support in the K2 mode for WASM platform"
+                 defaultValue="false"
+                 restartRequired="true"/>
+
+    <!-- inlay hints -->
+    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
+                                    handlerId="kotlin.fqn.class"/>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtReferencesTypeHintsProvider"
+            isEnabledByDefault="false"
+            group="TYPES_GROUP"
+            providerId="kotlin.references.types.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.types"
+            descriptionKey="inlay.kotlin.references.types.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.property"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.property"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.property"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.variable"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.variable"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.variable"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.function.return"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.return"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.function.return"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.type.function.parameter"
+              enabledByDefault="false"
+              nameKey="hints.settings.types.parameter"
+              descriptionKey="inlay.kotlin.references.types.hints.hints.type.function.parameter"/>
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtLambdasHintsProvider"
+            isEnabledByDefault="false"
+            group="LAMBDAS_GROUP"
+            providerId="kotlin.lambdas.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.lambdas"
+            descriptionKey="inlay.kotlin.lambdas.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.lambda.return"
+              enabledByDefault="true"
+              nameKey="hints.settings.lambda.return"
+              descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.return"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.lambda.receivers.parameters"
+              enabledByDefault="true"
+              nameKey="hints.settings.lambda.receivers.parameters"
+              descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.receivers.parameters"/>
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtValuesHintsProvider"
+            isEnabledByDefault="true"
+            group="VALUES_GROUP"
+            providerId="kotlin.values.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.values.ranges"
+            descriptionKey="inlay.kotlin.values.hints"/>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsProvider"
+            isEnabledByDefault="false"
+            group="PARAMETERS_GROUP"
+            providerId="kotlin.parameters.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.parameters"
+            descriptionKey="inlay.kotlin.parameters.hints">
+      <!--        <option bundle="messages.KotlinBundle"-->
+      <!--              optionId="hints.parameters.excluded"-->
+      <!--              enabledByDefault="false"-->
+      <!--              nameKey="hints.settings.excluded.parameters"-->
+      <!--              descriptionKey="inlay.kotlin.parameters.hints.excluded"/>-->
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtCallChainHintsProvider"
+            isEnabledByDefault="false"
+            group="METHOD_CHAINS_GROUP"
+            providerId="kotlin.method.chains"
+            bundle="messages.JavaBundle"
+            nameKey="java.method.chains.inlay.provider.name"
+            descriptionKey="inlay.MethodChainsInlayProvider.description" />
+
+    <vcs.codeVisionLanguageContext language="kotlin"
+                                   implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
+
+    <callHierarchyProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCallHierarchyProvider"/>
+    <hierarchy.referenceProcessor implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCallReferenceProcessor"/>
+
+    <typeHierarchyProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinTypeHierarchyProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
+
+    <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.MultiplatformSupportAvailability"/>
+    <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.WasmMultiplatformSupportAvailability"/>
   </extensions>
 </idea-plugin>

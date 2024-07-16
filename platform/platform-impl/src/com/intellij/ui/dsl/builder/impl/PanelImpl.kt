@@ -5,7 +5,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
@@ -41,7 +40,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
       return result
     }
     else {
-      return row(Label(label), init)
+      return row(createLabel(label), init)
     }
   }
 

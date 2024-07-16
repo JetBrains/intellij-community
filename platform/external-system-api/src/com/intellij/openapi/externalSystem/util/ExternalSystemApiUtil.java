@@ -268,7 +268,7 @@ public final class ExternalSystemApiUtil {
   /**
    * @deprecated Use findChild instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable <T> DataNode<T> find(
     @NotNull DataNode<?> node,
     @NotNull Key<T> key,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -865,7 +865,7 @@ public abstract class InplaceRefactoring {
       if (initialInjectedHost != null && initialInjectedHost != injectionHost) {
         return false;
       }
-      return injectedLanguageManager.injectedToHost(element, textRange).shiftRight(shiftOffset).containsOffset(offset);
+      return injectedLanguageManager.injectedToHost(element, textRange.shiftRight(shiftOffset)).containsOffset(offset);
     }
     return textRange.shiftRight(shiftOffset).containsOffset(offset);
   }

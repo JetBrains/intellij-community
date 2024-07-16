@@ -24,7 +24,7 @@ import com.intellij.psi.codeStyle.DisplayPriority;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
-public class GroovyGenerationSettingsProvider extends CodeStyleSettingsProvider {
+public final class GroovyGenerationSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   @NotNull
   public Configurable createSettingsPage(final @NotNull CodeStyleSettings settings, final @NotNull CodeStyleSettings originalSettings) {

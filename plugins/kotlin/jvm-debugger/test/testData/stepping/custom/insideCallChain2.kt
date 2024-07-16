@@ -20,5 +20,3 @@ fun main() {
         //Breakpoint!, lambdaOrdinal = -1
         .nextC().nextD()
 }
-
-// IGNORE_K2

@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
-import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafe
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafeAndGet
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
@@ -11,13 +11,14 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
-import kotlinx.coroutines.plus
+import kotlinx.coroutines.Dispatchers
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsListModel
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanelActionsController
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
+import org.jetbrains.plugins.github.ui.util.GHPluginProjectScopeProvider
 import org.jetbrains.plugins.github.util.GithubSettings
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -25,11 +26,13 @@ internal class GithubSettingsConfigurable internal constructor(
   private val project: Project
 ) : BoundConfigurable(GithubUtil.SERVICE_DISPLAY_NAME, "settings.github") {
   override fun createPanel(): DialogPanel {
+    val scopeProvider = project.service<GHPluginProjectScopeProvider>()
     val defaultAccountHolder = project.service<GithubProjectDefaultAccountHolder>()
     val accountManager = service<GHAccountManager>()
     val ghSettings = GithubSettings.getInstance()
 
-    val scope = DisposingMainScope(disposable!!) + ModalityState.any().asContextElement()
+    val scope = scopeProvider.createDisposedScope(javaClass.name, disposable!!,
+                                                  Dispatchers.EDT + ModalityState.any().asContextElement())
     val accountsModel = GHAccountsListModel()
     val detailsProvider = GHAccountsDetailsProvider(scope, accountManager, accountsModel)
 
@@ -50,6 +53,10 @@ internal class GithubSettingsConfigurable internal constructor(
         checkBox(message("settings.automatically.mark.as.viewed"))
           .bindSelected(ghSettings::isAutomaticallyMarkAsViewed, ghSettings::setAutomaticallyMarkAsViewed)
       }
+      row {
+        checkBox(message("settings.enable.pr.seen.markers"))
+          .bindSelected(ghSettings::isSeenMarkersEnabled, ghSettings::setIsSeenMarkersEnabled)
+      }
       row(message("settings.timeout")) {
         intTextField(range = 0..60)
           .columns(2)
@@ -59,11 +66,11 @@ internal class GithubSettingsConfigurable internal constructor(
         label(message("settings.timeout.seconds"))
           .gap(RightGap.COLUMNS)
 
-        addWarningForMemoryOnlyPasswordSafe(
+        addWarningForMemoryOnlyPasswordSafeAndGet(
           scope,
           service<GHAccountManager>().canPersistCredentials,
           ::panel
-        )
+        ).align(AlignX.RIGHT)
       }
     }
   }

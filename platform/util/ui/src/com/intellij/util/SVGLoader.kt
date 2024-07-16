@@ -122,10 +122,5 @@ object SVGLoader {
      * and the second is an ID of the patcher (see [com.intellij.ui.icons.ColorPatcherIdGenerator]).
      */
     fun digest(): LongArray
-
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @ScheduledForRemoval
-    @Deprecated("Not used", level = DeprecationLevel.ERROR)
-    fun wholeDigest(): ByteArray? = null
   }
 }

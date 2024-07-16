@@ -6,13 +6,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
  * Show a modal window with a progress bar and specified [windowTitle]
- * and execute given [action] task with [KtAnalysisSession] context
+ * and execute given [action] task with [KaSession] context
  * If [action] throws some exception, then [analyzeInModalWindow] will rethrow it
  * Should be executed from EDT only
  * If you want to analyse something from non-EDT thread, consider using [analyze]
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtElement
 inline fun <R> analyzeInModalWindow(
     contextElement: KtElement,
     @DialogTitle windowTitle: String,
-    crossinline action: KtAnalysisSession.() -> R
+    crossinline action: KaSession.() -> R
 ): R {
     ThreadingAssertions.assertEventDispatchThread()
     val task = object : Task.WithResult<R, Exception>(contextElement.project, windowTitle, /*canBeCancelled*/ true) {

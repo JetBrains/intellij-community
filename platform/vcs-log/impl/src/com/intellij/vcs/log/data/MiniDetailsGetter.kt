@@ -43,7 +43,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   private var currentTaskIndex: Long = 0
   private val loadingFinishedListeners = ArrayList<Runnable>()
 
-  override fun getCachedDataOrPlaceholder(commit: Int): VcsCommitMetadata {
+  fun getCachedDataOrPlaceholder(commit: Int): VcsCommitMetadata {
     return getCommitData(commit, emptySet())
   }
 

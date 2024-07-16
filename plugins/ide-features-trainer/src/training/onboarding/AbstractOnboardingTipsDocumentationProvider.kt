@@ -64,7 +64,8 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
       .map { if (it.startsWith(tipPrefix)) it.substring(tipPrefix.length, it.length) else it }
       .map { if (it.startsWith("//")) it.substring(2, it.length) else it }
       .joinToString(separator = " ").trim()
-    return "<tip><p>$result</p></tip>"
+    @Suppress("HardCodedStringLiteral")
+    return "<p>$result"
   }
 }
 
@@ -72,7 +73,7 @@ private fun createOnboardingTipComment(start: PsiComment, visitedComments: Mutab
   var current: PsiElement = start
   while(true) {
     var nextSibling = current.nextSibling
-    if (nextSibling is PsiWhiteSpace) nextSibling = nextSibling.nextSibling
+    while (nextSibling is PsiWhiteSpace) nextSibling = nextSibling.nextSibling
     if (nextSibling?.node?.elementType != commentTokenType) break
     visitedComments.add(nextSibling)
     current = nextSibling

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.ResolvingConverter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -17,7 +18,7 @@ import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 abstract class IdeaPluginConverterBase extends ResolvingConverter<IdeaPlugin> {
 
   @Override
-  public String toString(@Nullable IdeaPlugin ideaPlugin, ConvertContext context) {
+  public String toString(@Nullable IdeaPlugin ideaPlugin, @NotNull ConvertContext context) {
     return ideaPlugin != null ? ideaPlugin.getPluginId() : null;
   }
 
@@ -34,7 +35,7 @@ abstract class IdeaPluginConverterBase extends ResolvingConverter<IdeaPlugin> {
   }
 
   @Override
-  public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
+  public String getErrorMessage(@Nullable final String s, final @NotNull ConvertContext context) {
     return new HtmlBuilder()
       .append(DevKitBundle.message("error.cannot.resolve.plugin", s))
       .nbsp()

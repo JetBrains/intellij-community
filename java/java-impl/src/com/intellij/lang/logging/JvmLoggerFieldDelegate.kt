@@ -62,6 +62,11 @@ class JvmLoggerFieldDelegate(
     }
   }
 
+  override fun getLogFieldName(clazz: PsiClass): String? {
+    val settings = clazz.project.service<JvmLoggingSettingsStorage>().state
+    return settings.loggerName
+  }
+
   companion object {
     const val LOGGER_IDENTIFIER = "log"
   }

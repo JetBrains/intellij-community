@@ -23,7 +23,7 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 /**
  * @author Max Medvedev
  */
-public class GroovyClassMembersRefactoringSupport implements ClassMembersRefactoringSupport {
+public final class GroovyClassMembersRefactoringSupport implements ClassMembersRefactoringSupport {
   @Override
   public DependentMembersCollectorBase createDependentMembersCollector(Object clazz, Object superClass) {
     return new GrDependantMembersCollector((PsiClass)clazz, (PsiClass)superClass);

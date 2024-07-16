@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.NonTrivialActionGroup
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -20,6 +21,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
@@ -71,6 +73,43 @@ class ActionUpdaterTest {
     val actionGroup: ActionGroup = DefaultCompactActionGroup(newPopupGroup(canBePerformedGroup))
     val actions = expandActionGroup(actionGroup)
     assertEmpty(actions)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testNonTrivialActionGroupDisabled() {
+    val group = NonTrivialActionGroup()
+    group.add(DefaultActionGroup(DefaultActionGroup(
+      newAction(ActionUpdateThread.BGT) { it.presentation.isEnabledAndVisible = false })))
+    val presentations = PresentationFactory()
+    val actions = Utils.expandActionGroup(group, presentations, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
+    assertEmpty(actions)
+    assertFalse(presentations.getPresentation(group).isEnabled)
+  }
+
+  @Test
+  @RunMethodInEdt
+  fun testRecursiveUpdateThreadIsRespected() {
+    val assertNotEDT = { assertFalse(EDT.isCurrentThreadEdt(), "BGT is expected") }
+    val group = object : ActionGroup(), ActionUpdateThreadAware.Recursive {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> = arrayOf(
+        newAction(ActionUpdateThread.EDT) { assertNotEDT() },
+        object : ActionGroup() {
+          override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+          override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+            assertNotEDT()
+            return arrayOf(
+              newAction(ActionUpdateThread.EDT) { assertNotEDT() },
+              DefaultActionGroup(newAction(ActionUpdateThread.EDT) { assertNotEDT() }))
+          }
+        }
+      )
+    }
+    val actions = expandActionGroup(group)
+    assertEquals(3, actions.size)
+    assertTrue(actions.filterIsInstance<ActionGroup>().isEmpty())
   }
 
   @Test
@@ -329,25 +368,73 @@ class ActionUpdaterTest {
 
   @Test
   fun testSkipOperationException() = timeoutRunBlocking {
-    val key1 = Key.create<Int>("Key1")
-    val key2 = Key.create<Int>("Key2")
     val actionGroup = object : ActionGroup() {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         e!!
+        val bgtAction = newAction(ActionUpdateThread.BGT) {
+          throw SkipOperation("update")
+        }
+        val edtAction = newAction(ActionUpdateThread.EDT) {
+          throw SkipOperation("update")
+        }
         return arrayOf<AnAction>(
           EmptyAction.createEmptyAction("", null, true),
-          newAction(ActionUpdateThread.BGT) { throw SkipOperation("update") },
-          newAction(ActionUpdateThread.EDT) { throw SkipOperation("update") },
-          newAction(ActionUpdateThread.BGT) { e.updateSession.sharedData(key1) { throw SkipOperation("sharedData") } },
-          newAction(ActionUpdateThread.EDT) { e.updateSession.sharedData(key2) { throw SkipOperation("sharedData") } })
+          newAction(ActionUpdateThread.BGT) {
+            throw SkipOperation("update")
+          },
+          newAction(ActionUpdateThread.EDT) {
+            throw SkipOperation("update")
+          },
+          newAction(ActionUpdateThread.BGT) {
+            e.updateSession.presentation(bgtAction)
+          },
+          newAction(ActionUpdateThread.EDT) {
+            e.updateSession.presentation(edtAction)
+          })
       }
     }
-    val actions = withContext(Dispatchers.EDT + MyContextElement(1)) {
+    val actions = withContext(Dispatchers.EDT) {
       Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
                                      ActionPlaces.UNKNOWN, false, fastTrack = false)
     }
     assertEquals(1, actions.size)
+  }
+
+  @Test
+  fun testCyclicDependencySessionUpdate() = timeoutRunBlocking {
+    assertCyclicDependencyReported(DefaultActionGroup(object : AnAction("testAction-${ActionUpdateThread.BGT}") {
+      override fun actionPerformed(e: AnActionEvent) {}
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+      override fun update(e: AnActionEvent) {
+        e.updateSession.presentation(this)
+      }
+    }))
+    assertCyclicDependencyReported(object : ActionGroup() {
+      val action = this@ActionUpdaterTest.newAction(ActionUpdateThread.BGT) {}
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+        return arrayOf(action) + e!!.updateSession.children(this)
+      }
+    })
+    assertCyclicDependencyReported(object : ActionGroup() {
+      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> = arrayOf(DefaultActionGroup(this))
+    })
+  }
+
+  private suspend fun assertCyclicDependencyReported(group: ActionGroup) {
+    try {
+      withContext(Dispatchers.EDT) {
+        Utils.expandActionGroupSuspend(group, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                       ActionPlaces.UNKNOWN, false, fastTrack = false)
+      }
+      fail("Expected to fail")
+    }
+    catch (ex: Throwable) {
+      val cause = ExceptionUtil.getRootCause(ex)
+      if (cause.message?.contains("Cyclic dependency") != true) {
+        throw ex
+      }
+    }
   }
 
   private fun expandActionGroup(actionGroup: ActionGroup,

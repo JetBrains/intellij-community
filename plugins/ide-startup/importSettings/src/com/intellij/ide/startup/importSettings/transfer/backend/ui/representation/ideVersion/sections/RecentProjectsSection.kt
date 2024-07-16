@@ -3,7 +3,7 @@ package com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sec
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.RecentPathInfo
 import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
 import com.intellij.ui.components.JBScrollPane

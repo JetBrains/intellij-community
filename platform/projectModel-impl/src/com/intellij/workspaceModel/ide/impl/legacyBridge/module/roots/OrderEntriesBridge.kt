@@ -158,14 +158,14 @@ internal class ModuleOrderEntryBridge(
   )
 }
 
-fun EntitiesDependencyScope.toDependencyScope(): DependencyScope = when (this) {
+internal fun EntitiesDependencyScope.toDependencyScope(): DependencyScope = when (this) {
   EntitiesDependencyScope.COMPILE -> DependencyScope.COMPILE
   EntitiesDependencyScope.RUNTIME -> DependencyScope.RUNTIME
   EntitiesDependencyScope.PROVIDED -> DependencyScope.PROVIDED
   EntitiesDependencyScope.TEST -> DependencyScope.TEST
 }
 
-fun DependencyScope.toEntityDependencyScope(): EntitiesDependencyScope = when (this) {
+internal fun DependencyScope.toEntityDependencyScope(): EntitiesDependencyScope = when (this) {
   DependencyScope.COMPILE -> EntitiesDependencyScope.COMPILE
   DependencyScope.RUNTIME -> EntitiesDependencyScope.RUNTIME
   DependencyScope.PROVIDED -> EntitiesDependencyScope.PROVIDED

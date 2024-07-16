@@ -18,8 +18,8 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -50,9 +50,7 @@ public final class IndexOfReplaceableByContainsInspection
     final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final String text;
-    if (lhs instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression callExpression =
-        (PsiMethodCallExpression)lhs;
+    if (lhs instanceof PsiMethodCallExpression callExpression) {
       text = createContainsExpressionText(callExpression, false,
                                           expression.getOperationTokenType(), new CommentTracker());
     }
@@ -85,13 +83,10 @@ public final class IndexOfReplaceableByContainsInspection
       final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
       CommentTracker commentTracker = new CommentTracker();
       final String newExpressionText;
-      if (lhs instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)lhs;
+      if (lhs instanceof PsiMethodCallExpression callExpression) {
         newExpressionText = createContainsExpressionText(callExpression, false, expression.getOperationTokenType(), commentTracker);
       }
-      else if (rhs instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression =
-          (PsiMethodCallExpression)rhs;
+      else if (rhs instanceof PsiMethodCallExpression callExpression) {
         newExpressionText =
           createContainsExpressionText(callExpression, true, expression.getOperationTokenType(), commentTracker);
       }

@@ -14,7 +14,10 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Remove after the `workspace.model.custom.library.bridge` registry key removal")
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)
   : LibraryTable.Listener, RootProvider.RootSetChangedListener {
@@ -42,19 +45,10 @@ internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: Lib
       }
     }
   }
-
-  fun installOnExistingLibraries() {
-    getGlobalAndCustomLibraryTables()
-      .flatMap { it.libraries.asIterable() }
-      .filterIsInstance<LibraryEx>()
-      .forEach { it.rootProvider.addRootSetChangedListener(this, disposable) }
-  }
 }
 
-internal fun getGlobalAndCustomLibraryTables(): Sequence<LibraryTable> {
-  return LibraryTablesRegistrar.getInstance().customLibraryTables.asSequence() + LibraryTablesRegistrar.getInstance().libraryTable
-}
-
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Remove after the `workspace.model.custom.library.bridge` registry key removal")
 internal class ChangedRepositoryLibrarySynchronizer(private val project: Project,
                                                     private val queue: LibrarySynchronizationQueue) : WorkspaceModelChangeListener {
   /**
@@ -68,7 +62,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     beforeCalled = true
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val removed = change as? EntityChange.Removed ?: continue
-      val library = findLibrary(removed.entity.symbolicId, event.storageBefore)
+      val library = findLibrary(removed.oldEntity.symbolicId, event.storageBefore)
       if (library != null) {
         queue.revokeSynchronization(library)
       }
@@ -77,7 +71,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     for (change in event.getChanges(ModuleEntity::class.java)) {
       val (oldLModuleDeps, newModuleDeps) = when (change) {
         is EntityChange.Added -> continue
-        is EntityChange.Removed -> change.entity.dependencies to emptyList()
+        is EntityChange.Removed -> change.oldEntity.dependencies to emptyList()
         is EntityChange.Replaced -> change.oldEntity.dependencies to change.newEntity.dependencies
       }
 
@@ -98,7 +92,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
 
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val entity = when (change) {
-                     is EntityChange.Added -> change.entity
+                     is EntityChange.Added -> change.newEntity
                      is EntityChange.Replaced -> change.newEntity
                      is EntityChange.Removed -> null
                    } ?: continue
@@ -113,7 +107,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     for (change in event.getChanges(ModuleEntity::class.java)) {
       val (oldLModuleDeps, newModuleDeps) = when (change) {
         is EntityChange.Removed -> continue
-        is EntityChange.Added -> emptyList<ModuleDependencyItem>() to change.entity.dependencies
+        is EntityChange.Added -> emptyList<ModuleDependencyItem>() to change.newEntity.dependencies
         is EntityChange.Replaced -> change.oldEntity.dependencies to change.newEntity.dependencies
       }
 

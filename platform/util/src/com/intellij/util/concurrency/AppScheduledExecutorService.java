@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
-import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -229,16 +229,24 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   public static @NotNull Runnable capturePropagationAndCancellationContext(@NotNull Runnable command) {
-    if (!propagateContextOrCancellation()) {
+    if (!propagateContext()) {
       return command;
     }
-    return Propagation.capturePropagationAndCancellationContext(command);
+    return Propagation.capturePropagationContext(command, false);
+  }
+
+  /**
+   * This function intentionally has a scary name so that no one would try to use it.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Runnable captureContextCancellationForRunnableThatDoesNotOutliveContextScope(@NotNull Runnable r) {
+    return Propagation.capturePropagationContext(r, true);
   }
 
   public static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {
-    if (!propagateContextOrCancellation()) {
+    if (!propagateContext()) {
       return new FutureTask<>(callable);
     }
-    return Propagation.capturePropagationAndCancellationContext(callable);
+    return Propagation.capturePropagationContext(callable);
   }
 }

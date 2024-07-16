@@ -37,5 +37,5 @@ class ProjectLibraryData(
 
   override fun hashCode() = libraryName.hashCode()
 
-  override fun toString() = "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$outPath)"
+  override fun toString() = "ProjectLibraryData(name=$libraryName, packMode=$packMode, relativeOutputPath=$outPath, reason=$reason)"
 }

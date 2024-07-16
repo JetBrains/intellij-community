@@ -4,37 +4,43 @@
  */
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
-context(KtAnalysisSession)
-fun KtType.isNullableAnyType() = isAny && isMarkedNullable
+context(KaSession)
+fun KaType.isNullableAnyType() = isAny && isMarkedNullable
 
-context(KtAnalysisSession)
-fun KtType.isNonNullableBooleanType() = isBoolean && !isMarkedNullable
+context(KaSession)
+fun KaType.isNonNullableBooleanType() = isBoolean && !isMarkedNullable
 
-context(KtAnalysisSession)
-fun KtType.isEnum(): Boolean {
-    if (this !is KtNonErrorClassType) return false
-    val classSymbol = classSymbol
-    return classSymbol is KtClassOrObjectSymbol && classSymbol.classKind == KtClassKind.ENUM_CLASS
+context(KaSession)
+fun KaType.isEnum(): Boolean {
+    if (this !is KaClassType) return false
+    val classSymbol = symbol
+    return classSymbol is KaClassSymbol && classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 
 /**
  * Always renders flexible type as its upper bound.
  *
- * TODO should be moved to [KtFlexibleTypeRenderer] and removed from here, see KT-64138
+ * TODO should be moved to [KaFlexibleTypeRenderer] and removed from here, see KT-64138
  */
-object KtFlexibleTypeAsUpperBoundRenderer : KtFlexibleTypeRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    override fun renderType(type: KtFlexibleType, printer: PrettyPrinter) {
-        renderType(type.upperBound, printer)
+@KaExperimentalApi
+object KtFlexibleTypeAsUpperBoundRenderer : KaFlexibleTypeRenderer {
+    override fun renderType(
+        analysisSession: KaSession,
+        type: KaFlexibleType,
+        typeRenderer: KaTypeRenderer,
+        printer: PrettyPrinter
+    ) {
+        typeRenderer.renderType(analysisSession, type.upperBound, printer)
     }
 }

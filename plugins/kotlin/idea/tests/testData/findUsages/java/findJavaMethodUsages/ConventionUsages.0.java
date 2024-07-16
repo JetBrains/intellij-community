@@ -6,4 +6,3 @@ public class Small {
     }
 }
 
-// IGNORE_K2_LOG

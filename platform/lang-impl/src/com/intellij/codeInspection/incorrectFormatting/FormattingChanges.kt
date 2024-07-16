@@ -2,10 +2,12 @@
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.formatting.FormatTextRanges
 import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingServiceUtil
 import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -14,6 +16,12 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory
+import com.intellij.psi.impl.CheckUtil
+import com.intellij.psi.impl.source.SourceTreeToPsiMap
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade
+import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
+import com.intellij.psi.impl.source.tree.TreeElement
 
 private val LOG = logger<FormattingChanges>()
 
@@ -69,7 +77,8 @@ fun detectFormattingChanges(file: PsiFile): FormattingChanges? {
   //}
 
   try {
-    CodeStyleManager.getInstance(psiCopy.project).reformat(psiCopy, true)
+    //CodeStyleManager.getInstance(file.project).reformat(psiCopy, true)
+    reformat(psiCopy, copyDoc)
 
     val preFormat = fileDoc.text
     val postFormat = copyDoc.text
@@ -144,3 +153,19 @@ private data class NonWhitespaceChangeException(val pre: CharSequence,
                                                 val post: CharSequence,
                                                 val locPre: Int,
                                                 val locPost: Int) : Exception()
+
+// see also CodeStyleManagerImpl.reformatText and CoreFormattingService.formatRanges
+private fun reformat(file: PsiFile, doc: Document) {
+  val ranges = FormatTextRanges(TextRange(0, doc.textLength), true)
+
+  CheckUtil.checkWritable(file)
+  if (!SourceTreeToPsiMap.hasTreeElement(file)) return
+
+  val treeElement = SourceTreeToPsiMap.psiElementToTree(file)
+  (treeElement as TreeElement).acceptTree(object : RecursiveTreeElementWalkingVisitor() {})
+
+  val infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, ranges)
+  val codeFormatter = CodeFormatterFacade(CodeStyle.getSettings(file), file.getLanguage(), true)
+  codeFormatter.processText(file, ranges as FormatTextRanges?, false)
+  CoreCodeStyleUtil.postProcessRanges(infos) { range: TextRange? -> CoreCodeStyleUtil.postProcessText(file, range!!, true) }
+}

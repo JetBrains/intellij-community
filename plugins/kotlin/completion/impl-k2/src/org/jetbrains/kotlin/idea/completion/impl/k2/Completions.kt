@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.context.*
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
-    context(KtAnalysisSession)
+    context(KaSession)
     fun complete(
         factory: FirCompletionContributorFactory,
         positionContext: KotlinRawPositionContext,
@@ -83,6 +83,10 @@ internal object Completions {
                 complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
             }
 
+            is KotlinLabelReferencePositionContext -> {
+                complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
+            }
+
             is KotlinUnknownPositionContext -> {
                 complete(factory.keywordContributor(0), positionContext, weighingContext, sessionParameters)
             }
@@ -139,13 +143,13 @@ internal object Completions {
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     fun createWeighingContext(
         basicContext: FirBasicCompletionContext,
         positionContext: KotlinRawPositionContext
     ): WeighingContext = when (positionContext) {
         is KotlinSuperReceiverNameReferencePositionContext -> {
-            val expectedType = positionContext.nameExpression.getExpectedType()
+            val expectedType = positionContext.nameExpression.expectedType
             val receiver = positionContext.superExpression
 
             // Implicit receivers do not match for this position completion context.
@@ -168,11 +172,11 @@ internal object Completions {
         else -> WeighingContext.createEmptyWeighingContext(basicContext, positionContext.position)
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun createWeighingContextForNameReference(
         basicContext: FirBasicCompletionContext,
         positionContext: KotlinNameReferencePositionContext,
-        symbolsToSkip: Set<KtSymbol> = emptySet(),
+        symbolsToSkip: Set<KaSymbol> = emptySet(),
     ): WeighingContext {
         val expectedType = when (positionContext) {
             // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
@@ -181,10 +185,10 @@ internal object Completions {
             // about expected type at all
             // TODO: calculate actual types for callable references correctly and use information about expected type
             is KotlinCallableReferencePositionContext -> null
-            else -> positionContext.nameExpression.getExpectedType()
+            else -> positionContext.nameExpression.expectedType
         }
         val receiver = positionContext.explicitReceiver
-        val implicitReceivers = basicContext.originalKtFile.getScopeContextForPosition(positionContext.nameExpression).implicitReceivers
+        val implicitReceivers = basicContext.originalKtFile.scopeContext(positionContext.nameExpression).implicitReceivers
 
         return WeighingContext.createWeighingContext(
             basicContext,
@@ -197,7 +201,7 @@ internal object Completions {
     }
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArguments(): Boolean {
     if (explicitReceiver != null) return false
 
@@ -207,7 +211,7 @@ private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArgument
 
     if (valueArgument.getArgumentName() != null) return false
 
-    val call = callElement.resolveCall()?.singleCallOrNull<KtFunctionCall<*>>() ?: return false
+    val call = callElement.resolveToCall()?.singleCallOrNull<KaFunctionCall<*>>() ?: return false
 
     if (CallParameterInfoProvider.isJavaArgumentWithNonDefaultName(
             call.partiallyAppliedSymbol.signature,

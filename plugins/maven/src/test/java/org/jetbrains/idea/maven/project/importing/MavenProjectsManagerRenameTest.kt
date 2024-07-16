@@ -5,14 +5,12 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import kotlinx.coroutines.runBlocking
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
   
   @Test
   fun `rename compound module`() = runBlocking {
-    assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -37,7 +35,6 @@ class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun `rename compound module - main and test`() = runBlocking {
-    assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

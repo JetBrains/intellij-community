@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -24,7 +25,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.references.fe10.Fe10SyntheticPropertyAccessorReference
+import org.jetbrains.kotlin.references.fe10.base.KtFe10Reference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
@@ -223,15 +224,15 @@ class KotlinImportOptimizer : ImportOptimizer {
 
             override fun resolve(bindingContext: BindingContext) = reference.resolveToDescriptors(bindingContext)
 
-            override fun toString() = when (reference) {
-                is Fe10SyntheticPropertyAccessorReference -> {
+            @OptIn(KaImplementationDetail::class)
+            override fun toString(): String {
+                return if (reference is SyntheticPropertyAccessorReference && reference is KtFe10Reference) {
                     reference.toString().replace(
                         "Fe10SyntheticPropertyAccessorReference",
                         if (reference.getter) "Getter" else "Setter"
                     )
                 }
-
-                else -> reference.toString().replace("Fe10", "")
+                else reference.toString().replace("Fe10", "")
             }
         }
     }

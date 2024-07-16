@@ -331,8 +331,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         public void visitTypeElement(@NotNull PsiTypeElement parent) {
           super.visitTypeElement(parent);
           final PsiElement pparent = parent.getParent();
-          if (pparent instanceof PsiMethod && parent.equals(((PsiMethod)pparent).getReturnTypeElement())) {
-            final PsiMethod method = (PsiMethod)pparent;
+          if (pparent instanceof PsiMethod method && parent.equals(((PsiMethod)pparent).getReturnTypeElement())) {
             final MethodSignature signature = method.getSignature(substitutor);
             if (PsiUtil.isAccessible(method, inheritingClass, null)) {
               final PsiMethod inInheritor = MethodSignatureUtil.findMethodBySignature(inheritingClass, signature, false);

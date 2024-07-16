@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Vladislav.Soroka
  */
-public class MavenGroovyScriptTypeDetector extends GroovyScriptTypeDetector implements FileTypeUsageSchemaDescriptor {
+public final class MavenGroovyScriptTypeDetector extends GroovyScriptTypeDetector implements FileTypeUsageSchemaDescriptor {
   public MavenGroovyScriptTypeDetector() {
     super(MavenGroovyPomScriptType.INSTANCE);
   }

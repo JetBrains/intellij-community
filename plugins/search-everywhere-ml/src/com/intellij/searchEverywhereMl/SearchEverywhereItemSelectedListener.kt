@@ -9,5 +9,6 @@ interface SearchEverywhereItemSelectedListener {
                      indexes: IntArray,
                      selectedItems: List<Any>,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                     closePopup: Boolean)
+                     closePopup: Boolean,
+                     query: String)
 }

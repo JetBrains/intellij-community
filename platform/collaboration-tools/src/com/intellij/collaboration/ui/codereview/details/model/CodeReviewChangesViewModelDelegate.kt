@@ -1,129 +1,85 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details.model
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
-import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.map
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.*
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
-class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
+@ApiStatus.NonExtendable
+interface CodeReviewChangesViewModelDelegate<T> {
+  val selectedCommit: StateFlow<String?>
+  val changeListVm: StateFlow<ComputedResult<T>>
+
+  fun selectCommit(index: Int): T?
+  fun selectCommit(commitSha: String?): T?
+  fun selectNextCommit(): T?
+  fun selectPreviousCommit(): T?
+
+  companion object {
+    fun <T> create(
+      cs: CoroutineScope,
+      changesContainer: Flow<Result<CodeReviewChangesContainer>>,
+      vmProducer: CoroutineScope.(CodeReviewChangesContainer, CodeReviewChangeList) -> T,
+    ): CodeReviewChangesViewModelDelegate<T> {
+      return CodeReviewChangesViewModelDelegateImpl(cs, changesContainer, vmProducer)
+    }
+  }
+}
+
+private class CodeReviewChangesViewModelDelegateImpl<T>(
   private val cs: CoroutineScope,
   changesContainer: Flow<Result<CodeReviewChangesContainer>>,
-  private val vmProducer: CoroutineScope.(CodeReviewChangesContainer, CodeReviewChangeList) -> T
-) {
-  constructor(
-    cs: CoroutineScope,
-    changesContainer: Flow<Result<CodeReviewChangesContainer>>,
-    vmProducer: CoroutineScope.(CodeReviewChangeList) -> T
-  ) : this(cs, changesContainer, { _, changeList -> vmProducer(changeList) })
+  private val vmProducer: CoroutineScope.(CodeReviewChangesContainer, CodeReviewChangeList) -> T,
+) : CodeReviewChangesViewModelDelegate<T> {
+  private val state = MutableStateFlow<Result<State<T>>?>(null)
 
-  private val selectionRequests = MutableSharedFlow<ChangesRequest>()
+  override val selectedCommit: StateFlow<String?> = state.mapState { it?.getOrNull()?.commit }
+  override val changeListVm: StateFlow<ComputedResult<T>> = state.mapState { ComputedResult(it).map(State<T>::vm) }
 
-  private val _selectedCommit = MutableStateFlow<String?>(null)
-  val selectedCommit: StateFlow<String?> = _selectedCommit.asStateFlow()
-
-  val changeListVm: StateFlow<ComputedResult<T>> = changesContainer
-    .manageChangeListVm().stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
-
-  private fun Flow<Result<CodeReviewChangesContainer>>.manageChangeListVm(): Flow<ComputedResult<T>> =
-    channelFlow {
-      val parentCs = this
-      var csAndVm: Pair<CoroutineScope, T>? = null
-      collectLatest { changesResult ->
-        send(ComputedResult.loading())
-        val changes = changesResult.getOrElse {
-          if (it is CancellationException) throw it
-          send(ComputedResult.failure(it))
-          return@collectLatest
-        }
-
-        val commits = changes.commits
-        val commitsSet = commits.toSet()
-        val initialCommit = _selectedCommit.updateAndGet {
-          it.takeIf { commitsSet.contains(it) } ?: commitsSet.singleOrNull()
-        }
-
-        suspend fun updateChanges(commit: String?, change: RefComparisonChange? = null, force: Boolean = false) {
-          val existingCommit = commit.takeIf { commitsSet.contains(it) }
-          if (_selectedCommit.value != existingCommit || force) {
-            _selectedCommit.value = existingCommit
-            csAndVm?.first?.cancelAndJoinSilently()
-            val newChangeList = changes.getChangeList(commit)
-            val newCs = parentCs.childScope()
-            val newVm = vmProducer(changes, newChangeList).apply {
-              this.selectChange(change)
-            }
-            csAndVm = newCs to newVm
-            send(ComputedResult.success(newVm))
-          }
-          else {
-            csAndVm?.second?.selectChange(change)
-          }
-        }
-
-        updateChanges(initialCommit, force = true)
-
-        selectionRequests.collect { request ->
-          when (request) {
-            is ChangesRequest.Commit -> {
-              updateChanges(commits.getOrNull(request.index))
-            }
-            is ChangesRequest.CommitSha -> {
-              updateChanges(request.sha)
-            }
-            ChangesRequest.NextCommit -> {
-              val nextCommit = _selectedCommit.value?.let(commits::indexOf)?.let {
-                commits.getOrNull(it + 1)
-              } ?: return@collect
-              updateChanges(nextCommit)
-            }
-            ChangesRequest.PrevCommit -> {
-              val prevCommit = _selectedCommit.value?.let(commits::indexOf)?.let {
-                commits.getOrNull(it - 1)
-              } ?: return@collect
-              updateChanges(prevCommit)
-            }
-            is ChangesRequest.SelectChange -> {
-              updateChanges(changes.commitsByChange[request.change], request.change)
-            }
+  init {
+    cs.launch {
+      changesContainer.collect { result ->
+        state.update {
+          it?.getOrNull()?.vmCs?.cancel()
+          result.map { changes ->
+            createState(changes)
           }
         }
       }
     }
-
-  fun selectCommit(index: Int) {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.Commit(index))
-    }
   }
 
-  fun selectCommit(commitSha: String) {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.CommitSha(commitSha))
-    }
-  }
+  override fun selectCommit(index: Int): T? = updateState {
+    val commit = it.changes.commits.getOrNull(index)
+    it.changeCommit(commit)
+  }?.vm
 
-  fun selectNextCommit() {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.NextCommit)
-    }
-  }
+  override fun selectCommit(commitSha: String?): T? = updateState {
+    it.changeCommit(commitSha)
+  }?.vm
 
-  fun selectPreviousCommit() {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.PrevCommit)
-    }
-  }
+  override fun selectNextCommit(): T? = updateState { state ->
+    val commits = state.changes.commits
+    val nextCommit = state.commit?.let(commits::indexOf)?.let {
+      commits.getOrNull(it + 1)
+    } ?: return@updateState state
+    state.changeCommit(nextCommit)
+  }?.vm
 
-  fun selectChange(change: RefComparisonChange) {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.SelectChange(change))
-    }
-  }
+  override fun selectPreviousCommit(): T? = updateState { state ->
+    val commits = state.changes.commits
+    val nextCommit = state.commit?.let(commits::indexOf)?.let {
+      commits.getOrNull(it - 1)
+    } ?: return@updateState state
+    state.changeCommit(nextCommit)
+  }?.vm
 
   private fun CodeReviewChangesContainer.getChangeList(commit: String?): CodeReviewChangeList =
     if (commit == null) {
@@ -132,14 +88,29 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
     else {
       CodeReviewChangeList(commit, changesByCommits[commit].orEmpty())
     }
-}
 
-private sealed interface ChangesRequest {
-  data class Commit(val index: Int) : ChangesRequest
-  data class CommitSha(val sha: String) : ChangesRequest
-  data object NextCommit : ChangesRequest
-  data object PrevCommit : ChangesRequest
-  data class SelectChange(val change: RefComparisonChange) : ChangesRequest
+  private fun updateState(function: (State<T>) -> State<T>): State<T>? =
+    state.updateAndGet {
+      it?.map(function)
+    }?.getOrNull()
+
+  private fun State<T>.changeCommit(newCommit: String?): State<T> {
+    if (newCommit == commit) return this
+    vmCs.cancel()
+    return createState(changes, newCommit)
+  }
+
+  private fun createState(changes: CodeReviewChangesContainer, commit: String? = null): State<T> {
+    val newCs = cs.childScope("Change List View Model")
+    return State(changes, commit, newCs, newCs.vmProducer(changes, changes.getChangeList(commit)))
+  }
+
+  private class State<T>(
+    val changes: CodeReviewChangesContainer,
+    val commit: String?,
+    val vmCs: CoroutineScope,
+    val vm: T,
+  )
 }
 
 open class CodeReviewChangesContainer(val summaryChanges: List<RefComparisonChange>,

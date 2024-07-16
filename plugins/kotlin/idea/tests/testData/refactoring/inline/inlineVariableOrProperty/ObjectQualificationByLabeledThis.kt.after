@@ -1,0 +1,13 @@
+package f
+
+object StandAloneContext {
+    val closeKoin = 1
+
+}
+
+
+fun koin() {
+    val i = StandAloneContext.closeKoin
+}
+
+// IGNORE_K1

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.util.containers.Interner;
@@ -148,7 +148,7 @@ public class TreeBasedMap<T> {
 
     @Override
     public boolean hasNext() {
-      return myCurrentNodePath.size() > 0;
+      return !myCurrentNodePath.isEmpty();
     }
 
     @Override
@@ -166,7 +166,7 @@ public class TreeBasedMap<T> {
 
     private boolean pushNode(final @NotNull String name, @NotNull Node<T> node) {
       final HashMap<String, Node<T>> childrenMap = node.myChildren;
-      final boolean hasChildren = childrenMap != null && childrenMap.size() > 0;
+      final boolean hasChildren = childrenMap != null && !childrenMap.isEmpty();
       if (hasChildren || node.mappingExists()) {
         myCurrentNodePath.push(new PathElement<>(node, hasChildren ? childrenMap.keySet().iterator() : Collections.emptyIterator()));
         if (myCurrentNodePath.size() > 2) {

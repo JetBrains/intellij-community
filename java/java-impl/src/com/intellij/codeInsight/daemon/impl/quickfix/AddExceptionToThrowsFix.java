@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -46,9 +49,9 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
     return command;
   }
 
-  static @Nullable ModCommand addExceptionsToThrowsList(@NotNull final Project project,
-                                                        @NotNull final PsiMethod targetMethod,
-                                                        @NotNull final Set<? extends PsiClassType> unhandledExceptions,
+  static @Nullable ModCommand addExceptionsToThrowsList(final @NotNull Project project,
+                                                        final @NotNull PsiMethod targetMethod,
+                                                        final @NotNull Set<? extends PsiClassType> unhandledExceptions,
                                                         @NotNull ThreeState processHierarchy) {
     final PsiMethod[] superMethods = processHierarchy == ThreeState.NO ? PsiMethod.EMPTY_ARRAY : getSuperMethods(targetMethod);
 
@@ -132,8 +135,7 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
     };
   }
 
-  @Nullable
-  private static PsiMethod collectExceptions(Set<? super PsiClassType> unhandled, PsiElement element) {
+  private static @Nullable PsiMethod collectExceptions(Set<? super PsiClassType> unhandled, PsiElement element) {
     PsiElement targetElement = null;
     PsiMethod targetMethod = null;
 
@@ -170,13 +172,11 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.exception.to.throws.family");
   }
 
-  @Nullable
-  private static List<PsiClassType> getUnhandledExceptions(@Nullable PsiElement element, PsiElement topElement, PsiMethod targetMethod) {
+  private static @Nullable List<PsiClassType> getUnhandledExceptions(@Nullable PsiElement element, PsiElement topElement, PsiMethod targetMethod) {
     if (element == null || element == topElement && !(topElement instanceof PsiMethodReferenceExpression)) return null;
     List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
     if (!filterInProjectExceptions(targetMethod, unhandledExceptions).isEmpty()) {
@@ -188,8 +188,7 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
     return getUnhandledExceptions(element.getParent(), topElement, targetMethod);
   }
 
-  @NotNull
-  private static Set<PsiClassType> filterInProjectExceptions(@Nullable PsiMethod targetMethod, @NotNull List<? extends PsiClassType> unhandledExceptions) {
+  private static @NotNull Set<PsiClassType> filterInProjectExceptions(@Nullable PsiMethod targetMethod, @NotNull List<? extends PsiClassType> unhandledExceptions) {
     if (targetMethod == null) return Collections.emptySet();
 
     Set<PsiClassType> result = new HashSet<>();

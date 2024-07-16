@@ -50,6 +50,8 @@ import java.util.Objects;
  * For example, instead of pushing <code>SomeLanguageDialect</code> instances, push <code>someLanguageDialect.getName()</code> and
  * restore <code>SomeLanguageDialect</code> by name where needed.
  */
+@ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher<?>> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
 
@@ -92,7 +94,7 @@ public interface FilePropertyPusher<T> {
   T getImmediateValue(@NotNull Project project, @Nullable VirtualFile file);
 
   default boolean acceptsFile(@NotNull VirtualFile file, @NotNull Project project) {
-    return acceptsFile(file);
+    return false;
   }
 
   boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project);
@@ -103,18 +105,6 @@ public interface FilePropertyPusher<T> {
    * if a change is detected to issue the {@code fileOrDir} re-index
    */
   void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
-
-  //<editor-fold desc="Deprecated APIs" defaultState="collapsed">
-
-  /**
-   * @deprecated Please override {@link FilePropertyPusher#acceptsFile(VirtualFile, Project)}
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  default boolean acceptsFile(@NotNull VirtualFile file) {
-    return false;
-  }
-  //</editor-fold>
 }
 
 

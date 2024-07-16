@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -27,23 +27,18 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
     super(manager, JavaLanguage.INSTANCE);
   }
 
-  @NotNull
-  public abstract PsiClass getDelegate();
+  public abstract @NotNull PsiClass getDelegate();
 
   @Override
-  @NotNull
-  public abstract PsiElement copy();
+  public abstract @NotNull PsiElement copy();
 
   @Override
-  @NonNls
-  @Nullable
-  public String getName() {
+  public @NonNls @Nullable String getName() {
     return getDelegate().getName();
   }
 
   @Override
-  @Nullable
-  public PsiModifierList getModifierList() {
+  public @Nullable PsiModifierList getModifierList() {
     return getDelegate().getModifierList();
   }
 
@@ -53,8 +48,7 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @Nullable
-  public PsiDocComment getDocComment() {
+  public @Nullable PsiDocComment getDocComment() {
     return null;
   }
 
@@ -69,8 +63,7 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @Nullable
-  public PsiTypeParameterList getTypeParameterList() {
+  public @Nullable PsiTypeParameterList getTypeParameterList() {
     return getDelegate().getTypeParameterList();
   }
 
@@ -80,9 +73,7 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @NonNls
-  @Nullable
-  public String getQualifiedName() {
+  public @NonNls @Nullable String getQualifiedName() {
     return getDelegate().getQualifiedName();
   }
 
@@ -102,14 +93,12 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @Nullable
-  public PsiReferenceList getExtendsList() {
+  public @Nullable PsiReferenceList getExtendsList() {
     return getDelegate().getExtendsList();
   }
 
   @Override
-  @Nullable
-  public PsiReferenceList getImplementsList() {
+  public @Nullable PsiReferenceList getImplementsList() {
     return getDelegate().getImplementsList();
   }
 
@@ -124,8 +113,7 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @Nullable
-  public PsiClass getSuperClass() {
+  public @Nullable PsiClass getSuperClass() {
     return getDelegate().getSuperClass();
   }
 
@@ -134,9 +122,8 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
     return getDelegate().getInterfaces();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return getDelegate().getNavigationElement();
   }
 
@@ -199,14 +186,12 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @Nullable
-  public PsiField findFieldByName(@NonNls String name, boolean checkBases) {
+  public @Nullable PsiField findFieldByName(@NonNls String name, boolean checkBases) {
     return PsiClassImplUtil.findFieldByName(this, name, checkBases);
   }
 
   @Override
-  @Nullable
-  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
+  public @Nullable PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
@@ -221,38 +206,32 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases) {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
   @Override
-  @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiClassImplUtil.MemberType.METHOD);
   }
 
   @Override
-  @Nullable
-  public PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
+  public @Nullable PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
     return getDelegate().findInnerClassByName(name, checkBases);
   }
 
   @Override
-  @Nullable
-  public PsiElement getLBrace() {
+  public @Nullable PsiElement getLBrace() {
     return getDelegate().getLBrace();
   }
 
   @Override
-  @Nullable
-  public PsiElement getRBrace() {
+  public @Nullable PsiElement getRBrace() {
     return getDelegate().getRBrace();
   }
 
   @Override
-  @Nullable
-  public PsiIdentifier getNameIdentifier() {
+  public @Nullable PsiIdentifier getNameIdentifier() {
     return getDelegate().getNameIdentifier();
   }
 
@@ -272,14 +251,12 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @Nullable
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     return getDelegate().getContainingClass();
   }
 
   @Override
-  @NotNull
-  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+  public @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return getDelegate().getVisibleSignatures();
   }
 
@@ -330,8 +307,7 @@ public abstract class AbstractLightClass extends LightElement implements PsiClas
   }
 
   @Override
-  @NotNull
-  public PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+  public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
     PsiElement parent = getParent();
     if (parent instanceof PsiClassOwner && copy instanceof PsiClassOwner) {
       PsiClass[] copyClasses = ((PsiClassOwner)copy).getClasses();

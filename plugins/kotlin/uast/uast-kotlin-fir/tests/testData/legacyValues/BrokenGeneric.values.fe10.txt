@@ -4,28 +4,23 @@ UFile (package = ) [public final class BrokenGenericKt {...]
             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
-                UDeclarationsExpression [var x1: <ErrorType> = <anonymous class>()] = Undetermined
-                    ULocalVariable (name = x1) [var x1: <ErrorType> = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                UDeclarationsExpression [var x1: <ErrorType> = UIdentifier (Identifier (<))()] = Undetermined
+                    ULocalVariable (name = x1) [var x1: <ErrorType> = UIdentifier (Identifier (<))()]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (<))()] = external UIdentifier (Identifier (<))()()
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
-                UDeclarationsExpression [var x2: <ErrorType> = <anonymous class>()] = Undetermined
-                    ULocalVariable (name = x2) [var x2: <ErrorType> = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                UDeclarationsExpression [var x2: <ErrorType> = UIdentifier (Identifier (<))()] = Undetermined
+                    ULocalVariable (name = x2) [var x2: <ErrorType> = UIdentifier (Identifier (<))()]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (<))()] = external UIdentifier (Identifier (<))()()
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
-                UDeclarationsExpression [var x3: <ErrorType> = <anonymous class>()] = Undetermined
-                    ULocalVariable (name = x3) [var x3: <ErrorType> = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                UDeclarationsExpression [var x3: <ErrorType> = UIdentifier (Identifier (<))()] = Undetermined
+                    ULocalVariable (name = x3) [var x3: <ErrorType> = UIdentifier (Identifier (<))()]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (<))()] = external UIdentifier (Identifier (<))()()
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
-                UDeclarationsExpression [var x4: <ErrorType> = <anonymous class>()] = Undetermined
-                    ULocalVariable (name = x4) [var x4: <ErrorType> = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                UDeclarationsExpression [var x4: <ErrorType> = UIdentifier (Identifier (<))()] = Undetermined
+                    ULocalVariable (name = x4) [var x4: <ErrorType> = UIdentifier (Identifier (<))()]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (<))()] = external UIdentifier (Identifier (<))()()
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
-                UDeclarationsExpression [var x5: <ErrorType> = <anonymous class>()] = Undetermined
-                    ULocalVariable (name = x5) [var x5: <ErrorType> = <anonymous class>()]
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
+                UDeclarationsExpression [var x5: <ErrorType> = UIdentifier (Identifier (<))()] = Undetermined
+                    ULocalVariable (name = x5) [var x5: <ErrorType> = UIdentifier (Identifier (<))()]
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (<))()] = external UIdentifier (Identifier (<))()()
                             UIdentifier (Identifier (<)) [UIdentifier (Identifier (<))]
-                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()

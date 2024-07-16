@@ -42,7 +42,7 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
 
   @NotNull
   @Override
-  public Collection<String> getVariants(ConvertContext context) {
+  public Collection<String> getVariants(@NotNull ConvertContext context) {
     DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
     List<DomElement> children = DomUtil.getDefinedChildren(parent, true, true);
@@ -67,7 +67,7 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
   }
 
   @Override
-  public PsiElement resolve(String o, ConvertContext context) {
+  public PsiElement resolve(String o, @NotNull ConvertContext context) {
     DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
     return parent.getXmlElement();
@@ -77,7 +77,7 @@ public class ClassMappingNameConverter extends ResolvingConverter.StringConverte
   public boolean isReferenceTo(@NotNull PsiElement element,
                                String stringValue,
                                @Nullable String resolveResult,
-                               ConvertContext context) {
+                               @NotNull ConvertContext context) {
     return element.getManager().areElementsEquivalent(element, resolve(stringValue, context));
   }
 }

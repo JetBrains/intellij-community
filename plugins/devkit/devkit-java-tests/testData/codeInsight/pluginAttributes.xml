@@ -1,6 +1,5 @@
 <idea-plugin package="com.intellij"
              implementation-detail="false"
-             on-demand="false"
              allow-bundled-update="false"
              require-restart="false">
   <id>com.intellij</id>

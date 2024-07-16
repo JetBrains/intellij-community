@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -590,7 +591,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
 
-    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
           // decrease GC pressure, we're not measuring that
@@ -608,7 +609,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
-    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
       Application application = ApplicationManager.getApplication();
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
@@ -629,7 +630,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     Runnable r = () -> counter.incrementAndGet();
     Application application = ApplicationManager.getApplication();
     application.invokeAndWait(r);
-    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
+    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
       counter.set(0);
       UIUtil.invokeAndWaitIfNeeded(() -> LaterInvocator.enterModal(myWindow1));
       for (int i = 0; i < N; i++) {

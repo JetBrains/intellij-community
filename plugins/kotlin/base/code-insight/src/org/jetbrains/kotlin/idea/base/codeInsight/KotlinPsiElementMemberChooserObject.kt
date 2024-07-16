@@ -10,13 +10,14 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.psi.*
@@ -40,16 +41,17 @@ class KotlinPsiElementMemberChooserObject(
     override fun getElement(): KtElement = psiElement as KtElement
 
     companion object {
-        private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+        @KaExperimentalApi
+        private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.NONE }
+                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
             }
         }
 
         @JvmStatic
         fun getKotlinMemberChooserObject(declaration: KtDeclaration): KotlinPsiElementMemberChooserObject {
             return analyze(declaration) {
-                val symbol = declaration.getSymbol()
+                val symbol = declaration.symbol
                 val text = getChooserText(symbol)
                 val icon = getChooserIcon(declaration, symbol)
                 KotlinPsiElementMemberChooserObject(declaration, text, icon)
@@ -74,24 +76,25 @@ class KotlinPsiElementMemberChooserObject(
             }
         }
 
-        context(KtAnalysisSession)
-        private fun getChooserText(symbol: KtSymbol): @NlsSafe String {
-            if (symbol is KtClassOrObjectSymbol) {
-                val classId = symbol.classIdIfNonLocal
+        context(KaSession)
+        @OptIn(KaExperimentalApi::class)
+        private fun getChooserText(symbol: KaSymbol): @NlsSafe String {
+            if (symbol is KaClassSymbol) {
+                val classId = symbol.classId
                 if (classId != null) {
                     return classId.asFqNameString()
                 }
             }
 
-            if (symbol is KtDeclarationSymbol) {
+            if (symbol is KaDeclarationSymbol) {
                 return symbol.render(renderer)
             }
 
             return ""
         }
 
-        context(KtAnalysisSession)
-        private fun getChooserIcon(element: PsiElement, symbol: KtSymbol): Icon? {
+        context(KaSession)
+        private fun getChooserIcon(element: PsiElement, symbol: KaSymbol): Icon? {
             val isClass = element is KtClass || element is PsiClass
             val flags = if (isClass) 0 else Iconable.ICON_FLAG_VISIBILITY
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.module;
 
 import com.intellij.openapi.Disposable;
@@ -29,19 +29,18 @@ public abstract class PyRootTypeProvider {
   protected final VirtualFilePointerListener DUMMY_LISTENER = new VirtualFilePointerListener() {
   };
 
-  public abstract void reset(@NotNull final Disposable disposable, PyContentEntriesEditor editor, @NotNull Module module);
+  public abstract void reset(final @NotNull Disposable disposable, PyContentEntriesEditor editor, @NotNull Module module);
 
   public abstract void apply(Module module);
 
   public abstract boolean isModified(Module module);
 
-  public void removeRoot(ContentEntry contentEntry, @NotNull final VirtualFilePointer root, ModifiableRootModel model) {
+  public void removeRoot(ContentEntry contentEntry, final @NotNull VirtualFilePointer root, ModifiableRootModel model) {
     getRoots().remove(contentEntry, root);
   }
   public abstract MultiMap<ContentEntry, VirtualFilePointer> getRoots();
 
-  @Nullable
-  protected static ContentEntry findContentEntryForFile(VirtualFile virtualFile, PyContentEntriesEditor editor) {
+  protected static @Nullable ContentEntry findContentEntryForFile(VirtualFile virtualFile, PyContentEntriesEditor editor) {
     for (ContentEntry contentEntry : editor.getContentEntries()) {
       final VirtualFile file = contentEntry.getFile();
       if (file != null && VfsUtilCore.isAncestor(file, virtualFile, false)) {
@@ -63,9 +62,7 @@ public abstract class PyRootTypeProvider {
    *
    * @see #createRootEntryEditingAction(JTree, Disposable, PyContentEntriesEditor, ModifiableRootModel)
    */
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public abstract String getName();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getName();
 
   /**
    * Returns the description of the action for marking a directory with this root type in "Project Structure".
@@ -74,18 +71,14 @@ public abstract class PyRootTypeProvider {
    *
    * @see #createRootEntryEditingAction(JTree, Disposable, PyContentEntriesEditor, ModifiableRootModel)
    */
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public abstract String getDescription();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription();
 
   /**
    * Returns the title of the list of paths to the corresponding directories in "Project Structure".
    * <p>
    * Normally, this title should be in plural form, e.g. "Special Folders".
    */
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getRootsGroupTitle() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getRootsGroupTitle() {
     //noinspection DialogTitleCapitalization
     return getDescription();
   }
@@ -93,16 +86,14 @@ public abstract class PyRootTypeProvider {
   /**
    * Returns the color of the list of paths to the corresponding directories in "Project Structure".
    */
-  @NotNull
-  public abstract Color getRootsGroupColor();
+  public abstract @NotNull Color getRootsGroupColor();
 
   /**
    * Returns an optional shortcut for the action for marking a directory with this root type in "Project Structure".
    *
    * @see #createRootEntryEditingAction(JTree, Disposable, PyContentEntriesEditor, ModifiableRootModel)
    */
-  @Nullable
-  public CustomShortcutSet getShortcut() {
+  public @Nullable CustomShortcutSet getShortcut() {
     return null;
   }
 

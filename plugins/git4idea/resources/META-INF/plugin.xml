@@ -19,11 +19,14 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
+    <module name="intellij.platform.collaborationTools"/>
   </dependencies>
   <depends optional="true" config-file="git-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <content>
     <module name="intellij.vcs.git/newUiOnboarding"/>
+    <module name="intellij.vcs.git/terminal"/>
+    <module name="intellij.vcs.git.coverage"/>
   </content>
 
   <actions>
@@ -38,9 +41,6 @@
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
-    <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog">
-      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
-    </action>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" searchable="false"/>
@@ -53,9 +53,6 @@
     <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
-    <group id="Git.Reword.ToolbarActions">
-      <reference ref="Vcs.ShowMessageHistory" />
-    </group>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
@@ -199,6 +196,8 @@
       <reference ref="Git.CherryPick.Abort"/>
     </group>
 
+    <action id="git.update.force.pushed.branch" class="git4idea.actions.branch.GitForcePushedBranchUpdateAction" internal="true"/>
+
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
       <!-- See GitOngoingOperationAction -->
       <reference id="Git.Rebase.Abort"/>
@@ -210,13 +209,14 @@
     </group>
 
     <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
-      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
+      <group id="git.branches.popup.filter.by.separator" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
       <action id="git.branches.popup.filter.by.action" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction"/>
       <action id="git.branches.popup.filter.by.repository" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository"/>
       <separator/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
+      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupShowTagsAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupResizeAction"/>
     </group>
 
@@ -235,6 +235,8 @@
 
     <group id="Git.Branch">
       <action class="git4idea.actions.branch.GitCheckoutAction"/>
+      <action class="git4idea.actions.tag.GitCheckoutTagAction"/>
+      <action class="git4idea.actions.tag.GitDeleteTagAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
       <separator/>
@@ -242,7 +244,7 @@
       <action class="git4idea.actions.branch.GitShowDiffWithBranchAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitRebaseBranchAction"/>
-      <action class="git4idea.actions.branch.GitMergeBranchAction"/>
+      <action class="git4idea.actions.branch.GitMergeRefAction"/>
       <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
       <action class="git4idea.actions.branch.GitPushBranchAction"/>
@@ -289,8 +291,6 @@
     <group id="Git.LogContextMenu"/>
 
     <group id="Git.FileHistory.ContextMenu">
-      <reference id="Git.SelectInGitLog"/>
-      <separator/>
       <reference id="Git.Revert.In.Log"/>
       <separator/>
       <reference id="Git.CreateNewTag"/>
@@ -396,7 +396,7 @@
       <add-to-group group-id="ChangesViewPopupMenu" anchor="first"/>
     </group>
 
-    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.Stash"/>
+    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons.Stash"/>
 
     <group id="Git.Stage.Configure" popup="true">
       <separator key="separator.Git.Stage.Configure.display.as"/>
@@ -458,14 +458,22 @@
     <action id="Git.Stash.Apply" class="git4idea.stash.ui.GitApplyStashAction"/>
     <action id="Git.Stash.UnstashAs" class="git4idea.stash.ui.GitUnstashAsAction"/>
     <action id="Git.Stash.Drop" class="git4idea.stash.ui.GitDropStashAction" use-shortcut-of="$Delete"/>
-    <action id="Git.Show.Stash" class="git4idea.stash.ui.GitShowStashToolWindowTabAction"/>
+    <action id="Git.Stash.Clear" class="git4idea.stash.ui.GitClearStashesAction"/>
+    <action id="Git.Show.Stash" class="git4idea.stash.ui.GitShowStashToolWindowTabAction">
+      <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
+      <add-to-group group-id="Git.MainMenu.LocalChanges" relative-to-action="Vcs.Show.Shelf" anchor="after"/>
+    </action>
     <action id="Git.Stash.Refresh" class="git4idea.stash.ui.GitRefreshStashesAction" icon="AllIcons.Actions.Refresh"/>
+    <action id="Git.Stash.Toggle.Split.Preview" class="git4idea.stash.ui.GitStashToggleSplitPreviewAction" icon="AllIcons.Actions.PreviewDetails">
+      <add-to-group group-id="Vcs.SavedPatches.ChangesBrowser.Toolbar"/>
+    </action>
 
     <group id="Git.Stash.Operations.ContextMenu" class="git4idea.stash.ui.GitStashOperationsGroup">
       <reference id="Git.Stash.Pop"/>
       <reference id="Git.Stash.Apply"/>
       <reference id="Git.Stash.UnstashAs"/>
       <reference id="Git.Stash.Drop"/>
+      <reference id="Git.Stash.Clear"/>
       <add-to-group group-id="Vcs.SavedPatches.ContextMenu" anchor="first"/>
     </group>
 
@@ -490,7 +498,7 @@
       </group>
       <reference id="Git.Init"/>
       <separator/>
-      <reference id="LocalHistory.ShowHistory"/>
+      <reference id="LocalHistory.ShowProjectHistory"/>
     </group>
 
     <group id="MainToolbarVCSGroup">
@@ -588,6 +596,9 @@
                  description="Run git process for WSL executables using login shell command."/>
     <registryKey key="git.wsl.exe.executable.detect.lang.by.env" defaultValue="true"
                  description="Run git process for WSL executables using LANG detected from ENV."/>
+    <registryKey key="git.use.env.from.project.context" defaultValue="true"
+                 description="Update ENV variables passed to the git executable context to match the ones used for the project (ex: python venv, ruby sdk)."
+                 restartRequired="false"/>
     <registryKey key="git.use.no.optional.locks" defaultValue="true"
                  description="Use 'GIT_OPTIONAL_LOCKS' env variable to avoid taking unnecessary locks in git. Ex: to avoid 'git status' to interfere with 'git rebase' process in terminal."/>
     <registryKey key="git.merge.conflicts.toolwindow" defaultValue="false"
@@ -624,7 +635,6 @@
                  description="Max amount of entry to process from Git reflog to parse recently checkout branches"/>
     <registryKey key="git.show.recent.checkout.branches" defaultValue="5"
                  description="Max count of recently checkout branches to show (e.g. in branches tree popup)"/>
-    <registryKey key="git.log.index.inexact.renames" description="Detect and store inexact renames during indexing" defaultValue="false"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -889,5 +899,8 @@
     <listener class="git4idea.ui.branch.GitBranchWidget$SettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.ui.UISettingsListener"/>
+    <listener class="git4idea.branch.RecentProjectBranchUpdater"
+              activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.openapi.vcs.BranchChangeListener"/>
   </projectListeners>
 </idea-plugin>

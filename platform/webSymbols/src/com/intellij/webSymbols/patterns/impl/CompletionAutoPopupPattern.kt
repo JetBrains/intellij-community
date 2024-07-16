@@ -20,7 +20,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
-    listOf(MatchResult(WebSymbolNameSegment(start, start)))
+    listOf(MatchResult(WebSymbolNameSegment.create(start, start)))
 
   override fun list(owner: WebSymbol?,
                     scopeStack: Stack<WebSymbolsScope>,

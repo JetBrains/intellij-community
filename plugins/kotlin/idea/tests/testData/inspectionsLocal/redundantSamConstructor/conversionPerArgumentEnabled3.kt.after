@@ -7,5 +7,5 @@ fun interface KtRunnable {
 fun test(r1: KtRunnable, r2: KtRunnable) {}
 
 fun usage(r1: KtRunnable) {
-    test(r1, {})
+    test(r1) {}
 }

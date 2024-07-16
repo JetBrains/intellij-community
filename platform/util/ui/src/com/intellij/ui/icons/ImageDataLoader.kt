@@ -12,6 +12,9 @@ import java.net.URL
 interface ImageDataLoader {
   val path: String?
 
+  val expUIPath: String?
+    get() = null
+
   fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image?
 
   val url: URL?

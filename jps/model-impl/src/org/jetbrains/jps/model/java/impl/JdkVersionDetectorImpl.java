@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -27,6 +28,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+@ApiStatus.Internal
 public class JdkVersionDetectorImpl extends JdkVersionDetector {
   private static final Logger LOG = Logger.getInstance(JdkVersionDetectorImpl.class);
 
@@ -160,6 +162,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
       if (implementorVersion.startsWith("JBR-")) return Variant.JBR;
       if (implementorVersion.startsWith("SapMachine")) return Variant.SapMachine;
       if (implementorVersion.startsWith("Zulu")) return Variant.Zulu;
+      if (implementorVersion.startsWith("Homebrew")) return Variant.Homebrew;
     }
 
     String implementor = unquoteProperty(p, "IMPLEMENTOR");

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -19,8 +19,7 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
   private final String myText;
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return JavaBundle.message("inspection.replace.ternary.quickfix", myText);
   }
 
@@ -28,9 +27,8 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
     myText = ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("inspection.surround.if.family");
   }
 
@@ -62,11 +60,10 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
     }
   }
 
-  @NotNull
-  private static PsiConditionalExpression replaceWithConditionalExpression(@NotNull Project project,
-                                                                           @NotNull String condition,
-                                                                           @NotNull PsiExpression expression,
-                                                                           @NotNull String defaultValue) {
+  private static @NotNull PsiConditionalExpression replaceWithConditionalExpression(@NotNull Project project,
+                                                                                    @NotNull String condition,
+                                                                                    @NotNull PsiExpression expression,
+                                                                                    @NotNull String defaultValue) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     final PsiElement parent = expression.getParent();
@@ -93,9 +90,8 @@ public class ReplaceWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
   }
 
   public static class ReplaceMethodRefWithTernaryOperatorFix extends PsiUpdateModCommandQuickFix {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.replace.methodref.ternary.quickfix");
     }
 

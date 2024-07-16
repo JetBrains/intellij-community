@@ -45,14 +45,12 @@ import java.util.*;
 
 public final class TailRecursionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("tail.recursion.problem.descriptor");
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiMethod containingMethod = (PsiMethod)infos[0];
     if (!mayBeReplacedByIterativeMethod(containingMethod)) {
       return null;
@@ -75,8 +73,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
 
   private static final class RemoveTailRecursionFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("tail.recursion.replace.quickfix");
     }
 
@@ -91,7 +88,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       if (body == null) {
         return;
       }
-      @NonNls final StringBuilder builder = new StringBuilder();
+      final @NonNls StringBuilder builder = new StringBuilder();
       builder.append('{');
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
@@ -394,9 +391,8 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
 
     private static Graph<Integer> buildGraph(PsiParameter[] parameters, PsiExpression[] arguments) {
       final InboundSemiGraph<Integer> graph = new InboundSemiGraph<>() {
-        @NotNull
         @Override
-        public Collection<Integer> getNodes() {
+        public @NotNull Collection<Integer> getNodes() {
           final List<Integer> result = new ArrayList<>();
           for (int i = 0; i < parameters.length; i++) {
             result.add(i);
@@ -404,9 +400,8 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           return result;
         }
 
-        @NotNull
         @Override
-        public Iterator<Integer> getIn(Integer n) {
+        public @NotNull Iterator<Integer> getIn(Integer n) {
           final List<Integer> result = new ArrayList<>();
           final PsiParameter target = parameters[n];
           for (int i = 0, length = arguments.length; i < length; i++) {
@@ -475,8 +470,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     }
   }
 
-  @Nullable
-  private static PsiMethodCallExpression getTailCall(@Nullable PsiElement element, @NotNull PsiMethod method) {
+  private static @Nullable PsiMethodCallExpression getTailCall(@Nullable PsiElement element, @NotNull PsiMethod method) {
     PsiMethodCallExpression tailCall = null;
     if (element instanceof PsiReturnStatement returnStatement) {
       PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());

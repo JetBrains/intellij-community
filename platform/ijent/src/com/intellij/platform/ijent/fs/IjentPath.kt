@@ -1,13 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.fs
 
-import com.intellij.platform.ijent.IjentExecFileProvider
-import com.intellij.platform.ijent.IjentExecFileProvider.SupportedPlatform.OS.*
+import com.intellij.platform.ijent.IjentPlatform
 import com.intellij.platform.ijent.fs.IjentPath.Absolute.OS
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 
-@ApiStatus.Experimental
 sealed interface IjentPathResult<P : IjentPath> {
   data class Ok<P : IjentPath>(val path: P) : IjentPathResult<P>
   data class Err<P : IjentPath>(val raw: String, val reason: String) : IjentPathResult<P>
@@ -21,7 +18,6 @@ sealed interface IjentPathResult<P : IjentPath> {
  *
  * It consists of all methods of nio.Path which don't require any I/O.
  */
-@ApiStatus.Experimental
 sealed interface IjentPath {
   companion object {
     @JvmStatic
@@ -136,6 +132,9 @@ sealed interface IjentPath {
       @JvmStatic
       fun build(parts: List<String>): IjentPathResult<out Relative> =
         ArrayListIjentRelativePath.build(parts)
+
+      @JvmField
+      val EMPTY: Relative = ArrayListIjentRelativePath.EMPTY
     }
 
     override val parent: Relative?
@@ -234,8 +233,8 @@ fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
     is IjentPathResult.Err -> throw InvalidPathException(raw, reason)
   }
 
-val IjentExecFileProvider.SupportedPlatform.OS.pathOs: OS
+val IjentPlatform.pathOs: OS
   get() = when (this) {
-    DARWIN, LINUX -> OS.UNIX
-    WINDOWS -> OS.WINDOWS
+    is IjentPlatform.Posix -> OS.UNIX
+    is IjentPlatform.Windows -> OS.WINDOWS
   }

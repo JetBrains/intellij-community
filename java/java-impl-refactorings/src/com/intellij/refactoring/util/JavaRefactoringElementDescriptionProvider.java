@@ -49,6 +49,9 @@ public final class JavaRefactoringElementDescriptionProvider implements ElementD
       if (parameter.getDeclarationScope() instanceof PsiForeachStatement) {
         return JavaRefactoringBundle.message("local.variable.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
       }
+      if (parameter instanceof PsiPatternVariable) {
+        return JavaRefactoringBundle.message("pattern.variable.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
+      }
       return JavaRefactoringBundle.message("parameter.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
     }
 

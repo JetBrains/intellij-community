@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
-import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.lang.documentation.DocumentationSettings
@@ -15,26 +14,22 @@ import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtRendererBodyMemberScopeProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendHighlighted
+import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.createHighlightingManager
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.generateJavadoc
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -70,16 +65,6 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
             computeLocalDocumentation(element, originalElement, false) ?: return null
         return DocumentationResult.documentation(html)
     }
-
-    companion object {
-        internal val RENDERING_OPTIONS = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-            returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
-            propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
-            bodyMemberScopeProvider = KtRendererBodyMemberScopeProvider.NONE
-            singleTypeParameterRenderer = KtSingleTypeParameterSymbolRenderer.WITH_COMMA_SEPARATED_BOUNDS
-            parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.THREE_DOTS
-        }
-    }
 }
 
 private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
@@ -92,7 +77,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
                   renderKotlinDeclaration(
                       itReference.mainReference.resolve() as KtFunctionLiteral,
                       quickNavigation,
-                      symbolFinder = { (it as? KtFunctionLikeSymbol)?.valueParameters?.firstOrNull() })
+                      symbolFinder = { (it as? KaFunctionSymbol)?.valueParameters?.firstOrNull() })
               }
           }
       }
@@ -161,10 +146,10 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
     return null
 }
 
-context(KtAnalysisSession)
+context(KaSession)
 private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
-    val containingSymbol = ktDeclaration.getSymbol().getContainingSymbol()
-    val fqName = (containingSymbol as? KtClassLikeSymbol)?.classIdIfNonLocal?.asFqNameString()
+    val containingSymbol = ktDeclaration.symbol.containingDeclaration
+    val fqName = (containingSymbol as? KaClassLikeSymbol)?.classId?.asFqNameString()
         ?: (ktDeclaration.containingFile as? KtFile)?.packageFqName?.takeIf { !it.isRoot }?.asString()
 
     val fqNameSection = fqName?.let {
@@ -177,7 +162,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
 
         DocumentationManagerUtil.createHyperlink(link, it, highlighted, false, false)
         HtmlChunk.fragment(
-            HtmlChunk.icon("class", KotlinIcons.CLASS),
+            HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
             HtmlChunk.nbsp(),
             HtmlChunk.raw(link.toString()),
             HtmlChunk.br()
@@ -189,7 +174,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
         ?.takeIf { containingSymbol == null }
         ?.let {
             HtmlChunk.fragment(
-                HtmlChunk.icon("file", KotlinIcons.FILE),
+                HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
                 HtmlChunk.nbsp(),
                 HtmlChunk.text(it),
                 HtmlChunk.br()
@@ -211,11 +196,11 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
         // element is not an KtReferenceExpression, but KtClass of enum
         // so reference extracted from originalElement
         analyze(referenceExpression) {
-            val symbol = referenceExpression.mainReference.resolveToSymbol() as? KtNamedSymbol
+            val symbol = referenceExpression.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
-            if (name != null) {
-                val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
-                val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
+            if (name != null && symbol is KaDeclarationSymbol) {
+                val containingClass = symbol.containingDeclaration as? KaClassSymbol
+                val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
                     val navigationElement = superClass.psi?.navigationElement
                     if (navigationElement is KtElement && navigationElement.containingKtFile.isCompiled) {
@@ -227,7 +212,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
                     }
                 }
 
-                renderKotlinDeclaration(element, false) {
+                renderKotlinSymbol(symbol, element, false, false) {
                     if (!quickNavigation && kdoc != null) {
                         description {
                             renderKDoc(kdoc.getDefaultSection())
@@ -256,57 +241,33 @@ internal fun PsiElement?.isModifier() =
 private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
     declaration: KtDeclaration,
     onlyDefinition: Boolean,
-    symbolFinder: KtAnalysisSession.(KtSymbol) -> KtSymbol? = { it },
+    symbolFinder: KaSession.(KaSymbol) -> KaSymbol? = { it },
     preBuild: KDocTemplate.() -> Unit = {}
 ) {
     analyze(declaration) {
         // it's not possible to create symbol for function type parameter, so we need to process this case separately
         // see KTIJ-22404 and KTIJ-25653
         if (declaration is KtParameter && declaration.isFunctionTypeParameter) {
-            val definition = renderFunctionTypeParameter(declaration) ?: return
+            val definition = KotlinIdeDeclarationRenderer(createHighlightingManager(declaration.project)).renderFunctionTypeParameter(declaration) ?: return
 
             insert(KDocTemplate()) {
                 definition {
-                    append(definition.escape())
+                    append(definition)
                 }
             }
             return
         }
 
-        val symbol = symbolFinder(declaration.getSymbol())
-        if (symbol !is KtDeclarationSymbol) return
+        val symbol = symbolFinder(declaration.symbol)
+        if (symbol !is KaDeclarationSymbol) return
 
-        insert(KDocTemplate()) {
-            definition {
-                append(symbol.render(KotlinDocumentationTarget.RENDERING_OPTIONS).escape())
-            }
-
-            if (!onlyDefinition) {
-                description {
-                    renderKDoc(symbol, this)
-                }
-            }
-            getContainerInfo(declaration).toString().takeIf { it.isNotBlank() }?.let { info ->
-                containerInfo {
-                    append(info)
-                }
-            }
-            preBuild()
-        }
+        renderKotlinSymbol(symbol, declaration, onlyDefinition, true, preBuild)
     }
 }
 
-context(KtAnalysisSession)
-private fun renderFunctionTypeParameter(parameter: KtParameter): String? = with(KotlinDocumentationTarget.RENDERING_OPTIONS) {
-    prettyPrint {
-        parameter.nameAsName?.let { name -> withSuffix(": ") { nameRenderer.renderName(name, symbol = null, printer = this) } }
-        parameter.typeReference?.getKtType()?.let { type -> typeRenderer.renderType(type, printer = this) }
-    }
-}
-
-context(KtAnalysisSession)
+context(KaSession)
 private fun renderKDoc(
-    symbol: KtSymbol,
+    symbol: KaSymbol,
     stringBuilder: StringBuilder,
 ) {
     val declaration = symbol.psi as? KtElement
@@ -320,8 +281,8 @@ private fun renderKDoc(
             stringBuilder.renderKDoc(it.contentTag, it.sections)
         }
     } else if (declaration is KtFunction &&
-        symbol is KtCallableSymbol &&
-        symbol.getAllOverriddenSymbols().any { it.psi is PsiMethod }) {
+        symbol is KaCallableSymbol &&
+        symbol.allOverriddenSymbols.any { it.psi is PsiMethod }) {
         LightClassUtil.getLightClassMethod(declaration)?.let {
             stringBuilder.insert(KDocTemplate.DescriptionBodyTemplate.FromJava()) {
                 body = generateJavadoc(it)
@@ -330,21 +291,60 @@ private fun renderKDoc(
     }
 }
 
-context(KtAnalysisSession)
-private fun findKDoc(symbol: KtSymbol): KDocContent? {
-    val ktElement = symbol.psi as? KtElement
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+private fun findKDoc(symbol: KaSymbol): KDocContent? {
+    val ktElement = symbol.psi?.navigationElement as? KtElement
     ktElement?.findKDocByPsi()?.let {
         return it
     }
 
-    if (symbol is KtCallableSymbol) {
-        symbol.getAllOverriddenSymbols().forEach { overrider ->
+    if (symbol is KaCallableSymbol) {
+        symbol.allOverriddenSymbols.forEach { overrider ->
             findKDoc(overrider)?.let {
                 return it
             }
         }
     }
-    return null
+
+    if (symbol is KaValueParameterSymbol) {
+        val containingSymbol = symbol.containingDeclaration as? KaNamedFunctionSymbol
+        if (containingSymbol != null) {
+            val idx = containingSymbol.valueParameters.indexOf(symbol)
+            containingSymbol.getExpectsForActual().filterIsInstance<KaNamedFunctionSymbol>().mapNotNull { expectFunction ->
+                findKDoc(expectFunction.valueParameters[idx])
+            }.firstOrNull()?.let { return it }
+        }
+    }
+
+    return (symbol as? KaDeclarationSymbol)?.getExpectsForActual()?.mapNotNull { declarationSymbol -> findKDoc(declarationSymbol) }?.firstOrNull()
 }
 
-private fun String.escape(): String = HtmlEscapers.htmlEscaper().escape(this)
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KaDeclarationSymbol,
+                                                           declaration: KtDeclaration,
+                                                           onlyDefinition: Boolean,
+                                                           passContainerInfo: Boolean = true,
+                                                           preBuild: KDocTemplate.() -> Unit = {}) {
+    insert(KDocTemplate()) {
+        definition {
+            append(symbol.render(KotlinIdeDeclarationRenderer(createHighlightingManager(declaration.project), symbol).renderer))
+        }
+
+        if (!onlyDefinition) {
+            description {
+                renderKDoc(symbol, this)
+            }
+        }
+
+        if (passContainerInfo) {
+            getContainerInfo(declaration).toString().takeIf { it.isNotBlank() }?.let { info ->
+                containerInfo {
+                    append(info)
+                }
+            }
+        }
+        preBuild()
+    }
+}

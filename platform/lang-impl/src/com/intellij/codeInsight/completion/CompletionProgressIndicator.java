@@ -848,6 +848,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   @Override
   public void scheduleRestart() {
     ThreadingAssertions.assertEventDispatchThread();
+    LOG.trace("Scheduling restart");
     if (handler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();

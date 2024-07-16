@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services.bintray;
 
 import com.google.gson.Gson;
@@ -48,8 +48,7 @@ public class BintrayEndpoint {
   private final Gson gson = new Gson();
 
 
-  @Nullable
-  public RemoteRepositoryDescription getRepository(@NotNull String subject, @NotNull String repo) throws IOException {
+  public @Nullable RemoteRepositoryDescription getRepository(@NotNull String subject, @NotNull String repo) throws IOException {
     // workaround, API requires authorization
     String url = BintrayModel.Repository.getUrl(subject, repo);
     return HttpRequests.request(url).accept("application/xml").connect(request -> {
@@ -66,8 +65,7 @@ public class BintrayEndpoint {
     });
   }
 
-  @NotNull
-  public List<RemoteRepositoryDescription> getRepositories(@NotNull String subject) throws IOException {
+  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String subject) throws IOException {
     // workaround, API requires authorization
     String url = BintrayModel.Repository.getUrl(subject, null);
     return HttpRequests.request(url).accept("application/xml").connect(request -> {

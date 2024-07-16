@@ -5,11 +5,11 @@ package com.intellij.facet;
 import com.intellij.facet.impl.ui.libraries.FacetLibrariesValidatorImpl;
 import com.intellij.facet.mock.MockFacet;
 import com.intellij.facet.mock.MockFacetEditorContext;
-import com.intellij.facet.mock.MockFacetLibrariesValidatorDescription;
 import com.intellij.facet.mock.MockFacetValidatorsManager;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorsFactory;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidator;
+import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -33,7 +33,7 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
   private VirtualFile myJUnitJar;
   @NonNls private static final String LIB_NAME = "lib";
   private MockFacet myFacet;
-  private MockFacetLibrariesValidatorDescription myDescription;
+  private FacetLibrariesValidatorDescription myDescription;
 
   @Override
   protected void setUp() throws Exception {
@@ -42,7 +42,7 @@ public class FacetLibrariesValidatorTest extends FacetTestCase {
     myFacet = createFacet();
     myFastUtilJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("fastutil-min");
     myJUnitJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JUnit3");
-    myDescription = new MockFacetLibrariesValidatorDescription(LIB_NAME);
+    myDescription = new FacetLibrariesValidatorDescription(LIB_NAME);
   }
 
   @Override

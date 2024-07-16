@@ -46,6 +46,19 @@ public interface IdeDocumentationTargetProvider {
     return target == null ? Collections.emptyList() : List.of(target);
   }
 
+  // I am really sorry that I have to extend the API in such a way, but, I guess, all people who ever wanted to extend it, did so
+  // with a default implementation. This is going to be used in Rider, see README.MD in com.jetbrains.rdclient.quickDoc.mixproj
+  @ApiStatus.Internal
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
+  default @NotNull List<? extends @NotNull DocumentationTarget> documentationTargetsForInlineDoc(
+    @NotNull Editor editor,
+    @NotNull PsiFile file,
+    int offset
+  ) {
+    return documentationTargets(editor, file, offset);
+  }
+
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   @NotNull List<? extends @NotNull DocumentationTarget> documentationTargets(

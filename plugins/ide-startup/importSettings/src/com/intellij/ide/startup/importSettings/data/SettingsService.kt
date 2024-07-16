@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.data
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.StartupImportIcons
+import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.jb.IDEData
 import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
@@ -15,28 +16,26 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.rd.createLifetime
-import com.intellij.openapi.rd.createNestedDisposable
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
-import com.jetbrains.rd.swing.proxyProperty
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.ISignal
-import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.reactive.Signal
-import kotlinx.coroutines.*
+import com.jetbrains.rd.util.reactive.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.time.LocalDate
 import javax.swing.Icon
+
+internal val useMockDataForStartupWizard: Boolean
+  get() = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
 
 interface SettingsService {
   companion object {
@@ -53,36 +52,33 @@ interface SettingsService {
 
   val importCancelled: Signal<Unit>
 
-  val error: ISignal<NotificationData>
+  val notification: IProperty<NotificationData?>
 
   val jbAccount: IPropertyView<JBAccountInfoService.JBAData?>
 
-  val isSyncEnabled: IPropertyView<Boolean>
+  val isSyncEnabled: Boolean
+
+  val hasDataToSync: IPropertyView<Boolean>
 
   val doClose: ISignal<Unit>
 
   val pluginIdsPreloaded: Boolean
 
   fun configChosen()
-
-  fun isLoggedIn(): Boolean = jbAccount.value != null
 }
 
 class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
 
-  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
-
-
   override fun getSyncService() =
-    if (shouldUseMockData) TestSyncService()
+    if (useMockDataForStartupWizard) TestSyncService.getInstance()
     else SyncServiceImpl.getInstance()
 
   override fun getJbService() =
-    if (shouldUseMockData) TestJbService.getInstance()
+    if (useMockDataForStartupWizard) TestJbService.getInstance()
     else JbImportServiceImpl.getInstance()
 
   override fun getExternalService(): ExternalService =
-    if (shouldUseMockData) TestExternalService()
+    if (useMockDataForStartupWizard) TestExternalService.getInstance()
     else SettingTransferService.getInstance()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -129,7 +125,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     }
   }
 
-  override val error = Signal<NotificationData>()
+  override val notification = Property<NotificationData?>(null)
 
   override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
 
@@ -139,7 +135,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
   override var pluginIdsPreloaded: Boolean = false
 
   override fun configChosen() {
-    if (shouldUseMockData) {
+    if (useMockDataForStartupWizard) {
       TestJbService.getInstance().configChosen()
     } else {
       val fileChooserDescriptor = FileChooserDescriptor(true, true, false, false, false, false)
@@ -149,7 +145,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
         if (ConfigImportHelper.findConfigDirectoryByPath(prevPath) != null) {
           getJbService().importFromCustomFolder(prevPath)
         } else {
-          error.fire(object : NotificationData {
+          notification.set(object : NotificationData {
             override val status = NotificationData.NotificationStatus.ERROR
             override val message = BootstrapBundle.message("import.chooser.error.unrecognized", selectedDir,
                                                            IDEData.getSelf()?.fullName ?: "Current IDE")
@@ -160,26 +156,15 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     }
   }
 
-  private fun unloggedSyncHide(): IPropertyView<Boolean> {
-    fun getValue(): Boolean = Registry.`is`("import.setting.unlogged.sync.hide")
+  // override val isSyncEnabled = jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  override val hasDataToSync = Property(false)
+  //override val hasDataToSync = jbAccount.compose(getSyncService().syncState) { account, state -> account != null && state == SyncService.SYNC_STATE.LOGGED }
 
-    return proxyProperty(getValue()) { lifetime, set ->
-      val listener = object : RegistryValueListener {
-        override fun afterValueChanged(value: RegistryValue) {
-          set(value.asBoolean())
-        }
-      }
-
-      Registry.get("import.setting.unlogged.sync.hide").addListener(listener, lifetime.createNestedDisposable())
-    }
-  }
-
-  override val isSyncEnabled = Property(
-    shouldUseMockData) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  override val isSyncEnabled = System.getProperty("import.settings.sync.enabled").toBoolean()
 
   init {
-    if (shouldUseMockData) {
-      jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com"))
+    if (useMockDataForStartupWizard) {
+      jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com", "Alex Ivanovskii"))
     }
   }
 }
@@ -189,25 +174,27 @@ private val logger = logger<SettingsServiceImpl>()
 interface SyncService : JbService {
   enum class SYNC_STATE {
     UNLOGGED,
-    WAINING_FOR_LOGIN,
-    LOGIN_FAILED,
     LOGGED,
     TURNED_OFF,
-    NO_SYNC,
-    GENERAL
+    NO_SYNC
   }
 
   val syncState: IPropertyView<SYNC_STATE>
-  fun tryToLogin(): String?
+  fun tryToLogin()
   fun syncSettings(): DialogImportData
   fun importSyncSettings(): DialogImportData
   fun getMainProduct(): Product?
-  fun generalSync()
 }
 
-interface ExternalService : BaseService {
+interface ExternalService {
+  val productServices: List<ExternalProductService>
   suspend fun hasDataToImport(): Boolean
   fun warmUp(scope: CoroutineScope)
+}
+
+interface ExternalProductService : BaseService {
+  val productId: TransferableIdeId
+  val productTitle: @NlsSafe String
 }
 
 interface JbService : BaseService {

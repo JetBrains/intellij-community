@@ -1,3 +1,5 @@
+// IGNORE_K2
+
 fun foo(o: Any) {
     <caret>val a = 1
 }

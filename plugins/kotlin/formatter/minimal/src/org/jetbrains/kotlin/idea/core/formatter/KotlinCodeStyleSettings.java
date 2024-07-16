@@ -37,6 +37,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public boolean INSERT_WHITESPACES_IN_SIMPLE_ONE_LINE_METHOD = true;
     public boolean ALIGN_IN_COLUMNS_CASE_BRANCH = false;
     public boolean LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY = true;
+    public boolean INDENT_BEFORE_ARROW_ON_NEW_LINE = true;
     public boolean SPACE_AROUND_FUNCTION_TYPE_ARROW = true;
     public boolean SPACE_AROUND_WHEN_ARROW = true;
     public boolean SPACE_BEFORE_LAMBDA_ARROW = true;

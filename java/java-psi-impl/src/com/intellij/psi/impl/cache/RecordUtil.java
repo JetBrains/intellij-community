@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.lang.LighterAST;
@@ -68,8 +68,7 @@ public final class RecordUtil {
     return packed;
   }
 
-  @NotNull
-  public static String intern(@NotNull CharTable table, @NotNull LighterASTNode node) {
+  public static @NotNull String intern(@NotNull CharTable table, @NotNull LighterASTNode node) {
     assert node instanceof LighterASTTokenNode : node;
     return table.intern(((LighterASTTokenNode)node).getText()).toString();
   }

@@ -10,19 +10,20 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProcessor
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil
 
 /**
  * Represents a delegate implementation of the JvmLogger interface that is used to insert loggers which are [PsiAnnotation].
  * Use it to handle with Lombok loggers
- * @param fieldLoggerName the fully qualified name of the logger's type.
- * @param loggerTypeName the fully qualified name of annotation used to generate logger
+ * @param loggerTypeName the fully qualified name of the logger's type.
+ * @param annotationTypeName the fully qualified name of annotation used to generate logger
  * @param priority the priority of the logger.
  */
 class JvmLoggerAnnotationDelegate(
-  private val fieldLoggerName: String,
-  override val id: String,
   override val loggerTypeName: String,
+  override val id: String,
+  private val annotationTypeName: String,
   override val priority: Int
 ) : JvmLogger {
   override fun insertLoggerAtClass(project: Project, clazz: PsiClass, logger: PsiElement): PsiElement? {
@@ -33,18 +34,22 @@ class JvmLoggerAnnotationDelegate(
 
   override fun isAvailable(project: Project?): Boolean {
     return project != null &&
-           JavaPsiFacade.getInstance(project).findClass(fieldLoggerName, ProjectContainingLibrariesScope.getScope(project)) != null
+           JavaPsiFacade.getInstance(project).findClass(loggerTypeName, ProjectContainingLibrariesScope.getScope(project)) != null
            && LombokLibraryUtil.hasLombokLibrary(project)
   }
 
   override fun isAvailable(module: Module?): Boolean {
-    return module != null && JavaLibraryUtil.hasLibraryClass(module, fieldLoggerName) && LombokLibraryUtil.hasLombokClasses(module)
+    return module != null && JavaLibraryUtil.hasLibraryClass(module, loggerTypeName) && LombokLibraryUtil.hasLombokClasses(module)
   }
 
-  override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz.hasAnnotation(loggerTypeName).not()
+  override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz.hasAnnotation(annotationTypeName).not()
 
   override fun createLogger(project: Project, clazz: PsiClass): PsiAnnotation {
     val factory = JavaPsiFacade.getElementFactory(project)
-    return factory.createAnnotationFromText("@$loggerTypeName", clazz)
+    return factory.createAnnotationFromText("@$annotationTypeName", clazz)
+  }
+
+  override fun getLogFieldName(clazz: PsiClass): String {
+    return AbstractLogProcessor.getLoggerName(clazz)
   }
 }

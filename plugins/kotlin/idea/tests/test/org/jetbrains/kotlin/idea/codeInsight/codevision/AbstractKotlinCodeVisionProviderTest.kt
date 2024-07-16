@@ -5,14 +5,21 @@ package org.jetbrains.kotlin.idea.codeInsight.codevision
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import java.io.File
 
 abstract class AbstractKotlinCodeVisionProviderTest :
-    InlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+    InlayHintsProviderTestCase(),
+    ExpectedPluginModeProvider { // Abstract- prefix is just a convention for GenerateTests
 
     companion object {
         const val INHERITORS_KEY = "kotlin.code-vision.inheritors"
         const val USAGES_KEY = "kotlin.code-vision.usages"
+    }
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
     }
 
     fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests

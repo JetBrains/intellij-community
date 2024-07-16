@@ -29,12 +29,12 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
-import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.konan.target.TargetSupportException
@@ -43,10 +43,12 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.createDirectory
+import kotlin.io.path.div
+import kotlin.io.path.writeText
 
-abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
-    open fun isFirPlugin(): Boolean = false
+abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase(),
+                                         ExpectedPluginModeProvider {
 
     private var vfsDisposable: Ref<Disposable>? = null
 
@@ -57,12 +59,14 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
     }
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         enableKotlinOfficialCodeStyle(project)
 
         vfsDisposable = allowProjectRootAccess(this)
-        checkPluginIsCorrect(isFirPlugin())
     }
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     // [TargetSupportException] can be thrown by the multiplatform test setup when a test artifact doesn't exist for the host platform.
     // The test should be ignored in such cases, but since JUnit3 doesn't provide such an option, we make them pass instead.
@@ -119,9 +123,9 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disposeVfsRootAccess(vfsDisposable) },
-            ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
-            ThrowableRunnable { super.tearDown() }
+            { disposeVfsRootAccess(vfsDisposable) },
+            { disableKotlinOfficialCodeStyle(project) },
+            { super.tearDown() },
         )
     }
 
@@ -284,8 +288,8 @@ fun Module.createMultiplatformFacetM1(
 fun Module.createMultiplatformFacetM3(
     platformKind: TargetPlatform? = null,
     useProjectSettings: Boolean = true,
-    dependsOnModuleNames: List<String>,
-    pureKotlinSourceFolders: List<String>,
+    dependsOnModuleNames: List<String> = emptyList(),
+    pureKotlinSourceFolders: List<String> = emptyList(),
     additionalVisibleModuleNames: Set<String> = emptySet(),
 ) {
     createFacetWithAdditionalSetup(platformKind, useProjectSettings) {

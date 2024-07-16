@@ -3,11 +3,11 @@ package com.intellij.util.indexing.hints
 
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.ThreeState
-import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex.InputFilter
 import com.intellij.util.indexing.FileBasedIndex.ProjectSpecificInputFilter
 import com.intellij.util.indexing.IndexedFile
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
 /**
  * **TL;DR;**
@@ -65,8 +65,8 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * If a language for given file is substituted, IDE has two options how to index the file: either using original file type, or
  * default filetype of substituted language.
  * I.e. in the case when particular YAML is substituted with EERb language, [FileTypeIndexingHint] will
- * be invoked with `SubstitutedFileType{ERbFileType, YAMLFileType}` (because ERbFileType is the default filetype for EERbLanguage).
- * [com.intellij.util.indexing.hints.BaseFileTypeInputFilter] in its turn will resolve `SubstitutedFileType` to `ERbFileType`
+ * be invoked with `SubstitutedFileType{ErbFileType, YAMLFileType}` (because ERbFileType is the default filetype for EERbLanguage).
+ * [com.intellij.util.indexing.hints.BaseFileTypeInputFilter] in its turn will resolve `SubstitutedFileType` to `ErbFileType`
  * (this simplifies `BaseFileTypeInputFilter` subclasses implementation so that they don't need to care much about `SubstitutedFileType`)
  *
  *
@@ -83,6 +83,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * @see com.intellij.psi.LanguageSubstitutor
  */
 @Experimental
+@OverrideOnly
 interface FileTypeIndexingHint {
   fun acceptsFileTypeFastPath(fileType: FileType): ThreeState
 

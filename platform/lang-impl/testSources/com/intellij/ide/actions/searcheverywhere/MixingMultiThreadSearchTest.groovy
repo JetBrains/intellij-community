@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.Alarm
 import com.intellij.util.Processor
@@ -20,17 +21,17 @@ class MixingMultiThreadSearchTest extends BasePlatformTestCase {
 
   private static final String MORE_ITEM = "...MORE"
   private static final Collection<SEResultsEqualityProvider> ourEqualityProviders = Collections.singleton(new TrivialElementsEqualityProvider())
+  private static final String MIXED_RESULTS_FEATURE = "search.everywhere.mixed.results"
 
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    Experiments.getInstance().setFeatureEnabled("search.everywhere.mixed.results", true)
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown()
-    Experiments.getInstance().setFeatureEnabled("search.everywhere.mixed.results", false)
+    def experiments = Experiments.getInstance()
+    def mixedResultsWereEnabled = experiments.isFeatureEnabled(MIXED_RESULTS_FEATURE)
+    experiments.setFeatureEnabled(MIXED_RESULTS_FEATURE, true)
+    Disposer.register(testRootDisposable) {
+      experiments.setFeatureEnabled(MIXED_RESULTS_FEATURE, mixedResultsWereEnabled)
+    }
   }
 
   void "test simple without collisions"() {

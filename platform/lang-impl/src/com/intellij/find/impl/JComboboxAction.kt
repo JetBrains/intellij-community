@@ -17,7 +17,6 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
-import java.awt.event.ActionListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.JComponent
@@ -30,7 +29,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
   private var latestMask: String? by latestMaskProperty
   val saveMask: () -> Unit = { FindSettings.getInstance().fileMask = latestMask }
 
-  override fun createCustomComponent(presentation: Presentation): ComboboxActionComponent =
+  override fun createCustomComponent(presentation: Presentation, place: String): ComboboxActionComponent =
     ComboboxActionComponent(project, latestMaskProperty) { onChanged() }.also { it.isEditable = true }
 
   override fun actionPerformed(e: AnActionEvent) {}

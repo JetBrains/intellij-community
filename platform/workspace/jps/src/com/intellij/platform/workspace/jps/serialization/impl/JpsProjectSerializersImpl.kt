@@ -112,7 +112,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     return files.map {
       val fileName = it.fileName.toString()
-      val directoryUrl = virtualFileManager.getOrCreateFromUri(factory.directoryUrl)
+      val directoryUrl = virtualFileManager.getOrCreateFromUrl(factory.directoryUrl)
       val entitySource =
         bindExistingSource(fileInDirectorySourceNames, factory.entityClass, fileName, directoryUrl) ?: createFileInDirectorySource(
           directoryUrl, fileName)
@@ -155,7 +155,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
         val factory = directorySerializerFactoriesByUrl[PathUtilRt.getParentPath(addedFileUrl)]
         val newFileSerializer = factory?.createSerializer(addedFileUrl, createFileInDirectorySource(
-          virtualFileManager.getOrCreateFromUri(factory.directoryUrl), PathUtilRt.getFileName(addedFileUrl)), virtualFileManager)
+          virtualFileManager.getOrCreateFromUrl(factory.directoryUrl), PathUtilRt.getFileName(addedFileUrl)), virtualFileManager)
         if (newFileSerializer != null) {
           newFileSerializers.add(newFileSerializer)
           serializerToDirectoryFactory[newFileSerializer] = factory
@@ -485,6 +485,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     saveEntities(storage, ImmutableEntityStorage.empty(), allSources, writer)
   }
 
+  @TestOnly
+  override fun saveAffectedEntities(storage: EntityStorage, affectedEntitySources: Set<EntitySource>, writer: JpsFileContentWriter) {
+    moduleListSerializersByUrl.values.forEach {
+      saveModulesList(it, storage, ImmutableEntityStorage.empty(), writer)
+    }
+    saveEntities(storage, ImmutableEntityStorage.empty(), affectedEntitySources, writer)
+  }
+
   internal fun getActualFileUrl(source: EntitySource): String? {
     val actualFileSource = getActualFileSource(source) ?: return null
     return when (actualFileSource) {
@@ -663,18 +671,22 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val fileUrl = getActualFileUrl(source)
       if (fileUrl != null) {
         val affectedImportedSourceStoredExternally = when {
-          source is JpsImportedEntitySource && source.storedExternally -> sourcesStoredInternally[source.internalFile]
-          source is JpsImportedEntitySource && !source.storedExternally -> sourcesStoredExternally[source.internalFile]
           source is JpsFileEntitySource -> sourcesStoredExternally[source]
           else -> null
         }
-        // When user removes module from project we don't delete corresponding *.iml file located under project directory by default
-        // (because it may be included in other projects). However we do remove the module file if module actually wasn't removed, just
-        // its storage has been changed, e.g. if module was marked as imported from external system, or the place where module imported
-        // from external system was changed, or part of a module configuration is imported from external system and data stored in *.iml
-        // file was removed.
-        val deleteObsoleteFile = source in internalSourceConvertedToImported || (affectedImportedSourceStoredExternally != null &&
-                                                                                 affectedImportedSourceStoredExternally !in obsoleteSources)
+        // When user removes module from the project, we don't delete corresponding *.iml file located under project directory by default
+        // because it may be included in other projects.
+        //
+        // However, we do remove the module file if:
+        // - Module is imported from the external build system (like maven).
+        // - Module actually wasn't removed, just its storage has been changed, e.g: if module was marked as imported from the external system
+        //   (aka mavenize module).
+        // - Imported module had user-configured information (like custom content roots). This additional information is stored in the local
+        //    `.iml` file, and the `.iml` should be removed in case all custom elements are removed.
+        // - TO DO: Fill new cases if found!
+        val deleteObsoleteFile = shouldDeleteImportedFile(source, fileUrl) ||
+                                 source in internalSourceConvertedToImported ||
+                                 (affectedImportedSourceStoredExternally != null && affectedImportedSourceStoredExternally !in obsoleteSources)
         processObsoleteSource(fileUrl, deleteObsoleteFile, writer, affectedEntityTypeSerializers, affectedModuleListSerializers, storage)
         val actualSource = if (source is JpsImportedEntitySource && !source.storedExternally) source.internalFile else source
         if (actualSource is JpsProjectFileEntitySource.FileInDirectory) {
@@ -755,7 +767,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                   }
                 }
               }
-              val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.getOrCreateFromUri(url), moduleGroup)
+              val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.getOrCreateFromUrl(url), moduleGroup)
               fileSerializersByUrl.put(url, newSerializer)
               moduleSerializers[newSerializer] = moduleListSerializer
               affectedModuleListSerializers.add(moduleListSerializer)
@@ -794,6 +806,17 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         mergeSerializerEntitiesMap(serializersToRun, serializer, entitiesMap)
       }
     }
+  }
+
+  private fun shouldDeleteImportedFile(source: EntitySource, fileUrl: String): Boolean {
+    // Always remove files that were generated during importing from external build systems like gradle, maven, sbt.
+    // Example: If module was imported from gradle, and then it was removed in gradle, we don't need to keep the `.iml` file for this module
+    return source is JpsImportedEntitySource
+           // Except a corner case: We load `iml` files with broken structure that has duplicated modules.
+           // This may happen if we have two `modules.xml` files (one in `.idea` and the second in `external_build_system`) and they
+           //   both refer to the same `module.iml`. The duplicated module entity will be automatically removed, but the `module.iml` file
+           //   should not be removed as it contains information about the module.
+           && fileSerializersByUrl.getValues(fileUrl).size == 1
   }
 
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage) {
@@ -863,7 +886,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       return moduleListSerializer.getFileName(module)
     }
     val moduleEntity = additionalModuleRelatedEntities.mapNotNull {
-      val moduleId = (entities[it]?.firstOrNull() as? ModuleSettingsBase)?.moduleId ?: return@mapNotNull null
+      val moduleId = (entities[it]?.firstOrNull() as? ModuleSettingsFacetBridgeEntity)?.moduleId ?: return@mapNotNull null
       storage.resolve(moduleId)
     }.firstOrNull() ?: return null
     return moduleListSerializer.getFileName(moduleEntity)
@@ -900,7 +923,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
         val source =
           if (currentSource != null && fileIdToFileName.get(currentSource.fileNameId) == fileName) currentSource
-          else createFileInDirectorySource(virtualFileManager.getOrCreateFromUri(factory.directoryUrl), fileName)
+          else createFileInDirectorySource(virtualFileManager.getOrCreateFromUrl(factory.directoryUrl), fileName)
         factory.createSerializer("${factory.directoryUrl}/$fileName", source, virtualFileManager) to entityMap
       }
   }

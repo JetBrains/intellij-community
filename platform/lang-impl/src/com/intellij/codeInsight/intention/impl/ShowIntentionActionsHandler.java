@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -24,6 +24,7 @@ import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.LangBundle;
@@ -179,7 +180,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   public static boolean availableFor(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset, @NotNull IntentionAction action) {
-    if (!psiFile.isValid()) return false;
+    if (!psiFile.isValid() || editor.isViewer()) return false;
 
     try {
       Project project = psiFile.getProject();
@@ -324,10 +325,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     record ContextAndCommand(@NotNull ActionContext context, @NotNull ModCommand command) { }
     ThrowableComputable<ContextAndCommand, RuntimeException> computable =
       () -> ReadAction.nonBlocking(() -> {
-          ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
+          ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction, fixOffset);
           if (context == null) return null;
-          ActionContext adjusted = fixOffset >= 0 ? context.withOffset(fixOffset) : context;
-          return new ContextAndCommand(adjusted, commandAction.perform(adjusted));
+          return new ContextAndCommand(context, commandAction.perform(context));
         })
         .expireWhen(() -> hostFile.getProject().isDisposed())
         .executeSynchronously();
@@ -346,24 +346,26 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   @RequiresBackgroundThread
   private static ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
                                                       @Nullable Editor hostEditor,
-                                                      @NotNull ModCommandAction commandAction) {
+                                                      @NotNull ModCommandAction commandAction, 
+                                                      int fixOffset) {
     if (hostEditor == null) {
       return ActionContext.from(null, hostFile);
     }
-    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
+    int offset = fixOffset >= 0 ? fixOffset : hostEditor.getCaretModel().getOffset();
+    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
     Editor injectedEditor = null;
     if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
       injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
       ActionContext injectedContext = ActionContext.from(injectedEditor, injectedFile);
       if (commandAction.getPresentation(injectedContext) != null) {
-        return injectedContext;
+        return injectedContext.withOffset(((DocumentWindow)injectedEditor.getDocument()).hostToInjected(offset));
       }
     }
 
     if (hostEditor != injectedEditor) {
       ActionContext hostContext = ActionContext.from(hostEditor, hostFile);
       if (commandAction.getPresentation(hostContext) != null) {
-        return hostContext;
+        return hostContext.withOffset(offset);
       }
     }
     return null;

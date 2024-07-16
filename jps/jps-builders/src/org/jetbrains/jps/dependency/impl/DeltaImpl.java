@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,12 +25,16 @@ public final class DeltaImpl extends GraphImpl implements Delta {
   private final Set<NodeSource> myBaseSources;
   private final Set<NodeSource> myDeletedSources;
   
-  public DeltaImpl(Set<NodeSource> baseSources, Iterable<NodeSource> deletedSources) throws IOException {
+  DeltaImpl(Iterable<NodeSource> baseSources, Iterable<NodeSource> deletedSources) {
     super(Containers.MEMORY_CONTAINER_FACTORY);
     addIndex(new SubclassesIndex(Containers.MEMORY_CONTAINER_FACTORY));
-    addIndex(new ClassShortNameIndex(Containers.MEMORY_CONTAINER_FACTORY));
-    myBaseSources = Collections.unmodifiableSet(baseSources);
-    myDeletedSources = Collections.unmodifiableSet(Iterators.collect(deletedSources, new HashSet<>()));
+    myBaseSources = Collections.unmodifiableSet(baseSources instanceof Set? (Set<? extends NodeSource>)baseSources : Iterators.collect(baseSources, new HashSet<>()));
+    myDeletedSources = Collections.unmodifiableSet(deletedSources instanceof Set? (Set<? extends NodeSource>)deletedSources : Iterators.collect(deletedSources, new HashSet<>()));
+  }
+
+  @Override
+  public boolean isSourceOnly() {
+    return false;
   }
 
   @Override

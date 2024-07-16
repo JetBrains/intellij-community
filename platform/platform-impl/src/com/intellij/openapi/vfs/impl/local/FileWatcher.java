@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -15,10 +15,7 @@ import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.util.*;
@@ -33,6 +30,7 @@ import java.util.function.Supplier;
 /**
  * Unless stated otherwise, all paths are {@link SystemDependent @SystemDependent}.
  */
+@ApiStatus.Internal
 public final class FileWatcher implements AppLifecycleListener {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
@@ -72,7 +70,7 @@ public final class FileWatcher implements AppLifecycleListener {
     myManagingFS = managingFS;
     myNotificationSink = new MyFileWatcherNotificationSink();
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, this);
 
     myFileWatcherExecutor.execute(() -> {
       PluggableFileWatcher.EP_NAME.forEachExtensionSafe(watcher -> watcher.initialize(myManagingFS, myNotificationSink));
@@ -107,7 +105,7 @@ public final class FileWatcher implements AppLifecycleListener {
 
   public boolean isOperational() {
     for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
-      if (watcher.isOperational()) return true;
+      if (watcher != null && watcher.isOperational()) return true;
     }
     return false;
   }
@@ -118,7 +116,7 @@ public final class FileWatcher implements AppLifecycleListener {
       return true;
     }
     for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
-      if (watcher.isSettingRoots()) return true;
+      if (watcher != null && watcher.isSettingRoots()) return true;
     }
     return false;
   }
@@ -320,7 +318,9 @@ public final class FileWatcher implements AppLifecycleListener {
     myTestNotifier = notifier;
     myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
-        watcher.startup();
+        if (watcher != null) {
+          watcher.startup();
+        }
       }
       return null;
     }).get();
@@ -330,7 +330,9 @@ public final class FileWatcher implements AppLifecycleListener {
   public void shutdown() throws Exception {
     myFileWatcherExecutor.submit(() -> {
       for (PluggableFileWatcher watcher : PluggableFileWatcher.EP_NAME.getIterable()) {
-        watcher.shutdown();
+        if (watcher != null) {
+          watcher.shutdown();
+        }
       }
       myTestNotifier = null;
       return null;

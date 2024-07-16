@@ -8,10 +8,6 @@
             qualifiedName="org.jetbrains.kotlin.foreignUsagesRenameProcessor"
             interface="org.jetbrains.kotlin.idea.refactoring.rename.ForeignUsagesRenameProcessor"
             dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.postInsertDeclarationCallback"
-            interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.PostInsertDeclarationCallback"
-            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -20,7 +16,8 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.K1CommonRefactoringSettings"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings"/>
 
-    <lang.namesValidator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator"/>
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider"
+                        serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinNameValidatorProviderImpl"/>
 
     <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggestionProvider"/>
 

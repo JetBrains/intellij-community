@@ -8,13 +8,12 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
-import com.intellij.openapi.vcs.impl.VcsRootIterator
 import com.intellij.openapi.vcs.util.paths.RootDirtySet
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Processor
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 class GitVcsDirtyScope(private val project: Project) : VcsModifiableDirtyScope(), VcsDirtyScopeBuilder {
@@ -57,20 +56,14 @@ class GitVcsDirtyScope(private val project: Project) : VcsModifiableDirtyScope()
   }
 
   override fun addDirtyPathFast(vcsRoot: VirtualFile, filePath: FilePath, recursively: Boolean) {
-    val rootSet = createSetForRoot(vcsRoot)
+    val rootSet = dirtyDirectories.computeIfAbsent(vcsRoot, ::createDirtySetForRoot)
     rootSet.markDirty(filePath)
 
     if (recursively) {
       for (root in dirtyRootsUnder[filePath]) {
-        val subRootSet = createSetForRoot(root)
+        val subRootSet = dirtyDirectories.computeIfAbsent(root, ::createDirtySetForRoot)
         subRootSet.markEverythingDirty()
       }
-    }
-  }
-
-  private fun createSetForRoot(vcsRoot: VirtualFile): RootDirtySet {
-    return dirtyDirectories.computeIfAbsent(vcsRoot) { root ->
-      RootDirtySet(VcsUtil.getFilePath(root), true)
     }
   }
 
@@ -100,16 +93,6 @@ class GitVcsDirtyScope(private val project: Project) : VcsModifiableDirtyScope()
     addDirtyPathFast(vcsRoot.path, newcomer, false)
   }
 
-  @Deprecated("Deprecated in Java")
-  override fun iterate(iterator: Processor<in FilePath>) {
-    VcsRootIterator.iterate(this, iterator)
-  }
-
-  @Deprecated("Deprecated in Java")
-  override fun iterateExistingInsideScope(iterator: Processor<in VirtualFile>) {
-    VcsRootIterator.iterateExistingInsideScope(this, iterator)
-  }
-
   override fun wasEveryThingDirty(): Boolean = wasEverythingDirty
   override fun isEmpty(): Boolean = dirtyDirectories.isEmpty()
 
@@ -130,5 +113,13 @@ class GitVcsDirtyScope(private val project: Project) : VcsModifiableDirtyScope()
     }
     result.append("]")
     return result.toString()
+  }
+
+  companion object {
+    @ApiStatus.Internal
+    @JvmStatic
+    fun createDirtySetForRoot(vcsRoot: VirtualFile): RootDirtySet {
+      return RootDirtySet(VcsUtil.getFilePath(vcsRoot), true)
+    }
   }
 }

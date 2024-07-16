@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.openapi.application.ApplicationManager
@@ -26,15 +26,4 @@ abstract class BrowserLauncher {
   fun browse(url: String, browser: WebBrowser?): Unit = browse(url, browser, null)
 
   abstract fun browse(url: String, browser: WebBrowser? = null, project: Project? = null)
-
-  @Deprecated("Implementation detail; please use other methods instead", level = DeprecationLevel.ERROR)
-  fun browseUsingPath(url: String?,
-                      browserPath: String? = null,
-                      browser: WebBrowser? = null,
-                      project: Project? = null,
-                      openInNewWindow: Boolean = false,
-                      additionalParameters: Array<String> = com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY): Boolean {
-    browse(url!!, browser, project)
-    return true
-  }
 }

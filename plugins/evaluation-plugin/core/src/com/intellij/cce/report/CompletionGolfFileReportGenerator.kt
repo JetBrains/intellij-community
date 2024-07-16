@@ -26,9 +26,9 @@ class CompletionGolfFileReportGenerator(
     val totalLatency = TotalLatencyMetric().evaluate(listOf(session))
 
     val info = mutableListOf<String>().apply {
-      add("${(movesCountNormalised * 100).format()}%".padEnd(4, ' '))
+      add("${formatDouble((movesCountNormalised * 100))}%".padEnd(4, ' '))
       add("$movesCount act")
-      add("${(totalLatency / 1000).format()}s".padEnd(4, ' '))
+      add("${formatDouble((totalLatency / 1000))}s".padEnd(4, ' '))
     }
 
     return info
@@ -44,7 +44,9 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  override fun getBackgroundClass(lookup: Lookup, expectedText: String): String = ""
+  override fun getFilterCheckClass(lookup: Lookup, expectedText: String): String = ""
+
+  override fun getSkippedByModelClass(lookup: Lookup, expectedText: String): String = ""
 
   override fun getThresholds(): List<BaseThreshold> = Threshold.values().toList()
 

@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurable;
@@ -17,13 +18,19 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.icons.CachedImageIcon;
+import com.intellij.ui.icons.CustomIconUtilKt;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,6 +74,17 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
             showMorePopup();
           }
         })) {
+        @Override
+        protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
+          if (ExperimentalUI.isNewUI()) {
+            icon = paintHover(g, icon, myButton, CloseHoverBounds.x, CloseHoverBounds.y);
+            icon.paintIcon(this, g, CloseHoverBounds.x, CloseHoverBounds.y);
+          }
+          else {
+            super.paintIcon(g, icon);
+          }
+        }
+
         @Override
         public void repaint() {
           super.repaint();
@@ -117,12 +135,43 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
       }) {
       @Override
       protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
+        icon = paintHover(g, icon, myButton, CloseHoverBounds.x, CloseHoverBounds.y);
         icon.paintIcon(this, g, CloseHoverBounds.x, CloseHoverBounds.y);
       }
     };
     myActions.add(myCloseButton);
 
     return myActions;
+  }
+
+  private static @NotNull Icon paintHover(@NotNull Graphics g, @NotNull Icon icon, @NotNull BaseButtonBehavior button, int x, int y) {
+    if (ExperimentalUI.isNewUI()) {
+      if (button.isHovered()) {
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+          float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+          float gap = JBUIScale.scale(2);
+          Shape shape =
+            new RoundRectangle2D.Float(x - gap, y - gap, icon.getIconWidth() + 2 * gap, icon.getIconHeight() + 2 * gap, arc, arc);
+
+          g2.setColor(JBUI.CurrentTheme.Notification.ICON_HOVER_BACKGROUND);
+          g2.fill(shape);
+
+          g2.setColor(JBUI.CurrentTheme.ActionButton.hoverBorder());
+          g2.draw(shape);
+        }
+        finally {
+          g2.dispose();
+        }
+      }
+      if (ColorUtil.isDark(JBColor.namedColor("MainToolbar.background")) && JBColor.isBright() && icon instanceof CachedImageIcon) {
+        icon = CustomIconUtilKt.loadIconCustomVersionOrScale((CachedImageIcon)icon, 16, true);
+      }
+    }
+    return icon;
   }
 
   private void showMorePopup() {
@@ -187,7 +236,13 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
 
     if (myMoreButton != null) {
       Dimension size = myMoreButton.getPreferredSize();
-      myMoreButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace, y, size.width, size.height);
+      if (ExperimentalUI.isNewUI()) {
+        myMoreButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace - CloseHoverBounds.x, y - CloseHoverBounds.y,
+                               size.width + CloseHoverBounds.width, size.height + CloseHoverBounds.height);
+      }
+      else {
+        myMoreButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace, y, size.width, size.height);
+      }
     }
   }
 

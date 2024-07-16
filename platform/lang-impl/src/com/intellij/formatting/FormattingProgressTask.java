@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public final class FormattingProgressTask extends SequentialModalProgressTask implements FormattingProgressCallback {
 
   private static final double MAX_PROGRESS_VALUE = 1;

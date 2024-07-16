@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.OptionTreeWithPreviewPanel;
@@ -14,7 +14,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.border.CustomLineBorder;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,8 +143,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   @Override
-  @NotNull
-  protected final FileType getFileType() {
+  protected final @NotNull FileType getFileType() {
     return JavaFileType.INSTANCE;
   }
 
@@ -162,29 +160,24 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return JavaBundle.message("title.javadoc");
   }
 
-  @Nullable
   @Override
-  public Language getDefaultLanguage() {
+  public @Nullable Language getDefaultLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
-  @NlsContexts.Label
-  public static String getOtherGroup() {
+  public static @NlsContexts.Label String getOtherGroup() {
     return JavaBundle.message("group.javadoc.other");
   }
 
-  @NlsContexts.Label
-  public static String getInvalidTagsGroup() {
+  public static @NlsContexts.Label String getInvalidTagsGroup() {
     return JavaBundle.message("group.javadoc.invalid.tags");
   }
 
-  @NlsContexts.Label
-  public static String getBlankLinesGroup() {
+  public static @NlsContexts.Label String getBlankLinesGroup() {
     return JavaBundle.message("group.javadoc.blank.lines");
   }
 
-  @NlsContexts.Label
-  public static String getAlignmentGroup() {
+  public static @NlsContexts.Label String getAlignmentGroup() {
     return JavaBundle.message("group.javadoc.alignment");
   }
 }

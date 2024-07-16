@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.SettableFuture;
@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogListener;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +22,7 @@ import java.util.function.BiFunction;
 public abstract class VcsLogUiBase implements VcsLogUiEx {
   private final @NotNull String myId;
   protected final @NotNull VcsLogData myLogData;
-  protected final @NotNull VcsLogImpl myLog;
+  protected final @NotNull VcsLog myLog;
   protected final @NotNull VisiblePackRefresher myRefresher;
   protected final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 

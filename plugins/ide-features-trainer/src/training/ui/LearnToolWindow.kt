@@ -127,10 +127,6 @@ private fun adjustModulesPanel(contentPanel: JPanel): JPanel {
           icon = AllIcons.General.Warning
           text = LearnBundle.message("modules.panel.new.ui.warning")
         })
-        add(Box.createHorizontalGlue())
-        add(LinkLabel<Any>(LearnBundle.message("modules.panel.switch.ui"), null) { _, _ ->
-          ExperimentalUI.setNewUI(true)
-        })
       })
     })
     add(contentPanel)

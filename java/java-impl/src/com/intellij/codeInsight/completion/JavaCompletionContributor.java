@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -88,7 +88,10 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),
       // like `call(Cls::methodRef.<caret>`
       psiElement().afterLeaf(psiElement(JavaTokenType.DOT).afterSibling(psiElement(PsiMethodCallExpression.class).withLastChild(
-        psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))));
+        psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))),
+      // dot after primitive type `int.<caret>` or dot after dot `Object..<caret>`
+      psiElement().afterLeaf(psiElement(JavaTokenType.DOT).withParent(
+        psiElement(PsiErrorElement.class).afterSibling(psiElement(PsiErrorElement.class)))));
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
@@ -144,8 +147,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
    * @param position completion invocation position
    * @return filter for acceptable references; if null then no references are accepted at a given position
    */
-  @Nullable
-  public static ElementFilter getReferenceFilter(PsiElement position) {
+  public static @Nullable ElementFilter getReferenceFilter(PsiElement position) {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false,
                                                            PsiCodeBlock.class, PsiMethod.class,
                                                            PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
@@ -377,8 +379,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return aClass != null && boxedPrimitiveTypes.contains(aClass.getQualifiedName());
   }
 
-  @NotNull
-  static AndFilter createPermitsListFilter() {
+  static @NotNull AndFilter createPermitsListFilter() {
     return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter() {
       @Override
       protected boolean checkInheritance(@NotNull PsiClass curClass, @NotNull PsiClass candidate) {
@@ -552,6 +553,10 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     if (!smart && parent instanceof PsiJavaModuleReferenceElement) {
       addModuleReferences(parent, parameters.getOriginalFile(), result);
     }
+
+    if (JavaPatternCompletionUtil.insideDeconstructionList(parameters.getPosition())) {
+      JavaPatternCompletionUtil.suggestFullDeconstructionList(parameters, result);
+    }
   }
 
   @VisibleForTesting
@@ -608,8 +613,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return hadItems[0];
   }
 
-  @Nullable
-  private static PsiAnnotation findAnnotationWhoseAttributeIsCompleted(@NotNull PsiElement position) {
+  private static @Nullable PsiAnnotation findAnnotationWhoseAttributeIsCompleted(@NotNull PsiElement position) {
     return ANNOTATION_ATTRIBUTE_NAME.accepts(position) && !JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)
            ? Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class))
            : null;
@@ -892,8 +896,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return items;
   }
 
-  @Nullable
-  private static TailType getTailType(boolean smart, boolean inSwitchLabel, PsiElement position) {
+  private static @Nullable TailType getTailType(boolean smart, boolean inSwitchLabel, PsiElement position) {
     if (!smart && inSwitchLabel) {
       if (position instanceof PsiClass) {
         return TailTypes.insertSpaceType();
@@ -933,9 +936,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     });
   }
 
-  @Nls
-  @NotNull
-  private static String getPlace(PsiLocalVariable variable) {
+  private static @Nls @NotNull String getPlace(PsiLocalVariable variable) {
     String place = JavaBundle.message("completion.inner.scope");
     PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
     PsiElement statement = block == null ? null : block.getParent();
@@ -1068,10 +1069,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
   }
 
-  @NotNull
-  private static LookupElementBuilder createAnnotationAttributeElement(@NotNull PsiMethod annoMethod,
-                                                                       @Nullable String value,
-                                                                       @NotNull PsiElement position) {
+  private static @NotNull LookupElementBuilder createAnnotationAttributeElement(@NotNull PsiMethod annoMethod,
+                                                                                @Nullable String value,
+                                                                                @NotNull PsiElement position) {
     CommonCodeStyleSettings styleSettings = CodeStyle.getLanguageSettings(annoMethod.getContainingFile());
     String space = ReferenceExpressionCompletionContributor.getSpace(styleSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
@@ -1283,15 +1283,13 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
   }
 
-  @Nullable
-  static PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
+  static @Nullable PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
     PsiAnnotation anno = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
     PsiJavaCodeReferenceElement ref = anno == null ? null : anno.getNameReferenceElement();
     return ref != null && PsiTreeUtil.isAncestor(ref, position, false) ? ref : null;
   }
 
-  @Nullable
-  private static String customizeDummyIdentifier(@NotNull CompletionInitializationContext context, PsiFile file) {
+  private static @Nullable String customizeDummyIdentifier(@NotNull CompletionInitializationContext context, PsiFile file) {
     if (context.getCompletionType() != CompletionType.BASIC) return null;
 
     int offset = context.getStartOffset();
@@ -1354,8 +1352,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return at != null && at.getNode().getElementType() == JavaTokenType.EQ;
   }
 
-  @Nullable
-  private static PsiElement skipWhitespacesAndComments(@Nullable PsiElement at) {
+  private static @Nullable PsiElement skipWhitespacesAndComments(@Nullable PsiElement at) {
     PsiElement nextLeaf = at;
     while (nextLeaf != null && (nextLeaf instanceof PsiWhiteSpace ||
                                 nextLeaf instanceof PsiComment ||

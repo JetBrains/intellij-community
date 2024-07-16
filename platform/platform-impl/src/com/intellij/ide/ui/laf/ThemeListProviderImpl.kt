@@ -15,6 +15,7 @@ private class ThemeListProviderImpl : ThemeListProvider {
     val classicUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
     val customThemes = mutableListOf<UIThemeLookAndFeelInfo>()
 
+    val intellijLightThemeId = "JetBrainsLightTheme"
     val highContrastThemeId = "JetBrainsHighContrastTheme"
     val highContrastThemeToAdd = uiThemeProviderListManager.findThemeById(highContrastThemeId)
 
@@ -30,7 +31,7 @@ private class ThemeListProviderImpl : ThemeListProvider {
       .forEach { info ->
         if (info.id == highContrastThemeId
             || info.id == "IntelliJ"
-            || (info.id == "JetBrainsLightTheme" && ExperimentalUI.isNewUI())) return@forEach
+            || (info.id == intellijLightThemeId && ExperimentalUI.isNewUI())) return@forEach
 
         if (!info.isThemeFromPlugin) classicUiThemes.add(info)
         else customThemes.add(info)
@@ -41,8 +42,14 @@ private class ThemeListProviderImpl : ThemeListProvider {
     customThemes.sortBy { it.name }
 
     if (highContrastThemeToAdd != null) {
-      val destination = if (newUiThemes.isEmpty()) classicUiThemes else newUiThemes
-      destination.add(highContrastThemeToAdd)
+      if (newUiThemes.isEmpty()) {
+        val intellijLightIndex = classicUiThemes.indexOfFirst { it.id == intellijLightThemeId }
+        if (intellijLightIndex >= 0) {
+          classicUiThemes.add(intellijLightIndex, highContrastThemeToAdd)
+        }
+        else classicUiThemes.add(highContrastThemeToAdd)
+      }
+      else newUiThemes.add(highContrastThemeToAdd)
     }
 
     val groupInfos = mutableListOf<Groups.GroupInfo<UIThemeLookAndFeelInfo>>()

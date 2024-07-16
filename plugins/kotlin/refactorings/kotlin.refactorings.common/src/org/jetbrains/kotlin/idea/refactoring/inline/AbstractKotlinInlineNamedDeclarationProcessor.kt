@@ -19,9 +19,9 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -183,13 +183,13 @@ abstract class AbstractKotlinInlineNamedDeclarationProcessor<TDeclaration : KtNa
 
 private class OverrideUsageInfo(element: PsiElement) : UsageInfo(element)
 
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 fun findCallableConflictForUsage(usage: PsiElement): @NlsContexts.DialogMessage String? {
     val usageParent = usage.parent as? KtCallableReferenceExpression ?: return null
     if (usageParent.callableReference != usage) return null
     allowAnalysisOnEdt { //todo j2k calls writeAction so it's impossible to wrap in simple progress yet
         analyze(usageParent) {
-            val classSymbol = usageParent.getExpectedType()?.expandedClassSymbol ?: return null
+            val classSymbol = usageParent.expectedType?.expandedSymbol ?: return null
             val fqName = classSymbol.getFqNameIfPackageOrNonLocal() ?: return null
             if (fqName.isRoot || fqName.parent() != StandardNames.KOTLIN_REFLECT_FQ_NAME) return null
         }

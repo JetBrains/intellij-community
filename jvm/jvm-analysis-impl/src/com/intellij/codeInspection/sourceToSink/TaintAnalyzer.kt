@@ -822,6 +822,9 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
                   nextExpression.accept(returnFinder)
                 }
               }
+              else {
+                return super.visitIfExpression(node)
+              }
               returns.addAll(returnFinder.returns)
               if (returnFinder.onlyInSameLevel && returnFinder.returns.isNotEmpty()) {
                 stop = true

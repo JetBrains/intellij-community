@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 final class RecordConstructorChooserDialog extends DialogWrapper {
-  @NotNull private final JBRadioButton myCompact;
-  @NotNull private final JBRadioButton myCanonical;
-  @NotNull private final JBRadioButton myCustom;
-  @NotNull private final PsiClass myRecordClass;
+  private final @NotNull JBRadioButton myCompact;
+  private final @NotNull JBRadioButton myCanonical;
+  private final @NotNull JBRadioButton myCustom;
+  private final @NotNull PsiClass myRecordClass;
 
   RecordConstructorChooserDialog(@NotNull PsiClass recordClass) {
     super(recordClass.getProject());

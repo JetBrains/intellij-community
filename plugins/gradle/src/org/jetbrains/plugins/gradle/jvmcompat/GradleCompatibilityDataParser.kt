@@ -3,8 +3,10 @@ package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import org.jetbrains.annotations.VisibleForTesting
 
-internal object GradleCompatibilityDataParser : IdeVersionedDataParser<GradleCompatibilityState>() {
+@VisibleForTesting
+object GradleCompatibilityDataParser : IdeVersionedDataParser<GradleCompatibilityState>() {
   private fun JsonArray.parseVersions(): List<String> {
     return filter { it.isJsonPrimitive }.map { it.asString }
   }

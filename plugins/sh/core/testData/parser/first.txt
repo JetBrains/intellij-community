@@ -490,10 +490,10 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('exec')
       PsiWhiteSpace(' ')
-      NUMBER
-        PsiElement(int)('10')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
+          NUMBER
+            PsiElement(int)('10')
           PsiElement(<&)('<&')
           NUMBER
             PsiElement(int)('0')
@@ -561,88 +561,7 @@ SHELL_SCRIPT
       SUBSHELL_COMMAND
         PsiElement(()('(')
         COMPOUND_LIST
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('find')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('.')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-type')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('f')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-size')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('+0c')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(!)('!')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-name')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''*[0-9]*'')
-            PsiWhiteSpace(' \\n     ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(!)('!')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-name')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''\.*'')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              PsiElement(!)('!')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-name')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''*conf'')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-maxdepth')
-            PsiWhiteSpace(' ')
-            NUMBER
-              PsiElement(int)('1')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-print')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('sed')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''s/^\.\///'')
-        PsiElement())(')')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  PsiElement(\n)('\n')
-  COMMANDS_LIST
-    FOR_COMMAND
-      PsiElement(for)('for')
-      PsiWhiteSpace(' ')
-      FOR_CLAUSE
-        PsiElement(word)('name')
-        PsiWhiteSpace(' ')
-        PsiElement(in)('in')
-        PsiWhiteSpace(' ')
-        PsiElement($)('$')
-        SUBSHELL_COMMAND
-          PsiElement(()('(')
-          COMPOUND_LIST
+          PIPELINE_COMMAND_LIST
             SIMPLE_COMMAND
               GENERIC_COMMAND_DIRECTIVE
                 LITERAL
@@ -708,6 +627,89 @@ SHELL_SCRIPT
               PsiWhiteSpace(' ')
               STRING
                 PsiElement(RAW_STRING)(''s/^\.\///'')
+        PsiElement())(')')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    FOR_COMMAND
+      PsiElement(for)('for')
+      PsiWhiteSpace(' ')
+      FOR_CLAUSE
+        PsiElement(word)('name')
+        PsiWhiteSpace(' ')
+        PsiElement(in)('in')
+        PsiWhiteSpace(' ')
+        PsiElement($)('$')
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            PIPELINE_COMMAND_LIST
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('find')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('.')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-type')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('f')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-size')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('+0c')
+                PsiWhiteSpace(' ')
+                SIMPLE_COMMAND_ELEMENT
+                  PsiElement(!)('!')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-name')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(RAW_STRING)(''*[0-9]*'')
+                PsiWhiteSpace(' \\n     ')
+                SIMPLE_COMMAND_ELEMENT
+                  PsiElement(!)('!')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-name')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(RAW_STRING)(''\.*'')
+                PsiWhiteSpace(' ')
+                SIMPLE_COMMAND_ELEMENT
+                  PsiElement(!)('!')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-name')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(RAW_STRING)(''*conf'')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-maxdepth')
+                PsiWhiteSpace(' ')
+                NUMBER
+                  PsiElement(int)('1')
+                PsiWhiteSpace(' ')
+                LITERAL
+                  PsiElement(word)('-print')
+              PsiWhiteSpace(' ')
+              PsiElement(|)('|')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('sed')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(RAW_STRING)(''s/^\.\///'')
           PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')

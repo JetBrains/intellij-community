@@ -1,5 +1,7 @@
 // FIR_COMPARISON
 // FIR_IDENTICAL
+package test
+
 class FooBar
 
 fun f(bar: FooBar, <caret>c: Char)

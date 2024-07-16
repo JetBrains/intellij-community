@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom;
 
 import com.intellij.platform.backend.navigation.NavigationRequest;
@@ -34,7 +34,7 @@ public interface Navigatable {
   }
 
   /**
-   * Open editor and select/navigate to the object there if possible.
+   * Open an editor and select/navigate to the object there if possible.
    * Just do nothing if navigation is not possible like in case of a package
    *
    * @param requestFocus {@code true} if focus requesting is necessary
@@ -63,7 +63,7 @@ public interface Navigatable {
   /**
    * Indicates whether this instance supports navigation to source (that means some kind of editor).
    * Note that navigation can be supported even if this method returns {@code false}.
-   * In such cases it is not recommended to do batch navigation for all navigatables
+   * In such cases it is not recМшommended to do batch navigation for all navigatables
    * available via {@link com.intellij.openapi.actionSystem.CommonDataKeys#NAVIGATABLE_ARRAY},
    * because it may lead to opening several modal dialogs.
    * Use {@link com.intellij.util.OpenSourceUtil#navigate} to process such arrays correctly.

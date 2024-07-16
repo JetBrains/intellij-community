@@ -39,7 +39,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDes
 /**
  * @author Max Medvedev
  */
-public class GrUnusedIncDecInspection extends BaseInspection {
+public final class GrUnusedIncDecInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(GrUnusedIncDecInspection.class);
 
   @NotNull

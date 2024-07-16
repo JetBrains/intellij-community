@@ -2,6 +2,7 @@
 package com.intellij.openapi.components
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.impl.stores.stateStore
 import org.jetbrains.annotations.TestOnly
 import java.lang.System.identityHashCode
 

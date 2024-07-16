@@ -63,19 +63,26 @@ class GitFileHistory internal constructor(private val project: Project,
   private val path = VcsUtil.getLastCommitPath(project, path)
 
   @Throws(VcsException::class)
-  internal fun load(consumer: (GitFileRevision) -> Unit, vararg parameters: String) {
+  internal fun load(consumer: (GitFileRevision) -> Unit, vararg parameters: String) = load(consumer, {}, *parameters)
+
+
+  @Throws(VcsException::class)
+  internal fun load(consumer: (GitFileRevision) -> Unit, renameConsumer: (FileRename) -> Unit, vararg parameters: String) {
     val logParser = createLogParser(project)
 
     val visitedCommits = mutableSetOf<String>()
     val starts = ContainerUtil.newLinkedList(FileHistoryStart(startingRevisions, path))
     while (starts.isNotEmpty()) {
       val (startRevisions, startPath) = starts.removeFirst()
-
-      val lastCommits = runGitLog(logParser, startPath, visitedCommits, consumer, parameters.toList() + startRevisions)
+      val lastCommits = runGitLog(logParser, startPath, visitedCommits, consumer, startRevisions + parameters.toList())
       if (lastCommits.isEmpty()) return
 
       for (lastCommit in lastCommits) {
-        starts.addAll(getParentsAndPathsIfRename(lastCommit, startPath))
+        val parents = getParentsAndPathsIfRename(lastCommit, startPath)
+        parents.filter { it.path != startPath }.forEach {
+          it.revisions.forEach { prevRevision -> renameConsumer(FileRename(prevRevision, lastCommit, it.path, startPath)) }
+        }
+        starts.addAll(parents)
       }
     }
   }
@@ -189,15 +196,16 @@ class GitFileHistory internal constructor(private val project: Project,
                                               GitLogOption.AUTHOR_TIME)
     }
 
-    private fun loadHistory(project: Project,
-                            path: FilePath,
-                            startingFrom: VcsRevisionNumber?,
-                            consumer: (GitFileRevision) -> Unit,
-                            vararg parameters: String) {
+    fun loadHistory(project: Project,
+                    path: FilePath,
+                    startingFrom: VcsRevisionNumber?,
+                    consumer: (GitFileRevision) -> Unit,
+                    renameConsumer: (FileRename) -> Unit = {},
+                    vararg parameters: String) {
       val detectedRoot = GitUtil.getRootForFile(project, path)
       val repositoryRoot = GitLogProvider.getCorrectedVcsRoot(GitRepositoryManager.getInstance(project), detectedRoot, path)
       val revision = startingFrom?.asString() ?: GitUtil.HEAD
-      GitFileHistory(project, repositoryRoot, path, listOf(revision)).load(consumer, *parameters)
+      GitFileHistory(project, repositoryRoot, path, listOf(revision)).load(consumer, renameConsumer, *parameters)
     }
 
     /**
@@ -207,6 +215,7 @@ class GitFileHistory internal constructor(private val project: Project,
      * @param path              FilePath which history is queried.
      * @param startingFrom      Revision from which to start file history, when null history is started from HEAD revision.
      * @param consumer          This consumer is notified ([Consumer.accept]) when new history records are retrieved.
+     * @param renameConsumer          This consumer is notified ([Consumer.accept]) when rename records are retrieved.
      * @param exceptionConsumer This consumer is notified in case of error while executing git command.
      * @param parameters        Optional parameters which will be added to the git log command just before the path.
      */
@@ -216,9 +225,10 @@ class GitFileHistory internal constructor(private val project: Project,
                     startingFrom: VcsRevisionNumber?,
                     consumer: Consumer<in GitFileRevision>,
                     exceptionConsumer: Consumer<in VcsException>,
+                    renameConsumer: Consumer<FileRename> = Consumer { },
                     vararg parameters: String) {
       try {
-        loadHistory(project, path, startingFrom, consumer::accept, *parameters)
+        loadHistory(project, path, startingFrom, consumer::accept, renameConsumer::accept, *parameters)
       }
       catch (e: VcsException) {
         exceptionConsumer.accept(e)
@@ -242,7 +252,7 @@ class GitFileHistory internal constructor(private val project: Project,
                                   startingFrom: VcsRevisionNumber,
                                   vararg parameters: String): List<VcsFileRevision> {
       val revisions = mutableListOf<VcsFileRevision>()
-      loadHistory(project, path, startingFrom, revisions::add, *parameters)
+      loadHistory(project, path, startingFrom, revisions::add, {}, *parameters)
       return revisions
     }
 
@@ -266,3 +276,5 @@ class GitFileHistory internal constructor(private val project: Project,
 private fun <K, V, R> List<Pair<K, V>>.mapNotNullValues(mapping: (V) -> R?): List<Pair<K, R>> {
   return mapNotNull { (key, value) -> mapping(value)?.let { mappedValue -> key to mappedValue } }
 }
+
+data class FileRename(val beforeRevision: String?, val afterRevision: String, val beforePath: FilePath, val afterPath: FilePath)

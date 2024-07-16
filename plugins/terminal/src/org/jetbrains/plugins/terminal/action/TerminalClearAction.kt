@@ -4,15 +4,15 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.outputController
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalFocusModel
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.outputController
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalFocusModel
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
+import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 
-class TerminalClearAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalClearAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     e.terminalFocusModel?.focusPrompt()
     e.outputController?.outputModel?.clearBlocks()

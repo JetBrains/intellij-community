@@ -117,11 +117,6 @@ public final class LocalChangeListImpl extends LocalChangeList {
     ChangeListManager.getInstance(myProject).editComment(myName, comment);
   }
 
-  @Override
-  public void setReadOnly(boolean isReadOnly) {
-    ChangeListManager.getInstance(myProject).setReadOnly(myName, isReadOnly);
-  }
-
 
   public static class Builder {
     @NotNull private final Project myProject;

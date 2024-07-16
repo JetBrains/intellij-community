@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.markup;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.NonExtendable
 public interface HighlighterLayer {
   int SYNTAX = 1000;
   int CARET_ROW = 2000;

@@ -19,7 +19,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.CompileStaticUtil.isCom
 /**
  * @author Max Medvedev
  */
-public class GrGenericTypeConverter extends GrTypeConverter {
+public final class GrGenericTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {

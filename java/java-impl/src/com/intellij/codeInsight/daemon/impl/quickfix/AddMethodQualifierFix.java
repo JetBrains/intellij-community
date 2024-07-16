@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -25,9 +25,8 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
     super(methodCallExpression);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.method.qualifier.fix.family");
   }
 
@@ -42,8 +41,7 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
     return Presentation.of(getFamilyName());
   }
 
-  @NotNull
-  private static List<PsiVariable> findCandidates(@NotNull PsiMethodCallExpression methodCallElement, @NotNull SearchMode mode) {
+  private static @NotNull List<PsiVariable> findCandidates(@NotNull PsiMethodCallExpression methodCallElement, @NotNull SearchMode mode) {
     String methodName = methodCallElement.getMethodExpression().getReferenceName();
     if (methodName == null) {
       return Collections.emptyList();
@@ -81,8 +79,7 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
     return ModCommand.chooseAction(QuickFixBundle.message("add.qualifier"), qualifyActions);
   }
 
-  @NotNull
-  private static ModCommandAction createAction(PsiVariable candidate, SmartPsiElementPointer<PsiMethodCallExpression> pointer) {
+  private static @NotNull ModCommandAction createAction(PsiVariable candidate, SmartPsiElementPointer<PsiMethodCallExpression> pointer) {
     return ModCommand.psiUpdateStep(
         candidate, requireNonNullElse(candidate.getName(), ""), (var, updater) -> {
           PsiMethodCallExpression call = updater.getWritable(pointer.getElement());

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.openapi.fileEditor
@@ -16,27 +16,17 @@ class FileEditorManagerEvent @ApiStatus.ScheduledForRemoval @Deprecated("Use con
   val newEditor: FileEditor?,
   val newProvider: FileEditorProvider?,
 ) {
-  constructor(manager: FileEditorManager,
-              oldEditorWithProvider: FileEditorWithProvider?,
-              newEditorWithProvider: FileEditorWithProvider?) : this(manager = manager,
-                                                                     oldFile = oldEditorWithProvider?.fileEditor?.file,
-                                                                     oldEditor = oldEditorWithProvider?.fileEditor,
-                                                                     oldProvider = oldEditorWithProvider?.provider,
-                                                                     newFile = newEditorWithProvider?.fileEditor?.file,
-                                                                     newEditor = newEditorWithProvider?.fileEditor,
-                                                                     newProvider = newEditorWithProvider?.provider)
-
-  @Deprecated("Use constructor accepting {@link FileEditorWithProvider}")
-  @ApiStatus.ScheduledForRemoval
-  constructor(manager: FileEditorManager,
-              oldFile: VirtualFile?,
-              oldEditor: FileEditor?,
-              newFile: VirtualFile?,
-              newEditor: FileEditor?) : this(manager = manager,
-                                             oldFile = oldFile,
-                                             oldEditor = oldEditor,
-                                             oldProvider = null,
-                                             newFile = newFile,
-                                             newEditor = newEditor,
-                                             newProvider = null)
+  constructor(
+    manager: FileEditorManager,
+    oldEditorWithProvider: FileEditorWithProvider?,
+    newEditorWithProvider: FileEditorWithProvider?,
+  ) : this(
+    manager = manager,
+    oldFile = oldEditorWithProvider?.fileEditor?.file,
+    oldEditor = oldEditorWithProvider?.fileEditor,
+    oldProvider = oldEditorWithProvider?.provider,
+    newFile = newEditorWithProvider?.fileEditor?.file,
+    newEditor = newEditorWithProvider?.fileEditor,
+    newProvider = newEditorWithProvider?.provider,
+  )
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -29,10 +29,8 @@ public class CreateTypeParameterFromUsageFix extends PsiBasedModCommandAction<Ps
     super(refElement);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.type.parameter.from.usage.family");
   }
 
@@ -115,8 +113,7 @@ public class CreateTypeParameterFromUsageFix extends PsiBasedModCommandAction<Ps
   }
 
   private record Context(@NotNull List<PsiNameIdentifierOwner> placesToAdd, @NotNull String typeName) {
-    @Nullable
-    static Context from(@NotNull PsiJavaCodeReferenceElement element, boolean findFirstOnly) {
+    static @Nullable Context from(@NotNull PsiJavaCodeReferenceElement element, boolean findFirstOnly) {
       if (!PsiUtil.isAvailable(JavaFeature.GENERICS, element)) return null;
       if (element.isQualified()) return null;
       PsiElement container =

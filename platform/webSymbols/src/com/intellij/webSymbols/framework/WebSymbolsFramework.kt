@@ -16,6 +16,9 @@ abstract class WebSymbolsFramework {
   lateinit var id: String
     internal set
 
+  // required to accommodate com.intellij.javascript.web.WebFramework.UnregisteredWebFramework
+  protected fun setIdFromAnotherModule(id: String) { this.id = id }
+
   abstract val displayName: String
 
   open val icon: Icon?

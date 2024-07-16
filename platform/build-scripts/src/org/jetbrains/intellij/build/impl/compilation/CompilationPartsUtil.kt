@@ -3,8 +3,8 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -15,13 +15,16 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.zip
+import java.io.File
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -108,7 +111,7 @@ private fun createBufferPool(): DirectFixedSizeByteBufferPool {
   return DirectFixedSizeByteBufferPool(size = MAX_BUFFER_SIZE, maxPoolSize = ForkJoinPool.getCommonPoolParallelism() * 2)
 }
 
-fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE): List<PackAndUploadItem> {
+fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.ALL): List<PackAndUploadItem> {
   val incremental = context.options.incrementalCompilation
   if (!incremental) {
     try {
@@ -163,29 +166,37 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
     val traceContext = Context.current()
     ForkJoinTask.invokeAll(items.map { item ->
       ForkJoinTask.adapt(Callable {
-        spanBuilder("pack").setParent(traceContext).setAttribute("name", item.name).useWithoutActiveScope {
-          // we compress the whole file using ZSTD
-          zip(
-            targetFile = item.archive,
-            dirs = mapOf(item.output to ""),
-            overwrite = true,
-            fileFilter = { it != "classpath.index" && it != ".unmodified" && it != ".DS_Store" },
-            addDirEntriesMode = addDirEntriesMode
-          )
-        }
-        spanBuilder("compute hash").setParent(traceContext).setAttribute("name", item.name).useWithoutActiveScope {
-          item.hash = computeHash(item.archive)
-        }
+        item.hash = packAndComputeHash(traceContext, addDirEntriesMode, item.name, item.archive, item.output)
       })
     })
   }
   return items
 }
 
+private fun packAndComputeHash(traceContext: Context,
+                               addDirEntriesMode: AddDirEntriesMode,
+                               name: String,
+                               archive: Path,
+                               directory: Path): String {
+  spanBuilder("pack").setParent(traceContext).setAttribute("name", name).useWithoutActiveScope {
+    // we compress the whole file using ZSTD
+    zip(
+      targetFile = archive,
+      dirs = mapOf(directory to ""),
+      overwrite = true,
+      fileFilter = { it != ".unmodified" && it != ".DS_Store" },
+      addDirEntriesMode = addDirEntriesMode
+    )
+  }
+  return spanBuilder("compute hash").setParent(traceContext).setAttribute("name", name).useWithoutActiveScope {
+    computeHash(archive)
+  }
+}
+
 private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
   Files.newDirectoryStream(moduleOutDir).use {
     for (child in it) {
-      if (!child.endsWith("classpath.index") && !child.endsWith(".unmodified") && !child.endsWith(".DS_Store")) {
+      if (!child.endsWith(".unmodified") && !child.endsWith(".DS_Store")) {
         return false
       }
     }
@@ -234,16 +245,66 @@ private fun upload(config: CompilationCacheUploadConfiguration,
   }
 }
 
+private fun getArchivesStorage(fallbackPersistentCacheRoot: Path): Path =
+  (System.getProperty("agent.persistent.cache")?.let { Path.of(it) } ?: fallbackPersistentCacheRoot)
+    .resolve("idea-compile-parts-v2")
+
+@ApiStatus.Internal
+class ArchivedCompilationOutputsStorage(
+  private val paths: BuildPaths,
+  private val classesOutputDirectory: Path,
+  val archivedOutputDirectory: Path = getArchivesStorage(classesOutputDirectory.parent),
+) {
+  private val unarchivedToArchivedMap = ConcurrentHashMap<Path, Path>()
+
+  internal fun loadMetadataFile(metadataFile: Path) {
+    val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
+    metadata.files.forEach { entry ->
+      unarchivedToArchivedMap[classesOutputDirectory.resolve(entry.key)] = archivedOutputDirectory.resolve(entry.key).resolve("${entry.value}.jar")
+    }
+  }
+
+  fun getArchived(path: Path): Path {
+    if (Files.isRegularFile(path)) {
+      return path
+    }
+    if (!path.startsWith(classesOutputDirectory)) {
+      return path
+    }
+    return unarchivedToArchivedMap.computeIfAbsent(path) {
+      archive(path)
+    }
+  }
+
+  private fun archive(path: Path): Path {
+    val name = classesOutputDirectory.relativize(path).toString()
+
+    val archive = Files.createTempFile(paths.tempDir, name.replace(File.separator, "_"), ".jar")
+    Files.deleteIfExists(archive)
+    val hash: String = packAndComputeHash(Context.current(), AddDirEntriesMode.ALL, name, archive, path)
+
+    val result = archivedOutputDirectory.resolve(name).resolve("$hash.jar")
+    Files.createDirectories(result.parent)
+    Files.move(archive, result, StandardCopyOption.REPLACE_EXISTING)
+
+    return result
+  }
+
+  fun getMapping(): Map<Path, Path> {
+    return Collections.unmodifiableMap(unarchivedToArchivedMap)
+  }
+}
+
 @VisibleForTesting
 fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: String) -> Unit,
                                   withScope: (name: String, operation: () -> Unit) -> Unit,
                                   classOutput: Path,
                                   metadataFile: Path,
+                                  skipUnpack: Boolean,
                                   saveHash: Boolean) {
   withScope("fetch and unpack compiled classes") {
     val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
-    val tempDownloadStorage = (System.getProperty("agent.persistent.cache")?.let { Path.of(it) } ?: classOutput.parent)
-      .resolve("idea-compile-parts-v2")
+    val tempDownloadStorage = getArchivesStorage(classOutput.parent)
 
     val items = metadata.files.mapTo(ArrayList(metadata.files.size)) { entry ->
       FetchAndUnpackItem(name = entry.key,
@@ -273,7 +334,9 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
         }
 
         val file = item.file
-        toUnpack.add(item)
+        if (!skipUnpack) {
+          toUnpack.add(item)
+        }
         ForkJoinTask.adapt(Callable {
           when {
             !Files.exists(file) -> item
@@ -351,6 +414,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
                                    client = httpClientWithoutFollowingRedirects,
                                    bufferPool = bufferPool,
                                    downloadedBytes = downloadedBytes,
+                                   skipUnpack = skipUnpack,
                                    saveHash = saveHash)
         }
       }

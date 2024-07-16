@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.render;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.ui.VcsBookmarkRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,13 +13,16 @@ public class GraphCommitCell {
 
   private final @NotNull String myText;
   private final @NotNull Collection<VcsRef> myRefsToThisCommit;
+  private final @NotNull Collection<VcsBookmarkRef> myBookmarksToThisCommit;
   private final @NotNull Collection<? extends PrintElement> myPrintElements;
 
   public GraphCommitCell(@NotNull String text,
                          @NotNull Collection<VcsRef> refsToThisCommit,
+                         @NotNull Collection<VcsBookmarkRef> bookmarksToThisCommit,
                          @NotNull Collection<? extends PrintElement> printElements) {
     myText = text;
     myRefsToThisCommit = refsToThisCommit;
+    myBookmarksToThisCommit = bookmarksToThisCommit;
     myPrintElements = printElements;
   }
 
@@ -28,6 +32,10 @@ public class GraphCommitCell {
 
   public @NotNull Collection<VcsRef> getRefsToThisCommit() {
     return myRefsToThisCommit;
+  }
+
+  public @NotNull Collection<VcsBookmarkRef> getBookmarksToThisCommit() {
+    return myBookmarksToThisCommit;
   }
 
   public @NotNull Collection<? extends PrintElement> getPrintElements() {

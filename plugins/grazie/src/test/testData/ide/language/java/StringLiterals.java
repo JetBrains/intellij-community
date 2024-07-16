@@ -19,5 +19,5 @@ class Main {
     }
 
     String gitCherryPickPattern = "(cherry picked from "; // hard-coding the string git outputs
-    String nonGitCherryPick = "I'd like to <GRAMMAR_ERROR descr="EN_COMPOUNDS">cherry pick</GRAMMAR_ERROR> this";
+    String nonGitCherryPick = "I'd like to <GRAMMAR_ERROR descr="EN_COMPOUNDS_CHERRY_PICK">cherry pick</GRAMMAR_ERROR> this";
 }

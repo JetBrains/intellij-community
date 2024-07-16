@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.keymap.KeymapUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -29,32 +30,11 @@ abstract class ActionManagerEx : ActionManager() {
     @JvmStatic
     fun getInstanceEx(): ActionManagerEx = getInstance() as ActionManagerEx
 
-    /**
-     * Similar to [KeyStroke.getKeyStroke] but allows keys in lower case.
-     *
-     * I.e. "control x" is accepted and interpreted as "control X".
-     *
-     * @return null if string cannot be parsed.
-     */
+    @Deprecated("Use [KeymapUtil.getKeyStroke(s)]",
+                ReplaceWith("KeymapUtil.getKeyStroke(s)"),
+                DeprecationLevel.WARNING)
     @JvmStatic
-    fun getKeyStroke(s: String): KeyStroke? {
-      var result = try {
-        KeyStroke.getKeyStroke(s)
-      }
-      catch (_: Exception) {
-        null
-      }
-
-      if (result == null && s.length >= 2 && s[s.length - 2] == ' ') {
-        try {
-          val s1 = s.substring(0, s.length - 1) + s[s.length - 1].uppercaseChar()
-          result = KeyStroke.getKeyStroke(s1)
-        }
-        catch (_: Exception) {
-        }
-      }
-      return result
-    }
+    fun getKeyStroke(s: String): KeyStroke? = KeymapUtil.getKeyStroke(s)
 
     @Internal
     @JvmStatic
@@ -93,27 +73,28 @@ abstract class ActionManagerEx : ActionManager() {
                                    horizontal: Boolean,
                                    separatorCreator: Function<in String, out Component>): ActionToolbar
 
-  /**
-   * Do not call directly, prefer [ActionUtil] methods.
-   */
+  @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
+              ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
+              DeprecationLevel.WARNING)
   @Internal
   abstract fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent)
 
-  /**
-   * Do not call directly, prefer [ActionUtil] methods.
-   */
+  @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
+              ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
+              DeprecationLevel.WARNING)
   @Internal
   abstract fun fireAfterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult)
 
-  @Deprecated("use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead",
-              ReplaceWith("fireBeforeActionPerformed(action, event)"),
+  @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
+              ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
               DeprecationLevel.ERROR)
   fun fireBeforeActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
+    @Suppress("DEPRECATION")
     fireBeforeActionPerformed(action, event)
   }
 
-  @Deprecated("use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead",
-              ReplaceWith("fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)"),
+  @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
+              ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
               DeprecationLevel.ERROR)
   fun fireAfterActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
     fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)

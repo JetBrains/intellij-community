@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public class ResourcePatterns {
   private static final Logger LOG = Logger.getInstance(ResourcePatterns.class);
 

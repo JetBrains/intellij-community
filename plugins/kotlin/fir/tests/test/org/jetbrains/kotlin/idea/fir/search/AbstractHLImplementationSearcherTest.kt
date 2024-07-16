@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.search
 import com.intellij.codeInsight.navigation.GotoTargetHandler.computePresentationInBackground
 import com.intellij.codeInsight.navigation.ItemWithPresentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.util.parentOfType
@@ -17,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Paths
 
 abstract class AbstractHLImplementationSearcherTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin(): Boolean = true
+
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }

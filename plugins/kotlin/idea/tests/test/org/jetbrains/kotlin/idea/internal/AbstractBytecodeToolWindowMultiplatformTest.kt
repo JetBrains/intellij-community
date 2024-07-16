@@ -39,7 +39,7 @@ private fun configureCompilerAndCheckBytecode(file: KtFile) {
 
     val bytecode = runBlocking(Dispatchers.Default) {
         readAction {
-            KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration)
+            KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration, false)
         }
     }
 

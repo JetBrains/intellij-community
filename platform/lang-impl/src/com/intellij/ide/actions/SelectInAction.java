@@ -163,7 +163,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
     @DirtyUI
     @Override
     public boolean isSelectable(final SelectInTarget target) {
-      if (DumbService.isDumb(mySelectInContext.getProject()) && !DumbService.isDumbAware(target)) {
+      if (target == null || !DumbService.getInstance(mySelectInContext.getProject()).isUsableInCurrentContext(target)) {
         return false;
       }
       return target.canSelect(mySelectInContext);

@@ -11,7 +11,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class ModifiableModelCommitterServiceBridge : ModifiableModelCommitterService {
   override fun multiCommit(rootModels: MutableCollection<out ModifiableRootModel>, moduleModel: ModifiableModuleModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()

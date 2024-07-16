@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -524,7 +526,17 @@ public class ProjectSdksModel implements SdkModel {
   private void setupSdk(@NotNull Sdk newJdk, @Nullable java.util.function.Consumer<? super Sdk> callback) {
     String home = newJdk.getHomePath();
     SdkType sdkType = (SdkType)newJdk.getSdkType();
-    if (!sdkType.setupSdkPaths(newJdk, this)) return;
+
+    AtomicBoolean pathSetup = new AtomicBoolean(false);
+    ProgressManager.getInstance()
+      .runProcessWithProgressSynchronously(
+        () -> { pathSetup.set(sdkType.setupSdkPaths(newJdk, this)); },
+        ProjectBundle.message("progress.text.configuring.sdk"),
+        true,
+        null
+      )
+    ;
+    if (!pathSetup.get()) return;
 
     if (newJdk.getVersionString() == null) {
       String message = ProjectBundle.message("sdk.java.corrupt.error", home);

@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION", "LoggingSimilarMessage")
 
 package com.intellij.openapi.extensions.impl
 
@@ -16,9 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.Java11Shim
 import com.intellij.util.ThreeState
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
@@ -50,7 +48,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   private var cachedExtensionsAsArray: Array<T>? = null
 
   @Volatile
-  private var adapters = persistentListOf<ExtensionComponentAdapter>()
+  private var adapters: List<ExtensionComponentAdapter> = Java11Shim.INSTANCE.listOf()
 
   @Volatile
   private var adaptersAreSorted = true
@@ -64,8 +62,8 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   companion object {
     // XmlExtensionAdapter.createInstance takes a lock on itself.
     // If it's called without EP lock and tries to add an EP listener, we can get a deadlock because of lock ordering violation
-    // (EP->adapter in one thread, adapter->EP in the other thread)
-    // Could happen if extension constructor called addExtensionPointListener on EP.
+    // (EP->adapter in one thread, adapter->EP in the other thread).
+    // Could happen if an extension constructor calls addExtensionPointListener on EP.
     // So, updating of listeners is a lock-free as a solution.
     private val listenerUpdater =
       AtomicReferenceFieldUpdater.newUpdater(ExtensionPointImpl::class.java, PersistentList::class.java, "listeners")
@@ -138,7 +136,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       addExtensionAdapter(adapter)
     }
 
-    notifyListeners(isRemoved = false, adapters = persistentListOf(adapter), listeners = listeners)
+    notifyListeners(isRemoved = false, adapters = Java11Shim.INSTANCE.listOf(adapter), listeners = listeners)
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable) {
@@ -149,10 +147,10 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
             LOG.error("Extension to be removed not found: ${adapter.instance}")
           }
 
-          adapters = adapters.removeAt(index)
+          adapters = mutateAdapters(adapters) { it.removeAt(index) }
           clearCache()
         }
-        notifyListeners(isRemoved = true, adapters = persistentListOf(adapter), listeners = listeners)
+        notifyListeners(isRemoved = true, adapters = Java11Shim.INSTANCE.listOf(adapter), listeners = listeners)
       }
     }
   }
@@ -176,13 +174,23 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     notifyListeners(isRemoved = false, adapters = newAdapters, listeners = listeners)
   }
 
+  private inline fun mutateAdapters(
+    l: List<ExtensionComponentAdapter>,
+    operation: (l: MutableList<ExtensionComponentAdapter>) -> Unit,
+  ): List<ExtensionComponentAdapter> {
+    val result = l.toMutableList()
+    operation(result)
+    return Java11Shim.INSTANCE.copyOfList(result)
+  }
+
   @Synchronized
   private fun doRegisterExtensions(extensions: List<T>): List<ExtensionComponentAdapter> {
     val newAdapters = extensions.map {
       ObjectComponentAdapter(instance = it, pluginDescriptor = getPluginDescriptor(), loadingOrder = LoadingOrder.ANY)
     }
 
-    adapters = adapters.addAll(findInsertionIndexForAnyOrder(adapters), newAdapters)
+    val oldAdapters = adapters
+    adapters = mutateAdapters(oldAdapters) { it.addAll(findInsertionIndexForAnyOrder(oldAdapters), newAdapters) }
     clearCache()
     return newAdapters
   }
@@ -330,7 +338,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
         }
 
         if (adapters.size > 1) {
-          adapters = adapters.mutate { LoadingOrder.sortByLoadingOrder(it) }
+          adapters = mutateAdapters(adapters) { LoadingOrder.sortByLoadingOrder(it) }
         }
         adaptersAreSorted = true
       }
@@ -434,7 +442,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
 
   /**
    * Put extension point in read-only mode and replace existing extensions by supplied.
-   * For tests this method is more preferable than [.registerExtension] because makes registration more isolated and strict
+   * For tests this method is more preferable than [registerExtension] because makes registration more isolated and strict
    * (no one can modify extension point until `parentDisposable` is not disposed).
    *
    *
@@ -456,17 +464,15 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     val oldAdapters = adapters
     val oldAdaptersAreSorted = adaptersAreSorted
 
-    cachedExtensions = newList.toPersistentList()
+    cachedExtensions = Java11Shim.INSTANCE.copyOfList(newList)
     cachedExtensionsAsArray = null
-    adapters = if (newList.isEmpty()) {
-      persistentListOf()
+    if (newList.isEmpty()) {
+      adapters = Java11Shim.INSTANCE.listOf()
     }
     else {
-      adapters.mutate { list ->
-        newList.mapTo(list) {
-          ObjectComponentAdapter(instance = it, pluginDescriptor = extensionPointPluginDescriptor, loadingOrder = LoadingOrder.ANY)
-        }
-      }
+      adapters = Java11Shim.INSTANCE.copyOfList(newList.map {
+        ObjectComponentAdapter(instance = it, pluginDescriptor = extensionPointPluginDescriptor, loadingOrder = LoadingOrder.ANY)
+      })
     }
     adaptersAreSorted = true
 
@@ -484,27 +490,24 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
 
     clearUserCache()
 
-    Disposer.register(parentDisposable, object : Disposable {
-      @TestOnly
-      override fun dispose() {
-        synchronized(this) {
-          POINTS_IN_READONLY_MODE!!.remove(this@ExtensionPointImpl)
-          cachedExtensions = oldList
-          cachedExtensionsAsArray = null
-          adapters = oldAdapters
-          adaptersAreSorted = oldAdaptersAreSorted
+    Disposer.register(parentDisposable) {
+      synchronized(this@ExtensionPointImpl) {
+        POINTS_IN_READONLY_MODE!!.remove(this@ExtensionPointImpl)
+        cachedExtensions = oldList
+        cachedExtensionsAsArray = null
+        adapters = oldAdapters
+        adaptersAreSorted = oldAdaptersAreSorted
 
-          val listeners = listeners
-          if (fireEvents && !listeners.isEmpty()) {
-            doNotifyListeners(isRemoved = true, extensions = newList, listeners = listeners)
-            if (oldList != null) {
-              doNotifyListeners(isRemoved = false, extensions = oldList, listeners = listeners)
-            }
+        val listeners = listeners
+        if (fireEvents && !listeners.isEmpty()) {
+          doNotifyListeners(isRemoved = true, extensions = newList, listeners = listeners)
+          if (oldList != null) {
+            doNotifyListeners(isRemoved = false, extensions = oldList, listeners = listeners)
           }
-          clearUserCache()
         }
+        clearUserCache()
       }
-    })
+    }
   }
 
   @TestOnly
@@ -597,8 +600,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       if (extensionToKeepFilter.test(adapter)) {
         continue
       }
-
-      adapters = adapters.removeAt(i)
+      adapters = mutateAdapters(adapters) { it.removeAt(i) }
 
       if (!listeners.isEmpty()) {
         removedAdapters = removedAdapters.add(adapter)
@@ -764,7 +766,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   @Synchronized
   fun reset() {
     val adapters = this.adapters
-    this.adapters = persistentListOf()
+    this.adapters = Java11Shim.INSTANCE.listOf()
     // clear cache before notifying listeners to ensure that listeners don't get outdated data
     clearCache()
     if (!adapters.isEmpty()) {
@@ -796,7 +798,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   @Synchronized
   @VisibleForTesting
   fun addExtensionAdapter(adapter: ExtensionComponentAdapter) {
-    adapters = adapters.add(adapter)
+    adapters = mutateAdapters(adapters) { it.add(adapter) }
     clearCache()
   }
 
@@ -825,8 +827,8 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
                              componentManager: ComponentManager): ExtensionComponentAdapter
 
   /**
-   * [.clearCache] is not called.
-   * `adapters` is modified directly without copying - method must be called only during start-up.
+   * [clearCache] is not called.
+   * `adapters` is modified directly without copying - the method must be called only during start-up.
    */
   @Synchronized
   fun registerExtensions(descriptors: List<ExtensionDescriptor>,
@@ -834,16 +836,21 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
                          listenerCallbacks: MutableList<in Runnable>?) {
     adaptersAreSorted = false
 
-    val oldSize = adapters.size
+    val oldAdapters = adapters
+    val oldSize = oldAdapters.size
+    val newAdapters = arrayOfNulls<ExtensionComponentAdapter>(oldAdapters.size + descriptors.size)
+    var newSize = oldSize
+    for ((index, item) in oldAdapters.withIndex()) {
+      newAdapters[index] = item
+    }
     for (descriptor in descriptors) {
       if (descriptor.os == null || componentManager.isSuitableForOs(descriptor.os)) {
-        adapters = adapters.add(createAdapter(descriptor = descriptor,
-                                              pluginDescriptor = pluginDescriptor,
-                                              componentManager = componentManager))
+        newAdapters[newSize++] = createAdapter(descriptor = descriptor, pluginDescriptor = pluginDescriptor, componentManager = componentManager)
       }
     }
 
-    val newSize = adapters.size
+    @Suppress("UNCHECKED_CAST")
+    adapters = Java11Shim.INSTANCE.listOf(newAdapters as Array<ExtensionComponentAdapter>, newSize)
 
     clearCache()
     val listeners = listeners
@@ -1037,12 +1044,11 @@ private fun checkThatClassloaderIsActive(adapter: ExtensionComponentAdapter): Bo
 
 private fun isInsideClassInitializer(trace: Array<StackTraceElement>): Boolean {
   return trace.any {
-    @Suppress("SpellCheckingInspection")
     "<clinit>" == it.methodName
   }
 }
 
-// the instantiation of extension is done in a safe manner always — will be logged as error with a plugin id
+// the instantiation of an extension is done in a safe manner always — will be logged as an error with a plugin id
 private fun <T : Any> getOrCreateExtensionInstance(adapter: ExtensionComponentAdapter, componentManager: ComponentManager): T? {
   if (!checkThatClassloaderIsActive(adapter)) {
     return null

@@ -9,6 +9,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   RUBY("Ruby", listOf("rb"), "ruby", needSdk = true),
   SCALA("Scala", listOf("scala"), "Scala", needSdk = true),
   CPP("C++", listOf("cpp", "c", "cc"), "ObjectiveC"),
+  CPPRadler("Cpp", listOf("cpp", "c", "cc", "h"), "C++"),
   PHP("PHP", listOf("php"), "PHP"),
   JS("JavaScript", listOf("js", "jsx"), "JavaScript"),
   VUE("Vue", listOf("vue"), "Vue"),
@@ -21,6 +22,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   LESS("Less", listOf("less"), "LESS"),
   SCSS("SCSS", listOf("scss"), "SCSS"),
   HTML("HTML", listOf("html"), "HTML"),
+  TERRAFORM("Terraform", listOf("tf", "tfvars"), "HCL-Terraform"),
   ANOTHER("Another", listOf(), ""),
   UNSUPPORTED("Unsupported", listOf(), ""); // TODO: There are no unsupported languages
 

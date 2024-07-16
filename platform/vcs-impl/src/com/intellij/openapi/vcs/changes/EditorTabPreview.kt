@@ -5,16 +5,15 @@ import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
-import com.intellij.diff.editor.DiffEditorEscapeAction
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
+import com.intellij.diff.editor.SimpleDiffEditorEscapeAction
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -37,6 +36,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
+@Deprecated("Use EditorTabDiffPreview")
 abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) :
   EditorTabPreviewBase(diffProcessor.project!!, diffProcessor) {
 
@@ -44,6 +44,7 @@ abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor)
   override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, updatePreviewProcessor, ::getCurrentName)
 }
 
+@Deprecated("Use EditorTabDiffPreview")
 abstract class EditorTabPreviewBase(protected val project: Project,
                                     protected val parentDisposable: Disposable) : DiffPreview {
   private val updatePreviewQueue =
@@ -207,7 +208,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
     }
 
     fun registerEscapeHandler(file: VirtualFile, handler: Runnable) {
-      file.putUserData(DiffVirtualFileBase.ESCAPE_HANDLER, EditorTabPreviewEscapeAction(handler))
+      file.putUserData(DiffVirtualFileBase.ESCAPE_HANDLER, SimpleDiffEditorEscapeAction(handler))
     }
 
     fun showExternalToolIfNeeded(project: Project?, diffProducers: ListSelection<out DiffRequestProducer>?): Boolean {
@@ -217,10 +218,6 @@ abstract class EditorTabPreviewBase(protected val project: Project,
       return ExternalDiffTool.showIfNeeded(project, producers, DiffDialogHints.DEFAULT)
     }
   }
-}
-
-internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable) : DumbAwareAction(), DiffEditorEscapeAction {
-  override fun actionPerformed(e: AnActionEvent) = escapeHandler.run()
 }
 
 private class EditorTabDiffPreviewProvider(

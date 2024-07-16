@@ -3,11 +3,14 @@
 package org.jetbrains.fir.uast.test
 
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastCommentLogTestBase
 
 abstract class AbstractFirUastCommentsTest : AbstractFirUastTest(), UastCommentLogTestBase {
-    override val isFirUastPlugin: Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun check(filePath: String, file: UFile) {
         super.check(filePath, file)

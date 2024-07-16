@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * @author Max Medvedev
  */
-public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
+public final class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
 
   @NotNull
   @Override

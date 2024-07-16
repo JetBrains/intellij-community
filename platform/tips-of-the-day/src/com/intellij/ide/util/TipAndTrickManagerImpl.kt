@@ -29,7 +29,7 @@ internal class TipAndTrickManagerImpl : TipAndTrickManager {
       }
     }
     else {
-      TipsSortingResult(tips)
+      TipsSortingResult.create(tips)
     }
     withContext(Dispatchers.EDT) {
       if (project?.isDisposed != true) {

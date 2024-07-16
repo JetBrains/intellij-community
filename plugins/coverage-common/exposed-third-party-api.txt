@@ -1,0 +1,3 @@
+com/intellij/rt/coverage/data/ClassData
+com/intellij/rt/coverage/data/LineData
+com/intellij/rt/coverage/data/ProjectData

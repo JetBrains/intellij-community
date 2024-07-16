@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
@@ -10,7 +10,7 @@ import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
@@ -208,7 +208,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
-      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?): File {
         val path = localTempDir.newDirectory("pluginTemp")
           .toPath()
           .resolve("my-plugin-new.jar")
@@ -237,7 +237,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
-      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) =
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?) =
         throw IOException("404")
     }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
@@ -334,7 +334,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
-      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator) =
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?) =
         throw AssertionError("No file download should be requested")
     }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)

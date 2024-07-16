@@ -77,7 +77,10 @@ fun createTestFilterFrom(location: Location<*>?, psiClass: PsiClass?, psiMethod:
       parameterName = "[*$parameterName*]"
     }
   }
-  else if (psiClass != null && psiClass.isParameterizedClass()) {
+  else if (psiClass != null && psiClass.isJunit4ParameterizedClass()) {
+    parameterName = "[*]"
+  }
+  else if (psiClass != null && psiClass.isRobolectricParameterizedClass()) {
     parameterName = "[*]"
   }
   return createTestFilter(className, methodName, parameterName)
@@ -106,8 +109,12 @@ private fun PsiElement.getParents(): List<PsiElement> {
   return parents
 }
 
-private fun PsiClass.isParameterizedClass(): Boolean {
+private fun PsiClass.isJunit4ParameterizedClass(): Boolean {
   val annotation = JUnitUtil.getRunWithAnnotation(this)
-  return annotation != null && (JUnitUtil.isParameterized(annotation) ||
-                                JUnitUtil.isOneOf(annotation, "org.robolectric.ParameterizedRobolectricTestRunner"))
+  return annotation != null && JUnitUtil.isOneOf(annotation, "org.junit.runners.Parameterized")
+}
+
+private fun PsiClass.isRobolectricParameterizedClass(): Boolean {
+  val annotation = JUnitUtil.getRunWithAnnotation(this)
+  return annotation != null && JUnitUtil.isOneOf(annotation, "org.robolectric.ParameterizedRobolectricTestRunner")
 }

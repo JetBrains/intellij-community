@@ -6,13 +6,13 @@ import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import org.apache.commons.codec.binary.Base64OutputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileWriter
 import java.io.OutputStreamWriter
 import java.nio.file.Path
 import java.text.DecimalFormat
+import java.util.*
 import java.util.zip.GZIPOutputStream
 
 abstract class FileReportGenerator(
@@ -25,6 +25,7 @@ abstract class FileReportGenerator(
 
   val reportReferences: MutableMap<String, ReferenceInfo> = mutableMapOf()
 
+  // For the diff algorithm implementation, see [script.js](../../resources/diff.js)
   abstract fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) {
@@ -86,15 +87,13 @@ abstract class FileReportGenerator(
 
   protected fun zipJson(json: String): String {
     val resultStream = ByteArrayOutputStream()
-    OutputStreamWriter(GZIPOutputStream(Base64OutputStream(resultStream))).use {
+    OutputStreamWriter(GZIPOutputStream(Base64.getEncoder().wrap(resultStream))).use {
       it.write(json)
     }
     return resultStream.toString()
   }
 
-  protected fun Double.format() = DecimalFormat("0.##").format(this)
-
-  companion object {
-    private val sessionSerializer = SessionSerializer()
-  }
+  protected fun formatDouble(d: Double): String = DecimalFormat("0.##").format(d)
 }
+
+private val sessionSerializer = SessionSerializer()

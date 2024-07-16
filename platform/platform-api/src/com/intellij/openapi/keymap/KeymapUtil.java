@@ -30,7 +30,7 @@ import static java.awt.event.InputEvent.ALT_DOWN_MASK;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 public final class KeymapUtil {
-  private static final KeymapTextContext defaultKeymapTextContext = new KeymapTextContext();
+  private static final KeymapTextContext ourDefaultKeymapTextContext = new KeymapTextContext();
 
   private static final Set<Integer> ourTooltipKeys = new HashSet<>();
   private static final Set<Integer> ourOtherTooltipKeys = new HashSet<>();
@@ -40,7 +40,7 @@ public final class KeymapUtil {
   }
 
   public static @NlsSafe @NotNull String getShortcutText(@NotNull @NonNls String actionId) {
-    return defaultKeymapTextContext.getShortcutText(actionId);
+    return ourDefaultKeymapTextContext.getShortcutText(actionId);
   }
 
   public static @NlsSafe @Nullable String getShortcutTextOrNull(@NotNull @NonNls String actionId) {
@@ -50,23 +50,23 @@ public final class KeymapUtil {
   }
 
   public static @NotNull @NlsSafe String getShortcutText(@NotNull Shortcut shortcut) {
-    return defaultKeymapTextContext.getShortcutText(shortcut);
+    return ourDefaultKeymapTextContext.getShortcutText(shortcut);
   }
 
   public static @NotNull String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
-    return defaultKeymapTextContext.getMouseShortcutText(shortcut);
+    return ourDefaultKeymapTextContext.getMouseShortcutText(shortcut);
   }
 
   public static @NotNull @NlsSafe String getKeystrokeText(KeyStroke accelerator) {
-    return defaultKeymapTextContext.getKeystrokeText(accelerator);
+    return ourDefaultKeymapTextContext.getKeystrokeText(accelerator);
   }
 
   public static @NotNull String getKeyText(int code) {
-    return defaultKeymapTextContext.getKeyText(code);
+    return ourDefaultKeymapTextContext.getKeyText(code);
   }
 
   public static boolean isSimplifiedMacShortcuts() {
-    return defaultKeymapTextContext.isSimplifiedMacShortcuts();
+    return ourDefaultKeymapTextContext.isSimplifiedMacShortcuts();
   }
 
   public static @NotNull ShortcutSet getActiveKeymapShortcuts(@Nullable @NonNls String actionId) {
@@ -147,7 +147,30 @@ public final class KeymapUtil {
    * @throws InvalidDataException if {@code keystrokeString} doesn't represent valid {@code MouseShortcut}.
    */
   public static @NotNull MouseShortcut parseMouseShortcut(@NotNull String keystrokeString) throws InvalidDataException {
-    return defaultKeymapTextContext.parseMouseShortcut(keystrokeString);
+    return ourDefaultKeymapTextContext.parseMouseShortcut(keystrokeString);
+  }
+
+  /**
+   * Similar to {@link KeyStroke#getKeyStroke(String)} but allows keys in lower case.
+   * For example, "control x" is accepted and interpreted as "control X".
+   */
+  public static @Nullable KeyStroke getKeyStroke(@NotNull String s) {
+    KeyStroke result = null;
+    try {
+      result = KeyStroke.getKeyStroke(s);
+    }
+    catch (Exception ex) {
+      //ok
+    }
+    if (result == null && s.length() >= 2 && s.charAt(s.length() - 2) == ' ') {
+      try {
+        String s1 = s.substring(0, s.length() - 1) + Character.toUpperCase(s.charAt(s.length() - 1));
+        result = KeyStroke.getKeyStroke(s1);
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return result;
   }
 
   /**
@@ -155,7 +178,7 @@ public final class KeymapUtil {
    *         be used only for serializing of the {@code MouseShortcut}
    */
   public static @NotNull String getMouseShortcutString(@NotNull MouseShortcut shortcut) {
-    return defaultKeymapTextContext.getMouseShortcutString(shortcut);
+    return ourDefaultKeymapTextContext.getMouseShortcutString(shortcut);
   }
 
   public static boolean isTooltipRequest(@NotNull KeyEvent keyEvent) {

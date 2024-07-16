@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -250,8 +250,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
           return Pair.create(clickInfo, rendererComponent);
         }
       }
-      if (component instanceof JTree) {
-        JTree tree = (JTree)component;
+      if (component instanceof JTree tree) {
         TreePath path = tree.getClosestPathForLocation(me.getX(), me.getY());
         if (path != null) {
           int row = tree.getRowForPath(path);
@@ -312,7 +311,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
     }
   }
 
-  private static class AddedAtStacktracesCollector implements AWTEventListener {
+  private static final class AddedAtStacktracesCollector implements AWTEventListener {
     private AddedAtStacktracesCollector() { }
 
     public static void init() {

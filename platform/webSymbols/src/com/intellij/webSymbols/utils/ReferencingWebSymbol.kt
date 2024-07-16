@@ -12,20 +12,32 @@ import com.intellij.webSymbols.patterns.WebSymbolsPatternReferenceResolver
  * A utility [WebSymbol], which allows to reference
  * symbols from other namespace or kind.
  */
-class ReferencingWebSymbol(
+class ReferencingWebSymbol private constructor(
   override val namespace: SymbolNamespace,
   override val kind: SymbolKind,
   override val name: String,
   override val origin: WebSymbolOrigin,
   vararg references: WebSymbolQualifiedKind,
-  override val priority: WebSymbol.Priority? = null,
+  override val priority: WebSymbol.Priority?,
+  location: List<WebSymbolQualifiedName> = emptyList(),
 ) : WebSymbol {
 
-  constructor(qualifiedKind: WebSymbolQualifiedKind,
-              name: String,
-              origin: WebSymbolOrigin,
-              vararg qualifiedKinds: WebSymbolQualifiedKind)
-    : this(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *qualifiedKinds)
+  companion object {
+    @JvmStatic
+    @JvmOverloads
+    fun create(
+      qualifiedKind: WebSymbolQualifiedKind,
+      name: String,
+      origin: WebSymbolOrigin,
+      vararg qualifiedKinds: WebSymbolQualifiedKind,
+      priority: WebSymbol.Priority? = null,
+      location: List<WebSymbolQualifiedName> = emptyList(),
+    ): ReferencingWebSymbol =
+      ReferencingWebSymbol(
+        qualifiedKind.namespace, qualifiedKind.kind, name,
+        origin, *qualifiedKinds, priority = priority, location = location
+      )
+  }
 
   override val pattern: WebSymbolsPattern =
     WebSymbolsPatternFactory.createComplexPattern(
@@ -33,7 +45,7 @@ class ReferencingWebSymbol(
         priority = priority,
         symbolsResolver = WebSymbolsPatternReferenceResolver(
           *references.map {
-            WebSymbolsPatternReferenceResolver.Reference(qualifiedKind = it)
+            WebSymbolsPatternReferenceResolver.Reference(qualifiedKind = it, location = location)
           }.toTypedArray()
         )), false,
       WebSymbolsPatternFactory.createPatternSequence(

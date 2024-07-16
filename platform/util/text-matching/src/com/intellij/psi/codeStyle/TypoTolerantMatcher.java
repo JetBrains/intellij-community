@@ -313,6 +313,8 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
         }
       }
 
+      if (myPattern.length > TYPO_AWARE_PATTERN_LIMIT) return null;
+
       return matchWildcards(0, 0, new ErrorState());
     }
 
@@ -684,13 +686,13 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
   public @NonNls String toString() {
     return "TypoTolerantMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
   }
-  
+
   private record ErrorWithIndex(int index, Error error) {}
 
   private static class ErrorState {
     private final @Nullable ErrorState myBase;
     private final int myDeriveIndex;
-    
+
     private BitSet myAffected;
     private int myAllAffectedAfter = Integer.MAX_VALUE;
     private List<ErrorWithIndex> myErrors;
@@ -816,7 +818,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
 
       return null;
     }
-    
+
     private int numMisses(int end) {
       int numMisses = 0;
       if (myErrors != null && end > 0) {

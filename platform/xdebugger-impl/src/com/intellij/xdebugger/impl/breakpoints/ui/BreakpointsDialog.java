@@ -134,9 +134,24 @@ public class BreakpointsDialog extends DialogWrapper {
   private JComponent createDetailView() {
     DetailViewImpl detailView = new DetailViewImpl(myProject);
     detailView.setEmptyLabel(XDebuggerBundle.message("xbreakpoint.label.empty"));
+    detailView.addEditorChangedListener(newEditor -> {
+      if (newEditor != null) {
+        registerEditSourceAction(newEditor.getComponent());
+      }
+    });
     myDetailController.setDetailView(detailView);
 
     return detailView;
+  }
+
+  private void registerEditSourceAction(JComponent component) {
+    new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.showsource")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        navigate(true);
+        close(OK_EXIT_CODE);
+      }
+    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), component, myDisposable);
   }
 
   void collectItems() {
@@ -301,13 +316,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree, myDisposable);
 
-    new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.showsource")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        navigate(true);
-        close(OK_EXIT_CODE);
-      }
-    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree, myDisposable);
+    registerEditSourceAction(tree);
 
     DefaultActionGroup breakpointTypes = XBreakpointUtil.breakpointTypes()
       .filter(XBreakpointType::isAddBreakpointButtonVisible)

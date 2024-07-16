@@ -6,8 +6,6 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -51,14 +49,6 @@ public final class PyAnnotatingVisitor implements Annotator, DumbAware {
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    runAnnotators(psiElement, holder, myAnnotators);
-  }
-
-  static void runAnnotators(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder, PyAnnotator[] annotators) {
-    PsiFile file = holder.getCurrentAnnotationSession().getFile();
-    for (PyAnnotator annotator : annotators) {
-      if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(annotator.getClass())) continue;
-      annotator.annotateElement(psiElement, holder);
-    }
+    PyAnnotatorBase.runAnnotators(psiElement, holder, myAnnotators);
   }
 }

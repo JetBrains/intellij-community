@@ -1,6 +1,8 @@
 // Copyright 2000-2020 I are a incorrect comment that the developers can hardly do anything about.
 
 class ForMultiLanguageSupport {
+  // The finally block always executes when the try block exits.
+
     // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
     // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
     // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
@@ -30,6 +32,8 @@ class ForMultiLanguageSupport {
   // contains only letters, digits, numbers, underscores ("_")
 
   // The index is in the range [start, end). Tries to find a group of non-conflicting events in range [`startIndex`..`inEvents.size()`).
+
+  // Move [0; value) elements to the end of the list, so this list will start from element.
 
   // An iterable of bundle instances
 
@@ -68,4 +72,8 @@ class ForMultiLanguageSupport {
   int foo() {
     return 1;
   }
+
+  // Some legitimate English comment
+  // to be checked.
+  // noinspection ConstantValue
 }

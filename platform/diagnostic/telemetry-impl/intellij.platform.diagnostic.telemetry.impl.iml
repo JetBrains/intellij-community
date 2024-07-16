@@ -45,7 +45,7 @@
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
 </module>

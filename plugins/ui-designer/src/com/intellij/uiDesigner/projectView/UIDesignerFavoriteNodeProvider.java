@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 
-public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
+public final class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public @Nullable Collection<AbstractTreeNode<?>> getFavoriteNodes(DataContext context, final @NotNull ViewSettings viewSettings) {
     Project project = CommonDataKeys.PROJECT.getData(context);

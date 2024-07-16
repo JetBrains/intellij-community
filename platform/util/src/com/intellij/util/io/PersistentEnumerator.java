@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 
+@Internal
 public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
                                                    ScannableDataEnumeratorEx<Data> {
   protected final @NotNull PersistentEnumeratorBase<Data> myEnumerator;
@@ -52,7 +53,6 @@ public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
     return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version, false, registerForStats);
   }
 
-  @ApiStatus.Internal
   public static int getVersion() {
     return PersistentBTreeEnumerator.baseVersion();
   }
@@ -114,7 +114,6 @@ public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
     return myEnumerator.tryEnumerate(name);
   }
 
-  @ApiStatus.Internal
   public Collection<Data> getAllDataObjects(final @Nullable PersistentEnumeratorBase.DataFilter filter) throws IOException {
     return myEnumerator.getAllDataObjects(filter);
   }

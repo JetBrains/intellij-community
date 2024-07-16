@@ -1,0 +1,4 @@
+io/opentelemetry/api/trace/Tracer
+kotlin/jvm/internal/DefaultConstructorMarker
+org/apache/commons/cli/Option
+org/apache/commons/cli/Options

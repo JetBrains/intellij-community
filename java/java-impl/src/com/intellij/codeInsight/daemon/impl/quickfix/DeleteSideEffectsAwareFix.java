@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -41,10 +41,8 @@ public class DeleteSideEffectsAwareFix extends PsiUpdateModCommandAction<PsiStat
     myExpressionPtr = manager.createSmartPsiElementPointer(expression);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("extract.side.effects.family.name");
   }
 
@@ -69,8 +67,7 @@ public class DeleteSideEffectsAwareFix extends PsiUpdateModCommandAction<PsiStat
    * @param sideEffects side effects
    * @return inspection message
    */
-  @IntentionName
-  public static @NotNull String getMessage(@NotNull PsiExpression expression, @NotNull List<@NotNull PsiExpression> sideEffects) {
+  public static @IntentionName @NotNull String getMessage(@NotNull PsiExpression expression, @NotNull List<@NotNull PsiExpression> sideEffects) {
     if (sideEffects.isEmpty()) {
       JavaElementKind kind = expression.getParent() instanceof PsiExpressionStatement ? JavaElementKind.EXPRESSION : JavaElementKind.STATEMENT;
       return CommonQuickFixBundle.message("fix.remove.title", kind.object());

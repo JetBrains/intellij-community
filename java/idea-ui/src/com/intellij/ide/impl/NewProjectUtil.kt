@@ -10,7 +10,6 @@ import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtil.updateLastProjectLocation
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandProcessor
@@ -33,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.TimeoutUtil
@@ -172,15 +172,22 @@ object NewProjectUtil {
 
       if (newProject !== projectToClose) {
         updateLastProjectLocation(projectFile)
-        var options = build().withProject(newProject)
-        val fileName = projectFile.fileName
-        if (fileName != null) {
-          options = options.withProjectName(fileName.toString())
+        val moduleConfigurator = projectBuilder.createModuleConfigurator()
+        val options =  OpenProjectTask {
+          project = newProject
+          projectName = projectFile.fileName.toString()
+          callback = ProjectOpenedCallback { openedProject, module ->
+            if (openedProject != newProject && module != null) { // project attached
+              ApplicationManager.getApplication().invokeLater {
+                moduleConfigurator?.accept(module)
+              }
+            }
+          }
         }
         TrustedPaths.getInstance().setProjectPathTrusted(projectDir, true)
         runBlockingModalWithRawProgressReporter(
           owner = ModalTaskOwner.guess(),
-          title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", fileName.toString()),
+          title = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName),
         ) {
           ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = projectDir, options = options)
         }

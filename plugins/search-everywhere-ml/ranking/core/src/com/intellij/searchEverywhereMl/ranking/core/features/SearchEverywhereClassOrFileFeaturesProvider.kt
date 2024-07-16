@@ -42,8 +42,6 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereCla
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider.Fields.IS_OPENED_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider.Fields.IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider.Fields.IS_SAME_MODULE_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider.Fields.PACKAGE_DISTANCE_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider.Fields.PACKAGE_DISTANCE_NORMALIZED_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider.Fields.PREDICTION_SCORE_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider.Fields.RECENT_INDEX_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereClassOrFileFeaturesProvider.Fields.TIME_SINCE_LAST_FILETYPE_USAGE_DATA_KEY
@@ -67,8 +65,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     internal val IS_ACCESSIBLE_FROM_MODULE = EventFields.Boolean("isAccessibleFromModule")
 
     internal val IS_SAME_MODULE_DATA_KEY = EventFields.Boolean("isSameModule")
-    internal val PACKAGE_DISTANCE_DATA_KEY = EventFields.Int("packageDistance")
-    internal val PACKAGE_DISTANCE_NORMALIZED_DATA_KEY = EventFields.Double("packageDistanceNorm")
+
     internal val DIRECTORY_DEPTH_DATA_KEY = EventFields.Int("directoryDepth")
     internal val IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY = EventFields.Boolean("isSameFileTypeAsOpenedFile")
 
@@ -103,8 +100,7 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf(
       IS_ACCESSIBLE_FROM_MODULE,
-      IS_SAME_MODULE_DATA_KEY, PACKAGE_DISTANCE_DATA_KEY,
-      PACKAGE_DISTANCE_NORMALIZED_DATA_KEY, DIRECTORY_DEPTH_DATA_KEY,
+      IS_SAME_MODULE_DATA_KEY, DIRECTORY_DEPTH_DATA_KEY,
       IS_SAME_FILETYPE_AS_OPENED_FILE_DATA_KEY,
       IS_IN_SOURCE_DATA_KEY, IS_IN_TEST_SOURCES_DATA_KEY, IS_IN_LIBRARY_DATA_KEY,
       IS_EXCLUDED_DATA_KEY, FILETYPE_USAGE_RATIO_DATA_KEY,
@@ -196,11 +192,6 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     data.addAll(getModificationTimeStats(file, currentTime))
     data.add(IS_OPENED_DATA_KEY.with(isOpened(file, project)))
 
-    calculatePackageDistance(file, project, cache.currentlyOpenedFile)?.let { (packageDistance, packageDistanceNorm) ->
-      data.add(PACKAGE_DISTANCE_DATA_KEY.with(packageDistance))
-      data.add(PACKAGE_DISTANCE_NORMALIZED_DATA_KEY.with(packageDistanceNorm))
-    }
-
     calculateRootDistance(file, project)?.let {
       data.add(DIRECTORY_DEPTH_DATA_KEY.with(it))
     }
@@ -251,65 +242,6 @@ class SearchEverywhereClassOrFileFeaturesProvider : SearchEverywhereElementFeatu
     return openedFileModule == itemModule
   }
 
-  /**
-   * Calculates the package distance of the found [file] relative to the [openedFile].
-   *
-   * The distance can be considered the number of steps/changes to reach the other package,
-   * for instance the distance to a parent or a child of a package is equal to 1,
-   * and the distance from package a.b.c.d to package a.b.x.y is equal to 4.
-   *
-   * @return Pair of distance and normalized distance, or null if it could not be calculated.
-   */
-  private fun calculatePackageDistance(file: VirtualFile, project: Project, openedFile: VirtualFile?): Pair<Int, Double>? {
-    if (openedFile == null) {
-      return null
-    }
-
-    val (openedFilePackage, foundFilePackage) = ReadAction.compute<Pair<String?, String?>, Nothing> {
-      val fileIndex = ProjectRootManager.getInstance(project).fileIndex
-
-      // Parents of some files may still not be directories
-      val openedFileDirectory = openedFile.parent?.takeIf { it.isDirectory }
-      val foundFileDirectory = if (file.isDirectory) file else file.parent?.takeIf { it.isDirectory }
-
-      val openedFilePackageName = openedFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
-      val foundFilePackageName = foundFileDirectory?.let { fileIndex.getPackageNameByDirectory(it) }
-
-      Pair(openedFilePackageName, foundFilePackageName)
-    }.run {
-      fun splitPackage(s: String?) = if (s == null) {
-        null
-      }
-      else if (s.isBlank()) {
-        // In case the file is under a source root (src/testSrc/resource) and the package prefix is blank
-        emptyList()
-      }
-      else {
-        s.split('.')
-      }
-
-      Pair(splitPackage(first), splitPackage(second))
-    }
-
-    if (openedFilePackage == null || foundFilePackage == null) {
-      return null
-    }
-
-    val maxDistance = openedFilePackage.size + foundFilePackage.size
-    var common = 0
-    for ((index, value) in openedFilePackage.withIndex()) {
-      if (foundFilePackage.size == index || foundFilePackage[index] != value) {
-        // Stop counting if the found file package is a parent or it no longer matches the opened file package
-        break
-      }
-
-      common++
-    }
-
-    val distance = maxDistance - 2 * common
-    val normalizedDistance = roundDouble(if (maxDistance != 0) (distance.toDouble() / maxDistance) else 0.0)
-    return Pair(distance, normalizedDistance)
-  }
 
   private fun calculateRootDistance(file: VirtualFile, project: Project): Int? {
     val contentRoot = project.guessProjectDir() ?: return null

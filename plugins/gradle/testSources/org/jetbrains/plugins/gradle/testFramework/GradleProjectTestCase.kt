@@ -1,18 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.findOrCreateFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.writeText
+import com.intellij.testFramework.utils.editor.commitToPsi
+import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.testFramework.utils.vfs.getFile
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
@@ -22,10 +25,9 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   val project: Project get() = gradleFixture.project
   val projectRoot: VirtualFile get() = gradleFixture.fileFixture.root
   val projectPath: String get() = projectRoot.path
-  val gradleVersion: GradleVersion get() = gradleFixture.gradleVersion
 
-  fun isGradleAtLeast(version: String): Boolean = gradleVersion.isGradleAtLeast(version)
-  fun isGradleOlderThan(version: String): Boolean = gradleVersion.isGradleOlderThan(version)
+  fun isGradleAtLeast(version: String): Boolean = GradleVersionUtil.isGradleAtLeast(gradleVersion, version)
+  fun isGradleOlderThan(version: String): Boolean = GradleVersionUtil.isGradleOlderThan(gradleVersion, version)
 
   fun testEmptyProject(gradleVersion: GradleVersion, test: () -> Unit) =
     test(gradleVersion, EMPTY_PROJECT, test)
@@ -61,6 +63,21 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
       file.writeText(text)
     }
     return file
+  }
+
+
+  fun writeTextAndCommit(relativePath: String, text: String) {
+    val file = findOrCreateFile(relativePath)
+    runWriteActionAndWait {
+      file.writeTextAndCommit(text)
+    }
+  }
+
+  @RequiresWriteLock
+  private fun VirtualFile.writeTextAndCommit(text: String) {
+    findDocument()?.reloadFromDisk()
+    writeText(text)
+    findDocument()?.commitToPsi(project)
   }
 
   fun appendText(relativePath: String, text: String): VirtualFile {

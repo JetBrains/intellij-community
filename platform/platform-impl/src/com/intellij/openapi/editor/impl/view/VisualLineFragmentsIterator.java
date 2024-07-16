@@ -153,7 +153,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
 
   private void setInlaysAndFragmentIterator() {
     mySegmentEndOffset = getCurrentFoldRegionStartOffset();
-    assert mySegmentEndOffset >= mySegmentStartOffset;
+    assert mySegmentEndOffset >= mySegmentStartOffset : assertMessage();
     if (mySegmentEndOffset > mySegmentStartOffset) {
       mySegmentEndOffset = Math.min(myNextWrapOffset, Math.min(mySegmentEndOffset, myDocument.getLineEndOffset(myCurrentEndLogicalLine)));
       boolean normalLineEnd = mySegmentEndOffset < getCurrentFoldRegionStartOffset() && mySegmentEndOffset < myNextWrapOffset;
@@ -511,5 +511,29 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     int[] xToVisualColumn(float x) {
       return super.xToVisualColumn(x - xOffset);
     }
+  }
+
+  private @NotNull String assertMessage() {
+    String startOffset = "startOffset: " + mySegmentStartOffset;
+    String endOffset   = "endOffset: " + mySegmentEndOffset;
+    String foldIndex   = "foldIndex: " + myCurrentFoldRegionIndex;
+    String foldCount   = "foldCount: " + (myRegions != null ? myRegions.length : "null");
+    String foldRegion  = "fold" + ((myRegions != null && myCurrentFoldRegionIndex < myRegions.length) ? myRegions[myCurrentFoldRegionIndex].toString() : "");
+    String inlayIndex  = "inlayIndex: " + myCurrentInlayIndex;
+    String inlayCount  = "inlayCount: " + (myInlays != null ? myInlays.size() : "null");
+    String inlay       = "inlay: " + ((myInlays != null && myCurrentInlayIndex < myInlays.size()) ? myInlays.get(myCurrentInlayIndex).toString() : "");
+    String textLength  = "textLength: " + myDocument.getTextLength();
+    return String.join(
+      ", ",
+      startOffset,
+      endOffset,
+      foldIndex,
+      foldCount,
+      foldRegion,
+      inlayIndex,
+      inlayCount,
+      inlay,
+      textLength
+    );
   }
 }

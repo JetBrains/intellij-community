@@ -42,7 +42,7 @@ public final class QuestionableNameInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  @NonNls public String nameString = "aa,abc,bad,bar,bar2,baz,baz1,baz2," +
+  public @NonNls String nameString = "aa,abc,bad,bar,bar2,baz,baz1,baz2," +
                                      "baz3,bb,blah,bogus,bool,cc,dd,defau1t,dummy,dummy2,ee,fa1se," +
                                      "ff,foo,foo1,foo2,foo3,foobar,four,fred,fred1,fred2,gg,hh,hello," +
                                      "hello1,hello2,hello3,ii,nu11,one,silly,silly2,string,two,that," +
@@ -64,8 +64,7 @@ public final class QuestionableNameInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "questionable.name.problem.descriptor");
   }

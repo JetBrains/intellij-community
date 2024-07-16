@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.inspections;
 
 import com.intellij.codeInspection.*;
@@ -22,9 +22,8 @@ import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 import java.util.Collection;
 
 public final class YAMLUnusedAnchorInspection extends LocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new YamlPsiElementVisitor() {
       @Override
       public void visitAnchor(@NotNull YAMLAnchor anchor) {
@@ -43,10 +42,8 @@ public final class YAMLUnusedAnchorInspection extends LocalInspectionTool {
   }
 
   private static class RemoveAnchorQuickFix implements LocalQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return YAMLBundle.message("inspections.unused.anchor.quickfix.name");
     }
 

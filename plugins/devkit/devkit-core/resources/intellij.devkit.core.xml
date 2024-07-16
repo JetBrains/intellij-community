@@ -61,6 +61,10 @@
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointClassIndex"/>
 
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"
+                      rootTagName="product-modules"/>
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.templates.TemplateSetDescription" rootTagName="templateSet"/>
+
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
     <searchScopesProvider
@@ -82,12 +86,26 @@
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
                             language="XML"/>
 
+    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.driver.RemoteUseScopeEnlarger"/>
+    <methodReferencesSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodReferenceSearcher"/>
+    <overridingMethodsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodImplementationSearcher"/>
+    <allOverridingMethodsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodAllImplementationSearcher"/>
+    <directClassInheritorsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteInterfaceDirectImplementationSearcher"/>
+    <classInheritorsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteInterfaceImplementationSearcher"/>
+
     <localInspection language="XML" shortName="PluginXmlValidity" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"
                      key="inspection.plugin.xml.validity.display.name"/>
+    <localInspection isInternal="true"
+                     language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlRegistrationCheckInspection"
+                     key="inspection.plugin.xml.registration.check.display.name"/>
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
@@ -100,6 +118,13 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlExtensionRegistrationInspection"
                      key="inspection.plugin.xml.extension.registration.display.name"/>
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     isInternal="true"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ProductModulesXmlDomInspection"
+                     key="inspection.product.modules.xml.display.name"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      projectType="INTELLIJ_PLUGIN"
@@ -219,6 +244,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"
                      key="inspection.stateful.ep.display.name"/>
+    <localInspection language="UAST" shortName="UastHintedVisitorAdapterHints"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UastHintedVisitorAdapterHintsInspection"
+                     key="inspection.uast.hinted.visitor.adapter.hints.problem.display.name"/>
     <localInspection language="UAST" shortName="UElementAsPsi"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -415,6 +446,15 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ListenerImplementationMustNotBeDisposableInspection"/>
 
+    <localInspection language="UAST"
+                     key="inspection.read.or.write.action.during.service.init.display.name"
+                     shortName="ReadOrWriteActionInServiceInitialization"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path"
+                     groupKey="inspections.group.code"
+                     enabledByDefault="false"
+                     level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ReadOrWriteActionInServiceInitializationInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -434,33 +474,43 @@
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesQueryExecutor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
+    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId$Companion$withClientId$1"/>
+    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId$Companion.withClientId"/>
+    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId.withClientId"/>
     <stacktrace.fold substring="at com.intellij.ide.IdeEventQueue"/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.impl.FlushQueue"/>
-    <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
-    <stacktrace.fold substring="at com.intellij.openapi.command.WriteCommandAction"/>
-    <stacktrace.fold substring="at com.intellij.util.RunnableCallable.call("/>
-    <stacktrace.fold substring="at com.intellij.openapi.util.RecursionManager"/>
-    <stacktrace.fold substring="at com.intellij.openapi.util.RecursionGuard"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.ReadAction."/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.WriteAction."/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl$1.call("/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction("/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction("/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.tryRunReadAction("/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.TransactionGuardImpl"/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.impl.LaterInvocator"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.RunResult.run("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.TransactionGuardImpl"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.WriteAction."/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl$1.call("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl$2.run"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.tryRunReadAction("/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.DispatchedRunnable"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.FlushQueue"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.LaterInvocator"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.ModalityKt"/>
+    <stacktrace.fold substring="at com.intellij.openapi.application.impl.RwLockHolder"/>
+    <stacktrace.fold substring="at com.intellij.openapi.command.WriteCommandAction"/>
+    <stacktrace.fold substring="at com.intellij.openapi.command.impl.CoreCommandProcessor.executeCommand("/>
+    <stacktrace.fold substring="at com.intellij.openapi.progress.ContextKt.prepareThreadContext"/>
+    <stacktrace.fold substring="at com.intellij.openapi.progress.CoroutinesKt"/>
     <stacktrace.fold substring="at com.intellij.openapi.progress.impl.CoreProgressManager"/>
+    <stacktrace.fold substring="at com.intellij.openapi.progress.impl.PlatformTaskSupport"/>
     <stacktrace.fold substring="at com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
     <stacktrace.fold substring="at com.intellij.openapi.progress.impl.ProgressRunner"/>
-    <stacktrace.fold substring="at com.intellij.openapi.command.impl.CoreCommandProcessor.executeCommand("/>
+    <stacktrace.fold substring="at com.intellij.openapi.util.RecursionGuard"/>
+    <stacktrace.fold substring="at com.intellij.openapi.util.RecursionManager"/>
+    <stacktrace.fold substring="at com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil"/>
     <stacktrace.fold substring="at com.intellij.psi.impl.source.PostprocessReformattingAspect."/>
-    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId.withClientId"/>
-    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId$Companion.withClientId"/>
-    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId$Companion$withClientId$1"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
-    <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtilKt"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil$Companion$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtilKt"/>
+    <stacktrace.fold substring="at com.intellij.util.RunnableCallable.call("/>
+    <stacktrace.fold substring="at com.intellij.util.messages.impl.MessageBus"/>
+
     <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
@@ -517,7 +567,7 @@
       implementation="org.jetbrains.idea.devkit.inspections.PluginXmlExternalAnnotatorsFilter"/>
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
-    <console.folding order="first" implementation="org.jetbrains.idea.devkit.FailedTestDebugLogConsoleFolding"/>
+    <console.folding order="first" implementation="org.jetbrains.idea.devkit.run.FailedTestDebugLogConsoleFolding"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
 
@@ -554,7 +604,11 @@
     <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
                  description="Enables commit messages validation for intellij project"/>
 
-    <iconMapper mappingFile="DevkitIconMappings.json"/>
+    <fileIconProvider implementation="org.jetbrains.idea.devkit.apiDump.ApiDumpFileIconProvider"/>
+    <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.apiDump.ApiDumpGeneratedSourcesFilter"/>
+
+    <!-- INTERNAL -->
+    <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
@@ -692,9 +746,6 @@
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" id="ShowSerializedXml"/>
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" id="ShowHelpPageById"/>
       <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"/>
-      <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"/>
-      <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true"
-              class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 

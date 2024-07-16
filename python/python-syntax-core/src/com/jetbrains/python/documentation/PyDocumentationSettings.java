@@ -32,7 +32,8 @@ public abstract class PyDocumentationSettings
   public static final PyDefaultProjectAwareServiceClasses<ServiceState, PyDocumentationSettings, AppService, ModuleService>
     SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
 
-  final static DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.REST;
+  @ApiStatus.Internal
+  public final static DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.REST;
 
   protected PyDocumentationSettings() {
     super(new ServiceState());
@@ -116,7 +117,8 @@ public abstract class PyDocumentationSettings
     @OptionTag("renderExternalDocumentation")
     public boolean myRenderExternalDocumentation;
 
-    ServiceState(@NotNull DocStringFormat docStringFormat) {
+    @ApiStatus.Internal
+    public ServiceState(@NotNull DocStringFormat docStringFormat) {
       myDocStringFormat = docStringFormat;
     }
 

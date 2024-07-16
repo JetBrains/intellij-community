@@ -38,7 +38,7 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyTestGenerator implements TestGenerator {
+public final class GroovyTestGenerator implements TestGenerator {
 
   @Nullable
   @Override

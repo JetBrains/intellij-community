@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -14,7 +14,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -253,27 +252,6 @@ object UpdateChecker {
   fun getInternalPluginUpdates(
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
-  ) = getInternalPluginUpdates(
-    buildNumber = buildNumber,
-    indicator = indicator,
-    updateablePluginsMap = null
-  )
-
-  /**
-   * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
-   * otherwise, returns versions compatible with the specified build.
-   *
-   * When [updateablePluginsMap] is null, checks updates for the currently installed plugins in that IDE.
-   * Otherwise, checks the updates against these plugins that might not be installed or compatible with the current IDE
-   *
-   * [updateablePluginsMap] is an updateable map, meaning that plugins that have updates will be removed from it.
-   */
-  @ApiStatus.Internal
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
-  fun getInternalPluginUpdates(
-    buildNumber: BuildNumber? = null,
-    indicator: ProgressIndicator? = null,
     updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>? = null,
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
@@ -313,11 +291,9 @@ object UpdateChecker {
             }
             // collect latest plugins from custom repos
             val storedDescriptor = customRepoPlugins[id]
-            if (storedDescriptor == null
-                || VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) > 0 &&
-                allowedUpgrade(storedDescriptor, descriptor)
-                || (VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) < 0 &&
-                    allowedDowngrade(storedDescriptor, descriptor))) {
+            if (storedDescriptor == null ||
+                (VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) > 0 && allowedUpgrade(storedDescriptor, descriptor)) ||
+                (VersionComparatorUtil.compare(descriptor.version, storedDescriptor.version) < 0 && allowedDowngrade(storedDescriptor, descriptor))) {
               customRepoPlugins[id] = descriptor
             }
           }
@@ -407,9 +383,8 @@ object UpdateChecker {
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString }
-      if (lastUpdate != null && (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version,
-                                                                                                                 descriptor,
-                                                                                                                 buildNumber) > 0)) {
+      if (lastUpdate != null &&
+          (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
           .onFailure {
             if (!isNetworkError(it)) throw it
@@ -564,22 +539,6 @@ object UpdateChecker {
     return emptyList()
   }
 
-  private var ourHasFailedPlugins = false
-
-  @JvmStatic
-  fun checkForUpdate(event: IdeaLoggingEvent) {
-    if (!ourHasFailedPlugins) {
-      val app = ApplicationManager.getApplication()
-      if (app != null && !app.isDisposed && UpdateSettings.getInstance().isPluginsCheckNeeded) {
-        val pluginDescriptor = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
-        if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
-          ourHasFailedPlugins = true
-          updateAndShowResult()
-        }
-      }
-    }
-  }
-
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
   @ApiStatus.Internal
   fun testPlatformUpdate(
@@ -715,8 +674,24 @@ private fun doUpdateAndShowResult(
   // disabled plugins are excluded from updates, see IDEA-273418, TODO refactor
   // probably it can lead to disabled plugins becoming incompatible without a notification in platform update dialog
   val updatesForPlugins = updatesForEnabledPlugins // + nonIgnored(pluginUpdates.allDisabled)
+
+  // TODO revise this
+  val pluginAutoUpdateService = service<PluginAutoUpdateService>()
+  if (platformUpdates !is PlatformUpdates.Loaded) {
+    pluginAutoUpdateService.onPluginUpdatesCheck(updatesForPlugins)
+  } else {
+    if (pluginAutoUpdateService.isAutoUpdateEnabled()) {
+      val (pluginUpdates, _) = UpdateChecker.getInternalPluginUpdates(indicator = indicator)
+      pluginAutoUpdateService.onPluginUpdatesCheck(nonIgnored(pluginUpdates.allEnabled))
+    }
+  }
+
   if (!showResults) {
-    UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
+    if (platformUpdates is PlatformUpdates.Loaded) {
+      UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, pluginUpdates.incompatible)
+    } else {
+      UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatesForPlugins, customRepoPlugins)
+    }
     callback?.setDone()
     return null
   }

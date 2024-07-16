@@ -16,7 +16,7 @@ import java.lang.annotation.*;
  *   <li>URL</li>
  *   <li>Programming language or framework name</li>
  * </ul>
- * Avoid using NlsSafe just to suppress the "hardcoded string" inspection warning. Use @{@link NonNls} 
+ * Avoid using NlsSafe just to suppress the "hardcoded string" inspection warning. Use {@link NonNls @NonNls}
  * if something is not intended to be displayed to the user: internal identifier, XML tag attribute, 
  * substring to be searched in the external process output, etc.
  * <p>

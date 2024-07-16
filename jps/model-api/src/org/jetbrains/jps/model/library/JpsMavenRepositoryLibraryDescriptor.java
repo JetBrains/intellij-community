@@ -16,6 +16,7 @@
 package org.jetbrains.jps.model.library;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.Objects;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public class JpsMavenRepositoryLibraryDescriptor {
   public static final String DEFAULT_PACKAGING = "jar";
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -21,8 +21,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.ModuleTypeId;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
@@ -39,6 +37,7 @@ import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,12 +60,13 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
  */
 @Service(Service.Level.PROJECT)
 @State(name = "ExternalProjectsData", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@ApiStatus.Internal
 public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
   // exposed for tests
-  public static final int STORAGE_VERSION = 7;
+  public static final int STORAGE_VERSION = 8;
 
   private final @NotNull Project myProject;
   private final @NotNull ConcurrentMap<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
@@ -147,7 +147,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
         }
       }
     }
-    catch (ProcessCanceledException | CancellationException e) {
+    catch (CancellationException e) {
       throw e;
     }
     catch (Throwable e) {
@@ -364,7 +364,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     for (ExternalProjectPojo childProject : childProjects) {
       String moduleConfigPath = childProject.getPath();
       ModuleData moduleData = new ModuleData(childProject.getName(), systemId,
-                                             ModuleTypeId.JAVA_MODULE, childProject.getName(),
+                                             "JAVA_MODULE", childProject.getName(),
                                              moduleConfigPath, moduleConfigPath);
       projectDataNode.createChild(MODULE, moduleData);
     }

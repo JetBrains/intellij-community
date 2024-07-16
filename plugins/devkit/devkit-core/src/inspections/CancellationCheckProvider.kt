@@ -22,7 +22,7 @@ internal object CancellationCheckProviders : LanguageExtension<CancellationCheck
 
 /**
  * Provides the right cancellation check based on the context
- * (see [com.intellij.openapi.progress.ProgressManager.checkCanceled], [com.intellij.openapi.progress.checkCancelled])
+ * (see [com.intellij.openapi.progress.ProgressManager.checkCanceled], [com.intellij.openapi.progress.checkCanceled])
  * and checks expressions for cancellation check calls.
  */
 @IntellijInternalApi

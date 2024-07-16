@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -14,6 +15,10 @@ import java.util.concurrent.ExecutorService;
 public abstract class JdkVersionDetector {
   public static JdkVersionDetector getInstance() {
     return JpsServiceManager.getInstance().getService(JdkVersionDetector.class);
+  }
+
+  @ApiStatus.Internal
+  protected JdkVersionDetector() {
   }
 
   public abstract @Nullable JdkVersionInfo detectJdkVersionInfo(@NotNull String homePath);
@@ -35,6 +40,7 @@ public abstract class JdkVersionDetector {
     Oracle(null, "Oracle OpenJDK"),
     SapMachine("sap", "SAP SapMachine"),
     Zulu("zulu", "Azul Zulu"),
+    Homebrew("homebrew", "Homebrew OpenJDK"),
     Unknown(null, null);
 
     public final @Nullable String prefix;
@@ -69,10 +75,10 @@ public abstract class JdkVersionDetector {
     }
 
     public @NotNull @NlsSafe String displayVersionString() {
-      String s = "";
+      var s = "";
       if (variant.displayName != null) s += variant.displayName + ' ';
-      if (graalVersion != null) s += graalVersion + " - Java ";
       s += version;
+      if (graalVersion != null) s += " - VM " + graalVersion;
       if (arch == CpuArch.ARM64) s += " - aarch64";
       return s;
     }

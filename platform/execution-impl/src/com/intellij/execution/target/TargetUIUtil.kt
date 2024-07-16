@@ -36,7 +36,7 @@ fun textFieldWithBrowseTargetButton(row: Row,
                                          targetBrowserHints)
   textFieldWithBrowseButton.addActionListener(browser)
   textFieldWithBrowseButton.text = property.get()
-  return row.component(textFieldWithBrowseButton).withBinding(TextFieldWithBrowseButton::getText,
+  return row.component(textFieldWithBrowseButton).withBindingInt(TextFieldWithBrowseButton::getText,
                                                               TextFieldWithBrowseButton::setText,
                                                               property)
 }

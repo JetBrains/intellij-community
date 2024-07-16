@@ -21,15 +21,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class ContextsConfig {
 
     @JsonIgnore
-    private Map<String, ContextConfig> additionalProperties = new HashMap<String, ContextConfig>();
+    private Map<String, ContextKindConfig> additionalProperties = new HashMap<String, ContextKindConfig>();
 
     @JsonAnyGetter
-    public Map<String, ContextConfig> getAdditionalProperties() {
+    public Map<String, ContextKindConfig> getAdditionalProperties() {
         return this.additionalProperties;
     }
 
     @JsonAnySetter
-    public void setAdditionalProperty(String name, ContextConfig value) {
+    public void setAdditionalProperty(String name, ContextKindConfig value) {
         this.additionalProperties.put(name, value);
     }
 

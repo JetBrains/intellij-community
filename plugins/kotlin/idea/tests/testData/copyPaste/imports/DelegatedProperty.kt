@@ -1,4 +1,5 @@
 // NO_ERRORS_DUMP
+// IGNORE_K2_CUT
 package a
 
 import kotlin.reflect.KProperty

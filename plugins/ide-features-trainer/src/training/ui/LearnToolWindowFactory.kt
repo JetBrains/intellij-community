@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.util.PlatformUtils
 import training.lang.LangManager
 import training.util.LEARNING_PANEL_OPENED_IN
 import training.util.findLanguageSupport
@@ -16,6 +17,10 @@ import training.util.findLanguageSupport
 const val LEARN_TOOL_WINDOW_ID: String = "Learn"
 
 internal class LearnToolWindowFactory : ToolWindowFactory, DumbAware {
+  override suspend fun isApplicableAsync(project: Project): Boolean {
+    return !PlatformUtils.isWebStorm()
+  }
+
   override fun init(toolWindow: ToolWindow) {
     toolWindow.isShowStripeButton = findLanguageSupport(toolWindow.project) != null
   }

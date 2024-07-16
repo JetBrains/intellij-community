@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinTargetData
 import org.jetbrains.kotlin.idea.gradle.configuration.kotlinSourceSetData
-import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.cast
+import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.safeCastDataNode
 import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
@@ -37,7 +37,7 @@ internal class KotlinJvmRunTaskData(val targetName: String, val taskName: String
             We collect all SourceSets that declare a dependsOn as well. If any of those Source Sets can be executed
             by the run task, then the Source Set represented by 'module' can also!
              */
-            val sourceSetDataNode = CachedModuleDataFinder.findModuleData(module)?.cast<GradleSourceSetData>() ?: return null
+            val sourceSetDataNode = CachedModuleDataFinder.findModuleData(module)?.safeCastDataNode<GradleSourceSetData>() ?: return null
             val allSourceSetDataNodes = ExternalSystemApiUtil.findAll(mainModuleDataNode, GradleSourceSetData.KEY)
             val sourceSetWithDependingSourceSetDataNodes = sourceSetDataNode.withClosure { currentSourceSetDataNode ->
                 val currentKotlinSourceSetData = currentSourceSetDataNode.kotlinSourceSetData

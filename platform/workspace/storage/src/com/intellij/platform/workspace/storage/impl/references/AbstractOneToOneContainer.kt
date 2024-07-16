@@ -3,8 +3,8 @@ package com.intellij.platform.workspace.storage.impl.references
 
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
+import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ChildEntityId
-import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ParentEntityId
 
 internal class ImmutableAbstractOneToOneContainer(collection: Map<ConnectionId, BiMap<ChildEntityId, ParentEntityId>>)

@@ -214,7 +214,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
             editor.setPlaceholder(XDebuggerBundle.message(
               "debugger.evaluate.expression.or.add.a.watch.hint",
               KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null)),
-              KeymapUtil.getShortcutText(new KeyboardShortcut(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE, null))
+              KeymapUtil.getShortcutText(new KeyboardShortcut(XDebuggerEvaluationDialog.getAddWatchKeystroke(), null))
             ));
             editor.addFocusListener(new FocusChangeListener() {
               private static final Set<FocusEvent.Cause> myCauses = Set.of(
@@ -271,7 +271,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         }
       });
       addToWatchesActionRef.get()
-        .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE), editorComponent);
+        .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.getAddWatchKeystroke()), editorComponent);
       JComponent component = myEvaluateComboBox.getComponent();
       //component.setBackground(tree.getBackground());
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));

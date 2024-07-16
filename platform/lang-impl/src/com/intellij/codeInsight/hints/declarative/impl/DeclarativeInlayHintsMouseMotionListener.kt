@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.LightweightHint
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -62,7 +62,7 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
     }
   }
 
-  private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown
+  private fun isControlDown(e: MouseEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown
 
   private fun getRenderer(inlay: Inlay<*>): DeclarativeInlayRenderer? {
     val renderer = inlay.renderer

@@ -118,11 +118,22 @@ public final class PersistentFSRecordAccessor {
     long length = records.getLength(newRecordId);
     long timestamp = records.getTimestamp(newRecordId);
     if (parentId != NULL_FILE_ID || nameId != NULL_NAME_ID || contentId != NULL_ID || attributeRecordId != NULL_ID ||
-        flags != 0 || modCount != 0 || length!=0 || timestamp != 0) {
-      throw new IOException("new record (id: " + newRecordId + ") has non-empty fields: " +
-                            "parentId=" + parentId + ", flags=" + flags + ", nameId= " + nameId + ", " +
-                            "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", modCount=" + modCount
+        flags != 0 || modCount != 0 || length != 0 || timestamp != 0) {
+
+      IOException exception = new IOException(
+        "new record (id: " + newRecordId + ") has non-empty fields: " +
+        "parentId=" + parentId + ", flags=" + flags + ", nameId= " + nameId + ", " +
+        "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", " +
+        "length=" + length + ", timestamp=" + timestamp + ", " +
+        "modCount=" + modCount + " (globalModCount: " + records.getGlobalModCount() + "), " +
+        "wasClosedProperly=" + records.wasClosedProperly()
       );
+
+      FSRecords.LOG.error(exception);
+
+      //try fixing the error: clean the record (modCount can't be cleaned, ok, let it be off)
+      records.fillRecord(newRecordId, 0, 0, 0, 0, 0, true);
+      records.setContentRecordId(newRecordId, 0);
     }
   }
 

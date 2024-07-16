@@ -5,10 +5,11 @@ package com.intellij.ui.plaf.beg;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
@@ -51,8 +52,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private int myMaxGutterIconWidth2;
 
   public static final @NonNls String PLAY_SOUND_METHOD = "playSound";
-  public static final @NonNls String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
-  public static final @NonNls String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -240,15 +239,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     if (keystroke != null){
       int j1 = keystroke.getModifiers();
       if (j1 > 0){
-        if (SystemInfoRt.isMac) {
-          try {
-            Class<?> appleLaf = Class.forName(AQUA_LOOK_AND_FEEL_CLASS_NAME);
-            Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT, int.class, boolean.class);
-            s1 = (String)getModifiers.invoke(appleLaf, new Object[] {Integer.valueOf(j1), Boolean.FALSE});
-          }
-          catch (Exception e) {
-            s1 = MacKeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);
-          }
+        if (ClientSystemInfo.isMac()) {
+          s1 = MacKeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);
         }
         else {
           s1 = KeyEvent.getKeyModifiersText(j1) + '+';
@@ -518,12 +510,13 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       msm = MenuSelectionManager.defaultManager();
     }
     ActionMenuItem item = (ActionMenuItem)menuItem;
-    if (!item.isKeepMenuOpen()) {
+    boolean keepMenuOpen = Utils.isKeepPopupOpen(item.getKeepPopupOnPerform(), e);
+    if (!keepMenuOpen) {
       msm.clearSelectedPath();
     }
     ActionEvent event = new ActionEvent(menuItem, ActionEvent.ACTION_PERFORMED, null, e.getWhen(), e.getModifiers());
     item.fireActionPerformed(event);
-    if (item.isKeepMenuOpen()) {
+    if (keepMenuOpen) {
       Container parent = item.getParent();
       if (parent instanceof JComponent) {
         //Fake event to trigger update in ActionPopupMenuImpl.MyMenu

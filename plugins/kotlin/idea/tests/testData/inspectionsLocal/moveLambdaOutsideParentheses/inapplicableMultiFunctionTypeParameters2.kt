@@ -6,5 +6,5 @@ fun test(a: (String) -> Unit = {}, b: (String) -> Unit = {}) {
 }
 
 fun foo() {
-    test({ }, { }<caret>)
+    test({ }, <caret>{ })
 }

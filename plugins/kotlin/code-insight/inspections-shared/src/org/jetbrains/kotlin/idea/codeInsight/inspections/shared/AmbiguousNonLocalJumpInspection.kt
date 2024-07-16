@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.contracts.description.KtContractCallsInPlaceContractEffectDeclaration
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange.AT_MOST_ONCE
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange.EXACTLY_ONCE
@@ -68,19 +69,20 @@ private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump
     }
     .firstOrNull()
 
+@OptIn(KaExperimentalApi::class)
 private fun doesCauseAmbiguityForUnlabeledNonLocalBreakOrContinue(callExpr: KtCallExpression, functionLiteral: PsiElement): Boolean =
     true == analyze(callExpr) {
-        callExpr.resolveCall()?.successfulCallOrNull<KtFunctionCall<*>>()?.argumentMapping?.get(functionLiteral)
+        callExpr.resolveToCall()?.successfulCallOrNull<KaFunctionCall<*>>()?.argumentMapping?.get(functionLiteral)
             ?.takeIf(::isInlinedParameter)
             ?.name
             ?.let { lambdaParameterName ->
                 (callExpr.calleeExpression as? KtReferenceExpression)?.mainReference?.resolveToSymbol()
-                    ?.let { it as? KtFunctionSymbol }
-                    ?.takeIf(KtFunctionSymbol::isInline)
+                    ?.let { it as? KaNamedFunctionSymbol }
+                    ?.takeIf(KaNamedFunctionSymbol::isInline)
                     ?.contractEffects
                     ?.none {
-                        it is KtContractCallsInPlaceContractEffectDeclaration &&
-                                (it.valueParameterReference.parameterSymbol as? KtValueParameterSymbol)?.name == lambdaParameterName &&
+                        it is KaContractCallsInPlaceContractEffectDeclaration &&
+                                (it.valueParameterReference.parameterSymbol as? KaValueParameterSymbol)?.name == lambdaParameterName &&
                                 it.occurrencesRange in setOf(AT_MOST_ONCE, EXACTLY_ONCE)
                     }
             }
@@ -91,5 +93,5 @@ private fun PsiElement.findMatchingCallExpr(): KtCallExpression? =
         ?: parentsWithSelf.match(KtLambdaExpression::class, KtLambdaArgument::class, last = KtCallExpression::class)
         ?: parentsWithSelf.match(KtNamedFunction::class, KtValueArgument::class, KtValueArgumentList::class, last = KtCallExpression::class)
 
-private fun isInlinedParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): Boolean =
+private fun isInlinedParameter(parameter: KaVariableSignature<KaValueParameterSymbol>): Boolean =
     parameter.symbol.run { !isCrossinline && !isNoinline }

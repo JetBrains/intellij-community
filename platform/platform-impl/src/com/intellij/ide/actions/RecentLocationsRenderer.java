@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -60,6 +59,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
   private final JBCheckBox myCheckBox;
 
   private final SimpleColoredComponent myTitle = new SimpleColoredComponent();
+  private final SimpleColoredComponent myTimestamp = new SimpleColoredComponent();
   private final ConcurrentLinkedDeque<RecentLocationItem> myItemsDeque = new ConcurrentLinkedDeque<>();
   private final Map<RecentLocationItem, Couple<Highlight[]>> myItemHighlights = new ConcurrentHashMap<>();
   private Future<?> myHighlightingFuture;
@@ -80,7 +80,28 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
 
     setLayout(new BorderLayout());
     add(getEditor().getComponent(), BorderLayout.CENTER);
-    add(myTitle, BorderLayout.NORTH);
+    var northPanel = createNorthPanel();
+    add(northPanel, BorderLayout.NORTH);
+  }
+
+  private @NotNull JPanel createNorthPanel() {
+    var northPanel = new JPanel();
+    var layout = new GroupLayout(northPanel);
+    var hg = layout.createSequentialGroup();
+    var vg = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
+
+    hg.addComponent(myTitle);
+    hg.addGap(JBUI.scale(8), JBUI.scale(8), Short.MAX_VALUE);
+    hg.addComponent(myTimestamp, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE);
+    hg.addGap(JBUI.scale(8));
+
+    vg.addComponent(myTitle);
+    vg.addComponent(myTimestamp);
+
+    layout.setHorizontalGroup(hg);
+    layout.setVerticalGroup(vg);
+    northPanel.setLayout(layout);
+    return northPanel;
   }
 
   @Override
@@ -99,6 +120,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
                                                 boolean selected,
                                                 boolean hasFocus) {
     myTitle.clear();
+    myTimestamp.clear();
     if (myProject.isDisposed() || getEditor().isDisposed()) return myTitle;
     myCurrentValueForPainting = value;
     myCurrentSelectedForPainting = selected;
@@ -202,8 +224,8 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
       myTitle.setFont(FontUtil.minusOne(StartupUiUtil.getLabelFont()));
     }
     long timeStamp = place.getTimeStamp();
-    if (UISettings.getInstance().getShowInplaceComments() && Registry.is("show.last.visited.timestamps") && timeStamp != -1) {
-      myTitle.append(" " + DateFormatUtil.formatPrettyDateTime(timeStamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
+    if (Registry.is("show.last.visited.timestamps") && timeStamp != -1) {
+      myTimestamp.append(" " + DateFormatUtil.formatPrettyDateTime(timeStamp), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
     }
   }
 

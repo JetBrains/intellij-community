@@ -606,9 +606,17 @@ public class ProjectBytecodeAnalysis {
     if (alwaysNotNullParameters.cardinality() != 0) {
       allContracts.replaceAll(smc -> {
         ValueConstraint[] constraints = smc.getConstraints().toArray(new ValueConstraint[0]);
-        alwaysNotNullParameters.stream().forEach(idx -> constraints[idx] = ValueConstraint.ANY_VALUE);
+        for (int i = 0; i < constraints.length; i++) {
+          if (alwaysNotNullParameters.get(i)) {
+            if (constraints[i] == ValueConstraint.NULL_VALUE) {
+              return null;
+            }
+            constraints[i] = ValueConstraint.ANY_VALUE;
+          }
+        }
         return new StandardMethodContract(constraints, smc.getReturnValue());
       });
+      allContracts.removeIf(Objects::isNull);
     }
   }
 

@@ -29,6 +29,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test codeblocks`() = doTest()
 
+  fun `test codespan`() = doTest()
+
   fun `test tables`() = doTest()
 
   fun `test reflow`() = doTest()

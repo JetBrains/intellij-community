@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 import org.junit.jupiter.api.RepeatedTest
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.map
 import kotlin.random.Random.Default.nextInt
 
@@ -74,6 +75,38 @@ class PlatformActivityTrackerServiceTest {
         val waiters = (1..5).map { createAwaiter(service) }
         (actors + waiters).shuffled().map { it.complete() }
       }
+    }
+  }
+
+  // this test asserts that the configurtion flow only fluctuates between true and false,
+  // and it ends in a correct state of false, meaning that the configuration is complete
+  @RepeatedTest(50)
+  fun flowTest() : Unit = runBlocking {
+    withTimeout(10_000) {
+      val service = PlatformActivityTrackerService(this)
+      val flow = service.configurationFlow
+      assert(!flow.value)
+      // we start with 1 because the flow would immediately emit 'false', which shall decrement the value
+      val counter = AtomicInteger(1)
+      coroutineScope {
+        val launchedJob = launch {
+          flow.collect { currentConfigState ->
+            val counterValue = if (currentConfigState) {
+              counter.getAndIncrement()
+            } else {
+              counter.decrementAndGet()
+            }
+            assert(counterValue == 1 || counterValue == 0) { "Counter value: $counterValue" }
+          }
+        }
+        coroutineScope {
+          val actors = (1..5).map { createConfigurator(service) }
+          val waiters = (1..5).map { createAwaiter(service) }
+          (actors + waiters).shuffled().map { it.complete() }
+        }
+        launchedJob.cancel()
+      }
+      assert(!flow.value)
     }
   }
 }

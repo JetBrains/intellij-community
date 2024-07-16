@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -9,7 +9,9 @@ import com.intellij.psi.impl.java.stubs.impl.PsiImportListStubImpl;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiImportListImpl;
 import com.intellij.psi.impl.source.tree.java.ImportListElement;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.EmptyStubSerializer;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList>
@@ -18,35 +20,32 @@ public final class JavaImportListElementType extends JavaStubElementType<PsiImpo
     super("IMPORT_LIST", BasicJavaElementType.BASIC_IMPORT_LIST);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new ImportListElement();
   }
 
   @Override
-  public PsiImportList createPsi(@NotNull final PsiImportListStub stub) {
+  public PsiImportList createPsi(final @NotNull PsiImportListStub stub) {
     return getPsiFactory(stub).createImportList(stub);
   }
 
   @Override
-  public PsiImportList createPsi(@NotNull final ASTNode node) {
+  public PsiImportList createPsi(final @NotNull ASTNode node) {
     return new PsiImportListImpl(node);
   }
 
-  @NotNull
   @Override
-  public PsiImportListStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
-    return new PsiImportListStubImpl(parentStub);
-  }
-
-  @NotNull
-  @Override
-  public PsiImportListStub instantiate(final StubElement parentStub) {
+  public @NotNull PsiImportListStub createStub(final @NotNull LighterAST tree, final @NotNull LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     return new PsiImportListStubImpl(parentStub);
   }
 
   @Override
-  public void indexStub(@NotNull final PsiImportListStub stub, @NotNull final IndexSink sink) {
+  public @NotNull PsiImportListStub instantiate(final StubElement parentStub) {
+    return new PsiImportListStubImpl(parentStub);
+  }
+
+  @Override
+  public void indexStub(final @NotNull PsiImportListStub stub, final @NotNull IndexSink sink) {
   }
 }

@@ -9,7 +9,7 @@ import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.math.max
 
-class WrapLayoutStrategy(private val myAdjustTheSameSize: Boolean): ToolbarLayoutStrategy {
+internal class WrapLayoutStrategy(private val myAdjustTheSameSize: Boolean): ToolbarLayoutStrategy {
 
   private val fallbackDelegate = NoWrapLayoutStrategy(myAdjustTheSameSize)
 

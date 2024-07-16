@@ -2,6 +2,7 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -30,6 +31,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -242,19 +244,20 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     PsiMethod patternMethod = createMethodToAdd();
     final List<PsiReference> docRefs = new ArrayList<>();
     for (UsageInfo usage : usages) {
-      if (usage instanceof InheritorUsageInfo) {
-        final PsiClass inheritor = ((InheritorUsageInfo)usage).getInheritor();
+      if (usage instanceof InheritorUsageInfo inheritorUsage) {
+        final PsiClass inheritor = inheritorUsage.getInheritor();
         addMethodToClass(inheritor, patternMethod, true);
       }
-      else if (usage instanceof MethodCallUsageInfo && !((MethodCallUsageInfo)usage).isInternal()) {
-        final PsiElement expression = ((MethodCallUsageInfo)usage).getMethodCallExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          correctMethodCall((PsiMethodCallExpression)expression, false);
+      else if (usage instanceof MethodCallUsageInfo methodCallUsage && !methodCallUsage.isInternal()) {
+        final PsiElement expression = methodCallUsage.getMethodCallExpression();
+        if (expression instanceof PsiMethodCallExpression call) {
+          correctMethodCall(call, false);
         }
         else if (expression instanceof PsiMethodReferenceExpression methodReferenceExpression) {
           PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
 
-          if (myTargetVariable instanceof PsiParameter && shouldBeExpandedToLambda(methodReferenceExpression, myMethod.getParameterList().getParameterIndex((PsiParameter)myTargetVariable))) {
+          if (myTargetVariable instanceof PsiParameter parameter && 
+              shouldBeExpandedToLambda(methodReferenceExpression, myMethod.getParameterList().getParameterIndex(parameter))) {
             PsiLambdaExpression lambdaExpression = LambdaRefactoringUtil.convertMethodReferenceToLambda(methodReferenceExpression, false, true);
             if (lambdaExpression != null) {
               List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
@@ -266,7 +269,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           else {
             String exprText;
             if (myTargetVariable instanceof PsiParameter ||
-                qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == myMethod.getContainingClass()) {
+                qualifierExpression instanceof PsiReferenceExpression ref && ref.resolve() == myMethod.getContainingClass()) {
               exprText = myTargetVariable.getType().getCanonicalText();
             }
             else if (qualifierExpression instanceof PsiReferenceExpression) {
@@ -276,7 +279,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               exprText = myTargetVariable.getName();
             }
             PsiExpression newQualifier = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText(exprText, null);
-            ((PsiMethodReferenceExpression)expression).setQualifierExpression(newQualifier);
+            methodReferenceExpression.setQualifierExpression(newQualifier);
             JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(expression);
           }
         }
@@ -288,7 +291,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
     try {
       final PsiModifierList modifierList = patternMethod.getModifierList();
-      if (myTargetClass.isInterface()) {
+      if (myTargetClass.isInterface() && !myMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         if (!PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myTargetClass)) {
           patternMethod.getBody().delete();
           modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
@@ -452,112 +455,17 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
-  private PsiMethod createMethodToAdd () {
+  private PsiMethod createMethodToAdd() {
     ChangeContextUtil.encodeContextInfo(myMethod, true);
     try {
-      final PsiManager manager = myMethod.getManager();
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-      final PsiElementFactory factory = facade.getElementFactory();
-
       //correct internal references
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
-        final Map<PsiElement, PsiElement> replaceMap = new HashMap<>();
-        body.accept(new JavaRecursiveElementVisitor() {
-          @Override public void visitThisExpression(@NotNull PsiThisExpression expression) {
-            final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
-            if (classReferencedByThis != null && !PsiTreeUtil.isAncestor(myMethod, classReferencedByThis, false)) {
-              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
-              String paramName = getParameterNameToCreate(classReferencedByThis);
-              try {
-                final PsiExpression refExpression = factory.createExpressionFromText(paramName, null);
-                replaceMap.put(expression, refExpression);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
-            }
-          }
-
-          @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-            try {
-              final PsiExpression qualifier = expression.getQualifierExpression();
-              final PsiElement resolved = expression.resolve();
-              if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
-                if (resolved instanceof PsiField) {
-                  String fieldName = ((PsiField)resolved).getName();
-                  for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
-                    if (Comparing.strEqual(parameter.getName(), fieldName) ||
-                        facade.getResolveHelper().resolveReferencedVariable(fieldName, expression) != null) {
-                      qualifier.replace(factory.createExpressionFromText("this", null));
-                      return;
-                    }
-                  }
-                }
-                if (expression instanceof PsiMethodReferenceExpression) {
-                  qualifier.replace(factory.createExpressionFromText("this", null));
-                }
-                else {
-                  //Target is a field, replace target.m -> m
-                  qualifier.delete();
-                }
-                return;
-              }
-              if (myTargetVariable.equals(resolved)) {
-                PsiThisExpression thisExpression = RefactoringChangeUtil.createThisExpression(manager, PsiTreeUtil.isAncestor(myMethod, PsiTreeUtil.getParentOfType(expression, PsiClass.class), true) ? myTargetClass : null);
-                replaceMap.put(expression, thisExpression);
-                return;
-              }
-              else if (myMethod.equals(resolved)) {
-              }
-              else {
-                PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
-                if (classReferencedByThis != null) {
-                  final String paramName = getParameterNameToCreate(classReferencedByThis);
-                  if (paramName != null) {
-                    PsiReferenceExpression newQualifier = (PsiReferenceExpression)factory.createExpressionFromText(paramName, null);
-                    expression.setQualifierExpression(newQualifier);
-                    return;
-                  }
-                }
-              }
-              super.visitReferenceExpression(expression);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-
-          @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
-            try {
-              final PsiExpression qualifier = expression.getQualifier();
-              if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
-                //Target is a field, replace target.new A() -> new A()
-                qualifier.delete();
-              } else {
-                final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
-                if (classReferencedByThis != null) {
-                  if (qualifier != null) qualifier.delete();
-                  final String paramName = getParameterNameToCreate(classReferencedByThis);
-                  final PsiExpression newExpression = factory.createExpressionFromText(paramName + "." + expression.getText(), null);
-                  replaceMap.put(expression, newExpression);
-                }
-              }
-              super.visitNewExpression(expression);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-
-          @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-            correctMethodCall(expression, true);
-            super.visitMethodCallExpression(expression);
-          }
-        });
-        for (PsiElement element : replaceMap.keySet()) {
-          final PsiElement replacement = replaceMap.get(element);
-          element.replace(replacement);
+        replaceReferences(body);
+      } else {
+        if (myMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !myTargetClass.isInterface() && !myTargetClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          CreateFromUsageUtils.setupMethodBody(myMethod);
         }
       }
 
@@ -570,6 +478,108 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     catch (IncorrectOperationException e) {
       LOG.error(e);
       return myMethod;
+    }
+  }
+
+  private void replaceReferences(PsiCodeBlock body) {
+    final PsiManager manager = myMethod.getManager();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    final PsiElementFactory factory = facade.getElementFactory();
+    final Map<PsiElement, PsiElement> replaceMap = new HashMap<>();
+    body.accept(new JavaRecursiveElementVisitor() {
+      @Override public void visitThisExpression(@NotNull PsiThisExpression expression) {
+        final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
+        if (classReferencedByThis != null && !PsiTreeUtil.isAncestor(myMethod, classReferencedByThis, false)) {
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
+          String paramName = getParameterNameToCreate(classReferencedByThis);
+          try {
+            final PsiExpression refExpression = factory.createExpressionFromText(paramName, null);
+            replaceMap.put(expression, refExpression);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      }
+
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+        try {
+          final PsiExpression qualifier = expression.getQualifierExpression();
+          final PsiElement resolved = expression.resolve();
+          if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
+            if (resolved instanceof PsiField) {
+              String fieldName = ((PsiField)resolved).getName();
+              for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
+                if (Comparing.strEqual(parameter.getName(), fieldName) ||
+                    facade.getResolveHelper().resolveReferencedVariable(fieldName, expression) != null) {
+                  qualifier.replace(factory.createExpressionFromText("this", null));
+                  return;
+                }
+              }
+            }
+            if (expression instanceof PsiMethodReferenceExpression) {
+              qualifier.replace(factory.createExpressionFromText("this", null));
+            }
+            else {
+              //Target is a field, replace target.m -> m
+              qualifier.delete();
+            }
+            return;
+          }
+          if (myTargetVariable.equals(resolved)) {
+            PsiThisExpression thisExpression = RefactoringChangeUtil.createThisExpression(
+              manager, PsiTreeUtil.isAncestor(myMethod, ClassUtils.getContainingClass(expression), true) ? myTargetClass : null);
+            replaceMap.put(expression, thisExpression);
+            return;
+          }
+          if (!myMethod.equals(resolved)) {
+            PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
+            if (classReferencedByThis != null) {
+              final String paramName = getParameterNameToCreate(classReferencedByThis);
+              if (paramName != null) {
+                PsiReferenceExpression newQualifier = (PsiReferenceExpression)factory.createExpressionFromText(paramName, null);
+                expression.setQualifierExpression(newQualifier);
+                return;
+              }
+            }
+          }
+          super.visitReferenceExpression(expression);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+
+      @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        try {
+          final PsiExpression qualifier = expression.getQualifier();
+          if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
+            //Target is a field, replace target.new A() -> new A()
+            qualifier.delete();
+          } else {
+            final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
+            if (classReferencedByThis != null) {
+              if (qualifier != null) qualifier.delete();
+              final String paramName = getParameterNameToCreate(classReferencedByThis);
+              final PsiExpression newExpression = factory.createExpressionFromText(paramName + "." + expression.getText(), null);
+              replaceMap.put(expression, newExpression);
+            }
+          }
+          super.visitNewExpression(expression);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+
+      @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+        correctMethodCall(expression, true);
+        super.visitMethodCallExpression(expression);
+      }
+    });
+    for (PsiElement element : replaceMap.keySet()) {
+      final PsiElement replacement = replaceMap.get(element);
+      element.replace(replacement);
     }
   }
 

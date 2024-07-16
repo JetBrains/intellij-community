@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.isGroovySourceFile;
 
-public class FieldScriptTransformationSupport implements AstTransformationSupport {
+public final class FieldScriptTransformationSupport implements AstTransformationSupport {
   @NlsSafe private static final String FIELD = "Field";
 
   @Override

@@ -28,5 +28,17 @@ sealed interface ErrorStatusPresenter<T> {
 
   companion object {
     const val ERROR_ACTION_HREF: String = "ERROR_ACTION"
+
+    fun <T : Throwable> simple(
+      title: @Nls String,
+      descriptionProvider: ((T) -> @Nls String?)? = null,
+      actionProvider: (T) -> Action? = { null },
+    ): Text<T> = object : Text<T> {
+      override fun getErrorTitle(error: T): String = title
+      override fun getErrorAction(error: T): Action? = actionProvider(error)
+      override fun getErrorDescription(error: T): String? =
+        if (descriptionProvider != null) descriptionProvider.invoke(error)
+        else error.localizedMessage
+    }
   }
 }

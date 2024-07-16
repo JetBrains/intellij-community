@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -55,7 +55,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     final PyBrowseActionListener listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
 
       @Override
-      protected void onFileChosen(@NotNull final VirtualFile chosenFile) {
+      protected void onFileChosen(final @NotNull VirtualFile chosenFile) {
         super.onFileChosen(chosenFile);
         myCommonOptionsForm.setWorkingDirectory(chosenFile.getParent().getPath());
       }
@@ -162,21 +162,20 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   public void setMultiprocessMode(boolean multiprocess) {
   }
 
-  @Nls public static String getScriptPathText() {
+  public static @Nls String getScriptPathText() {
     return PyBundle.message("runcfg.labels.script.path");
   }
 
-  @Nls public static String getModuleNameText() {
+  public static @Nls String getModuleNameText() {
     return PyBundle.message("runcfg.labels.module.name");
   }
 
-  @Nls public static String getCustomNameText() {
+  public static @Nls String getCustomNameText() {
     return PyBundle.message("runcfg.labels.custom.name");
   }
 
   @Override
-  @NotNull
-  public String getInputFile() {
+  public @NotNull String getInputFile() {
     return content.inputFileTextFieldWithBrowseButton.getText();
   }
 

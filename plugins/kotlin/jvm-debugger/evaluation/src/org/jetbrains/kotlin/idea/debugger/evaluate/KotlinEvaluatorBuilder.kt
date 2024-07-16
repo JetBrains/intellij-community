@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -29,11 +29,12 @@ import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
-import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerFacility
-import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerFacility
+import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
@@ -106,7 +107,7 @@ object KotlinEvaluatorBuilder : EvaluatorBuilder {
     }
 }
 
-class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePosition: SourcePosition?) : Evaluator {
+class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePosition: SourcePosition?) : Evaluator, ExternalExpressionEvaluator {
 
     override fun evaluate(context: EvaluationContextImpl): Any? {
         if (codeFragment.text.isEmpty()) {
@@ -163,7 +164,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.SUCCESS)
             }
         } catch (e: Throwable) {
-            if (e !is EvaluateException && !isUnitTestMode()) {
+            if (e !is EvaluateException && e !is Eval4JInterpretingException && !isUnitTestMode()) {
                 KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.FAILURE)
                 if (isApplicationInternalMode()) {
                     reportErrorWithAttachments(context, codeFragment, e,
@@ -202,7 +203,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 evaluateWithEval4J(context, compiledData, classLoaderRef)
             }
         } else {
-            evaluateWithEval4J(context, compiledData, null)
+            evaluateWithEval4J(context, compiledData, context.classLoader)
         }
 
         return result.toJdiValue(context)
@@ -260,6 +261,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext): CompiledCodeFragmentData {
         val module = codeFragment.module
 
@@ -268,19 +270,19 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 put(CommonConfigurationKeys.MODULE_NAME, module.name)
             }
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
-            put(KtCompilerFacility.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
-            put(KtCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
+            put(KaCompilerFacility.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
+            put(KaCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
             // Compile lambdas to anonymous classes, so that toString would show something sensible for them.
             put(JVMConfigurationKeys.LAMBDAS, JvmClosureGenerationScheme.CLASS)
         }
 
         return analyze(codeFragment) {
             try {
-                val compilerTarget = KtCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
+                val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
                 val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
 
                 when (val result = compile(codeFragment, compilerConfiguration, compilerTarget, allowedErrorFilter)) {
-                    is KtCompilationResult.Success -> {
+                    is KaCompilationResult.Success -> {
                         logCompilation(codeFragment)
 
                         val classes: List<ClassToLoad> = result.output
@@ -294,7 +296,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         val ideCompilationResult = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature)
                         createCompiledDataDescriptor(ideCompilationResult)
                     }
-                    is KtCompilationResult.Failure -> {
+                    is KaCompilationResult.Failure -> {
                         val firstError = result.errors.first()
                         throw EvaluateExceptionUtil.createEvaluateException(firstError.defaultMessage)
                     }
@@ -310,7 +312,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun computeCodeFragmentParameterInfo(result: KtCompilationResult.Success): K2CodeFragmentParameterInfo {
+    @KaExperimentalApi
+    private fun computeCodeFragmentParameterInfo(result: KaCompilationResult.Success): K2CodeFragmentParameterInfo {
         val parameters = ArrayList<CodeFragmentParameter.Dumb>(result.capturedValues.size)
         val crossingBounds = HashSet<CodeFragmentParameter.Dumb>()
 
@@ -326,6 +329,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         return K2CodeFragmentParameterInfo(parameters, crossingBounds)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
         return when (this) {
             is CodeFragmentCapturedValue.Local ->
@@ -364,7 +368,12 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         } else {
             OldCodeFragmentCompilingStrategy(codeFragment)
         }
-        patchCodeFragment(context, codeFragment, compilerStrategy.stats)
+        try {
+            patchCodeFragment(context, codeFragment, compilerStrategy.stats)
+        } catch (e: Exception) {
+            compilerStrategy.processError(e, codeFragment, emptyList(), context)
+            throw e
+        }
 
         compilerStrategy.beforeAnalyzingCodeFragment()
         val analysisResult = analyze(codeFragment, debugProcess)

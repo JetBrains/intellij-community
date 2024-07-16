@@ -34,8 +34,6 @@ import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 
-data class ReplaceWithData(val pattern: String, val imports: List<String>, val replaceInWholeProject: Boolean)
-
 @OptIn(FrontendInternals::class)
 object ReplaceWithAnnotationAnalyzer {
     fun analyzeCallableReplacement(
@@ -91,7 +89,7 @@ object ReplaceWithAnnotationAnalyzer {
         val scope = buildScope(resolutionFacade, replaceWith, symbolDescriptor) ?: return null
 
         val typeResolver = resolutionFacade.getFrontendService(TypeResolver::class.java)
-        val bindingTrace = BindingTraceContext()
+        val bindingTrace = BindingTraceContext(resolutionFacade.project)
         typeResolver.resolvePossiblyBareType(TypeResolutionContext(scope, bindingTrace, false, true, false), typeReference)
 
         val typesToQualify = ArrayList<Pair<KtNameReferenceExpression, FqName>>()

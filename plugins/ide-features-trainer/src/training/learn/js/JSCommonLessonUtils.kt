@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.learn.js
 
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -52,7 +52,7 @@ fun TaskRuntimeContext.textAtCaretEqualsTo(text: String): Boolean {
 }
 
 fun shiftSymbol(): String {
-  if (SystemInfo.isMac) {
+  if (ClientSystemInfo.isMac()) {
     return "⇧"
   }
   return "Shift"

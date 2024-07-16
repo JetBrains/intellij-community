@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress;
 
 import org.jetbrains.annotations.ApiStatus.Obsolete;
+import org.jetbrains.annotations.Contract;
 
 public abstract class ProgressIndicatorProvider {
   public static ProgressIndicatorProvider getInstance() {
@@ -29,6 +30,7 @@ public abstract class ProgressIndicatorProvider {
    * or null if this code is running outside any progress.
    */
   @Obsolete
+  @Contract(pure = true)
   public static ProgressIndicator getGlobalProgressIndicator() {
     ProgressManager instance = ProgressManager.getInstanceOrNull();
     return instance == null ? null : instance.getProgressIndicator();

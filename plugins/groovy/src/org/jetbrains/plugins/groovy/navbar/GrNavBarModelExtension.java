@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class GrNavBarModelExtension extends AbstractNavBarModelExtension {
+public final class GrNavBarModelExtension extends AbstractNavBarModelExtension {
 
   @Nullable
   @Override

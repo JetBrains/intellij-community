@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.settings;
 
 import com.intellij.openapi.options.Configurable;
@@ -94,13 +94,11 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
     return myAlwaysDoSmartStepIntoEnabled;
   }
 
-  @NotNull
-  public List<PySteppingFilter> getSteppingFilters() {
+  public @NotNull List<PySteppingFilter> getSteppingFilters() {
     return mySteppingFilters;
   }
 
-  @NotNull
-  public String getSteppingFiltersForProject(@NotNull Project project) {
+  public @NotNull String getSteppingFiltersForProject(@NotNull Project project) {
     StringBuilder sb = new StringBuilder();
     for (PySteppingFilter filter : mySteppingFilters) {
       if (filter.isEnabled()) {
@@ -129,9 +127,8 @@ public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettin
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
+  public @NotNull Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     if (category == DebuggerSettingsCategory.STEPPING) {
       return singletonList(SimpleConfigurable.create("python.debug.configurable", "Python", //NON-NLS
                                                      PyDebuggerSteppingConfigurableUi.class, () -> this));

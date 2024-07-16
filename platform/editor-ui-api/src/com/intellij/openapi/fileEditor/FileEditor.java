@@ -23,16 +23,22 @@ import java.util.List;
  * @see TextEditor
  */
 public interface FileEditor extends UserDataHolder, Disposable {
+
+  FileEditor[] EMPTY_ARRAY = {};
+
   /**
    * @see #isModified()
    */
-  String PROP_MODIFIED = "modified";
+  static @NotNull String getPropModified() {
+    return "modified";
+  }
+
   /**
    * @see #isValid()
    */
-  String PROP_VALID = "valid";
-
-  FileEditor[] EMPTY_ARRAY = {};
+  static @NotNull String getPropValid() {
+    return "valid";
+  }
 
   /**
    * Returns a component which represents the editor in UI.

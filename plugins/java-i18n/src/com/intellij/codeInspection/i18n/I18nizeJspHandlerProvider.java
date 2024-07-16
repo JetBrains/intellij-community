@@ -21,7 +21,7 @@ import org.jetbrains.uast.UExpression;
 
 import java.util.Collection;
 
-public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
+public final class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
 
   private static final I18nQuickFixHandler<UExpression> HADLER = new I18nQuickFixHandler<>() {
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.actionSystem.*;
@@ -24,7 +24,7 @@ public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(false);
     final Project project = e.getData(CommonDataKeys.PROJECT);
@@ -37,7 +37,7 @@ public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
     PyExecuteInConsole.executeCodeInConsole(project, (String)null, null, true, true, true, null);

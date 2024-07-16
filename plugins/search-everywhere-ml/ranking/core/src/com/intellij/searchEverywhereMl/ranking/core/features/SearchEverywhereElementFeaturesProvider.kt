@@ -1,12 +1,15 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core.features
 
+import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.searchEverywhereMl.ranking.core.searchEverywhereMlRankingService
 import com.intellij.textMatching.PrefixMatchingType
 import com.intellij.textMatching.PrefixMatchingUtil
+import com.intellij.textMatching.WholeTextMatchUtil
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.round
 
@@ -15,8 +18,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   constructor(vararg supportedTabs: Class<out SearchEverywhereContributor<*>>) : this(supportedTabs.map { it.simpleName })
 
   companion object {
-    val EP_NAME: ExtensionPointName<SearchEverywhereElementFeaturesProvider>
-      = ExtensionPointName.create("com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider")
+    val EP_NAME: ExtensionPointName<SearchEverywhereElementFeaturesProvider> = ExtensionPointName.create("com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider")
 
     fun getFeatureProviders(): List<SearchEverywhereElementFeaturesProvider> {
       return EP_NAME.extensionList.filter { getPluginInfo(it.javaClass).isDevelopedByJetBrains() }
@@ -30,9 +32,12 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
 
     internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
     internal val ML_SCORE_KEY = EventFields.Double("mlScore")
+    internal val SIMILARITY_SCORE = EventFields.Double("similarityScore")
+    internal val IS_SEMANTIC_ONLY = EventFields.Boolean("isSemanticOnly")
+    internal val BUFFERED_TIMESTAMP = EventFields.Long("bufferedTimestamp")
 
 
-    internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
+    internal val prefixMatchingNameFeatureToField = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
       "prefix_greedy_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyScore"),
       "prefix_greedy_with_case_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyWithCaseScore"),
@@ -42,10 +47,20 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       "prefix_matched_words_with_case_relative" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsWithCaseRelative"),
       "prefix_skipped_words" to EventFields.Int("${PrefixMatchingUtil.baseName}SkippedWords"),
       "prefix_matching_type" to EventFields.String(
-        "${PrefixMatchingUtil.baseName}MatchingType", PrefixMatchingType.values().map { it.name }
+        "${PrefixMatchingUtil.baseName}MatchingType", PrefixMatchingType.entries.map { it.name }
       ),
       "prefix_exact" to EventFields.Boolean("${PrefixMatchingUtil.baseName}Exact"),
       "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
+    )
+    internal val wholeMatchingNameFeatureToField = hashMapOf<String, EventField<*>>(
+      "levenshtein_distance" to EventFields.Double("${WholeTextMatchUtil.baseName}LevenshteinDistance",
+                                                   "Levenshtein distance normalized by query lengths"),
+      "levenshtein_distance_case_insensitive" to
+        EventFields.Double("${WholeTextMatchUtil.baseName}LevenshteinDistanceCaseInsensitive",
+                           "Levenshtein distance with case insensitive matching, normalized by query length"),
+      "words_in_query" to EventFields.Int("${WholeTextMatchUtil.baseName}WordsInQuery", "Number of words in the query"),
+      "words_in_element" to EventFields.Int("${WholeTextMatchUtil.baseName}WordsInElement", "Number of words in the element text"),
+      "exactly_matched_words" to EventFields.Int("${WholeTextMatchUtil.baseName}ExactlyMatchedWords")
     )
 
 
@@ -84,12 +99,19 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       NAME_LENGTH.with(nameOfFoundElement.length)
     )
     features.forEach { (key, value) ->
-      val field = nameFeatureToField[key]
+      val field = prefixMatchingNameFeatureToField[key]
       setMatchValueToField(value, field)?.let {
         result.add(it)
       }
     }
+    result.addAll(WholeTextMatchUtil.calculateFeatures(nameOfFoundElement, searchQuery).map { (key, value) ->
+      setMatchValueToField(value, wholeMatchingNameFeatureToField[key])
+    }.filterNotNull())
     return result
+  }
+
+  protected fun getQueryEmbedding(queryText: String, split: Boolean = false): FloatTextEmbedding? {
+    return searchEverywhereMlRankingService?.getCurrentSession()?.getSearchQueryEmbedding(queryText, split)
   }
 
   internal fun setMatchValueToField(matchValue: Any,
@@ -109,6 +131,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     return null
   }
 }
+
 @ApiStatus.Internal
 fun <T> MutableList<EventPair<*>>.putIfValueNotNull(key: EventField<T>, value: T?) {
   value?.let {

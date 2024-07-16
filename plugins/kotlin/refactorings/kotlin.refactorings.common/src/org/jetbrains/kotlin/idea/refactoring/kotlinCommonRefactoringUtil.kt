@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDirectory
@@ -10,30 +11,48 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.changeSignature.ChangeInfo
-import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.ui.ConflictsDialog
+import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.siblings
-import java.util.Collections
+import java.util.*
 import kotlin.math.min
+
+/**
+ * Get the element that specifies the name of [this] element.
+ */
+fun PsiElement.nameDeterminant() = when {
+    this is KtConstructor<*> -> containingClass() ?: error("Constructor had no containing class")
+    this is PsiMethod && isConstructor -> containingClass ?: error("Constructor had no containing class")
+    else -> this
+} as PsiNamedElement
+
+fun PsiElement.getContainer(): PsiElement {
+    return when (this) {
+        is KtElement -> PsiTreeUtil.getParentOfType(
+            this,
+            KtPropertyAccessor::class.java,
+            KtProperty::class.java,
+            KtNamedFunction::class.java,
+            KtConstructor::class.java,
+            KtClassOrObject::class.java
+        ) ?: containingFile
+        else -> ConflictsUtil.getContainer(this)
+    }
+}
 
 fun KtFile.createTempCopy(text: String? = null): KtFile {
     val tmpFile = KtPsiFactory.contextual(this).createFile(name, text ?: this.text ?: "")
@@ -245,7 +264,7 @@ fun PsiElement.getAllExtractionContainers(strict: Boolean = true): List<KtElemen
     return containers
 }
 
-fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boolean = false): List<KtElement> {
+fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boolean = false, acceptScript: Boolean = false): List<KtElement> {
     fun getEnclosingDeclaration(element: PsiElement, strict: Boolean): PsiElement? {
         return (if (strict) element.parents else element.parentsWithSelf)
             .filter {
@@ -253,6 +272,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
                         || it is KtAnonymousInitializer
                         || it is KtClassBody
                         || it is KtFile
+                        || acceptScript && it is KtScript
             }
             .firstOrNull()
     }
@@ -265,6 +285,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
 
     return when (enclosingDeclaration) {
         is KtFile -> Collections.singletonList(enclosingDeclaration)
+        is KtScript -> Collections.singletonList(enclosingDeclaration)
         is KtClassBody -> getAllExtractionContainers(strict).filterIsInstance<KtClassBody>()
         else -> {
             val targetContainer = when (enclosingDeclaration) {
@@ -276,3 +297,43 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
         }
     }
 }
+
+fun KtBlockExpression.addElement(element: KtElement, addNewLine: Boolean = false): KtElement {
+    val rBrace = rBrace
+    val newLine = KtPsiFactory(project).createNewLine()
+    val anchor = if (rBrace == null) {
+        val lastChild = lastChild
+        lastChild as? PsiWhiteSpace ?: addAfter(newLine, lastChild)!!
+    } else {
+        rBrace.prevSibling!!
+    }
+    val addedElement = addAfter(element, anchor)!! as KtElement
+    if (addNewLine) {
+        addAfter(newLine, addedElement)
+    }
+    return addedElement
+}
+
+fun Project.checkConflictsInteractively(
+    conflicts: MultiMap<PsiElement, String>,
+    onShowConflicts: () -> Unit = {},
+    onAccept: () -> Unit
+) {
+    if (!conflicts.isEmpty) {
+        if (isUnitTestMode()) throw ConflictsInTestsException(conflicts.values())
+
+        val dialog = ConflictsDialog(this, conflicts) { onAccept() }
+        dialog.show()
+        if (!dialog.isOK) {
+            if (dialog.isShowConflicts) {
+                onShowConflicts()
+            }
+            return
+        }
+    }
+
+    onAccept()
+}
+
+fun FqNameUnsafe.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
+fun FqName.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }

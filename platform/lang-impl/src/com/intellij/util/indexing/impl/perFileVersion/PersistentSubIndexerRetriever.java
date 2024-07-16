@@ -3,8 +3,8 @@ package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.indexing.*;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,6 +16,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+@Internal
 public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion>
   implements Closeable, PersistentSubIndexerRetrieverBase<SubIndexerVersion> {
   private static final String INDEXED_VERSIONS = "indexed_versions";

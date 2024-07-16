@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
@@ -60,16 +59,6 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @NotNull
   public Path getHostWorkingDirectory() {
     return getLocalBuildSystemDirectory();
-  }
-
-  @Override
-  public InetAddress getListenAddress() {
-    return InetAddress.getLoopbackAddress();
-  }
-
-  @Override
-  public @NotNull String getHostIp() {
-    return getListenAddress().getHostAddress();
   }
 
   @Override

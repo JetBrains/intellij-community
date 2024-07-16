@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -30,11 +30,11 @@ public final class MalformedFormatStringInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  @NonNls public String additionalClasses = "";
+  public @NonNls String additionalClasses = "";
   /**
    * @noinspection PublicField
    */
-  @NonNls public String additionalMethods = "";
+  public @NonNls String additionalMethods = "";
 
   public MalformedFormatStringInspection() {
     classNames = new ArrayList<>();
@@ -67,8 +67,7 @@ public final class MalformedFormatStringInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Object value = infos[0];
     if (value instanceof Exception exception) {
       final String message = exception.getMessage();

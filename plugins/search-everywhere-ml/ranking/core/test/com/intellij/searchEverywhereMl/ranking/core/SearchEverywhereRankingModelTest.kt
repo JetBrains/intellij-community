@@ -5,40 +5,45 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCache
 import com.intellij.searchEverywhereMl.ranking.core.features.HeavyFeaturesProviderTestCase
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereModelProvider
+import com.intellij.testFramework.VfsTestUtil
 
 internal abstract class SearchEverywhereRankingModelTest
   : HeavyFeaturesProviderTestCase<SearchEverywhereFileFeaturesProvider>(SearchEverywhereFileFeaturesProvider::class.java) {
   abstract val tab: SearchEverywhereTabWithMlRanking
   private val featuresProviders by lazy { SearchEverywhereElementFeaturesProvider.getFeatureProviders() }
-  protected val model by lazy { SearchEverywhereModelProvider().getModel(tab.tabId) }
+  protected open val model by lazy { SearchEverywhereModelProvider().getModel(tab.tabId) }
   protected val mockProgressIndicator by lazy { MockProgressIndicator() }
 
   protected abstract fun filterElements(searchQuery: String): List<FoundItemDescriptor<*>>
 
   protected fun performSearchFor(searchQuery: String, featuresProviderCache: FeaturesProviderCache? = null): RankingAssertion {
-    VirtualFileManager.getInstance().syncRefresh()
-    val rankedElements: List<FoundItemDescriptor<*>> = filterElements(searchQuery)
-      .associateWith { getMlWeight(it, searchQuery, featuresProviderCache) }
-      .entries
-      .sortedByDescending { it.value }
-      .map { it.key }
+    VfsTestUtil.syncRefresh()
+
+    lateinit var rankedElements: List<FoundItemDescriptor<*>>
+    ProgressManager.getInstance().executeNonCancelableSection {
+      rankedElements = filterElements(searchQuery)
+        .associateWith { getMlWeight(it, searchQuery, featuresProviderCache) }
+        .entries
+        .sortedByDescending { it.value }
+        .map { it.key }
+    }
 
     assert(rankedElements.size > 1) { "Found ${rankedElements.size} which is unsuitable for ranking assertions" }
 
     return RankingAssertion(rankedElements)
   }
 
-  private fun getMlWeight(item: FoundItemDescriptor<*>,
-                          searchQuery: String,
-                          featuresProviderCache: FeaturesProviderCache?): Double {
+  protected fun getMlWeight(item: FoundItemDescriptor<*>,
+                            searchQuery: String,
+                            featuresProviderCache: FeaturesProviderCache?): Double {
     return model.predict(getElementFeatures(item, searchQuery, featuresProviderCache))
   }
 
@@ -56,10 +61,11 @@ internal abstract class SearchEverywhereRankingModelTest
     }.fold(emptyMap()) { acc, value -> acc + value }
   }
 
+  @Suppress("unused")
   protected class RankingAssertion(private val results: List<FoundItemDescriptor<*>>) {
     fun thenAssertElement(element: FoundItemDescriptor<*>) = ElementAssertion(element)
-    fun findElementAndAssert(predicate: (FoundItemDescriptor<*>) -> Boolean) = ElementAssertion(results.find(predicate)!!)
 
+    @Suppress("unused")
     inner class ElementAssertion(private val element: FoundItemDescriptor<*>) {
       fun isWithinTop(n: Int) {
         val errorMessage = "The index of the element is actually ${results.indexOf(element)}, it's not within the top $n."
@@ -72,6 +78,8 @@ internal abstract class SearchEverywhereRankingModelTest
         assertEquals(errorMessage, element, results[index])
       }
     }
+
+    fun findElementAndAssert(predicate: (FoundItemDescriptor<*>) -> Boolean) = ElementAssertion(results.find(predicate)!!)
   }
 
   protected inner class StubChooseByNameViewModel(private val model: ChooseByNameModel) : ChooseByNameViewModel {

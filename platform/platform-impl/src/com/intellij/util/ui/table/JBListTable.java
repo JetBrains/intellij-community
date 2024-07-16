@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DottedBorder;
@@ -68,7 +69,7 @@ public abstract class JBListTable {
   private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
     final List<EditorTextField> editors = UIUtil.findComponentsOfType(editor, EditorTextField.class);
     for (EditorTextField textField : editors) {
-      textField.putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
+      textField.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.FALSE);
       textField.putClientProperty("JBListTable.isTableCellEditor", Boolean.TRUE);
     }
   }

@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.hints
 
 import com.intellij.util.indexing.SubstitutedFileType
+import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * [SubstitutedFileType] is an error-prone way to use filetype. Effectively it means that some file has two file types:
@@ -11,6 +12,7 @@ import com.intellij.util.indexing.SubstitutedFileType
  * any real filetype (e.g. JavaFileType). To simplify API, some classes (e.g. [BaseFileTypeInputFilter]) resolve
  * [SubstitutedFileType] to real filetype. [FileTypeSubstitutionStrategy] defines the resolution strategy.
  */
+@Experimental
 enum class FileTypeSubstitutionStrategy {
   BEFORE_SUBSTITUTION,
   AFTER_SUBSTITUTION

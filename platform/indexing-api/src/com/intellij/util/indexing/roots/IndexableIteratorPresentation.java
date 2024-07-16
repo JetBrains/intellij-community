@@ -2,9 +2,11 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+@Internal
 public interface IndexableIteratorPresentation {
   /**
    * Presentable name that can be shown in logs and used for debugging purposes.

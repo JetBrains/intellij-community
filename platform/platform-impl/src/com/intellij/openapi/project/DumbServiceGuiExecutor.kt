@@ -1,33 +1,38 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.ide.IdeBundle
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
 import com.intellij.openapi.project.DumbModeStatisticsCollector.logProcessFinished
-import com.intellij.openapi.project.MergingTaskQueue.QueuedTask
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.indexing.IndexingBundle
-import com.intellij.util.io.storage.HeavyProcessLatch
 import kotlinx.coroutines.flow.first
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
+import kotlin.coroutines.CoroutineContext
 
-@VisibleForTesting
+@Internal
 class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueue, listener: ExecutorStateListener)
   : MergingQueueGuiExecutor<DumbModeTask>(project, queue, listener,
                                           IndexingBundle.message("progress.indexing"),
                                           IndexingBundle.message("progress.indexing.paused")) {
+
+  override val taskId = IndexingType.INDEXING
 
   internal fun guiSuspender(): MergingQueueGuiSuspender = super.guiSuspender
 
   override fun processTasksWithProgress(suspender: ProgressSuspender?,
                                         visibleIndicator: ProgressIndicator,
                                         parentActivity: StructuredIdeActivity?): SubmissionReceipt? {
-    val childActivity = createChildActivity(parentActivity)
+    if (parentActivity != null) {
+      thisLogger().error("DumbServiceGuiExecutor is supposed to have a plain structure of activities. $parentActivity")
+    }
+    val childActivity = DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project)
     var taskCompletedNormally = false
     return try {
       if (visibleIndicator is ProgressIndicatorEx) DumbServiceAppIconProgress.registerForProgress(project, visibleIndicator)
@@ -42,23 +47,17 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
     }
   }
 
-  private fun createChildActivity(parentActivity: StructuredIdeActivity?): StructuredIdeActivity {
-    return if (parentActivity == null) {
-      DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.started(project)
-    }
-    else {
-      DumbModeStatisticsCollector.DUMB_MODE_ACTIVITY.startedWithParent(project, parentActivity)
-    }
-  }
-
-  override fun runSingleTask(task: QueuedTask<DumbModeTask>, activity: StructuredIdeActivity?) {
-    HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Indexing, IdeBundle.message("progress.performing.indexing.tasks")) {
-      super.runSingleTask(task, activity)
-    }
-  }
-
   @TestOnly
   internal suspend fun waitUntilFinished() {
     isRunning.first { !it }
+  }
+
+  @ApiStatus.Internal
+  enum class IndexingType : CoroutineContext.Element {
+    SCANNING, INDEXING;
+
+    override val key: CoroutineContext.Key<IndexingType> get() = IndexingType
+
+    companion object Key : CoroutineContext.Key<IndexingType>
   }
 }

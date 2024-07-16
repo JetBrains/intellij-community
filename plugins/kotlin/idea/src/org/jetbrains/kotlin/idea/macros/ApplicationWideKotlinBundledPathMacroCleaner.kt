@@ -9,6 +9,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.jps.KOTLIN_BUNDLED
 
 /**
  * Starting from KTIJ-11633 Kotlin JPS plugin is downloaded by IDEA depending on what current version of Kotlin compiler in project

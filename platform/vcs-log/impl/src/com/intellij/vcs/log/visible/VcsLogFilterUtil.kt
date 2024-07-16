@@ -41,11 +41,12 @@ private fun VcsLogFiltererImpl.filter(dataPack: DataPack,
   val visibleRoots = VcsLogUtil.getAllVisibleRoots(dataPack.logProviders.keys, filters)
 
   if (!dataPack.isFull || visibleRoots.none { index.isIndexed(it) }) {
-    return filterWithVcs(filters, commitCount.count)
+    return filterWithVcs(filters, PermanentGraph.Options.Default, commitCount.count)
   }
 
   if (filters.filters.all { it is VcsLogDetailsFilter || it is VcsLogRootFilter } && structureFilter == null) {
-    val filterByDetailsResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, null, null, false)
+    val filterByDetailsResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, null, null,
+                                                PermanentGraph.Options.Default, false)
     val matchingCommits = filterByDetailsResult.matchingCommits
     if (matchingCommits != null) return matchingCommits
 
@@ -53,7 +54,7 @@ private fun VcsLogFiltererImpl.filter(dataPack: DataPack,
     return commits.mapTo(IntOpenHashSet()) { it.id }
   }
 
-  val (visiblePack, _) = filter(dataPack, VisiblePack.EMPTY, PermanentGraph.SortType.Normal, filters, commitCount)
+  val (visiblePack, _) = filter(dataPack, VisiblePack.EMPTY, PermanentGraph.Options.Default, filters, commitCount)
 
   val maxCommits = visiblePack.visibleGraph.visibleCommitCount.applyIf(!commitCount.isAll()) { coerceAtMost(commitCount.count) }
   val result = IntOpenHashSet()

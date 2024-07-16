@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.json.JsonBundle;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -179,7 +180,9 @@ public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJ
   }
 
   private void logErrorForUser(@NotNull @NotificationContent String error) {
-    JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.WARNING).notify(myProject);
+    NotificationGroupManager.getInstance()
+      .getNotificationGroup("JSON Schema")
+      .createNotification(error, MessageType.WARNING).notify(myProject);
   }
 
   @Override

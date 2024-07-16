@@ -49,7 +49,12 @@ public final class ToolManager extends BaseToolManager<Tool> {
   }
 
   @Override
-  protected String getActionIdPrefix() {
+  protected @NotNull String getActionIdPrefix() {
     return Tool.ACTION_ID_PREFIX;
+  }
+
+  @Override
+  protected @NotNull String getGroupIdPrefix() {
+    return "Tools_";
   }
 }

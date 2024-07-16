@@ -23,7 +23,7 @@ internal class ChooseTemplateDataLanguageIntention : IntentionAction {
   }
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    return file?.viewProvider is TemplateLanguageFileViewProvider
+    return file?.viewProvider is ConfigurableTemplateLanguageFileViewProvider
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {

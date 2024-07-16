@@ -58,6 +58,13 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack =
     ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
+  /**
+   * Prevents caching of the inner computations that happened inside ignoreDumbMode (in case if access to indexes was in fact requested)
+   * But it doesn't prevent caching of the result returned from ignoreDumbMode (for example, if ignoreDumbMode is
+   * wrapped in CachedValuesManager.getCachedValue)
+   * <p>
+   * It doesn't work as a recursion guard and computePreventingRecursion is not called recursively.
+   */
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
 
   @ApiStatus.Internal
@@ -602,6 +609,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     }
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
+    // after prohibitResultCaching all new attempts to cache something will be unsuccessful until ignoreDumbMode call stack finishes,
+    // e.g., if resolve triggers another resolve that will try to cache CachedValuesManager.getCachedValue it won't be cached
     ourIgnoranceGuard.prohibitResultCaching(dumbModeAccessTypeStack.get(0));
     return dumbModeAccessTypeStack.peek();
   }
@@ -622,29 +631,26 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
                                                    @NotNull ThrowableComputable<T, E> computable) throws E {
     Application app = ApplicationManager.getApplication();
-    app.assertReadAccessAllowed();
-    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
-      Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
-      boolean preventCaching = dumbModeAccessTypeStack.empty();
-      dumbModeAccessTypeStack.push(dumbModeAccessType);
-      Disposable disposable = Disposer.newDisposable();
-      if (app.isWriteIntentLockAcquired()) {
-        app.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
-                                                          () -> RecursionManager.dropCurrentMemoizationCache());
-      }
-      try {
-        return preventCaching
-               ? ourIgnoranceGuard.computePreventingRecursion(dumbModeAccessType, false, computable)
-               : computable.compute();
-      }
-      finally {
-        Disposer.dispose(disposable);
-        DumbModeAccessType type = dumbModeAccessTypeStack.pop();
-        assert dumbModeAccessType == type;
-      }
+    Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
+    boolean preventCaching = dumbModeAccessTypeStack.empty();
+    dumbModeAccessTypeStack.push(dumbModeAccessType);
+    Disposable disposable = null;
+    if (app.isWriteIntentLockAcquired()) {
+      disposable = Disposer.newDisposable();
+      app.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
+                                                        () -> RecursionManager.dropCurrentMemoizationCache());
     }
-    else {
-      return computable.compute();
+    try {
+      return preventCaching
+             ? ourIgnoranceGuard.computePreventingRecursion(dumbModeAccessType, false, computable)
+             : computable.compute();
+    }
+    finally {
+      if (disposable != null) {
+        Disposer.dispose(disposable);
+      }
+      DumbModeAccessType type = dumbModeAccessTypeStack.pop();
+      assert dumbModeAccessType == type;
     }
   }
 

@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
 import com.intellij.debugger.impl.DebuggerUtilsImpl
@@ -26,6 +27,8 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.request.EventRequest
+import junit.framework.TestCase
 import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
@@ -154,6 +157,11 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
 
             for ((expression, expected, kind) in data.fragments) {
                 mayThrow(expression) {
+                    if (myWasUsedOnlyDefaultSuspendPolicy) {
+                        // It would be more correct to extract the policy from the breakpoint declaration (in test),
+                        // but it is not a very easy task
+                        TestCase.assertEquals("Invalid suspend policy on breakpoint", EventRequest.SUSPEND_ALL, suspendPolicy, )
+                    }
                     evaluate(this, expression, kind, expected)
                 }
             }
@@ -192,7 +200,13 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 val result = FramePrinter(suspendContext).print(stackFrame)
                 print(result, ProcessOutputTypes.SYSTEM)
             }
-            suspendContext.invokeInManagerThread(completion)
+            assert(debugProcess.isAttached)
+            debugProcess.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+                override fun contextAction(suspendContext: SuspendContextImpl) {
+                    completion()
+                }
+                override fun commandCancelled() = error(message = "Test was cancelled")
+            })
         }
     }
 

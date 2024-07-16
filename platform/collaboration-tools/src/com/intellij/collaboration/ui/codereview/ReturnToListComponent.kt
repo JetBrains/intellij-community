@@ -10,6 +10,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
+@Deprecated("Deprecated with the move to a different design")
 object ReturnToListComponent {
   fun createReturnToListSideComponent(@Nls text: String, onClick: () -> Unit): JComponent = BorderLayoutPanel()
     .addToRight(LinkLabel<Any>("${UIUtil.leftArrow()} $text", null) { _, _ ->

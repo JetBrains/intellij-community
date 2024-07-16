@@ -10,7 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradleRepositoriesTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test repositories closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "repositories { <caret> }") {
@@ -20,7 +20,7 @@ class GradleRepositoriesTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test maven repository closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "repositories { maven { <caret> } }") {
@@ -30,7 +30,7 @@ class GradleRepositoriesTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test ivy repository closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "repositories { ivy { <caret> } }") {
@@ -40,7 +40,7 @@ class GradleRepositoriesTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test flat repository closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "repositories { flatDir { <caret> } }") {
@@ -50,7 +50,7 @@ class GradleRepositoriesTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test maven repository method setter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "repositories { maven { <caret>url(42) } }") {
@@ -60,7 +60,7 @@ class GradleRepositoriesTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test ivy repository method setter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "repositories { ivy { <caret>url('') } }") {
@@ -70,7 +70,7 @@ class GradleRepositoriesTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test flat repository method setter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "repositories { flatDir { <caret>name('') } }") {

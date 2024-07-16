@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.ide.tags.TagManager;
@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +69,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
   }
 
+  /**
+   * Important: Access to the children list should be synchronized on this GroupNode
+   */
   @NotNull
   List<Node> getChildren() {
     return myChildren;
@@ -391,6 +395,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   private volatile UsageNodePresentation myCachedPresentation;
 
+  @ApiStatus.Internal
   @Override
   public @Nullable UsageNodePresentation getCachedPresentation() {
     return myCachedPresentation;

@@ -66,6 +66,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private JCheckBox myCbGenerateFinalParameters;
   private JCheckBox myCbGenerateFinalLocals;
   private JCheckBox myCbUseExternalAnnotations;
+  private JCheckBox myGenerateTypeAnnotationBeforeType;
   private JCheckBox myInsertOverrideAnnotationCheckBox;
   private JCheckBox myRepeatSynchronizedCheckBox;
   private JPanel myVisibilityPanel;
@@ -137,6 +138,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     myCbDeclareVarType.setSelected(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE);
 
     myCbUseExternalAnnotations.setSelected(javaSettings.USE_EXTERNAL_ANNOTATIONS);
+    myGenerateTypeAnnotationBeforeType.setSelected(javaSettings.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE);
     myInsertOverrideAnnotationCheckBox.setSelected(javaSettings.INSERT_OVERRIDE_ANNOTATION);
     myRepeatSynchronizedCheckBox.setSelected(javaSettings.REPEAT_SYNCHRONIZED);
     myJavaVisibilityPanel.setVisibility(javaSettings.VISIBILITY);
@@ -179,6 +181,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE = myCbDeclareVarType.isSelected();
 
     javaSettings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
+    javaSettings.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = myGenerateTypeAnnotationBeforeType.isSelected();
     javaSettings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
     javaSettings.REPEAT_SYNCHRONIZED = myRepeatSynchronizedCheckBox.isSelected();
 
@@ -237,6 +240,7 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     isModified |= isCheckboxModified(myCbDeclareVarType, JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE);
 
     isModified |= isCheckboxModified(myCbUseExternalAnnotations, javaSettings.USE_EXTERNAL_ANNOTATIONS);
+    isModified |= isCheckboxModified(myGenerateTypeAnnotationBeforeType, javaSettings.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE);
     isModified |= isCheckboxModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);
     isModified |= isCheckboxModified(myRepeatSynchronizedCheckBox, javaSettings.REPEAT_SYNCHRONIZED);
 

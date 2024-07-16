@@ -24,9 +24,15 @@ import java.util.List;
 
 public class CoverageListNode extends AbstractTreeNode<Object> {
   protected final CoverageSuitesBundle myBundle;
-  protected final CoverageViewManager.StateBean myStateBean;
   private final FileStatusManager myFileStatusManager;
   private final VirtualFile myFile;
+
+  /**
+   * @deprecated Use {@link CoverageViewManager#getStateBean()}
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  protected final CoverageViewManager.StateBean myStateBean;
 
   /**
    * Children are cached in order to be able to filter nodes with no (interesting) children.
@@ -35,26 +41,36 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   private List<AbstractTreeNode<?>> myCachedChildren;
 
   /**
-   * @deprecated This constructor is not used anymore.
+   * @deprecated Use {@link CoverageListNode#CoverageListNode(Project, PsiNamedElement, CoverageSuitesBundle)}
    */
   @Deprecated
   public CoverageListNode(Project project,
                           @NotNull PsiNamedElement element,
                           CoverageSuitesBundle bundle,
-                          CoverageViewManager.StateBean stateBean,
-                          boolean unused) {
-    this(project, element, bundle, stateBean);
+                          @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean,
+                          @SuppressWarnings("unused") boolean unused) {
+    this(project, element, bundle);
+  }
+
+  /**
+   * @deprecated Use {@link CoverageListNode#CoverageListNode(Project, PsiNamedElement, CoverageSuitesBundle)}
+   */
+  @Deprecated
+  public CoverageListNode(Project project,
+                          @NotNull PsiNamedElement element,
+                          CoverageSuitesBundle bundle,
+                          @SuppressWarnings("unused") CoverageViewManager.StateBean stateBean) {
+    this(project, element, bundle);
   }
 
   public CoverageListNode(Project project,
                           @NotNull PsiNamedElement element,
-                          CoverageSuitesBundle bundle,
-                          CoverageViewManager.StateBean stateBean) {
+                          CoverageSuitesBundle bundle) {
     super(project, element);
 
     myName = ReadAction.compute(() -> element.getName());
     myBundle = bundle;
-    myStateBean = stateBean;
+    myStateBean = CoverageViewManager.getInstance(project).getStateBean();
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myFile = ReadAction.compute(() -> {
       VirtualFile file = element.isValid() ? PsiUtilCore.getVirtualFile(element) : null;
@@ -70,7 +86,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   @Override
   public synchronized List<? extends AbstractTreeNode<?>> getChildren() {
     if (myCachedChildren != null) return myCachedChildren;
-    return myCachedChildren = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle, myStateBean)
+    return myCachedChildren = myBundle.getCoverageEngine().createCoverageViewExtension(myProject, myBundle)
       .getChildrenNodes(this);
   }
 
@@ -79,8 +95,9 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     ApplicationManager.getApplication().runReadAction(() -> {
       final Object object = getValue();
       if (object instanceof PsiNamedElement value) {
+        CoverageViewManager.StateBean stateBean = CoverageViewManager.getInstance(myProject).getStateBean();
         if (value instanceof PsiQualifiedNamedElement &&
-            (myStateBean.isFlattenPackages() && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
+            (stateBean.isFlattenPackages() && value.getContainingFile() == null || getParent() instanceof CoverageListRootNode)) {
           presentation.setPresentableText(((PsiQualifiedNamedElement)value).getQualifiedName());
         }
         else {
@@ -92,7 +109,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     });
   }
 
-  public VirtualFile getFile() {
+  VirtualFile getFile() {
     return myFile;
   }
 
@@ -127,7 +144,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   public void navigate(boolean requestFocus) {
     if (canNavigate()) {
       final PsiNamedElement value = (PsiNamedElement)getValue();
-      if (requestFocus) {
+      if (requestFocus && value != null) {
         NavigationUtil.activateFileWithPsiElement(value, true);
       }
       else if (value instanceof NavigationItem navigationItem) {
@@ -146,7 +163,7 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
     });
   }
 
-  public boolean contains(VirtualFile file) {
+  boolean contains(VirtualFile file) {
     final Object value = getValue();
     if (value instanceof PsiElement element) {
       final boolean equalContainingFile = Comparing.equal(PsiUtilCore.getVirtualFile(element), file);
@@ -165,7 +182,8 @@ public class CoverageListNode extends AbstractTreeNode<Object> {
   }
 
   private boolean contains(VirtualFile file, PsiDirectory value) {
-    if (myStateBean.isFlattenPackages()) {
+    CoverageViewManager.StateBean stateBean = CoverageViewManager.getInstance(myProject).getStateBean();
+    if (stateBean.isFlattenPackages()) {
       return Comparing.equal(value.getVirtualFile(), file.getParent());
     }
 

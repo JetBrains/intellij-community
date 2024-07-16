@@ -21,3 +21,5 @@ fun main() = runBlocking<Unit> {
         bar()
     }
 }
+
+// REGISTRY: debugger.async.stacks.coroutines=false

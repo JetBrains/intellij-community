@@ -292,21 +292,15 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return getSelectedFile();
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      final VirtualFile selectedFile = getSelectedFile();
-      return selectedFile != null ? new VirtualFile[] {selectedFile} : VirtualFile.EMPTY_ARRAY;
-    }
-    else if (CloseAction.CloseTarget.KEY.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(CloseAction.CloseTarget.KEY, this);
+
+    VirtualFile selection = getSelectedFile();
+    sink.set(CommonDataKeys.VIRTUAL_FILE, selection);
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY,
+             selection != null ? new VirtualFile[]{selection} : VirtualFile.EMPTY_ARRAY);
   }
 
   private void asyncUpdateTab(@NotNull TabInfo tabInfo) {

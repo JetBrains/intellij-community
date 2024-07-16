@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,7 @@ import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-@ApiStatus.Experimental
+@Internal
 public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduceIndex<Key, Value, FileContent>
   implements UpdatableIndex<Key, Value, FileContent, FileCache> {
   private final boolean mySingleEntryIndex;
@@ -68,8 +68,9 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
     if (isDisposed()) {
       return null;
     }
-    // in future we will get rid of forward index for SingleEntryFileBasedIndexExtension
     if (mySingleEntryIndex) {
+      // there is no forward index for SingleEntryFileBasedIndexExtension, so get an entry from inverted index
+      // (it _must_ be <=1 entry there, with Key=(Integer)fileId)
       @SuppressWarnings("unchecked")
       Key key = (Key)(Object)fileId;
       Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());

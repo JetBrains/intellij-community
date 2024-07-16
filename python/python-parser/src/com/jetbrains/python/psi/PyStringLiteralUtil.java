@@ -5,11 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.lexer.PythonLexer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
@@ -29,8 +27,7 @@ public final class PyStringLiteralUtil extends PyStringLiteralCoreUtil {
    *
    * @return string without heading and trailing pair of ' or "
    */
-  @NotNull
-  public static String getStringValue(@NotNull String s) {
+  public static @NotNull String getStringValue(@NotNull String s) {
     return getStringValueTextRange(s).substring(s);
   }
 
@@ -56,8 +53,7 @@ public final class PyStringLiteralUtil extends PyStringLiteralCoreUtil {
    * Returns the range of the string literal text between the opening quote and the closing one.
    * If the closing quote is either missing or mismatched, this range spans until the end of the literal.
    */
-  @NotNull
-  public static TextRange getContentRange(@NotNull String text) {
+  public static @NotNull TextRange getContentRange(@NotNull String text) {
     LOG.assertTrue(isStringLiteralToken(text), "Text of a single string literal node expected");
     int startOffset = getPrefixLength(text);
     int delimiterLength = 1;

@@ -33,7 +33,7 @@ abstract class ProjectManagerEx : ProjectManager() {
       IS_PER_PROJECT_INSTANCE_READY && PerProjectState.valueOf(it) == PerProjectState.ENABLED
     } == true
 
-    val IS_CHILD_PROCESS: Boolean by lazy { isChildProcessPath(PathManager.getSystemDir()) }
+    val IS_CHILD_PROCESS: Boolean = false
 
     @Experimental
     const val PER_PROJECT_SUFFIX: String = "INTERNAL_perProject"

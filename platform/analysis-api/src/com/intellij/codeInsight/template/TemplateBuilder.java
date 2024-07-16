@@ -69,4 +69,10 @@ public interface TemplateBuilder {
    * @param inline if true then inline template will be created, regular otherwise
    */
   void run(@NotNull Editor editor, boolean inline);
+
+  /**
+   * override scroll template policy
+   * @param scrollToTemplate by default true, set false to prevent scrolling
+   */
+  TemplateBuilder setScrollToTemplate(boolean scrollToTemplate);
 }

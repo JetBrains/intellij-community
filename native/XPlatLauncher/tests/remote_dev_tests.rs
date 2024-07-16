@@ -5,10 +5,14 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::fs;
-    use std::fs::File;
-    use std::path::PathBuf;
     use crate::utils::*;
+
+    #[cfg(target_os = "linux")]
+    use {
+        std::path::PathBuf,
+        std::fs,
+        std::fs::File
+    };
 
     #[test]
     fn remote_dev_args_test() {
@@ -100,11 +104,17 @@ mod tests {
         assert!(output.contains("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable"));
     }
 
+    #[cfg(target_os = "linux")]
     fn prepare_font_config_dir(dist_root: &PathBuf) {
-        let font_config_root = dist_root.join("plugins/remote-dev-server/selfcontained/fontconfig");
-        fs::create_dir_all(&font_config_root).unwrap();
-        fs::create_dir_all(font_config_root.join("fonts")).unwrap();
+        let self_contained_root = &dist_root.join("plugins/remote-dev-server/selfcontained");
+        let font_config_root = &self_contained_root.join("fontconfig");
+        let fonts_dir = &font_config_root.join("fonts");
+        fs::create_dir_all(fonts_dir).unwrap();
         File::create(font_config_root.join("fonts.conf")).unwrap();
+
+        let libs_dir = &self_contained_root.join("lib");
+        fs::create_dir_all(libs_dir).unwrap();
+        File::create(self_contained_root.join("lib-load-order")).unwrap();
     }
 
     #[test]

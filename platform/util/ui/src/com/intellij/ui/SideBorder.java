@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.border.LineBorder;
 import java.awt.*;
@@ -18,7 +18,8 @@ public class SideBorder extends LineBorder {
   @MagicConstant(flags = {NONE, LEFT, TOP, RIGHT, BOTTOM, ALL})
   public @interface SideMask {}
 
-  private final int mySideMask;
+  @ApiStatus.Internal
+  protected final int mySideMask;
 
   public SideBorder(Color color, @SideMask int mask) {
     this(color, mask, 1);

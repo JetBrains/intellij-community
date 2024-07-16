@@ -30,7 +30,7 @@ import java.io.ObjectOutput;
 /**
  * @author Max Medvedev
  */
-public class AutoExternalizeContributor implements AstTransformationSupport {
+public final class AutoExternalizeContributor implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

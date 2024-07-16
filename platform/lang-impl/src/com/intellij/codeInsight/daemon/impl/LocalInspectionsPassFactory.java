@@ -31,7 +31,7 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
       return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     }
     TextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-    return new LocalInspectionsPass(file, editor.getDocument(), textRange, visibleRange, true, new DefaultHighlightInfoProcessor(), true);
+    return new LocalInspectionsPass(file, editor.getDocument(), textRange, visibleRange, true, HighlightInfoUpdater.getInstance(file.getProject()), true);
   }
 
   @Override
@@ -40,6 +40,6 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     TextRange textRange = file.getTextRange();
     LOG.assertTrue(textRange != null, "textRange is null for " + file + " (" + PsiUtilCore.getVirtualFile(file) + ")");
-    return new LocalInspectionsPass(file, document, textRange, TextRange.EMPTY_RANGE, true, highlightInfoProcessor, true);
+    return new LocalInspectionsPass(file, document, textRange, TextRange.EMPTY_RANGE, true, HighlightInfoUpdater.EMPTY, true);
   }
 }

@@ -313,6 +313,9 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
+  /**
+   * @see git4idea.status.GitStagingAreaHolder#removeUnwantedRecords
+   */
   private void removePathsUnderOtherRoots(@NotNull Collection<FilePath> untrackedFiles, @NonNls String type) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 

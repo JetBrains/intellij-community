@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.HeavyTestHelper;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +78,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   public VirtualFile getFile(@NotNull String path) {
     String fullPath = myTempDir.toString() + '/' + path;
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), fullPath);
-    return WriteAction.computeAndWait(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath));
+    VirtualFile vFile = WriteAction.computeAndWait(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath));
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    return vFile;
   }
 
   @NotNull
@@ -92,9 +95,11 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     }
 
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.toString());
-    return WriteAction.computeAndWait(() -> {
+    VirtualFile createdVFile = WriteAction.computeAndWait(() -> {
       return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
     });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    return createdVFile;
   }
 
   @NotNull

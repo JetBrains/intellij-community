@@ -29,7 +29,7 @@ public class DeprecatedLombokAnnotationInspectionTest extends LombokInspectionTe
 
   public void testDeprecatedBuilder() {
     final @Language("JAVA") String testClassText = """
-      <error descr="Lombok's annotation 'lombok.experimental.Builder' is deprecated and not supported by lombok-plugin anymore. Use 'lombok.Builder' instead.">@lombok.experimental.Builder</error>
+      <error descr="Lombok's annotation 'lombok.experimental.Builder' is deprecated and not supported by Lombok plugin anymore. Use 'lombok.Builder' instead.">@lombok.experimental.Builder</error>
       public class DeprecationTest {
             private String someStr;
       }""";
@@ -42,7 +42,7 @@ public class DeprecatedLombokAnnotationInspectionTest extends LombokInspectionTe
 
   public void testDeprecatedValue() {
     final @Language("JAVA") String testClassText = """
-      <error descr="Lombok's annotation 'lombok.experimental.Value' is deprecated and not supported by lombok-plugin anymore. Use 'lombok.Value' instead.">@lombok.experimental.Value</error>
+      <error descr="Lombok's annotation 'lombok.experimental.Value' is deprecated and not supported by Lombok plugin anymore. Use 'lombok.Value' instead.">@lombok.experimental.Value</error>
       public class DeprecationTest {
             private String someStr;
       }""";
@@ -54,7 +54,7 @@ public class DeprecatedLombokAnnotationInspectionTest extends LombokInspectionTe
 
   public void testDeprecatedWither() {
     final @Language("JAVA") String testClassText = """
-      <error descr="Lombok's annotation 'lombok.experimental.Wither' is deprecated and not supported by lombok-plugin anymore. Use 'lombok.With' instead.">@lombok.experimental.Wither</error>
+      <error descr="Lombok's annotation 'lombok.experimental.Wither' is deprecated and not supported by Lombok plugin anymore. Use 'lombok.With' instead.">@lombok.experimental.Wither</error>
       public class DeprecationTest {
             private String someStr;
       }""";

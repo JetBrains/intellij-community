@@ -141,7 +141,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     for (FileEditor fileEditor : source.getEditors(file)) {
       if (!(fileEditor instanceof TextEditor)) continue;
       Editor editor = ((TextEditor)fileEditor).getEditor();
-      runAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
+      runAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), editor.getComponent());
     }
   }
 
@@ -228,7 +228,8 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
 
     // try to detect a non-trivial composite PSI element if there's a PSI file
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file != null && !StringUtil.isEmptyOrSpaces(lineText)) {
+    if (file != null && !StringUtil.isEmptyOrSpaces(lineText) &&
+        !"textmate".equals(file.getLanguage().getID())) {
       int start = lineStart, end = lineEnd;
       while (start < end && Character.isWhitespace(lineText.charAt(start - lineStart))) start ++;
       while (end > start && Character.isWhitespace(lineText.charAt(end - 1 - lineStart))) end --;

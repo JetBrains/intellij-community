@@ -94,5 +94,9 @@ public interface ExternalProject extends Model, Serializable {
   @NotNull
   Map<String, Set<File>> getArtifactsByConfiguration();
 
+  @ApiStatus.Internal
   @NotNull GradleSourceSetModel getSourceSetModel();
+
+  @ApiStatus.Internal
+  @NotNull GradleTaskModel getTaskModel();
 }

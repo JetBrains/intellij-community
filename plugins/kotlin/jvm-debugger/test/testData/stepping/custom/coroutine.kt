@@ -19,3 +19,5 @@ fun main(args: Array<String>) {
         first()
     }
 }
+
+// IGNORE_LOG_ERRORS

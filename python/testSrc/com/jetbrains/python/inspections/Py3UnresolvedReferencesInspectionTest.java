@@ -319,4 +319,26 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   public void testNoWarningForTypeGetItem() {
     doTestByText("expr: type[str]");
   }
+
+  // PY-35190
+  public void testABCMetaRegisterMethod() {
+    doTestByText("""
+                 from abc import ABCMeta
+                 
+                 class MyABC(metaclass=ABCMeta):
+                     pass
+                 
+                 MyABC.register(str)
+                 """);
+  }
+
+  // PY-54356
+  public void testDunderOrResolvedForTypingCallable() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   class C:
+                       def a_method(self, key: str, decoder: Callable | None = None) -> Any | None:
+                           pass
+                   """);
+  }
 }

@@ -9,9 +9,6 @@ import com.intellij.ui.AppIcon
 import java.nio.file.Path
 
 internal class RecentProjectApplication : ApplicationStarterBase(1) {
-  override val commandName: String
-    get() = "reopen"
-
   override val usageMessage: String
     get() = "This command is used for internal purpose only." //NON-NLS
 

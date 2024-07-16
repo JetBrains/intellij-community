@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.util.EventDispatcher
 
+@Deprecated("Deprecated with migration to coroutines and view models")
 abstract class GHEventDispatcherLoadingModel : GHLoadingModel {
   protected val eventDispatcher = EventDispatcher.create(GHLoadingModel.StateChangeListener::class.java)
 

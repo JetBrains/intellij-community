@@ -3,7 +3,8 @@
 package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionProvider
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.idea.fir.extensions.KtResolveExtensionProviderForTests
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 
@@ -21,7 +22,9 @@ abstract class AbstractK2JvmBasicCompletionTestWithResolveExtension : AbstractK2
                 </class>
             </xml>
         """.trimIndent())
-        project.extensionArea.getExtensionPoint(KtResolveExtensionProvider.EP_NAME)
+
+        @OptIn(KaExperimentalApi::class)
+        project.extensionArea.getExtensionPoint(KaResolveExtensionProvider.EP_NAME)
             .registerExtension(KtResolveExtensionProviderForTests(), testRootDisposable)
     }
 

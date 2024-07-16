@@ -425,6 +425,7 @@ public final class DebuggerUtilsAsync {
   }
 
   public static CompletableFuture<Void> resume(ThreadReference thread) {
+    LOG.assertTrue(thread.suspendCount() > 0, "Suspend count must be greater zero before resume, " + thread);
     if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
       return ((ThreadReferenceImpl)thread).resumeAsync();
     }
@@ -503,10 +504,10 @@ public final class DebuggerUtilsAsync {
     return throwable instanceof CompletionException || throwable instanceof ExecutionException ? throwable.getCause() : throwable;
   }
 
-  public static <T> T logError(@Nullable Throwable throwable) {
+  public static <T> T logError(@NotNull Throwable throwable) {
     Throwable e = unwrap(throwable);
     if (!(e instanceof CancellationException)) {
-      DebuggerUtilsImpl.logError(e, true); // wrap to keep the exact catch position
+      DebuggerUtilsImpl.logError(e.getMessage(), e, true); // wrap to keep the exact catch position
     }
     return null;
   }

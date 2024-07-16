@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -17,8 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class JavaVcsSelectionProvider implements VcsSelectionProvider {
   @Override
-  @Nullable
-  public VcsSelection getSelection(@NotNull DataContext context) {
+  public @Nullable VcsSelection getSelection(@NotNull DataContext context) {
     final Editor editor = context.getData(CommonDataKeys.EDITOR);
     if (editor == null) return null;
     PsiElement psiElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);

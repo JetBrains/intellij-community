@@ -6,7 +6,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.impl.SdkFinder
 import com.intellij.openapi.util.ModificationTracker
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ModifiableRootModelBridge : ModifiableRootModel, ModificationTracker {
   fun prepareForCommit()
   fun postCommit()

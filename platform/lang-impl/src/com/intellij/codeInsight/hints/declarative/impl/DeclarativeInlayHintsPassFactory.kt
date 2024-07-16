@@ -8,13 +8,17 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus.Internal
 
 class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
   @Suppress("CompanionObjectInExtension") // used in third party
@@ -36,15 +40,32 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     private val PSI_MODIFICATION_STAMP: Key<Long> = Key<Long>("declarative.inlays.psi.modification.stamp")
 
     fun updateModificationStamp(editor: Editor, file: PsiFile) {
-      editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationCount(file))
+      updateModificationStamp(editor, file.project)
     }
 
     fun scheduleRecompute(editor: Editor, project: Project) {
-      editor.putUserData(PSI_MODIFICATION_STAMP, null)
+      resetModificationStamp(editor)
       DaemonCodeAnalyzer.getInstance(project).restart()
     }
 
-    private fun getCurrentModificationCount(file: PsiFile) = file.manager.modificationTracker.modificationCount
+    internal fun updateModificationStamp(editor: Editor, project: Project) {
+      editor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationCount(project))
+    }
+
+    @Internal
+    fun resetModificationStamp() {
+      for (editor in EditorFactory.getInstance().allEditors) {
+        resetModificationStamp(editor)
+      }
+    }
+
+    internal fun resetModificationStamp(editor: Editor) {
+      editor.putUserData(PSI_MODIFICATION_STAMP, null)
+    }
+
+    private fun getCurrentModificationCount(project: Project): Long {
+      return PsiModificationTracker.getInstance(project).modificationCount
+    }
   }
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): DeclarativeInlayHintsPass? {
@@ -53,28 +74,33 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     if (!HighlightingLevelManager.getInstance(file.project).shouldHighlight(file)) return null
 
     val stamp = editor.getUserData(PSI_MODIFICATION_STAMP)
-    val current = getCurrentModificationCount(file)
+    val current = getCurrentModificationCount(file.project)
     if (current == stamp) {
       return null
     }
 
     val declarativeInlayHintsSettings = DeclarativeInlayHintsSettings.getInstance()
-    val passProviders = getSuitableToFileProviders(file)
-      .filter {
-        declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault
-      }
-      .map {
-        val optionsToEnabled = HashMap<String, Boolean>()
-        for (optionInfo in it.options) {
-          val isOptionEnabled = declarativeInlayHintsSettings.isOptionEnabled(optionInfo.id, it.providerId) ?: optionInfo.isEnabledByDefault
-          require(optionsToEnabled.put(optionInfo.id, isOptionEnabled) == null)
+    val enabledGlobally = InlayHintsSettings.instance().hintsEnabledGlobally()
+    val passProviders = if (enabledGlobally) {
+      getSuitableToFileProviders(file)
+        .filter {
+          declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault
         }
-        InlayProviderPassInfo(
-          provider = it.provider,
-          providerId = it.providerId,
-          optionToEnabled = optionsToEnabled
-        )
-      }
+        .map {
+          val optionsToEnabled = HashMap<String, Boolean>()
+          for (optionInfo in it.options) {
+            val isOptionEnabled = declarativeInlayHintsSettings.isOptionEnabled(optionInfo.id, it.providerId) ?: optionInfo.isEnabledByDefault
+            require(optionsToEnabled.put(optionInfo.id, isOptionEnabled) == null)
+          }
+          InlayProviderPassInfo(
+            provider = it.provider,
+            providerId = it.providerId,
+            optionToEnabled = optionsToEnabled
+          )
+        }
+    } else {
+      emptyList()
+    }
     return DeclarativeInlayHintsPass(file, editor, passProviders, false)
   }
 

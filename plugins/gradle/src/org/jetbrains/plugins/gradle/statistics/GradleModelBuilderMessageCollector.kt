@@ -12,18 +12,21 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 11)
+  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 18)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
   private val MESSAGE_KIND = EventFields.Enum<Message.Kind>("message_kind")
   private val MESSAGE_GROUP = EventFields.String("message_group", listOf(
     Messages.PROJECT_MODEL_GROUP,
+
     Messages.SCALA_PROJECT_MODEL_GROUP,
 
+    Messages.TASK_INDEX_GROUP,
+    Messages.TASK_INDEX_COLLECTING_GROUP,
+    Messages.TASK_INDEX_CACHE_GET_GROUP,
+    Messages.TASK_INDEX_CACHE_SET_GROUP,
+
     Messages.TASK_MODEL_GROUP,
-    Messages.TASK_MODEL_COLLECTING_GROUP,
-    Messages.TASK_CACHE_GET_GROUP,
-    Messages.TASK_CACHE_SET_GROUP,
 
     Messages.SOURCE_SET_MODEL_GROUP,
     Messages.SOURCE_SET_MODEL_PROJECT_TASK_ARTIFACT_GROUP,
@@ -34,24 +37,22 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_CONFIGURATION_ARTIFACT_GROUP,
     Messages.SOURCE_SET_MODEL_SOURCE_SET_ARTIFACT_GROUP,
     Messages.SOURCE_SET_MODEL_SKIPPED_SOURCE_SET_ARTIFACT_GROUP,
-    Messages.SOURCE_SET_CACHE_GET_GROUP,
-    Messages.SOURCE_SET_CACHE_SET_GROUP,
 
     Messages.RESOURCE_FILTER_MODEL_GROUP,
-
-    Messages.SOURCE_SET_DEPENDENCY_MODEL_GROUP,
-    Messages.SOURCE_SET_DEPENDENCY_MODEL_CACHE_GET_GROUP,
-    Messages.SOURCE_SET_DEPENDENCY_MODEL_CACHE_SET_GROUP,
-
-    Messages.EAR_CONFIGURATION_MODEL_GROUP,
-    Messages.WAR_CONFIGURATION_MODEL_GROUP,
 
     Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_GROUP,
     Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP,
     Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP,
 
-    Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP,
+    Messages.SOURCE_SET_ARTIFACT_INDEX_GROUP,
+    Messages.SOURCE_SET_ARTIFACT_INDEX_CACHE_SET_GROUP,
 
+    Messages.SOURCE_SET_DEPENDENCY_MODEL_GROUP,
+
+    Messages.EAR_CONFIGURATION_MODEL_GROUP,
+    Messages.WAR_CONFIGURATION_MODEL_GROUP,
+
+    Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP,
     Messages.DEPENDENCY_ACCESSOR_MODEL_GROUP,
     Messages.DEPENDENCY_GRAPH_MODEL_GROUP,
 

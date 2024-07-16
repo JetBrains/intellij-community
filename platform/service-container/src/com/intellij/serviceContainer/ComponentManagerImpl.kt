@@ -5,6 +5,7 @@ package com.intellij.serviceContainer
 
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.withThreadLocal
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
@@ -17,6 +18,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -32,20 +34,18 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.UList
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.runSuppressing
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import java.lang.StackWalker.StackFrame
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -54,7 +54,6 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import java.util.stream.Stream
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.coroutines.CoroutineContext
@@ -234,11 +233,12 @@ abstract class ComponentManagerImpl(
   protected open val isMessageBusSupported: Boolean = parent?.parent == null
   protected open val isComponentSupported: Boolean = true
 
+  // FIXME this is effectively no-op right now
   @Volatile
   @JvmField
   internal var componentContainerIsReadonly: String? = null
 
-  override fun getCoroutineScope(): CoroutineScope {
+  final override fun getCoroutineScope(): CoroutineScope {
     if (parent?.parent == null) {
       return scopeHolder.containerScope
     }
@@ -296,14 +296,6 @@ abstract class ComponentManagerImpl(
       return getOrCreateMessageBusUnderLock()
     }
     return messageBus
-  }
-
-  fun getDeprecatedModuleLevelMessageBus(): MessageBus {
-    if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
-      ProgressManager.checkCanceled()
-      throw AlreadyDisposedException("Already disposed: $this")
-    }
-    return messageBus ?: getOrCreateMessageBusUnderLock()
   }
 
   final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
@@ -940,7 +932,7 @@ abstract class ComponentManagerImpl(
     val pluginId = pluginDescriptor.pluginId
     try {
       @Suppress("UNCHECKED_CAST")
-      return instantiateClass(doLoadClass(className, pluginDescriptor) as Class<T>, pluginId)
+      return instantiateClass(doLoadClass(className, pluginDescriptor, checkCoreSubModules = true) as Class<T>, pluginId)
     }
     catch (e: Throwable) {
       when {
@@ -1048,14 +1040,13 @@ abstract class ComponentManagerImpl(
 
         if (plugin.pluginId != PluginManagerCore.CORE_ID) {
           val impl = getServiceImplementation(service, this)
-          if (!servicePreloadingAllowListForNonCorePlugin.contains(impl)) {
-            val message = "`preload=true` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
-            if (service.preload == PreloadMode.AWAIT) {
-              LOG.error(PluginException(message, plugin.pluginId))
-            }
-            else {
-              LOG.warn(message)
-            }
+          val message = "`preload=${service.preload.name}` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
+          val isKnown = servicePreloadingAllowListForNonCorePlugin.contains(impl)
+          if (service.preload == PreloadMode.AWAIT && !isKnown) {
+            LOG.error(PluginException(message, plugin.pluginId))
+          }
+          else if (!isKnown || !impl.startsWith("com.intellij.")) {
+            LOG.warn(message)
           }
         }
 
@@ -1335,18 +1326,14 @@ abstract class ComponentManagerImpl(
     return null
   }
 
-  fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T) -> Unit) {
+  fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
+    val result = ArrayList<T>()
     for (instance in componentContainer.initializedInstances()) {
       if (aClass.isAssignableFrom(instance.javaClass)) {
         @Suppress("UNCHECKED_CAST")
-        processor(instance as T)
+        (result.add(instance as T))
       }
     }
-  }
-
-  fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
-    val result = ArrayList<T>()
-    processInitializedComponents(aClass, result::add)
     return result
   }
 
@@ -1383,7 +1370,7 @@ abstract class ComponentManagerImpl(
     // The parent scope should become canceled only when the container is disposed, or the plugin is unloaded.
     // Leaking the parent scope might lead to premature cancellation.
     // Fool proofing: a fresh child scope is created per instance to avoid leaking the parent to clients.
-    return intersectionScope.namedChildScope(pluginClass.name)
+    return intersectionScope.childScope(pluginClass.name)
   }
 
   @Internal // to run post-start-up activities - to not create scope for each class and do not keep it alive
@@ -1408,7 +1395,7 @@ abstract class ComponentManagerImpl(
 
 private class PluginServicesStore {
   private val regularServices = ConcurrentHashMap<IdeaPluginDescriptor, UnregisterHandle>()
-  private val dynamicServices = ConcurrentHashMap<IdeaPluginDescriptor, PersistentList<InstanceHolder>>()
+  private val dynamicServices = ConcurrentHashMap<IdeaPluginDescriptor, UList<InstanceHolder>>()
 
   fun putServicesUnregisterHandle(descriptor: IdeaPluginDescriptor, handle: UnregisterHandle) {
     val prev = regularServices.put(descriptor, handle)
@@ -1421,12 +1408,12 @@ private class PluginServicesStore {
 
   fun addDynamicService(descriptor: IdeaPluginDescriptor, holder: InstanceHolder) {
     dynamicServices.compute(descriptor) { _, instances ->
-      (instances ?: persistentListOf()).add(holder)
+      (instances ?: UList()).add(holder)
     }
   }
 
   fun removeDynamicServices(descriptor: IdeaPluginDescriptor): List<InstanceHolder> {
-    return dynamicServices.remove(descriptor) ?: java.util.List.of()
+    return dynamicServices.remove(descriptor)?.toList() ?: java.util.List.of()
   }
 }
 
@@ -1459,14 +1446,32 @@ fun handleComponentError(t: Throwable, componentClassName: String?, pluginId: Pl
   }
 }
 
-internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor): Class<*> {
+internal fun doLoadClass(name: String, pluginDescriptor: PluginDescriptor, checkCoreSubModules: Boolean = false): Class<*> {
   // maybe null in unit tests
   val classLoader = pluginDescriptor.pluginClassLoader ?: ComponentManagerImpl::class.java.classLoader
   if (classLoader is PluginAwareClassLoader) {
     return classLoader.tryLoadingClass(name, true) ?: throw ClassNotFoundException("$name $classLoader")
   }
   else {
-    return classLoader.loadClass(name)
+    try {
+      return classLoader.loadClass(name)
+    }
+    catch (e: ClassNotFoundException) {
+      if (checkCoreSubModules && pluginDescriptor.pluginId == PluginManagerCore.CORE_ID && pluginDescriptor is IdeaPluginDescriptorImpl) {
+        for (module in pluginDescriptor.content.modules) {
+          val subDescriptor = module.requireDescriptor()
+          if (subDescriptor.packagePrefix == null && !module.name.startsWith("intellij.libraries.")) {
+            val pluginClassLoader = subDescriptor.classLoader as? PluginAwareClassLoader ?: continue
+            pluginClassLoader.loadClassInsideSelf(name)?.let {
+              assert(it.isAnnotationPresent(InternalIgnoreDependencyViolation::class.java))
+              return it
+            }
+          }
+        }
+      }
+
+      throw e
+    }
   }
 }
 
@@ -1476,6 +1481,7 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }
 
+// Ask Core team approve before changing this set
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SpellCheckingInspection")
 private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
   "com.android.tools.adtui.webp.WebpMetadata\$WebpMetadataRegistrar",
@@ -1539,10 +1545,13 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
 
   if (!Cancellation.isInNonCancelableSection() && !checkOutsideClassInitializer(debugString)) {
     Cancellation.withNonCancelableSection().use {
-      return getOrCreateInstanceBlocking(debugString = debugString, keyClass = keyClass)
+      return doGetOrCreateInstanceBlocking(keyClass)
     }
   }
+  return doGetOrCreateInstanceBlocking(keyClass)
+}
 
+private fun InstanceHolder.doGetOrCreateInstanceBlocking(keyClass: Class<*>?): Any {
   try {
     return runBlockingInitialization {
       getInstanceInCallerContext(keyClass)
@@ -1558,26 +1567,53 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
  * @return `true` if called outside a class initializer, `false` if called inside a class initializer
  */
 private fun checkOutsideClassInitializer(debugString: String): Boolean {
-  val className = isInsideClassInitializer()
-                  ?: return true
-  // TODO make this an error
-  LOG.warn(
-    "$className <clinit> requests $debugString instance. " +
-    "Class initialization must not depend on services. " +
-    "Consider using instance of the service on-demand instead.",
-  )
+  val className = isInsideClassInitializer() ?: return true
+  if (logAccessInsideClinit.get()) {
+    dontLogAccessInClinit().use {
+      val message = "$className <clinit> requests $debugString instance. " +
+                    "Class initialization must not depend on services. " +
+                    "Consider using instance of the service on-demand instead."
+      if (!ApplicationManager.getApplication().isUnitTestMode) {
+        LOG.error(message)
+      }
+      else {
+        // TODO make this an error IJPL-156676
+        LOG.warn(message)
+      }
+    }
+  }
   return false
 }
 
-private fun isInsideClassInitializer(): String? = StackWalker.getInstance().walk { frames: Stream<StackFrame> ->
-  frames.asSequence().firstNotNullOfOrNull { frame ->
-    if (frame.methodName == "<clinit>") {
-      frame.className
-    }
-    else {
-      null
+private fun isInsideClassInitializer(): String? {
+  return StackWalker.getInstance().walk { frames ->
+    frames.asSequence().firstNotNullOfOrNull { frame ->
+      if (frame.methodName == "<clinit>") {
+        frame.className
+      }
+      else {
+        null
+      }
     }
   }
+}
+
+private val logAccessInsideClinit = ThreadLocal.withInitial { true }
+
+private fun dontLogAccessInClinit(): AccessToken {
+  // Logger itself also loads services, which results in SOE:
+  // at com.intellij.serviceContainer.ComponentManagerImpl.getService
+  // at com.intellij.ide.plugins.PluginUtil.getInstance(PluginUtil.java:13)
+  // at com.intellij.diagnostic.DefaultIdeaErrorLogger.canHandle(DefaultIdeaErrorLogger.java:39)
+  // at com.intellij.diagnostic.DialogAppender.queueAppend(DialogAppender.kt:76)
+  // at com.intellij.diagnostic.DialogAppender.publish(DialogAppender.kt:48)
+  // at java.logging/java.util.logging.Logger.log(Logger.java:983)
+  // ...
+  // at com.intellij.openapi.diagnostic.Logger.error(Logger.java:376)
+  // at com.intellij.serviceContainer.ComponentManagerImplKt.getOrCreateInstanceBlocking(ComponentManagerImpl.kt:1557)
+  // at com.intellij.serviceContainer.ComponentManagerImpl.doGetService(ComponentManagerImpl.kt:744)
+  // at com.intellij.serviceContainer.ComponentManagerImpl.getService(ComponentManagerImpl.kt:688)
+  return withThreadLocal(logAccessInsideClinit) { false }
 }
 
 /**
@@ -1610,6 +1646,9 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   try {
     return action()
   }
+  catch (pce : ProcessCanceledException) {
+    throw pce
+  }
   catch (ce: CancellationException) {
     throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = ce)
     throw CeProcessCanceledException(ce)
@@ -1634,6 +1673,9 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(contextForInitializer, action)
+    }
+    catch (pce : ProcessCanceledException) {
+      throw pce
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)

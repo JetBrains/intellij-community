@@ -79,7 +79,7 @@ public class ConditionalGotoInstruction extends Instruction {
   }
 
   public String toString() {
-    return "IF_EQ " + myCompareTo + " " + getOffset();
+    return "IF_EQ " + myCompareTo + " " + myOffset;
   }
 
   public boolean isTarget(@NotNull DfType valueOnStack, @NotNull Instruction target) {

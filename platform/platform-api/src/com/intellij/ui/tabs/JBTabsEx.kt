@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs
 
 import com.intellij.openapi.actionSystem.DataKey
@@ -19,9 +19,7 @@ interface JBTabsEx : JBTabs {
 
   fun addTabSilently(info: TabInfo, index: Int): TabInfo?
 
-  fun removeTab(info: TabInfo, forcedSelectionTransfer: TabInfo?)
-
-  fun getToSelectOnRemoveOf(info: TabInfo): TabInfo?
+  fun getToSelectOnRemoveOf(tab: TabInfo): TabInfo?
 
   fun sortTabs(comparator: Comparator<TabInfo>)
 

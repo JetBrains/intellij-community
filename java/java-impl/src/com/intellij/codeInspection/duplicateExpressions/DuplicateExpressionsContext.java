@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.openapi.util.Key;
@@ -41,8 +41,7 @@ final class DuplicateExpressionsContext {
     return mySideEffectCalculator.mayHaveSideEffect(expression);
   }
 
-  @Nullable
-  static DuplicateExpressionsContext getOrCreateContext(@NotNull PsiExpression expression, @NotNull UserDataHolder session) {
+  static @Nullable DuplicateExpressionsContext getOrCreateContext(@NotNull PsiExpression expression, @NotNull UserDataHolder session) {
     PsiCodeBlock nearestBody = findNearestBody(expression);
     if (nearestBody != null) {
       Map<PsiCodeBlock, DuplicateExpressionsContext> contexts = session.getUserData(CONTEXTS_KEY);
@@ -54,8 +53,7 @@ final class DuplicateExpressionsContext {
     return null;
   }
 
-  @Nullable
-  static DuplicateExpressionsContext getContext(@Nullable PsiCodeBlock body, @NotNull UserDataHolder session) {
+  static @Nullable DuplicateExpressionsContext getContext(@Nullable PsiCodeBlock body, @NotNull UserDataHolder session) {
     Map<PsiCodeBlock, DuplicateExpressionsContext> contexts = session.getUserData(CONTEXTS_KEY);
     return contexts != null ? contexts.get(body) : null;
   }

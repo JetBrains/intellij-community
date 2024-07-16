@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.ui.ExperimentalUI
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
@@ -19,59 +20,57 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 
-internal suspend fun importConfigIfNeeded(isHeadless: Boolean,
-                                          configImportNeededDeferred: Deferred<Boolean>,
-                                          lockSystemDirsJob: Job,
-                                          logDeferred: Deferred<Logger>,
-                                          args: List<String>,
-                                          targetDirectoryToImportConfig: Path?,
-                                          appStarterDeferred: Deferred<AppStarter>,
-                                          euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
-                                          initLafJob: Job): Job? {
-  if (isHeadless) {
-    importConfigHeadless(configImportNeededDeferred = configImportNeededDeferred,
-                         lockSystemDirsJob = lockSystemDirsJob,
-                         logDeferred = logDeferred)
+internal suspend fun importConfigIfNeeded(
+  isHeadless: Boolean,
+  configImportNeededDeferred: Deferred<Boolean>,
+  lockSystemDirsJob: Job,
+  logDeferred: Deferred<Logger>,
+  args: List<String>,
+  targetDirectoryToImportConfig: Path?,
+  appStarterDeferred: Deferred<AppStarter>,
+  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
+  initLafJob: Job
+): Job? {
+  if (AppMode.isRemoteDevHost() || !configImportNeededDeferred.await()) {
     return null
   }
 
-  if (AppMode.isRemoteDevHost() || !configImportNeededDeferred.await()) {
+  if (isHeadless) {
+    importConfigHeadless(lockSystemDirsJob, logDeferred)
+    if (!AppMode.isRemoteDevHost()) enableNewUi(logDeferred, false)
     return null
   }
 
   initLafJob.join()
   val log = logDeferred.await()
-  importConfig(
-    args = args,
-    targetDirectoryToImportConfig = targetDirectoryToImportConfig ?: PathManager.getConfigDir(),
-    log = log,
-    appStarter = appStarterDeferred.await(),
-    euaDocumentDeferred = euaDocumentDeferred,
-  )
+  val targetDirectoryToImportConfig = targetDirectoryToImportConfig ?: PathManager.getConfigDir()
+  importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
 
-  if (ConfigImportHelper.isNewUser()) {
-    enableNewUi(logDeferred)
+  val isNewUser = ConfigImportHelper.isNewUser()
+  enableNewUi(logDeferred, isNewUser)
+  if (isNewUser && isIdeStartupDialogEnabled) {
+    log.info("Will enter initial app wizard flow.")
+    val result = CompletableDeferred<Boolean>()
+    isInitialStart = result
+    return result
+  }
 
-    if (isIdeStartupDialogEnabled) {
-      log.info("Will enter initial app wizard flow.")
-      val result = CompletableDeferred<Boolean>()
-      isInitialStart = result
-      return result
-    }
-    else {
-      return null
-    }
-  }
-  else {
-    return null
-  }
+  return null
 }
 
-private suspend fun importConfig(args: List<String>,
-                                 targetDirectoryToImportConfig: Path,
-                                 log: Logger,
-                                 appStarter: AppStarter,
-                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
+private suspend fun importConfigHeadless(lockSystemDirsJob: Job, logDeferred: Deferred<Logger>) {
+  // make sure we lock the dir before writing
+  lockSystemDirsJob.join()
+  enableNewUi(logDeferred, isBackgroundSwitch = true)
+}
+
+private suspend fun importConfig(
+  args: List<String>,
+  targetDirectoryToImportConfig: Path,
+  log: Logger,
+  appStarter: AppStarter,
+  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>
+) {
   span("screen reader checking") {
     runCatching {
       enableScreenReaderSupportIfNecessary()
@@ -91,27 +90,20 @@ private suspend fun importConfig(args: List<String>,
   }
 }
 
-private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
-  if (System.getProperty("ide.experimental.ui") == null) {
-    try {
-      EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true"))
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      logDeferred.await().error(e)
+private suspend fun enableNewUi(logDeferred: Deferred<Logger>, isBackgroundSwitch: Boolean) {
+  try {
+    val shouldEnableNewUi = !EarlyAccessRegistryManager.getBoolean("ide.experimental.ui") && !EarlyAccessRegistryManager.getBoolean("moved.to.new.ui")
+    if (shouldEnableNewUi) {
+      EarlyAccessRegistryManager.setAndFlush(mapOf("ide.experimental.ui" to "true", "moved.to.new.ui" to "true"))
+      if (!isBackgroundSwitch) {
+        ExperimentalUI.forcedSwitchedUi = true
+      }
     }
   }
-}
-
-private suspend fun importConfigHeadless(configImportNeededDeferred: Deferred<Boolean>,
-                                         lockSystemDirsJob: Job,
-                                         logDeferred: Deferred<Logger>) {
-  if (!configImportNeededDeferred.await()) {
-    return
+  catch (e: CancellationException) {
+    throw e
   }
-  // make sure we lock the dir before writing
-  lockSystemDirsJob.join()
-  enableNewUi(logDeferred)
+  catch (e: Throwable) {
+    logDeferred.await().error(e)
+  }
 }

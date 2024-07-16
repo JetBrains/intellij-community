@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer
 
 private const val workspaceBasePackageName = "com.intellij.platform.workspace"
@@ -45,11 +46,13 @@ internal object EntityStorage {
 }
 internal val MutableEntityStorage = fqn(workspaceStoragePackageName, "MutableEntityStorage")
 internal val EntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentation")
+internal val MutableEntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "MutableEntityStorageInstrumentation")
 internal val EntityStorageInstrumentationApi = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentationApi")
+internal val WorkspaceEntityInternalApi = fqn(workspaceStoragePackageName, "WorkspaceEntityInternalApi")
 
 
 internal val EntityType = fqn(workspaceStoragePackageName, "EntityType")
-internal val ConnectionId = fqn(workspaceStorageImplPackageName, "ConnectionId")
+internal val ConnectionId = fqn(workspaceStoragePackageName, "ConnectionId")
 internal val EntityLink = fqn(workspaceStorageImplPackageName, "EntityLink")
 internal val WorkspaceEntityBase = fqn(workspaceStorageImplPackageName, "WorkspaceEntityBase")
 internal val SoftLinkable = fqn(workspaceStorageImplPackageName, "SoftLinkable")
@@ -132,6 +135,7 @@ internal val SdkRoot = fqn(workspaceEntitiesPackageName, "SdkRoot")
 
 // Annotations
 internal val Child = fqn(workspaceStorageAnnotationsPackageName, "Child")
+internal val Internal = fqn("org.jetbrains.annotations.ApiStatus", "Internal")
 
 
 // Collections

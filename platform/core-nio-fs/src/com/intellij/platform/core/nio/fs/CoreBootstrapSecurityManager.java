@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @see com.intellij.util.lang.PathClassLoader
  * @see CoreRoutingFileSystemProvider
+ * @see MultiRoutingFileSystemProvider
  * @see FileSystems#getDefault()
  */
 public class CoreBootstrapSecurityManager extends SecurityManager {

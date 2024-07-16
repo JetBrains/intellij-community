@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.authentication
 
+import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.ide.DataManager
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
@@ -13,13 +15,15 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.DropDownLink
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.DialogManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -27,6 +31,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefault
 import org.jetbrains.plugins.github.authentication.ui.GHLoginDialog
 import org.jetbrains.plugins.github.authentication.ui.GHLoginModel
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.ui.util.GHPluginProjectScopeProvider
 import java.awt.Component
 import javax.swing.JButton
 import javax.swing.JComponent
@@ -78,20 +83,22 @@ object GHAccountsUtil {
     val group = DefaultActionGroup()
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
-        GHLoginDialog.OAuth(model, project, parentComponent).apply {
-          setServer(GithubServerPath.DEFAULT_HOST, false)
-          showAndGet()
-        }
+        scopedDialog(project) {
+          GHLoginDialog.OAuth(model, project, this, parentComponent).apply {
+            setServer(GithubServerPath.DEFAULT_HOST, false)
+          }
+        }.showAndGet()
       })
 
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
-        GHLoginDialog.Token(model, project, parentComponent).apply {
-          title = GithubBundle.message("dialog.title.add.github.account")
-          setLoginButtonText(GithubBundle.message("accounts.add.button"))
-          setServer(GithubServerPath.DEFAULT_HOST, false)
-          showAndGet()
-        }
+        scopedDialog(project) {
+          GHLoginDialog.Token(model, project, this, parentComponent).apply {
+            title = GithubBundle.message("dialog.title.add.github.account")
+            setLoginButtonText(GithubBundle.message("accounts.add.button"))
+            setServer(GithubServerPath.DEFAULT_HOST, false)
+          }
+        }.showAndGet()
       }
     )
 
@@ -99,12 +106,13 @@ object GHAccountsUtil {
 
     group.add(
       DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
-        GHLoginDialog.Token(model, project, parentComponent).apply {
-          title = GithubBundle.message("dialog.title.add.github.account")
-          setServer("", true)
-          setLoginButtonText(GithubBundle.message("accounts.add.button"))
-          showAndGet()
-        }
+        scopedDialog(project) {
+          GHLoginDialog.Token(model, project, this, parentComponent).apply {
+            title = GithubBundle.message("dialog.title.add.github.account")
+            setServer("", true)
+            setLoginButtonText(GithubBundle.message("accounts.add.button"))
+          }
+        }.showAndGet()
       }
     )
     return group
@@ -202,15 +210,34 @@ private fun GHLoginRequest.configure(dialog: GHLoginDialog) {
   login?.let { dialog.setLogin(it, isLoginEditable) }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
+private fun <D : GHLoginDialog> scopedDialog(project: Project?, dialogConstructor: CoroutineScope.() -> D): D {
+  if (project != null) {
+    return project.service<GHPluginProjectScopeProvider>().constructDialog("GitHub login dialog", dialogConstructor)
+  }
+  else {
+    val cs = GlobalScope.childScope(GHLoginDialog::class.java.name)
+    val dialog = cs.dialogConstructor()
+    cs.cancelledWith(dialog.disposable)
+    return dialog
+  }
+}
+
 private fun GHLoginRequest.loginWithToken(model: GHLoginModel, project: Project?, parentComponent: Component?) {
-  val dialog = GHLoginDialog.Token(model, project, parentComponent)
-  configure(dialog)
+  val dialog = scopedDialog(project) {
+    GHLoginDialog.Token(model, project, this, parentComponent).also {
+      configure(it)
+    }
+  }
   DialogManager.show(dialog)
 }
 
 private fun GHLoginRequest.loginWithOAuth(model: GHLoginModel, project: Project?, parentComponent: Component?) {
-  val dialog = GHLoginDialog.OAuth(model, project, parentComponent)
-  configure(dialog)
+  val dialog = scopedDialog(project) {
+    GHLoginDialog.OAuth(model, project, this, parentComponent).also {
+      configure(it)
+    }
+  }
   DialogManager.show(dialog)
 }
 
@@ -222,11 +249,26 @@ private fun GHLoginRequest.loginWithOAuthOrToken(model: GHLoginModel, project: P
 }
 
 private fun promptOAuthLogin(request: GHLoginRequest, project: Project?, parentComponent: Component?): Int {
-  val builder = MessageDialogBuilder.yesNoCancel(title = GithubBundle.message("login.to.github"),
-                                                 message = request.text ?: GithubBundle.message("dialog.message.login.to.continue"))
+  val message = if (PasswordSafe.instance.isMemoryOnly) {
+    HtmlBuilder()
+      .append(HtmlChunk.p().addText(CollaborationToolsBundle.message("accounts.error.password-not-saved")))
+      .append(HtmlChunk.br())
+      .append(HtmlChunk.p().addText(CollaborationToolsBundle.message("accounts.error.password-not-saved.solution")))
+      .toString()
+  } else {
+    request.text ?: GithubBundle.message("dialog.message.login.to.continue")
+  }
+
+  val builder = MessageDialogBuilder
+    .yesNoCancel(title = GithubBundle.message("login.to.github"),
+                 message = message)
     .yesText(GithubBundle.message("login.via.github.action"))
     .noText(GithubBundle.message("button.use.token"))
-    .icon(Messages.getWarningIcon())
+
+  if (PasswordSafe.instance.isMemoryOnly) {
+    builder.asWarning()
+  }
+
   if (parentComponent != null) {
     return builder.show(parentComponent)
   }

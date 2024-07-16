@@ -8,23 +8,26 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import javax.swing.*
 
 abstract class BannerStartPagePromoter : StartPagePromoter {
 
   override fun getPromotion(isEmptyState: Boolean): JComponent {
-    val vPanel: JPanel = NonOpaquePanel()
-    vPanel.layout = BoxLayout(vPanel, BoxLayout.PAGE_AXIS)
-    vPanel.alignmentY = Component.TOP_ALIGNMENT
-
+    // todo: almost all should be rewritten with Kotlin UI DSL, when it's moved to from IMPL to API module
     val headerPanel: JPanel = NonOpaquePanel()
     headerPanel.layout = BoxLayout(headerPanel, BoxLayout.X_AXIS)
     headerPanel.alignmentX = Component.LEFT_ALIGNMENT
@@ -33,11 +36,12 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.add(createHeader())
     headerPanel.add(Box.createHorizontalGlue())
 
-    val hPanel: JPanel = object : BackgroundRoundedPanel(JBUI.scale(16)) {
-      override fun addNotify() {
-        super.addNotify()
-        onBannerShown()
-      }
+    val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16)).also {
+      UiNotifyConnector.installOn(it, object : Activatable {
+        override fun showNotify() {
+          onBannerShown()
+        }
+      })
     }
 
     closeAction?.let { closeAction ->
@@ -49,8 +53,6 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
       headerPanel.add(closeButton)
     }
 
-    vPanel.add(headerPanel)
-    vPanel.add(rigid(0, 4))
     val description = JLabel("<html>${description}</html>").also {
       it.alignmentX = Component.LEFT_ALIGNMENT
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
@@ -59,14 +61,22 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
         else -> 0
       }))
       it.foreground = UIUtil.getContextHelpForeground()
+      // todo workaround IJPL-62164 Implement minSize in GridLayout
+      it.preferredSize = Dimension(100, 0)
     }
-    vPanel.add(description)
-
     val button = createButton()
 
-    val minSize = JBDimension(0, 8)
-    vPanel.add(Box.Filler(minSize, minSize, Dimension(0, Short.MAX_VALUE.toInt())))
-    vPanel.add(buttonPixelHunting(button))
+    val vPanel = JPanel(GridLayout()).apply {
+      isOpaque = false
+      alignmentY = Component.TOP_ALIGNMENT
+    }
+    val builder = RowsGridBuilder(vPanel)
+    builder
+      .cell(headerPanel, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
+      .row(rowGaps = UnscaledGapsY(top = 4, bottom = 8))
+      .cell(description, horizontalAlign = HorizontalAlign.FILL)
+      .row()
+      .cell(button, visualPaddings = button.insets.toUnscaledGaps())
 
     hPanel.background = JBColor.namedColor("WelcomeScreen.SidePanel.background", JBColor(0xF2F2F2, 0x3C3F41))
     hPanel.layout = BoxLayout(hPanel, BoxLayout.X_AXIS)
@@ -78,33 +88,6 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     hPanel.add(vPanel)
 
     return hPanel
-  }
-
-  private fun buttonPixelHunting(button: JComponent): JPanel {
-    val buttonPlace = object: JPanel() {
-      override fun updateUI() {
-        super.updateUI()
-
-        val buttonSizeWithoutInsets = Dimension(button.preferredSize.width - button.insets.left - button.insets.right,
-                                                button.preferredSize.height - button.insets.top - button.insets.bottom)
-
-        apply {
-          layout = null
-          maximumSize = buttonSizeWithoutInsets
-          preferredSize = buttonSizeWithoutInsets
-          minimumSize = buttonSizeWithoutInsets
-          isOpaque = false
-          alignmentX = LEFT_ALIGNMENT
-        }
-
-        button.bounds = Rectangle(-button.insets.left, -button.insets.top, button.preferredSize.width, button.preferredSize.height)
-      }
-    }
-
-    buttonPlace.add(button)
-    buttonPlace.updateUI()
-
-    return buttonPlace
   }
 
   private fun rigid(width: Int, height: Int): Component {

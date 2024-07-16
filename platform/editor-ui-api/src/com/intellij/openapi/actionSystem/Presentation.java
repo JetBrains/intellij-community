@@ -13,12 +13,15 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+import java.beans.PropertyChangeListenerProxy;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -57,19 +60,27 @@ public final class Presentation implements Cloneable {
   @Deprecated(forRemoval = true)
   public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("SECONDARY_TEXT");
 
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double DEFAULT_WEIGHT = 0;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double HIGHER_WEIGHT = 42;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private static final int IS_ENABLED = 0x1;
   private static final int IS_VISIBLE = 0x2;
-  private static final int IS_MULTI_CHOICE = 0x4;
+  private static final int IS_KEEP_POPUP_IF_REQUESTED = 0x4;
+  private static final int IS_KEEP_POPUP_IF_PREFERRED = 0x8;
   private static final int IS_POPUP_GROUP = 0x10;
   private static final int IS_PERFORM_GROUP = 0x20;
   private static final int IS_HIDE_GROUP_IF_EMPTY = 0x40;
   private static final int IS_DISABLE_GROUP_IF_EMPTY = 0x80;
   private static final int IS_APPLICATION_SCOPE = 0x100;
   private static final int IS_PREFER_INJECTED_PSI = 0x200;
+  private static final int IS_ENABLED_IN_MODAL_CONTEXT = 0x400;
   private static final int IS_TEMPLATE = 0x1000;
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
@@ -82,14 +93,13 @@ public final class Presentation implements Cloneable {
   private Icon hoveredIcon;
   private Icon selectedIcon;
 
-  private PropertyChangeSupport changeSupport;
-  private double myWeight = DEFAULT_WEIGHT;
+  private @NotNull FList<PropertyChangeListener> myListeners = FList.emptyList();
 
-  private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics = NotNullLazyValue.createValue(() -> {
+  private static final @NotNull NotNullLazyValue<Boolean> outRemoveMnemonics = NotNullLazyValue.createValue(() -> {
     return SystemInfoRt.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions();
   });
 
-  public static Presentation newTemplatePresentation() {
+  public static @NotNull Presentation newTemplatePresentation() {
     Presentation presentation = new Presentation();
     presentation.myFlags = BitUtil.set(presentation.myFlags, IS_TEMPLATE, true);
     return presentation;
@@ -108,18 +118,11 @@ public final class Presentation implements Cloneable {
   }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener l) {
-    PropertyChangeSupport support = changeSupport;
-    if (support == null) {
-      changeSupport = support = new PropertyChangeSupport(this);
-    }
-    support.addPropertyChangeListener(l);
+    myListeners = myListeners.prepend(l);
   }
 
   public void removePropertyChangeListener(@NotNull PropertyChangeListener l) {
-    PropertyChangeSupport support = changeSupport;
-    if (support != null) {
-      support.removePropertyChangeListener(l);
-    }
+    myListeners = myListeners.without(l);
   }
 
   /**
@@ -184,7 +187,7 @@ public final class Presentation implements Cloneable {
         TextWithMnemonic parsed = TextWithMnemonic.parse(s);
         UISettings uiSettings = UISettings.getInstanceOrNull();
         boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
-        return mnemonicsDisabled ? parsed.dropMnemonic(removeMnemonics.getValue()) : parsed;
+        return mnemonicsDisabled ? parsed.dropMnemonic(outRemoveMnemonics.getValue()) : parsed;
       };
     }
     else {
@@ -201,7 +204,7 @@ public final class Presentation implements Cloneable {
    * @param textWithMnemonicSupplier text with mnemonic to set
    */
   public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
-    if (changeSupport == null) {
+    if (myListeners.isEmpty()) {
       this.textWithMnemonicSupplier = textWithMnemonicSupplier;
       return;
     }
@@ -265,22 +268,26 @@ public final class Presentation implements Cloneable {
   }
 
   public void setDescription(@NotNull Supplier<@ActionDescription String> dynamicDescription) {
+    if (myListeners.isEmpty()) {
+      descriptionSupplier = dynamicDescription;
+      return;
+    }
     Supplier<String> oldDescription = descriptionSupplier;
     descriptionSupplier = dynamicDescription;
-    if (changeSupport != null) {
-      fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), descriptionSupplier.get());
-    }
+    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), descriptionSupplier.get());
   }
 
   public void setDescription(@ActionDescription String description) {
+    if (myListeners.isEmpty()) {
+      descriptionSupplier = () -> description;
+      return;
+    }
     Supplier<String> oldDescriptionSupplier = descriptionSupplier;
     descriptionSupplier = () -> description;
-    if (changeSupport != null) {
-      fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
-    }
+    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
   }
 
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     Supplier<? extends Icon> icon = this.icon;
     return icon == null ? null : icon.get();
   }
@@ -304,31 +311,30 @@ public final class Presentation implements Cloneable {
   }
 
   public void setIcon(@Nullable Icon icon) {
-    if (changeSupport == null) {
+    if (myListeners.isEmpty()) {
       this.icon = icon == null ? null : () -> icon;
       return;
     }
 
-    Icon oldIcon = getIcon();
+    Icon oldIcon = this.icon == null ? null : this.icon.get();
     this.icon = () -> icon;
-    fireObjectPropertyChange(PROP_ICON, oldIcon, this.icon.get());
+    fireObjectPropertyChange(PROP_ICON, oldIcon, icon);
   }
 
   public void setIconSupplier(@Nullable Supplier<? extends @Nullable Icon> icon) {
-    Supplier<? extends @Nullable Icon> oldIcon = this.icon;
-    this.icon = icon;
-
-    PropertyChangeSupport support = changeSupport;
-    if (support != null) {
-      Icon icon1 = oldIcon == null ? null : oldIcon.get();
-      Icon icon2 = icon == null ? null : icon.get();
-      if (!Objects.equals(icon1, icon2)) {
-        support.firePropertyChange(PROP_ICON, icon1, icon2);
-      }
+    if (myListeners.isEmpty()) {
+      this.icon = icon;
+      return;
     }
+
+    Icon oldIcon = this.icon == null ? null : this.icon.get();
+    this.icon = icon;
+    Icon newIcon = icon == null ? null : icon.get();
+    if (Objects.equals(oldIcon, newIcon)) return;
+    fireObjectPropertyChange(PROP_ICON, oldIcon, newIcon);
   }
 
-  public Icon getDisabledIcon() {
+  public @Nullable Icon getDisabledIcon() {
     return disabledIcon;
   }
 
@@ -338,21 +344,21 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, disabledIcon);
   }
 
-  public Icon getHoveredIcon() {
+  public @Nullable Icon getHoveredIcon() {
     return hoveredIcon;
   }
 
-  public void setHoveredIcon(final @Nullable Icon hoveredIcon) {
+  public void setHoveredIcon(@Nullable Icon hoveredIcon) {
     Icon old = this.hoveredIcon;
     this.hoveredIcon = hoveredIcon;
     fireObjectPropertyChange(PROP_HOVERED_ICON, old, this.hoveredIcon);
   }
 
-  public Icon getSelectedIcon() {
+  public @Nullable Icon getSelectedIcon() {
     return selectedIcon;
   }
 
-  public void setSelectedIcon(Icon selectedIcon) {
+  public void setSelectedIcon(@Nullable Icon selectedIcon) {
     Icon old = this.selectedIcon;
     this.selectedIcon = selectedIcon;
     fireObjectPropertyChange(PROP_SELECTED_ICON, old, this.selectedIcon);
@@ -411,8 +417,8 @@ public final class Presentation implements Cloneable {
   /**
    * For an action group presentation sets whether the action group is "performable" as an ordinary action or not.
    *
-   * @see com.intellij.openapi.actionSystem.impl.ActionMenu#SUPPRESS_SUBMENU
-   * @see com.intellij.openapi.actionSystem.impl.ActionButton#HIDE_DROPDOWN_ICON
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#SUPPRESS_SUBMENU
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#HIDE_DROPDOWN_ICON
    */
   public void setPerformGroup(boolean performing) {
     myFlags = BitUtil.set(myFlags, IS_PERFORM_GROUP, performing);
@@ -444,7 +450,7 @@ public final class Presentation implements Cloneable {
     myFlags = BitUtil.set(myFlags, IS_DISABLE_GROUP_IF_EMPTY, disable);
   }
 
-  /** @see Presentation#setApplicationScope(boolean)  */
+  /** @see Presentation#setApplicationScope(boolean) */
   public boolean isApplicationScope() {
     return BitUtil.isSet(myFlags, IS_APPLICATION_SCOPE);
   }
@@ -456,6 +462,33 @@ public final class Presentation implements Cloneable {
    */
   public void setApplicationScope(boolean applicationScope) {
     myFlags = BitUtil.set(myFlags, IS_APPLICATION_SCOPE, applicationScope);
+  }
+
+  /**
+   * For an action presentation in a popup sets whether a popup is closed or kept open
+   * when the action is performed.
+   * <p>
+   * {@link com.intellij.openapi.actionSystem.ToggleAction} use {@link KeepPopupOnPerform#Always} by default.
+   * The behavior is controlled by the {@link UISettings#getKeepPopupsForToggles} property.
+   *
+   * @see KeepPopupOnPerform
+   * @see UISettings#getKeepPopupsForToggles
+   */
+  public void setKeepPopupOnPerform(@NotNull KeepPopupOnPerform mode) {
+    boolean requestedBit = mode == KeepPopupOnPerform.IfRequested || mode == KeepPopupOnPerform.Always;
+    boolean preferredBit = mode == KeepPopupOnPerform.IfPreferred || mode == KeepPopupOnPerform.Always;
+    myFlags = BitUtil.set(myFlags, IS_KEEP_POPUP_IF_REQUESTED, requestedBit);
+    myFlags = BitUtil.set(myFlags, IS_KEEP_POPUP_IF_PREFERRED, preferredBit);
+  }
+
+  /** @see Presentation#setKeepPopupOnPerform(KeepPopupOnPerform) */
+  public @NotNull KeepPopupOnPerform getKeepPopupOnPerform() {
+    boolean requestedBit = BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_REQUESTED);
+    boolean preferedBit = BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_PREFERRED);
+    return requestedBit && preferedBit ? KeepPopupOnPerform.Always :
+           requestedBit ? KeepPopupOnPerform.IfRequested :
+           preferedBit ? KeepPopupOnPerform.IfPreferred :
+           KeepPopupOnPerform.Never;
   }
 
   /** @see Presentation#setPreferInjectedPsi(boolean) */
@@ -472,6 +505,21 @@ public final class Presentation implements Cloneable {
   @ApiStatus.Internal
   public void setPreferInjectedPsi(boolean preferInjectedPsi) {
     myFlags = BitUtil.set(myFlags, IS_PREFER_INJECTED_PSI, preferInjectedPsi);
+  }
+
+  /** @see Presentation#setEnabledInModalContext(boolean) */
+  @ApiStatus.Internal
+  public boolean isEnabledInModalContext() {
+    return BitUtil.isSet(myFlags, IS_ENABLED_IN_MODAL_CONTEXT);
+  }
+
+  /**
+   * For an action presentation sets whether the action can be performed in the modal context.
+   * The default is {@code false}.
+   */
+  @ApiStatus.Internal
+  public void setEnabledInModalContext(boolean enabledInModalContext) {
+    myFlags = BitUtil.set(myFlags, IS_ENABLED_IN_MODAL_CONTEXT, enabledInModalContext);
   }
 
   /**
@@ -505,17 +553,26 @@ public final class Presentation implements Cloneable {
     setVisible(enabled);
   }
 
-  private void fireBooleanPropertyChange(String propertyName, boolean oldValue, boolean newValue) {
-    PropertyChangeSupport support = changeSupport;
-    if (oldValue != newValue && support != null) {
-      support.firePropertyChange(propertyName, oldValue, newValue);
-    }
+  private void fireBooleanPropertyChange(@NotNull String propertyName, boolean oldValue, boolean newValue) {
+    if (myListeners.isEmpty() || oldValue == newValue) return;
+    PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
+    doFirePropertyChange(event, myListeners);
   }
 
-  private void fireObjectPropertyChange(String propertyName, Object oldValue, Object newValue) {
-    PropertyChangeSupport support = changeSupport;
-    if (support != null && !Objects.equals(oldValue, newValue)) {
-      support.firePropertyChange(propertyName, oldValue, newValue);
+  private void fireObjectPropertyChange(@NotNull String propertyName, Object oldValue, Object newValue) {
+    if (myListeners.isEmpty() || Objects.equals(oldValue, newValue)) return;
+    PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
+    doFirePropertyChange(event, myListeners);
+  }
+
+  private static void doFirePropertyChange(@NotNull PropertyChangeEvent event,
+                                           @NotNull FList<PropertyChangeListener> listeners) {
+    for (PropertyChangeListener listener : listeners.size() == 1 ? listeners : ContainerUtil.reverse(listeners)) {
+      if (listener instanceof PropertyChangeListenerProxy p &&
+          !event.getPropertyName().equals(p.getPropertyName())) {
+        continue;
+      }
+      listener.propertyChange(event);
     }
   }
 
@@ -530,7 +587,7 @@ public final class Presentation implements Cloneable {
     try {
       Presentation clone = (Presentation)super.clone();
       clone.myFlags = BitUtil.set(clone.myFlags, IS_TEMPLATE, false);
-      clone.changeSupport = null;
+      clone.myListeners = FList.emptyList();
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -577,7 +634,6 @@ public final class Presentation implements Cloneable {
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
-    setWeight(presentation.getWeight());
 
     if (!myUserMap.equals(presentation.myUserMap)) {
       Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
@@ -625,36 +681,52 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(key, oldValue, value);
   }
 
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public double getWeight() {
-    return myWeight;
+    return DEFAULT_WEIGHT;
   }
 
-  /**
-   * Some action groups (like 'New...') may filter out actions with non-highest priority.
-   *
-   * @param weight please use {@link #HIGHER_WEIGHT} or {@link #EVEN_HIGHER_WEIGHT}
-   */
-  public void setWeight(double weight) {
-    myWeight = weight;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
+  public void setWeight(double ignore) {
   }
 
   public boolean isEnabledAndVisible() {
     return isEnabled() && isVisible();
   }
 
-  /**
-   * Sets if multiple actions or toggles can be performed in the same menu or popup.
-   */
-  public void setMultiChoice(boolean b) {
-    myFlags = BitUtil.set(myFlags, IS_MULTI_CHOICE, b);
-  }
-
-  public boolean isMultiChoice() {
-    return BitUtil.isSet(myFlags, IS_MULTI_CHOICE);
-  }
-
   @Override
-  public @Nls String toString() {
-    return getText() + " (" + descriptionSupplier.get() + ")";
+  public @NonNls String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(getText()).append(" (").append(descriptionSupplier.get()).append(")");
+    sb.append(", flags=[");
+    int start = sb.length();
+    appendFlag(myFlags, IS_TEMPLATE, sb, start, "template");
+    appendFlag(myFlags, IS_ENABLED, sb, start, "enabled");
+    appendFlag(myFlags, IS_VISIBLE, sb, start, "visible");
+    if (BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_REQUESTED) &&
+        BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_PREFERRED)) {
+      appendFlag(1, 1, sb, start, "keep_popup_always");
+    }
+    else {
+      appendFlag(myFlags, IS_KEEP_POPUP_IF_REQUESTED, sb, start, "keep_popup_if_requested");
+      appendFlag(myFlags, IS_KEEP_POPUP_IF_PREFERRED, sb, start, "keep_popup_if_preferred");
+    }
+    appendFlag(myFlags, IS_POPUP_GROUP, sb, start, "popup_group");
+    appendFlag(myFlags, IS_PERFORM_GROUP, sb, start, "perform_group");
+    appendFlag(myFlags, IS_HIDE_GROUP_IF_EMPTY, sb, start, "hide_group_if_empty");
+    appendFlag(myFlags, IS_DISABLE_GROUP_IF_EMPTY, sb, start, "disable_group_if_empty");
+    appendFlag(myFlags, IS_APPLICATION_SCOPE, sb, start, "application_scope");
+    appendFlag(myFlags, IS_PREFER_INJECTED_PSI, sb, start, "prefer_injected_psi");
+    appendFlag(myFlags, IS_ENABLED_IN_MODAL_CONTEXT, sb, start, "enabled_in_modal_context");
+    sb.append("]");
+    return sb.toString();
+  }
+
+  private static void appendFlag(int flags, int mask, @NotNull StringBuilder sb, int start, @NotNull String maskName) {
+    if (!BitUtil.isSet(flags, mask)) return;
+    if (sb.length() > start) sb.append(", ");
+    sb.append(maskName);
   }
 }

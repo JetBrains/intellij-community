@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection.java19api;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.java19api.JavaEmptyModuleInfoFileInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.testFramework.fixtures.MultiModuleProjectDescriptor;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.util.io.FileUtil;
@@ -75,7 +76,7 @@ public class JavaEmptyModuleInfoFileInspectionTest extends LightMultiFileTestCas
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, false, file);
 
-    IntentionAction intention = myFixture.getAvailableIntention("Fill in module dependencies");
+    IntentionAction intention = myFixture.getAvailableIntention(JavaBundle.message("inspection.auto.add.module.requirements.quickfix"));
     if (intention != null) {
       myFixture.launchAction(intention);
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();

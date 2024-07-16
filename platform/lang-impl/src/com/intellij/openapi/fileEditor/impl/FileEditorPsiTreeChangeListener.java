@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.List;
 
 /**
  * Updates attribute of open files when roots change
@@ -72,8 +75,10 @@ public final class FileEditorPsiTreeChangeListener extends PsiTreeChangeAdapter 
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return;
     FileEditorManagerEx fileEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
-    FileEditor[] editors = fileEditorManager.getAllEditors(file);
-    if (editors.length == 0) return;
+    @NotNull @Unmodifiable List<@NotNull FileEditor> editors = fileEditorManager.getAllEditorList(file);
+    if (editors.isEmpty()) {
+      return;
+    }
 
     final VirtualFile currentFile = fileEditorManager.getCurrentFile();
     if (currentFile != null && Comparing.equal(psiFile.getVirtualFile(), currentFile)) {

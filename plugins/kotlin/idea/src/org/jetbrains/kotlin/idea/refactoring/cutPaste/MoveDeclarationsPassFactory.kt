@@ -7,11 +7,11 @@ import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.refactoring.suggested.range
 
 class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
 
@@ -60,7 +60,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
             }
 
             return HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
-                .range(cookie.bounds.range!!)
+                .range(cookie.bounds.asTextRange!!)
                 .registerFix(MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount), null, null, null, null)
                 .createUnconditionally()
         }

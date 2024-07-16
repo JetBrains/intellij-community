@@ -2,7 +2,6 @@
 package com.intellij.find;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -21,7 +20,7 @@ import javax.swing.*;
 
 public final class FindAllAction extends AnAction implements ShortcutProvider, DumbAware {
   private static Icon getFindIcon() {
-    return ExperimentalUI.isNewUI() ? ExpUiIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;
+    return ExperimentalUI.isNewUI() ? AllIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;
   }
 
   public FindAllAction() {

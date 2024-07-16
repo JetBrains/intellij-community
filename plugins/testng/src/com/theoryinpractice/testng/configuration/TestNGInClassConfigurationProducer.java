@@ -5,12 +5,15 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NotNull;
 
-public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
+public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer
+  implements DumbAware {
+
   private final TestNGInClassConfigurationProducerDelegate myDelegate = new TestNGInClassConfigurationProducerDelegate();
 
   @Override

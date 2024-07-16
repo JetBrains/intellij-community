@@ -15,6 +15,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,10 @@ public abstract class StubIndex {
 
   public static StubIndex getInstance() {
     return ourInstance.get();
+  }
+
+  @Internal
+  public StubIndex() {
   }
 
   /**
@@ -142,11 +147,11 @@ public abstract class StubIndex {
    * this tracker to react on stub changes without performing the index update. File is considered modified if a stub for its actual content
    * differs from what is stored in the index. Modification detector might react false-positively when the number of changed files is big.
    */
-  @ApiStatus.Internal
+  @Internal
   @ApiStatus.Experimental
   public abstract @NotNull ModificationTracker getPerFileElementTypeModificationTracker(@NotNull StubFileElementType<?> fileElementType);
 
-  @ApiStatus.Internal
+  @Internal
   @ApiStatus.Experimental
   public abstract @NotNull ModificationTracker getStubIndexModificationTracker(@NotNull Project project);
 }

@@ -2,9 +2,11 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Set;
 
+@ApiStatus.Internal
 public class UnloadedModulesNameHolderImpl implements UnloadedModulesNameHolder {
   private final Set<String> names;
 

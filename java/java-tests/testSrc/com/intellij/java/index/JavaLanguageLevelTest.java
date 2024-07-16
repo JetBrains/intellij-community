@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.index;
 
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,8 +12,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-
-import java.io.IOException;
 
 public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSourceRootAddedForExistingFiles() {
@@ -36,7 +33,7 @@ public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
       assertNotNull(getIndexedStub(file));
     }
     finally {
-      PsiTestUtil.removeSourceRoot(myFixture.getModule(), file.getParent());
+      PsiTestUtil.removeContentEntry(myFixture.getModule(), file.getParent());
     }
   }
 

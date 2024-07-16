@@ -16,8 +16,8 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -374,7 +374,9 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
       }
     }
 
-      val (adjustedUsages, refKindUsages) = @OptIn(KtAllowAnalysisFromWriteAction::class) allowAnalysisFromWriteAction {
+      val wasRequiredOverride = (element.unwrapped as? KtNamedFunction)?.let { renameRefactoringSupport.overridesNothing(it) } != true
+
+      val (adjustedUsages, refKindUsages) = @OptIn(KaAllowAnalysisFromWriteAction::class) allowAnalysisFromWriteAction {
           val adjustedUsages = if (element is KtParameter) {
               usages.filterNot {
                   val refTarget = it.reference?.resolve()
@@ -428,9 +430,11 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
     usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
 
-    renameRefactoringSupport.dropOverrideKeywordIfNecessary(element)
+      if (wasRequiredOverride) {
+          renameRefactoringSupport.dropOverrideKeywordIfNecessary(element)
+      }
 
-    listener?.elementRenamed(element)
+      listener?.elementRenamed(element)
   }
 
 }

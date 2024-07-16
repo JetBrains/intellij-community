@@ -4,7 +4,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -239,7 +238,7 @@ public final class Java8MigrationUtils {
       if (myValueReference == null) return false;
       PsiVariable var = extractDeclaration();
       // has variable, but it used only in condition
-      return var == null || ReferencesSearch.search(var).findAll().size() != 1;
+      return var == null || VariableAccessUtils.getVariableReferences(var).size() != 1;
     }
 
     public PsiMethodCallExpression getCheckCall() {

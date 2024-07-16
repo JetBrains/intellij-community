@@ -9,15 +9,14 @@ UFile (package = ) [public final class A {...]
         UMethod (name = A) [public fun A(@org.jetbrains.annotations.NotNull i: int) {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = external <init>(i.toString())(external toString()())
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())] = external <init>(i.toString())(external toString()())
+            UBlockExpression [{...}] = external A(i.toString())(external toString()())
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [A(i.toString())] = external A(i.toString())(external toString()())
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>(i.toString())(external toString()())
+                    USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] = external A()
                     UQualifiedReferenceExpression [i.toString()] = external toString()()
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
                             UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
     UClass (name = AWithInit) [public final class AWithInit {...}]
         UField (name = str) [@org.jetbrains.annotations.NotNull private final var str: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -29,19 +28,17 @@ UFile (package = ) [public final class A {...]
                 UBlockExpression [{...}] = external println()()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println()()
         UMethod (name = AWithInit) [public fun AWithInit(@org.jetbrains.annotations.NotNull i: int) {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = external <init>(i.toString())(external toString()())
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())] = external <init>(i.toString())(external toString()())
+            UBlockExpression [{...}] = external AWithInit(i.toString())(external toString()())
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [AWithInit(i.toString())] = external AWithInit(i.toString())(external toString()())
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: AWithInit) [<init>] = external <init>(i.toString())(external toString()())
+                    USimpleNameReferenceExpression (identifier = AWithInit, resolvesTo = PsiClass: AWithInit) [AWithInit] = external AWithInit()
                     UQualifiedReferenceExpression [i.toString()] = external toString()()
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
                             UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
     UClass (name = AWith2Init) [public final class AWith2Init {...}]
         UField (name = str) [@org.jetbrains.annotations.NotNull private final var str: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -53,37 +50,32 @@ UFile (package = ) [public final class A {...]
                 UBlockExpression [{...}] = external println(1)(1)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(1)] = external println(1)(1)
                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(1)(1)
                         ULiteralExpression (value = 1) [1] = 1
                 UBlockExpression [{...}] = external println(2)(2)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(2)] = external println(2)(2)
                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(2)(2)
                         ULiteralExpression (value = 2) [2] = 2
         UMethod (name = AWith2Init) [public fun AWith2Init(@org.jetbrains.annotations.NotNull i: int) {...}]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = external <init>(i.toString())(external toString()())
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>(i.toString())] = external <init>(i.toString())(external toString()())
+            UBlockExpression [{...}] = external AWith2Init(i.toString())(external toString()())
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [AWith2Init(i.toString())] = external AWith2Init(i.toString())(external toString()())
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: AWith2Init) [<init>] = external <init>(i.toString())(external toString()())
+                    USimpleNameReferenceExpression (identifier = AWith2Init, resolvesTo = PsiClass: AWith2Init) [AWith2Init] = external AWith2Init()
                     UQualifiedReferenceExpression [i.toString()] = external toString()()
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
                             UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
     UClass (name = AOnlyInit) [public final class AOnlyInit {...}]
         UMethod (name = AOnlyInit) [public fun AOnlyInit() {...}]
             UBlockExpression [{...}] = external println(2)(2)
                 UBlockExpression [{...}] = external println(1)(1)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(1)] = external println(1)(1)
                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(1)(1)
                         ULiteralExpression (value = 1) [1] = 1
                 UBlockExpression [{...}] = external println(2)(2)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(2)] = external println(2)(2)
                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(2)(2)
                         ULiteralExpression (value = 2) [2] = 2
     UClass (name = AWithSecondary) [public final class AWithSecondary {...}]
         UField (name = a) [@org.jetbrains.annotations.NotNull public var a: java.lang.String]
@@ -96,23 +88,22 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] = external Object()()
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>] = external <init>()()
+                    USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object] = external Object()
                 UBinaryExpression (operator = =) [a = i.toString()] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     UQualifiedReferenceExpression [i.toString()] = external toString()()
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
                             UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = AWithSecondary) [public fun AWithSecondary(@org.jetbrains.annotations.NotNull s: java.lang.String) {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] = external Object()()
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>] = external <init>()()
+                    USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object] = external Object()
                 UBinaryExpression (operator = =) [a = s] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
@@ -127,27 +118,25 @@ UFile (package = ) [public final class A {...]
             UParameter (name = i) [@org.jetbrains.annotations.NotNull var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Undetermined
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] = external Object()()
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>] = external <init>()()
+                    USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object] = external Object()
                 UBlockExpression [{...}] = external println()()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
                         UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println()()
                 UBinaryExpression (operator = =) [a = i.toString()] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     UQualifiedReferenceExpression [i.toString()] = external toString()()
                         USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
                             UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                            USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
         UMethod (name = AWithSecondaryInit) [public fun AWithSecondaryInit(@org.jetbrains.annotations.NotNull s: java.lang.String) {...}]
             UParameter (name = s) [@org.jetbrains.annotations.NotNull var s: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = external toString()()
-                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Object()] = external Object()()
                     UIdentifier (Identifier ()) [UIdentifier (Identifier ())]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Object) [<init>] = external <init>()()
+                    USimpleNameReferenceExpression (identifier = Object, resolvesTo = PsiClass: Object) [Object] = external Object()
                 UBinaryExpression (operator = =) [a = s] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = external a()
                     USimpleNameReferenceExpression (identifier = s) [s] = Undetermined
@@ -158,7 +147,6 @@ UFile (package = ) [public final class A {...]
                     USimpleNameReferenceExpression (identifier = local) [local] = (var local = Undetermined)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
                         UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                        USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()
     UClass (name = AWithFieldInit) [public final class AWithFieldInit {...}]
         UField (name = a) [@org.jetbrains.annotations.NotNull private final var a: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
@@ -174,4 +162,3 @@ UFile (package = ) [public final class A {...]
                             USimpleNameReferenceExpression (identifier = i) [i] = Undetermined
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()
                                 UIdentifier (Identifier (toString)) [UIdentifier (Identifier (toString))]
-                                USimpleNameReferenceExpression (identifier = toString, resolvesTo = null) [toString] = external toString()()

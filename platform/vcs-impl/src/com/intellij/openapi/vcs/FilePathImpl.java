@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
@@ -58,15 +56,6 @@ public final class FilePathImpl implements FilePath {
     return result;
   }
 
-  @Override
-  public void refresh() {
-  }
-
-  @Override
-  public void hardRefresh() {
-    LocalFileSystem.getInstance().refreshAndFindFileByPath(myPath);
-  }
-
   @NotNull
   @Override
   public String getPath() {
@@ -119,16 +108,6 @@ public final class FilePathImpl implements FilePath {
   @Override
   public String getPresentableUrl() {
     return FileUtil.toSystemDependentName(myPath);
-  }
-
-  @Override
-  @Nullable
-  public Document getDocument() {
-    VirtualFile file = getVirtualFile();
-    if (file == null || file.getFileType().isBinary()) {
-      return null;
-    }
-    return FileDocumentManager.getInstance().getDocument(file);
   }
 
   @Override

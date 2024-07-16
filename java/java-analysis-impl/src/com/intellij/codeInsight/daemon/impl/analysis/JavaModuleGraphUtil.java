@@ -54,6 +54,12 @@ public final class JavaModuleGraphUtil {
   @Contract("null->null")
   public static @Nullable PsiJavaModule findDescriptorByElement(@Nullable PsiElement element) {
     if (element == null) return null;
+    if (element instanceof PsiJavaModule module) return module;
+    if (element.getContainingFile() instanceof PsiJavaFile file) {
+      PsiJavaModule module = file.getModuleDeclaration();
+      if (module != null) return module;
+    }
+
     if (element instanceof PsiFileSystemItem fsItem) {
       return findDescriptorByFile(fsItem.getVirtualFile(), fsItem.getProject());
     }
@@ -236,12 +242,37 @@ public final class JavaModuleGraphUtil {
                                       boolean isExported) {
     if (to.equals(JAVA_BASE)) return false;
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
+    if (from instanceof LightJavaModule) return false;
+    if (to.equals(from.getName())) return false;
+    if (!PsiNameHelper.isValidModuleName(to, from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to, scope) ? PsiKeyword.STATIC + " " : "") +
                                      (isExported ? PsiKeyword.TRANSITIVE + " " : "") +
                                      to);
+    PsiJavaModule toModule = findDependencyByName(from, to);
+    if (toModule != null) optimizeDependencies(from, toModule);
     return true;
+  }
+
+  @Nullable
+  private static PsiJavaModule findDependencyByName(@NotNull PsiJavaModule module, @NotNull String name) {
+    for (PsiRequiresStatement require : module.getRequires()) {
+      if (name.equals(require.getModuleName())) return require.resolve();
+    }
+    return null;
+  }
+
+  public static boolean addDependency(@NotNull PsiElement from,
+                                      @NotNull PsiClass to,
+                                      @Nullable DependencyScope scope) {
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
+    PsiJavaModule fromDescriptor = findDescriptorByElement(from);
+    if (fromDescriptor == null) return false;
+    PsiJavaModule toDescriptor = findDescriptorByElement(to);
+    if (toDescriptor == null) return false;
+    if(!ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensionList(), sys -> sys.isAccessible(to, from))) return false;
+    return addDependency(fromDescriptor, toDescriptor, scope);
   }
 
   public static boolean addDependency(@NotNull PsiJavaModule from,
@@ -249,13 +280,51 @@ public final class JavaModuleGraphUtil {
                                       @Nullable DependencyScope scope) {
     if (to.getName().equals(JAVA_BASE)) return false;
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
+    if (from instanceof LightJavaModule) return false;
+    if (from == to) return false;
     if (!PsiNameHelper.isValidModuleName(to.getName(), to)) return false;
-    if (alreadyContainsRequires(from, to.getName())) return false;
+    if (contains(from.getRequires(), to.getName())) return false;
+    if (reads(from, to)) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +
                                      (isExported(from, to) ? PsiKeyword.TRANSITIVE + " " : "") +
                                      to.getName());
+    optimizeDependencies(from, to);
     return true;
+  }
+
+  private static boolean contains(@NotNull Iterable<PsiRequiresStatement> requires, @NotNull String name) {
+    for (PsiRequiresStatement statement : requires) {
+      if (name.equals(statement.getModuleName())) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Optimizes the dependencies of a current module file by removing redundant 'requires' statements
+   * that contain (transitive) in the selected dependency.
+   *
+   * @param currentModule      The Java module for which to optimize the dependencies.
+   * @param selectedDependency The Java module that is the selected dependency.
+   */
+  public static void optimizeDependencies(@NotNull PsiJavaModule currentModule, @NotNull PsiJavaModule selectedDependency) {
+    Map<PsiJavaModule, PsiRequiresStatement> requires = new HashMap<>();
+    for (PsiRequiresStatement require : currentModule.getRequires()) {
+      PsiJavaModule resolvedModule = require.resolve();
+      if (resolvedModule != null) {
+        requires.put(resolvedModule, require);
+      }
+    }
+
+    Set<PsiJavaModule> redundant = new HashSet<>();
+    for (PsiJavaModule module : requires.keySet()) {
+      if (module.getName().equals(selectedDependency.getName())) continue;
+      if (reads(selectedDependency, module)) redundant.add(module);
+    }
+
+    for (PsiJavaModule module : redundant) {
+      requires.get(module).delete();
+    }
   }
 
   private static boolean isExported(@NotNull PsiJavaModule from, @NotNull PsiJavaModule to) {
@@ -316,8 +385,7 @@ public final class JavaModuleGraphUtil {
       if (descriptors.size() == 2) {
         if (descriptors.stream()
               .map(d -> getVirtualFile(d))
-              .filter(Objects::nonNull)
-              .map(moduleRootManager.getFileIndex()::isInTestSourceContent).count() < 2) {
+              .filter(Objects::nonNull).count() < 2) {
           return Collections.emptyList();
         }
         projectModules.addAll(descriptors);

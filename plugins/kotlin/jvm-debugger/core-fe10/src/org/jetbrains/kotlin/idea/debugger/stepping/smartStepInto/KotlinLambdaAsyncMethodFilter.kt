@@ -2,36 +2,50 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.BasicStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.event.LocatableEvent
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 
 class KotlinLambdaAsyncMethodFilter(
-    declaration: KtDeclaration?,
+    element: PsiElement?,
     callingExpressionLines: Range<Int>?,
     private val lambdaInfo: KotlinLambdaInfo,
     private val lambdaFilter: KotlinLambdaMethodFilter
-) : KotlinMethodFilter(declaration, callingExpressionLines, lambdaInfo.callerMethodInfo) {
+) : MethodFilter {
     private var visitedLocations = 0
+    private val methodFilter = if (element is PsiMethod) {
+        BasicStepMethodFilter(element, lambdaInfo.callerMethodInfo.ordinal, callingExpressionLines)
+    } else {
+        KotlinMethodFilter(element, callingExpressionLines, lambdaInfo.callerMethodInfo)
+    }
+
+    override fun getCallingExpressionLines() = methodFilter.callingExpressionLines
+    override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
+        return locationMatches(process, location, null)
+    }
 
     override fun locationMatches(process: DebugProcessImpl, location: Location?, frameProxy: StackFrameProxyImpl?): Boolean {
-        if (frameProxy == null || !super.locationMatches(process, location, frameProxy)) {
+        if (frameProxy == null || !methodFilter.locationMatches(process, location, frameProxy)) {
             return false
         }
         visitedLocations++
@@ -43,7 +57,7 @@ class KotlinLambdaAsyncMethodFilter(
         // We failed to get the location inside lambda (it can happen for SAM conversions in IR backend).
         // So we fall back to ordinal check.
         if (locationInLambda == null) {
-            return visitedLocations == lambdaInfo.callerMethodOrdinal
+            return visitedLocations == 1 + lambdaInfo.callerMethodInfo.ordinal
         }
         return lambdaFilter.locationMatches(process, locationInLambda)
     }
@@ -95,6 +109,14 @@ class KotlinLambdaAsyncMethodFilter(
             }
 
             val frameIndex = if (methodName.isGeneratedIrBackendLambdaMethodName()) 1 else 0
+            return isTargetLambda(thread, frameIndex)
+                    // For lambdas passed to Java functions, the lambda could be additionally wrapped for type compatibility.
+                    // One of the previous frames (heuristically 3rd frame) should contain the original lambda.
+                    || isTargetLambda(thread, 3)
+        }
+
+        private fun isTargetLambda(thread: ThreadReferenceProxyImpl, frameIndex: Int): Boolean {
+            if (thread.frameCount() <= frameIndex) return false
             val lambdaReference = thread.frame(frameIndex).safeThisObject()
             return lambdaReference != null && lambdaReference.uniqueID() == lambdaId
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.ui;
 
 import com.intellij.icons.AllIcons;
@@ -25,16 +25,15 @@ public class PyMemberSelectionTable extends AbstractMemberSelectionTable<PyEleme
   private final boolean mySupportAbstract;
 
   public PyMemberSelectionTable(
-    @NotNull final List<PyMemberInfo<PyElement>> memberInfos,
-    @Nullable final MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model,
+    final @NotNull List<PyMemberInfo<PyElement>> memberInfos,
+    final @Nullable MemberInfoModel<PyElement, PyMemberInfo<PyElement>> model,
     final boolean supportAbstract) {
     super(memberInfos, model, (supportAbstract ? getAbstractTitle() : null));
     mySupportAbstract = supportAbstract;
   }
 
-  @Nullable
   @Override
-  protected Object getAbstractColumnValue(final PyMemberInfo<PyElement> memberInfo) {
+  protected @Nullable Object getAbstractColumnValue(final PyMemberInfo<PyElement> memberInfo) {
     //TODO: Too many logic, move to presenters
     return (mySupportAbstract && memberInfo.isChecked() && myMemberInfoModel.isAbstractEnabled(memberInfo)) ? memberInfo.isToAbstract() : null;
   }

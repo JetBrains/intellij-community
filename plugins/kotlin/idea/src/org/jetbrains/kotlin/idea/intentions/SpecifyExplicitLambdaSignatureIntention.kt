@@ -4,19 +4,14 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtParameterList
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.isError
@@ -39,7 +34,7 @@ open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndepend
             val functionLiteral = element.functionLiteral
             val functionDescriptor = element.analyze(BodyResolveMode.PARTIAL)[BindingContext.FUNCTION, functionLiteral]!!
 
-            applyWithParameters(element, functionDescriptor.valueParameters
+            specifyExplicitLambdaSignature(element, functionDescriptor.valueParameters
                 .asSequence()
                 .mapIndexed { index, parameterDescriptor ->
                     parameterDescriptor.render(psiName = functionLiteral.valueParameters.getOrNull(index)?.let {
@@ -47,37 +42,6 @@ open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndepend
                     })
                 }
                 .joinToString())
-        }
-
-        fun KtFunctionLiteral.setParameterListIfAny(psiFactory: KtPsiFactory, newParameterList: KtParameterList?) {
-            val oldParameterList = valueParameterList
-            if (oldParameterList != null && newParameterList != null) {
-                oldParameterList.replace(newParameterList)
-            } else {
-                val openBraceElement = lBrace
-                val nextSibling = openBraceElement.nextSibling
-                val addNewline = nextSibling is PsiWhiteSpace && nextSibling.text?.contains("\n") ?: false
-                val (whitespace, arrow) = psiFactory.createWhitespaceAndArrow()
-                addRangeAfter(whitespace, arrow, openBraceElement)
-                if (newParameterList != null) {
-                    addAfter(newParameterList, openBraceElement)
-                }
-
-                if (addNewline) {
-                    addAfter(psiFactory.createNewLine(), openBraceElement)
-                }
-            }
-        }
-
-        fun applyWithParameters(element: KtLambdaExpression, parameterString: String) {
-            val psiFactory = KtPsiFactory(element.project)
-            val functionLiteral = element.functionLiteral
-            val newParameterList =
-                (psiFactory.createExpression("{ $parameterString -> }") as KtLambdaExpression).functionLiteral.valueParameterList
-            runWriteActionIfPhysical(element) {
-                functionLiteral.setParameterListIfAny(psiFactory, newParameterList)
-                ShortenReferences.DEFAULT.process(element.valueParameters)
-            }
         }
     }
 }

@@ -17,14 +17,17 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 @FunctionalInterface
 public interface GutterMarkPreprocessor {
-  ExtensionPointName<GutterMarkPreprocessor> EP_NAME = ExtensionPointName.create("com.intellij.gutterMarkPreprocessor");
 
   @NotNull
   List<GutterMark> processMarkers(@NotNull List<GutterMark> list);
+
+  @ApiStatus.Internal
+  ExtensionPointName<GutterMarkPreprocessor> EP_NAME = ExtensionPointName.create("com.intellij.gutterMarkPreprocessor");
 }

@@ -1,31 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.settingDescriptorFactory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.minutes
-
-private val LOG: Logger
-  get() = logger<BundledPluginsState>()
 
 @ApiStatus.Internal
 const val BUNDLED_PLUGINS_FILENAME: String = "bundled_plugins.txt"
@@ -35,32 +27,12 @@ private fun getSavedBuildNumber(settingsController: SettingsController,
   return settingsController.getItem(settingDescriptor)?.let { BuildNumber.fromString(it) }
 }
 
-internal suspend fun setSavedBuildNumber(value: BuildNumber?,
-                                         settingsController: SettingsController,
-                                         settingDescriptor: SettingDescriptor<String>) {
+internal fun setSavedBuildNumber(value: BuildNumber?,
+                                 settingsController: SettingsController,
+                                 settingDescriptor: SettingDescriptor<String>) {
   settingsController.setItem(settingDescriptor, value?.asString())
 }
 
-private class BundledPluginsState : ApplicationInitializedListener {
-  init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    asyncScope.launch {
-      // postpone avoiding getting PropertiesComponent and writing to disk too early
-      delay(1.minutes)
-
-      if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
-        saveBundledPluginsState()
-      }
-    }
-  }
-}
-
-@VisibleForTesting
 suspend fun saveBundledPluginsState() {
   val settingsController = serviceAsync<SettingsController>()
   val settingDescriptor = settingDescriptorFactory(PluginManagerCore.CORE_ID).settingDescriptor("bundled.plugins.list.saved.version") {
@@ -84,7 +56,7 @@ suspend fun saveBundledPluginsState() {
       setSavedBuildNumber(currentBuildNumber, settingsController, settingDescriptor)
     }
     catch (e: IOException) {
-      LOG.warn("Unable to save bundled plugins list", e)
+      PluginManagerCore.logger.warn("Unable to save bundled plugins list", e)
     }
   }
 }
@@ -117,7 +89,7 @@ fun readPluginIdsFromFile(configDir: Path = PathManager.getConfigDir()): Set<Pai
       }
   }
   catch (e: IOException) {
-    LOG.warn("Unable to load bundled plugins list from $file", e)
+    PluginManagerCore.logger.warn("Unable to load bundled plugins list from $file", e)
   }
   return bundledPlugins
 }

@@ -4,19 +4,27 @@ package com.intellij.application.options.colors;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.awt.*;
+import java.util.Collections;
+import java.util.Set;
+import java.util.TreeSet;
 
 public final class RainbowColorsInSchemeState {
+  public static final String DEFAULT_LANGUAGE_NAME = "Default";
   private final EditorColorsScheme myEditedScheme;
   private final EditorColorsScheme myOriginalScheme;
 
@@ -35,11 +43,21 @@ public final class RainbowColorsInSchemeState {
           scheme.setAttributes(key, RainbowHighlighter.createRainbowAttribute(color));
         }
       }
-      updateRainbowMarkup();
+      updateRainbowMarkup(scheme);
     }
   }
 
-  private static void updateRainbowMarkup() {
+  private static void updateRainbowMarkup(@NotNull EditorColorsScheme scheme) {
+    Set<String> languagesWithRainbowHighlighting = getRainbowOnLanguageIds(scheme);
+    reportStatistic(languagesWithRainbowHighlighting);
+
+    RainbowHighlighter.resetRainbowGeneratedColors(scheme);
+    ApplicationManager
+      .getApplication()
+      .getMessageBus()
+      .syncPublisher(RainbowStateChangeListener.getTOPIC())
+      .onRainbowStateChanged(scheme, languagesWithRainbowHighlighting);
+
     Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     for (Editor editor : allEditors) {
       final Project project = editor.getProject();
@@ -50,6 +68,35 @@ public final class RainbowColorsInSchemeState {
         }
       }
     }
+  }
+
+  private static void reportStatistic(@NotNull Set<String> languagesWithRainbowHighlighting) {
+    Set<String> logCopy = new TreeSet<>(languagesWithRainbowHighlighting);
+    boolean rainbowOnByDefault = logCopy.remove(DEFAULT_LANGUAGE_NAME);
+    RainbowCollector.getRAINBOW_HIGHLIGHTER_CHANGED_EVENT().log(
+      rainbowOnByDefault,
+      logCopy.stream().toList());
+  }
+
+  @NotNull
+  private static @UnmodifiableView Set<String> getRainbowOnLanguageIds(@NotNull EditorColorsScheme scheme) {
+    TreeSet<String> rainbowOnLanguages = new TreeSet<>();
+    ColorSettingsPage.EP_NAME.forEachExtensionSafe(
+      it -> {
+          if (it instanceof RainbowColorSettingsPage rcp  && RainbowHighlighter.isRainbowEnabledWithInheritance(scheme, rcp.getLanguage())) {
+            Language language = rcp.getLanguage();
+            if (language != Language.ANY) {
+              // Here we skip [Language.ANY] as the language that has no frontend representation
+              // Instead, the [null] language is the Default language
+              // See the [com.jetbrains.rdclient.colorSchemes.ProtocolRainbowColorSettingsPage.getLanguage] implementation
+              rainbowOnLanguages.add(language != null
+                                     ? language.getID()
+                                     : DEFAULT_LANGUAGE_NAME);
+            }
+          }
+        }
+    );
+    return Collections.unmodifiableSet(rainbowOnLanguages);
   }
 
   public boolean isModified(@Nullable Language language) {

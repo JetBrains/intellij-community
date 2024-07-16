@@ -1,5 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.blobstorage;
+
+import com.intellij.util.MathUtil;
 
 /**
  * Allocation strategy for records in {@link StreamlinedBlobStorage}: "how much capacity reserve for a
@@ -107,12 +109,8 @@ public interface SpaceAllocationStrategy {
       if (currentCapacity < actualLength) {
         throw new IllegalArgumentException("currentCapacity(=" + currentCapacity + ") should be >= actualLength(=" + actualLength + ")");
       }
-      final double capacity = Math.ceil(actualLength * (1.0 + percentOnTheTop / 100.0));
-      final int advisedCapacity = (int)Math.max(minCapacity, capacity);
-      if (advisedCapacity < 0 || advisedCapacity > maxCapacity) {
-        return maxCapacity;
-      }
-      return advisedCapacity;
+      final double capacityWithReserve = Math.ceil(actualLength * (1.0 + percentOnTheTop / 100.0));
+      return (int)MathUtil.clamp(capacityWithReserve, minCapacity, maxCapacity);
     }
 
     @Override

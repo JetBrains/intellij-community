@@ -4,41 +4,41 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.providers.analysisMessageBus
-import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
+import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 
 /**
- * Returns the [KtModule]s for which modification events need to be published when this [Module] is affected.
+ * Returns the [KaModule]s for which modification events need to be published when this [Module] is affected.
  *
  * An event should be published for the production source info first, so this function cannot use `sourceModuleInfos` as is. Ordering the
  * production source module first allows some subscribers like session invalidation to *also* invalidate the test source module right away
  * via friend dependencies. Then the invalidation service can quickly skip invalidation of the test source module on the second event, as it
  * will already be invalidated.
  */
-fun Module.toKtModulesForModificationEvents(): List<KtModule> =
-    listOfNotNull(productionSourceInfo?.toKtModule(), testSourceInfo?.toKtModule())
+fun Module.toKaModulesForModificationEvents(): List<KaModule> =
+    listOfNotNull(productionSourceInfo?.toKaModule(), testSourceInfo?.toKaModule())
 
 /**
- * Publishes an out-of-block modification event for this [KtModule]. Must be called in a write action.
+ * Publishes an out-of-block modification event for this [KaModule]. Must be called in a write action.
  */
-fun KtModule.publishModuleOutOfBlockModification() {
+fun KaModule.publishModuleOutOfBlockModification() {
     ThreadingAssertions.assertWriteAccess()
 
-    project.analysisMessageBus.syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(this)
+    project.analysisMessageBus.syncPublisher(KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(this)
 }
 
 /**
- * Publishes an out-of-block modification event for this [Module]'s production and test source [KtModule]s. Must be called in a write
+ * Publishes an out-of-block modification event for this [Module]'s production and test source [KaModule]s. Must be called in a write
  * action.
  */
 fun Module.publishModuleOutOfBlockModification() {
     ThreadingAssertions.assertWriteAccess()
 
-    toKtModulesForModificationEvents().forEach { it.publishModuleOutOfBlockModification() }
+    toKaModulesForModificationEvents().forEach { it.publishModuleOutOfBlockModification() }
 }
 
 /**
@@ -47,5 +47,5 @@ fun Module.publishModuleOutOfBlockModification() {
 fun Project.publishGlobalSourceOutOfBlockModification() {
     ThreadingAssertions.assertWriteAccess()
 
-    analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
+    analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
 }

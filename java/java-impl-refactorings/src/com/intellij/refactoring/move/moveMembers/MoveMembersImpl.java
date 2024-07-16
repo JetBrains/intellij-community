@@ -39,7 +39,7 @@ public final class MoveMembersImpl {
     for (PsiElement element : elements) {
       if (element instanceof PsiMember member) {
         preselectMembers.add(member);
-        if (!sourceClass.equals(((PsiMember)element).getContainingClass())) {
+        if (!sourceClass.equals(member.getContainingClass())) {
           String message = RefactoringBundle.getCannotRefactorMessage(
             RefactoringBundle.message("members.to.be.moved.should.belong.to.the.same.class"));
           CommonRefactoringUtil.showErrorMessage(getRefactoringName(), message, HelpID.MOVE_MEMBERS, project);

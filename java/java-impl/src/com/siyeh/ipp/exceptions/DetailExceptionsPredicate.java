@@ -53,8 +53,7 @@ final class DetailExceptionsPredicate implements PsiElementPredicate {
     return false;
   }
 
-  @Nullable
-  private static PsiTryStatement getTryStatementIfParameter(@NotNull PsiElement element) {
+  private static @Nullable PsiTryStatement getTryStatementIfParameter(@NotNull PsiElement element) {
     PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
     if (parameter == null) return null;
     PsiCatchSection catchSection = ObjectUtils.tryCast(parameter.getParent(), PsiCatchSection.class);
@@ -62,8 +61,7 @@ final class DetailExceptionsPredicate implements PsiElementPredicate {
     return ObjectUtils.tryCast(catchSection.getParent(), PsiTryStatement.class);
   }
 
-  @Nullable
-  private static PsiTryStatement getTryStatementIfKeyword(@NotNull PsiElement element) {
+  private static @Nullable PsiTryStatement getTryStatementIfKeyword(@NotNull PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return null;
     }

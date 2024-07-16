@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -8,6 +8,7 @@ import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Map.entry
 
 /**
  * @return `null` if no `product-info.json` could be found in given IDE installation or on errors
@@ -35,7 +36,21 @@ internal fun loadProductInfo(ideaJdkHome: String): ProductInfo? {
         .replace("Contents/Contents", "Contents")
     }.toMutableList()
 
-    return ProductInfo(bootClassPathJarNames, additionalJvmArguments)
+    val productModuleJarPaths = ArrayList<String>()
+    val layout = jsonRoot["layout"] as? List<*>
+    if (layout != null) {
+      for (layoutEntry in layout ) {
+        val entry = layoutEntry as? Map<*, *>?: continue
+        if (entry["kind"] == "productModuleV2") {
+          val classPath = entry["classPath"] as? List<String>?: continue
+          for (classPath in classPath) {
+            productModuleJarPaths += classPath
+          }
+        }
+      }
+    }
+
+    return ProductInfo(bootClassPathJarNames, productModuleJarPaths, additionalJvmArguments)
   }
   catch (e: Throwable) {
     logger<ProductInfo>().error("error parsing '$productInfoJsonPath'", e)
@@ -43,4 +58,6 @@ internal fun loadProductInfo(ideaJdkHome: String): ProductInfo? {
   }
 }
 
-internal data class ProductInfo(val bootClassPathJarNames: List<String>, val additionalJvmArguments: List<String>)
+internal data class ProductInfo(val bootClassPathJarNames: List<String>,
+                                val productModuleJarPaths: List<String>,
+                                val additionalJvmArguments: List<String>)

@@ -684,7 +684,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   private inner class MyEditorFactoryListener : EditorFactoryListener {
     fun install(disposable: Disposable) {
       val editorFactory = EditorFactory.getInstance()
-      for (editor in editorFactory.allEditors) {
+      for (editor in editorFactory.editorList) {
         if (isTrackedEditor(editor)) {
           requestTrackerFor(editor.document, editor)
         }

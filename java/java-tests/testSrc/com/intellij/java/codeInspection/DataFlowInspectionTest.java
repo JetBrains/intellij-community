@@ -593,6 +593,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGetterOfNullableFieldIsNotNull() { doTest(); }
 
   public void testArrayStoreProblems() { doTest(); }
+  public void testArrayAccessInTry() { doTest(); }
 
   public void testNestedScopeComplexity() { doTest(); }
 
@@ -759,4 +760,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testInitializedViaSuperCall() { doTest(); }
   public void testBoxedBooleanMethodWithCast() { doTest(); }
   public void testAssignAndReturnVolatile() { doTest(); }
+  public void testQualifiedValueFromConstant() { doTest();}
 }

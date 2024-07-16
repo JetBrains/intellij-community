@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.toolbarLayout
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.util.*
 import javax.swing.JComponent
@@ -15,6 +16,7 @@ import kotlin.math.max
  * Preferentially, the largest components are compressed first to optimize the use of available space.
  * Note: for correct work, it's necessary to have a parent component for row with toolbar.
  */
+@Internal
 open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
   override fun calculateBounds(toolbar: ActionToolbar): MutableList<Rectangle> {
     val toolbarComponent = toolbar.component

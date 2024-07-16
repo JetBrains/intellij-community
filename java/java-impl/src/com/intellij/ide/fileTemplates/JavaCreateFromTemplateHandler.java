@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -86,14 +86,13 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     return fileType.equals(JavaFileType.INSTANCE) && !ArrayUtil.contains(template.getName(), JavaTemplateUtil.INTERNAL_FILE_TEMPLATES);
   }
 
-  @NotNull
   @Override
-  public PsiElement createFromTemplate(@NotNull Project project,
-                                       @NotNull PsiDirectory directory,
-                                       String fileName,
-                                       @NotNull FileTemplate template,
-                                       @NotNull String templateText,
-                                       @NotNull Map<String, Object> props) throws IncorrectOperationException {
+  public @NotNull PsiElement createFromTemplate(@NotNull Project project,
+                                                @NotNull PsiDirectory directory,
+                                                String fileName,
+                                                @NotNull FileTemplate template,
+                                                @NotNull String templateText,
+                                                @NotNull Map<String, Object> props) throws IncorrectOperationException {
     String extension = template.getExtension();
     PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension);
     hackAwayEmptyPackage((PsiJavaFile)result.getContainingFile(), template, props);
@@ -113,9 +112,8 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     return false;
   }
 
-  @NotNull
   @Override
-  public String getErrorMessage() {
+  public @NotNull String getErrorMessage() {
     return JavaBundle.message("title.cannot.create.class");
   }
 
@@ -127,9 +125,8 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     }
   }
 
-  @NotNull
   @Override
-  public String commandName(@NotNull FileTemplate template) {
+  public @NotNull String commandName(@NotNull FileTemplate template) {
     return JavaBundle.message("command.create.class.from.template");
   }
 

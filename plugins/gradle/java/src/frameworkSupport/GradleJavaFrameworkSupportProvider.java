@@ -15,7 +15,7 @@ import javax.swing.*;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportProvider {
+public final class GradleJavaFrameworkSupportProvider extends GradleFrameworkSupportProvider {
 
   public static final String ID = "java";
 

@@ -137,7 +137,7 @@ public final class HtmlSyntaxInfoUtil {
       EditorColorsScheme scheme =
         new ColorsSchemeWithChangedSaturation(EditorColorsManager.getInstance().getGlobalScheme(), saturationFactor);
 
-      List<QuickDocSyntaxHighlightingHandler.HighlightInfo> semanticHighlighting =
+      List<QuickDocSyntaxHighlightingHandler.QuickDocHighlightInfo> semanticHighlighting =
         handler != null ? handler.performSemanticHighlighting(fakePsiFile) : Collections.emptyList();
       var rangeIterator = semanticHighlighting.isEmpty() ? null : new HighlightInfoIterator(semanticHighlighting, scheme);
       var html = getHtmlContent(fakePsiFile, preprocessedCode, rangeIterator, scheme, 0, preprocessedCode.length());
@@ -355,11 +355,11 @@ public final class HtmlSyntaxInfoUtil {
 
   private static class HighlightInfoIterator implements SyntaxInfoBuilder.RangeIterator {
 
-    private final Iterator<QuickDocSyntaxHighlightingHandler.HighlightInfo> myIterator;
+    private final Iterator<QuickDocSyntaxHighlightingHandler.QuickDocHighlightInfo> myIterator;
     private final EditorColorsScheme myScheme;
-    private QuickDocSyntaxHighlightingHandler.HighlightInfo myCurrentInfo = null;
+    private QuickDocSyntaxHighlightingHandler.QuickDocHighlightInfo myCurrentInfo = null;
 
-    private HighlightInfoIterator(List<QuickDocSyntaxHighlightingHandler.HighlightInfo> highlightInfos,
+    private HighlightInfoIterator(List<QuickDocSyntaxHighlightingHandler.QuickDocHighlightInfo> highlightInfos,
                                   EditorColorsScheme scheme) {
       myIterator = highlightInfos.stream()
         .sorted(Comparator.comparing(el -> el.getStartOffset()))

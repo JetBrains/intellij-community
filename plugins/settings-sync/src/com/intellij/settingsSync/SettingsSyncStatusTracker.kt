@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -22,6 +23,7 @@ internal class SettingsSyncStatusTracker {
       }
 
       override fun enabledStateChanged(syncEnabled: Boolean) {
+        logger<SettingsSyncStatusTracker>().info("Settings sync enabled state changed to: $syncEnabled")
         if (!syncEnabled) clear()
       }
     })

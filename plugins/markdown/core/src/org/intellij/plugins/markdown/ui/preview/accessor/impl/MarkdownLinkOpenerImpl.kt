@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview.accessor.impl
 
 import com.intellij.ide.BrowserUtil
@@ -253,7 +254,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
 
     private fun navigateToHeader(project: Project, file: VirtualFile, element: PsiElement) {
       val manager = FileEditorManager.getInstance(project)
-      val openedEditors = manager.getEditors(file).filterIsInstance<MarkdownEditorWithPreview>()
+      val openedEditors = manager.getEditorList(file).filterIsInstance<MarkdownEditorWithPreview>()
       if (openedEditors.isNotEmpty()) {
         for (editor in openedEditors) {
           PsiNavigateUtil.navigate(element, true)

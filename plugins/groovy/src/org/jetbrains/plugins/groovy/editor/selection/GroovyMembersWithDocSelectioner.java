@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GroovyMembersWithDocSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyMembersWithDocSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof GrDocComment || e instanceof GrDocCommentOwner;

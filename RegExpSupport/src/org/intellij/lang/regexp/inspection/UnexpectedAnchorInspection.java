@@ -98,8 +98,7 @@ public class UnexpectedAnchorInspection extends LocalInspectionTool {
         }
         return false;
       }
-      else if (sibling instanceof RegExpBranch) {
-        final RegExpBranch branch = (RegExpBranch)sibling;
+      else if (sibling instanceof RegExpBranch branch) {
         for (RegExpAtom atom : branch.getAtoms()) {
           if (isUnexpectedSibling(element, next, atom)) {
             return true;

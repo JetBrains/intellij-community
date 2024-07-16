@@ -148,7 +148,7 @@ public abstract class RefactoringDialog extends DialogWrapper implements Possibl
 
   @Override
   protected final void doOKAction() {
-    if (!DumbService.isDumbAware(this) && DumbService.isDumb(myProject)) {
+    if (!DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       Messages.showMessageDialog(myProject, RefactoringBundle.message("refactoring.not.available.indexing"),
                                  RefactoringBundle.message("refactoring.indexing.warning.title"), null);
       DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.RefactoringDialog);

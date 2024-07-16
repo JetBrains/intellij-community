@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
+public final class NewGroovyClassNamingConventionInspection extends AbstractNamingConventionInspection<PsiClass> {
   @NonNls private static final String GROOVY = "Groovy";
 
   public NewGroovyClassNamingConventionInspection() {
@@ -70,8 +70,7 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        if (element instanceof GrTypeDefinition) {
-          PsiClass aClass = (PsiClass)element;
+        if (element instanceof GrTypeDefinition aClass) {
           final String name = aClass.getName();
           if (name == null) return;
           checkName(aClass, name, holder);

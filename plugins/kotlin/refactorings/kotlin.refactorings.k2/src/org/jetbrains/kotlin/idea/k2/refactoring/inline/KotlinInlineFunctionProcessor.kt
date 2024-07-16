@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlineNamedDec
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline
@@ -29,19 +30,13 @@ class KotlinInlineFunctionProcessor(
     editor = editor,
     project = project,
 ) {
-    override fun createReplacementStrategy(): UsageReplacementStrategy? = createUsageReplacementStrategyForFunction(declaration, editor)
-    override fun unwrapSpecialUsage(usage: KtReferenceExpression): KtSimpleNameExpression? {
-        return null
+    override fun createReplacementStrategy(): UsageReplacementStrategy? {
+        val codeToInline = createCodeToInlineForFunction(declaration, editor, fallbackToSuperCall = false) ?: return null
+        return CallableUsageReplacementStrategy(codeToInline, inlineSetter = false)
     }
-}
-
-fun createUsageReplacementStrategyForFunction(
-    function: KtNamedFunction,
-    editor: Editor?,
-    fallbackToSuperCall: Boolean = false,
-): UsageReplacementStrategy? {
-    val codeToInline = createCodeToInlineForFunction(function, editor, fallbackToSuperCall = fallbackToSuperCall) ?: return null
-    return CallableUsageReplacementStrategy(codeToInline, inlineSetter = false)
+    override fun unwrapSpecialUsage(usage: KtReferenceExpression): KtSimpleNameExpression? {
+        return fullyExpandCall(usage)
+    }
 }
 
 fun createCodeToInlineForFunction(

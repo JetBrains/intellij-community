@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (list!!) call" "true"
 // WITH_STDLIB
 
 class C {

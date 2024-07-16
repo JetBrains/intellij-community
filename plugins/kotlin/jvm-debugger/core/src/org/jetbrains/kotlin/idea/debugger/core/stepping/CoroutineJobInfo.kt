@@ -1,36 +1,42 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.engine.LightOrRealThreadInfo
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.openapi.components.serviceOrNull
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 
-interface ContinuationFilter {
-    fun canRunTo(nextContinuationFilter: ContinuationFilter): Boolean
+interface CoroutineFilter {
+    fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean
 }
 
-data class CoroutineJobInfo(private val continuationFilter: ContinuationFilter) : LightOrRealThreadInfo {
+data class CoroutineJobInfo(private val coroutineFilter: CoroutineFilter) : LightOrRealThreadInfo {
     override val realThread = null
 
     override fun checkSameThread(thread: ThreadReference, suspendContext: SuspendContextImpl): Boolean {
-        val nextContinuationFilter = getContinuationObject(suspendContext)
-        return nextContinuationFilter != null && continuationFilter.canRunTo(nextContinuationFilter)
+        val nextCoroutineFilter = getCoroutineFilter(suspendContext)
+        thisLogger().debug("Check thread filter: need $coroutineFilter, current is $nextCoroutineFilter")
+        return nextCoroutineFilter != null && coroutineFilter.canRunTo(nextCoroutineFilter)
     }
 
     companion object {
         @JvmStatic
-        private fun getContinuationObject(suspendContext: SuspendContextImpl): ContinuationFilter? {
-            val stackFrameInterceptor: StackFrameInterceptor = suspendContext.debugProcess.project.serviceOrNull() ?: return null
-            return stackFrameInterceptor.extractContinuationFilter(suspendContext)
+        private fun getCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {
+            return StackFrameInterceptor.instance?.extractCoroutineFilter(suspendContext)
         }
 
         @JvmStatic
         fun extractJobInfo(suspendContext: SuspendContextImpl): LightOrRealThreadInfo? {
             if (!Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")) return null
-            return getContinuationObject(suspendContext)?.let { CoroutineJobInfo(it) }
+            try {
+                return getCoroutineFilter(suspendContext)?.let { CoroutineJobInfo(it) }
+            } catch (e: Throwable) {
+                DebuggerUtilsImpl.logError(e)
+                return null
+            }
         }
     }
 }

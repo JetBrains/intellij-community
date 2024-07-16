@@ -9,9 +9,9 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.PropertyOwner;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMember;
@@ -49,7 +49,7 @@ public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLam
 
   @Override
   public Shortcut @NotNull [] getShortcut() {
-    return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta L" : "control L")};
+    return new Shortcut[]{KeyboardShortcut.fromString(ClientSystemInfo.isMac() ? "meta L" : "control L")};
   }
 
   @NotNull

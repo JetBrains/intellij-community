@@ -1,17 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml
 
+import com.intellij.platform.ml.feature.FeatureDeclaration
+import com.intellij.platform.ml.feature.FeatureFilter
 import org.jetbrains.annotations.ApiStatus
+
 
 /**
  * A [TierDescriptor] that is not fully aware of the features it describes with.
  * It is used to make a smooth transition from the old forms of features providers to the new API.
- *
- * It will be removed eventually.
  */
-@Deprecated(message = "ObsoleteTierDescriptors' features are not logged, as they are missing a feature declaration",
-            replaceWith = ReplaceWith("TierDescriptor", "com.intellij.platform.ml"),
-            level = DeprecationLevel.WARNING)
 @ApiStatus.Internal
 interface ObsoleteTierDescriptor : TierDescriptor {
   /**

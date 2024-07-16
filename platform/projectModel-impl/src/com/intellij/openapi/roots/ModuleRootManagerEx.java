@@ -11,6 +11,7 @@ import org.jetbrains.annotations.TestOnly;
 public abstract class ModuleRootManagerEx extends ModuleRootManager {
   public static final ExtensionPointName<ModuleExtension> MODULE_EXTENSION_NAME = new ExtensionPointName<>("com.intellij.moduleExtension");
 
+  @ApiStatus.Internal
   @NotNull
   public abstract ModifiableRootModel getModifiableModel(@NotNull RootConfigurationAccessor accessor);
 
@@ -28,6 +29,7 @@ public abstract class ModuleRootManagerEx extends ModuleRootManager {
   @TestOnly
   public abstract long getModificationCountForTests();
 
+  @ApiStatus.Internal
   public abstract void dropCaches();
 
   public static ModuleRootManagerEx getInstanceEx(@NotNull Module module) {

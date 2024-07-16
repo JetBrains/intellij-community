@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -26,7 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>> extends DialogWrapper implements RemoteSdkEditorContainer {
+public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> extends DialogWrapper implements RemoteSdkEditorContainer {
   private static final Logger LOG = Logger.getInstance(CreateRemoteSdkDialog.class);
   protected final @Nullable Project myProject;
   private CreateRemoteSdkForm<T> myInterpreterForm;
@@ -148,7 +148,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData<?>
       assert newData instanceof RemoteSdkAdditionalData;
 
       //noinspection unchecked
-      if (((RemoteSdkAdditionalData<?>)newData).isValid() &&
+      if (((RemoteSdkAdditionalData)newData).isValid() &&
           (myOriginalData == null || !myOriginalData.isValid() ||
            (myOriginalData.getClass().isInstance(newData) && isModified(myOriginalData, (T)newData)))
       ) {

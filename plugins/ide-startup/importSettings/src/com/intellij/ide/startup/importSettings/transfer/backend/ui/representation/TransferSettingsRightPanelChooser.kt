@@ -4,7 +4,7 @@ package com.intellij.ide.startup.importSettings.ui.representation
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.ui.representation.failed.TransferSettingsFailedIdeRepresentation
 import com.intellij.ide.startup.importSettings.ui.representation.ideVersion.TransferSettingsIdeRepresentation
 import javax.swing.JComponent

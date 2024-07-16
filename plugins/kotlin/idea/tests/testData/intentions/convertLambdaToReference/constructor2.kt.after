@@ -8,3 +8,5 @@ fun foo(x: () -> A.B) {}
 fun main() {
     foo(A::B)
 }
+
+// IGNORE_K2

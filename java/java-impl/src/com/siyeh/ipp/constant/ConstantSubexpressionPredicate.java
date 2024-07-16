@@ -66,8 +66,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     return value != null;
   }
 
-  @Nullable
-  static PsiPolyadicExpression getSubexpression(PsiPolyadicExpression expression, PsiJavaToken token) {
+  static @Nullable PsiPolyadicExpression getSubexpression(PsiPolyadicExpression expression, PsiJavaToken token) {
     final PsiExpression[] operands = expression.getOperands();
     if (operands.length == 2) {
       return expression;

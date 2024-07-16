@@ -22,7 +22,7 @@ public class ExtensionNsConverter extends IdeaPluginConverterBase {
 
   @Override
   @NotNull
-  public Collection<? extends IdeaPlugin> getVariants(ConvertContext context) {
+  public Collection<? extends IdeaPlugin> getVariants(@NotNull ConvertContext context) {
     final IdeaPlugin ideaPlugin = context.getInvocationElement().getParentOfType(IdeaPlugin.class, true);
     if (ideaPlugin == null) return Collections.emptyList();
 
@@ -35,7 +35,7 @@ public class ExtensionNsConverter extends IdeaPluginConverterBase {
   }
 
   @Override
-  public IdeaPlugin fromString(@Nullable @NonNls final String s, ConvertContext context) {
+  public IdeaPlugin fromString(@Nullable @NonNls final String s, @NotNull ConvertContext context) {
     return s == null ? null : findById(context.getInvocationElement(), s);
   }
 

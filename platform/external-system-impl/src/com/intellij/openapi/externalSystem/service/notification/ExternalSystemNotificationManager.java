@@ -115,7 +115,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
   /**
    * @deprecated use {@link #createNotification(String, Throwable, ProjectSystemId, Project, String, DataContext)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable NotificationData createNotification(
     @NotNull @NotificationTitle String title,
     @NotNull Throwable error,
@@ -401,7 +401,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     }
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull NewErrorTreeViewPanel prepareMessagesView(final @NotNull ProjectSystemId externalSystemId,
                                                             final @NotNull NotificationSource notificationSource,
                                                             boolean activateView) {

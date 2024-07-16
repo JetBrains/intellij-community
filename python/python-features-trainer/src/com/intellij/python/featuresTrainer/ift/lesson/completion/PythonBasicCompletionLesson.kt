@@ -19,7 +19,7 @@ class PythonBasicCompletionLesson : BasicCompletionLessonBase() {
     
     
     def $keyToComplete1():
-        return movies_dict[<caret>]
+        return movies_dict['<caret>']
   """.trimIndent())
 
   override val sample2 = parseLessonSample("""
@@ -41,10 +41,9 @@ class PythonBasicCompletionLesson : BasicCompletionLessonBase() {
   """.trimIndent())
 
   override val item1StartToType = "'dir"
-  override val item1CompletionPrefix = "'$keyToComplete1"
-  override val item1CompletionSuffix = "'"
+  override val item1CompletionPrefix = keyToComplete1
 
-  override val item2Completion = "'$keyToComplete2'"
+  override val item2Completion = keyToComplete2
   override val item2Inserted = keyToComplete2
 
   //override val existedFile = PythonLangSupport.sandboxFile

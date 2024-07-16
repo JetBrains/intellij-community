@@ -47,19 +47,14 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
 
   override val syncState = Property(SyncService.SYNC_STATE.UNLOGGED)
 
-  init {
-    loadAmbientSyncState()
-  }
-
   private val accountInfoService: JBAccountInfoService?
     get() = JBAccountInfoService.getInstance()
 
   //private val settingSyncControls: SettingsSyncMain.SettingsSyncControls
   //  get() = SettingsSyncMain.getInstance().controls
 
-  override fun tryToLogin(): String? {
+  override fun tryToLogin() {
     accountInfoService?.invokeJBALogin({ loadAmbientSyncState() }, ::loadAmbientSyncState)
-    return null
   }
 
   override fun syncSettings(): DialogImportData {
@@ -99,9 +94,6 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
     //}
   }
 
-  override fun generalSync() {
-    TODO("Not yet implemented")
-  }
 
   override fun getOldProducts(): List<Product> {
     // TODO: Figure out what are these

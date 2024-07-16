@@ -44,11 +44,6 @@ public final class CoreExternalResourceManager extends ExternalResourceManagerEx
   }
 
   @Override
-  public void addIgnoredResource(@NotNull String url) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
     throw new UnsupportedOperationException();
   }

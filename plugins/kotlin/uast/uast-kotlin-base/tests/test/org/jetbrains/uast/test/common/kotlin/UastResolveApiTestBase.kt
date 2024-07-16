@@ -2,20 +2,22 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.*
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.uast.*
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import java.lang.IllegalStateException
 
-interface UastResolveApiTestBase : UastPluginSelection {
+interface UastResolveApiTestBase : ExpectedPluginModeProvider {
 
     fun checkCallbackForDoWhile(filePath: String, uFile: UFile) {
         val facade = uFile.findFacade()
@@ -48,8 +50,8 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 return super.visitPrefixExpression(node)
             }
         })
-        Assert.assertEquals("Kotlin built-in >= (int.compareTo) and == (int.equals) are invisible", 0, resolvedBinaryOperators.size)
-        Assert.assertEquals("Kotlin built-in ++ (int.inc) is invisible", 0, resolvedUnaryOperators.size)
+        Assert.assertEquals("Kotlin built-in >= (int.compareTo) and == (int.equals)", 2, resolvedBinaryOperators.size)
+        Assert.assertEquals("Kotlin built-in ++ (int.inc), ++i and ++j", 2, resolvedUnaryOperators.size)
     }
 
     fun checkCallbackForIf(filePath: String, uFile: UFile) {
@@ -64,7 +66,7 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 return super.visitBinaryExpression(node)
             }
         })
-        Assert.assertEquals("Kotlin built-in * (int.times) and + (int.plus) are invisible", 0, resolvedOperators.size)
+        Assert.assertEquals("Kotlin built-in * (int.times) and + (int.plus)", 2, resolvedOperators.size)
     }
 
     fun checkCallbackForMethodReference(filePath: String, uFile: UFile) {
@@ -95,6 +97,8 @@ interface UastResolveApiTestBase : UastPluginSelection {
             }
             val resolvedImport = uImport.resolve()
                 ?: throw IllegalStateException("Unresolved import: ${uImport.asRenderString()}")
+
+            val isK2PluginMode = pluginMode == KotlinPluginMode.K2
             val expected = when (resolvedImport) {
                 is PsiClass -> {
                     // import java.lang.Thread.*
@@ -104,21 +108,21 @@ interface UastResolveApiTestBase : UastPluginSelection {
                     // import java.lang.Thread.currentThread
                     resolvedImport.name == "currentThread" ||
                             // import kotlin.collections.emptyList
-                            (!isFirUastPlugin && resolvedImport.name == "emptyList")
+                            (!isK2PluginMode && resolvedImport.name == "emptyList")
                 }
                 is PsiField -> {
                     // import java.lang.Thread.NORM_PRIORITY
                     resolvedImport.name == "NORM_PRIORITY" ||
                             // import kotlin.Int.Companion.SIZE_BYTES
-                            (!isFirUastPlugin && resolvedImport.name == "SIZE_BYTES")
+                            (!isK2PluginMode && resolvedImport.name == "SIZE_BYTES")
                 }
                 is KtNamedFunction -> {
                     // import kotlin.collections.emptyList
-                    isFirUastPlugin && resolvedImport.isTopLevel && resolvedImport.name == "emptyList"
+                    isK2PluginMode && resolvedImport.isTopLevel && resolvedImport.name == "emptyList"
                 }
                 is KtProperty -> {
                     // import kotlin.Int.Companion.SIZE_BYTES
-                    isFirUastPlugin && resolvedImport.name == "SIZE_BYTES"
+                    isK2PluginMode && resolvedImport.name == "SIZE_BYTES"
                 }
                 else -> false
             }

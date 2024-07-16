@@ -329,8 +329,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (myPreselectedNodeObject != null && myPreselectedNodeObject.equals(node.getData())) {
           preselectedNode[0] = treeNode;
         }
-        if (node.getData() instanceof ModuleData) {
-          ModuleData moduleData = (ModuleData)node.getData();
+        if (node.getData() instanceof ModuleData moduleData) {
           if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(moduleData.getLinkedExternalProjectPath())) {
             rootModuleNode[0] = treeNode;
           }

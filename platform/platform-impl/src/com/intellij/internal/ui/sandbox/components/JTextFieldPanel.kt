@@ -11,7 +11,7 @@ import javax.swing.JComponent
 
 internal class JTextFieldPanel : UISandboxPanel {
 
-  override val title: String = "JTextField"
+  override val title: String = "JBTextField"
 
   override fun createContent(disposable: Disposable): JComponent {
     val result = panel {
@@ -25,6 +25,11 @@ internal class JTextFieldPanel : UISandboxPanel {
       }
       withStateLabel {
         textField().enabled(false)
+      }
+      row("With empty text:") {
+        textField().apply {
+          component.emptyText.text = "Type some text here"
+        }
       }
 
       group("Validation") {

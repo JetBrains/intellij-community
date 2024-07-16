@@ -467,4 +467,9 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testInitializingDataclassKwOnlyOnField() {
     runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
   }
+
+  // PY-73102
+  public void testDeprecatedCall() {
+    doMultiFileTest("client.py");
+  }
 }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -18,7 +16,7 @@ public class LightField extends LightElement implements PsiField {
   private final PsiField myField;
   private final PsiClass myContainingClass;
 
-  public LightField(@NotNull final PsiManager manager, @NotNull final PsiField field, @NotNull final PsiClass containingClass) {
+  public LightField(final @NotNull PsiManager manager, final @NotNull PsiField field, final @NotNull PsiClass containingClass) {
     super(manager, JavaLanguage.INSTANCE);
     myField = field;
     myContainingClass = containingClass;
@@ -35,13 +33,12 @@ public class LightField extends LightElement implements PsiField {
   }
 
   @Override
-  public void setInitializer(@Nullable final PsiExpression initializer) throws IncorrectOperationException {
+  public void setInitializer(final @Nullable PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not supported");
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return myField.getUseScope();
   }
 
@@ -51,14 +48,12 @@ public class LightField extends LightElement implements PsiField {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myField.getName();
   }
 
-  @NotNull
   @Override
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     return myField.getNameIdentifier();
   }
 
@@ -77,9 +72,8 @@ public class LightField extends LightElement implements PsiField {
     return myContainingClass;
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return myField.getType();
   }
 
@@ -109,7 +103,7 @@ public class LightField extends LightElement implements PsiField {
   }
 
   @Override
-  public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {
+  public PsiElement setName(final @NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("Not supported");
   }
 
@@ -119,7 +113,7 @@ public class LightField extends LightElement implements PsiField {
   }
 
   @Override
-  public boolean hasModifierProperty(@NonNls @NotNull final String name) {
+  public boolean hasModifierProperty(final @NonNls @NotNull String name) {
     return myField.hasModifierProperty(name);
   }
 

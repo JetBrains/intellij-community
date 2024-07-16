@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -24,6 +25,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/afterUnmatchedBrace")
         public static class AfterUnmatchedBrace extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -102,6 +109,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/arrayAccess")
         public static class ArrayAccess extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -115,6 +128,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/beforeDot")
         public static class BeforeDot extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -343,6 +362,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/commenter")
         public static class Commenter extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -396,6 +421,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/contextReceivers")
         public static class ContextReceivers extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -444,6 +475,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/controlFlowConstructions")
         public static class ControlFlowConstructions extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -653,6 +690,16 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/Try2.after.kt");
             }
 
+            @TestMetadata("WhenEntryArrow.after.kt")
+            public void testWhenEntryArrow() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenEntryArrow.after.kt");
+            }
+
+            @TestMetadata("WhenEntryArrowNoIndentBeforeArrow.after.kt")
+            public void testWhenEntryArrowNoIndentBeforeArrow() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenEntryArrowNoIndentBeforeArrow.after.kt");
+            }
+
             @TestMetadata("WhenWithCondition.after.kt")
             public void testWhenWithCondition() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition.after.kt");
@@ -702,6 +749,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -738,6 +791,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyBraces/trailingComma")
             public static class TrailingComma extends AbstractPerformanceTypingIndentationTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -791,6 +850,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyBraces")
             public static class Uncategorized extends AbstractPerformanceTypingIndentationTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -845,6 +910,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyParameters")
         public static class EmptyParameters extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1138,6 +1209,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
         public static class EmptyParenthesisInBinaryExpression extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1216,6 +1293,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/expressionBody")
         public static class ExpressionBody extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1317,6 +1400,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../idea/tests/testData/editor/enterHandler/multilineString/spaces")
             public static class Spaces extends AbstractPerformanceTypingIndentationTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1518,6 +1607,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs2")
                 public static class Tabs2 extends AbstractPerformanceTypingIndentationTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1581,6 +1676,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../idea/tests/testData/editor/enterHandler/multilineString/withTabs/tabs4")
                 public static class Tabs4 extends AbstractPerformanceTypingIndentationTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1646,6 +1747,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/script")
         public static class Script extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1684,6 +1791,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/templates")
         public static class Templates extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1807,6 +1920,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler")
         public static class Uncategorized extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -2219,6 +2338,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/beforeDot")
         public static class BeforeDot extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2437,6 +2562,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/elvis")
         public static class Elvis extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2470,6 +2601,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyParameters")
         public static class EmptyParameters extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2518,6 +2655,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
         public static class EmptyParenthesisInBinaryExpression extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2576,6 +2719,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/expressionBody")
         public static class ExpressionBody extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2674,6 +2823,12 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler")
         public static class Uncategorized extends AbstractPerformanceTypingIndentationTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }

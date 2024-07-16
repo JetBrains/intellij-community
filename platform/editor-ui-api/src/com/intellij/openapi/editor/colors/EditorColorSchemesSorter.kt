@@ -15,6 +15,9 @@ interface EditorColorSchemesSorter {
 
   fun getOrderedSchemes(schemesMap: Map<String, EditorColorsScheme>): Groups<EditorColorsScheme>
 
+  fun getOrderedSchemesFromArray(schemesMap: Array<EditorColorsScheme>): Groups<EditorColorsScheme> =
+    getOrderedSchemesFromSequence(schemesMap.asSequence())
+
   fun getOrderedSchemesFromSequence(schemes: Sequence<EditorColorsScheme>): Groups<EditorColorsScheme> {
     val map = mutableMapOf<String, EditorColorsScheme>()
     schemes.forEach { map[it.name] = it }
@@ -29,4 +32,6 @@ class Groups<T>(val infos: List<GroupInfo<T>>) {
   companion object {
     fun <T>create(items: List<List<T>>): Groups<T> = Groups(items.map { GroupInfo(it) })
   }
+
+  val items: List<T> get() = infos.flatMap { it.items }
 }

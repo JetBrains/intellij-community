@@ -1,5 +1,5 @@
 class RandomJavaClass {
-    void f(foo.UsedInJava p) {
+    void f(foo.UsedInJavaZ808 p) {
 
     }
 }

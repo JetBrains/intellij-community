@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.ApplicationManager
@@ -12,12 +12,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtilRt
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.OptionTag
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -94,7 +94,9 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
                          && Registry.`is`("maven.skip.gav.update.in.unit.test.mode")
         if (!skipUpdate) {
           (gavIndex as? MavenUpdatableIndex)?.let {
-            scheduleUpdateIndexContent(listOf(gavIndex), false)
+            blockingContext {
+              scheduleUpdateIndexContent(listOf(gavIndex), false)
+            }
           }
         }
       }
@@ -248,7 +250,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     }
 
     inMemoryUpdate.forEach { idx ->
-      cs.async(Dispatchers.IO) {
+      cs.launchTracked(Dispatchers.IO) {
         MavenLog.LOG.info("Starting update maven index for ${idx.repository}")
         val indicator = MavenProgressIndicator(null, null)
         try {
@@ -265,7 +267,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     luceneUpdate.forEach { idx ->
       luceneUpdateStatusMap[idx.repository.url] = MavenIndexUpdateState(idx.repository.url, null, null,
                                                                         MavenIndexUpdateState.State.INDEXING)
-      cs.async {
+      cs.launchTracked {
         try {
           val indicator = MavenProgressIndicator(null, null)
           idx.update(indicator, explicit)
@@ -306,7 +308,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
 
   @TestOnly
   fun getAllGavIndices(): List<MavenGAVIndex> {
-    return inMemoryIndices.values.toImmutableList()
+    return java.util.List.copyOf(inMemoryIndices.values)
   }
 
   fun updateIndexContent(repositoryInfo: MavenRepositoryInfo, project: Project) {
@@ -337,7 +339,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
                                       IndicesBundle.message("maven.indices.updated.for.repo", repositoryInfo.url),
                                       MavenIndexUpdateState.State.CANCELLED))
             }
-            catch (e: Exception) {
+            catch (e: Throwable) {
               if (e !is ProcessCanceledException) {
                 MavenLog.LOG.warn(e)
               }

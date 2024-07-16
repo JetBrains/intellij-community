@@ -42,7 +42,6 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
                         USimpleNameReferenceExpression (identifier = case4) [case4] = external case4()
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [repeat(4)] = external repeat(4)(4)
                         UIdentifier (Identifier (repeat)) [UIdentifier (Identifier (repeat))]
-                        USimpleNameReferenceExpression (identifier = repeat, resolvesTo = null) [repeat] = external repeat(4)(4)
                         ULiteralExpression (value = 4) [4] = 4
                 ULiteralExpression (value = " z") [" z"] = " z"
         UField (name = empty) [@org.jetbrains.annotations.NotNull private static final var empty: java.lang.String = ""]
@@ -67,7 +66,6 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
             UBlockExpression [{...}] = Undetermined
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] = external println(baz)(external baz())
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println(baz)(external baz())
                     UPolyadicExpression (operator = +) [baz] = external baz()
                         USimpleNameReferenceExpression (identifier = baz) [baz] = external baz()
                 UDeclarationsExpression [var template1: java.lang.String = simpleForTemplate()] = Undetermined
@@ -75,11 +73,9 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
                         UPolyadicExpression (operator = +) [simpleForTemplate()] = external simpleForTemplate()()
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] = external simpleForTemplate()()
                                 UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
-                                USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] = external simpleForTemplate()()
                 UDeclarationsExpression [var template2: java.lang.String = "." + simpleForTemplate()] = Undetermined
                     ULocalVariable (name = template2) [var template2: java.lang.String = "." + simpleForTemplate()]
                         UPolyadicExpression (operator = +) ["." + simpleForTemplate()] = Undetermined
                             ULiteralExpression (value = ".") ["."] = "."
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] = external simpleForTemplate()()
                                 UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
-                                USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] = external simpleForTemplate()()

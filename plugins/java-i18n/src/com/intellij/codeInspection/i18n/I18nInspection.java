@@ -44,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -355,12 +356,9 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (psi != null && psiVar != null) {
       if (psiVar instanceof PsiLocalVariable local) {
         // Java
-        PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
-        if (codeBlock instanceof PsiCodeBlock) {
-          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
-          return ContainerUtil.mapNotNull(
-            refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
-        }
+        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local);
+        return ContainerUtil.mapNotNull(
+          refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
       }
       else {
         // Kotlin
@@ -413,6 +411,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
             if (uVar != null && NlsInfo.fromUVariable(uVar).canBeUsedInLocalizedContext()) return false;
           }
         }
+      }
+      if (MethodUtils.isToString(target) && PsiPrimitiveType.getUnboxedType(ref.getReceiverType()) != null) {
+        // toString() on primitive: consider safe
+        return true;
       }
       processReferenceToNonLocalized(sourcePsi, ref, target);
       return true;

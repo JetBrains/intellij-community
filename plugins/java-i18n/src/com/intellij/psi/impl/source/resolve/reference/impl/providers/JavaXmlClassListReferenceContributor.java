@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
 import static com.intellij.patterns.XmlPatterns.xmlTag;
 
-public class JavaXmlClassListReferenceContributor extends PsiReferenceContributor{
+public final class JavaXmlClassListReferenceContributor extends PsiReferenceContributor{
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
     final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();

@@ -82,7 +82,7 @@ private fun installTipsInFirstEditor(editor: Editor, project: Project, info: Onb
   if (offset != null) {
     val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return
 
-    XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, false, true)
+    XBreakpointUtil.toggleLineBreakpoint(project, position, true, editor, false, false, true)
   }
 
   val pathToRunningFile = file.path

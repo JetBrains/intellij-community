@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,10 +21,8 @@ import java.util.Collection;
 
 public class SingleSourceRootMoveDestination implements MoveDestination {
   private static final Logger LOG = Logger.getInstance(SingleSourceRootMoveDestination.class);
-  @NotNull
-  private final PackageWrapper myPackage;
-  @NotNull
-  private final PsiDirectory myTargetDirectory;
+  private final @NotNull PackageWrapper myPackage;
+  private final @NotNull PsiDirectory myTargetDirectory;
 
   public SingleSourceRootMoveDestination(@NotNull PackageWrapper aPackage, @NotNull PsiDirectory targetDirectory) {
     LOG.assertTrue(aPackage.equalToPackage(JavaDirectoryService.getInstance().getPackage(targetDirectory)));
@@ -32,9 +30,8 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
     myTargetDirectory = targetDirectory;
   }
 
-  @NotNull
   @Override
-  public PackageWrapper getTargetPackage() {
+  public @NotNull PackageWrapper getTargetPackage() {
     return myPackage;
   }
 
@@ -69,7 +66,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   @Override
-  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+  public void analyzeModuleConflicts(final @NotNull Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     final VirtualFile targetDirFile = PsiUtilCore.getVirtualFile(myTargetDirectory);
     if (targetDirFile == null) return;

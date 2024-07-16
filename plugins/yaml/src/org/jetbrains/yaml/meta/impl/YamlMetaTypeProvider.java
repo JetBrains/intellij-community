@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,19 +31,16 @@ public class YamlMetaTypeProvider {
 
   private final Key<CachedValue<MetaTypeProxy>> myKey;
 
-  @NotNull
-  private final ModelAccess myMetaModel;
-  @NotNull
-  private final ModificationTracker myModificationTracker;
+  private final @NotNull ModelAccess myMetaModel;
+  private final @NotNull ModificationTracker myModificationTracker;
 
-  public YamlMetaTypeProvider(@NotNull final ModelAccess metaModel, @NotNull final ModificationTracker modificationTracker) {
+  public YamlMetaTypeProvider(final @NotNull ModelAccess metaModel, final @NotNull ModificationTracker modificationTracker) {
     myMetaModel = metaModel;
     myKey = Key.create(metaModel.getClass().getName() + ":KEY");
     myModificationTracker = modificationTracker;
   }
 
-  @Nullable
-  public MetaTypeProxy getMetaTypeProxy(@NotNull PsiElement psi) {
+  public @Nullable MetaTypeProxy getMetaTypeProxy(@NotNull PsiElement psi) {
     if (psi instanceof YAMLValue) {
       return getValueMetaType((YAMLValue)psi);
     }
@@ -53,8 +48,7 @@ public class YamlMetaTypeProvider {
     return metaOwner == null ? null : getValueMetaType(metaOwner);
   }
 
-  @Nullable
-  public YAMLValue getMetaOwner(@NotNull PsiElement psi) {
+  public @Nullable YAMLValue getMetaOwner(@NotNull PsiElement psi) {
     PsiFile file = psi.getContainingFile();
     if (!(file instanceof YAMLFile)) {
       return null;
@@ -62,8 +56,7 @@ public class YamlMetaTypeProvider {
     return getTypedAncestorOrSelf(psi, YAMLValue.class);
   }
 
-  @Nullable
-  public MetaTypeProxy getKeyValueMetaType(@NotNull YAMLKeyValue keyValue) {
+  public @Nullable MetaTypeProxy getKeyValueMetaType(@NotNull YAMLKeyValue keyValue) {
     if (keyValue.getValue() != null) {
       return getMetaTypeProxy(keyValue.getValue());
     }
@@ -71,8 +64,7 @@ public class YamlMetaTypeProvider {
     return FieldAndRelation.forNullable(type, Field.Relation.OBJECT_CONTENTS);
   }
 
-  @Nullable
-  public MetaTypeProxy getValueMetaType(@NotNull YAMLValue typedValue) {
+  public @Nullable MetaTypeProxy getValueMetaType(@NotNull YAMLValue typedValue) {
     return CachedValuesManager.getCachedValue(typedValue, myKey, () -> {
       debug(() -> " >> computing type for : " + YamlDebugUtil.getDebugInfo(typedValue));
       MetaTypeProxy computed = computeMetaType(typedValue);
@@ -82,8 +74,7 @@ public class YamlMetaTypeProvider {
     });
   }
 
-  @Nullable
-  private MetaTypeProxy computeMetaType(@NotNull YAMLValue value) {
+  private @Nullable MetaTypeProxy computeMetaType(@NotNull YAMLValue value) {
     PsiElement typed = PsiTreeUtil.getParentOfType(value, YAMLKeyValue.class, YAMLSequenceItem.class, YAMLDocument.class);
     if (typed instanceof YAMLDocument) {
       Field root = myMetaModel.getRoot((YAMLDocument)typed);
@@ -147,8 +138,7 @@ public class YamlMetaTypeProvider {
     return Field.Relation.SCALAR_VALUE;
   }
 
-  @Nullable
-  private Field computeMetaType(@NotNull YAMLKeyValue keyValue) {
+  private @Nullable Field computeMetaType(@NotNull YAMLKeyValue keyValue) {
     YAMLMapping parentMapping = keyValue.getParentMapping();
     if (parentMapping == null) {
       debug(() -> "Unexpected: keyValue parent is not a mapping: " + keyValue.getParent());
@@ -160,14 +150,12 @@ public class YamlMetaTypeProvider {
     return childMeta != null ? specializeField(childMeta, keyValue.getValue()) : null;
   }
 
-  @NotNull
-  private static Field specializeField(@NotNull Field field, @Nullable YAMLValue value) {
+  private static @NotNull Field specializeField(@NotNull Field field, @Nullable YAMLValue value) {
     return value != null ? field.resolveToSpecializedField(value) : field;
   }
 
   @Contract("null, _ -> null")
-  @Nullable
-  private static Field findChildMeta(@Nullable MetaTypeProxy parentMeta, @NotNull YAMLKeyValue child) {
+  private static @Nullable Field findChildMeta(@Nullable MetaTypeProxy parentMeta, @NotNull YAMLKeyValue child) {
     if (parentMeta == null) {
       return null;
     }
@@ -176,8 +164,7 @@ public class YamlMetaTypeProvider {
   }
 
   @SuppressWarnings("SameParameterValue")
-  @Nullable
-  private static <T extends PsiElement> T getTypedAncestorOrSelf(@NotNull PsiElement psi, @NotNull Class<? extends T> clazz) {
+  private static @Nullable <T extends PsiElement> T getTypedAncestorOrSelf(@NotNull PsiElement psi, @NotNull Class<? extends T> clazz) {
     return clazz.isInstance(psi) ? clazz.cast(psi) : PsiTreeUtil.getParentOfType(psi, clazz);
   }
 
@@ -203,8 +190,7 @@ public class YamlMetaTypeProvider {
   }
 
   public static class FieldAndRelation implements MetaTypeProxy {
-    @Nullable
-    public static FieldAndRelation forNullable(@Nullable Field field, @NotNull Field.Relation relation) {
+    public static @Nullable FieldAndRelation forNullable(@Nullable Field field, @NotNull Field.Relation relation) {
       return field == null ? null : new FieldAndRelation(field, relation);
     }
 
@@ -216,14 +202,12 @@ public class YamlMetaTypeProvider {
       myRelation = relation;
     }
 
-    @NotNull
     @Override
-    public Field getField() {
+    public @NotNull Field getField() {
       return myField;
     }
 
-    @NotNull
-    public Field.Relation getRelation() {
+    public @NotNull Field.Relation getRelation() {
       return myRelation;
     }
 
@@ -233,8 +217,7 @@ public class YamlMetaTypeProvider {
     }
 
     @Override
-    @NotNull
-    public YamlMetaType getMetaType() {
+    public @NotNull YamlMetaType getMetaType() {
       return myField.getType(myRelation);
     }
   }

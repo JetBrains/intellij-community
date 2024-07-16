@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkNonblockingUtilTestCase.Companion.waitForLookup
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase
 import com.intellij.openapi.externalSystem.service.execution.nonblockingResolveSdkBySdkName
 import com.intellij.openapi.project.Project
@@ -97,11 +96,13 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
   }
 
   fun assertGradleProperties(java: Sdk?) {
-    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradlePropertiesFile))
+    val javaHome = GradlePropertiesFile.getJavaHome(project, externalProjectPath)
+    assertEquals(java?.homePath, javaHome)
   }
 
   fun assertGradleLocalProperties(java: Sdk?) {
-    assertEquals(java?.homePath, getJavaHome(project, externalProjectPath, GradleLocalPropertiesFile))
+    val javaHome = GradleLocalPropertiesFile.getJavaHome(externalProjectPath)
+    assertEquals(java?.homePath, javaHome)
   }
 
   fun withServiceGradleUserHome(action: () -> Unit) {

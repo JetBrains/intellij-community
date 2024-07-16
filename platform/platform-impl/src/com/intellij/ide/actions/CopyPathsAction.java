@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -30,7 +30,7 @@ public final class CopyPathsAction extends AnAction implements DumbAware {
   private static String getPaths(VirtualFile[] files) {
     StringBuilder buf = new StringBuilder(files.length * 64);
     for (VirtualFile file : files) {
-      if (buf.length() > 0) buf.append('\n');
+      if (!buf.isEmpty()) buf.append('\n');
       buf.append(file.getPresentableUrl());
     }
     return buf.toString();

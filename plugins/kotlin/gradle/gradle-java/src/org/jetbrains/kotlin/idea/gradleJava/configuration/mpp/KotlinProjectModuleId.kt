@@ -19,6 +19,7 @@ value class KotlinProjectModuleId @UnsafeApi constructor(private val id: String)
         KotlinSourceSetModuleId(this.id + ":" + sourceSetName)
 }
 
+@OptIn(UnsafeApi::class)
 fun KotlinProjectModuleId(resolverContext: ProjectResolverContext, gradleIdeaModule: GradleIdeaModule) =
     KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(resolverContext, gradleIdeaModule))
 

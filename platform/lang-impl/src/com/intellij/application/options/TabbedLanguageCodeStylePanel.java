@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel;
@@ -53,7 +53,7 @@ import static java.util.Arrays.stream;
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
   private CodeStyleAbstractPanel myActiveTab;
-  private List<CodeStyleAbstractPanel> myTabs;
+  private List<CodeStyleAbstractPanel> tabs;
   private JPanel myPanel;
   private TabbedPaneWrapper myTabbedPane;
   private final PredefinedCodeStyle[] myPredefinedCodeStyles;
@@ -84,9 +84,9 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
             for (int i = 0; i < myTabbedPane.getTabCount(); i++) {
               if (myTabbedPane.getTitleAt(i).equals(tabTitle)) {
                 myTabbedPane.removeTabAt(i);
-                myTabs.stream().filter(
+                tabs.stream().filter(
                   panel -> panel.getTabTitle().equals(tabTitle)
-                ).findFirst().ifPresent(panel -> myTabs.remove(panel));
+                ).findFirst().ifPresent(panel -> tabs.remove(panel));
                 return;
               }
             }
@@ -145,7 +145,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   protected void ensureTabs() {
-    if (myTabs == null) {
+    if (tabs == null) {
       myPanel = new JPanel();
       myPanel.setLayout(new BorderLayout());
       myTabbedPane = new TabbedPaneWrapper(this);
@@ -157,11 +157,11 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
           }
         }
       });
-      myTabs = new ArrayList<>();
+      tabs = new ArrayList<>();
       myPanel.add(myTabbedPane.getComponent());
       initTabs(getSettings());
     }
-    assert !myTabs.isEmpty();
+    assert !tabs.isEmpty();
   }
 
   public void showSetFrom(Component component) {
@@ -207,7 +207,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    * @param tab The panel to use in a tab.
    */
   protected final void addTab(CodeStyleAbstractPanel tab) {
-    myTabs.add(tab);
+    tabs.add(tab);
     tab.setShouldUpdatePreview(true);
     addPanelToWatch(tab.getPanel());
     myTabbedPane.addTab(tab.getTabTitle(), tab.getPanel());
@@ -236,7 +236,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   public final void setModel(@NotNull CodeStyleSchemesModel model) {
     super.setModel(model);
     ensureTabs();
-    for (CodeStyleAbstractPanel tab : myTabs) {
+    for (CodeStyleAbstractPanel tab : tabs) {
       tab.setModel(model);
     }
   }
@@ -269,7 +269,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   @Override
   protected void updatePreview(boolean useDefaultSample) {
     ensureTabs();
-    for (CodeStyleAbstractPanel tab : myTabs) {
+    for (CodeStyleAbstractPanel tab : tabs) {
       tab.updatePreview(useDefaultSample);
     }
   }
@@ -277,7 +277,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   @Override
   public void onSomethingChanged() {
     ensureTabs();
-    for (CodeStyleAbstractPanel tab : myTabs) {
+    for (CodeStyleAbstractPanel tab : tabs) {
       tab.setShouldUpdatePreview(true);
       tab.onSomethingChanged();
     }
@@ -286,14 +286,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   @Override
   public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     ensureTabs();
-    for (CodeStyleAbstractPanel tab : myTabs) {
+    for (CodeStyleAbstractPanel tab : tabs) {
       tab.apply(settings);
     }
   }
 
   @Override
   public void dispose() {
-    for (CodeStyleAbstractPanel tab : myTabs) {
+    for (CodeStyleAbstractPanel tab : tabs) {
       Disposer.dispose(tab);
     }
     super.dispose();
@@ -302,7 +302,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   @Override
   public boolean isModified(CodeStyleSettings settings) {
     ensureTabs();
-    for (CodeStyleAbstractPanel tab : myTabs) {
+    for (CodeStyleAbstractPanel tab : tabs) {
       if (tab.isModified(settings)) {
         return true;
       }
@@ -318,7 +318,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   @Override
   protected void resetImpl(@NotNull CodeStyleSettings settings) {
     ensureTabs();
-    for (CodeStyleAbstractPanel tab : myTabs) {
+    for (CodeStyleAbstractPanel tab : tabs) {
       tab.resetImpl(settings);
     }
   }
@@ -574,8 +574,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     return new OptionsContainingConfigurable() {
       @Override
       public @NotNull Map<String, Set<String>> processListOptionsWithPaths() {
-        final Map<String, Set<String>> result = new HashMap<>();
-        for (CodeStyleAbstractPanel tab : myTabs) {
+        Map<String, Set<String>> result = new HashMap<>(tabs.size());
+        for (CodeStyleAbstractPanel tab : tabs) {
           result.put(tab.getTabTitle(), tab.processListOptions());
         }
         return result;
@@ -707,7 +707,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   @Override
   public void highlightOptions(@NotNull String searchString) {
-    for (CodeStyleAbstractPanel tab : myTabs) {
+    for (CodeStyleAbstractPanel tab : tabs) {
       tab.highlightOptions(searchString);
     }
   }

@@ -14,6 +14,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
@@ -22,6 +23,7 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletion
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeModelListener;
@@ -84,6 +86,7 @@ public class MavenArtifactSearchPanel extends JPanel {
                                                   : new MyArtifactCellRenderer(myResultList);
     myResultList.setCellRenderer(renderer);
     myResultList.setRowHeight(renderer.getPreferredSize().height);
+    myResultList.getAccessibleContext().setAccessibleName(MavenDomBundle.message("maven.search.results.list.accessible.name"));
 
     mySearchField = new JTextField(initialText);
     mySearchField.addKeyListener(new KeyAdapter() {
@@ -108,6 +111,7 @@ public class MavenArtifactSearchPanel extends JPanel {
         }
       }
     });
+    mySearchField.getAccessibleContext().setAccessibleName(MavenDomBundle.message("maven.search.text.field.accessible.name"));
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
@@ -334,6 +338,21 @@ public class MavenArtifactSearchPanel extends JPanel {
           return w;
         }
       });
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleJPanel() {
+          @Override
+          public String getAccessibleName() {
+            return AccessibleContextUtil.combineAccessibleStrings(
+              myLeftComponent.getAccessibleContext().getAccessibleName(),
+              myRightComponent.getAccessibleContext().getAccessibleName());
+          }
+        };
+      }
+      return accessibleContext;
     }
 
     @Override

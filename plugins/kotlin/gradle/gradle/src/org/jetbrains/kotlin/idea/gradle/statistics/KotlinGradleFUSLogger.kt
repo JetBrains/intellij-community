@@ -4,15 +4,22 @@ package org.jetbrains.kotlin.idea.gradle.statistics
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.addOptionTag
+import com.intellij.util.xmlb.Constants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.gradle.diagnostic.KotlinGradleBuildErrorsChecker
 import org.jetbrains.kotlin.statistics.BuildSessionLogger
@@ -57,6 +64,33 @@ private const val MAXIMUM_USER_DIRS = 10
  */
 private const val GRADLE_USER_DIRS_PROPERTY_NAME = "kotlin-gradle-user-dirs"
 
+@Service(Service.Level.PROJECT)
+@State(name = "KotlinGradleFUSSettings", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+class KotlinGradleFUSSettings : PersistentStateComponent<Element> {
+
+    var gradleUserDirs: Set<String> = emptySet()
+
+    override fun getState(): Element {
+        val element = Element("KotlinGradleFUSSettings")
+        gradleUserDirs.forEach {
+            element.addOptionTag(KotlinGradleFUSSettings::gradleUserDirs.name, it)
+        }
+        return element
+    }
+
+    override fun loadState(state: Element) {
+        val dirs = state.getChildren(Constants.OPTION)
+            .filter { it.getAttributeValue(Constants.NAME) == KotlinGradleFUSSettings::gradleUserDirs.name }
+            .mapNotNull { it.getAttributeValue(Constants.VALUE) }
+            .toSet()
+        gradleUserDirs = dirs
+    }
+
+    companion object {
+        fun getInstance(project: Project): KotlinGradleFUSSettings = project.service()
+    }
+}
+
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class KotlinGradleFUSLogger(private val project: Project, private val coroutineScope: CoroutineScope) {
@@ -91,21 +125,31 @@ class KotlinGradleFUSLogger(private val project: Project, private val coroutineS
         }
     }
 
-    private var gradleUserDirs: List<String>
+    private var gradleUserDirs: Set<String>
+        set(value) {
+            KotlinGradleFUSSettings.getInstance(project).gradleUserDirs = value
+            // to clean up previous state
+            obsoleteGradleUserDirs = null
+        }
+        get() {
+            return KotlinGradleFUSSettings.getInstance(project).gradleUserDirs + (obsoleteGradleUserDirs ?: emptyList())
+        }
+
+    @Deprecated("to be dropped in 2024.3")
+    private var obsoleteGradleUserDirs: List<String>?
         set(value) {
             PropertiesComponent.getInstance(project).setList(GRADLE_USER_DIRS_PROPERTY_NAME, value)
         }
-        get() = PropertiesComponent.getInstance(project).getList(GRADLE_USER_DIRS_PROPERTY_NAME) ?: emptyList()
+        get() = PropertiesComponent.getInstance(project).getList(GRADLE_USER_DIRS_PROPERTY_NAME)
 
     fun populateGradleUserDir(path: String) {
         val currentState = gradleUserDirs
-        if (path in currentState) return
 
-        val result = ArrayList<String>()
-        result.add(path)
-        result.addAll(currentState)
+        if (path in currentState && obsoleteGradleUserDirs == null) return
 
-        gradleUserDirs = result.filter { filePath -> Path(filePath).exists() }.take(MAXIMUM_USER_DIRS)
+        gradleUserDirs = (listOf(path) + currentState)
+            .filter { Path(it).exists() }
+            .take(MAXIMUM_USER_DIRS).toSet()
     }
 
     fun setup() {

@@ -11,8 +11,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Allows tracking subsystem activities and getting a "dumb mode" with respect to tracked computations.
@@ -47,6 +50,11 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
    * because we need to avoid memory leaks and problems with dynamic plugin unloading.
    */
   private val concurrentConfigurationCounter: ConcurrentHashMap<ActivityKey, AssociatedCounter> = ConcurrentHashMap()
+
+  private val ongoingConfigurationFlow : MutableStateFlow<Boolean> = MutableStateFlow(false)
+  private val flowCounter = AtomicInteger(0)
+
+  internal val configurationFlow : StateFlow<Boolean> = ongoingConfigurationFlow
 
   /**
    * Installs a tracker for a suspending asynchronous activity of [action].
@@ -109,6 +117,16 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
         }
       }
     }
+    val counter = flowCounter.getAndIncrement()
+    if (counter == 0) {
+      while (!ongoingConfigurationFlow.compareAndSet(false, true)) {
+        // The loop should not spin for long.
+        // Suppose we have two activities: the first one is fast, and the second one is slow.
+        // CAS may fail only if slow activity sets itself before the fast one,
+        // but in this case the ending of the fast activity would set `false` back, and fast activity would be able to set `true` again.
+        // This can cause a blink, but it is technically correct.
+      }
+    }
   }
 
   private fun leaveConfiguration(kind: ActivityKey) {
@@ -136,6 +154,12 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
       }
       if (operationSucceeded) {
         break
+      }
+    }
+    val counter = flowCounter.decrementAndGet()
+    if (counter == 0) {
+      while (!ongoingConfigurationFlow.compareAndSet(true, false)) {
+        // See the comment in a similar loop of `enterConfiguration`
       }
     }
   }

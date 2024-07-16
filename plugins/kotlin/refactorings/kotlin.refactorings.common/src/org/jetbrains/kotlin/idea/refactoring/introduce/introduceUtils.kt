@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElements
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import kotlin.math.min
 
 fun KtExpression.removeTemplateEntryBracesIfPossible(): KtExpression {
@@ -112,7 +113,7 @@ fun calculateAnchorForExpressions(commonParent: PsiElement, commonContainer: Psi
 }
 
 fun validateExpressionElements(elements: List<PsiElement>): String? {
-    if (elements.any { it is KtConstructor<*> || it is KtParameter || it is KtTypeAlias || it is KtPropertyAccessor }) {
+    if (elements.any { it is KtConstructor<*> || it is KtParameter || it is KtTypeAlias || it is KtPropertyAccessor || it is KtFunction && !it.isLocal && it.parent?.parent !is KtScript }) {
         return KotlinBundle.message("text.refactoring.is.not.applicable.to.this.code.fragment")
     }
     return null
@@ -126,7 +127,8 @@ fun selectElementsWithTargetSibling(
     elementKinds: Collection<ElementKind>,
     elementValidator: (List<PsiElement>) -> String?,
     getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
-    continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit
+    continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit,
+    selection: ((elements: List<PsiElement>, commonParent: PsiElement) -> PsiElement?)? = null
 ) {
     fun onSelectionComplete(elements: List<PsiElement>, targetContainer: PsiElement) {
         val physicalElements = elements.map { it.substringContextOrThis }
@@ -147,7 +149,7 @@ fun selectElementsWithTargetSibling(
         continuation(elements, outermostParent)
     }
 
-    selectElementsWithTargetParent(operationName, editor, file, title, elementKinds, elementValidator, getContainers, ::onSelectionComplete)
+    selectElementsWithTargetParent(operationName, editor, file, title, elementKinds, elementValidator, getContainers, ::onSelectionComplete, selection)
 }
 
 fun selectElementsWithTargetParent(
@@ -157,8 +159,9 @@ fun selectElementsWithTargetParent(
     @NlsContexts.DialogTitle title: String,
     elementKinds: Collection<ElementKind>,
     elementValidator: (List<PsiElement>) -> @NlsContexts.DialogMessage String?,
-    getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
-    continuation: (elements: List<PsiElement>, targetParent: PsiElement) -> Unit
+    getContainers: (List<PsiElement>, PsiElement) -> List<PsiElement>,
+    continuation: (List<PsiElement>, PsiElement) -> Unit,
+    selection: ((List<PsiElement>, PsiElement) -> PsiElement?)? = null
 ) {
     fun showErrorHintByKey(key: String) {
         showErrorHintByKey(file.project, editor, key, operationName)
@@ -184,7 +187,8 @@ fun selectElementsWithTargetParent(
             containers,
             editor,
             title,
-            true
+            true,
+            selection?.invoke(physicalElements, parent)
         ) {
             continuation(elements, it)
         }
@@ -268,3 +272,19 @@ fun showErrorHint(project: Project, editor: Editor, @NlsContexts.DialogMessage m
 fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, @NlsContexts.DialogTitle title: String) {
     showErrorHint(project, editor, KotlinBundle.message(messageKey), title)
 }
+
+fun KtNamedDeclaration.getGeneratedBody(): KtExpression =
+    when (this) {
+        is KtNamedFunction -> bodyExpression
+        else -> {
+            val property = this as KtProperty
+
+            property.getter?.bodyExpression?.let { return it }
+            property.initializer?.let { return it }
+            // We assume lazy property here with delegate expression 'by Delegates.lazy { body }'
+            property.delegateExpression?.let {
+                val call = it.getCalleeExpressionIfAny()?.parent as? KtCallExpression
+                call?.lambdaArguments?.singleOrNull()?.getLambdaExpression()?.bodyExpression
+            }
+        }
+    } ?: throw AssertionError("Couldn't get block body for this declaration: ${getElementTextWithContext()}")

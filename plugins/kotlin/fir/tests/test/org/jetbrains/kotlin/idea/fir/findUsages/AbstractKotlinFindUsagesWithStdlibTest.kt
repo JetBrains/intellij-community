@@ -2,18 +2,16 @@
 
 package org.jetbrains.kotlin.idea.fir.findUsages
 
-import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.findUsages.AbstractKotlinFindUsagesWithStdlibTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
 
 abstract class AbstractKotlinFindUsagesWithStdlibFirTest : AbstractKotlinFindUsagesWithStdlibTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { project.invalidateCaches() },
-            ThrowableRunnable { super.tearDown() }
+            { project.invalidateCaches() },
+            { super.tearDown() },
         )
     }
 

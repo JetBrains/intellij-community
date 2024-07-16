@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import pytest
 
 from _pydevd_bundle.smart_step_into import get_stepping_variants
@@ -26,6 +27,27 @@ def function_with_try_except_code():
         else:
             print("Everything is fine.")
     return f.__code__
+
+
+@pytest.fixture
+def returned_object_method():
+    def inner():
+        class A:
+            def __init__(self, z):
+                self.z = z
+
+            def foo(self, x):
+                y = 2 * x + self.z
+                return 1 + y
+
+        def zoo(x):
+            y = int((x - 2) / (x - 1))
+
+            return A(y)
+
+        print(zoo(2).foo(2))
+
+    return inner.__code__
 
 
 def f():
@@ -71,3 +93,11 @@ def test_candidates_for_consecutive_calls(consecutive_calls):
     assert variants[2].argval == '__add__'
     assert variants[3].argval == 'h'
     assert variants[4].argval == '__add__'
+
+
+def test_candidates_for_returned_object_method(returned_object_method):
+    variants = list(get_stepping_variants(returned_object_method))
+    assert len(variants) == 3
+    assert variants[0].argval == 'zoo'
+    assert variants[1].argval == 'foo'
+    assert variants[2].argval == 'print'

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 
 import java.util.List;
 
@@ -53,6 +54,11 @@ public abstract class CompilerConfiguration {
 
   @NotNull
   public abstract AnnotationProcessingConfiguration getAnnotationProcessingConfiguration(Module module);
+
+  /**
+   * Adds a new empty annotation processing profile with the given name and returns the created instance.
+   */
+  public abstract @NotNull ProcessorConfigProfile addNewProcessorProfile(@NotNull String profileName);
 
   /**
    * Returns true if at least one enabled annotation processing profile exists.

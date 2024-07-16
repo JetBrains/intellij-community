@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 
-public class FormClassAnnotator implements Annotator {
+public final class FormClassAnnotator implements Annotator {
   private static final Logger LOG = Logger.getInstance(FormClassAnnotator.class);
 
   @Override

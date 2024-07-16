@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.membersManager.vp;
 
 import com.intellij.refactoring.RefactoringBundle;
@@ -39,17 +25,13 @@ import java.util.Collection;
  */
 abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
   M extends MemberInfoModel<PyElement, PyMemberInfo<PyElement>>> implements MembersBasedPresenter {
-  @NotNull
-  protected final T myView;
-  @NotNull
-  protected final PyClass myClassUnderRefactoring;
-  @NotNull
-  protected final PyMemberInfoStorage myStorage;
+  protected final @NotNull T myView;
+  protected final @NotNull PyClass myClassUnderRefactoring;
+  protected final @NotNull PyMemberInfoStorage myStorage;
   /**
    * Member model
    */
-  @NotNull
-  protected final M myModel;
+  protected final @NotNull M myModel;
 
   /**
    * @param view                  View for presenter
@@ -57,10 +39,10 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
    * @param infoStorage           info storage
    * @param model                 Member model (to be used for dependencies checking)
    */
-  MembersBasedPresenterImpl(@NotNull final T view,
-                            @NotNull final PyClass classUnderRefactoring,
-                            @NotNull final PyMemberInfoStorage infoStorage,
-                            @NotNull final M model) {
+  MembersBasedPresenterImpl(final @NotNull T view,
+                            final @NotNull PyClass classUnderRefactoring,
+                            final @NotNull PyMemberInfoStorage infoStorage,
+                            final @NotNull M model) {
     myView = view;
     myClassUnderRefactoring = classUnderRefactoring;
     myStorage = infoStorage;
@@ -115,8 +97,7 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
    * @return map of conflicts (if any)
    * @see #getDestClassesToCheckConflicts()
    */
-  @NotNull
-  protected final MultiMap<PyClass, PyMemberInfo<?>> getConflicts() {
+  protected final @NotNull MultiMap<PyClass, PyMemberInfo<?>> getConflicts() {
     final MultiMap<PyClass, PyMemberInfo<?>> result = new MultiMap<>();
     final Collection<PyMemberInfo<PyElement>> memberInfos = myView.getSelectedMemberInfos();
     for (final PyClass destinationClass : getDestClassesToCheckConflicts()) {
@@ -133,6 +114,5 @@ abstract class MembersBasedPresenterImpl<T extends MembersBasedView<?>,
    * @return classes where this refactoring will move members. To be used to check for conflicts (if one of target classes already has members)
    * @see #getConflicts()
    */
-  @NotNull
-  protected abstract Iterable<? extends PyClass> getDestClassesToCheckConflicts();
+  protected abstract @NotNull Iterable<? extends PyClass> getDestClassesToCheckConflicts();
 }

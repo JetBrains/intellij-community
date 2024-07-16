@@ -77,8 +77,7 @@ public final class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
       }
       return var;
     }
-    else if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    else if (element instanceof PsiMethod method) {
       final PsiType returnType = method.getReturnType();
       if (!PsiTypes.booleanType().equals(returnType)) {
         CommonRefactoringUtil.showErrorHint(project, editor,
@@ -259,8 +258,7 @@ public final class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
         });
       }
     }
-    else if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)((PsiParameter)element).getDeclarationScope();
+    else if (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod method) {
       int index = method.getParameterList().getParameterIndex((PsiParameter)element);
       assert index >= 0;
       final Query<PsiReference> methodQuery = MethodReferencesSearch.search(method);

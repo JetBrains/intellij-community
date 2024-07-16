@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.ParameterHintsPass.HintData
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.serviceAsync
@@ -19,6 +21,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.PsiManager
+import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,22 +37,28 @@ internal class ParameterHintsEditorInitializer : TextEditorInitializer {
     editorSupplier: suspend () -> EditorEx,
     highlighterReady: suspend () -> Unit,
   ) {
-    val hints = project.serviceAsync<ParamHintsGrave>().raise(file, document)
-    if (hints == null) {
-      return
+    val zombieHints = project.serviceAsync<ParamHintsGrave>().raise(file, document) ?: return
+    val psiManager = project.serviceAsync<PsiManager>()
+    val psiFile = readActionBlocking { psiManager.findFile(file) } ?: return
+    if (isEnabledForLang(psiFile.language)) {
+      val editor = editorSupplier()
+      withContext(Dispatchers.EDT) {
+        ParameterHintsUpdater(editor, listOf(), zombieHints, Int2ObjectOpenHashMap(0), true).update()
+      }
     }
-    val editor = editorSupplier()
-    withContext(Dispatchers.EDT) {
-      ParameterHintsUpdater(editor, listOf(), hints, Int2ObjectOpenHashMap(0), true).update()
-    }
+  }
+
+  private fun isEnabledForLang(language: Language): Boolean {
+    return InlayParameterHintsExtension.forLanguage(language) != null && isParameterHintsEnabledForLanguage(language)
   }
 }
 
 @Service(Level.PROJECT)
-internal class ParamHintsGrave(project: Project, private val scope: CoroutineScope)
-  : TextEditorCache<ParameterHintsState>(project, scope),
-    Disposable
-{
+internal class ParamHintsGrave(
+  project: Project,
+  private val scope: CoroutineScope,
+) : TextEditorCache<ParameterHintsState>(project, scope), Disposable {
+
   override fun namePrefix() = "persistent-parameter-hints"
   override fun valueExternalizer() = ParameterHintsState.Externalizer
   override fun useHeapCache() = true
@@ -75,10 +85,7 @@ internal class ParamHintsGrave(project: Project, private val scope: CoroutineSco
     }
     val inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(editor, 0, editor.document.textLength)
     val hints = inlays.mapNotNull { inlay -> inlay.toHintData() }.toList()
-    if (hints.isEmpty()) {
-      return
-    }
-    val contentHash = editor.document.contentHash()
+    val contentHash = contentHash(editor.document)
     scope.launch(Dispatchers.IO) {
       cache[file.id] = ParameterHintsState(contentHash, hints)
     }
@@ -102,12 +109,12 @@ internal class ParamHintsGrave(project: Project, private val scope: CoroutineSco
       return null
     }
     val state: ParameterHintsState? = cache[file.id]
-    if (state == null || state.contentHash != document.contentHash()) {
+    if (state == null || state.contentHash != contentHash(document) || state.hints.isEmpty()) {
       return null
     }
     val hintMap = Int2ObjectOpenHashMap<MutableList<HintData>>()
     for ((offset, hint) in state.hints) {
-      val list: MutableList<HintData> = hintMap.getOrPut(offset) { ArrayList() }
+      val list: MutableList<HintData> = hintMap.getOrPut(offset) { SmartList() }
       if (isDebug()) {
         list.add(debugHintData(hint))
       } else {

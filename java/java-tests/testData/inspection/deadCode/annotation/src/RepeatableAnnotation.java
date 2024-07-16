@@ -36,5 +36,13 @@ class Annotated1 {
   public static void main(String[] args) {
   }
 }
-
+@interface TestAnn {
+  String str();
+  int digit() default 2;
+}
+class Test {
+  @TestAnn(str = "test")
+  public static void main(String[] args) {
+  }
+}
 

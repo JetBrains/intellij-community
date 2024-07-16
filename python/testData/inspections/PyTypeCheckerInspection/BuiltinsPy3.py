@@ -1,7 +1,7 @@
 def test_operators():
     print(2 + <warning descr="Expected type 'int', got 'str' instead">'foo'</warning>)
-    print(b'foo' + <warning descr="Expected type 'Buffer | Buffer', got 'str' instead">'bar'</warning>)
-    print(b'foo' + <warning descr="Expected type 'Buffer | Buffer', got 'int' instead">3</warning>)
+    print(b'foo' + <warning descr="Expected type 'Buffer', got 'str' instead">'bar'</warning>)
+    print(b'foo' + <warning descr="Expected type 'Buffer', got 'int' instead">3</warning>)
 
 
 def test_numerics():

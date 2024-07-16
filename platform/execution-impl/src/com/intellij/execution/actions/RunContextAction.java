@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,42 +42,23 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   @Override
-  protected void perform(ConfigurationContext context) {
-    final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
+  protected void perform(@NotNull RunnerAndConfigurationSettings configuration,
+                         @NotNull ConfigurationContext context) {
+    RunManagerEx runManager = (RunManagerEx)context.getRunManager();
     DataContext dataContext = context.getDefaultDataContext();
     ReadAction
       .nonBlocking(() -> findExisting(context))
-      .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> perform(runManager, existingConfiguration, dataContext))
+      .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> {
+        if (configuration != existingConfiguration) {
+          RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
+          runManager.setTemporaryConfiguration(configuration);
+          perform(runManager, configuration, dataContext);
+        }
+        else {
+          perform(runManager, configuration, dataContext);
+        }
+      })
       .submit(AppExecutorUtil.getAppExecutorService());
-  }
-
-  @Override
-  protected void perform(final RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
-    final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
-    if (configuration == null) {
-      RunnerAndConfigurationSettings contextConfiguration = context.getConfiguration();
-      if (contextConfiguration == null) {
-        return;
-      }
-      runManager.setTemporaryConfiguration(contextConfiguration);
-      perform(runManager, contextConfiguration, context.getDataContext());
-    }
-    else {
-      DataContext dataContext = context.getDefaultDataContext();
-      ReadAction
-        .nonBlocking(() -> findExisting(context))
-        .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> {
-          if (configuration != existingConfiguration) {
-            RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
-            runManager.setTemporaryConfiguration(configuration);
-            perform(runManager, configuration, dataContext);
-          }
-          else {
-            perform(runManager, configuration, dataContext);
-          }
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
   }
 
   private void perform(RunManagerEx runManager,
@@ -109,19 +89,13 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   @Override
-  protected void updatePresentation(final Presentation presentation, final @NotNull String actionText, final ConfigurationContext context) {
+  protected void updatePresentation(@NotNull Presentation presentation, final @NotNull String actionText, final ConfigurationContext context) {
     presentation.setText(myExecutor.getStartActionText(actionText), true);
 
     Pair<Boolean, Boolean> b = isEnabledAndVisible(context);
 
     presentation.setEnabled(b.first);
     presentation.setVisible(b.second);
-  }
-
-  @Override
-  protected void approximatePresentationByPreviousAvailability(AnActionEvent event, ThreeState hadAnythingRunnable) {
-    super.approximatePresentationByPreviousAvailability(event, hadAnythingRunnable);
-    event.getPresentation().setText(myExecutor.getStartActionText() + "...");
   }
 
   private Pair<Boolean, Boolean> isEnabledAndVisible(ConfigurationContext context) {

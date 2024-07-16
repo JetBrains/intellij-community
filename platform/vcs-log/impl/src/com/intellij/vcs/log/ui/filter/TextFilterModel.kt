@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.filter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.vcs.log.VcsLogFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogHashFilter
 import com.intellij.vcs.log.VcsLogTextFilter
@@ -14,8 +15,8 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 class TextFilterModel internal constructor(properties: MainVcsLogUiProperties,
                                            filters: VcsLogFilterCollection?,
                                            parentDisposable: Disposable) :
-  FilterModel.PairFilterModel<VcsLogTextFilter, VcsLogHashFilter>(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER,
-                                                                  properties, filters) {
+  FilterModel.MultipleFilterModel(listOf(VcsLogFilterCollection.TEXT_FILTER, VcsLogFilterCollection.HASH_FILTER), properties,
+                                  filters) {
   init {
     if (filters != null) {
       val textFilter = filters.get(VcsLogFilterCollection.TEXT_FILTER)
@@ -27,7 +28,7 @@ class TextFilterModel internal constructor(properties: MainVcsLogUiProperties,
     val listener: VcsLogUiProperties.PropertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
       override fun <T> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
         if (MainVcsLogUiProperties.TEXT_FILTER_REGEX == property || MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE == property) {
-          if (filter1 != null) {
+          if (getFilter(VcsLogFilterCollection.TEXT_FILTER) != null) {
             _filter = getFilterFromProperties()
             notifyFiltersChanged()
           }
@@ -37,12 +38,12 @@ class TextFilterModel internal constructor(properties: MainVcsLogUiProperties,
     properties.addChangeListener(listener, parentDisposable)
   }
 
-  override fun getFilterFromProperties(): FilterPair<VcsLogTextFilter, VcsLogHashFilter>? {
-    val filterPair: FilterPair<VcsLogTextFilter, VcsLogHashFilter>? = super.getFilterFromProperties()
-    if (filterPair == null) return null
+  override fun getFilterFromProperties(): VcsLogFilterCollection? {
+    val filterCollection = super.getFilterFromProperties()
+    if (filterCollection == null) return null
 
-    var textFilter = filterPair.filter1
-    var hashFilter = filterPair.filter2
+    var textFilter = filterCollection[VcsLogFilterCollection.TEXT_FILTER]
+    var hashFilter = filterCollection[VcsLogFilterCollection.HASH_FILTER]
 
     // check filters correctness
     if (textFilter != null && textFilter.text.isBlank()) {
@@ -64,16 +65,26 @@ class TextFilterModel internal constructor(properties: MainVcsLogUiProperties,
                " is inconsistent with empty text filter. Using text filter " + textFilter)
     }
 
-    return FilterPair(textFilter, hashFilter)
+    return VcsLogFilterObject.collection(textFilter, hashFilter)
   }
 
-  val text: String get() = filter1?.text ?: ""
+  val text: String get() = getFilter(VcsLogFilterCollection.TEXT_FILTER)?.text ?: ""
 
-  override fun getFilter1Values(filter1: VcsLogTextFilter): List<String> = listOf(filter1.text)
-  override fun getFilter2Values(filter2: VcsLogHashFilter): List<String> = ArrayList(filter2.hashes)
+  override fun getFilterValues(filter: VcsLogFilter): List<String>? {
+    return when (filter) {
+      is VcsLogTextFilter -> listOf(filter.text)
+      is VcsLogHashFilter -> ArrayList(filter.hashes)
+      else -> null
+    }
+  }
 
-  override fun createFilter1(values: List<String>): VcsLogTextFilter = createTextFilter(values.first())
-  override fun createFilter2(values: List<String>): VcsLogHashFilter = VcsLogFilterObject.fromHashes(values)
+  override fun createFilter(key: VcsLogFilterCollection.FilterKey<*>, values: List<String>): VcsLogFilter? {
+    return when (key) {
+      VcsLogFilterCollection.TEXT_FILTER -> createTextFilter(values.first())
+      VcsLogFilterCollection.HASH_FILTER -> VcsLogFilterObject.fromHashes(values)
+      else -> null
+    }
+  }
 
   private fun createTextFilter(text: String): VcsLogTextFilter {
     return VcsLogFilterObject.fromPattern(text,
@@ -86,9 +97,7 @@ class TextFilterModel internal constructor(properties: MainVcsLogUiProperties,
       setFilter(null)
     }
     else {
-      val textFilter = createTextFilter(text)
-      val hashFilter = VcsLogFilterObject.fromHash(text)
-      setFilter(FilterPair(textFilter, hashFilter))
+      setFilter(VcsLogFilterObject.collection(createTextFilter(text), VcsLogFilterObject.fromHash(text)))
     }
   }
 

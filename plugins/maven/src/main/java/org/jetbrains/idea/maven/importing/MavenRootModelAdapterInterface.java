@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.Path;
+import org.jetbrains.idea.maven.utils.MavenPathWrapper;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -52,7 +52,7 @@ public interface MavenRootModelAdapterInterface {
 
   void useModuleOutput(String production, String test);
 
-  Path toPath(String path);
+  MavenPathWrapper toPath(String path);
 
   void addModuleDependency(@NotNull String moduleName,
                            @NotNull DependencyScope scope,

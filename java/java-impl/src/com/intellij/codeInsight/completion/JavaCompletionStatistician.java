@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -73,7 +59,7 @@ public final class JavaCompletionStatistician extends CompletionStatistician{
   }
 
   @Override
-  public StatisticsInfo serialize(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
+  public StatisticsInfo serialize(final @NotNull LookupElement element, final @NotNull CompletionLocation location) {
     return forLocation(location).apply(element);
   }
 
@@ -81,8 +67,7 @@ public final class JavaCompletionStatistician extends CompletionStatistician{
     return PsiTreeUtil.getParentOfType(position, PsiNameValuePair.class) != null && PreferByKindWeigher.isEnumClass(firstInfo);
   }
 
-  @Nullable
-  private static ExpectedTypeInfo getExpectedTypeInfo(CompletionLocation location) {
+  private static @Nullable ExpectedTypeInfo getExpectedTypeInfo(CompletionLocation location) {
     ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     return infos != null && infos.length > 0 ? infos[0] : null;
   }
@@ -100,8 +85,7 @@ public final class JavaCompletionStatistician extends CompletionStatistician{
     return new StatisticsInfo(context, JavaStatisticsManager.getMemberUseKey2(psiClass));
   }
 
-  @Nullable
-  private static StatisticsInfo getFieldOrMethodInfo(PsiMember member, LookupElement item, @Nullable ExpectedTypeInfo firstInfo) {
+  private static @Nullable StatisticsInfo getFieldOrMethodInfo(PsiMember member, LookupElement item, @Nullable ExpectedTypeInfo firstInfo) {
     PsiClass containingClass = member.getContainingClass();
     if (containingClass == null) return null;
 

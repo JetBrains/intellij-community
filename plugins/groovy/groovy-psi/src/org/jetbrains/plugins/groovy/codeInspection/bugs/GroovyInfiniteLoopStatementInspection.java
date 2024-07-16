@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 
-public class GroovyInfiniteLoopStatementInspection extends BaseInspection {
+public final class GroovyInfiniteLoopStatementInspection extends BaseInspection {
 
   @Override
   @Nullable

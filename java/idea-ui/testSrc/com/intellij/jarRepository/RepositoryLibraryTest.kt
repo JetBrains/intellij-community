@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -157,5 +157,5 @@ class RepositoryLibraryTest {
     assertTrue(workspaceVersion() == modelVersionBefore)
   }
 
-  private fun workspaceVersion() = WorkspaceModel.getInstance(projectRule.project).internal.entityStorage.version
+  private fun workspaceVersion() = (WorkspaceModel.getInstance(projectRule.project) as WorkspaceModelInternal).entityStorage.version
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.editor.colors.EditorColorSchemesSorter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.Scheme;
@@ -33,7 +34,9 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     EditorColorsScheme current = EditorColorsManager.getInstance().getGlobalScheme();
-    for (EditorColorsScheme scheme : EditorColorsManager.getInstance().getAllSchemes()) {
+    EditorColorsScheme[] schemes = EditorColorsManager.getInstance().getAllSchemes();
+
+    for (EditorColorsScheme scheme : EditorColorSchemesSorter.getInstance().getOrderedSchemesFromArray(schemes).getItems()) {
       addScheme(group, current, scheme, false);
     }
   }

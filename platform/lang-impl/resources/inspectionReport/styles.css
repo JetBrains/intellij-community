@@ -1,11 +1,11 @@
-/* Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
+/* Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
 html {
     font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;
 }
 
 body {
     color: #4C4C4C;
-    margin: 60px 60px 0 60px;
+    margin: 0;
 }
 
 p {
@@ -24,6 +24,7 @@ body, input, select, textarea, th, td {
 li {
     position: relative;
     list-style: none;
+    margin-top: 5px;
 }
 
 label:hover {
@@ -33,7 +34,7 @@ label:hover {
 
 li::before {
     content: "\23FA";
-    margin: 0;
+    margin: 0 5px 0 0;
 }
 
 li input {
@@ -60,10 +61,6 @@ li input + ol > li {
     padding-left: 1px;
 }
 
-li label {
-    padding-left: 5px;
-}
-
 li input:checked + ol {
     margin: -20px 0 0 -44px;
     padding: 25px 0 0 80px;
@@ -81,4 +78,31 @@ li input:checked + ol > li:last-child {
 
 div.location {
     margin-left: 40px;
+}
+
+html, body, #inspection-tree, #description {
+  height: 100%;
+}
+
+#inspection-tree {
+    float: left;
+    overflow: auto;
+    margin-left: 20px;
+    width: 50%;
+}
+
+#description {
+  width: calc(50% - 40px);
+  float: left;
+  overflow: auto;
+  margin-left: 20px;
+}
+
+.problem-description-group {
+    margin-top: 40px;
+    font-weight: bold;
+}
+
+.problem-description {
+  margin-left: 40px;
 }

@@ -9,19 +9,21 @@ import org.jdom.Attribute
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Text
+import org.jetbrains.annotations.ApiStatus
 import java.io.DataInputStream
 import java.io.InputStream
 import java.io.OutputStream
-import java.util.*
 
 internal enum class TypeMarker {
   ELEMENT, CDATA, TEXT, ELEMENT_END
 }
 
+@ApiStatus.Internal
 fun serializeElementToBinary(element: Element, out: OutputStream) {
   BinaryXmlWriter(DataOutputStream(out)).write(element)
 }
 
+@ApiStatus.Internal
 fun deserializeElementFromBinary(input: InputStream): Element = BinaryXmlReader(DataInputStream(input)).read()
 
 private class BinaryXmlReader(private val input: DataInputStream) {

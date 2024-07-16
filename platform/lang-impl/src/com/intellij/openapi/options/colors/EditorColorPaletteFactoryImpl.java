@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public final class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
+final class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
   
   @Override
   public EditorColorPalette getPalette(@NotNull EditorColorsScheme scheme, @Nullable Language language) {

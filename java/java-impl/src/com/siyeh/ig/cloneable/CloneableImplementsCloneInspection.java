@@ -59,14 +59,12 @@ public final class CloneableImplementsCloneInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CloneableClassWithoutClone";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("cloneable.class.without.clone.problem.descriptor");
   }
 
@@ -112,9 +110,8 @@ public final class CloneableImplementsCloneInspection extends BaseInspection {
       myGenerateTryCatch = generateTryCatch;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("cloneable.class.without.clone.quickfix");
     }
 
@@ -124,7 +121,7 @@ public final class CloneableImplementsCloneInspection extends BaseInspection {
       if (!(parent instanceof PsiClass aClass)) {
         return;
       }
-      @NonNls final StringBuilder methodText = new StringBuilder();
+      final @NonNls StringBuilder methodText = new StringBuilder();
       final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
       if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, aClass) && codeStyleSettings.INSERT_OVERRIDE_ANNOTATION) {
         methodText.append("@java.lang.Override ");

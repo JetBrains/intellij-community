@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ui.HyperlinkAdapter
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
@@ -11,6 +12,7 @@ import javax.swing.JComponent
 import javax.swing.KeyStroke
 import javax.swing.event.HyperlinkEvent
 
+@ApiStatus.Internal
 class ActionLinkListener(
   private val component: JComponent,
 ) : HyperlinkAdapter() {

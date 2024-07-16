@@ -446,7 +446,19 @@ public final class PatternHelper {
   static boolean processAtLeastOneBlock(@NotNull VarTracker tracker, @NotNull Statement statement) {
     if (statement instanceof BasicBlockStatement  && statement.getExprents() != null) {
       boolean found = false;
-      for (Exprent statementExprent : statement.getExprents()) {
+      List<Exprent> exprents = statement.getExprents();
+      List<StatEdge> edges = statement.getSuccessorEdges(StatEdge.EdgeType.DIRECT_ALL);
+      //should keep this variable, because it is used outside
+      if (edges.size() == 1 && edges.get(0).getType() == StatEdge.EdgeType.BREAK && exprents.size() > 1) {
+        Exprent exprent = exprents.get(exprents.size() - 1);
+        if (exprent instanceof AssignmentExprent assignmentExprent &&
+            assignmentExprent.getLeft() instanceof VarExprent preserveVarExprent &&
+            usedOutside(edges.get(0), assignmentExprent)) {
+            exprents = exprents.subList(0, exprents.size() - 1);
+            tracker.addPreserve(preserveVarExprent, statement);
+        }
+      }
+      for (Exprent statementExprent : exprents) {
         if (collectRecordAssignment(tracker, statementExprent, statement)) {
           found = true;
           continue;
@@ -458,6 +470,18 @@ public final class PatternHelper {
       return processAtLeastOneBlock(tracker, statement.getFirst());
     }
     return true;
+  }
+
+  private static boolean usedOutside(@NotNull StatEdge edge,
+                                     @NotNull AssignmentExprent assignmentExprent) {
+    Exprent left = assignmentExprent.getLeft();
+    if (!(left instanceof VarExprent varExprent)) return false;
+    Statement destination = edge.getDestination();
+    if (destination == null) return false;
+    List<Exprent> exprents = destination.getExprents();
+    if (exprents == null) return false;
+    return exprents.stream()
+      .anyMatch(exp -> exp.containsExprent(varExprent));
   }
 
   /**
@@ -602,6 +626,10 @@ public final class PatternHelper {
     @NotNull
     List<TempVarAssignmentItem> getTempItems() {
       return varTempAssignmentTracker;
+    }
+
+    void addPreserve(@NotNull VarExprent varExprent, @NotNull Statement statement) {
+      varTempAssignmentTracker.add(new TempVarAssignmentItem(varExprent, statement, false));
     }
 
     @Nullable

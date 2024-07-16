@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -33,9 +33,8 @@ public final class ThrowsRuntimeExceptionInspection extends BaseInspection {
     return new LocalQuickFix[] {new ThrowsRuntimeExceptionFix(exceptionName)};
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("throws.runtime.exception.problem.descriptor");
   }
 
@@ -52,15 +51,13 @@ public final class ThrowsRuntimeExceptionInspection extends BaseInspection {
       myExceptionName = exceptionName;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", myExceptionName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("move.exception.to.javadoc.fix.family.name");
     }
 
@@ -146,15 +143,13 @@ public final class ThrowsRuntimeExceptionInspection extends BaseInspection {
       myClassName = className;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("throws.runtime.exception.quickfix", myClassName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("throws.runtime.exception.fix.family.name");
     }
 

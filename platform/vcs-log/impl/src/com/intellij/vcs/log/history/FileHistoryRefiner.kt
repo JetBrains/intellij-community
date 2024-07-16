@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
+
 package com.intellij.vcs.log.history
 
 import com.intellij.util.containers.Stack
@@ -10,6 +12,7 @@ import com.intellij.vcs.log.graph.utils.Dfs
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
@@ -19,20 +22,20 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
 
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
-  private val pathsForCommits = HashMap<Int, MaybeDeletedFilePath>()
+  private val commitToFileStateMap = HashMap<Int, CommitFileState>()
 
-  fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<Map<Int, MaybeDeletedFilePath>, Set<Int>> {
-    walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, startPath)
+  fun refine(row: Int, startFileState: CommitFileState): Pair<Map<Int, CommitFileState>, Set<Int>> {
+    walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, startFileState)
 
     val excluded = HashSet<Int>()
-    for ((commit, path) in pathsForCommits) {
+    for ((commit, path) in commitToFileStateMap) {
       if (!historyData.affects(commit, path, true)) {
         excluded.add(commit)
       }
     }
 
-    excluded.forEach { pathsForCommits.remove(it) }
-    return Pair(pathsForCommits, excluded)
+    excluded.forEach { commitToFileStateMap.remove(it) }
+    return Pair(commitToFileStateMap, excluded)
   }
 
   /*
@@ -42,46 +45,46 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
    * And when a node is entered from down-sibling, goes to the up-siblings first.
    * Then goes to the other down-siblings.
    */
-  private fun walk(graph: LiteLinearGraph, startNode: Int, startPath: MaybeDeletedFilePath) {
+  private fun walk(graph: LiteLinearGraph, startNode: Int, startFileState: CommitFileState) {
     if (startNode < 0 || startNode >= graph.nodesCount()) {
       return
     }
 
     val visited = BitSetFlags(graph.nodesCount(), false)
-    val starts: Queue<Pair<Int, MaybeDeletedFilePath>> = LinkedList<Pair<Int, MaybeDeletedFilePath>>().apply {
-      add(Pair(startNode, startPath))
+    val starts: Queue<Pair<Int, CommitFileState>> = LinkedList<Pair<Int, CommitFileState>>().apply {
+      add(Pair(startNode, startFileState))
     }
 
     iterateStarts@ while (starts.isNotEmpty()) {
-      val (nextStart, nextStartPath) = starts.poll()
+      val (nextStart, nextStartFileState) = starts.poll()
       if (visited.get(nextStart)) continue@iterateStarts
 
-      val stack = Stack(Pair(nextStart, nextStartPath))
+      val stack = Stack(Pair(nextStart, nextStartFileState))
 
       iterateStack@ while (!stack.empty()) {
-        val (currentNode, currentPath) = stack.peek()
+        val (currentNode, currentFileState) = stack.peek()
         val down = isDown(stack)
         if (!visited.get(currentNode)) {
           visited.set(currentNode, true)
-          pathsForCommits[permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))] = currentPath
+          commitToFileStateMap[permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))] = currentFileState
         }
 
-        for ((nextNode, nextPath) in getNextNodes(graph, visited, currentNode, currentPath, down)) {
-          if (!currentPath.deleted && nextPath.deleted) {
-            starts.add(Pair(nextNode, nextPath))
+        for ((nextNode, nextFileState) in getNextNodes(graph, visited, currentNode, currentFileState, down)) {
+          if (!currentFileState.deleted && nextFileState.deleted) {
+            starts.add(Pair(nextNode, nextFileState))
           }
           else {
-            stack.push(Pair(nextNode, nextPath))
+            stack.push(Pair(nextNode, nextFileState))
             continue@iterateStack
           }
         }
 
-        for ((nextNode, nextPath) in getNextNodes(graph, visited, currentNode, currentPath, !down)) {
-          if (!currentPath.deleted && nextPath.deleted) {
-            starts.add(Pair(nextNode, nextPath))
+        for ((nextNode, nextFileState) in getNextNodes(graph, visited, currentNode, currentFileState, !down)) {
+          if (!currentFileState.deleted && nextFileState.deleted) {
+            starts.add(Pair(nextNode, nextFileState))
           }
           else {
-            stack.push(Pair(nextNode, nextPath))
+            stack.push(Pair(nextNode, nextFileState))
             continue@iterateStack
           }
         }
@@ -91,48 +94,48 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     }
   }
 
-  private fun getPath(currentNode: Int, previousNode: Int, previousPath: MaybeDeletedFilePath, down: Boolean): MaybeDeletedFilePath {
-    if (previousNode == Dfs.NextNode.NODE_NOT_FOUND) return previousPath
+  private fun getFileState(currentNode: Int, previousNode: Int, previousFileState: CommitFileState, down: Boolean): CommitFileState {
+    if (previousNode == Dfs.NextNode.NODE_NOT_FOUND) return previousFileState
 
     val previousNodeId = visibleLinearGraph.getNodeId(previousNode)
     val currentNodeId = visibleLinearGraph.getNodeId(currentNode)
 
     if (down) {
       val previousCommit = permanentCommitsInfo.getCommitId(previousNodeId)
-      val pathGetter = { parentIndex: Int ->
-        historyData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+      val stateGetter = { parentIndex: Int ->
+        historyData.getFileStateInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousFileState)
       }
-      val path = findPathWithoutConflict(previousNodeId, pathGetter)
-      return path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(previousNodeId, currentNodeId, visibilityBuffer))
+      val state = findStateWithoutConflict(previousNodeId, stateGetter)
+      return state ?: stateGetter(permanentLinearGraph.getCorrespondingParent(previousNodeId, currentNodeId, visibilityBuffer))
     }
     else {
       val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
-      val pathGetter = { parentIndex: Int ->
-        historyData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+      val stateGetter = { parentIndex: Int ->
+        historyData.getFileStateInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousFileState)
       }
-      val path = findPathWithoutConflict(currentNodeId, pathGetter)
-      return path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(currentNodeId, previousNodeId, visibilityBuffer))
+      val state = findStateWithoutConflict(currentNodeId, stateGetter)
+      return state ?: stateGetter(permanentLinearGraph.getCorrespondingParent(currentNodeId, previousNodeId, visibilityBuffer))
     }
   }
 
-  private fun findPathWithoutConflict(nodeId: Int, pathGetter: (Int) -> MaybeDeletedFilePath): MaybeDeletedFilePath? {
+  private fun findStateWithoutConflict(nodeId: Int, stateGetter: (Int) -> CommitFileState): CommitFileState? {
     val parents = permanentLinearGraph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN)
-    val path = pathGetter(parents.first())
-    if (parents.size == 1) return path
+    val state = stateGetter(parents.first())
+    if (parents.size == 1) return state
 
-    if (parents.subList(1, parents.size).find { pathGetter(it) != path } != null) return null
-    return path
+    if (parents.subList(1, parents.size).find { stateGetter(it) != state } != null) return null
+    return state
   }
 
   private fun getNextNodes(graph: LiteLinearGraph,
                            visited: BitSetFlags,
                            currentNode: Int,
-                           currentPath: MaybeDeletedFilePath,
-                           down: Boolean): List<Pair<Int, MaybeDeletedFilePath>> {
+                           currentPath: CommitFileState,
+                           down: Boolean): List<Pair<Int, CommitFileState>> {
     val nextNodes = graph.getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)
-    val nodesWithPaths = nextNodes.filterNot(visited::get).map { node -> Pair(node, getPath(node, currentNode, currentPath, down)) }
+    val nodesWithStates = nextNodes.filterNot(visited::get).map { node -> Pair(node, getFileState(node, currentNode, currentPath, down)) }
 
-    return nodesWithPaths.sortedWith(compareBy { (_, path) ->
+    return nodesWithStates.sortedWith(compareBy { (_, path) ->
       when {
         path == currentPath -> -1
         path.deleted -> 1

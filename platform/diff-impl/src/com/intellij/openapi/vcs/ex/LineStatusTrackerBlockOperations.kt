@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
@@ -102,6 +102,7 @@ abstract class LineStatusTrackerBlockOperations<R : Range, B : BlockI>(private v
 
   fun transferLineFromVcs(line: Int, approximate: Boolean): Int = transferLine(line, approximate, true)
   fun transferLineToVcs(line: Int, approximate: Boolean): Int = transferLine(line, approximate, false)
+
   private fun transferLine(line: Int, approximate: Boolean, fromVcs: Boolean): Int {
     LOCK.read {
       val blocks = getBlocks()
@@ -130,10 +131,8 @@ abstract class LineStatusTrackerBlockOperations<R : Range, B : BlockI>(private v
   }
 
   companion object {
-    @JvmStatic
     fun BlockI.isSelectedByLine(line: Int): Boolean = DiffUtil.isSelectedByLine(line, start, end)
 
-    @JvmStatic
     fun BlockI.isSelectedByLine(lines: BitSet): Boolean = DiffUtil.isSelectedByLine(lines, start, end)
   }
 }

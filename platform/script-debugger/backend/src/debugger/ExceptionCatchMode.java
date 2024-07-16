@@ -15,9 +15,12 @@
  */
 package org.jetbrains.debugger;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Defines when VM will break on exception throw (before stack unwind happened)
  */
+@ApiStatus.Internal
 public enum ExceptionCatchMode {
   /**
    * VM always breaks when exception is being thrown

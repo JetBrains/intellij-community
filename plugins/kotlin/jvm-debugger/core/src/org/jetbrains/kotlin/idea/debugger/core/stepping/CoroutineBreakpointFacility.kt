@@ -3,27 +3,55 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.StepIntoMethodBreakpoint
-import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.requests.CustomProcessingLocatableEventRequestor
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.Location
-import com.sun.jdi.Method
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
+import org.jetbrains.kotlin.idea.debugger.core.getLocationOfNextInstructionAfterResume
 import java.util.function.Function
 
 object CoroutineBreakpointFacility {
-    fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, location: Location, method: Method): Boolean {
+    fun installResumeBreakpointInCurrentMethod(suspendContext: SuspendContextImpl): Boolean {
+        val currentLocation = suspendContext.location ?: return false
+        val methodLineLocations = currentLocation.method().allLineLocations()
+        // In case of stepping over the last closing bracket -> step out.
+        // For a suspend block, the location of the closing bracket is previous to the last
+        // (the last location is the resume location and corresponds to the first line of the function).
+        val resumeLocation = if (methodLineLocations.size > 2 && methodLineLocations[methodLineLocations.size - 2] == currentLocation) {
+            StackFrameInterceptor.instance?.callerLocation(suspendContext)
+        } else {
+            currentLocation
+        } ?: return false
+        val nextLocationAfterResumeIndex = getLocationOfNextInstructionAfterResume(resumeLocation)
+        return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResumeIndex)
+    }
+
+    fun installResumeBreakpointInCallerMethod(suspendContext: SuspendContextImpl): Boolean {
+        val resumeLocation = StackFrameInterceptor.instance?.callerLocation(suspendContext) ?: return false
+        val nextLocationAfterResumeIndex: Int = getLocationOfNextInstructionAfterResume(resumeLocation)
+        return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResumeIndex)
+    }
+
+    private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, resumedLocation: Location, nextCallAfterResume: Int = -1): Boolean {
         val debugProcess = context.debugProcess
+        debugProcess.cancelRunToCursorBreakpoint()
         val project = debugProcess.project
         val suspendAll = context.suspendPolicy == EventRequest.SUSPEND_ALL
 
         val useCoroutineIdFiltering = Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")
+        val method = resumedLocation.safeMethod() ?: return false
 
-        val breakpoint = object : StepIntoMethodBreakpoint(location.declaringType().name(), method.name(), method.signature(), project) {
+        val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project),
+                                  CustomProcessingLocatableEventRequestor {
+            override fun stopOnlyInBaseClass() = true
+
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
                 val result = super.processLocatableEvent(action, event)
                 if (result) {
@@ -39,18 +67,22 @@ object CoroutineBreakpointFacility {
                 if (!result) return false
 
                 val suspendContextImpl = action.suspendContext ?: return true
-                return scheduleStepOverCommandForSuspendSwitch(suspendContextImpl)
+                return scheduleStepOverCommandForSuspendSwitch(suspendContextImpl, nextCallAfterResume)
             }
 
-            override fun callbackAfterReplacementForAllThreadSuspendContext(): Function<SuspendContextImpl, Boolean>? {
-                if (suspendAll) {
-                    return Function<SuspendContextImpl, Boolean> { scheduleStepOverCommandForSuspendSwitch(it) }
+            override fun customVoteSuspend(suspendContext: SuspendContextImpl): Boolean {
+                if (!suspendAll) return false
+                return SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext) {
+                    scheduleStepOverCommandForSuspendSwitch(it, nextCallAfterResume)
                 }
-                return null
             }
 
-            private fun scheduleStepOverCommandForSuspendSwitch(it: SuspendContextImpl): Boolean {
-                DebuggerSteppingHelper.createStepOverCommandForSuspendSwitch(it).prepareSteppingRequestsAndHints(it)
+            override fun applyAfterContextSwitch() = Function<SuspendContextImpl, Boolean> { c ->
+                scheduleStepOverCommandForSuspendSwitch(c, nextCallAfterResume)
+            }
+
+            private fun scheduleStepOverCommandForSuspendSwitch(it: SuspendContextImpl, nextCallAfterResume: Int): Boolean {
+                DebuggerSteppingHelper.createStepOverCommandForSuspendSwitch(it, nextCallAfterResume).prepareSteppingRequestsAndHints(it)
                 // false return value will resume the execution in the `DebugProcessEvents` and
                 // the scheduled above steps will perform stepping through the coroutine switch until line location.
                 return false
@@ -58,7 +90,9 @@ object CoroutineBreakpointFacility {
         }
 
         breakpoint.suspendPolicy = when (context.suspendPolicy) {
-            EventRequest.SUSPEND_ALL -> if (useCoroutineIdFiltering) DebuggerSettings.SUSPEND_THREAD else DebuggerSettings.SUSPEND_ALL
+            EventRequest.SUSPEND_ALL ->
+                if (useCoroutineIdFiltering && !DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) DebuggerSettings.SUSPEND_THREAD
+                else DebuggerSettings.SUSPEND_ALL
             EventRequest.SUSPEND_EVENT_THREAD -> DebuggerSettings.SUSPEND_THREAD
             EventRequest.SUSPEND_NONE -> DebuggerSettings.SUSPEND_NONE
             else -> DebuggerSettings.SUSPEND_ALL
@@ -68,6 +102,9 @@ object CoroutineBreakpointFacility {
         }
         breakpoint.createRequest(debugProcess)
         debugProcess.setSteppingBreakpoint(breakpoint)
+
+        val filterThread = debugProcess.requestsManager.filterThread
+        thisLogger().debug("Resume breakpoint for $method in thread $filterThread")
 
         return true
     }

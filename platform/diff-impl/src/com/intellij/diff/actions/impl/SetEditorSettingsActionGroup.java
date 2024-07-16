@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.base.HighlightingLevel;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
@@ -107,7 +108,10 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
 
         @Override
         public boolean isSelected() {
-          return myForcedSoftWrap || myTextSettings.isUseSoftWraps();
+          boolean hasForcedSoftWraps = ContainerUtil.exists(myEditors.get(), editor -> {
+            return Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+          });
+          return myForcedSoftWrap || myTextSettings.isUseSoftWraps() || hasForcedSoftWraps;
         }
 
         @Override
@@ -156,7 +160,9 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
 
   public void applyDefaults() {
     for (AnAction action : myActions) {
-      ((EditorSettingAction)action).applyDefaults(myEditors.get());
+      if (action instanceof EditorSettingAction) {
+        ((EditorSettingAction)action).applyDefaults(myEditors.get());
+      }
     }
   }
 
@@ -178,6 +184,11 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
     ContainerUtil.addAll(actions, myActions);
     actions.add(editorSettingsGroup);
     actions.add(Separator.getInstance());
+
+    if (e != null && e.getData(DiffDataKeys.MERGE_VIEWER) != null) {
+      actions.add(Separator.getInstance());
+      actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+    }
 
     if (e != null && ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
       return actions.toArray(AnAction.EMPTY_ARRAY);

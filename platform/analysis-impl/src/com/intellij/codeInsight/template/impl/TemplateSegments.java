@@ -4,11 +4,13 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-class TemplateSegments {
+@ApiStatus.Internal
+public class TemplateSegments {
   private final ArrayList<RangeMarker> mySegments = new ArrayList<>();
   private final @NotNull Document myDocument;
 

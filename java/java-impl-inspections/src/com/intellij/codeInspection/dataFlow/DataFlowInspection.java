@@ -156,7 +156,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
         }
       }
 
-      if (!alwaysNull && PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
+      if (!alwaysNull && PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, qualifier)) {
         fixes.add(new SurroundWithRequireNonNullFix(qualifier));
       }
 

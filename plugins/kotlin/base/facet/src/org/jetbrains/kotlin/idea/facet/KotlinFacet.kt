@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.facet
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.Module
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 
 open class KotlinFacet(
@@ -20,7 +22,15 @@ open class KotlinFacet(
     }
 }
 
-fun KotlinCommonCompilerArgumentsHolder.Companion.getInstance(module: Module) =
+// TODO consider using mergedCompilerArguments here also - it includes "additionalArguments" section from Kotlin Facets
+fun KotlinCommonCompilerArgumentsHolder.Companion.getInstance(module: Module): CommonCompilerArguments =
     // When the user ticks `useProjectSettings` the facet stays, so we have to check `useProjectSettings` manually
     KotlinFacet.get(module)?.configuration?.settings?.takeUnless { it.useProjectSettings }?.compilerArguments
         ?: getInstance(module.project).settings
+
+@ApiStatus.Internal
+fun KotlinCommonCompilerArgumentsHolder.Companion.getMergedCompilerArguments(module: Module): CommonCompilerArguments =
+    // When the user ticks `useProjectSettings` the facet stays, so we have to check `useProjectSettings` manually
+    KotlinFacet.get(module)?.configuration?.settings?.takeUnless { it.useProjectSettings }?.mergedCompilerArguments
+        ?: getInstance(module.project).settings
+

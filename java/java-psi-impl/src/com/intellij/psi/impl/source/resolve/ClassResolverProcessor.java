@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,8 +26,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
   private static final String[] DEFAULT_PACKAGES = {CommonClassNames.DEFAULT_PACKAGE};
 
   private final String myClassName;
-  @NotNull
-  private final PsiFile myContainingFile;
+  private final @NotNull PsiFile myContainingFile;
   private final PsiElement myPlace;
   private final PsiResolveHelper myResolveHelper;
   private PsiClass myAccessClass;
@@ -201,6 +200,21 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
       psiClass = psiClass.getContainingClass();
     }
     return false;
+  }
+
+  @Override
+  public boolean executeForUnresolved() {
+    if (myCurrentFileContext instanceof PsiImportStatementBase) {
+      PsiImportStatementBase importStatement = (PsiImportStatementBase)myCurrentFileContext;
+      PsiJavaCodeReferenceElement importRef = importStatement.getImportReference();
+      if (importRef != null && !importStatement.isOnDemand()) {
+        String name = importRef.getReferenceName();
+        if (myClassName.equals(name)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   @Override

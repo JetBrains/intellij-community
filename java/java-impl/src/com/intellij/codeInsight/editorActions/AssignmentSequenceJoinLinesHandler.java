@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Document;
@@ -21,7 +21,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 public final class AssignmentSequenceJoinLinesHandler implements JoinLinesHandlerDelegate {
   @Override
-  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
+  public int tryJoinLines(final @NotNull Document document, final @NotNull PsiFile psiFile, final int start, final int end) {
     PsiJavaToken elementAtStartLineEnd = tryCast(psiFile.findElementAt(start), PsiJavaToken.class);
     if (elementAtStartLineEnd == null || !elementAtStartLineEnd.getTokenType().equals(JavaTokenType.SEMICOLON)) return CANNOT_JOIN;
     PsiElement firstElement = elementAtStartLineEnd.getParent();

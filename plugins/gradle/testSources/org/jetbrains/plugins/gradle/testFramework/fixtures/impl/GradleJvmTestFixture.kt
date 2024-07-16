@@ -8,33 +8,46 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.fixtures.SdkTestFixture
+import com.intellij.openapi.util.use
+import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 
-
-class GradleJvmTestFixture(private val gradleVersion: GradleVersion) : SdkTestFixture {
+/**
+ * A fixture which provides SDKs for Gradle JVM and cleans up it when test will be finished.
+ * Expected that application will be started before the first SDK is set up by this fixture.
+ */
+class GradleJvmTestFixture(
+  private val gradleVersion: GradleVersion,
+  private val javaVersionRestriction: JavaVersionRestriction,
+) : IdeaTestFixture {
 
   private lateinit var fixtureDisposable: Disposable
 
   private lateinit var sdk: Sdk
 
-  override fun getSdk(): Sdk {
-    return sdk
-  }
+  val gradleJvm: String
+    get() = sdk.name
 
   override fun setUp() {
     fixtureDisposable = Disposer.newDisposable()
-    sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, fixtureDisposable)
-    installLinkedSettingsWatcher()
+    sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, fixtureDisposable, javaVersionRestriction)
   }
 
   override fun tearDown() {
     Disposer.dispose(fixtureDisposable)
   }
 
-  private fun installLinkedSettingsWatcher() {
+  inline fun <R> withProjectSettingsConfigurator(action: () -> R): R {
+    return Disposer.newDisposable().use { disposable ->
+      installProjectSettingsConfigurator(disposable)
+      action()
+    }
+  }
+
+  fun installProjectSettingsConfigurator(parentDisposable: Disposable = fixtureDisposable) {
     val listener = object : ExternalSystemSettingsListenerEx {
       override fun onProjectsLinked(
         project: Project,
@@ -43,12 +56,13 @@ class GradleJvmTestFixture(private val gradleVersion: GradleVersion) : SdkTestFi
       ) {
         for (projectSettings in settings) {
           if (projectSettings is GradleProjectSettings) {
-            projectSettings.gradleJvm = getSdk().name
+            println("Configured Gradle JVM (${sdk.name}) for project ${projectSettings.externalProjectPath}")
+            projectSettings.gradleJvm = gradleJvm
           }
         }
       }
     }
     ExternalSystemSettingsListenerEx.EP_NAME.point
-      .registerExtension(listener, fixtureDisposable)
+      .registerExtension(listener, parentDisposable)
   }
 }

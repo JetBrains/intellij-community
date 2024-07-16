@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.ide.ui.laf.darcula.paintComponentBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
@@ -22,7 +22,7 @@ internal class DarculaButtonBorder: DarculaButtonPainter() {
     }
 
     JBInsets.removeFrom(r, getBorderInsets(c))
-    paintComponentBorder(g, r, DarculaUIUtil.Outline.focus, true, true)
+    DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.Outline.focus, true, true)
     return true
   }
 }

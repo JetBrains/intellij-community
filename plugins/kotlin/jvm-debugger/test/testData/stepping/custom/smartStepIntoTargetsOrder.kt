@@ -26,5 +26,3 @@ fun f1(l1: () -> Unit, l2: () -> Unit) {
 
 fun foo() = Unit
 fun boo() = Unit
-
-// IGNORE_K2

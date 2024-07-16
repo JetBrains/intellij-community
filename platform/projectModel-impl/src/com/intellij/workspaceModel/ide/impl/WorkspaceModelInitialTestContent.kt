@@ -4,9 +4,11 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
+@ApiStatus.Internal
 object WorkspaceModelInitialTestContent {
   private val initialContent: AtomicReference<ImmutableEntityStorage?> = AtomicReference(null)
 

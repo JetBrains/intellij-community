@@ -135,6 +135,13 @@ class DependencyAnalyzerViewImpl(
     return externalProjects.find(predicate)
   }
 
+  /**
+   * Returns all resolved dependencies for the selected external project.
+   */
+  fun getDependencies(): List<Dependency> {
+    return dependencyModel.flatMap { it.variances }
+  }
+
   override fun getData(dataId: String): Any? {
     return when (dataId) {
       DependencyAnalyzerView.VIEW.name -> this

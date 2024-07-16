@@ -82,9 +82,6 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.LT_IN_TYPE_LIST:
         if (getFirstChildNode() != null && getFirstChildNode().getElementType() == JavaTokenType.LT){
           return getFirstChildNode();
@@ -100,6 +97,9 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
         else{
           return null;
         }
+
+      default:
+        return null;
     }
   }
 

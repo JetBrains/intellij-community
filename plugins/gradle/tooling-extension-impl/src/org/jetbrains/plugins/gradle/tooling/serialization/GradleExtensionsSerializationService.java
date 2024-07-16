@@ -28,7 +28,7 @@ public final class GradleExtensionsSerializationService implements Serialization
   @Override
   public byte[] write(GradleExtensions gradleExtensions, Class<? extends GradleExtensions> modelClazz) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    try (IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out)) {
+    try (IonWriter writer = createIonWriter().build(out)) {
       write(writer, myWriteContext, gradleExtensions);
     }
     return out.toByteArray();
@@ -198,7 +198,7 @@ public final class GradleExtensionsSerializationService implements Serialization
             readString(reader, "description"),
             readBoolean(reader, "visible"),
             readBoolean(reader, "scriptClasspathConfiguration"),
-            readStringList(reader));
+            readStringList(reader, null));
         }
       });
     reader.stepOut();

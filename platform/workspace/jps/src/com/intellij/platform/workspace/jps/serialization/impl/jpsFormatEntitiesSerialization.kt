@@ -53,8 +53,8 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
    */
   fun loadEntities(reader: JpsFileContentReader,
                    errorReporter: ErrorReporter,
-                   virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>>
-  fun checkAndAddToBuilder(builder: MutableEntityStorage, orphanage: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>)
+                   virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>>
+  fun checkAndAddToBuilder(builder: MutableEntityStorage, orphanage: MutableEntityStorage, newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>)
 
   fun saveEntities(mainEntities: Collection<E>,
                    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
@@ -145,6 +145,9 @@ interface JpsProjectSerializers {
 
   @TestOnly
   fun saveAllEntities(storage: EntityStorage, writer: JpsFileContentWriter)
+
+  @TestOnly
+  fun saveAffectedEntities(storage: EntityStorage, affectedEntitySources: Set<EntitySource>, writer: JpsFileContentWriter)
 
   fun saveEntities(storage: EntityStorage, unloadedEntityStorage: EntityStorage, affectedSources: Set<EntitySource>,
                    writer: JpsFileContentWriter)

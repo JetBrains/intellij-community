@@ -17,26 +17,21 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import kotlinx.coroutines.Dispatchers
+import com.intellij.testFramework.VfsTestUtil
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
   override fun setUp() = runBlocking {
     super.setUp()
-    withContext(Dispatchers.EDT) {
-      VirtualFileManager.getInstance().syncRefresh()
-    }
-    Unit
+    VfsTestUtil.syncRefresh()
   }
 
   @Test

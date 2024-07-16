@@ -14,17 +14,15 @@ import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESListenerLeakTracker
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.junit.jupiter.api.Assertions
@@ -33,14 +31,14 @@ class GradleTestFixtureImpl(
   private val className: String,
   private val methodName: String,
   override val gradleVersion: GradleVersion,
+  private val javaVersionRestriction: JavaVersionRestriction
 ) : GradleTestFixture {
 
-  private lateinit var listenerLeakTracker: ESListenerLeakTracker
   private lateinit var reloadLeakTracker: OperationLeakTracker
 
   private lateinit var testDisposable: Disposable
 
-  private lateinit var sdkFixture: SdkTestFixture
+  private lateinit var gradleJvmFixture: GradleJvmTestFixture
   private lateinit var fileFixture: TempDirTestFixture
 
   override lateinit var testRoot: VirtualFile
@@ -48,17 +46,15 @@ class GradleTestFixtureImpl(
   override lateinit var gradleJvm: String
 
   override fun setUp() {
-    listenerLeakTracker = ESListenerLeakTracker()
-    listenerLeakTracker.setUp()
-
     reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
     reloadLeakTracker.setUp()
 
     testDisposable = Disposer.newDisposable()
 
-    sdkFixture = GradleTestFixtureFactory.getFixtureFactory().createGradleJvmTestFixture(gradleVersion)
-    sdkFixture.setUp()
-    gradleJvm = sdkFixture.getSdk().name
+    gradleJvmFixture = GradleJvmTestFixture(gradleVersion, javaVersionRestriction)
+    gradleJvmFixture.setUp()
+    gradleJvmFixture.installProjectSettingsConfigurator()
+    gradleJvm = gradleJvmFixture.gradleJvm
 
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()
@@ -74,10 +70,9 @@ class GradleTestFixtureImpl(
   override fun tearDown() {
     runAll(
       { fileFixture.tearDown() },
-      { sdkFixture.tearDown() },
+      { gradleJvmFixture.tearDown() },
       { Disposer.dispose(testDisposable) },
-      { reloadLeakTracker.tearDown() },
-      { listenerLeakTracker.tearDown() }
+      { reloadLeakTracker.tearDown() }
     )
   }
 
@@ -93,7 +88,7 @@ class GradleTestFixtureImpl(
   override suspend fun linkProject(project: Project, relativePath: String) {
     val projectRoot = testRoot.getDirectory(relativePath)
     awaitAnyGradleProjectReload(wait = true) {
-      linkAndRefreshGradleProject(projectRoot.path, project)
+      linkAndSyncGradleProject(project, projectRoot)
     }
   }
 

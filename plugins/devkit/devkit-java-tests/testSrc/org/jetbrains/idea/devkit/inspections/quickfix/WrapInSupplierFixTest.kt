@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
 
@@ -13,7 +12,7 @@ class WrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldOrPropertyInsp
 
   override fun getFileExtension(): String = "java"
 
-  private val quickFixName = DevKitBundle.message("inspections.wrap.application.service.in.supplier.quick.fix.message")
+  private val quickFixName = "Wrap application service in 'java.util.function.Supplier'"
 
   fun testWrapFieldInSupplier() {
     doFixTest(quickFixName)

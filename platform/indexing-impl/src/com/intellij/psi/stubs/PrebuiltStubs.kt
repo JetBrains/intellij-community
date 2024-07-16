@@ -2,7 +2,9 @@
 package com.intellij.psi.stubs
 
 import com.intellij.util.indexing.FileContent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Deprecated("Use shared indexes")
 interface PrebuiltStubsProvider {
   /**

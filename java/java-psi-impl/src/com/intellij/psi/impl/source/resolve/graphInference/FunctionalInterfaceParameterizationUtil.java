@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,18 +33,15 @@ public final class FunctionalInterfaceParameterizationUtil {
     return false;
   }
 
-  @Nullable
-  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType) {
+  public static @Nullable PsiType getGroundTargetType(@Nullable PsiType psiClassType) {
     return getGroundTargetType(psiClassType, null);
   }
 
-  @Nullable
-  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr) {
+  public static @Nullable PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr) {
     return getGroundTargetType(psiClassType, expr, true);
   }
 
-  @Nullable
-  public static PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr, boolean performFinalCheck) {
+  public static @Nullable PsiType getGroundTargetType(@Nullable PsiType psiClassType, @Nullable PsiLambdaExpression expr, boolean performFinalCheck) {
     psiClassType = LambdaUtil.normalizeFunctionalType(psiClassType);
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
@@ -148,8 +145,7 @@ public final class FunctionalInterfaceParameterizationUtil {
      If Ai is a upper-bounded wildcard ? extends Ui, then Ti = glb(Ui, Bi).
      If Ai is a lower-bounded wildcard ? super Li, then Ti = Li.
    */
-  @Nullable
-  public static PsiType getNonWildcardParameterization(PsiClassType psiClassType) {
+  public static @Nullable PsiType getNonWildcardParameterization(PsiClassType psiClassType) {
     final PsiClassType.ClassResolveResult result = psiClassType.resolveGenerics();
     final PsiClass psiClass = result.getElement();
     if (psiClass != null) {

@@ -372,10 +372,6 @@ internal class ProjectTypeList(
       return value.group.name
     }
 
-    override fun getTooltipFor(value: TemplateGroupItem): String? {
-      return value.group.description
-    }
-
     override fun getIconFor(value: TemplateGroupItem): Icon {
       return value.group.icon ?: EmptyIcon.ICON_16
     }

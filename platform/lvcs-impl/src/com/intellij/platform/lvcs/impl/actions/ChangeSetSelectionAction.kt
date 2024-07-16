@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.actions
 
 import com.intellij.history.core.LocalHistoryFacade
@@ -11,7 +11,9 @@ import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import com.intellij.platform.lvcs.impl.toChangeSetSelection
 import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ChangeSetSelectionAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     if (e.project == null) {
@@ -25,8 +27,12 @@ abstract class ChangeSetSelectionAction : DumbAwareAction() {
       return
     }
     e.presentation.isVisible = true
-    e.presentation.isEnabled = activitySelection.toChangeSetSelection() != null
+
+    val changeSetSelection = activitySelection.toChangeSetSelection()
+    e.presentation.isEnabled = changeSetSelection != null && isEnabled(changeSetSelection)
   }
+
+  protected open fun isEnabled(changeSetSelection: ChangeSetSelection): Boolean = true
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
@@ -35,13 +41,13 @@ abstract class ChangeSetSelectionAction : DumbAwareAction() {
 
     val localHistoryImpl = LocalHistoryImpl.getInstanceImpl()
     val facade = localHistoryImpl.facade ?: return
-    val gateway = localHistoryImpl.gateway ?: return
+    val gateway = localHistoryImpl.gateway
 
     val selection = activitySelection.toChangeSetSelection() ?: return
 
-    actionPerformed(project, facade, gateway, activityScope, selection)
+    actionPerformed(project, facade, gateway, activityScope, selection, e)
   }
 
   abstract fun actionPerformed(project: Project, facade: LocalHistoryFacade, gateway: IdeaGateway,
-                               activityScope: ActivityScope, selection: ChangeSetSelection)
+                               activityScope: ActivityScope, selection: ChangeSetSelection, e: AnActionEvent)
 }

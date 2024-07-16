@@ -11,6 +11,7 @@ import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -415,16 +416,9 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    Object data = super.getData(dataId);
-    if (data != null) {
-      return data;
-    }
-    //TODO:myViewPanel == null ? null : myViewPanel.getData(dataId);
-    if (LangDataKeys.IDE_VIEW.is(dataId)) {
-      return myIdeView;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(LangDataKeys.IDE_VIEW, myIdeView);
   }
 
   public void updateSelectedScope() {

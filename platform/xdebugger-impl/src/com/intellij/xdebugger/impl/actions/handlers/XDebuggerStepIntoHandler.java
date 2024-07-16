@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
+import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,13 @@ public class XDebuggerStepIntoHandler extends XDebuggerSmartStepIntoHandler {
   protected <V extends XSmartStepIntoVariant> boolean handleSimpleCases(XSmartStepIntoHandler<V> handler,
                                                                         List<? extends V> variants,
                                                                         XDebugSession session) {
+    if (variants.size() == 1) {
+      V singleVariant = variants.get(0);
+      if (singleVariant instanceof ForceSmartStepIntoSource forceSmartStepIntoSource && forceSmartStepIntoSource.needForceSmartStepInto()) {
+        return super.handleSimpleCases(handler, variants, session);
+      }
+    }
+
     if (variants.size() < 2) {
       session.stepInto();
       return true;

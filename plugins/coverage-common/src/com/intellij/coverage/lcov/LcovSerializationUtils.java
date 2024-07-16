@@ -17,7 +17,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class LcovSerializationUtils {
+public final class LcovSerializationUtils {
   private static final String SOURCE_FILE_PREFIX = "SF:";
   private static final String LINE_HIT_PREFIX = "DA:";
   private static final String FUNCTION_PREFIX = "FN:";
@@ -92,7 +92,7 @@ public class LcovSerializationUtils {
     return projectData;
   }
 
-  protected static @NotNull String normalizeFilePath(@NotNull String filePath) {
+  private static @NotNull String normalizeFilePath(@NotNull String filePath) {
     if (SystemInfo.isWindows) {
       filePath = StringUtil.toLowerCase(filePath);
     }

@@ -19,5 +19,5 @@ fun KotlinLibraryName(coordinates: IdeaKotlinBinaryCoordinates): KotlinLibraryNa
 
 val LibraryData.kotlinLibraryName: KotlinLibraryName get() = KotlinLibraryName(this.externalName)
 
-fun LibraryData(name: String, isUnresolved: Boolean = false) =
-    LibraryData(GradleConstants.SYSTEM_ID, name, isUnresolved)
+fun LibraryData(name: KotlinLibraryName, isUnresolved: Boolean = false) =
+    LibraryData(GradleConstants.SYSTEM_ID, name.toString(), isUnresolved)

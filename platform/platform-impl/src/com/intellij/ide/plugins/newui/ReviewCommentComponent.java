@@ -6,10 +6,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.RatesPanel;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -93,7 +93,7 @@ public final class ReviewCommentComponent extends JPanel {
     group.add(new DumbAwareAction(IdeBundle.message("plugins.review.action.copy.link.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        String url = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() +
+        String url = MarketplaceUrls.getPluginManagerUrl() + "/" +
                      myPluginId + "/reviews#review=" + URLUtil.encodeURIComponent(myCommendId);
 
         CopyPasteManager.getInstance().setContents(new StringSelection(url));

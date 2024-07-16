@@ -8,11 +8,13 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -184,16 +186,14 @@ public class NestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCa
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     ActionGroup group = mark.getPopupMenuActions();
     assertNotNull(group);
-    AnActionEvent event = TestActionEvent.createTestEvent();
-    List<AnAction> list = ContainerUtil.findAll(group.getChildren(event), action -> {
-      AnActionEvent actionEvent = TestActionEvent.createTestEvent();
-      action.update(actionEvent);
-      String text = actionEvent.getPresentation().getText();
+    PresentationFactory factory = new PresentationFactory();
+    List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
+      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN), action -> {
+      String text = factory.getPresentation(action).getText();
       return text != null && text.startsWith("Run '") && text.endsWith("'");
     });
     assertEquals(list.toString(), 1, list.size());
-    list.get(0).update(event);
-    assertEquals(expectedRunTitle, event.getPresentation().getText());
+    assertEquals(expectedRunTitle, factory.getPresentation(list.get(0)).getText());
     myFixture.testAction(list.get(0));
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();

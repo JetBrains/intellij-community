@@ -5,8 +5,12 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -15,24 +19,29 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
  * A request to create Kotlin callable from the usage in Kotlin.
  */
 internal class CreateMethodFromKotlinUsageRequest (
-    private val functionCall: KtCallExpression,
+    functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>,
-    val receiverExpression: KtExpression? = null,
-    val isExtension: Boolean = false,
-    val isAbstractClassOrInterface: Boolean = false,
+    val receiverExpression: KtExpression?,
+    val receiverType: KaType?, // (in case receiverExpression is null) it can be notnull when there's implicit receiver: `blah { unknownFunc() }`
+    val isExtension: Boolean,
+    val isAbstractClassOrInterface: Boolean,
+    val isForCompanion: Boolean,
 ) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
-    private val returnType = mutableListOf<ExpectedType>()
+    internal val targetClass: PsiElement? = initializeTargetClass(receiverExpression, functionCall)
 
-    init {
-      analyze(functionCall) {
-          initializeReturnType()
-      }
+    private fun initializeTargetClass(receiverExpression: KtExpression?, functionCall: KtCallExpression): PsiElement? {
+        return analyze(functionCall) {
+            (receiverExpression?.resolveExpression() as? KaClassLikeSymbol)?.psi
+        }
     }
 
-    context (KtAnalysisSession)
-    private fun initializeReturnType() {
-        val returnJvmType = functionCall.getExpectedJvmType() ?: return
-        returnType.add(ExpectedKotlinType.createExpectedKotlinType(returnJvmType))
+    private val returnType:List<ExpectedType> = initializeReturnType(functionCall)
+
+    private fun initializeReturnType(functionCall: KtCallExpression): List<ExpectedType> {
+        return analyze(functionCall) {
+            val returnJvmType = functionCall.getExpectedKotlinType() ?: return emptyList()
+            listOf(returnJvmType)
+        }
     }
 
     override fun isValid(): Boolean = super.isValid() && getReferenceName() != null

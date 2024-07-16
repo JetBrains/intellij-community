@@ -9,40 +9,52 @@ import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.kind.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import kotlin.math.min
 
+@Internal
 internal data class ModuleRootOriginImpl(override val module: Module,
                                          override val roots: List<VirtualFile>?,
                                          override val nonRecursiveRoots: List<VirtualFile>?) : ModuleRootOrigin
 
+@Internal
 internal data class LibraryOriginImpl(override val classRoots: List<VirtualFile>,
                                       override val sourceRoots: List<VirtualFile>) : LibraryOrigin
 
+@Internal
 internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary,
                                                override val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryOrigin
 
+@Internal
 internal data class SdkOriginImpl(override val sdk: Sdk,
                                   override val rootsToIndex: Collection<VirtualFile>) : SdkOrigin
 
+@Internal
 internal data class IndexableSetContributorOriginImpl(override val indexableSetContributor: IndexableSetContributor,
                                                       override val rootsToIndex: Set<VirtualFile>) : IndexableSetContributorOrigin
 
+@Internal
 internal data class ProjectFileOrDirOriginImpl(override val fileOrDir: VirtualFile) : ProjectFileOrDirOrigin
 
+@Internal
 internal data class ModuleAwareContentEntityOriginImpl(override val module: Module,
                                                        override val reference: EntityPointer<*>,
                                                        override val rootHolder: IndexingRootHolder) : ModuleAwareContentEntityOrigin
 
+@Internal
 internal data class GenericContentEntityOriginImpl(override val reference: EntityPointer<*>,
                                                    override val rootHolder: IndexingRootHolder) : GenericContentEntityOrigin
 
+@Internal
 internal data class ExternalEntityOriginImpl(override val reference: EntityPointer<*>,
                                              override val rootHolder: IndexingSourceRootHolder) : ExternalEntityOrigin
 
+@Internal
 internal data class CustomKindEntityOriginImpl(override val reference: EntityPointer<*>,
                                                override val rootHolder: IndexingRootHolder) : CustomKindEntityOrigin
 
+@Internal
 internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>,
                                            override val nonRecursiveRoots: List<VirtualFile>) : IndexingRootHolder {
 

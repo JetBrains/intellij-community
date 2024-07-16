@@ -48,7 +48,7 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class MoveGroovyMemberHandler implements MoveMemberHandler {
+public final class MoveGroovyMemberHandler implements MoveMemberHandler {
   @Override
   public boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage) {
     final PsiElement element = usage.getElement();

@@ -36,6 +36,9 @@ abstract class RepositoryAndAccountSelectorViewModelBase<M : HostedGitRepository
 
   final override val accountSelectionState = MutableStateFlow<A?>(null)
 
+  override val canPersistCredentials: StateFlow<Boolean> = accountManager.canPersistCredentials
+    .stateIn(cs, SharingStarted.Eagerly, true)
+
   @OptIn(ExperimentalCoroutinesApi::class)
   final override val missingCredentialsState: StateFlow<Boolean?> =
     accountSelectionState.transformLatest {

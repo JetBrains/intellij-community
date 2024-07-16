@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class FormattingUiNotificationService implements FormattingNotificationService {
+final class FormattingUiNotificationService implements FormattingNotificationService {
 
   private @NotNull final Project myProject;
 
-  public FormattingUiNotificationService(@NotNull Project project) {
+  FormattingUiNotificationService(@NotNull Project project) {
     myProject = project;
   }
 

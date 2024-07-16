@@ -19,13 +19,7 @@ import java.util.concurrent.CountDownLatch
 
 class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
   override fun runActivity(project: Project) {
-    // don't start DumbModeWhileScanning when scanning in smart mode is disabled. Otherwise, due to merged and cancelled tasks,
-    // scanning task may appear later in the queue than DumbModeWhileScanning, which effectively means a deadlock
-    // (DumbModeWhileScanning waits for a latch that will be counted down in scanning task via PerProjectIndexingQueue.flush)
-    val shouldScanInSmartMode = UnindexedFilesScannerExecutor.shouldScanInSmartMode()
-    if (shouldScanInSmartMode) {
-      project.service<DumbModeWhileScanningTrigger>().subscribe()
-    }
+    project.service<DumbModeWhileScanningTrigger>().subscribe()
   }
 }
 

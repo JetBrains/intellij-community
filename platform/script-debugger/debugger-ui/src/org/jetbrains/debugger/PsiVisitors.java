@@ -10,11 +10,17 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated scriptDebugger.ui is deprecated
+ */
+@Deprecated
 public final class PsiVisitors {
 
+  @ApiStatus.Internal
   @RequiresReadLock
   public static <RESULT> RESULT visit(@NotNull XSourcePosition position,
                                       @NotNull Project project,
@@ -39,6 +45,7 @@ public final class PsiVisitors {
     return element == null ? defaultResult : visitor.visit(position, element, positionOffset, document);
   }
 
+  @ApiStatus.Internal
   public interface Visitor<RESULT> {
     RESULT visit(@NotNull XSourcePosition position, @NotNull PsiElement element, int positionOffset, @NotNull Document document);
   }

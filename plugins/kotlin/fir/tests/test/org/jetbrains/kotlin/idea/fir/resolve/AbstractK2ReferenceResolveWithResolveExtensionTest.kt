@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.fir.resolve
 
-import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionProvider
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.idea.fir.extensions.KtResolveExtensionProviderForTests
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractK2ReferenceResolveWithResolveExtensionTest : AbstractFirReferenceResolveTest() {
-    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
@@ -25,7 +25,9 @@ abstract class AbstractK2ReferenceResolveWithResolveExtensionTest : AbstractFirR
                 </class>
             </xml>
         """.trimIndent())
-        project.extensionArea.getExtensionPoint(KtResolveExtensionProvider.EP_NAME)
+
+        @OptIn(KaExperimentalApi::class)
+        project.extensionArea.getExtensionPoint(KaResolveExtensionProvider.EP_NAME)
             .registerExtension(KtResolveExtensionProviderForTests(), testRootDisposable)
     }
 }

@@ -3,14 +3,16 @@ package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.merge.*;
+import com.intellij.diff.util.DiffBalloons;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,8 +114,9 @@ final class ApplyPatchMergeTool implements MergeTool {
           int yOffset = new RelativePoint(getResultEditor().getComponent(), new Point(0, JBUIScale.scale(5))).getPoint(component).y;
           RelativePoint point = new RelativePoint(component, new Point(component.getWidth() / 2, yOffset));
 
-          String message = DiffBundle.message("apply.patch.all.changes.processed.message.text");
-          DiffUtil.showSuccessPopup(message, point, this, () -> {
+          String title = DiffBundle.message("apply.patch.all.changes.processed.title.text");
+          @NlsSafe String message = XmlStringUtil.wrapInHtmlTag(DiffBundle.message("apply.patch.all.changes.processed.message.text"), "a");
+          DiffBalloons.showSuccessPopup(title, message, point, this, () -> {
             if (isDisposed()) return;
             myMergeContext.finishMerge(MergeResult.RESOLVED);
           });

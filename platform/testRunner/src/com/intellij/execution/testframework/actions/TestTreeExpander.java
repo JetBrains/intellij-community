@@ -20,7 +20,9 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class TestTreeExpander implements TreeExpander {
   private TestFrameworkRunningModel myModel;
 

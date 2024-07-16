@@ -6,6 +6,7 @@ import com.intellij.formatting.engine.BlockRangesMap;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
  * <p/>
  * {@code 'Dependency'} here affect {@link #getMinLineFeeds() minLineFieeds} property value. See property contract for more details.
  */
+@ApiStatus.Internal
 public class DependantSpacingImpl extends SpacingImpl {
   private static final int DEPENDENCE_CONTAINS_LF_MASK      = 0x10;
   private static final int DEPENDENT_REGION_LF_CHANGED_MASK = 0x20;

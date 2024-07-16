@@ -7,6 +7,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,7 @@ abstract class Node extends DefaultMutableTreeNode {
 
   protected abstract boolean isDataExcluded();
 
+  @ApiStatus.Internal
   public @Nullable UsageNodePresentation getCachedPresentation() {
     return null;
   }

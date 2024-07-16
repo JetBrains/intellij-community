@@ -23,7 +23,7 @@ import java.util.Collection;
  * @author Vladislav.Soroka
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class CompositeBuildDataService extends AbstractProjectDataService<CompositeBuildData, Project> {
+public final class CompositeBuildDataService extends AbstractProjectDataService<CompositeBuildData, Project> {
 
   @NotNull
   @Override

@@ -1,4 +1,4 @@
-// "Safe delete 'property'" "true"
+// "Safe delete 'myOwnProperty96'" "true"
 class UnusedProperty() {
 }
 

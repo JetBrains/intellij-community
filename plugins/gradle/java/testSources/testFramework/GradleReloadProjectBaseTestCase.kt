@@ -7,19 +7,21 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixture
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
+import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 
-@TestApplication
+@GradleTestApplication
 abstract class GradleReloadProjectBaseTestCase {
 
   private lateinit var testInfo: TestInfo
@@ -47,12 +49,18 @@ abstract class GradleReloadProjectBaseTestCase {
 
   open fun tearDown() = Unit
 
-  open fun test(gradleVersion: GradleVersion, action: suspend () -> Unit) {
+  open fun test(
+    gradleVersion: GradleVersion,
+    javaVersionRestriction: JavaVersionRestriction = JavaVersionRestriction.NO,
+    action: suspend () -> Unit
+  ) {
     runAll(
       {
-        setUpGradleReloadProjectBaseTestCase(gradleVersion)
+        setUpGradleReloadProjectBaseTestCase(gradleVersion, javaVersionRestriction)
         runBlocking {
-          action()
+          ExternalSystemExecutionTracer.printExecutionOutputOnException {
+            action()
+          }
         }
       },
       {
@@ -66,11 +74,12 @@ abstract class GradleReloadProjectBaseTestCase {
     this.testInfo = testInfo
   }
 
-  private fun setUpGradleReloadProjectBaseTestCase(gradleVersion: GradleVersion) {
+  private fun setUpGradleReloadProjectBaseTestCase(gradleVersion: GradleVersion, javaVersionRestriction: JavaVersionRestriction) {
     gradleTestFixture = GradleTestFixtureImpl(
       className = testInfo.testClass.get().simpleName,
       methodName = testInfo.testMethod.get().name,
-      gradleVersion = gradleVersion
+      gradleVersion = gradleVersion,
+      javaVersionRestriction = javaVersionRestriction
     )
     gradleFixture.setUp()
 

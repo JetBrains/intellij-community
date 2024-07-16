@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -10,13 +10,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
@@ -136,6 +137,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         return PsiTreeUtil.getParentOfType(element, argumentListClass.java)
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun updateParameterInfo(argumentList: TArgumentList, context: UpdateParameterInfoContext) {
         if (context.parameterOwner !== argumentList) {
             context.removeHint()
@@ -167,8 +169,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 val valueParameters = candidateSignature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
 
                 // TODO: When resolvedCall is KtFunctionalTypeVariableCall, the candidate is FunctionN.invoke() and parameter names are "p1", "p2", etc.
-                // We need to get the type of the target variable, and retrieve the parameter names from the type (KtFunctionalType).
-                // The names need to be added to KtFunctionalType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
+                // We need to get the type of the target variable, and retrieve the parameter names from the type (KaFunctionType).
+                // The names need to be added to KaFunctionType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
 
                 val parameterToIndex = buildMap {
                     valueParameters.forEachIndexed { index, parameter -> put(parameter, index) }
@@ -202,7 +204,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 val hasTypeMismatchBeforeCurrent = CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(
                     callElement,
                     argumentMapping,
-                    currentArgumentIndex
+                    currentArgumentIndex,
+
+                    // We only want to display the parameter info as "disabled" if the type mismatch can *definitely* be proved. If an
+                    // argument has a type error instead, the parameter info may still be applicable and even help the user fix the error.
+                    subtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.LENIENT,
                 )
 
                 // We want to highlight the candidate green if it is the only best/final candidate selected and is applicable.
@@ -244,9 +250,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun renderParameter(
-        parameter: KtVariableLikeSignature<KtValueParameterSymbol>,
+        parameter: KaVariableSignature<KaValueParameterSymbol>,
         includeName: Boolean
     ): String {
         return buildString {
@@ -269,8 +276,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 append(": ")
             }
 
-            val returnType = parameter.returnType.takeUnless { it is KtErrorType } ?: parameter.symbol.returnType
-            append(returnType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+            val returnType = parameter.returnType.takeUnless { it is KaErrorType } ?: parameter.symbol.returnType
+            append(returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
 
             parameter.symbol.defaultValue?.let { defaultValue ->
                 append(" = ")
@@ -283,8 +290,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         arguments: List<KtExpression?>,
         currentArgumentIndex: Int,
         argumentToParameterIndex: Map<KtExpression, Int>,
-        argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
-        parameterToIndex: Map<KtVariableLikeSignature<KtValueParameterSymbol>, Int>
+        argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
+        parameterToIndex: Map<KaVariableSignature<KaValueParameterSymbol>, Int>
     ): Int? {
         val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
         val highlightParameterIndex = when {

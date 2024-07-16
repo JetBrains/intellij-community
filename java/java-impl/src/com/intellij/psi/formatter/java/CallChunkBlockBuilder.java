@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -52,11 +38,10 @@ public class CallChunkBlockBuilder {
     mySmartIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION, myUseRelativeIndents);
   }
 
-  @NotNull
-  public Block create(@NotNull final List<? extends ASTNode> subNodes,
-                      final Wrap wrap,
-                      @Nullable final Alignment alignment,
-                      int relativeIndentSize) {
+  public @NotNull Block create(final @NotNull List<? extends ASTNode> subNodes,
+                               final Wrap wrap,
+                               final @Nullable Alignment alignment,
+                               int relativeIndentSize) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
     final ASTNode firstNode = subNodes.get(0);
     if (JavaFormatterUtil.isStartOfCallChunk(mySettings, firstNode)) {
@@ -79,7 +64,7 @@ public class CallChunkBlockBuilder {
                                      @NotNull Indent chainedBlockIndent,
                                      @Nullable Alignment alignment,
                                      @Nullable Wrap wrap,
-                                     @NotNull final String debugName) {
+                                     final @NotNull String debugName) {
     return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings, chainedBlockIndent, wrap) {
       @Override
       public String getDebugName() {
@@ -96,8 +81,7 @@ public class CallChunkBlockBuilder {
     return isChainedCall ? mySmartIndent : Indent.getContinuationIndent(myUseRelativeIndents);
   }
 
-  @NotNull
-  private List<Block> createJavaBlocks(@NotNull final List<? extends ASTNode> subNodes) {
+  private @NotNull List<Block> createJavaBlocks(final @NotNull List<? extends ASTNode> subNodes) {
     final ArrayList<Block> result = new ArrayList<>();
     for (ASTNode node : subNodes) {
       Indent indent = Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS);

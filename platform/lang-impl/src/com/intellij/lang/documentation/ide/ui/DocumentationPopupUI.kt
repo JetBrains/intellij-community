@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentInnerPadding
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentOuterPadding
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.settingsButtonPadding
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.spaceBeforeParagraph
 import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
@@ -157,7 +158,7 @@ internal class DocumentationPopupUI(
 
   private fun updatePaddings(toolbar: JComponent) {
     ui.locationLabel.border = JBUI.Borders.empty(
-      2, LineTooltipRenderer.CONTENT_PADDING,
+      2 + spaceBeforeParagraph, LineTooltipRenderer.CONTENT_PADDING,
       2 + contentOuterPadding, 2 + (toolbar.width / JBUIScale.scale(1f)).toInt())
     val editorPreferredSize = ui.editorPane.preferredSize
     val viewPanel = ui.scrollPane.viewport.view as JPanel
@@ -165,8 +166,8 @@ internal class DocumentationPopupUI(
         && !ui.locationLabel.isVisible
         && editorPreferredSize.width + toolbar.width > JBUIScale.scale(DocumentationHtmlUtil.docPopupMinWidth)
     ) {
-      viewPanel.border = JBUI.Borders.empty(
-        0, 0, 0, (toolbar.width / JBUIScale.scale(1f)).toInt() - contentOuterPadding - contentInnerPadding - 10)
+      viewPanel.border = JBUI.Borders.emptyRight(
+        (toolbar.width / JBUIScale.scale(1f)).toInt() - contentOuterPadding - contentInnerPadding - 10)
     }
     else {
       viewPanel.border = JBUI.Borders.empty()
@@ -194,7 +195,7 @@ internal class DocumentationPopupUI(
     override fun actionPerformed(e: AnActionEvent) {
       val documentationUI = detachUI()
       myPopup.cancel()
-      DocumentationToolWindowManager.instance(project).showInToolWindow(documentationUI)
+      DocumentationToolWindowManager.getInstance(project).showInToolWindow(documentationUI)
     }
   }
 

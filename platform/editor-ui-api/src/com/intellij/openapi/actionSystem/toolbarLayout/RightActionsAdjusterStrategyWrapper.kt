@@ -7,7 +7,7 @@ import java.awt.Insets
 import java.awt.Rectangle
 import javax.swing.JComponent
 
-class RightActionsAdjusterStrategyWrapper(private val delegate: ToolbarLayoutStrategy): ToolbarLayoutStrategy by delegate {
+internal class RightActionsAdjusterStrategyWrapper(private val delegate: ToolbarLayoutStrategy): ToolbarLayoutStrategy by delegate {
 
   override fun calculateBounds(toolbar: ActionToolbar): MutableList<Rectangle> {
     val bounds = delegate.calculateBounds(toolbar)

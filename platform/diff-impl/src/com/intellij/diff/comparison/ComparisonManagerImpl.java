@@ -8,6 +8,7 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.*;
 import com.intellij.diff.tools.util.text.LineOffsets;
+import com.intellij.diff.tools.util.text.LineOffsetsImpl;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
@@ -18,6 +19,7 @@ import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.DiffConfig;
 import com.intellij.util.text.CharSequenceSubSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +31,7 @@ import java.util.List;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
 import static java.util.Collections.singletonList;
 
+@ApiStatus.Internal
 public final class ComparisonManagerImpl extends ComparisonManager {
   @NotNull
   public static ComparisonManagerImpl getInstanceImpl() {
@@ -102,6 +105,20 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
     List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
     return ByLineRt.convertIntoMergeLineFragments(ranges);
+  }
+
+  @Override
+  public List<MergeLineFragment> mergeLinesWithinRange(@NotNull CharSequence text1,
+                                                       @NotNull CharSequence text2,
+                                                       @NotNull CharSequence text3,
+                                                       @NotNull ComparisonPolicy policy,
+                                                       @NotNull MergeRange range,
+                                                       @NotNull ProgressIndicator indicator) throws DiffTooBigException {
+    List<CharSequence> lineTexts1 = getLineContents(range.start1, range.end1, text1, LineOffsetsImpl.create(text1));
+    List<CharSequence> lineTexts2 = getLineContents(range.start2, range.end2, text2, LineOffsetsImpl.create(text2));
+    List<CharSequence> lineTexts3 = getLineContents(range.start3, range.end3, text3, LineOffsetsImpl.create(text3));
+    List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
+    return ByLineRt.convertIntoMergeLineFragments(ranges, range);
   }
 
   @Override

@@ -5,9 +5,7 @@ import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CompositeDataProvider;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -50,7 +48,9 @@ public abstract class VcsTreeModelData {
   @NotNull
   public static VcsTreeModelData included(@NotNull ChangesTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
-    return new IncludedUnderData(tree, getRoot(tree));
+
+    Set<Object> includedSet = tree.getIncludedSet();
+    return new IncludedUnderData(includedSet, getRoot(tree));
   }
 
   @NotNull
@@ -80,7 +80,8 @@ public abstract class VcsTreeModelData {
     ChangesBrowserNode<?> tagNode = findTagNode(tree, tag);
     if (tagNode == null) return new EmptyData();
 
-    return new IncludedUnderData(tree, tagNode);
+    Set<Object> includedSet = tree.getIncludedSet();
+    return new IncludedUnderData(includedSet, tagNode);
   }
 
 
@@ -238,9 +239,9 @@ public abstract class VcsTreeModelData {
     private final ChangesBrowserNode<?> myNode;
     private final Set<Object> myIncluded;
 
-    IncludedUnderData(@NotNull ChangesTree tree, @NotNull ChangesBrowserNode<?> node) {
+    IncludedUnderData(@NotNull Set<Object> includedSet, @NotNull ChangesBrowserNode<?> node) {
       myNode = node;
-      myIncluded = tree.getIncludedSet();
+      myIncluded = includedSet;
     }
 
     @NotNull
@@ -300,78 +301,39 @@ public abstract class VcsTreeModelData {
     }
   }
 
+  public static void uiDataSnapshot(@NotNull DataSink sink, @Nullable Project project, @NotNull JTree tree) {
+    sink.set(CommonDataKeys.PROJECT, project);
 
-  @Nullable
-  public static Object getData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId) {
-    return getDataOrSuper(project, tree, dataId, null);
-  }
+    Change[] changes = mapToChange(selected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
+    sink.set(VcsDataKeys.CHANGES,
+             changes.length != 0 ? changes : mapToChange(all(tree)).toArray(Change.EMPTY_CHANGE_ARRAY));
+    sink.set(VcsDataKeys.SELECTED_CHANGES, changes);
+    sink.set(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, changes);
+    sink.set(VcsDataKeys.CHANGES_SELECTION,
+             getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class)));
+    sink.set(VcsDataKeys.CHANGE_LEAD_SELECTION,
+             mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY));
+    sink.set(VcsDataKeys.FILE_PATHS, mapToFilePath(selected(tree)));
 
-  @Nullable
-  public static Object getDataOrSuper(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId,
-                                      @Nullable Object superProviderData) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      VcsTreeModelData treeSelection = selected(tree);
-      VcsTreeModelData exactSelection = exactlySelected(tree);
-      return CompositeDataProvider.compose(slowId -> getSlowData(project, treeSelection, exactSelection, slowId),
-                                           (DataProvider)superProviderData);
-    }
-
-    Object data = getFastData(project, tree, dataId);
-    if (data != null) {
-      return data;
-    }
-
-    return superProviderData;
-  }
-
-  @Nullable
-  private static Object getFastData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return project;
-    }
-    else if (VcsDataKeys.CHANGES.is(dataId)) {
-      Change[] changes = mapToChange(selected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
-      if (changes.length != 0) return changes;
-      return mapToChange(all(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    else if (VcsDataKeys.SELECTED_CHANGES.is(dataId) ||
-             VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.is(dataId)) {
-      return mapToChange(selected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    else if (VcsDataKeys.CHANGES_SELECTION.is(dataId)) {
-      return getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class));
-    }
-    else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
-      return mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    else if (VcsDataKeys.FILE_PATHS.is(dataId)) {
-      return mapToFilePath(selected(tree));
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Object getSlowData(@Nullable Project project,
-                                    @NotNull VcsTreeModelData treeSelection,
-                                    @NotNull VcsTreeModelData exactSelection,
-                                    @NotNull String slowId) {
-    if (SelectInContext.DATA_KEY.is(slowId)) {
+    VcsTreeModelData treeSelection = selected(tree);
+    VcsTreeModelData exactSelection = exactlySelected(tree);
+    sink.lazy(SelectInContext.DATA_KEY, () -> {
       if (project == null) return null;
       VirtualFile file = mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
       if (file == null) return null;
       return new FileSelectInContext(project, file, null);
-    }
-    else if (VcsDataKeys.VIRTUAL_FILES.is(slowId)) {
+    });
+    sink.lazy(VcsDataKeys.VIRTUAL_FILES, () -> {
       return mapToVirtualFile(treeSelection);
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return mapToVirtualFile(treeSelection).toArray(VirtualFile.EMPTY_ARRAY);
+    });
+    if (project != null) {
+      sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+        return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(treeSelection));
+      });
     }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
-      if (project == null) return null;
-      return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(treeSelection));
-    }
-    return null;
   }
 
   @NotNull

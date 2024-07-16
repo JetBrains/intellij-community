@@ -6,11 +6,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataServiceExtension;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
 
 /**
  * @deprecated duplicate behaviour with {@link com.intellij.externalSystem.JavaModuleDataService}
@@ -22,7 +23,7 @@ public final class ModuleDataServiceJavaExtension implements ModuleDataServiceEx
 
   @Override
   public void importModule(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull Module module, @NotNull ModuleData data) {
-    if (ModuleTypeId.JAVA_MODULE.equals(module.getModuleTypeName())) {
+    if (JAVA_MODULE_ENTITY_TYPE_ID_NAME.equals(module.getModuleTypeName())) {
       ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
       setLanguageLevel(modifiableRootModel, data);
 

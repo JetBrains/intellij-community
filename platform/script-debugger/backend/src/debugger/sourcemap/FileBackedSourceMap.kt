@@ -6,9 +6,11 @@ import java.lang.ref.SoftReference
 import java.nio.file.Path
 import kotlin.io.path.readText
 
-class FileBackedSourceMap private constructor(filePath: Path,
-                                              initialData: SourceMapDataEx,
-                                              sourceResolver: SourceResolver)
+internal class FileBackedSourceMap private constructor(
+  filePath: Path,
+  initialData: SourceMapDataEx,
+  sourceResolver: SourceResolver,
+)
   : SourceMapBase(FileBackedSourceMapData(filePath, initialData), sourceResolver) {
 
   override val sourceIndexToMappings: Array<MappingList?>

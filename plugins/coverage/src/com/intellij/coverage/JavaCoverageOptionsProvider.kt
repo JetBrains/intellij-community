@@ -27,7 +27,8 @@ class JavaCoverageOptionsProvider(private val project: Project) : PersistentStat
     }
 
   @RequiresBackgroundThread
-  fun isGeneratedConstructor(qualifiedName: String, methodSignature: String): Boolean {
+  fun isGeneratedConstructor(qualifiedName: String, methodSignature: String?): Boolean {
+    if (methodSignature == null) return false
     if (state.myIgnoreImplicitConstructors) {
       val psiClass = DumbService.getInstance(project).runReadActionInSmartMode<PsiClass?> {
         ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), qualifiedName)

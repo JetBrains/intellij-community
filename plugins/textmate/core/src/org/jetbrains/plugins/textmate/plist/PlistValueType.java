@@ -10,7 +10,7 @@ public enum PlistValueType {
     if (o instanceof String) {
       return STRING;
     }
-    if (o instanceof Long) {
+    if (o instanceof Integer) {
       return INTEGER;
     }
     if (o instanceof Plist) {

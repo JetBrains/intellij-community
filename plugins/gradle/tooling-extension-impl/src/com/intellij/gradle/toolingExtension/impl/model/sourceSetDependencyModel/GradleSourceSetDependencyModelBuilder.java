@@ -27,13 +27,8 @@ public class GradleSourceSetDependencyModelBuilder extends AbstractModelBuilderS
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-
     DefaultGradleSourceSetDependencyModel sourceSetDependencyModel = new DefaultGradleSourceSetDependencyModel();
     sourceSetDependencyModel.setDependencies(collectDependencies(context, project));
-
-    GradleSourceSetDependencyCache.getInstance(context)
-      .setSourceSetDependencyModel(project, sourceSetDependencyModel);
-
     return sourceSetDependencyModel;
   }
 
@@ -64,9 +59,6 @@ public class GradleSourceSetDependencyModelBuilder extends AbstractModelBuilderS
     @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
-    GradleSourceSetDependencyCache.getInstance(context)
-      .markSourceSetDependencyModelAsError(project);
-
     context.getMessageReporter().createMessage()
       .withGroup(Messages.SOURCE_SET_DEPENDENCY_MODEL_GROUP)
       .withKind(Message.Kind.ERROR)

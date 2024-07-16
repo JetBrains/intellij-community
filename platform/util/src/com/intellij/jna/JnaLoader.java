@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jna;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.system.CpuArch;
+import com.intellij.util.system.OS;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,16 @@ public final class JnaLoader {
   public static synchronized void load(@NotNull Logger logger) {
     if (ourJnaLoaded == null) {
       ourJnaLoaded = Boolean.FALSE;
+
+      if (OS.CURRENT == OS.Windows && Boolean.getBoolean("ide.native.launcher")) {
+        // temporary fix for JNA + `SetDefaultDllDirectories` DLL loading issue (IJPL-157390)
+        String winDir = System.getenv("SystemRoot");
+        if (winDir != null) {
+          String path = System.getProperty("jna.platform.library.path");
+          path = (path == null ? "" : path + ';') + winDir + "\\System32";
+          System.setProperty("jna.platform.library.path", path);
+        }
+      }
 
       try {
         long t = System.currentTimeMillis();

@@ -46,7 +46,7 @@ public interface LibraryOrSdkOrderEntry extends OrderEntry {
    * @deprecated use {@link #getRootUrls(OrderRootType)} instead; meaning of this method coming from the base {@link OrderEntry} interface
    * is unclear.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Override
   default String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
     return getRootUrls(rootType);

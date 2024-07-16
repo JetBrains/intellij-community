@@ -3,17 +3,18 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.*
-import org.jetbrains.plugins.terminal.exp.HighlightingInfo
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.plainAttributesProvider
-import org.jetbrains.plugins.terminal.exp.TextAttributesProvider
-import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
+import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
+import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
+import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.plainAttributesProvider
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 
 @RunsInEdt
-class TerminalTextHighlighterTest {
+internal class TerminalTextHighlighterTest {
 
   private val projectRule: ProjectRule = ProjectRule()
   private val disposableRule: DisposableRule = DisposableRule()
@@ -25,14 +26,15 @@ class TerminalTextHighlighterTest {
   @Test
   fun `editor highlighter finds proper initial range`() {
     val outputManager = TestTerminalOutputManager(projectRule.project, disposableRule.disposable)
-    outputManager.createBlock("echo foo", TestCommandOutput("foo bar baz",
+    outputManager.createBlock("echo foo", TextWithHighlightings("foo bar baz",
                                                             listOf(HighlightingInfo(1, 2, green()),
                                                                    HighlightingInfo(5, 6, yellow()))))
-    checkHighlighter(outputManager, listOf(TextRange(0, 1),
-                                           TextRange(1, 2),
-                                           TextRange(2, 5),
-                                           TextRange(5, 6),
-                                           TextRange(6, outputManager.document.textLength)))
+    checkHighlighter(outputManager, listOf(TextRange(0, 8),   // 'echo foo'
+                                           TextRange(8, 10),  // '\nf'
+                                           TextRange(10, 11), // 'o'
+                                           TextRange(11, 14), // 'o b'
+                                           TextRange(14, 15), // 'a'
+                                           TextRange(15, outputManager.document.textLength)))  // 'r baz'
   }
 
   private fun checkHighlighter(outputManager: TestTerminalOutputManager, ranges: List<TextRange>) {

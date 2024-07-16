@@ -21,9 +21,8 @@ class JavaCoverageNode(
   project: Project,
   classOrPackage: PsiNamedElement,
   bundle: CoverageSuitesBundle,
-  stateBean: CoverageViewManager.StateBean,
   private val presentableName: String,
-) : CoverageListNode(project, classOrPackage, bundle, stateBean) {
+) : CoverageListNode(project, classOrPackage, bundle) {
   init {
     require(classOrPackage is PsiClass || classOrPackage is PsiPackage)
   }
@@ -44,8 +43,7 @@ class JavaCoverageNode(
 
 class JavaCoverageRootNode(project: Project,
                            classOrPackage: PsiNamedElement,
-                           bundle: CoverageSuitesBundle,
-                           stateBean: CoverageViewManager.StateBean) : CoverageListRootNode(project, classOrPackage, bundle, stateBean) {
+                           bundle: CoverageSuitesBundle) : CoverageListRootNode(project, classOrPackage, bundle) {
   private val cachedIcon: Icon? by lazy { classOrPackage.getIcon(0) }
   override fun update(presentation: PresentationData) {
     presentation.presentableText = CoverageBundle.message("coverage.view.packages.root")

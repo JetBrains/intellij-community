@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -11,19 +11,18 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitTypeCastExpression(@NotNull PsiTypeCastExpression cast) {
@@ -75,9 +74,8 @@ public final class CastCanBeRemovedNarrowingVariableTypeInspection extends Abstr
       return JavaBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.name", myVariableName, myType);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.family.name");
     }
 
@@ -95,13 +93,10 @@ public final class CastCanBeRemovedNarrowingVariableTypeInspection extends Abstr
       PsiTypeElement typeElement = var.getTypeElement();
       if (typeElement == null) return;
       PsiElement newTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeElement.replace(castType));
-      for (PsiReference reference : ReferencesSearch.search(var).findAll()) {
-        if (reference instanceof PsiReferenceExpression varRef) {
-          PsiTypeCastExpression castOccurrence =
-            tryCast(PsiUtil.skipParenthesizedExprUp(varRef.getParent()), PsiTypeCastExpression.class);
-          if (castOccurrence != null && RedundantCastUtil.isCastRedundant(castOccurrence)) {
-            RemoveRedundantCastUtil.removeCast(castOccurrence);
-          }
+      for (PsiReferenceExpression varRef : VariableAccessUtils.getVariableReferences(var)) {
+        if (PsiUtil.skipParenthesizedExprUp(varRef.getParent()) instanceof PsiTypeCastExpression castOccurrence && 
+            RedundantCastUtil.isCastRedundant(castOccurrence)) {
+          RemoveRedundantCastUtil.removeCast(castOccurrence);
         }
       }
       if (myOnTheFly) {

@@ -136,6 +136,8 @@ private val THREAD_NAME = AttributeKey.stringKey("thread.name")
 private val THREAD_ID = AttributeKey.longKey("thread.id")
 private val EXCEPTION_STACKTRACE = AttributeKey.stringKey("exception.stacktrace")
 
+private val NEW_LINE_REGEX = "(\r\n|\n)".toRegex()
+
 private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBuilder, writeFirstComma: Boolean) {
   var writeComma = writeFirstComma
   attributes.forEach(BiConsumer { k, v ->
@@ -157,7 +159,7 @@ private fun writeAttributesAsHumanReadable(attributes: Attributes, sb: StringBui
       sb.append("\n  ┌")
       sb.append(delimiter)
       sb.append("┐\n   ")
-      sb.append(v.toString().replace("(\r\n|\n)".toRegex(), "\n   ").trim { it <= ' ' })
+      sb.append(v.toString().replace(NEW_LINE_REGEX, "\n   ").trim())
       sb.append("\n  └")
       sb.append(delimiter)
       sb.append("┘")

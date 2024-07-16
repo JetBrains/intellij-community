@@ -1,30 +1,47 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.UnknownModelException;
 import org.gradle.tooling.UnsupportedVersionException;
 import org.gradle.tooling.model.Model;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @ApiStatus.Internal
 public class DefaultBuildController implements BuildController {
 
-  private final BuildController myDelegate;
-  private final GradleBuild myMainGradleBuild;
-  private final Model myMyMainGradleBuildRootProject;
+  private final @NotNull BuildController myDelegate;
 
-  public DefaultBuildController(@NotNull BuildController buildController, @NotNull GradleBuild mainGradleBuild) {
+  private final @NotNull GradleBuild myMainGradleBuild;
+  private final @NotNull Model myMyMainGradleBuildRootProject;
+
+  private final @NotNull BuildEnvironment myBuildEnvironment;
+
+  public DefaultBuildController(
+    @NotNull BuildController buildController,
+    @NotNull GradleBuild mainGradleBuild,
+    @NotNull BuildEnvironment buildEnvironment
+  ) {
     myDelegate = buildController;
+
     myMainGradleBuild = mainGradleBuild;
     myMyMainGradleBuildRootProject = myMainGradleBuild.getRootProject();
+
+    myBuildEnvironment = buildEnvironment;
+  }
+
+  private boolean isMainBuild(Model model) {
+    return model == null || model == myMainGradleBuild;
   }
 
   @Override
@@ -102,17 +119,35 @@ public class DefaultBuildController implements BuildController {
     }
   }
 
+  /**
+   * The old Gradle versions have deadlocks during parallel model fetch.
+   * <p>
+   * See <a href="https://github.com/gradle/gradle/issues/19837">Gradle issue 19837</a> for mode details.
+   */
+  private boolean isParallelModelFetchSupported() {
+    String gradleVersion = myBuildEnvironment.getGradle().getGradleVersion();
+    return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.4.2");
+  }
+
+  @Override
+  public <T> void send(T value) {
+    myDelegate.send(value);
+  }
+
   @Override
   public <T> List<T> run(Collection<? extends BuildAction<? extends T>> collection) {
-    return myDelegate.run(collection);
+    if (isParallelModelFetchSupported()) {
+      return myDelegate.run(collection);
+    }
+    List<T> result = new ArrayList<>();
+    for (BuildAction<? extends T> buildAction : collection) {
+      result.add(buildAction.execute(this));
+    }
+    return result;
   }
 
   @Override
   public boolean getCanQueryProjectModelInParallel(Class<?> aClass) {
-    return myDelegate.getCanQueryProjectModelInParallel(aClass);
-  }
-
-  private boolean isMainBuild(Model model) {
-    return model == null || model == myMainGradleBuild;
+    return isParallelModelFetchSupported() && myDelegate.getCanQueryProjectModelInParallel(aClass);
   }
 }

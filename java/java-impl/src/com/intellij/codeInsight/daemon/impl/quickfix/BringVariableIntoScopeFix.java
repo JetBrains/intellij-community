@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -85,9 +85,7 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
     return container;
   }
 
-  @IntentionName
-  @NotNull
-  private String getText() {
+  private @IntentionName @NotNull String getText() {
     PsiLocalVariable variable = myOutOfScopeVariable;
 
     String varText = !variable.isValid()
@@ -96,8 +94,7 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("bring.variable.to.scope.family");
   }
 

@@ -5,7 +5,7 @@ object O {
 }
 
 fun foo() {
-    O.z<caret>
+    O.zz<caret>
 }
 
 // INVOCATION_COUNT: 0

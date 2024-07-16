@@ -58,6 +58,7 @@ public final class TestNGUtil {
     return version != null && StringUtil.compareVersionNumbers(version, "5.12") <= 0;
   }
 
+  public static final String MAVEN_TEST_NG = "org.testng:testng";
   public static final String TEST_ANNOTATION_FQN = Test.class.getName();
   public static final String TESTNG_PACKAGE = "org.testng";
   public static final String FACTORY_ANNOTATION_FQN = Factory.class.getName();
@@ -208,8 +209,7 @@ public final class TestNGUtil {
     if (checkJavadoc && getTextJavaDoc((PsiDocCommentOwner)element) != null)
       return true;
     //now we check all methods for the test annotation
-    if (element instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass) element;
+    if (element instanceof PsiClass psiClass) {
       for (PsiMethod method : psiClass.getAllMethods()) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, TEST_ANNOTATION_FQN);
         if (annotation != null) {

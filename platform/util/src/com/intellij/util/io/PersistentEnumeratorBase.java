@@ -10,6 +10,7 @@ import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import com.intellij.util.io.keyStorage.InlinedKeyStorage;
 import com.intellij.util.io.keyStorage.NoDataException;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
@@ -30,6 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  * @author jeka
  */
+@Internal
 public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>,
                                                                 ScannableDataEnumeratorEx<Data>,
                                                                 Forceable, Closeable, SelfDiagnosing {

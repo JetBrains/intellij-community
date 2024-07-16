@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ import java.util.Objects;
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
  * that starts on a given {@link PsiElement}, or a {@link PsiElement} of a given type under the caret.
- * 
+ *
  * @param <E> type of the element
  */
 public abstract class PsiBasedModCommandAction<E extends PsiElement> implements ModCommandAction {
@@ -26,22 +27,29 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
 
   /**
    * Constructs an instance, which is bound to a specified element
-   * 
+   *
    * @param element element to start the action at.
    */
   protected PsiBasedModCommandAction(@NotNull E element) {
-    myPointer = SmartPointerManager.createPointer(element);
-    myClass = null;
+    this(element, null);
   }
 
   /**
-   * Constructs an instance, which will look for an element 
+   * Constructs an instance, which will look for an element
    * of a specified class at the caret offset.
-   * 
+   *
    * @param elementClass element class
    */
   protected PsiBasedModCommandAction(@NotNull Class<E> elementClass) {
-    myPointer = null;
+    this(null, elementClass);
+  }
+
+  // todo to be decomposed into 2 base classes
+  @ApiStatus.Internal
+  protected PsiBasedModCommandAction(@Nullable E element,
+                                     @Nullable Class<E> elementClass) {
+    assert element != null || elementClass != null;
+    myPointer = element != null ? SmartPointerManager.createPointer(element) : null;
     myClass = elementClass;
   }
 
@@ -54,8 +62,9 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   private @Nullable E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
       E element = myPointer.getElement();
-      if (element != null && !BaseIntentionAction.canModify(element)) return null;
-      return element;
+      return element != null && !BaseIntentionAction.canModify(element) ?
+             null :
+             element;
     }
     int offset = context.offset();
     PsiFile file = context.file();
@@ -104,7 +113,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
    * @param element element to test
    * @param context context
    * @return true if no parent elements should be checked for applicability. By default, returns false,
-   * so we will search for applicable element until {@link PsiFile} element is reached.
+   * so we will search for the applicable element until {@link PsiFile} element is reached.
    */
   protected boolean stopSearchAt(@NotNull PsiElement element, @NotNull ActionContext context) {
     return false;
@@ -114,7 +123,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
    * @param element element to test
    * @param context context
    * @return true if the supplied element is the one we want to apply the action on. Used when
-   * searching the appropriate element. By default, returns true always, meaning that the first found element
+   * searching for the appropriate element. By default, returns true always, meaning that the first found element
    * of type E is applicable.
    */
   protected boolean isElementApplicable(@NotNull E element, @NotNull ActionContext context) {
@@ -147,7 +156,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   }
 
   /**
-   * Computes a command to be executed to actually perform the action. 
+   * Computes a command to be executed to actually perform the action.
    * Called in a background read-action. Called after {@link #getPresentation(ActionContext)} returns non-null presentation.
    *
    * @param context context in which the action is executed

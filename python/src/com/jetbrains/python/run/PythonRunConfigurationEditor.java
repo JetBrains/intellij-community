@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -18,18 +18,17 @@ public class PythonRunConfigurationEditor extends SettingsEditor<PythonRunConfig
   }
 
   @Override
-  protected void resetEditorFrom(@NotNull final PythonRunConfiguration config) {
+  protected void resetEditorFrom(final @NotNull PythonRunConfiguration config) {
     PythonRunConfiguration.copyParams(config, myForm);
   }
 
   @Override
-  protected void applyEditorTo(@NotNull final PythonRunConfiguration config) throws ConfigurationException {
+  protected void applyEditorTo(final @NotNull PythonRunConfiguration config) throws ConfigurationException {
     PythonRunConfiguration.copyParams(myForm, config);
   }
 
   @Override
-  @NotNull
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     return myForm.getPanel();
   }
 

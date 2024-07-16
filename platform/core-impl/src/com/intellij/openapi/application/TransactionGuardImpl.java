@@ -202,6 +202,26 @@ public final class TransactionGuardImpl extends TransactionGuard {
     };
   }
 
+  @ApiStatus.Internal
+  public @NotNull Runnable wrapCoroutineInvocation(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        if (isWriteSafeModality(modalityState)) {
+          runWithWritingAllowed(runnable);
+        }
+        else {
+          runnable.run();
+        }
+      }
+
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
+    };
+  }
+
   private void runWithWritingAllowed(@NotNull Runnable runnable) {
     final boolean prev = myWritingAllowed;
     myWritingAllowed = true;

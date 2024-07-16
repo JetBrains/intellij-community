@@ -20,7 +20,15 @@ public final class RefCall extends RemoteCall {
                  String methodName,
                  Object[] args,
                  Ref ref) {
-    super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, args);
+    super(sessionId,
+          timedSpan,
+          pluginId,
+          dispatcher,
+          lockSemantics,
+          className,
+          methodName,
+          ref.rdTarget(),
+          args);
 
     this.ref = ref;
   }

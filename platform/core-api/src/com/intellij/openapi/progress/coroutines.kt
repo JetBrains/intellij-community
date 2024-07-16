@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
@@ -36,7 +37,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
  * @see ensureActive
  * @see coroutineSuspender
  */
-suspend fun checkCancelled() {
+suspend fun checkCanceled() {
   val ctx = coroutineContext
   ctx.ensureActive() // standard check first
   ctx[CoroutineSuspenderElementKey]?.checkPaused() // will suspend if paused
@@ -118,18 +119,39 @@ suspend fun checkCancelled() {
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
-  return runBlockingCancellable(allowOrphan = false, action)
+  return runBlockingCancellable(allowOrphan = false, compensateParallelism = true, action)
 }
 
-private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend CoroutineScope.() -> T): T {
+/**
+ * Do not use this overload unless you absolutely certain that you should.
+ * Consider using [runBlockingCancellable] without [compensateParallelism] argument instead.
+ */
+@Internal
+@InternalCoroutinesApi
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
+fun <T> runBlockingCancellable(compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
+  return runBlockingCancellable(allowOrphan = false, compensateParallelism = compensateParallelism, action)
+}
+
+private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
   assertBackgroundThreadOrWriteAction()
   return prepareThreadContext { ctx ->
     if (!allowOrphan && ctx[Job] == null && !Cancellation.isInNonCancelableSection()) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
     try {
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(ctx + readActionContext(), action)
+      if (compensateParallelism) {
+        @OptIn(InternalCoroutinesApi::class)
+        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + readActionContext(), action)
+      }
+      else {
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking(ctx + readActionContext(), action)
+      }
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
@@ -150,7 +172,19 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
-  return runBlockingCancellable(allowOrphan = true, action)
+  return runBlockingCancellable(allowOrphan = true, compensateParallelism = true, action)
+}
+
+/**
+ * Do not use this overload unless you absolutely certain that you should.
+ * Consider using [runBlockingMaybeCancellable] without the [compensateParallelism] argument instead.
+ */
+@Internal
+@InternalCoroutinesApi
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
+fun <T> runBlockingMaybeCancellable(compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
+  return runBlockingCancellable(allowOrphan = true, compensateParallelism = compensateParallelism, action)
 }
 
 @Deprecated(
@@ -169,6 +203,9 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(context + readActionContext(), action)
     }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
     }
@@ -186,19 +223,13 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
  *
  * Current thread context usually includes [current job][Cancellation.currentJob],
  * which makes [ProgressManager.checkCanceled] work inside [action].
- * [ProcessCanceledException] thrown from `ProgressManager.checkCanceled()` inside the [action] is rethrown as [CancellationException],
- * so the calling code could continue working in the coroutine framework terms.
+ * [ProcessCanceledException] thrown from `ProgressManager.checkCanceled()` is rethrown back to the suspending context.
  *
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
-  return try {
-    coroutineScope {
-      blockingContextInner(coroutineContext, action)
-    }
-  }
-  catch (pce: ProcessCanceledException) {
-    throw PceCancellationException(pce)
+  return coroutineScope {
+    blockingContextInner(coroutineContext, action)
   }
 }
 
@@ -240,14 +271,9 @@ suspend fun <T> blockingContext(action: () -> T): T {
  * @see [coroutineScope]
  */
 suspend fun <T> blockingContextScope(action: () -> T): T {
-  return try {
-    coroutineScope {
-      val coroutineContext = coroutineContext
-      blockingContextInner(coroutineContext + BlockingJob(coroutineContext.job), action)
-    }
-  }
-  catch (pce: ProcessCanceledException) {
-    throw PceCancellationException(pce)
+  return coroutineScope {
+    val coroutineContext = coroutineContext
+    blockingContextInner(coroutineContext + BlockingJob(coroutineContext.job), action)
   }
 }
 
@@ -302,20 +328,13 @@ fun currentThreadCoroutineScope() : CoroutineScope {
   return CoroutineScope(threadContext)
 }
 
+@Internal
+fun CoroutineContext.prepareForInstallation(): CoroutineContext = this.minusKey(ContinuationInterceptor.Key)
 
 @Internal
-fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
-  try {
-    return blockingContextInner(currentContext, action)
-  }
-  catch (pce: ProcessCanceledException) {
-    throw PceCancellationException(pce)
-  }
-}
-
 @Throws(ProcessCanceledException::class)
-private fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
-  val context = currentContext.minusKey(ContinuationInterceptor)
+internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
+  val context = currentContext.prepareForInstallation()
   return installThreadContext(context).use {
     action()
   }
@@ -375,10 +394,14 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  */
 @Internal
 @RequiresBlockingContext
+@Throws(ProcessCanceledException::class)
 fun <T> blockingContextToIndicator(action: () -> T): T {
   val ctx = currentThreadContext()
   return try {
     contextToIndicator(ctx, action)
+  }
+  catch (pce : ProcessCanceledException) {
+    throw pce
   }
   catch (ce: CancellationException) {
     throw CeProcessCanceledException(ce)
@@ -431,7 +454,7 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
       @OptIn(InternalCoroutinesApi::class)
       throw job.getCancellationException()
     }
-    throw PceCancellationException(e)
+    throw e
   }
 }
 

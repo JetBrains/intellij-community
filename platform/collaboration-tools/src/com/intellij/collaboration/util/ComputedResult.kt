@@ -39,8 +39,19 @@ fun <T> ComputedResult<T>.getOrNull(): T? = result?.getOrNull()
 
 fun ComputedResult<*>.exceptionOrNull(): Throwable? = result?.exceptionOrNull()
 
-fun ComputedResult<*>.onFailure(consumer: (Throwable) -> Unit): ComputedResult<*> = apply {
-  result?.exceptionOrNull()?.let(consumer)
+fun <R, T> ComputedResult<T>.fold(onInProgress: () -> R, onSuccess: (value: T) -> R, onFailure: (exception: Throwable) -> R): R =
+  result?.fold(onSuccess, onFailure) ?: onInProgress()
+
+fun <T> ComputedResult<T>.onSuccess(consumer: (T) -> Unit): ComputedResult<T> = apply {
+  result?.onSuccess(consumer)
+}
+
+fun <T> ComputedResult<T>.onFailure(consumer: (Throwable) -> Unit): ComputedResult<T> = apply {
+  result?.onFailure(consumer)
+}
+
+fun <T> ComputedResult<T>.onInProgress(consumer: () -> Unit): ComputedResult<T> = apply {
+  if (isInProgress) consumer()
 }
 
 

@@ -1,17 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -29,6 +32,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
@@ -53,7 +57,7 @@ private val LOG: Logger
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
-) : IdeFrameEx, AccessibleContextAccessor, DataProvider {
+) : IdeFrameEx, AccessibleContextAccessor, UiDataProvider {
   constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
 
   private val isUpdatingTitle = AtomicBoolean()
@@ -83,7 +87,9 @@ open class ProjectFrameHelper internal constructor(
     // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane
     frameDecorator = rootPane.createDecorator()
     frame.setFrameHelper(object : FrameHelper {
-      override fun getData(dataId: String) = this@ProjectFrameHelper.getData(dataId)
+      override fun uiDataSnapshot(sink: DataSink) {
+        return this@ProjectFrameHelper.uiDataSnapshot(sink)
+      }
 
       override val accessibleName: String
         get() {
@@ -264,29 +270,17 @@ open class ProjectFrameHelper internal constructor(
 
   override fun getCurrentAccessibleContext(): AccessibleContext = frame.accessibleContext
 
-  override fun getData(dataId: String): Any? {
+  override fun uiDataSnapshot(sink: DataSink) {
     val project = project
-    return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> if (project != null && project.isInitialized) project else null
-      IdeFrame.KEY.`is`(dataId) -> this
-      PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.`is`(dataId) -> {
-        if (project == null || !project.isInitialized) {
-          return null
-        }
-
-        val manager = project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl ?: return null
-        manager.getLastActiveToolWindows().toList().toTypedArray()
-      }
-      PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        if (project == null || !project.isInitialized) {
-          null
-        }
-        else {
-          (project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx)?.selectedEditor
-        }
-      }
-      else -> null
-    }
+    sink[IdeFrame.KEY] = this
+    if (project == null || !project.isInitialized) return
+    sink[CommonDataKeys.PROJECT] = project
+    sink[PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS] =
+      (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl)
+        ?.getLastActiveToolWindows()?.toList()?.toTypedArray()
+    sink[PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR] =
+      (project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx)
+        ?.selectedEditor
   }
 
   override fun getProject(): Project? = project
@@ -308,7 +302,7 @@ open class ProjectFrameHelper internal constructor(
   internal suspend fun setProject(project: Project) {
     rootPane.setProject(project)
     activationTimestamp?.let {
-      RecentProjectsManager.getInstance().setActivationTimestamp(project, it)
+      serviceAsync<RecentProjectsManager>().setActivationTimestamp(project, it)
     }
   }
 
@@ -451,7 +445,11 @@ private object WindowCloseListener : WindowAdapter() {
 
     val app = ApplicationManager.getApplication()
     if (app != null && !app.isDisposed) {
-      frameHelper.windowClosing(project)
+      // Project closing process is also subject to cancellation checks.
+      // Here we run the closing process in the scope of applicaiton, so that the user gets the chance to abort project closing process.
+      installThreadContext((app as ComponentManagerImpl).getCoroutineScope().coroutineContext).use {
+        frameHelper.windowClosing(project)
+      }
     }
   }
 }

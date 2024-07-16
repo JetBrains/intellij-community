@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author Max Medvedev
  */
-public class ReplaceIfWithTernaryIntention extends GrPsiUpdateIntention {
+public final class ReplaceIfWithTernaryIntention extends GrPsiUpdateIntention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final GrIfStatement ifStatement = (GrIfStatement)element.getParent();

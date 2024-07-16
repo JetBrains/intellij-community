@@ -4,6 +4,7 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -140,10 +141,10 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       psiMethods.add((PsiMethod)element);
       return psiMethods;
     }
-    if (element instanceof PsiParameter param && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod method) {
+    if (element instanceof PsiParameter param && param.getDeclarationScope() instanceof PsiMethod method) {
       Set<PsiElement> parametersToDelete = new HashSet<>();
       parametersToDelete.add(element);
-      int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
+      int parameterIndex = method.getParameterList().getParameterIndex(param);
       List<PsiMethod> superMethods = new ArrayList<>(Arrays.asList(method.findDeepestSuperMethods()));
       if (superMethods.isEmpty()) {
         superMethods.add(method);
@@ -679,11 +680,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static void appendCallees(@NotNull PsiMember method, @NotNull List<? super UsageInfo> usages) {
-    List<PsiElement> calleesSafeToDelete = SafeDeleteJavaCalleeChooser.computeReferencedCodeSafeToDelete(method);
-    if (calleesSafeToDelete != null) {
-      for (PsiElement callee : calleesSafeToDelete) {
-        usages.add(new SafeDeleteMemberCalleeUsageInfo(callee, method));
-      }
+    List<PsiElement> calleesSafeToDelete = SafeDeleteFix.computeReferencedCodeSafeToDelete(method);
+    for (PsiElement callee : calleesSafeToDelete) {
+      usages.add(new SafeDeleteMemberCalleeUsageInfo(callee, method));
     }
   }
 

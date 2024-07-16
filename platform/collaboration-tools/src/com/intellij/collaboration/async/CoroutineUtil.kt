@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.collaboration.async
 
 import com.intellij.collaboration.util.ComputedResult
@@ -6,17 +8,12 @@ import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -27,7 +24,7 @@ inline fun <reified T> classAsCoroutineName() = CoroutineName(T::class.java.name
 /**
  * Prefer creating a service to supply a parent scope
  */
-@ApiStatus.Obsolete
+@Deprecated("Prefer creating a service to supply a parent scope")
 @Suppress("FunctionName")
 fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope {
   return MainScope().also {
@@ -37,16 +34,13 @@ fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope {
   }
 }
 
-/**
- * Prefer creating a service to supply a parent scope
- */
-@ApiStatus.Obsolete
+@Deprecated("Prefer creating a service to supply a parent scope")
 fun Disposable.disposingMainScope(): CoroutineScope = DisposingMainScope(this)
 
 /**
  * Prefer creating a service to supply a parent scope
  */
-@ApiStatus.Obsolete
+@Deprecated("Prefer creating a service to supply a parent scope")
 fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope = CoroutineScope(context).also {
   Disposer.register(this) {
     it.cancel()
@@ -136,12 +130,39 @@ fun <T, M> StateFlow<T>.mapState(
   mapper: (value: T) -> M
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
+@ApiStatus.Internal
+fun <T, M> StateFlow<T>.mapStateInNow(
+  scope: CoroutineScope,
+  mapper: (value: T) -> M
+): StateFlow<M> = map { mapper(it) }.stateInNow(scope, mapper(value))
+
 @ApiStatus.Experimental
-fun <T, M> StateFlow<T>.mapState(mapper: (value: T) -> M): StateFlow<M> = DerivedStateFlow(map(mapper)) { mapper(value) }
+fun <T, M> StateFlow<T>.mapState(mapper: (value: T) -> M): StateFlow<M> = MappedStateFlow(this) { mapper(value) }
+
+private class MappedStateFlow<T, R>(private val source: StateFlow<T>, private val mapper: (T) -> R) : StateFlow<R> {
+  override val value: R
+    get() = mapper(source.value)
+
+  override val replayCache: List<R>
+    get() = source.replayCache.map(mapper)
+
+  override suspend fun collect(collector: FlowCollector<R>): Nothing {
+    source.map(mapper).distinctUntilChanged().collect(collector)
+    awaitCancellation()
+  }
+}
 
 @ApiStatus.Experimental
 fun <T1, T2, R> StateFlow<T1>.combineState(other: StateFlow<T2>, combiner: (T1, T2) -> R): StateFlow<R> =
   DerivedStateFlow(combine(other, combiner)) { combiner(value, other.value) }
+
+/**
+ * Not great, because will always compute [combiner] twice at the start
+ * To be used when you need the flow to handle [CoroutineStart.UNDISPATCHED], because pure [combine] does not
+ */
+@ApiStatus.Internal
+fun <T1, T2, R> combineStateIn(cs: CoroutineScope, sf1: StateFlow<T1>, sf2: StateFlow<T2>, combiner: (T1, T2) -> R): StateFlow<R> =
+  combine(sf1, sf2, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sf1.value, sf2.value))
 
 /**
  * Special state flow which value is supplied by [valueSupplier] and collection is delegated to [source]
@@ -166,48 +187,46 @@ private class DerivedStateFlow<T>(
 }
 
 @ApiStatus.Experimental
-fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(mapper)
+fun <T, R> Flow<T>.mapScoped(supervisor: Boolean, mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(supervisor, mapper)
 
 @ApiStatus.Experimental
-private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> =
+fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(false, mapper)
+
+/**
+ * Maps each value from a source flow to a distinct [CoroutineScope]
+ *
+ * Can handle [CoroutineStart.UNDISPATCHED]
+ */
+@ApiStatus.Experimental
+private fun <T, R> Flow<T>.mapScoped2(supervisor: Boolean, mapper: suspend CoroutineScope.(T) -> R): Flow<R> =
   flow {
     coroutineScope {
-      var lastScope: CoroutineScope? = null
-      val breaker = MutableSharedFlow<R>(1)
-      try {
-        launchNow {
+      var lastScope: Job? = null
+      // need a breaker to allow re-emitting in the same coroutine that started the flow
+      val breaker = Channel<R>()
+      launchNow {
+        try {
           collect { state ->
             lastScope?.cancelAndJoinSilently()
-            lastScope = childScope().apply {
-              launchNow {
+            lastScope = launchNow {
+              val scopeBody: suspend CoroutineScope.() -> Unit = {
                 val result = mapper(state)
-                breaker.emit(result)
+                breaker.send(result)
               }
+              if (supervisor) supervisorScope(scopeBody) else coroutineScope(scopeBody)
             }
           }
         }
-        breaker.collect(this@flow)
+        finally {
+          breaker.close()
+        }
       }
-      finally {
-        lastScope?.cancelAndJoinSilently()
-      }
+      breaker.consumeAsFlow().collect(this@flow)
     }
   }
 
-/**
- * Performs mapping only if the source value is not null
- */
 @ApiStatus.Experimental
-fun <T, R> Flow<T?>.mapNullable(mapper: (T) -> R): Flow<R?> = map { it?.let(mapper) }
-
-/**
- * Performs mapping only if the source value is not null
- */
-@OptIn(ExperimentalCoroutinesApi::class)
-@ApiStatus.Experimental
-fun <T, R> Flow<T?>.mapNullableLatest(mapper: suspend (T) -> R): Flow<R?> = mapLatest {
-  if (it != null) mapper(it) else null
-}
+private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> = mapScoped2(false, mapper)
 
 @ApiStatus.Experimental
 fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> = mapScoped2 { if (it == null) null else mapper(it) }
@@ -249,17 +268,10 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
   catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
 
 /**
- * Associate each *item* [T] *key* [K] in the iterable from the receiver flow (source list) with a *value* [V]
- * Keys are distinguished by a [hashingStrategy]
- *
- * When a new iterable is received:
- * * a new [CoroutineScope] and a new value is created via [valueExtractor] for new items
- * * existing values are updated via [update] if it was supplied
- * * values for missing items are removed and destroyed via [destroy]
- *
- * Order of the values in the resulting map is the same as in the source iterable
- * All [CoroutineScope]'s of values are only active while the resulting flow is being collected
+ * The destructor is never necessary because cleanup can be performed on scope cancellation
+ * @see associateCachingBy
  */
+@ApiStatus.Obsolete
 fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
                                                    hashingStrategy: HashingStrategy<K>,
                                                    valueExtractor: CoroutineScope.(T) -> V,
@@ -268,106 +280,34 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
   : Flow<Map<K, V>> = flow {
   coroutineScope {
     val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
-    launchNow {
-      collect { items ->
-        container.update(items)
-      }
+    collect {
+      container.update(it)
+      emit(container.mappingState.value)
     }
-    container.mappingState.collect {
-      emit(it)
-    }
+    awaitCancellation()
   }
 }
 
 /**
- * Allows mapping a collection of items [T] to scoped (coroutine scope bound) values [V]
- * An intermittent key [K] is used to uniquely identify items
+ * Associate each *item* [T] *key* [K] in the iterable from the receiver flow (source list) with a *value* [V]
  *
- * @param cs parent scope for value scopes
- * @param keyExtractor should be a quick-to-run function extracting a key from item
- * @param hashingStrategy strategy used to compare keys
- * @param mapper factory function to create a value from item
- * @param destroy destructor function to destroy a value
- * @param update function used to update value if a new item is supplied for the existing key
+ * Keys are distinguished by a [hashingStrategy]
+ *
+ * When a new iterable is received:
+ * * a new [CoroutineScope] and a new value is created via [valueExtractor] for new items
+ * * existing values are updated via [update] if it was supplied
+ * * values for missing items are removed and their scope is cancelled
+ *
+ * Order of the values in the resulting map is the same as in the source iterable
+ * All [CoroutineScope]'s of values are only active while the resulting flow is being collected
+ *
+ * **Returned flow never completes**
  */
-class MappingScopedItemsContainer<T, K, V>(
-  private val cs: CoroutineScope,
-  private val keyExtractor: (T) -> K,
-  private val hashingStrategy: HashingStrategy<K>,
-  private val mapper: CoroutineScope.(T) -> V,
-  private val destroy: suspend V.() -> Unit,
-  private val update: (suspend V.(T) -> Unit)? = null
-) {
-  private val _mappingState = MutableStateFlow<Map<K, ScopingWrapper<V>>>(emptyMap())
-  val mappingState: StateFlow<Map<K, V>> = _mappingState.mapState { it.mapValues { (_, value) -> value.value } }
-  private val mapGuard = Mutex()
-
-  suspend fun update(items: Iterable<T>) = mapGuard.withLock {
-    withContext(NonCancellable) {
-      val currentMap = _mappingState.value
-      var hasStructureChanges = false
-      val newItemsSet = CollectionFactory.createLinkedCustomHashingStrategySet(hashingStrategy).also {
-        items.mapTo(it, keyExtractor)
-      }
-
-      val result = createLinkedMap<K, ScopingWrapper<V>>(hashingStrategy)
-      // destroy missing
-      for ((key, scopedValue) in currentMap) {
-        if (!newItemsSet.contains(key)) {
-          hasStructureChanges = true
-          scopedValue.value.destroy()
-          scopedValue.cancel()
-        }
-        else {
-          result[key] = scopedValue
-        }
-      }
-
-      // add new or update existing
-      for (item in items) {
-        val itemKey = keyExtractor(item)
-        val existing = result[itemKey]
-        if (existing == null) {
-          val valueScope = cs.childScope()
-          result[itemKey] = ScopingWrapper(valueScope, mapper(valueScope, item))
-          hasStructureChanges = true
-        }
-        else {
-          // if not inferring nullability fsr
-          update?.let { existing.value.it(item) }
-          result[itemKey] = existing
-        }
-      }
-
-      if (hasStructureChanges) {
-        _mappingState.value = result
-      }
-    }
-  }
-
-  suspend fun addIfAbsent(item: T): V = mapGuard.withLock {
-    withContext(NonCancellable) {
-      val key = keyExtractor(item)
-      _mappingState.value[key]?.value ?: _mappingState.updateAndGet {
-        val valueScope = cs.childScope()
-        val newValue = ScopingWrapper(valueScope, mapper(valueScope, item))
-        it + (key to newValue)
-      }[key]!!.value
-    }
-  }
-
-  companion object {
-    fun <T, V> byIdentity(cs: CoroutineScope, mapper: CoroutineScope.(T) -> V) =
-      MappingScopedItemsContainer(cs, { it }, HashingStrategy.identity(), mapper, {})
-  }
-}
-
-private data class ScopingWrapper<T>(val scope: CoroutineScope, val value: T) {
-  suspend fun cancel() = scope.cancelAndJoinSilently()
-}
-
-private fun <T, R> createLinkedMap(hashingStrategy: HashingStrategy<T>): MutableMap<T, R> =
-  CollectionFactory.createLinkedCustomHashingStrategyMap(hashingStrategy)
+fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
+                                                   hashingStrategy: HashingStrategy<K>,
+                                                   valueExtractor: CoroutineScope.(T) -> V,
+                                                   update: (suspend V.(T) -> Unit)? = null)
+  : Flow<Map<K, V>> = associateCachingBy(keyExtractor, hashingStrategy, valueExtractor, { }, update)
 
 /**
  * @see associateCachingBy
@@ -380,6 +320,8 @@ private fun <T, R> Flow<Iterable<T>>.associateCaching(hashingStrategy: HashingSt
   return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
 }
 
+@ApiStatus.Internal
+@ApiStatus.Obsolete
 fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
                                                   mapper: CoroutineScope.(T) -> R,
                                                   destroy: suspend R.() -> Unit,
@@ -433,6 +375,7 @@ private class ReferentiallyComparedValue<T : Any>(val value: T) {
  * This acts as a replacement of consecutive `asResultFlow` and `throwFailure` and avoids that exceptions cancel the flow.
  */
 @JvmName("transformConsecutiveResultSuccesses")
+@ApiStatus.Internal
 fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
   resetOnFailure: Boolean = true,
   transformer: suspend Flow<T>.() -> Flow<R>
@@ -469,6 +412,7 @@ fun <T, R> Flow<Result<T>>.transformConsecutiveSuccesses(
  * This means that, if [resetOnFailure] is `true`, the [transformer] block is called once for every series of consecutive
  * successes. If it is `false`, the [transformer] block is called only once with a flow that receives every success value.
  */
+@ApiStatus.Internal
 fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
   resetOnFailure: Boolean = true,
   transformer: suspend Flow<T>.() -> Flow<R>
@@ -504,29 +448,8 @@ fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
  * Transforms the flow of some computation requests to a flow of computation states of this request
  * Will not emit "loading" state if the computation was completed before handling its state
  */
-@JvmName("futureComputationState")
 @OptIn(ExperimentalCoroutinesApi::class)
-fun <T> Flow<CompletableFuture<T>>.computationState(): Flow<ComputedResult<T>> =
-  transformLatest { request ->
-    if (!request.isDone) {
-      emit(ComputedResult.loading())
-    }
-    try {
-      val value = request.asDeferred().await()
-      emit(ComputedResult.success(value))
-    }
-    catch (e: Exception) {
-      if (!CompletableFutureUtil.isCancellation(e)) {
-        emit(ComputedResult.failure(e))
-      }
-    }
-  }
-
-/**
- * Transforms the flow of some computation requests to a flow of computation states of this request
- * Will not emit "loading" state if the computation was completed before handling its state
- */
-@OptIn(ExperimentalCoroutinesApi::class)
+@ApiStatus.Internal
 fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
   transformLatest { request ->
     if (!request.isCompleted) {
@@ -543,21 +466,44 @@ fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
     }
   }
 
+
+@OptIn(ExperimentalCoroutinesApi::class)
+inline fun <A, T> computationStateFlow(arguments: Flow<A>, crossinline computer: suspend (A) -> T): Flow<ComputedResult<T>> =
+  arguments.transformLatest { parameters ->
+    supervisorScope {
+      val req = async(start = CoroutineStart.UNDISPATCHED) {
+        computer(parameters)
+      }
+      if (!req.isCompleted) {
+        emit(ComputedResult.loading())
+      }
+
+      val toEmit = ComputedResult.compute { req.await() }
+      currentCoroutineContext().ensureActive()
+      if (toEmit != null) {
+        emit(toEmit)
+      }
+    }
+  }
+
 /**
- * Maps the flow of requests to a flow of successfully computed values
+ * Awaits the first non-canceled computation and returns the result or throws the exception
  */
-fun <T> Flow<CompletableFuture<T>>.values(): Flow<T> = mapNotNull {
-  try {
-    it.asDeferred().await()
-  }
-  catch (_: Throwable) {
-    null
-  }
-}
+@JvmName("awaitCompletedDeferred")
+@ApiStatus.Internal
+suspend fun <T> Flow<Deferred<T>>.awaitCompleted(): T =
+  mapLatest {
+    runCatching { it.await() }.also {
+      currentCoroutineContext().ensureActive()
+    }
+  }.filter {
+    it.exceptionOrNull() !is CancellationException
+  }.first().getOrThrow()
 
 /**
  * Maps values in the flow to successful results and catches and wraps any exception into a failure result.
  */
+@Deprecated("This doesn't work as we expected it to. `Flow.catch` doesn't actually prevent the flow from stopping")
 fun <T> Flow<T>.asResultFlow(): Flow<Result<T>> =
   map { Result.success(it) }.catch { emit(Result.failure(it)) }
 
@@ -570,6 +516,7 @@ fun <T, R> Flow<Result<T>>.mapCatching(mapper: suspend (T) -> R): Flow<Result<R>
 /**
  * Maps a flow or results to a flow of values from successful results. Failure results are re-thrown as exceptions.
  */
+@Deprecated("This doesn't work as we expected it to. The flow will actually stop emitting on error")
 fun <T> Flow<Result<T>>.throwFailure(): Flow<T> =
   map { it.getOrThrow() }
 

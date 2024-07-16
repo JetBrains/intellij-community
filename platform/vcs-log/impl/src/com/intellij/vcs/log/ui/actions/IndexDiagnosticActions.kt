@@ -23,7 +23,7 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import java.util.*
 import java.util.function.Supplier
 
-abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.ActionText String>) : DumbAwareAction(dynamicText) {
+internal abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.ActionText String>) : DumbAwareAction(dynamicText) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -71,7 +71,7 @@ abstract class IndexDiagnosticActionBase(dynamicText: Supplier<@NlsActions.Actio
   abstract fun getCommitsToCheck(e: AnActionEvent, logManager: VcsLogManager): List<Int>
 }
 
-class CheckSelectedCommits :
+internal class CheckSelectedCommits :
   IndexDiagnosticActionBase(VcsLogBundle.messagePointer("vcs.log.index.diagnostic.selected.action.title")) {
 
   override fun update(e: AnActionEvent, logManager: VcsLogManager) {
@@ -102,7 +102,7 @@ class CheckSelectedCommits :
   }
 }
 
-class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("vcs.log.index.diagnostic.action.title")) {
+internal class CheckOldCommits : IndexDiagnosticActionBase(VcsLogBundle.messagePointer("vcs.log.index.diagnostic.action.title")) {
 
   override fun update(e: AnActionEvent, logManager: VcsLogManager) {
     val rootsForIndexing = logManager.dataManager.index.indexingRoots

@@ -23,7 +23,7 @@ class JarTaskManifestResolver : AbstractProjectResolverExtension() {
   }
 
   private fun doPopulate(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
-    val model = resolverCtx.models.getModel(gradleModule, JarTaskManifestConfiguration::class.java) ?: return
+    val model = resolverCtx.getProjectModel(gradleModule, JarTaskManifestConfiguration::class.java) ?: return
     val moduleData = ideModule.data
     val moduleIdentityPath = moduleData.gradleIdentityPathOrNull ?: moduleData.id
     val manifestAttributes = model.projectIdentityPathToManifestAttributes[moduleIdentityPath] ?: return

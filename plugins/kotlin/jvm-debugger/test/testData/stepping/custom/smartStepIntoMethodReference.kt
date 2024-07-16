@@ -51,5 +51,3 @@ fun main() {
 fun test() {
 
 }
-
-// IGNORE_K2

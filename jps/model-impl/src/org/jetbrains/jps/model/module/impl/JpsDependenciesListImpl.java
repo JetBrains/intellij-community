@@ -26,11 +26,11 @@ import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
 
-public final class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependenciesListImpl> implements JpsDependenciesList {
+final class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependenciesListImpl> implements JpsDependenciesList {
   public static final JpsElementCollectionRole<JpsDependencyElement> DEPENDENCY_COLLECTION_ROLE =
     JpsElementCollectionRole.create(JpsElementChildRoleBase.create("dependency"));
 
-  public JpsDependenciesListImpl() {
+  JpsDependenciesListImpl() {
     super();
     myContainer.setChild(DEPENDENCY_COLLECTION_ROLE);
   }

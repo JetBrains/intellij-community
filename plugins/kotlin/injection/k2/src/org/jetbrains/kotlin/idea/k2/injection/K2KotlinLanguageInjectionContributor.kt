@@ -4,16 +4,15 @@ package org.jetbrains.kotlin.idea.k2.injection
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
-import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.idea.base.injection.InjectionInfo
 import org.jetbrains.kotlin.idea.base.injection.KotlinLanguageInjectionContributorBase
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -32,8 +31,8 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     }
 
     override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean = analyze(this) {
-        val symbol = resolveCall()?.singleFunctionCallOrNull()?.symbol
-        symbol?.callableIdIfNonLocal == CallableId(packageName, callableName)
+        val symbol = resolveToCall()?.singleFunctionCallOrNull()?.symbol
+        symbol?.callableId == CallableId(packageName, callableName)
     }
 
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()
@@ -43,7 +42,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
             null
         } else {
             analyze(callableDeclaration) {
-                val annotation = callableDeclaration.getSymbol().findAnnotation<LanguageAnnotation>() ?: return null
+                val annotation = callableDeclaration.symbol.findAnnotation<LanguageAnnotation>() ?: return null
                 injectionInfoByAnnotation(annotation)
             }
         }
@@ -55,7 +54,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     ): InjectionInfo? {
         val element = functionReference.element as? KtElement ?: return null
         return analyze(element) {
-            val functionSymbol = element.mainReference?.resolveToSymbol() as? KtFunctionLikeSymbol ?: return null
+            val functionSymbol = element.mainReference?.resolveToSymbol() as? KaFunctionSymbol ?: return null
             val parameterSymbol = if (argumentName != null) {
                 functionSymbol.valueParameters.firstOrNull { it.name == argumentName }
             } else {
@@ -71,8 +70,8 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
         }
     }
 
-    context(KtAnalysisSession)
-    private fun injectionInfoByAnnotation(injectAnnotation: KtAnnotationApplicationWithArgumentsInfo): InjectionInfo? {
+    context(KaSession)
+    private fun injectionInfoByAnnotation(injectAnnotation: KaAnnotation): InjectionInfo? {
         val languageId = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::value.name) ?: return null
         val prefix = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::prefix.name)
         val suffix = injectAnnotation.getStringValueOfArgument(LanguageAnnotation::suffix.name)
@@ -80,17 +79,17 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     }
 }
 
-context(KtAnalysisSession)
-private inline fun <reified T : Annotation> KtAnnotatedSymbol.findAnnotation(): KtAnnotationApplicationWithArgumentsInfo? =
+context(KaSession)
+private inline fun <reified T : Annotation> KaAnnotatedSymbol.findAnnotation(): KaAnnotation? =
     annotations.find { it.classId?.asFqNameString() == T::class.java.name }
 
-context(KtAnalysisSession)
-private fun KtAnnotationApplicationWithArgumentsInfo.getStringValueOfArgument(argumentName: String): String? {
+context(KaSession)
+private fun KaAnnotation.getStringValueOfArgument(argumentName: String): String? {
     val argumentValueExpression =
-        arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KtConstantAnnotationValue ?: return null
-    return when (val argumentAsConstant = argumentValueExpression.constantValue) {
-        is KtConstantValue.KtStringConstantValue -> argumentAsConstant.value
-        is KtConstantValue.KtErrorConstantValue -> error("We cannot render this argument as a constant")
-        else -> argumentAsConstant.renderAsKotlinConstant()
+        arguments.firstOrNull { it.name.asString() == argumentName }?.expression as? KaAnnotationValue.ConstantValue ?: return null
+    return when (val argumentAsConstant = argumentValueExpression.value) {
+        is KaConstantValue.StringValue -> argumentAsConstant.value
+        is KaConstantValue.ErrorValue -> error("We cannot render this argument as a constant")
+        else -> argumentAsConstant.render()
     }
 }

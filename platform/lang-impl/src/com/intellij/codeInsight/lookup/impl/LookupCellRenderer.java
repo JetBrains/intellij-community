@@ -81,6 +81,10 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     return JBUI.insets("CompletionPopup.Body.insets", JBUI.insets(4));
   }
 
+  static Insets bodyInsetsWithAdvertiser() {
+    return JBUI.insets("CompletionPopup.BodyWithAdvertiser.insets", JBUI.insets(4, 4, 3, 4));
+  }
+
   private static Insets selectionInsets() {
     Insets innerInsets = JBUI.CurrentTheme.CompletionPopup.selectionInnerInsets();
     Insets bodyInsets = bodyInsets();
@@ -707,7 +711,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       setFocusBorderAroundIcon(true);
     }
   }
-
   private final class LookupPanel extends SelectablePanel {
     boolean myUpdateExtender;
     LookupPanel() {

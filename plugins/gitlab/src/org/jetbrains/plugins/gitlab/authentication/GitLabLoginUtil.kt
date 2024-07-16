@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.authentication
 
-import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForPersistentCredentials
 import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.collaboration.auth.ui.login.TokenLoginDialog
 import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
@@ -14,11 +13,12 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.toHttpsNormalizedURI
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
+import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Component
 import javax.swing.JComponent
@@ -80,7 +80,10 @@ object GitLabLoginUtil {
     val exitState = showLoginDialog(project, parentComponent, model, title, true)
     val loginState = model.loginState.value
     if (exitState == DialogWrapper.OK_EXIT_CODE && loginState is LoginModel.LoginState.Connected) {
-      return LoginResult.Success(GitLabAccount(name = loginState.username, server = model.getServerPath()), model.token)
+      return LoginResult.Success(
+        GitLabAccount(id = account.id, name = loginState.username, server = model.getServerPath()),
+        model.token
+      )
     }
 
     return LoginResult.Failure
@@ -93,21 +96,17 @@ object GitLabLoginUtil {
     title: @NlsContexts.DialogTitle String,
     serverFieldDisabled: Boolean
   ): Int {
-    val dialog = TokenLoginDialog(project, parentComponent, model, title, model.tryGitAuthorizationSignal) {
-      val cs = this
-      TokenLoginInputPanelFactory(model).createIn(
-        cs,
-        serverFieldDisabled,
-        tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
-        errorPresenter = GitLabLoginErrorStatusPresenter(cs, model),
-        footer = {
-          addWarningForPersistentCredentials(
-            cs,
-            service<GitLabAccountManager>().canPersistCredentials,
-            ::panel
-          )
-        }
-      )
+    val scopeProvider = project.service<GitLabPluginProjectScopeProvider>()
+    val dialog = scopeProvider.constructDialog("GitLab token login dialog") {
+      TokenLoginDialog(project, this, parentComponent, model, title, model.tryGitAuthorizationSignal) {
+        val cs = this
+        TokenLoginInputPanelFactory(model).createIn(
+          cs,
+          serverFieldDisabled,
+          tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
+          errorPresenter = GitLabLoginErrorStatusPresenter(cs, model)
+        )
+      }
     }
     dialog.showAndGet()
 
@@ -133,7 +132,7 @@ object GitLabLoginUtil {
   }
 
   fun isAccountUnique(accounts: Collection<GitLabAccount>, server: GitLabServerPath, username: String): Boolean =
-    accounts.none { it.server == server && it.name == username }
+    accounts.none { it.server.toHttpsNormalizedURI() == server.toHttpsNormalizedURI() && it.name == username }
 }
 
 sealed interface LoginResult {

@@ -8,6 +8,7 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
 import git4idea.GitBranch
+import git4idea.GitReference
 import git4idea.repo.GitRepository
 import javax.swing.Icon
 import javax.swing.tree.TreeModel
@@ -19,6 +20,7 @@ interface GitBranchesTreeModel : TreeModel {
 
   fun getPreferredSelection(): TreePath?
 
+  fun updateTags()
   fun filterBranches(matcher: MinusculeMatcher? = null) {}
 
   object TreeRoot : PathElementIdProvider {
@@ -30,15 +32,16 @@ interface GitBranchesTreeModel : TreeModel {
                                  val repository: GitRepository? = null) : PathElementIdProvider {
     override fun getPathElementId(): String = type.name + "/" + prefix.toString()
   }
-  data class BranchTypeUnderRepository(val repository: GitRepository, val type: BranchType)
+  data class RefTypeUnderRepository(val repository: GitRepository, val type: BranchType)
 
   data class TopLevelRepository(val repository: GitRepository): PresentableNode {
     override fun getPresentableText(): String = DvcsUtil.getShortRepositoryName(repository)
   }
 
-  data class BranchUnderRepository(val repository: GitRepository, val branch: GitBranch): PresentableNode {
-    override fun getPresentableText(): String = branch.name
+  data class RefUnderRepository(val repository: GitRepository, val ref: GitReference): PresentableNode {
+    override fun getPresentableText(): String = ref.name
   }
+
   object RecentNode : BranchType, PathElementIdProvider {
     const val NAME = "RECENT"
     override fun getName(): String = NAME
@@ -61,8 +64,8 @@ interface GitBranchesTreeModel : TreeModel {
     val userValue = node ?: return false
     return (userValue is GitRepository && this !is GitBranchesTreeMultiRepoFilteringModel) ||
            userValue is TopLevelRepository ||
-           userValue is GitBranch ||
-           userValue is BranchUnderRepository ||
+           userValue is GitReference ||
+           userValue is RefUnderRepository ||
            (userValue is PopupFactoryImpl.ActionItem && userValue.isEnabled)
   }
 }

@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
  * Tests:
  * [org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated.CanSealedSubClassBeObject]
  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ConvertSealedSubClassToObject]
- * [org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.Fe10BindingLocalInspectionTestGenerated.ConvertSealedSubClassToObject]
  */
 class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {

@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
 
-public class TraitMethodImplementor implements MethodImplementor {
+public final class TraitMethodImplementor implements MethodImplementor {
   @Override
   public PsiMethod @NotNull [] createImplementationPrototypes(PsiClass inClass, PsiMethod method) throws IncorrectOperationException {
     if (!(inClass instanceof GrTypeDefinition && method instanceof GrTraitMethod)) return PsiMethod.EMPTY_ARRAY;

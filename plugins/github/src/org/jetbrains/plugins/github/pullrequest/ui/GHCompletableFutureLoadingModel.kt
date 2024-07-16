@@ -9,6 +9,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 
+@Deprecated("Deprecated with migration to coroutines and view models")
 class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
   : GHSimpleLoadingModel<T>(), Disposable {
 

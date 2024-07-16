@@ -10,19 +10,20 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -38,7 +39,7 @@ abstract class KtGenerateMembersHandler(
     final override val toImplement: Boolean
 ) : AbstractGenerateMembersHandler<KtClassMember>() {
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun generateMembers(
         editor: Editor,
         classOrObject: KtClassOrObject,
@@ -47,7 +48,7 @@ abstract class KtGenerateMembersHandler(
     ) {
         // Using allowAnalysisOnEdt here because we don't want to pre-populate all possible textual overrides before user selection.
         val (commands, insertedBlocks) = allowAnalysisOnEdt {
-            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 val entryMembers = analyze(classOrObject) {
                     createMemberEntries(editor, classOrObject, selectedElements, copyDoc)
@@ -86,7 +87,8 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun createMemberEntries(
         editor: Editor,
         currentClass: KtClassOrObject,
@@ -164,10 +166,10 @@ abstract class KtGenerateMembersHandler(
      * callable symbol for an overridable member that the user has picked to override (or implement), and the value is the stub
      * implementation for the chosen symbol.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
 private fun getMembersOrderedByRelativePositionsInSuperTypes(
         currentClass: KtClassOrObject,
-        newMemberSymbolsAndGeneratedPsi: Map<KtCallableSymbol, KtCallableDeclaration>
+        newMemberSymbolsAndGeneratedPsi: Map<KaCallableSymbol, KtCallableDeclaration>
     ): List<MemberEntry> {
 
         // This doubly linked list tracks the preferred ordering of members.
@@ -184,8 +186,8 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
             for (existingDeclaration in existingDeclarations) {
                 val node: DoublyLinkedNode<MemberEntry> = DoublyLinkedNode(MemberEntry.ExistingEntry(existingDeclaration))
                 sentinelTailNode.prepend(node)
-                val callableSymbol = existingDeclaration.getSymbol() as? KtCallableSymbol ?: continue
-                for (overriddenSymbol in callableSymbol.getAllOverriddenSymbols()) {
+                val callableSymbol = existingDeclaration.symbol as? KaCallableSymbol ?: continue
+                for (overriddenSymbol in callableSymbol.allOverriddenSymbols) {
                     put(overriddenSymbol.psi ?: continue, node)
                 }
             }
@@ -195,7 +197,7 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
         // `KtMemberScope` because the latter does not guarantee members are traversed in the original order. For example the
         // FIR implementation groups overloaded functions together.
         outer@ for ((selectedSymbol, generatedPsi) in newMemberSymbolsAndGeneratedPsi) {
-            val superSymbol = selectedSymbol.unwrapFakeOverrides
+            val superSymbol = selectedSymbol.fakeOverrideOriginal
             val superPsi = superSymbol.psi
             if (superPsi == null) {
                 // This normally should not happen, but we just try to play safe here.
@@ -344,12 +346,13 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
     }
 
     companion object {
-        val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+        @KaExperimentalApi
+        val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             annotationRenderer = annotationRenderer.with {
-                annotationFilter = KtRendererAnnotationsFilter.NONE
+                annotationFilter = KaRendererAnnotationsFilter.NONE
             }
             modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD) }
+                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD) }
             }
         }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
@@ -64,11 +64,9 @@ class KotlinLineBreakpoint(
         return false
     }
 
-    override fun getMethodName(): String? {
-        ReadAction.compute<String, Throwable> {
+    override fun computeMethodName(): String? {
+        return ReadAction.compute<String, Throwable> {
             sourcePosition?.elementAt?.getNonStrictParentOfType<KtElement>()?.containingNonLocalDeclaration()?.name
-        }?.let { return it }
-
-        return super.getMethodName()
+        } ?: super.computeMethodName()
     }
 }

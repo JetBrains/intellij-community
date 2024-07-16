@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -27,9 +27,8 @@ public final class PyToxConfigurationType implements ConfigurationType {
     return "reference.dialogs.rundebug.Tox";
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return PyBundle.message("runcfg.tox");
   }
 
@@ -43,9 +42,8 @@ public final class PyToxConfigurationType implements ConfigurationType {
     return PythonIcons.Python.PythonTests;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 

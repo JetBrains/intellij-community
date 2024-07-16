@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
@@ -31,6 +31,7 @@ open class BasicFileReportGenerator(
         onChange = "changeLookupOrder()"
       }
       codeBlocks(text, sessions, maxLookupOrder)
+      script { src = "../res/diff.js" }
       script { src = "../res/script.js" }
     }
   }
@@ -87,8 +88,8 @@ open class BasicFileReportGenerator(
     }
   }
 
-  private fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
-    createHTML().span("completion ${
+  protected open fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
+    createHTML().span("session ${
       ReportColors.getColor(
         session,
         HtmlColorClasses,

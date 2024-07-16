@@ -19,7 +19,7 @@ import java.util.Set;
  * This manager processes requests to filter coverage result by test (and restore default).
  */
 @Service(Service.Level.PROJECT)
-public final class SubCoverageManager {
+final class SubCoverageManager {
   private static final Logger LOG = Logger.getInstance(SubCoverageManager.class);
   private boolean mySubCoverageIsActive;
 

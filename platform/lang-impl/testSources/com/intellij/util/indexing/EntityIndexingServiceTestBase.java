@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.WriteAction;
@@ -9,6 +9,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -40,7 +41,7 @@ public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCas
 
   @NotNull
   protected VirtualFileUrl getUrl(@NotNull VirtualFile file) {
-    return fileUrlManager.getOrCreateFromUri(file.getUrl());
+    return fileUrlManager.getOrCreateFromUrl(file.getUrl());
   }
 
   @NotNull
@@ -59,7 +60,7 @@ public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCas
     try {
       List<EntityChange<?>> changes = new ArrayList<>();
       for (VersionedStorageChange event : listener.myEvents) {
-        Iterator<EntityChange<?>> iterator = event.getAllChanges().iterator();
+        Iterator<EntityChange<?>> iterator = ((VersionedStorageChangeInternal)event).getAllChanges().iterator();
         while (iterator.hasNext()) {
           EntityChange<?> next = iterator.next();
           changes.add(next);

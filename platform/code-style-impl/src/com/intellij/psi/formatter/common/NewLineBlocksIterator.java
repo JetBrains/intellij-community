@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -15,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+@ApiStatus.Internal
 public final class NewLineBlocksIterator implements Iterator<Block> {
   private final ProgressIndicator myIndicator;
   private final Document myDocument;

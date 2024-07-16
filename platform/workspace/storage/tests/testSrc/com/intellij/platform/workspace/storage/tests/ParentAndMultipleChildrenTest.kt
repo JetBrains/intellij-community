@@ -193,7 +193,7 @@ class ParentAndMultipleChildrenTest {
     target addEntity ParentMultipleEntity("Parent", MySource)
     val source = createBuilderFrom(target)
     val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
-    source.modifyEntity(parentToModify) {
+    source.modifyParentMultipleEntity(parentToModify) {
       this.children = listOf(
         ChildMultipleEntity("child1", MySource),
         ChildMultipleEntity("child2", MySource),
@@ -207,7 +207,7 @@ class ParentAndMultipleChildrenTest {
     target addEntity ParentMultipleEntity("Parent", MySource)
     val source = createBuilderFrom(target)
     val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
-    source.modifyEntity(parentToModify) {
+    source.modifyParentMultipleEntity(parentToModify) {
       this.children = listOf(
         ChildMultipleEntity("child1", MySource),
         ChildMultipleEntity("child2", MySource),
@@ -222,7 +222,7 @@ class ParentAndMultipleChildrenTest {
 
     val source = createBuilderFrom(target)
     val childToModify = source.toSnapshot().entities(XChildWithOptionalParentEntity::class.java).single()
-    source.modifyEntity(childToModify) {
+    source.modifyXChildWithOptionalParentEntity(childToModify) {
       this.optionalParent = XParentEntity("parent", MySource)
     }
   }

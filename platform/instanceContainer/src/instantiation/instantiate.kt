@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.instantiation
 
 import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
 import kotlinx.coroutines.*
@@ -56,11 +56,16 @@ suspend fun <T> instantiate(
 private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType>): Pair<MethodType, MethodHandle> {
   val lookup = MethodHandles.privateLookupIn(instanceClass, MethodHandles.lookup())
   for (signature in signatures) {
-    runCatching {
-      return Pair(
-        signature,
-        lookup.findConstructor(instanceClass, signature)
-      )
+    try {
+      return Pair(signature, lookup.findConstructor(instanceClass, signature))
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (_: NoSuchMethodException) {
+    }
+    catch (e: Throwable) {
+      throw e
     }
   }
   throw InstantiationException("Class '$instanceClass' does not define any of supported signatures '$signatures'")
@@ -287,7 +292,7 @@ private suspend fun <T> instantiate(
       .toArray(ArrayUtilRt.EMPTY_OBJECT_ARRAY)
       .also { args ->
         replaceScopeMarkerWithScope(args) {
-          parentScope.namedChildScope(instanceClass.name)
+          parentScope.childScope(instanceClass.name)
         }
       }
   }

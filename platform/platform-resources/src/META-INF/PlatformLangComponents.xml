@@ -13,6 +13,8 @@
       testServiceImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
       headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
     />
+    <uiDataRule implementation="com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$DataRule"/>
+
     <projectService
       serviceInterface="com.intellij.problems.WolfTheProblemSolver"
       serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
@@ -23,11 +25,12 @@
       serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer"
       serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl"
     />
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerStatusBarUpdater"/>
 
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
-      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge" preload="true"/>
+      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge"/>
     <workspace.bridgeInitializer
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
@@ -108,6 +111,10 @@
 
     <ideEventQueueDispatcher implementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyEventDispatcher"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.project.configuration.HeadlessLogging$HeadlessLoggingService"
+                        serviceImplementation="com.intellij.openapi.project.configuration.EmptyLoggingService"
+                        headlessImplementation="com.intellij.openapi.project.configuration.HeadlessLoggingServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
                         serviceImplementation="com.intellij.openapi.client.ClientAppSessionsManager"/>
     <projectService serviceInterface="com.intellij.openapi.client.ClientSessionsManager"
@@ -137,7 +144,11 @@
 
     <applicationService
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
-      serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl"/>
+      serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />
+
+    <applicationService
+      serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo"
+      serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingIndentGuideInfo" />
 
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
 
@@ -153,6 +164,9 @@
     -->
 
     <applicationService serviceImplementation="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentService" serviceImplementation="com.intellij.openapi.editor.impl.inspector.InspectionsSettingContentServiceImpl"/>
+
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -197,6 +211,10 @@
               topic="com.intellij.ide.ui.LafManagerListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetUpdateListener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
+
+    <listener class="com.intellij.openapi.project.configuration.HeadlessProgressListener"
+              topic="com.intellij.openapi.progress.ProgressManagerListener"
+              activeInHeadlessMode="true"/>
 
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeEditorActionHandler"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
@@ -268,8 +286,5 @@
 
     <listener class="com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener"
               topic="com.intellij.openapi.project.ModuleListener"/>
-
-    <listener class="com.intellij.formatting.visualLayer.VisualFormattingRestartingListener"
-              topic="com.intellij.psi.codeStyle.CodeStyleSettingsListener"/>
   </projectListeners>
 </idea-plugin>

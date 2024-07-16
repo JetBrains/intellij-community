@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.CompilerMessageImpl;
@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-class AutoMakeMessageHandler extends DefaultMessageHandler {
+final class AutoMakeMessageHandler extends DefaultMessageHandler {
   private static final Key<Notification> LAST_AUTO_MAKE_NOTIFICATION = Key.create("LAST_AUTO_MAKE_NOTIFICATION");
   private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
   private final Project myProject;
@@ -152,7 +152,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       descr = failure.hasStacktrace()? failure.getStacktrace() : "";
     }
     final String msg = JavaCompilerBundle.message("notification.compiler.auto.build.failure", descr);
-    CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO).notify(myProject);
+    CompilerManager.getNotificationGroup().createNotification(msg, MessageType.INFO).notify(myProject);
     ProblemsView.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, msg), sessionId);
   }
 
@@ -178,7 +178,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       }
     }
     if (statusMessage != null) {
-      final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
+      final Notification notification = CompilerManager.getNotificationGroup().createNotification(statusMessage, MessageType.INFO);
       if (!myProject.isDisposed()) {
         notification.notify(myProject);
       }

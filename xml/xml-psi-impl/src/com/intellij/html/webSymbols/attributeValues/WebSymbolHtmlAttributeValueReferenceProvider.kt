@@ -3,9 +3,9 @@ package com.intellij.html.webSymbols.attributeValues
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
@@ -27,24 +27,21 @@ class WebSymbolHtmlAttributeValueReferenceProvider : WebSymbolReferenceProvider<
   override fun getSymbol(psiElement: XmlAttributeValue): WebSymbol? {
     val attribute = psiElement.parentOfType<XmlAttribute>()
     val attributeDescriptor = attribute?.descriptor?.asSafely<WebSymbolAttributeDescriptor>() ?: return null
-    val queryExecutor = WebSymbolsQueryExecutorFactory.create(attribute)
-    val queryScope = getHtmlAttributeValueQueryScope(queryExecutor, attribute) ?: return null
     val type = attributeDescriptor.symbol.attributeValue
                  ?.takeIf { it.kind == null || it.kind == WebSymbolHtmlAttributeValue.Kind.PLAIN }
                  ?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
                ?: return null
     val name = psiElement.value.takeIf { it.isNotEmpty() } ?: return null
+    val queryExecutor = WebSymbolsQueryExecutorFactory.create(psiElement)
 
     return if (type == Type.ENUM)
-      if (queryExecutor.runCodeCompletionQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES,
-                                               "", 0, scope = queryScope)
+      if (queryExecutor.runCodeCompletionQuery(WebSymbol.HTML_ATTRIBUTE_VALUES, "", 0)
           .filter { !it.completeAfterInsert }
           .none { it.name == name })
         null
       else
         queryExecutor
-          .runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES,
-                             name, scope = queryScope)
+          .runNameMatchQuery(WebSymbol.HTML_ATTRIBUTE_VALUES.withName(name))
           .takeIf {
             it.isNotEmpty()
             && !it.hasOnlyExtensions()
@@ -52,8 +49,7 @@ class WebSymbolHtmlAttributeValueReferenceProvider : WebSymbolReferenceProvider<
           ?.asSingleSymbol()
     else
       queryExecutor
-        .runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTE_VALUES,
-                           name, scope = queryScope)
+        .runNameMatchQuery(WebSymbol.HTML_ATTRIBUTE_VALUES.withName(name))
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()
@@ -61,19 +57,10 @@ class WebSymbolHtmlAttributeValueReferenceProvider : WebSymbolReferenceProvider<
         ?.asSingleSymbol()
       ?: WebSymbolMatch.create(
         name,
-        listOf(WebSymbolNameSegment(0, name.length, problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL)),
+        listOf(WebSymbolNameSegment.create(0, name.length, problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL)),
         WebSymbol.NAMESPACE_HTML,
         WebSymbol.KIND_HTML_ATTRIBUTE_VALUES,
         WebSymbolOrigin.empty()
       )
   }
-}
-
-internal fun getHtmlAttributeValueQueryScope(queryExecutor: WebSymbolsQueryExecutor, attribute: XmlAttribute): List<WebSymbolsScope>? {
-  val element = attribute.parent ?: return null
-  val attributeDescriptor = attribute.descriptor?.asSafely<WebSymbolAttributeDescriptor>()
-                            ?: return null
-  val elementSymbols = (element.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
-                       ?: queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, element.name)
-  return elementSymbols + attributeDescriptor.symbol
 }

@@ -86,14 +86,11 @@ fun getReferencesForDirectUsagesOfVariable(element: PsiElement, targetHint: PsiE
   val uParentVariable = getUsageVariableTargetForInitializer(uElement) ?: return PsiReference.EMPTY_ARRAY
 
   val registrar = ReferenceProvidersRegistry.getInstance().getRegistrar(Language.findLanguageByID("UAST")!!)
-  val providerInfos = (registrar as PsiReferenceRegistrarImpl).getPairsByElement(originalElement,
-                                                                                 PsiReferenceService.Hints(targetHint, null))
+  val providers = (registrar as PsiReferenceRegistrarImpl).getPsiReferenceProvidersByElement(originalElement,
+                                                                                             PsiReferenceService.Hints(targetHint, null))
 
   // by-usage providers must implement acceptsTarget correctly, we rely on fact that they accept targetHint
-  val suitableProviders = providerInfos.asSequence()
-    .map { it.provider }
-    .filterIsInstance<UastReferenceByUsageAdapter>()
-    .toList()
+  val suitableProviders = providers.filterIsInstance<UastReferenceByUsageAdapter>()
 
   val usages = getDirectVariableUsagesWithNonLocal(uParentVariable)
   for (usage in usages) {

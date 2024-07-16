@@ -51,11 +51,11 @@ public final class JavaPsiSwitchUtil {
         }
       }
     }
-    return isEnhancedSwitch(cases, isClassSelectorType(selectorType));
+    return isEnhancedSwitch(cases, selectorType);
   }
 
-  public static boolean isEnhancedSwitch(@NotNull List<? extends PsiCaseLabelElement> labelElements, boolean selectorIsTypeOrClass) {
-    if (selectorIsTypeOrClass) return true;
+  public static boolean isEnhancedSwitch(@NotNull List<? extends PsiCaseLabelElement> labelElements, @NotNull PsiType selectorType) {
+    if (isEnhancedSelectorType(selectorType)) return true;
     return ContainerUtil.exists(labelElements, st -> st instanceof PsiPattern || isNullType(st));
   }
 
@@ -64,7 +64,15 @@ public final class JavaPsiSwitchUtil {
     return element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType());
   }
 
-  private static boolean isClassSelectorType(@NotNull PsiType type) {
+  private static boolean isEnhancedSelectorType(@NotNull PsiType type) {
+    PsiPrimitiveType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(type);
+    if (unboxedType != null &&
+        (unboxedType.equals(PsiTypes.booleanType()) ||
+         unboxedType.equals(PsiTypes.floatType()) ||
+         unboxedType.equals(PsiTypes.doubleType()) ||
+         unboxedType.equals(PsiTypes.longType()))) {
+      return true;
+    }
     if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.INT_RANK) return false;
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) return false;
     PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);

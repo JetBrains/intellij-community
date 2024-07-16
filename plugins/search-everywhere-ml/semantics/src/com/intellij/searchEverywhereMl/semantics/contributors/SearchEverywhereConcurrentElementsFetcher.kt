@@ -2,9 +2,13 @@ package com.intellij.searchEverywhereMl.semantics.contributors
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.MergeableElement
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereResultsNotifier
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.searchEverywhereMl.semantics.SemanticSearchBundle
 import com.intellij.searchEverywhereMl.semantics.providers.StreamSemanticItemsProvider
 import com.intellij.util.Processor
 import com.intellij.util.TimeoutUtil
@@ -14,7 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : Any> {
+interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : Any>: SearchEverywhereResultsNotifier {
   val itemsProvider: StreamSemanticItemsProvider<I>
 
   val useReadAction: Boolean
@@ -34,6 +38,8 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
                                 durationMs: Long): () -> FoundItemDescriptor<E>?
 
   fun ScoredText.findPriority(): DescriptorPriority
+
+  fun checkScopeIsDefaultAndAutoSet(): Boolean = true
 
   @RequiresBackgroundThread
   fun fetchElementsConcurrently(pattern: String,
@@ -62,6 +68,10 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
         val semanticMatches = itemsProvider.searchIfEnabled(pattern, priorityThresholds[DescriptorPriority.LOW])
         if (semanticMatches.isEmpty()) return@launch
         standardSearchJob.join()
+        val noStandardResults = knownItems.isEmpty()
+        // Allow the scope to change automatically:
+        if (noStandardResults && checkScopeIsDefaultAndAutoSet()) return@launch
+        var sentNotification = false
 
         suspend fun iterate() {
           for (priority in ORDERED_PRIORITIES) {
@@ -80,6 +90,10 @@ interface SearchEverywhereConcurrentElementsFetcher<I : MergeableElement, E : An
                 ensureActive()
                 val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
                 mutex.withLock { prepareDescriptor() }?.let {
+                  if (noStandardResults && !sentNotification) {
+                    notifyCallback?.accept(SemanticSearchBundle.getMessage("search.everywhere.no.exact.matches"))
+                    sentNotification = true
+                  }
                   consumer.process(it)
                   foundItemsCount++
                 }

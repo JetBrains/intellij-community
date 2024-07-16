@@ -471,6 +471,7 @@ public final class DiffDrawUtil {
     private boolean hideStripeMarkers = false;
     private boolean hideGutterMarkers = false;
     private boolean alignedSides = false;
+    private boolean clearThinLineBetweenGutterAndEditor = false;
 
     private int layerPriority = 0; // higher number wins
 
@@ -552,6 +553,22 @@ public final class DiffDrawUtil {
     }
 
     /**
+     * When an editor has fordings enabled, the right side of the gutter is rendered in the editor.
+     * Visually, it looks like the gutter overlaps with the editor and there is a thin line where this happens.
+     * See {@link EditorGutterComponentEx#getWhitespaceSeparatorOffset}.
+     * This option instructs diff gutter renderer to fill this thin area using the default editor background color
+     * (as if no diff highlighters were in range).
+     * <p>
+     * For example, this can be used to make rendering consistent
+     * with {@code RangeHighlighter}s that do not paint in the gutter area.
+     */
+    @NotNull
+    public LineHighlighterBuilder withClearThinLineBetweenGutterAndEditor(boolean clear) {
+      this.clearThinLineBetweenGutterAndEditor = clear;
+      return this;
+    }
+
+    /**
      * @see #setupLayeredRendering
      */
     @NotNull
@@ -607,7 +624,7 @@ public final class DiffDrawUtil {
       if (!hideGutterMarkers) {
         highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(highlighter, type, editorMode, gutterMode,
                                                                      hideWithoutLineNumbers, isEmptyRange, isFirstLine, isLastLine,
-                                                                     alignedSides));
+                                                                     alignedSides, clearThinLineBetweenGutterAndEditor));
       }
 
       if (isEmptyRange && !alignedSides) {

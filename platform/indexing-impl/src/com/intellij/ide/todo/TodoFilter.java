@@ -8,6 +8,7 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,7 @@ public final class TodoFilter implements Cloneable {
     myTodoPatterns = new HashSet<>();
   }
 
+  @Internal
   public TodoFilter(@NotNull Element element, @NotNull List<TodoPattern> patterns) {
     setName("");
     myTodoPatterns = new HashSet<>();

@@ -248,11 +248,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun titledRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
-    return createBlockRow(title, true, init)
+    return createBlockRow(title, init)
   }
 
-  private fun createBlockRow(@NlsContexts.Separator title: String?, isSeparated: Boolean, init: Row.() -> Unit): Row {
-    val parentRow = createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
+  private fun createBlockRow(@NlsContexts.Separator title: String?, init: Row.() -> Unit): Row {
+    val parentRow = createChildRow(indent = indent, title = title, isSeparated = true, incrementsIndent = true)
     parentRow.init()
     val result = parentRow.createChildRow()
     result.internalPlaceholder()
@@ -588,8 +588,3 @@ private val JComponent.origin: JComponent
       else -> this
     }
   }
-
-private fun Row.attachSubRowsEnabled(component: AbstractButton) {
-  subRowsEnabled = component.selected()
-  component.selected.addListener { subRowsEnabled = it }
-}

@@ -40,7 +40,8 @@ public final class LogFilesManager {
           }
 
           final Set<String> oldPaths = logFile.getPaths();
-          final Set<String> newPaths = logFile.getOptions().getPaths(); // should not be called in UI thread
+          LogFileOptions options = logFile.getOptions();
+          final Set<String> newPaths = LogFilesCollectorKt.collectLogPaths(options.getPathPattern(), options.isShowAll()); // should not be called in UI thread
           logFile.setPaths(newPaths);
 
           final Set<String> obsoletePaths = new HashSet<>(oldPaths);
@@ -52,7 +53,7 @@ public final class LogFilesManager {
                 return;
               }
 
-              addConfigurationConsoles(logFile.getOptions(), file -> !oldPaths.contains(file), newPaths, logFile.getConfiguration());
+              addConfigurationConsoles(options, file -> !oldPaths.contains(file), newPaths, logFile.getConfiguration());
               for (String each : obsoletePaths) {
                 myManager.removeLogConsole(each);
               }

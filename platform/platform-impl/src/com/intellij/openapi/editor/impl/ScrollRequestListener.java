@@ -3,9 +3,10 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-
+@ApiStatus.Internal
 public interface ScrollRequestListener {
   void scrollRequested(@NotNull LogicalPosition targetPosition, @NotNull ScrollType scrollType);
 }

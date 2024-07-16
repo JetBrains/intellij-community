@@ -32,7 +32,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.impl.source.tree.injected.changesHandler.innerRange
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP

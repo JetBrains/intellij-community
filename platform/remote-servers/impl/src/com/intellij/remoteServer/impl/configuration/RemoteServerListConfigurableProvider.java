@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -34,8 +34,7 @@ public final class RemoteServerListConfigurableProvider extends ConfigurableProv
     return new RemoteServerListConfigurable(RemoteServersManager.getInstance(), getServerTypesIncludedInList(), null);
   }
 
-  @NotNull
-  private static List<ServerType<?>> getServerTypesIncludedInList() {
+  private static @NotNull List<ServerType<?>> getServerTypesIncludedInList() {
     Set<String> includedTypes = IncludeServerType.EP_NAME.getExtensionList().stream().map(type -> type.myServerType).collect(Collectors.toSet());
     return ContainerUtil.filter(ServerType.EP_NAME.getExtensionList(), type -> includedTypes.contains(type.getClass().getName()));
   }

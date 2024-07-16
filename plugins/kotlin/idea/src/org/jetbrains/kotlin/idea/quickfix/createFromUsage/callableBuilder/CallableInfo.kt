@@ -185,7 +185,8 @@ abstract class CallableInfo(
     val possibleContainers: List<KtElement>,
     val typeParameterInfos: List<TypeInfo>,
     val isForCompanion: Boolean = false,
-    val modifierList: KtModifierList? = null
+    val modifierList: KtModifierList? = null,
+    val annotations: List<KtAnnotationEntry> = emptyList()
 ) {
     abstract val kind: CallableKind
     abstract val parameterInfos: List<ParameterInfo>
@@ -208,8 +209,9 @@ class FunctionInfo(
     typeParameterInfos: List<TypeInfo> = Collections.emptyList(),
     isForCompanion: Boolean = false,
     modifierList: KtModifierList? = null,
-    val preferEmptyBody: Boolean = false
-) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList) {
+    val preferEmptyBody: Boolean = false,
+    annotations: List<KtAnnotationEntry> = emptyList()
+) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList, annotations) {
     override val kind: CallableKind get() = CallableKind.FUNCTION
 
     override fun copy(
@@ -224,7 +226,8 @@ class FunctionInfo(
         parameterInfos,
         typeParameterInfos,
         isForCompanion,
-        modifierList
+        modifierList,
+        annotations = annotations
     )
 }
 
@@ -258,8 +261,10 @@ class ConstructorInfo(
     val isPrimary: Boolean = false,
     modifierList: KtModifierList? = null,
     val withBody: Boolean = false,
-    val annotations: List<KtAnnotationEntry> = emptyList()
-) : CallableInfo("", TypeInfo.Empty, TypeInfo.Empty, Collections.emptyList(), Collections.emptyList(), false, modifierList = modifierList) {
+    annotations: List<KtAnnotationEntry> = emptyList()
+) : CallableInfo("", TypeInfo.Empty, TypeInfo.Empty, Collections.emptyList(), Collections.emptyList(),
+                 false, modifierList = modifierList,
+                 annotations = annotations) {
     override val kind: CallableKind get() = CallableKind.CONSTRUCTOR
 
     override fun copy(
@@ -279,10 +284,10 @@ class PropertyInfo(
     val isLateinitPreferred: Boolean = false,
     val isConst: Boolean = false,
     isForCompanion: Boolean = false,
-    val annotations: List<KtAnnotationEntry> = emptyList(),
+    annotations: List<KtAnnotationEntry> = emptyList(),
     modifierList: KtModifierList? = null,
     val initializer: KtExpression? = null
-) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList) {
+) : CallableInfo(name, receiverTypeInfo, returnTypeInfo, possibleContainers, typeParameterInfos, isForCompanion, modifierList, annotations) {
     override val kind: CallableKind get() = CallableKind.PROPERTY
     override val parameterInfos: List<ParameterInfo> get() = Collections.emptyList()
 

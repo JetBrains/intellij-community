@@ -12,18 +12,23 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUtil.createTimelineItem
@@ -32,9 +37,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineIte
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineThreadComponentFactory
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
+import org.jetbrains.plugins.github.ui.util.handleGithubHyperlink
 import javax.swing.JComponent
 
-class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewModel)
+class GHPRTimelineItemComponentFactory(private val project: Project,
+                                       private val timelineVm: GHPRTimelineViewModel)
   : (CoroutineScope, GHPRTimelineItem) -> JComponent {
 
   private val avatarIconsProvider: GHAvatarIconsProvider = timelineVm.avatarIconsProvider
@@ -42,12 +50,12 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
   private val ghostUser: GHUser = timelineVm.ghostUser
   private val prAuthor: GHActor? = timelineVm.detailsVm.details.value.result?.getOrNull()?.author
 
-  private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(htmlImageLoader, avatarIconsProvider, ghostUser)
+  private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(timelineVm)
 
   override fun invoke(cs: CoroutineScope, item: GHPRTimelineItem): JComponent = when (item) {
     is GHPRTimelineItem.Review -> cs.createComponent(item)
     is GHPRTimelineItem.Comment -> cs.createComponent(item)
-    is GHPRTimelineItem.Commits -> createComponent(item.commits)
+    is GHPRTimelineItem.Commits -> createComponent(project, item.commits)
     is GHPRTimelineItem.Event -> try {
       eventComponentFactory.createComponent(item.event)
     }
@@ -61,7 +69,7 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
     }
   }
 
-  private fun createComponent(commits: List<GHPullRequestCommitShort>): JComponent {
+  private fun createComponent(project: Project, commits: List<GHPullRequestCommitShort>): JComponent {
     val commitsPanels = commits.asSequence()
       .map { it.commit }
       .map {
@@ -70,7 +78,7 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
                     .children(
                       HtmlChunk.link("$COMMIT_HREF_PREFIX${it.oid}", it.abbreviatedOid),
                       HtmlChunk.nbsp(),
-                      HtmlChunk.raw(it.messageHeadlineHTML)
+                      HtmlChunk.raw(it.messageHeadline.convertToHtml(project))
                     ))
 
         val author = it.author
@@ -90,11 +98,13 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
       }.map { text ->
         SimpleHtmlPane(addBrowserListener = false).apply {
           setHtmlBody(text)
-          onHyperlinkActivated {
-            val href = it.description
+          onHyperlinkActivated { e ->
+            val href = e.description
             if (href.startsWith(COMMIT_HREF_PREFIX)) {
               timelineVm.showCommit(href.removePrefix(COMMIT_HREF_PREFIX))
+              return@onHyperlinkActivated
             }
+            handleGithubHyperlink(e, timelineVm::openPullRequestInfoAndTimeline)
           }
         }
       }.fold(VerticalListPanel(4)) { panel, commitPane ->
@@ -122,9 +132,7 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
 
   private fun CoroutineScope.createComponent(comment: GHPRTimelineCommentViewModel): JComponent {
     val cs = this@createComponent
-    val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader).apply {
-      bindTextIn(cs, comment.bodyHtml)
-    }
+    val textPane = createHtmlPane(comment.bodyHtml)
     val content = EditableComponentFactory.create(cs, textPane, comment.editVm) {
       val actions = createEditActionsConfig(it)
       val editor = CodeReviewCommentTextFieldFactory.createIn(this, it, actions)
@@ -160,17 +168,18 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
 
   private fun CoroutineScope.createComponent(review: GHPRTimelineReviewViewModel): JComponent {
     val cs = this@createComponent
-    val textPane = SimpleHtmlPane(customImageLoader = htmlImageLoader).apply {
-      bindTextIn(cs, review.bodyHtml)
-    }
+    val textPane = createHtmlPane(review.bodyHtml)
     val content = EditableComponentFactory.wrapTextComponent(cs, textPane, review.editVm)
     val contentPanel = VerticalListPanel().apply {
       add(content)
       add(createReviewStatus(review))
     }
     val actionsPanel = HorizontalListPanel(8).apply {
-      if (review.canEdit) add(CodeReviewCommentUIUtil.createEditButton {
+      add(CodeReviewCommentUIUtil.createEditButton {
         review.editBody()
+      }.apply {
+        bindVisibilityIn(cs, review.canEdit)
+        bindDisabledIn(cs, review.isBusy)
       })
     }
     val reviewItem = createTimelineItem(avatarIconsProvider, review.author, review.createdAt, contentPanel, actionsPanel)
@@ -194,6 +203,12 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
       }
     }
   }
+
+  private fun CoroutineScope.createHtmlPane(text: Flow<@Nls String>) =
+    SimpleHtmlPane(customImageLoader = htmlImageLoader, addBrowserListener = false).apply {
+      addGithubHyperlinkListener(timelineVm::openPullRequestInfoAndTimeline)
+      bindTextIn(this@createHtmlPane, text)
+    }
 
   private fun createReviewStatus(review: GHPRTimelineReviewViewModel): JComponent {
     val stateText = when (review.state) {

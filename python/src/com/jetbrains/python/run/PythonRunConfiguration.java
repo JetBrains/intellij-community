@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
@@ -46,7 +46,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
   private boolean myShowCommandLineAfterwards = false;
   private boolean myEmulateTerminal = false;
   private boolean myModuleMode = false;
-  @NotNull private String myInputFile = "";
+  private @NotNull String myInputFile = "";
   private boolean myRedirectInput = false;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
@@ -68,7 +68,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) throws ExecutionException {
     return new PythonScriptCommandLineState(this, env);
   }
 
@@ -245,9 +245,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
     myModuleMode = moduleMode;
   }
 
-  @NotNull
   @Override
-  public String getInputFile() {
+  public @NotNull String getInputFile() {
     return myInputFile;
   }
 

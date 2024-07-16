@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
-public class SplitElseIfIntention extends GrPsiUpdateIntention {
+public final class SplitElseIfIntention extends GrPsiUpdateIntention {
 
   @Override
   @NotNull

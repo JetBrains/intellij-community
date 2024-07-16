@@ -196,14 +196,6 @@ final public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
     return myAnnotationSession;
   }
 
-  // internal optimization method to reduce latency between creating Annotation and showing it on screen
-  // (Do not) call this method to
-  // 1. state that all Annotations in this holder are final (no further Annotation.setXXX() or .registerFix() are following) and
-  // 2. queue them all for converting to RangeHighlighters in EDT
-  @ApiStatus.Internal
-  void queueToUpdateIncrementally() {
-  }
-
   @Override
   public @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
     return createBuilder(severity, message);

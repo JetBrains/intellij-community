@@ -18,11 +18,11 @@ package org.jetbrains.jps.model.artifact.impl.elements;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement;
 
-public class JpsArchivePackagingElementImpl extends JpsCompositePackagingElementBase<JpsArchivePackagingElementImpl>
+class JpsArchivePackagingElementImpl extends JpsCompositePackagingElementBase<JpsArchivePackagingElementImpl>
   implements JpsArchivePackagingElement {
   private String myArchiveName;
 
-  public JpsArchivePackagingElementImpl(String archiveName) {
+  JpsArchivePackagingElementImpl(String archiveName) {
     myArchiveName = archiveName;
   }
 
@@ -31,9 +31,14 @@ public class JpsArchivePackagingElementImpl extends JpsCompositePackagingElement
     myArchiveName = original.myArchiveName;
   }
 
+  @Override
+  public @NotNull JpsArchivePackagingElementImpl createCopy() {
+    return new JpsArchivePackagingElementImpl(this);
+  }
+
   @NotNull
   @Override
-  public JpsArchivePackagingElementImpl createCopy() {
+  public JpsArchivePackagingElementImpl createElementCopy() {
     return new JpsArchivePackagingElementImpl(this);
   }
 

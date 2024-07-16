@@ -3,10 +3,8 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,12 +49,12 @@ public final class FileChooserDescriptorFactory {
 
   public static FileChooserDescriptor createSingleFileDescriptor(@NotNull FileType fileType) {
     return new FileChooserDescriptor(true, false, false, false, false, false)
-      .withFileFilter(new FileTypeFilter(fileType));
+      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType), "file-type");
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(@NotNull String extension) {
     return new FileChooserDescriptor(true, false, false, false, false, false)
-      .withFileFilter(new FileExtFilter(extension));
+      .withFileFilter(file -> file.isCaseSensitive() ? extension.equals(file.getExtension()) : extension.equalsIgnoreCase(file.getExtension()), "file-ext");
   }
 
   public static FileChooserDescriptor createSingleFolderDescriptor() {
@@ -73,34 +71,6 @@ public final class FileChooserDescriptorFactory {
 
   public static FileChooserDescriptor createSingleFileOrFolderDescriptor(@NotNull FileType fileType) {
     return new FileChooserDescriptor(true, true, false, false, false, false)
-      .withFileFilter(new FileTypeFilter(fileType));
-  }
-
-  @ApiStatus.Internal
-  static class FileTypeFilter implements Condition<VirtualFile> {
-    private final FileType myFileType;
-
-    private FileTypeFilter(FileType type) {
-      myFileType = type;
-    }
-
-    @Override
-    public boolean value(VirtualFile file) {
-      return FileTypeRegistry.getInstance().isFileOfType(file, myFileType);
-    }
-  }
-
-  @ApiStatus.Internal
-  static class FileExtFilter implements Condition<VirtualFile> {
-    private final String myExtension;
-
-    private FileExtFilter(String extension) {
-      myExtension = extension;
-    }
-
-    @Override
-    public boolean value(VirtualFile file) {
-      return file.isCaseSensitive() ? myExtension.equals(file.getExtension()) : myExtension.equalsIgnoreCase(file.getExtension());
-    }
+      .withFileFilter(file -> FileTypeRegistry.getInstance().isFileOfType(file, fileType), "file-type");
   }
 }

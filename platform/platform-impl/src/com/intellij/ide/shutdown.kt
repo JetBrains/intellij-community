@@ -92,7 +92,7 @@ internal fun cancelAndJoinBlocking(
 private val delayUntilCoroutineDump: Duration = 10.seconds
 
 internal fun cancelAndTryJoin(project: ProjectImpl) {
-  val containerScope = project.coroutineScope
+  val containerScope = project.getCoroutineScope()
   val debugString = "Project $project"
   LOG.trace { "$debugString: trying to join scope" }
   val containerJob = containerScope.coroutineContext.job

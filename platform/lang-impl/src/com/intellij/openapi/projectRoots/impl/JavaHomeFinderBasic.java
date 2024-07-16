@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,7 +49,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findJavaInstalledBySdkMan);
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
-    myFinders.add(this::findJavaInstalledByRTX);
+    myFinders.add(this::findJavaInstalledByMise);
 
     myFinders.add(
       () -> myCheckEmbeddedJava ? scanAll(getJavaHome(), false) : Collections.emptySet()
@@ -228,7 +228,7 @@ public class JavaHomeFinderBasic {
   }
 
   /**
-   * Finds Java home directories installed by <a href="https://github.com/sdkman">SDKMAN</a>
+   * Finds Java home directories installed by <a href="https://github.com/sdkman">SDKMAN</a>.
    */
   private @NotNull Set<@NotNull String> findJavaInstalledBySdkMan() {
     try {
@@ -251,7 +251,10 @@ public class JavaHomeFinderBasic {
     return jdks != null && Files.isDirectory(jdks) ? scanAll(jdks, true) : Collections.emptySet();
   }
 
-  private @NotNull Set<String> findJavaInstalledByRTX() {
+  /**
+   * Finds Java home directory installed by <a href="https://mise.jdx.dev/lang/java.html">mise</a>.
+   */
+  private @NotNull Set<String> findJavaInstalledByMise() {
     Path jdks = getPathInUserHome(".local/share/mise/installs/java/");
     if (jdks == null || !Files.isDirectory(jdks)) return Collections.emptySet();
     return scanAll(jdks, true).stream()
@@ -304,8 +307,8 @@ public class JavaHomeFinderBasic {
       List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).toList();
       for (Path innerDir : innerDirectories) {
         var home = innerDir;
+        if (!JdkUtil.checkForJdk(home)) continue;
         var releaseFile = home.resolve("release");
-        if (!safeExists(releaseFile)) continue;
 
         if (mac) {
           // Zulu JDK on macOS has a rogue layout, with which Gradle failed to operate (see the bugreport IDEA-253051),
@@ -356,7 +359,7 @@ public class JavaHomeFinderBasic {
 
 
   /**
-   * Finds Java home directories installed by <a href="https://github.com/halcyon/asdf-java">asdf-java</a>
+   * Finds Java home directories installed by <a href="https://github.com/halcyon/asdf-java">asdf-java</a>.
    */
   private @NotNull Set<String> findJavaInstalledByAsdfJava() {
     Path installsDir = findAsdfInstallsDir();

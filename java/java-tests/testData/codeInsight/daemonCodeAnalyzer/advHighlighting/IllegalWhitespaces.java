@@ -4,6 +4,6 @@ class C {
   }
 
   void f(int x, int y) {
-    if (x == 0 ||<error descr="')' expected"><error descr="Expression expected"><error descr="Illegal character: U+00A0"> </error></error></error><error descr="Not a statement">y == 0</error><error descr="Unexpected token">)</error> { }
+    if (x == 0 ||<error descr="')' expected"><error descr="Expression expected"><error descr="Illegal character: U+00A0"><error descr="Unexpected token"> </error></error></error></error><error descr="Not a statement">y == 0</error><error descr="Unexpected token">)</error> { }
   }
 }

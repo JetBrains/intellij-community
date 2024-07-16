@@ -5,19 +5,22 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManagerListener
+import com.intellij.openapi.application.runReadAction
 
-class InlineCompletionLookupManagerListener : LookupManagerListener {
+private class InlineCompletionLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     newLookup?.addLookupListener(object : LookupListener {
       override fun currentItemChanged(event: LookupEvent) {
         if (event.item == null) return
-        val listener = InlineCompletion.getHandlerOrNull(event.lookup.editor) ?: return
-        listener.invoke(InlineCompletionEvent.LookupChange(event))
+        val editor = runReadAction { event.lookup.editor }
+        val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
+        handler.invoke(InlineCompletionEvent.LookupChange(event))
       }
 
       override fun lookupCanceled(event: LookupEvent) {
-        val listener = InlineCompletion.getHandlerOrNull(event.lookup.editor) ?: return
-        listener.invoke(InlineCompletionEvent.LookupCancelled(event))
+        val editor = runReadAction { event.lookup.editor }
+        val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
+        handler.invoke(InlineCompletionEvent.LookupCancelled(event))
       }
     })
   }

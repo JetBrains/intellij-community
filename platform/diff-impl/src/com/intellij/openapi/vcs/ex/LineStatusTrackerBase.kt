@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.command.undo.UndoUtil
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -34,21 +33,21 @@ abstract class LineStatusTrackerBase<R : Range>(
   final override val disposable: Disposable = Disposer.newDisposable()
   internal val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
 
-  protected val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
-  protected val documentTracker: DocumentTracker
+  val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
+  val documentTracker: DocumentTracker = DocumentTracker(vcsDocument, document, LOCK)
 
   final override var isReleased: Boolean = false
     private set
 
-  protected var isInitialized: Boolean = false
+  var isInitialized: Boolean = false
     private set
 
-  protected val blocks: List<Block> get() = documentTracker.blocks
+  val blocks: List<Block>
+    get() = documentTracker.blocks
 
   protected val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
 
   init {
-    documentTracker = DocumentTracker(vcsDocument, document, LOCK)
     Disposer.register(disposable, documentTracker)
 
     documentTracker.addHandler(MyDocumentTrackerHandler())
@@ -138,13 +137,12 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   @RequiresEdt
   override fun doFrozen(task: Runnable) {
-    documentTracker.doFrozen({ task.run() })
+    documentTracker.doFrozen { task.run() }
   }
 
   override fun <T> readLock(task: () -> T): T {
     return documentTracker.readLock(task)
   }
-
 
   private inner class MyBlockOperations(lock: DocumentTracker.Lock) : LineStatusTrackerBlockOperations<R, Block>(lock) {
     override fun getBlocks(): List<Block>? = if (isValid()) blocks else null
@@ -281,13 +279,13 @@ abstract class LineStatusTrackerBase<R : Range>(
   protected abstract val Block.ourData: DocumentTracker.BlockData
 
   companion object {
-    @JvmStatic
-    protected val LOG: Logger = Logger.getInstance(LineStatusTrackerBase::class.java)
     private val VCS_DOCUMENT_KEY: Key<Boolean> = Key.create("LineStatusTrackerBase.VCS_DOCUMENT_KEY")
     val SEPARATE_UNDO_STACK: Key<Boolean> = Key.create("LineStatusTrackerBase.SEPARATE_UNDO_STACK")
 
-    fun createVcsDocument(originalDocument: Document): Document {
-      val result = DocumentImpl(originalDocument.immutableCharSequence, true)
+    fun createVcsDocument(originalDocument: Document): Document = createVcsDocument(originalDocument.immutableCharSequence)
+
+    fun createVcsDocument(content: CharSequence): Document {
+      val result = DocumentImpl(content, true)
       UndoUtil.disableUndoFor(result)
       result.putUserData(VCS_DOCUMENT_KEY, true)
       result.setReadOnly(true)

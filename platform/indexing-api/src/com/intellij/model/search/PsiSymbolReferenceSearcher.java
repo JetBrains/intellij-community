@@ -3,11 +3,13 @@ package com.intellij.model.search;
 
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 
 /**
  * Convenience interface for searchers providing additional queries to find {@link PsiSymbolReference}s by {@link Symbol}.
  */
 @OverrideOnly
-public interface PsiSymbolReferenceSearcher extends Searcher<PsiSymbolReferenceSearchParameters, PsiSymbolReference> {
+@Internal
+public interface PsiSymbolReferenceSearcher extends Searcher<PsiSymbolReferenceSearchParameters, PsiSymbolReference> { // todo: drop
 }

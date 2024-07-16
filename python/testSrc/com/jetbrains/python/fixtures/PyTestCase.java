@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -40,9 +39,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
-import com.intellij.util.ContentsUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
@@ -226,6 +223,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       modificator.addRoot(root, rootType);
       modificator.commitChanges();
     });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     try {
       rootConsumer.accept(root);
     }
@@ -236,6 +234,7 @@ public abstract class PyTestCase extends UsefulTestCase {
         modificator.removeRoot(root, rootType);
         modificator.commitChanges();
       });
+      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     }
   }
 
@@ -283,6 +282,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   private void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
   }
 
   protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {

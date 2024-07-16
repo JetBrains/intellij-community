@@ -55,7 +55,8 @@ private fun PsiDirectory.getNonRootFqNameOrNull(): FqName? = getPackage()?.quali
 
 fun PsiFile.getFqNameByDirectory(): FqName {
     val singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(project)
-    val singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(virtualFile)
+    val vFile = virtualFile ?: return FqName.ROOT
+    val singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(vFile)
     singleFileSourcePackageName?.let { return FqName(it) }
     return parent?.getNonRootFqNameOrNull() ?: FqName.ROOT
 }

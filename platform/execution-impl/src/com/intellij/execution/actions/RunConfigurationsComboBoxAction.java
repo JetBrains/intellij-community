@@ -447,11 +447,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       List<AnAction> result = new ArrayList<>();
       forAllExecutors(o -> {
         if (executorFilter == null || executorFilter.test(o)) {
-          result.add(new ExecutorRegistryImpl.RunCurrentFileExecutorAction(o));
+          result.add(new RunCurrentFileExecutorAction(o));
         }
       });
       result.add(Separator.getInstance());
-      result.add(new ExecutorRegistryImpl.EditRunConfigAndRunCurrentFileExecutorAction(DefaultRunExecutor.getRunExecutorInstance()));
+      result.add(new EditRunConfigAndRunCurrentFileExecutorAction(DefaultRunExecutor.getRunExecutorInstance()));
       return result;
     }
 
@@ -552,14 +552,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       // Add actions similar to com.intellij.execution.actions.ChooseRunConfigurationPopup.ConfigurationActionsStep#buildActions
       forAllExecutors(o -> {
         if (executorFilter == null || executorFilter.test(o)) {
-          result.add(new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(o, myConfiguration, false));
+          result.add(new RunSpecifiedConfigExecutorAction(o, myConfiguration, false));
         }
       });
       result.add(Separator.create(ExperimentalUI.isNewUI() ? ExecutionBundle.message("choose.run.popup.separator") : null));
 
       if (!ExperimentalUI.isNewUI()) {
         Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-        result.add(new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
+        result.add(new RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
       }
       else {
         result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));

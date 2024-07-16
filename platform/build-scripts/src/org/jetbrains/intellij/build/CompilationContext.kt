@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -40,22 +42,36 @@ interface CompilationContext {
    */
   val classesOutputDirectory: Path
 
+  val originalModuleRepository: OriginalModuleRepository
+
   fun findRequiredModule(name: String): JpsModule
 
   fun findModule(name: String): JpsModule?
 
   fun getModuleOutputDir(module: JpsModule): Path
 
+  fun getModuleTestsOutputDir(module: JpsModule): Path
+
+  @Deprecated("Use getModuleTestsOutputDir instead", replaceWith = ReplaceWith("getModuleTestsOutputDir(module)"))
   fun getModuleTestsOutputPath(module: JpsModule): String
 
   fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
 
+  fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
+
+  fun findFileInModuleSources(module: JpsModule, relativePath: String): Path?
+
   fun notifyArtifactBuilt(artifactPath: Path)
+
+  @ApiStatus.Internal
+  fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext
+
+  @ApiStatus.Internal
+  fun prepareForBuild()
 }
 
 interface CompilationTasks {
   companion object {
-    @JvmStatic
     fun create(context: CompilationContext): CompilationTasks = CompilationTasksImpl(context)
   }
 

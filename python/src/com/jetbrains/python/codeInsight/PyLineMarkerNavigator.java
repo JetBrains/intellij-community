@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -57,12 +57,11 @@ abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIcon
    * @see #MARKERS
    */
   @TestOnly
-  static NavigatablePsiElement @Nullable [] getNavigationTargets(@NotNull final UserDataHolder holder) {
+  static NavigatablePsiElement @Nullable [] getNavigationTargets(final @NotNull UserDataHolder holder) {
     return holder.getUserData(MARKERS);
   }
 
   protected abstract @PopupTitle String getTitle(T elt);
 
-  @Nullable
-  protected abstract Query<? extends PsiElement> search(T elt, @NotNull TypeEvalContext context);
+  protected abstract @Nullable Query<? extends PsiElement> search(T elt, @NotNull TypeEvalContext context);
 }

@@ -6,7 +6,9 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION
+import org.jetbrains.annotations.ApiStatus.Experimental
 
+@Experimental
 object AcceptAllRegularFilesIndexingHint : BaseFileTypeInputFilter(BEFORE_SUBSTITUTION) {
   override fun acceptFileType(fileType: FileType): ThreeState = ThreeState.YES
 

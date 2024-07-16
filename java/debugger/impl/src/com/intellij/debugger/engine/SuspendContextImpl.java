@@ -11,8 +11,8 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -25,15 +25,19 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Supplier;
 
 public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext, Disposable {
   private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
+
+  private final long myDebugId;
 
   private final DebugProcessImpl myDebugProcess;
   private final int mySuspendPolicy;
@@ -44,8 +48,15 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   protected int myVotesToVote;
   protected Set<ThreadReferenceProxyImpl> myResumedThreads;
 
-  private final EventSet myEventSet;
+  protected final Set<ThreadReferenceProxyImpl> myNotExecutableThreads = new HashSet<>();
+
+  // There may be several events for the same break-point. So let's use custom processing if any of them is wanted it.
+  protected boolean myIsCustomSuspendLogic = false;
+  protected boolean mySuspendAllSwitchedContext = false;
+
+  private EventSet myEventSet;
   private volatile boolean myIsResumed;
+  protected volatile boolean myIsGoingToResume;
 
   private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<>();
   public volatile boolean myInProgress;
@@ -55,37 +66,63 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   private JavaExecutionStack myActiveExecutionStack;
 
-  private @Nullable ThreadReferenceProxyImpl myAnotherThreadToFocus = null;
+  private final ThreadReferenceProxyImpl.ThreadListener myListener = new ThreadReferenceProxyImpl.ThreadListener() {
+    @Override
+    public void threadSuspended() {
+      myNotExecutableThreads.clear();
+      myFrameCount = -1;
+    }
+
+    @Override
+    public void threadResumed() {
+      myNotExecutableThreads.clear();
+      myFrameCount = -1;
+    }
+  };
 
   SuspendContextImpl(@NotNull DebugProcessImpl debugProcess,
                      @MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy,
                      int eventVotes,
-                     EventSet set) {
+                     @Nullable EventSet set,
+                     long debugId) {
     myDebugProcess = debugProcess;
     mySuspendPolicy = suspendPolicy;
     myVotesToVote = eventVotes;
     myEventSet = set;
+    myDebugId = debugId;
+  }
+
+  protected void setEventSet(EventSet eventSet) {
+    assertCanBeUsed();
+    assertInLog(myEventSet == null, () -> "Event set in " + this + "should be empty");
+    myEventSet = eventSet;
   }
 
   public void setThread(@Nullable ThreadReference thread) {
-    assertNotResumed();
-    setThread(myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread));
+    assertCanBeUsed();
+    ThreadReferenceProxyImpl threadProxy = myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
+    assertInLog(myThread == null || myThread == threadProxy,
+                () -> "Invalid thread setting in " + this + ": myThread = " + myThread + ", thread = " + thread);
+    setThread(threadProxy);
+  }
+
+  void resetThread(@NotNull ThreadReferenceProxyImpl threadProxy) {
+    if (myThread == threadProxy) {
+      return;
+    }
+    assertInLog(myEvaluationContext == null, () -> "Resetting thread during evaluation is not supported: " + this);
+    assertInLog(myActiveExecutionStack == null, () -> "Thread should be retested before the active execution stack initialization: " + this);
+    assertCanBeUsed();
+    if (myThread != null) {
+      myThread.removeListener(myListener);
+    }
+    myFrameCount = -1;
+    setThread(threadProxy);
   }
 
   private void setThread(@Nullable ThreadReferenceProxyImpl threadProxy) {
-    LOG.assertTrue(myThread == null || myThread == threadProxy);
     if (threadProxy != null && myThread != threadProxy) { // do not add more than once
-      threadProxy.addListener(new ThreadReferenceProxyImpl.ThreadListener() {
-        @Override
-        public void threadSuspended() {
-          myFrameCount = -1;
-        }
-
-        @Override
-        public void threadResumed() {
-          myFrameCount = -1;
-        }
-      }, this);
+      threadProxy.addListener(myListener, this);
     }
     myThread = threadProxy;
   }
@@ -94,7 +131,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public void dispose() {
   }
 
-  public int frameCount() {
+  int getCachedThreadFrameCount() {
     if (myFrameCount == -1) {
       try {
         myFrameCount = myThread != null ? myThread.frameCount() : 0;
@@ -109,13 +146,13 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Nullable
   public Location getLocation() {
     // getting location from the event set is much faster than obtaining the frame and getting it from there
-    if (myEventSet != null) {
+    if ((myActiveExecutionStack == null || myActiveExecutionStack.getThreadProxy() == myThread) && myEventSet != null) {
       LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
       if (event != null) {
-        if (myThread != null && !myThread.getThreadReference().equals(event.thread())) {
-          LOG.error("Invalid thread");
+        // myThread can be reset to the different thread in resetThread() method
+        if (myThread == null || myThread.getThreadReference().equals(event.thread())) {
+          return event.location();
         }
-        return event.location();
       }
     }
     try {
@@ -133,7 +170,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   void resume(boolean callResume) {
     assertNotResumed();
     if (isEvaluating()) {
-      LOG.error("Resuming context while evaluating", ThreadDumper.dumpThreadsToString());
+      logError("Resuming context " + this + " while evaluating");
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
@@ -156,10 +193,15 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     }
   }
 
+  private void assertCanBeUsed() {
+    assertNotResumed();
+    assertInLog(!myIsGoingToResume, () -> "Context " + this + " is going to resume.");
+  }
+
   private void assertNotResumed() {
     if (myIsResumed) {
       if (myDebugProcess.isAttached()) {
-        LOG.error("Cannot access SuspendContext. SuspendContext is resumed.");
+        logError("Cannot access " + this + " because it is resumed.");
       }
     }
   }
@@ -177,14 +219,26 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   }
 
   @Override
-  public StackFrameProxyImpl getFrameProxy() {
+  public @Nullable StackFrameProxyImpl getFrameProxy() {
+    if (myActiveExecutionStack != null) {
+      try {
+        return myActiveExecutionStack.getThreadProxy().frame(0);
+      }
+      catch (EvaluateException e) {
+        myDebugProcess.logError("Error in proxy extracting", e);
+      }
+    }
+    return getFrameProxyFromTechnicalThread();
+  }
+
+  private @Nullable StackFrameProxyImpl getFrameProxyFromTechnicalThread() {
     assertNotResumed();
     try {
       if (myThread != null) {
         int frameCount = myThread.frameCount();
         if (myFrameCount != -1 && myFrameCount != frameCount) {
-          LOG.error("Incorrect frame count, cached " + myFrameCount + ", now " + frameCount +
-                    ", thread " + myThread + " suspend count " + myThread.getSuspendCount());
+          logError("Incorrect frame count, cached " + myFrameCount + ", now " + frameCount +
+                   ", thread " + myThread + " suspend count " + myThread.getSuspendCount());
         }
         myFrameCount = frameCount;
         if (frameCount > 0) {
@@ -201,6 +255,15 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   @Nullable
   @Override
   public ThreadReferenceProxyImpl getThread() {
+    if (myActiveExecutionStack != null) {
+      return myActiveExecutionStack.getThreadProxy();
+    }
+    return myThread;
+  }
+
+  /** The thead that comes from the JVM event or was reset by switching to suspend-all procedure */
+  @ApiStatus.Internal
+  public @Nullable ThreadReferenceProxyImpl getEventThread() {
     return myThread;
   }
 
@@ -216,18 +279,18 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myVotesToVote = 1000000000;
   }
 
-  public boolean isExplicitlyResumed(@Nullable ThreadReferenceProxyImpl thread) {
+  public boolean isExplicitlyResumed(@NotNull ThreadReferenceProxyImpl thread) {
     return myResumedThreads != null && myResumedThreads.contains(thread);
   }
 
-  public boolean suspends(ThreadReferenceProxyImpl thread) {
+  public boolean suspends(@NotNull ThreadReferenceProxyImpl thread) {
     assertNotResumed();
-    if (isEvaluating()) {
+    if (myEvaluationContext != null && thread == myEvaluationContext.getThreadForEvaluation()) {
       return false;
     }
     return switch (getSuspendPolicy()) {
       case EventRequest.SUSPEND_ALL -> !isExplicitlyResumed(thread);
-      case EventRequest.SUSPEND_EVENT_THREAD -> thread == getThread();
+      case EventRequest.SUSPEND_EVENT_THREAD -> thread == myThread;
       default -> false;
     };
   }
@@ -242,19 +305,86 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   }
 
   public boolean isResumed() {
-    return myIsResumed;
+    return myIsResumed || myIsGoingToResume;
   }
 
+  @ApiStatus.Internal
   public void setIsEvaluating(EvaluationContextImpl evaluationContext) {
-    assertNotResumed();
+    assertCanBeUsed();
     myEvaluationContext = evaluationContext;
   }
 
   public String toString() {
+    return "{" + myDebugId + "} " + "SP=" + getSuspendPolicyString() + " " + oldToString();
+  }
+
+  private String eventSetAsString() {
+    if (myEventSet == null) {
+      return "null";
+    }
+    if (DebuggerDiagnosticsUtil.needAnonymizedReports()) {
+      return "EventSet" + DebuggerDiagnosticsUtil.getEventSetClasses(myEventSet) + " in " + myThread;
+    }
+    return myEventSet.toString();
+  }
+
+  private String getStackStr() {
+    if (myActiveExecutionStack == null) {
+      return "null";
+    }
+    return DebuggerDiagnosticsUtil.needAnonymizedReports() ? ("Stack in " + myThread) : myActiveExecutionStack.toString();
+  }
+
+  private String oldToString() {
     if (myEventSet != null) {
-      return myEventSet.toString();
+      return eventSetAsString();
     }
     return myThread != null ? myThread.toString() : JavaDebuggerBundle.message("string.null.context");
+  }
+
+  Attachment toAttachment() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("myDebugId = ").append(myDebugId).append("\n");
+    sb.append("myThread = ").append(myThread).append("\n");
+    sb.append("Suspend policy = ").append(getSuspendPolicyString()).append("\n");
+    sb.append("myEventSet = ").append(eventSetAsString()).append("\n");
+    sb.append("myInProgress = ").append(myInProgress).append("\n");
+    sb.append("myEvaluationContext = ").append(myEvaluationContext).append("\n");
+    sb.append("myFrameCount = ").append(myFrameCount).append("\n");
+    sb.append("myActiveExecutionStack = ").append(getStackStr()).append("\n");
+
+    if (myResumedThreads != null && !myResumedThreads.isEmpty()) {
+      sb.append("myResumedThreads:\n");
+      for (ThreadReferenceProxyImpl thread : myResumedThreads) {
+        sb.append("  ").append(thread).append("\n");
+      }
+    }
+
+    if (!myNotExecutableThreads.isEmpty()) {
+      sb.append("myNotExecutableThreads:\n");
+      for (ThreadReferenceProxyImpl thread : myNotExecutableThreads) {
+        sb.append("  ").append(thread).append("\n");
+      }
+    }
+
+    sb.append("mySuspendAllSwitchedContext = ").append(mySuspendAllSwitchedContext).append("\n");
+    sb.append("myIsCustomSuspendLogic = ").append(myIsCustomSuspendLogic).append("\n");
+    sb.append("myPostponedCommands: ").append(myPostponedCommands.size()).append("\n");
+    sb.append("myKeptReferences: ").append(myKeptReferences.size()).append("\n");
+    sb.append("myIsVotedForResume = ").append(myIsVotedForResume).append("\n");
+    sb.append("myVotesToVote = ").append(myVotesToVote).append("\n");
+    sb.append("myIsResumed = ").append(myIsResumed).append("\n");
+    sb.append("myIsGoingToResume = ").append(myIsGoingToResume).append("\n");
+    return new Attachment("context " + this, sb.toString());
+  }
+
+  private String getSuspendPolicyString() {
+    return switch (getSuspendPolicy()) {
+      case EventRequest.SUSPEND_EVENT_THREAD -> "thread";
+      case EventRequest.SUSPEND_ALL -> "all";
+      case EventRequest.SUSPEND_NONE -> "none";
+      default -> "other";
+    };
   }
 
   public void keep(ObjectReference reference) {
@@ -295,6 +425,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   }
 
   public void initExecutionStacks(ThreadReferenceProxyImpl activeThread) {
+    assertCanBeUsed();
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (myThread == null) {
       setThread(activeThread);
@@ -307,6 +438,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Override
   public void computeExecutionStacks(final XExecutionStackContainer container) {
+    assertCanBeUsed();
     myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(this) {
       final Set<ThreadReferenceProxyImpl> myAddedThreads = new HashSet<>();
 
@@ -314,7 +446,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         List<ThreadReferenceProxyImpl> pausedThreads =
           StreamEx.of(myDebugProcess.getSuspendManager().getPausedContexts())
-            .map(SuspendContextImpl::getThread)
+            .map(SuspendContextImpl::getEventThread)
             .nonNull()
             .toList();
         // add paused threads first
@@ -360,11 +492,13 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private static final Comparator<JavaExecutionStack> THREADS_SUSPEND_AND_NAME_COMPARATOR =
     Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR);
 
-  public @Nullable ThreadReferenceProxyImpl getAnotherThreadToFocus() {
-    return myAnotherThreadToFocus;
+  private void logError(@NotNull String message) {
+    myDebugProcess.logError(message);
   }
 
-  public void setAnotherThreadToFocus(@Nullable ThreadReferenceProxyImpl threadToFocus) {
-    myAnotherThreadToFocus = threadToFocus;
+  private void assertInLog(boolean value, @NotNull Supplier<@NotNull String> supplier) {
+    if (!value) {
+      myDebugProcess.logError(supplier.get());
+    }
   }
 }

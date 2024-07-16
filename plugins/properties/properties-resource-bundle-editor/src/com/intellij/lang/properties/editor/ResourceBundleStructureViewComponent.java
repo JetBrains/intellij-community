@@ -7,7 +7,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
@@ -33,9 +32,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
   private final static Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
@@ -102,82 +101,75 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
-      return new ResourceBundle[]{myResourceBundle};
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      DataProvider superProvider = (DataProvider)super.getData(dataId);
-      JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreeUtil::getLastUserObject);
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selection, myResourceBundle), superProvider);
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return new DeleteProvider() {
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.BGT;
-        }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(ResourceBundle.ARRAY_DATA_KEY, new ResourceBundle[]{myResourceBundle});
 
-        @Override
-        public void deleteElement(@NotNull DataContext dataContext) {
-          PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-          if (selectedPsiElements == null) return;
-          List<PsiFile> psiFiles = ContainerUtil.findAll(selectedPsiElements, PsiFile.class);
-          DeleteProvider delegate;
-          if (!psiFiles.isEmpty()) {
-            delegate = new ResourceBundleDeleteProvider();
+    JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreeUtil::getLastUserObject);
+    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER,
+             slowId -> getSlowData(slowId, selection, myResourceBundle));
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new DeleteProvider() {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @Override
+      public void deleteElement(@NotNull DataContext dataContext) {
+        PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+        if (selectedPsiElements == null) return;
+        List<PsiFile> psiFiles = ContainerUtil.findAll(selectedPsiElements, PsiFile.class);
+        DeleteProvider delegate;
+        if (!psiFiles.isEmpty()) {
+          delegate = new ResourceBundleDeleteProvider();
+        }
+        else {
+          IProperty[] properties = IProperty.ARRAY_KEY.getData(dataContext);
+          if (properties != null && properties.length != 0) {
+            delegate = new PropertiesDeleteProvider(((ResourceBundleEditor)getFileEditor()).getPropertiesInsertDeleteManager(), properties);
           }
           else {
-            IProperty[] properties = IProperty.ARRAY_KEY.getData(dataContext);
-            if (properties != null && properties.length != 0) {
-              delegate = new PropertiesDeleteProvider(((ResourceBundleEditor)getFileEditor()).getPropertiesInsertDeleteManager(), properties);
-            }
-            else {
-              return;
-            }
-          }
-          delegate.deleteElement(dataContext);
-        }
-
-        @Override
-        public boolean canDeleteElement(@NotNull DataContext dataContext) {
-          return CommonDataKeys.PROJECT.getData(dataContext) != null;
-        }
-      };
-    }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return new CopyProvider() {
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.BGT;
-        }
-
-        @Override
-        public void performCopy(@NotNull DataContext dataContext) {
-          PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-          if (selectedPsiElements != null) {
-            List<String> names = new ArrayList<>(selectedPsiElements.length);
-            for (PsiElement element : selectedPsiElements) {
-              if (element instanceof PsiNamedElement) {
-                names.add(((PsiNamedElement)element).getName());
-              }
-            }
-            CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(names, "\n")));
+            return;
           }
         }
+        delegate.deleteElement(dataContext);
+      }
 
-        @Override
-        public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-          return true;
-        }
+      @Override
+      public boolean canDeleteElement(@NotNull DataContext dataContext) {
+        return CommonDataKeys.PROJECT.getData(dataContext) != null;
+      }
+    });
+    sink.set(PlatformDataKeys.COPY_PROVIDER, new CopyProvider() {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
 
-        @Override
-        public boolean isCopyVisible(@NotNull DataContext dataContext) {
-          return true;
+      @Override
+      public void performCopy(@NotNull DataContext dataContext) {
+        PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+        if (selectedPsiElements != null) {
+          List<String> names = new ArrayList<>(selectedPsiElements.length);
+          for (PsiElement element : selectedPsiElements) {
+            if (element instanceof PsiNamedElement) {
+              names.add(((PsiNamedElement)element).getName());
+            }
+          }
+          CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(names, "\n")));
         }
-      };
-    }
-    return super.getData(dataId);
+      }
+
+      @Override
+      public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+        return true;
+      }
+
+      @Override
+      public boolean isCopyVisible(@NotNull DataContext dataContext) {
+        return true;
+      }
+    });
   }
 
   private static @Nullable Object getSlowData(@NotNull String dataId,

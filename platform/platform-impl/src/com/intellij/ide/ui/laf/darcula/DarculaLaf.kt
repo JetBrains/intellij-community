@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.*
 import com.intellij.platform.ide.bootstrap.createBaseLaF
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.util.*
 import javax.swing.*
@@ -30,6 +31,9 @@ open class DarculaLaf : BasicLookAndFeel() {
     @JvmStatic
     @Deprecated("Use LookAndFeelThemeAdapter.isAltPressed", level = DeprecationLevel.ERROR,
                 replaceWith = ReplaceWith("LookAndFeelThemeAdapter.isAltPressed", "com.intellij.ide.ui.laf.LookAndFeelThemeAdapter"))
+    @get:ApiStatus.ScheduledForRemoval
+    @get:Deprecated("Use LookAndFeelThemeAdapter.isAltPressed", level = DeprecationLevel.ERROR,
+                    replaceWith = ReplaceWith("LookAndFeelThemeAdapter.isAltPressed", "com.intellij.ide.ui.laf.LookAndFeelThemeAdapter"))
     val isAltPressed: Boolean
       get() = LookAndFeelThemeAdapter.isAltPressed
   }

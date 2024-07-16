@@ -7,3 +7,4 @@ fun foo(o: Any) {
 // EXIST: { itemText: "write", attributes: "bold" }
 
 // RUNTIME_TYPE: java.util.concurrent.locks.ReentrantReadWriteLock
+// IGNORE_K2

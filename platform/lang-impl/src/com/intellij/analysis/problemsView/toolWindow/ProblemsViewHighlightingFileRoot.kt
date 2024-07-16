@@ -18,7 +18,7 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
     override val project = panel.project
   }
 
-  private val watcher: ProblemsViewHighlightingWatcher = createWatcher(provider, file, document)
+  private val watcher: ProblemsViewHighlightingWatcher = ProblemsViewHighlightingWatcher(provider, this, file, document, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
 
   init {
     Disposer.register(this, provider)
@@ -42,9 +42,6 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
     true -> synchronized(problems) { problems.filter(filter) }
     else -> emptyList()
   }
-
-  private fun createWatcher(provider: ProblemsProvider, file: VirtualFile, document: Document): ProblemsViewHighlightingWatcher =
-    ProblemsViewHighlightingWatcher(provider, this, file, document, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
 
   override fun getOtherProblemCount(): Int = 0
 
@@ -88,6 +85,6 @@ internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val fi
           listOf(ProblemsViewGroupNode(node, it, entry.value))
         }
         ?: getNodesForProblems(node, entry.value)
-    }
+      }
   }
 }

@@ -154,7 +154,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
         return myEditor == null || myEditor.getSettings().isPreselectRename();
       }
     };
-    if (myPsiElement instanceof PsiFile && myEditor == null) {
+    if (myPsiElement instanceof PsiFile) {
       myNameSuggestionsField.selectNameWithoutExtension();
     }
     myNameChangedListener = () -> processNewNameChanged();

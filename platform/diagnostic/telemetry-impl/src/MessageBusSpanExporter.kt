@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryReceivedListener.Companion.TOPIC
 import io.opentelemetry.sdk.trace.data.SpanData
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MessageBusSpanExporter : AsyncSpanExporter {
   companion object {
     private val lock = Object()

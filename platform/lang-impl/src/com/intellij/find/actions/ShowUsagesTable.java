@@ -72,6 +72,9 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
     if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
       return PopupUtil.getPopupContainerFor(this);
     }
+    if (UsageView.USAGE_VIEW_KEY.is(dataId)) {
+      return myUsageView;
+    }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       List<Object> selection = Arrays.stream(getSelectedRows())
         .mapToObj(o -> getValueAt(o, 0))
@@ -144,7 +147,7 @@ public final class ShowUsagesTable extends JBTable implements DataProvider {
             break;
           }
           if (usages == null) usages = new ArrayList<>();
-          usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
+          usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo() : usage);
         }
       }
 

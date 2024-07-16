@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
+import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtToken
@@ -34,8 +35,8 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
         element: PsiElement,
         shorteningMode: KtSimpleNameReference.ShorteningMode
     ): PsiElement {
-        return element.kotlinFqName?.let { fqName -> bindToFqName(simpleNameReference, fqName, shorteningMode, element) }
-            ?: simpleNameReference.expression
+        val fqName = element.nameDeterminant().kotlinFqName ?: return simpleNameReference.expression
+        return bindToFqName(simpleNameReference, fqName, shorteningMode, element)
     }
 
     protected fun KtSimpleReference<KtNameReferenceExpression>.getAdjustedNewName(newElementName: String): Name? {
@@ -256,10 +257,10 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
     private fun convertOperatorToFunctionCall(opExpression: KtOperationExpression): Pair<KtExpression, KtSimpleNameExpression> =
         OperatorToFunctionConverter.convert(opExpression)
 
-    protected abstract fun canMoveLambdaOutsideParentheses(newExpression: KtDotQualifiedExpression): Boolean
+    abstract fun canMoveLambdaOutsideParentheses(callExpression: KtCallExpression?): Boolean
 
     protected fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? {
-        val canMoveLambda = canMoveLambdaOutsideParentheses(newExpression)
+        val canMoveLambda = canMoveLambdaOutsideParentheses(newExpression.getPossiblyQualifiedCallExpression())
         return OperatorToFunctionConverter.replaceExplicitInvokeCallWithImplicit(newExpression)?.let { newQualifiedExpression ->
             newQualifiedExpression.getPossiblyQualifiedCallExpression()
                 ?.takeIf { canMoveLambda }

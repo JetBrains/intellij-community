@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   public static final String OBJECT_CLASS_NAME = "java/lang/Object";
@@ -104,13 +105,12 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   }
 
   public @NotNull String getShortName() {
-    return getShortName(getName());
-  }
-
-  @NotNull
-  public static String getShortName(String jvmClassName) {
-    int index = jvmClassName.lastIndexOf('/');
-    return index >= 0? jvmClassName.substring(index + 1) : jvmClassName;
+    String fqName = getName();
+    if (isInnerClass() && fqName.startsWith(myOuterFqName) && fqName.length() > myOuterFqName.length()) {
+      return fqName.substring(myOuterFqName.length() + 1); // for inner classes use 'real' class short name as it appears in source code
+    }
+    int index = fqName.lastIndexOf('/');
+    return index >= 0? fqName.substring(index + 1) : fqName;
   }
 
   public boolean isInterface() {
@@ -168,9 +168,17 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   }
 
   public final class Diff extends JVMClassNode<JvmClass, JvmClass.Diff>.Diff {
+    private final Supplier<Specifier<String, ?>> myInterfacesDiff;
+    private final Supplier<Specifier<JvmMethod, JvmMethod.Diff>> myMethodsDiff;
+    private final Supplier<Specifier<JvmField, JvmField.Diff>> myFieldsDiff;
+    private final Supplier<Specifier<ElemType, ?>> myAnnotationTargetsDiff;
 
     public Diff(JvmClass past) {
       super(past);
+      myInterfacesDiff = Utils.lazyValue(() -> Difference.diff(myPast.getInterfaces(), getInterfaces()));
+      myMethodsDiff = Utils.lazyValue(() -> Difference.deepDiff(myPast.getMethods(), getMethods()));
+      myFieldsDiff = Utils.lazyValue(() -> Difference.deepDiff(myPast.getFields(), getFields()));
+      myAnnotationTargetsDiff = Utils.lazyValue(() -> Difference.diff(myPast.getAnnotationTargets(), getAnnotationTargets()));
     }
 
     @Override
@@ -205,15 +213,15 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     }
 
     public Specifier<String, ?> interfaces() {
-      return Difference.diff(myPast.getInterfaces(), getInterfaces());
+      return myInterfacesDiff.get();
     }
 
     public Specifier<JvmMethod, JvmMethod.Diff> methods() {
-      return Difference.deepDiff(myPast.getMethods(), getMethods());
+      return myMethodsDiff.get();
     }
 
     public Specifier<JvmField, JvmField.Diff> fields() {
-      return Difference.deepDiff(myPast.getFields(), getFields());
+      return myFieldsDiff.get();
     }
 
     public boolean retentionPolicyChanged() {
@@ -221,7 +229,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     }
 
     public Specifier<ElemType, ?> annotationTargets() {
-      return Difference.diff(myPast.getAnnotationTargets(), getAnnotationTargets());
+      return myAnnotationTargetsDiff.get();
     }
 
     public boolean targetAttributeCategoryMightChange() {

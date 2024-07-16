@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -77,7 +77,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   private final LightVirtualFile myNewVirtualFile;
 
   private final long myOrigCreationStamp;
-  private EditorWindow mySplittedWindow;
+  private EditorWindow splittedWindow;
   private boolean myCommittingToOriginal;
 
   private final @NotNull InjectedFileChangesHandler myEditChangesHandler;
@@ -181,7 +181,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     if (changesHandlerFactory != null) {
       return changesHandlerFactory.createFileChangesHandler(shreds, editor, document, injectedFile);
     }
-    if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
+    if (ContainerUtil.or(shreds, it -> InjectionMeta.getInjectionIndent().get(it.getHost()) != null)) {
       return new IndentAwareInjectedFileChangesHandler(shreds, editor, document, injectedFile);
     }
     return new CommonInjectedFileChangesHandler(shreds, editor, document, injectedFile);
@@ -209,7 +209,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
         EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
-        mySplittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
+        splittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
       }
       Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       // fold missing values
@@ -295,14 +295,14 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
   private void closeEditor() {
     boolean unsplit = false;
-    if (mySplittedWindow != null && !mySplittedWindow.isDisposed()) {
-      List<EditorComposite> editors = mySplittedWindow.getAllComposites();
+    if (splittedWindow != null && !splittedWindow.isDisposed()) {
+      List<EditorComposite> editors = splittedWindow.getAllComposites();
       if (editors.size() == 1 && Comparing.equal(editors.get(0).getFile(), myNewVirtualFile)) {
         unsplit = true;
       }
     }
     if (unsplit) {
-      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow);
+      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, splittedWindow);
     }
     FileEditorManager.getInstance(myProject).closeFile(myNewVirtualFile);
   }

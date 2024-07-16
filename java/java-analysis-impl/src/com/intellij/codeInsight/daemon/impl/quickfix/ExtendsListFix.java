@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -45,15 +45,18 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     myTypeToExtendFrom = aClass instanceof PsiTypeParameter ? typeToExtendFrom : (PsiClassType)GenericsUtil.eliminateWildcards(typeToExtendFrom);
 
     @NonNls final String messageKey;
-    if (classToExtendFrom != null && aClass.isInterface() == classToExtendFrom.isInterface()) {
+    if (classToExtendFrom != null && aClass.isInterface() == classToExtendFrom.isInterface() || aClass instanceof PsiTypeParameter) {
       messageKey = toAdd ? "add.class.to.extends.list" : "remove.class.from.extends.list";
     }
     else {
       messageKey = toAdd ? "add.interface.to.implements.list" : "remove.interface.from.implements.list";
     }
 
-    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom == null ? "" : classToExtendFrom instanceof PsiTypeParameter ? classToExtendFrom.getName()
-                                                                                                                                                 : classToExtendFrom.getQualifiedName());
+    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom == null 
+                                                                  ? "" 
+                                                                  : classToExtendFrom instanceof PsiTypeParameter 
+                                                                    ? classToExtendFrom.getName()
+                                                                    : classToExtendFrom.getQualifiedName());
   }
 
   @Override

@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import kotlin.test.Ignore
 import kotlin.test.Test
 
 
@@ -27,10 +28,19 @@ class KotlinMppLibrarySourcesTest : AbstractKotlinMppGradleImportingTest() {
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.9.20+")
+    @PluginTargetVersions(pluginVersion = "1.9.20 <=> 2.0.0-dev-10424")
+    fun testExpectActualInOldKotlinTestPublication() {
+        doTest {
+            publish("kotlin-test")
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0.0-dev-10425+")
     fun testExpectActualInStdlibSources() {
         doTest {
             publish("stdlib", "kotlin-test")
         }
     }
+    
 }

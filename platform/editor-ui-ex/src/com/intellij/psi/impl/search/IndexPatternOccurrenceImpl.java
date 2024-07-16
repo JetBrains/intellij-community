@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 
-class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
+final class IndexPatternOccurrenceImpl implements IndexPatternOccurrence {
   private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;

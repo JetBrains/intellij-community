@@ -35,7 +35,7 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate {
     }
     final PsiReferenceExpression methodExpression =
       expression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"assertEquals".equals(methodName)) {
       return false;
     }
@@ -67,7 +67,7 @@ class AssertEqualsWithLiteralPredicate implements PsiElementPredicate {
     if (expression == null) {
       return false;
     }
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "true".equals(text) ||
            "false".equals(text) || "null".equals(text);
   }

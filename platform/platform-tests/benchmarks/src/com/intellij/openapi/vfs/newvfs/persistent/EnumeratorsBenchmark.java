@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.*;
-import com.intellij.util.io.dev.enumerator.StringAsUTF8;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -18,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -80,7 +80,7 @@ public class EnumeratorsBenchmark {
     private DurableDataEnumerator<String> createEnumerator() throws IOException {
       Path file = tempDir.resolve("enumerator");
       if (newImplementation) {
-        return DurableEnumeratorFactory.defaultWithDurableMap(StringAsUTF8.INSTANCE)
+        return DurableEnumeratorFactory.defaultWithDurableMap(stringAsUTF8())
           .mapFactory(ExtendibleMapFactory.largeSize())
           .open(file);
       }

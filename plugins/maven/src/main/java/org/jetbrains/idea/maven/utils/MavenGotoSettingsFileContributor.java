@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class MavenGotoSettingsFileContributor implements ChooseByNameContributor, DumbAware {
+public final class MavenGotoSettingsFileContributor implements ChooseByNameContributor, DumbAware {
   @Override
   public String @NotNull [] getNames(Project project, boolean includeNonProjectItems) {
     if (!includeNonProjectItems) return ArrayUtilRt.EMPTY_STRING_ARRAY;

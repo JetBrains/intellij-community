@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.memory;
 
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
@@ -69,11 +70,11 @@ public final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctP
     EqClass first = dp.getFirst();
     EqClass second = dp.getSecond();
     if (first.isEmpty() || second.isEmpty()) return false;
-    int firstVal = first.get(0);
-    int secondVal = second.get(0);
-    int firstIndex = myState.getEqClassIndex(myState.getFactory().getValue(firstVal));
+    DfaVariableValue firstVal = first.getVariable(0);
+    DfaVariableValue secondVal = second.getVariable(0);
+    int firstIndex = myState.getEqClassIndex(firstVal);
     if (firstIndex == -1) return false;
-    int secondIndex = myState.getEqClassIndex(myState.getFactory().getValue(secondVal));
+    int secondIndex = myState.getEqClassIndex(secondVal);
     if (secondIndex == -1) return false;
     long pair = createPair(firstIndex, secondIndex, dp.isOrdered());
     return myData.contains(pair) && decode(pair).equals(dp);

@@ -20,7 +20,7 @@ import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
-public class AntArtifactPreProcessingPropertiesProvider extends ArtifactPropertiesProvider {
+public final class AntArtifactPreProcessingPropertiesProvider extends ArtifactPropertiesProvider {
   public static AntArtifactPreProcessingPropertiesProvider getInstance() {
     return EP_NAME.findExtension(AntArtifactPreProcessingPropertiesProvider.class);
   }

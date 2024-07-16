@@ -30,9 +30,8 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
     super(field);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("initialize.final.field.in.constructor.name");
   }
 
@@ -78,8 +77,7 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
                                             allMembers, chosenMembers -> getFinalCommand(field, chosenMembers));
   }
 
-  @NotNull
-  private static ModCommand getFinalCommand(@NotNull PsiField field, List<? extends @NotNull MemberChooserElement> chosenMembers) {
+  private static @NotNull ModCommand getFinalCommand(@NotNull PsiField field, List<? extends @NotNull MemberChooserElement> chosenMembers) {
     return ModCommand.psiUpdate(field, (writableField, updater) -> {
       List<PsiMethod> writableConstructors =
         ContainerUtil.map(chosenMembers, member -> updater.getWritable(((PsiMethodMember)member).getElement()));
@@ -106,7 +104,7 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
     runAssignmentTemplate(rExpressions, suggestedInitializers, updater);
   }
 
-  private static void runAssignmentTemplate(@NotNull final List<? extends PsiExpression> initializers,
+  private static void runAssignmentTemplate(final @NotNull List<? extends PsiExpression> initializers,
                                             final LookupElement @NotNull [] suggestedInitializers,
                                             @NotNull ModPsiUpdater updater) {
     LOG.assertTrue(!initializers.isEmpty());
@@ -120,11 +118,10 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
     }
   }
 
-  @NotNull
-  private static PsiExpression addFieldInitialization(@NotNull PsiMethod constructor,
-                                                      LookupElement @NotNull [] suggestedInitializers,
-                                                      @NotNull PsiField field,
-                                                      @NotNull Project project) {
+  private static @NotNull PsiExpression addFieldInitialization(@NotNull PsiMethod constructor,
+                                                               LookupElement @NotNull [] suggestedInitializers,
+                                                               @NotNull PsiField field,
+                                                               @NotNull Project project) {
     PsiCodeBlock methodBody = constructor.getBody();
     if (methodBody == null) {
       //incomplete code

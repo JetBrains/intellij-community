@@ -2,10 +2,12 @@
 package org.jetbrains.debugger
 
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.PromiseManager
 import org.jetbrains.concurrency.rejectedPromise
 
+@ApiStatus.Internal
 abstract class ScriptManagerBase<SCRIPT : ScriptBase> : ScriptManager {
   @Suppress("UNCHECKED_CAST")
   private val scriptSourceLoader = object : PromiseManager<ScriptBase, String>(ScriptBase::class.java) {
@@ -32,5 +34,6 @@ abstract class ScriptManagerBase<SCRIPT : ScriptBase> : ScriptManager {
   }
 }
 
+@get:ApiStatus.Internal
 val Url.isSpecial: Boolean
   get() = !isInLocalFileSystem && (scheme == null || scheme == VM_SCHEME || authority == null)

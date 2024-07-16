@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
@@ -326,9 +326,9 @@ public class PluginManagerTest {
 
       @Override
       public @NotNull RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
-                                                            @NotNull DataLoader dataLoader,
-                                                            @NotNull String path,
-                                                            @Nullable RawPluginDescriptor readInto) {
+                                                                              @NotNull DataLoader dataLoader,
+                                                                              @NotNull String path,
+                                                                              @Nullable RawPluginDescriptor readInto) {
         if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
           var element = moduleMap.get(path);
           if (element != null) {
@@ -418,7 +418,7 @@ public class PluginManagerTest {
       sb.append("\n  <idea-plugin url=\"file://out/").append(d.getPluginPath().getFileName().getParent()).append("/META-INF/plugin.xml\">");
       sb.append("\n    <id>").append(escape.apply(d.getPluginId().getIdString())).append("</id>");
       sb.append("\n    <name>").append(StringUtil.escapeXmlEntities(d.getName())).append("</name>");
-      for (PluginId module : d.modules) {
+      for (PluginId module : d.pluginAliases) {
         sb.append("\n    <module value=\"").append(module.getIdString()).append("\"/>");
       }
       for (var dependency : d.pluginDependencies) {

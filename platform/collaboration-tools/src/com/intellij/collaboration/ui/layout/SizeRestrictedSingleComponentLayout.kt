@@ -8,10 +8,13 @@ import kotlin.math.min
 import kotlin.properties.Delegates.observable
 
 /**
- * Wraps a single component limiting its size to [maxSize] aor overriding the preferred size with [prefSize]
+ * Wraps a single component limiting its size to [minSize] - [maxSize] and overriding the preferred size with [prefSize]
  */
 class SizeRestrictedSingleComponentLayout : LayoutManager2 {
 
+  var minSize: DimensionRestrictions by observable(DimensionRestrictions.None) { _, _, _ ->
+    component?.revalidate()
+  }
   var maxSize: DimensionRestrictions by observable(DimensionRestrictions.None) { _, _, _ ->
     component?.revalidate()
   }
@@ -35,6 +38,8 @@ class SizeRestrictedSingleComponentLayout : LayoutManager2 {
 
   override fun minimumLayoutSize(parent: Container): Dimension =
     component?.takeIf { it.isVisible }?.minimumSize?.let {
+      it.width = minSize.getWidth() ?: it.width
+      it.height = minSize.getHeight() ?: it.height
       maxSize.limitMax(it)
     }?.also {
       JBInsets.addTo(it, parent.insets)

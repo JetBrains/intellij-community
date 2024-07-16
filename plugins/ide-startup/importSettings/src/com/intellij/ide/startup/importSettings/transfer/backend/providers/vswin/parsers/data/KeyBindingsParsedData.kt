@@ -1,22 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin.parsers.data
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.data
 
-
-import com.intellij.ide.startup.importSettings.db.KnownPlugins
 import com.intellij.ide.startup.importSettings.models.KeyBinding
 import com.intellij.ide.startup.importSettings.providers.vswin.mappings.KeyBindingsMappings.newTokens
 import com.intellij.ide.startup.importSettings.providers.vswin.mappings.KeyBindingsMappings.vsCommandToIdeaAction
+import com.intellij.ide.startup.importSettings.providers.vswin.parsers.data.VSParsedData
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHive
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.KnownPlugins
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.logger
 import org.jdom.Element
 import javax.swing.KeyStroke
 
-private class BadKeyBindingException(message: String, val isImportant: Boolean, cause: Throwable?) : Exception(message, cause) {
-  constructor(full: String, token: String, isImportant: Boolean) : this("Can't parse: $full, token: $token", isImportant, null)
-}
+private class BadKeyBindingException(message: String, cause: Throwable?) : Exception(message, cause)
 
-private class UnknownKeyboardActionException(val command: String) : Exception()
+private class UnknownKeyboardActionException : Exception()
 
 private val logger = logger<VisualStudioKeyboardShortcut>()
 class VisualStudioKeyboardShortcut(val shortcut: String, val command: String) {
@@ -25,12 +23,12 @@ class VisualStudioKeyboardShortcut(val shortcut: String, val command: String) {
   init {
     logger.info("Started parsing $shortcut, cmd $command")
     if (vsCommandToIdeaAction(command) == null) {
-      throw UnknownKeyboardActionException(command)
+      throw UnknownKeyboardActionException()
     }
     splitItems = split().map { processSingleShortcut(it) }
 
     if (splitItems.contains(null)) {
-      throw BadKeyBindingException("got null somewhere", false, null)
+      throw BadKeyBindingException("got null somewhere", null)
     }
   }
 
@@ -68,12 +66,11 @@ class VisualStudioKeyboardShortcut(val shortcut: String, val command: String) {
   }
 }
 
-class KeyBindingsParsedData(majorVersion: Int, val scheme: String, userShortcuts: Element, hive: VSHive?) : VSParsedData {
+class KeyBindingsParsedData(val scheme: String, userShortcuts: Element, hive: VSHive?) : VSParsedData {
   private val parsedKeyBindings = mutableListOf<KeyBinding>()
 
   companion object {
-    const val globalScope: String = "Global"
-    const val key: String = "Environment_KeyBindings"
+    const val KEY: String = "Environment_KeyBindings"
     private val logger = logger<KeyBindingsParsedData>()
   }
 
@@ -122,7 +119,7 @@ class KeyBindingsParsedData(majorVersion: Int, val scheme: String, userShortcuts
       val scArr = mutableListOf<KeyboardShortcut>()
       val convertedAction = vsCommandToIdeaAction(command)
       if (convertedAction == null) {
-        logger.warn("convertedaction is null at late stage")
+        logger.warn("convertedAction is null at late stage")
         continue
       }
       for ((shortcut, _) in shortcuts) {

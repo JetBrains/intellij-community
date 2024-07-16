@@ -17,12 +17,17 @@ package org.jetbrains.debugger
 
 import com.intellij.util.Processor
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.FunctionValue
 
+@ApiStatus.Internal
 const val VM_SCHEME: String = "vm"
+
+@ApiStatus.Internal
 const val WEBPACK_INTERNAL_SCHEME: String = "webpack-internal"
 
+@ApiStatus.Internal
 interface ScriptManager {
   fun getSource(script: Script): Promise<String>
 

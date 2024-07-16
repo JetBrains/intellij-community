@@ -7,9 +7,7 @@ End of files
 Compiling files:
   src/fun.kt
 End of files
-After build round. Marked as dirty by Kotlin:
-  src/useDefault.kt
-Exit code: ADDITIONAL_PASS_REQUIRED
+Exit code: OK
 ------------------------------------------
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
@@ -29,17 +27,6 @@ Cleaning output files:
 End of files
 Compiling files:
   src/fun.kt
-End of files
-After build round. Marked as dirty by Kotlin:
-  src/useDefault.kt
-Exit code: ADDITIONAL_PASS_REQUIRED
-------------------------------------------
-Cleaning output files:
-  out/production/module/META-INF/module.kotlin_module
-  out/production/module/test/UseDefaultKt.class
-End of files
-Compiling files:
-  src/useDefault.kt
 End of files
 Exit code: OK
 ------------------------------------------

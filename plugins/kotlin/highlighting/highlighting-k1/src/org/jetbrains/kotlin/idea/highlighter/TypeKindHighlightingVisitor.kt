@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
@@ -33,7 +34,10 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         val referenceTarget = computeReferencedDescriptor(expression) ?: return
         val textRange = computeHighlightingRangeForUsage(expression, referenceTarget)
         val key = attributeKeyForObjectAccess(expression) ?: calculateDeclarationReferenceAttributes(referenceTarget) ?: return
-        highlightName(expression.project, textRange, key)
+        if (key != KotlinHighlightInfoTypeSemanticNames.ANNOTATION
+            || parent?.parentOfTypes(KtImportDirective::class, KtPackageDirective::class, KtTypeAlias::class) != null) { // annotation was highlighted in AnnoEntryHighVisitor
+            highlightName(expression.project, textRange, key)
+        }
     }
 
     private fun attributeKeyForObjectAccess(expression: KtSimpleNameExpression): HighlightInfoType? {
@@ -75,7 +79,10 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
     override fun visitClassOrObject(classOrObject: KtClassOrObject) {
         val identifier = classOrObject.nameIdentifier
         val classDescriptor = bindingContext.get(BindingContext.CLASS, classOrObject)
-        if (identifier != null && classDescriptor != null) {
+        if (identifier != null
+            && classDescriptor != null && identifier.parent !is KtClass
+            && classOrObject !is KtObjectDeclaration
+            ) { // class was highlighted in DeclarationHighlightingVisitor
             highlightName(
                 identifier,
                 attributeKeyForDeclarationFromExtensions(classOrObject, classDescriptor)
@@ -83,18 +90,6 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
             )
         }
         super.visitClassOrObject(classOrObject)
-    }
-
-    override fun visitTypeAlias(typeAlias: KtTypeAlias) {
-        val identifier = typeAlias.nameIdentifier
-        val descriptor = bindingContext.get(BindingContext.TYPE_ALIAS, typeAlias)
-        if (identifier != null && descriptor != null) {
-            val key = attributeKeyForDeclarationFromExtensions(identifier, descriptor)
-                ?: calculateTypeAliasReferenceAttributes(descriptor)
-
-            highlightName(identifier, key)
-        }
-        super.visitTypeAlias(typeAlias)
     }
 
     override fun visitDynamicType(type: KtDynamicType) {

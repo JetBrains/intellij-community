@@ -39,3 +39,5 @@ fun foo5(a: Int) {
     println(a)
     a + 1
 }
+
+// IGNORE_K2

@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::{env, thread};
+use std::thread;
 use std::ffi::{c_void, CString};
 use std::path::Path;
 use std::sync::Mutex;
@@ -69,10 +69,15 @@ fn get_vfprintf_hook_pointer() -> *mut c_void {
 #[no_mangle]
 extern "C" fn abort_hook() {
     error!("[JVM] abort_hook");
-    let text = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("");
-    if !text.is_empty() {
-        let gui = !DEBUG_MODE.load(Ordering::Acquire);
-        ui::show_error(gui, anyhow::format_err!(text))
+    match HOOK_MESSAGES.lock() {
+        Ok(unlocked) => {
+            let text = unlocked.as_ref().map(|lines| lines.join("")).unwrap_or("".to_string());
+            if !text.is_empty() {
+                let gui = !DEBUG_MODE.load(Ordering::Acquire);
+                ui::show_error(gui, anyhow::format_err!(text))
+            }
+        }
+        Err(e) => error!("[JVM] HOOK_MESSAGES.lock() failed: {}", e)
     }
 }
 
@@ -93,6 +98,8 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
         // resetting stack overflow protection handler set by the runtime (`std/src/sys/unix/stack_overflow.rs`)
         reset_signal_handler(libc::SIGBUS)?;
         reset_signal_handler(libc::SIGSEGV)?;
+        // resetting interrupt handler masked when an IDE is launched in a particularly perverse way
+        reset_signal_handler(libc::SIGINT)?;
     }
 
     let jre_home = jre_home.to_owned();
@@ -106,7 +113,12 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
         debug!("[JVM] Thread started [{:?}]", thread::current().id());
 
         let mut vm_options = vm_options.clone();
-        vm_options.push(jvm_property!("sun.java.command", main_class));
+        let mut java_command = main_class.clone();
+        args.iter().for_each(|arg| {
+            java_command += " ";
+            java_command += arg
+        });
+        vm_options.push(jvm_property!("sun.java.command", java_command));
 
         let jni_env_result = load_and_start_jvm(&jre_home, vm_options);
         let jni_env = match jni_env_result {
@@ -157,17 +169,12 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
 }
 
 fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv<'static>> {
-    // Read the current directory and pass it to JVM through environment variable.
-    // The real current directory will be changed in load_libjvm().
-    let work_dir = env::current_dir().context("Failed to get current directory")?;
-    env::set_var("IDEA_INITIAL_DIRECTORY", work_dir);
-
     let libjvm_path = jre_home.join(JVM_LIB_REL_PATH);
     debug!("[JVM] Loading {libjvm_path:?}");
-    let libjvm = load_libjvm(jre_home, &libjvm_path)?;
+    let libjvm = load_libjvm(&libjvm_path)?;
 
     debug!("[JVM] Looking for 'JNI_CreateJavaVM' symbol");
-    let create_jvm_call: CreateJvmCall<'_> = unsafe { libjvm.get(b"JNI_CreateJavaVM")? };
+    let create_jvm_call: CreateJvmCall<'_> = unsafe { libjvm.get(b"JNI_CreateJavaVM\0")? };
 
     debug!("[JVM] Constructing JVM init args");
     let mut java_vm: *mut jni::sys::JavaVM = std::ptr::null_mut();
@@ -199,23 +206,17 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
 }
 
 #[cfg(target_os = "windows")]
-fn load_libjvm(jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Library> {
-    let jre_bin_dir = jre_home.join("bin");
-    debug!("[JVM] Changing working dir to {jre_bin_dir:?}, so that 'libjvm.dll' can find its dependencies");
-    env::set_current_dir(&jre_bin_dir)?;
-
-    unsafe {
-        libloading::Library::new(libjvm_path)
-    }.context("Failed to load 'libjvm.dll'")
+fn load_libjvm(libjvm_path: &Path) -> Result<libloading::Library> {
+    unsafe { libloading::Library::new(libjvm_path) }
+        .context("Failed to load 'jvm.dll'")
 }
 
 #[cfg(target_family = "unix")]
-fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Library> {
+fn load_libjvm(libjvm_path: &Path) -> Result<libloading::Library> {
     let path_ref = Some(libjvm_path.as_os_str());
     let flags = libloading::os::unix::RTLD_LAZY;
-    unsafe {
-        libloading::os::unix::Library::open(path_ref, flags).map(From::from)
-    }.context("Failed to load 'libjvm'")
+    unsafe { libloading::os::unix::Library::open(path_ref, flags).map(From::from) }
+        .with_context(|| format!("Failed to load '{}'", Path::new(libjvm_path.file_name().unwrap()).display()))
 }
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {

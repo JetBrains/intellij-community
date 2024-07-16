@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyNestedSynchronizedStatementInspection extends BaseInspection {
+public final class GroovyNestedSynchronizedStatementInspection extends BaseInspection {
 
   @Override
   @Nullable

@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.util.containers.UList
 import com.sun.management.OperatingSystemMXBean
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import java.lang.management.ManagementFactory
 import java.lang.management.ThreadInfo
@@ -14,7 +13,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDurationMs: Int, coroutineScope: CoroutineScope) {
   private val maxDumps: Int = maxDurationMs / dumpInterval
 
-  var threadInfos: PersistentList<Array<ThreadInfo>> = persistentListOf()
+  var threadInfos: UList<Array<ThreadInfo>> = UList()
     private set
 
   private val job: Job?

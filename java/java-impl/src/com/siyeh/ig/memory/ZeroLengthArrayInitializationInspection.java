@@ -37,14 +37,12 @@ public final class ZeroLengthArrayInitializationInspection extends BaseInspectio
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ZeroLengthArrayAllocation";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "array.allocation.zero.length.problem.descriptor");
   }

@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.ID
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Basically it checks incoming string is contained in {@linkplain ID} internal map, and if it does, then
@@ -19,6 +20,7 @@ import com.intellij.util.indexing.ID
  *
  * There are few things on the top of that, extensively documented in kotlin.
  */
+@Internal
 class IndexIdRuleValidator : CustomValidationRule() {
   override fun getRuleId(): String = "index_id"
 

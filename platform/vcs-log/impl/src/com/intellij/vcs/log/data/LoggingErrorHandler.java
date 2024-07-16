@@ -3,9 +3,11 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class LoggingErrorHandler implements VcsLogErrorHandler {
   private final @NotNull Logger myLogger;
 

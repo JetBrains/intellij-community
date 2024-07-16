@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.cache.CompilerCacheLoadingSettings;
@@ -36,7 +36,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
           if (!myProject.isDisposed()) {
             myProject.getMessageBus().syncPublisher(CustomBuilderMessageHandler.TOPIC).messageReceived(
-              message.getBuilderId(), message.getMessageType(), message.getMessageText()
+              sessionId, message.getBuilderId(), message.getMessageType(), message.getMessageText()
             );
           }
         }

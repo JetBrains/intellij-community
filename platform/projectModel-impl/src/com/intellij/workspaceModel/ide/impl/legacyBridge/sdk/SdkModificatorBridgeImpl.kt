@@ -9,10 +9,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.SdkEntity
-import com.intellij.platform.workspace.jps.entities.SdkRoot
-import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -22,7 +19,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Compa
 import org.jdom.Element
 
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
-class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
+
+internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
                                private val originalSdk: ProjectJdkImpl,
                                private val originalSdkDelegate: SdkBridgeImpl) : SdkModificator {
 
@@ -53,7 +51,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
   override fun setHomePath(path: String?) {
     modifiedSdkEntity.homePath = if (path != null) {
       val globalInstance = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
-      globalInstance.getOrCreateFromUri(path)
+      globalInstance.getOrCreateFromUrl(path)
     } else {
       null
     }
@@ -84,7 +82,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
   override fun addRoot(root: VirtualFile, rootType: OrderRootType) {
     val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
     modifiedSdkEntity.roots.add(
-      SdkRoot(virtualFileUrlManager.getOrCreateFromUri(root.url), rootTypes[rootType.customName]!!)
+      SdkRoot(virtualFileUrlManager.getOrCreateFromUrl(root.url), rootTypes[rootType.customName]!!)
     )
   }
 
@@ -120,8 +118,8 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
     // Update only entity existing in the storage
     val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdk) as? SdkEntity
     existingEntity?.let { entity ->
-      globalWorkspaceModel.updateModel("Modifying SDK ${originalEntity.symbolicId}") {
-        it.modifyEntity(entity) {
+      globalWorkspaceModel.updateModel("Modifying SDK ${SdkId(originalEntity.name, originalEntity.type)}") {
+        it.modifySdkEntity(entity) {
           this.applyChangesFrom(modifiedSdkEntity)
         }
       }

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,8 @@ import java.util.function.BiPredicate;
 import static com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode.*;
 
 public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
+
+  @ApiStatus.Internal
   public static final String COPIED_FROM_EMPTY_SELECTION_PASTE_MODE = "editor.paste.line.copied.from.empty.selection";
 
   @Override
@@ -54,6 +57,7 @@ public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     return getSelectedTextForClipboard(editor, CopyPasteOptions.DEFAULT, extraDataCollector);
   }
 
+  @ApiStatus.Internal
   public static String getSelectedTextForClipboard(@NotNull Editor editor, @NotNull CopyPasteOptions options,
                                                    @NotNull Collection<? super TextBlockTransferableData> extraDataCollector) {
     final StringBuilder buf = new StringBuilder();
@@ -238,6 +242,7 @@ public final class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     return TextRange.from(lineStartOffset, text.length());
   }
 
+  @ApiStatus.Internal
   public static @NotNull TextRange insertStringAtCaret(@NotNull Editor editor, @NotNull String text) {
     return insertStringAtCaret(editor, text, false);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -14,12 +14,15 @@ import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -101,14 +104,80 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
   }
 
   public void testDisabledTestMethodWithGradleConfiguration() {
-    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 0);
+    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 0, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+      
+      class DisabledMethodTest {
+        @Disabled
+        @Test
+        public void testDisabled<caret>() {}
+      }
+      """);
   }
 
   public void testDisabledTestMethodWithJunitConfiguration() {
-    doTestWithDisabledAnnotation(new JUnitConfiguration("DisabledMethodTest", myFixture.getProject()), 1);
+    doTestWithDisabledAnnotation(new JUnitConfiguration("DisabledMethodTest", myFixture.getProject()), 1, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+     
+      class DisabledMethodTest {
+        @Disabled
+        @Test
+        public void testDisabled<caret>() {}
+      }
+     """);
   }
 
-  private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount) {
+  public void testDisabledTestClassWithGradleConfiguration() {
+    // For classes we always show the run line marker, even when no tests are runnable
+    // This is because calculating whether to show the line marker here is complex and it not showing up at all might be confusing for users
+    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 1, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+      
+      class Disabled<caret>MethodTest {
+        @Disabled
+        @Test
+        public void testDisabled() {}
+      
+        @Disabled
+        @Test
+        public void testAlsoDisabled() {}
+      }
+      """);
+  }
+
+  public void testDisabledTestClassWithNonDisabledTestGradleConfiguration() {
+    doTestWithDisabledAnnotation(new MockGradleRunConfiguration(myFixture.getProject(), "DisabledMethodTest"), 1, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+      
+      class Disabled<caret>MethodTest {
+        @Disabled
+        @Test
+        public void testDisabled() {}
+      
+        @Test
+        public void testNotDisabled() {}
+      }
+      """);
+  }
+
+  public void testDisabledTestClassWithJunitConfiguration() {
+    doTestWithDisabledAnnotation(new JUnitConfiguration("DisabledMethodTest", myFixture.getProject()), 1, """
+      import org.junit.jupiter.api.Disabled;
+      import org.junit.jupiter.api.Test;
+     
+      class Disabled<caret>MethodTest {
+        @Disabled
+        @Test
+        public void testDisabled() {}
+      }
+     """);
+  }
+
+  private void doTestWithDisabledAnnotation(RunConfiguration configuration, int marksCount, String testClass) {
     JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
     myFixture.addClass("package org.junit.jupiter.api; public @interface Disabled {}");
 
@@ -119,15 +188,7 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     myTempSettings.add(runnerAndConfigurationSettings);
     manager.setSelectedConfiguration(runnerAndConfigurationSettings);
 
-    myFixture.configureByText("DisabledMethodTest.java", """
-      import org.junit.jupiter.api.Disabled;
-      import org.junit.jupiter.api.Test;
-      class DisabledMethodTest {
-        @Disabled
-        @Test
-        public void testDisabled<caret>() {}
-      }
-      """);
+    myFixture.configureByText("DisabledMethodTest.java", testClass);
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(marksCount, marks.size());
   }
@@ -150,10 +211,10 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     ActionGroup group = mark.getPopupMenuActions();
     assertNotNull(group);
     AnActionEvent event = TestActionEvent.createTestEvent();
-    List<AnAction> list = ContainerUtil.findAll(group.getChildren(event), action -> {
-      AnActionEvent actionEvent = TestActionEvent.createTestEvent();
-      action.update(actionEvent);
-      String text = actionEvent.getPresentation().getText();
+    PresentationFactory factory = new PresentationFactory();
+    List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
+      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN), action -> {
+      String text = factory.getPresentation(action).getText();
       return text != null && text.startsWith("Run '") && text.endsWith("'");
     });
     assertEquals(list.toString(), 2, list.size());
@@ -166,5 +227,20 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
     myTempSettings.add(selectedConfiguration);
     assertEquals("MainTest", selectedConfiguration.getName());
+  }
+
+  public void testClassInDumbMode() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    PsiFile file = myFixture.configureByText("MyTest.java", """
+      public class My<caret>Test extends junit.framework.TestCase {
+          public void testFoo() {
+          }
+      }""");
+    PsiClass psiClass = ((PsiJavaFile)file).getClasses()[0];
+    TestRunLineMarkerProvider provider = new TestRunLineMarkerProvider();
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
+      assertNotNull(info);
+    });
   }
 }

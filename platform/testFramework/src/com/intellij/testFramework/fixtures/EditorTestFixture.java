@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
@@ -30,6 +31,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
@@ -69,14 +71,14 @@ public class EditorTestFixture {
   @NotNull
   private final Editor myEditor;
   @NotNull
-  private final VirtualFile myFile;
+  private final VirtualFile myVirtualFile;
 
   private boolean myEmptyLookup;
 
   public EditorTestFixture(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
     myProject = project;
     myEditor = editor;
-    myFile = file;
+    myVirtualFile = file;
   }
 
   public void type(char c) {
@@ -126,11 +128,14 @@ public class EditorTestFixture {
   }
 
   public boolean performEditorAction(@NotNull String actionId) {
-    DataContext dataContext = getEditorDataContext();
+    return performEditorAction(actionId, null);
+  }
 
+  public boolean performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent) {
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     AnAction action = managerEx.getAction(actionId);
-    AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+    AnActionEvent event = actionEvent != null ? actionEvent
+                                              : new AnActionEvent(null, getEditorDataContext(), ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
     ActionUtil.performDumbAwareUpdate(action, event, false);
     if (event.getPresentation().isEnabled()) {
@@ -143,11 +148,11 @@ public class EditorTestFixture {
 
   @NotNull
   private DataContext getEditorDataContext() {
-    return ((EditorEx)myEditor).getDataContext();
+    return EditorUtil.getEditorDataContext(myEditor);
   }
 
   public PsiFile getFile() {
-    return ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myFile));
+    return ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myVirtualFile));
   }
 
   @NotNull
@@ -289,9 +294,17 @@ public class EditorTestFixture {
     }
 
     if (element == null) {
-      fail("element not found in file " + myFile.getName() +
-           " at caret position offset " + myEditor.getCaretModel().getOffset() + "," +
-           " psi structure:\n" + DebugUtil.psiToString(getFile(), false, true));
+      PsiFile psiFile = getFile();
+      int offset = myEditor.getCaretModel().getOffset();
+      int expectedCaretOffset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : offset;
+      fail("element not found in file " + psiFile + "(" + psiFile.getClass() + ", " + psiFile.getViewProvider() + ", " + editor.getProject() + ")" +
+           " at caret position offset " + offset + (offset == expectedCaretOffset ? "" : ", expected caret offset: "+expectedCaretOffset) +
+           ", psi structure:\n" + DebugUtil.psiToString(psiFile, true, true) +
+           ", elementAt(" + offset + ")=" + psiFile.findElementAt(offset) +
+           ", editor=" + editor +
+           ", adjusted offset=" + TargetElementUtilBase.adjustOffset(psiFile, editor.getDocument(), offset)+
+           ", TargetElementUtilBase.findTargetElement(editor, flags, offset)=" + TargetElementUtilBase.findTargetElement(editor, findTargetFlags, offset)
+      );
     }
     return element;
   }
@@ -319,8 +332,8 @@ public class EditorTestFixture {
 
   @NotNull
   public List<Crumb> getBreadcrumbsAtCaret() {
-    FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
-    return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));
+    FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myVirtualFile);
+    return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myVirtualFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));
   }
 
   @NotNull

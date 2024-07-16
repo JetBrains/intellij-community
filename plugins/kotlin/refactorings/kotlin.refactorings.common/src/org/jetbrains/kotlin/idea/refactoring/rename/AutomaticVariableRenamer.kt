@@ -16,8 +16,8 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
@@ -121,10 +121,10 @@ class AutomaticVariableRenamer(
 
 private fun KtCallableDeclaration.isCollectionLikeOf(classPsiElement: PsiNamedElement): Boolean {
     analyze(this) {
-        fun KtType.isCollectionLikeOf(classPsiElement: PsiNamedElement): Boolean {
-            if (isArrayOrPrimitiveArray() || isClassTypeWithClassId(StandardClassIds.Collection) || getAllSuperTypes().any { it.isClassTypeWithClassId(StandardClassIds.Collection) }) {
-                val typeArgument = (this as? KtNonErrorClassType)?.ownTypeArguments?.singleOrNull()?.type ?: return false
-                if (typeArgument.expandedClassSymbol?.psi == classPsiElement) {
+        fun KaType.isCollectionLikeOf(classPsiElement: PsiNamedElement): Boolean {
+            if (isArrayOrPrimitiveArray || isClassType(StandardClassIds.Collection) || getAllSuperTypes().any { it.isClassType(StandardClassIds.Collection) }) {
+                val typeArgument = (this as? KaClassType)?.typeArguments?.singleOrNull()?.type ?: return false
+                if (typeArgument.expandedSymbol?.psi == classPsiElement) {
                     return true
                 }
                 return typeArgument.isCollectionLikeOf(classPsiElement)
@@ -132,7 +132,7 @@ private fun KtCallableDeclaration.isCollectionLikeOf(classPsiElement: PsiNamedEl
             return false
         }
 
-        return getReturnKtType().isCollectionLikeOf(classPsiElement)
+        return returnType.isCollectionLikeOf(classPsiElement)
     }
 }
 

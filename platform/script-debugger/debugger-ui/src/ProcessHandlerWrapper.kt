@@ -11,6 +11,7 @@ import com.intellij.xdebugger.XDebugProcess
 import org.jetbrains.rpc.LOG
 import java.io.OutputStream
 
+@Deprecated("Please consider implementing own wrapper")
 class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val handler: ProcessHandler) : ProcessHandler(), KillableProcess {
   init {
     if (handler.isStartNotified) {

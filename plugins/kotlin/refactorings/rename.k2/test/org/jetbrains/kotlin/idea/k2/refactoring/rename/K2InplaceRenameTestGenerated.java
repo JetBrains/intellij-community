@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.rename;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/refactoring/rename/inplace")
 public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K2;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -116,6 +123,21 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("conflicts/typeParameters/HidingClassByTypeParameter1.kt")
     public void testConflicts_typeParameters_HidingClassByTypeParameter1() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/HidingClassByTypeParameter1.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/TypeParameterInCompanionDontHideOuter.kt")
+    public void testConflicts_typeParameters_TypeParameterInCompanionDontHideOuter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterInCompanionDontHideOuter.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/TypeParameterInInnerHideOuter.kt")
+    public void testConflicts_typeParameters_TypeParameterInInnerHideOuter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterInInnerHideOuter.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/TypeParameterInStaticDontHideOuter.kt")
+    public void testConflicts_typeParameters_TypeParameterInStaticDontHideOuter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterInStaticDontHideOuter.kt");
     }
 
     @TestMetadata("conflicts/typeParameters/TypeParameterVsLocalFunction.kt")
@@ -388,6 +410,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingParameterByLocal.kt");
     }
 
+    @TestMetadata("HidingPropertyByLocal.kt")
+    public void testHidingPropertyByLocal() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyByLocal.kt");
+    }
+
     @TestMetadata("HidingPropertyBySetterParameter.kt")
     public void testHidingPropertyBySetterParameter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingPropertyBySetterParameter.kt");
@@ -616,6 +643,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("QuotedParameter.kt")
     public void testQuotedParameter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedParameter.kt");
+    }
+
+    @TestMetadata("RedundantOverride.kt")
+    public void testRedundantOverride() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/RedundantOverride.kt");
     }
 
     @TestMetadata("SameNameFunctionByImplicitReceiver.kt")

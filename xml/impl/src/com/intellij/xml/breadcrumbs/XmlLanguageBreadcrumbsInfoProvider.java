@@ -41,6 +41,11 @@ public class XmlLanguageBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return getTooltip((XmlTag)e);
   }
 
+  @Override
+  public boolean isShownByDefault() {
+    return false;
+  }
+
   public static @NotNull String getTooltip(@NotNull XmlTag tag) {
     final StringBuilder result = new StringBuilder("&lt;");
     result.append(tag.getName());

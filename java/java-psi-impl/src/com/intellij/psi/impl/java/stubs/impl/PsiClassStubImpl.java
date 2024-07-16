@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -37,18 +37,18 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   public PsiClassStubImpl(@NotNull JavaClassElementType type,
                           final StubElement parent,
-                          @Nullable final String qualifiedName,
-                          @Nullable final String name,
-                          @Nullable final String baseRefText,
+                          final @Nullable String qualifiedName,
+                          final @Nullable String name,
+                          final @Nullable String baseRefText,
                           final short flags) {
     this(type, parent, TypeInfo.fromString(qualifiedName), name, baseRefText, flags);
   }
 
   public PsiClassStubImpl(@NotNull JavaClassElementType type,
                           final StubElement parent,
-                          @NotNull final TypeInfo typeInfo,
-                          @Nullable final String name,
-                          @Nullable final String baseRefText,
+                          final @NotNull TypeInfo typeInfo,
+                          final @Nullable String name,
+                          final @Nullable String baseRefText,
                           final short flags) {
     super(parent, type);
     myTypeInfo = typeInfo;

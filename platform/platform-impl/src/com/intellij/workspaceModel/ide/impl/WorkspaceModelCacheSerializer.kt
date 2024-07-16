@@ -17,6 +17,7 @@ import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
 
+@ApiStatus.Internal
 class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelativizer: UrlRelativizer?) {
   private val serializer: EntityStorageSerializer =
     EntityStorageSerializerImpl(
@@ -115,19 +117,23 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
   }
 
   object PluginAwareEntityTypesResolver : EntityTypesResolver {
-    override fun getPluginId(clazz: Class<*>): String? {
-      return (clazz.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.pluginId?.idString
+    override fun getPluginIdAndModuleId(clazz: Class<*>): Pair<String?, String?> {
+      val pluginAwareClassLoader = clazz.classLoader as? PluginAwareClassLoader
+      return pluginAwareClassLoader?.pluginId?.idString to pluginAwareClassLoader?.moduleId
     }
 
-    override fun resolveClass(name: String, pluginId: String?): Class<*> {
-      val classLoader = getClassLoader(pluginId) ?:
+    override fun resolveClass(name: String, pluginId: String?, moduleId: String?): Class<*> {
+      val classLoader = getClassLoader(pluginId, moduleId) ?:
         error("Could not resolve class loader for plugin '$pluginId' with type: $name")
 
       if (name.startsWith("[")) return Class.forName(name, true, classLoader)
       return classLoader.loadClass(name)
     }
 
-    override fun getClassLoader(pluginId: String?): ClassLoader? {
+    override fun getClassLoader(pluginId: String?, moduleId: String?): ClassLoader? {
+      if (moduleId != null) {
+        return PluginManagerCore.getPluginSet().findEnabledModule(moduleId)!!.classLoader
+      }
       val id = pluginId?.let { PluginId.getId(it) }
       if (id != null && !PluginManagerCore.isPluginInstalled(id)) {
          return null

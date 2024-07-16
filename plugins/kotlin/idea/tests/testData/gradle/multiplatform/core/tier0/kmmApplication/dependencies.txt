@@ -13,8 +13,8 @@ project.commonMain
 project.commonTest
     commonMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}} (TEST)
 
 project.iosArm64Main
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
@@ -44,8 +44,8 @@ project.iosTest
     commonTest (refines, TEST)
     iosMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test:annotationsCommonMain:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test:assertionsCommonMain:{{KGP_VERSION}} (TEST)
 
 project.iosX64Main
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB

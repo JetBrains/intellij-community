@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -30,14 +30,11 @@ public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariabl
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("remove.unused.element.family", JavaElementKind.VARIABLE.object());
   }
 
-  @IntentionName
-  @NotNull
-  protected String getText(@NotNull PsiVariable variable) {
+  protected @IntentionName @NotNull String getText(@NotNull PsiVariable variable) {
     return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.fromElement(variable).object(), variable.getName());
   }
 
@@ -168,8 +165,7 @@ public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariabl
   }
 
   private static List<PsiReferenceExpression> collectReferences(@NotNull PsiVariable variable) {
-    PsiElement context = variable instanceof PsiField ? ((PsiField)variable).getContainingClass() : PsiUtil.getVariableCodeBlock(variable, null);
-    List<PsiReferenceExpression> references = new ArrayList<>(VariableAccessUtils.getVariableReferences(variable, context));
+    List<PsiReferenceExpression> references = new ArrayList<>(VariableAccessUtils.getVariableReferences(variable));
     references.removeIf(ref -> !PsiUtil.isAccessedForWriting(ref));
     return ContainerUtil.filter(references, r1 ->
       (r1.getParent() instanceof PsiAssignmentExpression assignment && !ExpressionUtils.isVoidContext(assignment)) ||  

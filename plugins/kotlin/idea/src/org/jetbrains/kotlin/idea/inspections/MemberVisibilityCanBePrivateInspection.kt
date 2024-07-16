@@ -96,7 +96,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         val useScope = declaration.useScope
         val name = declaration.name ?: return false
         val restrictedScope = if (useScope is GlobalSearchScope) {
-            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null, null)) {
+            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
                 PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return false
                 PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> return false
                 PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> KotlinSourceFilterScope.projectSourcesAndResources(useScope, declaration.project)
@@ -119,6 +119,13 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
                     otherUsageFound = true
                     return@Processor false
                 }
+            }
+            // Do not privatize functions referenced by callable references
+            if (usage.getStrictParentOfType<KtCallableReferenceExpression>() != null) {
+                // Consider the reference is used outside of the class,
+                // as KFunction#call would fail even on references inside that same class
+                otherUsageFound = true
+                return@Processor false
             }
             val function = usage.getParentOfTypesAndPredicate<KtDeclarationWithBody>(
                 true, KtNamedFunction::class.java, KtPropertyAccessor::class.java

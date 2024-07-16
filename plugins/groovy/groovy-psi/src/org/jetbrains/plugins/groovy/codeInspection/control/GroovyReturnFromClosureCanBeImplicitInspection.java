@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceStatement;
 
-public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspection {
+public final class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspection {
 
     @Override
     @Nullable

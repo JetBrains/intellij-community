@@ -20,7 +20,7 @@ data class ModuleId(val name: @NlsSafe String) : SymbolicEntityId<ModuleEntity> 
   override fun hashCode(): Int  = name.hashCode()
 }
 
-data class FacetId(val name: @NlsSafe String, val type: @NonNls String, val parentId: ModuleId) : SymbolicEntityId<FacetEntity> {
+data class FacetId(val name: @NlsSafe String, val type: FacetEntityTypeId, val parentId: ModuleId) : SymbolicEntityId<FacetEntity> {
   override val presentableName: String
     get() = name
 }

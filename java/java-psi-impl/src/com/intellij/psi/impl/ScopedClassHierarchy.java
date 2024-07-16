@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.RecursionGuard;
@@ -71,8 +71,7 @@ class ScopedClassHierarchy {
     }
   }
 
-  @NotNull
-  private static List<PsiType> getSuperTypes(PsiClass psiClass) {
+  private static @NotNull List<PsiType> getSuperTypes(PsiClass psiClass) {
     List<PsiType> superTypes = new ArrayList<>();
     if (psiClass instanceof PsiAnonymousClass) {
       ContainerUtil.addIfNotNull(superTypes, ((PsiAnonymousClass)psiClass).getBaseClassType());
@@ -82,8 +81,7 @@ class ScopedClassHierarchy {
     return superTypes;
   }
 
-  @NotNull
-  static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
+  static @NotNull ScopedClassHierarchy getHierarchy(final @NotNull PsiClass psiClass, final @NotNull GlobalSearchScope resolveScope) {
     if (psiClass instanceof PsiAnonymousClass) {
       return new ScopedClassHierarchy(psiClass, resolveScope);
     }
@@ -93,8 +91,7 @@ class ScopedClassHierarchy {
     }).get(resolveScope);
   }
 
-  @Nullable
-  static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass derivedClass, @NotNull GlobalSearchScope scope, @NotNull PsiClass superClass) {
+  static @Nullable PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass derivedClass, @NotNull GlobalSearchScope scope, @NotNull PsiClass superClass) {
     ScopedClassHierarchy hierarchy = getHierarchy(derivedClass, scope);
     Map<PsiClass, PsiClassType.ClassResolveResult> map = hierarchy.mySupersWithSubstitutors;
     if (map == null) {
@@ -113,8 +110,7 @@ class ScopedClassHierarchy {
     return cachedClass == superClass ? cachedSubstitutor : mirrorSubstitutor(superClass, cachedClass, cachedSubstitutor);
   }
 
-  @NotNull
-  private static PsiSubstitutor mirrorSubstitutor(@NotNull PsiClass from, @NotNull final PsiClass to, @NotNull PsiSubstitutor substitutor) {
+  private static @NotNull PsiSubstitutor mirrorSubstitutor(@NotNull PsiClass from, final @NotNull PsiClass to, @NotNull PsiSubstitutor substitutor) {
     Iterator<PsiTypeParameter> baseParams = PsiUtil.typeParametersIterator(to);
     Iterator<PsiTypeParameter> candidateParams = PsiUtil.typeParametersIterator(from);
 
@@ -144,8 +140,7 @@ class ScopedClassHierarchy {
     return list;
   }
 
-  @NotNull
-  private List<PsiClassType.ClassResolveResult> calcImmediateSupersWithCapturing() {
+  private @NotNull List<PsiClassType.ClassResolveResult> calcImmediateSupersWithCapturing() {
     PsiUtilCore.ensureValid(myPlaceClass);
     List<PsiClassType.ClassResolveResult> list = new ArrayList<>();
     for (PsiClassType type : myPlaceClass.getSuperTypes()) {
@@ -168,8 +163,7 @@ class ScopedClassHierarchy {
     return list;
   }
 
-  @NotNull
-  private Map<PsiClass, PsiSubstitutor> calcAllMemberSupers(final LanguageLevel level) {
+  private @NotNull Map<PsiClass, PsiSubstitutor> calcAllMemberSupers(final LanguageLevel level) {
     final Map<PsiClass, PsiSubstitutor> map = new HashMap<>();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myPlaceClass.getProject());
     new PairProcessor<PsiClass, PsiSubstitutor>() {

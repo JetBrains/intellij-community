@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -41,9 +41,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return myForcedPresentableName;
   }
 
-  @Nullable
   @Override
-  public PsiType getType() {
+  public @Nullable PsiType getType() {
     PsiClass psiClass = getObject();
     return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, getSubstitutor());
   }
@@ -57,9 +56,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return this;
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     if (myForcedPresentableName != null) {
       return myForcedPresentableName;
     }
@@ -79,9 +77,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     myForcedPresentableName = forcedPresentableName;
   }
 
-  @NotNull
   @Override
-  public PsiClass getObject() {
+  public @NotNull PsiClass getObject() {
     return myClass;
   }
 
@@ -168,8 +165,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return StringUtil.notNullize(name);
   }
 
-  @NotNull
-  private static String formatTypeParameters(@NotNull final PsiSubstitutor substitutor, final PsiTypeParameter[] params) {
+  private static @NotNull String formatTypeParameters(final @NotNull PsiSubstitutor substitutor, final PsiTypeParameter[] params) {
     final boolean space = showSpaceAfterComma(params[0]);
     StringBuilder buffer = new StringBuilder();
     buffer.append("<");

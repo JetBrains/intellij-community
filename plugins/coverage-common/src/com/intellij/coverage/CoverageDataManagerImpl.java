@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-
+@ApiStatus.Internal
 public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable.Default {
   private final Project myProject;
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -50,12 +51,10 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   private boolean myIsProjectClosing = false;
 
-
-
   public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
 
-    CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
+    CoverageSuiteListener coverageViewListener = createCoverageViewListener();
     if (coverageViewListener != null) {
       addSuiteListener(coverageViewListener, this);
     }
@@ -132,7 +131,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Nullable
-  protected CoverageViewSuiteListener createCoverageViewListener() {
+  protected CoverageSuiteListener createCoverageViewListener() {
     return new CoverageViewSuiteListener(myProject);
   }
 
@@ -253,6 +252,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
     CoverageDataAnnotationsManager.getInstance(myProject).clearAnnotations();
     suite.getCoverageEngine().getCoverageAnnotator(myProject).onSuiteChosen(suite);
+    suite.setCoverageData(null);
     triggerPresentationUpdate();
   }
 
@@ -371,12 +371,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   public static void processGatheredCoverage(RunConfigurationBase<?> configuration) {
     final Project project = configuration.getProject();
     if (project.isDisposed()) return;
-    final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
     final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
     if (coverageSuite != null) {
       ((BaseCoverageSuite)coverageSuite).setConfiguration(configuration);
-      coverageDataManager.coverageGathered(coverageSuite);
+      getInstance(project).coverageGathered(coverageSuite);
     }
   }
 

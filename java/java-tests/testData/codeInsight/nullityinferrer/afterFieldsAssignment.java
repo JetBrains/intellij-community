@@ -1,18 +1,14 @@
 import org.jetbrains.annotations.*;
 
 class Test {
-  @NotNull
-  String myFoo = "";
+  @NotNull String myFoo = "";
 
-  @Nullable
-  String myFoo1 = null;
+  @Nullable String myFoo1 = null;
 
-  @NotNull
-  String myFoo2 = foo2();
+  @NotNull String myFoo2 = foo2();
   @NotNull String foo2() { return "";}
 
-  @Nullable
-  String myFoo3 = foo3();
+  @Nullable String myFoo3 = foo3();
   @Nullable String foo3() { return null;}
 
   String myFoo4;
@@ -39,8 +35,7 @@ class Test {
   final String myFoo13 = null;
   final Runnable myFoo14 = new Runnable() {
     {foo();}
-    @Nullable
-    Object foo() {
+    @Nullable Object foo() {
       return null;
     }
     public void run() {}
@@ -59,8 +54,7 @@ class Test {
     myFoo12 = "";
   }
 
-  @Nullable
-  String foo10(boolean flag) {
+  @Nullable String foo10(boolean flag) {
     return flag ? foo2() : foo3();
   }
 }

@@ -64,9 +64,10 @@ fun Module.getTopLevelBuildScriptSettingsPsiFile(): PsiFile? {
 }
 
 private fun Module.getBuildScriptFile(vararg fileNames: String): Path? {
-    val moduleDir = Path(moduleFilePath).parent.pathString
-    findBuildGradleFile(moduleDir, *fileNames)?.let {
-        return it
+    moduleNioFile.parent?.let { moduleDir ->
+        findBuildGradleFile(moduleDir.pathString, *fileNames)?.let {
+            return it
+        }
     }
 
     for (contentRoot in ModuleRootManager.getInstance(this).contentRoots) {

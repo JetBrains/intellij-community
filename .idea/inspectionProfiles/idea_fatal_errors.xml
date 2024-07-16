@@ -888,7 +888,7 @@
       <option name="CHECK_TRY_CATCH_SECTION" value="true" />
       <option name="CHECK_METHOD_BODY" value="true" />
     </inspection_tool>
-    <inspection_tool class="DefaultNotLastCaseInSwitch" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="DefaultNotLastCaseInSwitch" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="DefaultNotLastCaseInSwitchJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DeferredIsResult" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="DeferredResultUnused" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1120,6 +1120,7 @@
     <inspection_tool class="ExplicitThis" enabled="false" level="INFORMATION" enabled_by_default="false" />
     <inspection_tool class="ExtendsAnnotation" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ExtendsConcreteCollection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ExpressionComparedToItself" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ExtendsObject" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ExtendsTagPositionInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ExtendsThread" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -2002,6 +2003,8 @@
     <inspection_tool class="LessUnresolvedMixin" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="LessUnresolvedVariable" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="LiftReturnOrAssignment" enabled="false" level="INFO" enabled_by_default="false" />
+    <inspection_tool class="LightServiceMigrationCode" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LightServiceMigrationXML" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="LightServiceMustBeFinal" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="LimitedScopeInnerClass" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ListIndexOfReplaceableByContains" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -2129,7 +2132,7 @@
     <inspection_tool class="MinitestFrameworkSupportInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MismatchedArrayReadWrite" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MismatchedLightServiceLevelAndCtor" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="MismatchedCollectionQueryUpdate" enabled="false" level="WARNING" enabled_by_default="false">
+    <inspection_tool class="MismatchedCollectionQueryUpdate" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="queryNames">
         <value />
       </option>
@@ -2490,6 +2493,7 @@
       <option name="CHECK_NON_CONSTANT_VALUES" value="true" />
     </inspection_tool>
     <inspection_tool class="PatternVariableCanBeUsed" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="PatternVariableHidesField" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PermissionUsageInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PgSelectFromProcedureInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Php7ReadinessInspection" enabled="false" level="ERROR" enabled_by_default="true" />
@@ -3487,6 +3491,7 @@
     <inspection_tool class="SuspiciousGetterSetter" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SuspiciousIndentAfterControlStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SuspiciousInstanceOfGuard" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SuspiciousIndentAfterControlStatement" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SuspiciousIntegerDivAssignment" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SuspiciousListRemoveInLoop" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SuspiciousLiteralUnderscore" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -3541,9 +3546,6 @@
           <module name="intellij.java.ui" />
           <module name="intellij.java.psi.impl" />
           <module name="intellij.java.analysis" />
-          <module name="intellij.xml.dom.impl" />
-          <module name="intellij.xml.dom" />
-          <module name="intellij.xml.psi" />
           <module name="intellij.java.impl.refactorings" />
         </modules-set>
         <modules-set>
@@ -3555,6 +3557,11 @@
           <module name="intellij.properties" />
           <module name="intellij.properties.psi.impl" />
           <module name="intellij.properties.psi" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.xml.dom.impl" />
+          <module name="intellij.xml.dom" />
+          <module name="intellij.xml.psi" />
         </modules-set>
         <modules-set>
           <module name="intellij.xml.impl" />
@@ -3586,7 +3593,6 @@
         <modules-set>
           <module name="intellij.java.testFramework" />
           <module name="intellij.platform.testFramework" />
-          <module name="intellij.platform.vcs.impl" />
           <module name="intellij.platform.execution.impl" />
           <module name="intellij.platform.lang.impl" />
           <module name="intellij.platform.util" />
@@ -3621,9 +3627,9 @@
           <module name="intellij.platform.configurationStore.impl" />
           <module name="intellij.platform.codeStyle" />
           <module name="intellij.platform.codeStyle.impl" />
-          <module name="intellij.platform.vfs.impl" />
           <module name="intellij.platform.lang.core" />
           <module name="intellij.platform.ide.core" />
+          <module name="intellij.platform.ide.core.impl" />
           <module name="intellij.codeServer.db.connectivity" />
           <module name="intellij.codeServer.core" />
           <module name="intellij.platform.refactoring" />
@@ -3662,9 +3668,6 @@
           <module name="intellij.platform.duplicates.analysis" />
         </modules-set>
         <modules-set>
-          <module name="intellij.platform.jps.build.javac.rt" />
-        </modules-set>
-        <modules-set>
           <module name="intellij.vcs.perforce" />
           <module name="intellij.vcs.perforce.util" />
         </modules-set>
@@ -3677,6 +3680,7 @@
           <module name="intellij.python.psi" />
           <module name="intellij.pycharm.community" />
           <module name="intellij.python.psi.impl" />
+          <module name="intellij.python.syntax.core" />
         </modules-set>
         <modules-set>
           <module name="intellij.appcode" />
@@ -3710,10 +3714,17 @@
           <module name="intellij.platform.util.zip" />
         </modules-set>
         <modules-set>
+          <module name="intellij.platform.bootstrap" />
+          <module name="intellij.platform.util.classLoader" />
+          <module name="intellij.platform.boot" />
           <module name="intellij.platform.util.ex" />
           <module name="intellij.platform.util.zip" />
           <module name="intellij.platform.util.rt.java8" />
           <module name="intellij.platform.util.immutableKeyValueStore" />
+        </modules-set>
+        <modules-set>
+          <module name="intellij.platform.diagnostic" />
+          <module name="intellij.platform.util.base" />
         </modules-set>
       </option>
     </inspection_tool>

@@ -2,17 +2,16 @@
 
 Cleaning output files:
   out/production/module/Base.class
+  out/production/module/META-INF/module.kotlin_module
 End of files
-Exit code: NOTHING_DONE
-------------------------------------------
 Compiling files:
   src/Base.kt
 End of files
 Exit code: OK
 ------------------------------------------
 Cleaning output files:
-  out/production/module/META-INF/module.kotlin_module
   out/production/module/ChildClass.class
+  out/production/module/META-INF/module.kotlin_module
 End of files
 Compiling files:
   src/ChildClass.kt

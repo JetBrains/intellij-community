@@ -3,10 +3,10 @@
 class a {
 }
 
-class b extends <error descr="Duplicate class: 'a'">a</error>, <error descr="Duplicate class: 'a'">a</error> {
+class b extends a, <error descr="Duplicate reference to 'a' in 'extends' list">a</error> {
 }
 
 interface i {}
 
-class c implements <error descr="Duplicate class: 'i'">i</error>, <error descr="Duplicate class: 'i'">i</error> {
+class c implements i, <error descr="Duplicate reference to 'i' in 'implements' list">i</error> {
 }

@@ -18,7 +18,7 @@ import java.util.List;
 
 import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
 
-public class PropertiesUastReferenceContributor extends PsiReferenceContributor {
+public final class PropertiesUastReferenceContributor extends PsiReferenceContributor {
   private static final Logger LOG = Logger.getInstance(PropertiesUastReferenceContributor.class);
 
   @Override

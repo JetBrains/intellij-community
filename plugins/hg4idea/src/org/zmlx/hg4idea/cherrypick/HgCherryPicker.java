@@ -1,14 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.cherrypick;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
@@ -48,16 +49,19 @@ public class HgCherryPicker extends VcsCherryPicker {
   }
 
   @Override
-  public void cherryPick(final @NotNull List<? extends VcsFullCommitDetails> commits) {
-    Map<HgRepository, List<VcsFullCommitDetails>> commitsInRoots = DvcsUtil.groupCommitsByRoots(
+  public boolean cherryPick(final @NotNull List<? extends VcsCommitMetadata> commits) {
+    Map<HgRepository, List<VcsCommitMetadata>> commitsInRoots = DvcsUtil.groupCommitsByRoots(
       HgUtil.getRepositoryManager(myProject), commits);
-    for (Map.Entry<HgRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
+    IntRef commitsGrafted = new IntRef(0);
+    for (Map.Entry<HgRepository, List<VcsCommitMetadata>> entry : commitsInRoots.entrySet()) {
       processGrafting(entry.getKey(), ContainerUtil.map(entry.getValue(),
-                                                        commitDetails -> commitDetails.getId().asString()));
+                                                        commitDetails -> commitDetails.getId().asString()), commitsGrafted);
     }
+
+    return commitsGrafted.get() == commits.size();
   }
 
-  private static void processGrafting(@NotNull HgRepository repository, @NotNull List<String> hashes) {
+  private static void processGrafting(@NotNull HgRepository repository, @NotNull List<String> hashes, @NotNull IntRef totalCommitsGrafted) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
     HgGraftCommand command = new HgGraftCommand(project, repository);
@@ -85,6 +89,9 @@ public class HgCherryPicker extends VcsCherryPicker {
                                                          HgBundle.message("action.hg4idea.Graft.continue.error"));
         break;
       }
+    }
+    if (!HgErrorUtil.isCommandExecutionFailed(result)) {
+      totalCommitsGrafted.inc();
     }
     repository.update();
     root.refresh(true, true);

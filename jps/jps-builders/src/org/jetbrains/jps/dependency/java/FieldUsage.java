@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 
@@ -20,8 +21,8 @@ public class FieldUsage extends MemberUsage{
     myDescriptor = descriptor;
   }
 
-  public FieldUsage(GraphDataInput in) throws IOException {
-    super(in);
+  public FieldUsage(@NotNull JvmNodeReferenceID owner, GraphDataInput in) throws IOException {
+    super(owner, in);
     myDescriptor = in.readUTF();
   }
 

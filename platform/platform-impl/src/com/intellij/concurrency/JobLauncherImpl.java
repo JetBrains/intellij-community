@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
@@ -243,9 +243,11 @@ public final class JobLauncherImpl extends JobLauncher {
         if (toWait < 0) {
           return false;
         }
-        // wait while helping other tasks in the meantime, but not for too long
-        // we are avoiding calling timed myForkJoinTask.get() because it's very expensive when timed out (bc of TimeoutException)
-        ForkJoinPool.commonPool().awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          // wait while helping other tasks in the meantime, but not for too long
+          // we are avoiding calling timed myForkJoinTask.get() because it's very expensive when timed out (bc of TimeoutException)
+          ForkJoinPool.commonPool().awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
+        }
       }
       if (myForkJoinTask.isDone()) {
         try {
@@ -538,14 +540,19 @@ public final class JobLauncherImpl extends JobLauncher {
         futureResult.set(false);
       }
     }
-    catch (Exception e) {
-      // in case of exception in normal flow, terminate background tasks
+    catch (Throwable t) {
+      // in case of any exception or error in normal flow, terminate background tasks
       addToQueue.dropEverythingAndPanic();
-      throw e;
+      throw t;
     }
     finally {
-      // do not call future.get() to avoid overcompensation
-      completer.invoke();
+      // FJP may execute tasks in the same stackframe.
+      // This is the behavior similar to the manual pumping the event queue,
+      // so we need to prepare the stackframe for installation of context.
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        // do not call future.get() to avoid overcompensation
+        completer.invoke();
+      }
     }
     return futureResult.get();
   }

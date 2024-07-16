@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.JetBrainsProtocolHandler
@@ -84,8 +84,8 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       }
     }
 
-    // Allows to specify named sets of disabled plugins.
-    // For instance, in case of CLion, we want to have two distinct sets of incompatible plugins:
+    // Allows specifying named sets of disabled plugins.
+    // For instance, in the case of CLion, we want to have two distinct sets of incompatible plugins:
     //  - for CLion "Nova"
     //  - for CLion "Classic"
     //

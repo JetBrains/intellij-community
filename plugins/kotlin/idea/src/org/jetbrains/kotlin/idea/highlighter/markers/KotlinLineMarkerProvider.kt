@@ -12,11 +12,13 @@ import com.intellij.java.JavaBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
@@ -184,8 +186,7 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
             KotlinBundle.message("highlighter.action.text.go.to.super.method")
         else
             KotlinBundle.message("highlighter.action.text.go.to.super.property"),
-        IdeActions.ACTION_GOTO_SUPER,
-        gutter.icon
+        IdeActions.ACTION_GOTO_SUPER
     )
     result.add(lineMarkerInfo)
 }
@@ -199,7 +200,9 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
 
     val lightClass = element.toLightClass() ?: element.toFakeLightClass()
 
-    if (ClassInheritorsSearch.search(lightClass, false).findFirst() == null) return
+    if (ClassInheritorsSearch.search(lightClass, false).findFirst() == null && !(LambdaUtil.isFunctionalClass(lightClass) && ReferencesSearch.search(lightClass).findFirst() != null)) {
+        return
+    }
 
     val anchor = element.nameIdentifier ?: element
     val icon = gutter.icon ?: return
@@ -218,8 +221,7 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
             KotlinBundle.message("highlighter.action.text.go.to.implementations")
         else
             KotlinBundle.message("highlighter.action.text.go.to.subclasses"),
-        IdeActions.ACTION_GOTO_IMPLEMENTATION,
-        gutter.icon
+        IdeActions.ACTION_GOTO_IMPLEMENTATION
     )
     result.add(lineMarkerInfo)
 }
@@ -258,8 +260,7 @@ private fun collectOverriddenPropertyAccessors(
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.overridden.properties"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION,
-            gutter.icon
+            IdeActions.ACTION_GOTO_IMPLEMENTATION
         )
 
         result.add(lineMarkerInfo)
@@ -308,8 +309,7 @@ private fun collectActualMarkers(
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
         KotlinBundle.message("highlighter.action.text.go.to.actual.declarations"),
-        IdeActions.ACTION_GOTO_IMPLEMENTATION,
-        gutter.icon
+        IdeActions.ACTION_GOTO_IMPLEMENTATION
     )
     result.add(lineMarkerInfo)
 }
@@ -337,8 +337,7 @@ private fun collectExpectedMarkers(
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
         KotlinBundle.message("highlighter.action.text.go.to.expected.declaration"),
-        null,
-        gutter.icon
+        null
     )
     result.add(lineMarkerInfo)
 }
@@ -379,8 +378,7 @@ private fun collectOverriddenFunctions(functions: Collection<KtNamedFunction>, r
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.overridden.methods"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION,
-            gutter.icon
+            IdeActions.ACTION_GOTO_IMPLEMENTATION
         )
 
         result.add(lineMarkerInfo)

@@ -46,6 +46,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -115,15 +116,7 @@ public final class GradleUtil {
   public static boolean writeWrapperConfiguration(@NotNull Path targetPath, @NotNull WrapperConfiguration wrapperConfiguration) {
     Properties wrapperProperties = new Properties();
     setFromWrapperConfiguration(wrapperConfiguration, wrapperProperties);
-    try (BufferedWriter writer = Files.newBufferedWriter(targetPath, StandardCharsets.ISO_8859_1)) {
-      wrapperProperties.store(writer, null);
-    }
-    catch (IOException e) {
-      GradleLog.LOG.warn(
-        String.format("I/O exception on writing Gradle wrapper properties into '%s'", targetPath.toAbsolutePath()), e);
-      return false;
-    }
-    return true;
+    return writeGradleProperties(wrapperProperties, targetPath);
   }
 
   public static @Nullable WrapperConfiguration readWrapperConfiguration(@NotNull Path wrapperPropertiesFile) {
@@ -158,17 +151,31 @@ public final class GradleUtil {
     target.setProperty(WrapperExecutor.ZIP_STORE_PATH_PROPERTY, source.getZipPath());
   }
 
-  private static @Nullable Properties readGradleProperties(@NotNull Path wrapperPropertiesFile) {
-    try (BufferedReader reader = Files.newBufferedReader(wrapperPropertiesFile, StandardCharsets.ISO_8859_1)) {
+  public static @Nullable Properties readGradleProperties(@NotNull Path propertiesFile) {
+    try (BufferedReader reader = Files.newBufferedReader(propertiesFile, StandardCharsets.ISO_8859_1)) {
       final Properties props = new Properties();
       props.load(reader);
       return props;
     }
-    catch (Exception e) {
+    catch (NoSuchFileException ignored) {
+    }
+    catch (IOException e) {
       GradleLog.LOG.warn(
-        String.format("I/O exception on reading gradle wrapper properties file at '%s'", wrapperPropertiesFile.toAbsolutePath()), e);
+        String.format("I/O exception on reading gradle properties file at '%s'", propertiesFile.toAbsolutePath()), e);
     }
     return null;
+  }
+
+  private static boolean writeGradleProperties(@NotNull Properties properties, @NotNull Path propertiesFile) {
+    try (BufferedWriter writer = Files.newBufferedWriter(propertiesFile, StandardCharsets.ISO_8859_1)) {
+      properties.store(writer, null);
+      return true;
+    }
+    catch (IOException e) {
+      GradleLog.LOG.warn(
+        String.format("I/O exception on writing Gradle properties into '%s'", propertiesFile.toAbsolutePath()), e);
+    }
+    return false;
   }
 
   private static void applyPropertyValue(@NotNull Properties props,

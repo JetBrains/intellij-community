@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.lang.Language;
@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -37,7 +38,20 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
                                    final boolean multiline,
                                    boolean editorFont,
                                    boolean showEditor) {
-    super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition);
+    this(project, debuggerEditorsProvider, historyId, sourcePosition, text, multiline, editorFont, showEditor, null);
+  }
+
+  protected XDebuggerExpressionEditor(Project project,
+                                      @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
+                                      @Nullable @NonNls String historyId,
+                                      @Nullable XSourcePosition sourcePosition,
+                                      @NotNull XExpression text,
+                                      final boolean multiline,
+                                      boolean editorFont,
+                                      boolean showEditor,
+                                      @Nullable PsiElement psiContext) {
+    super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition,
+          psiContext);
     myExpression = XExpressionImpl.changeMode(text, getMode());
     myEditorTextField =
       new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType(), false, !multiline) {

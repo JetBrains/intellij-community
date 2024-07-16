@@ -19,7 +19,7 @@ final class A1 extends Sealed1 {
 final class C1 extends Sealed1 {
 }
 
-sealed abstract class Sealed2 permits <error descr="Duplicate class: 'A2'">A2</error>, <error descr="Duplicate class: 'A2'">A2</error> {
+sealed abstract class Sealed2 permits A2, <error descr="Duplicate reference to 'A2' in 'permits' list">A2</error> {
 }
 
 final class A2 extends Sealed2 {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
@@ -15,7 +15,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.write
-import com.intellij.util.system.CpuArch
 import java.nio.file.Path
 
 private val LOG = logger<RuntimeChooserPaths>()
@@ -24,14 +23,11 @@ private val LOG = logger<RuntimeChooserPaths>()
 class RuntimeChooserPaths {
   private fun computeJdkFilePath(): Path {
     val directory = PathManager.getCustomOptionsDirectory() ?: throw IllegalStateException("Runtime selection not supported")
-    val scriptName = ApplicationNamesInfo.getInstance().scriptName
-    val configName = scriptName + (if (!SystemInfo.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
+    val configName = "${ApplicationNamesInfo.getInstance().scriptName}${if (SystemInfo.isWindows) "64.exe" else ""}.jdk"
     return Path.of(directory, configName)
   }
 
-  fun installCustomJdk(@NlsSafe jdkName: String,
-                       resolveSuggestedHome: (ProgressIndicator) -> Path?
-  ): Unit = runWithProgress { indicator, jdkFile ->
+  fun installCustomJdk(@NlsSafe jdkName: String, resolveSuggestedHome: (ProgressIndicator) -> Path?): Unit = runWithProgress { indicator, jdkFile ->
     val sdkHome = try {
       resolveSuggestedHome(indicator)
     }
@@ -72,7 +68,6 @@ class RuntimeChooserPaths {
         try {
           val jdkFile = computeJdkFilePath()
           jdkFileShadow = jdkFile
-
           @NlsSafe val runtimeName = action(indicator, jdkFile)
           if (runtimeName != null && !ApplicationManagerEx.isInIntegrationTest()) {
             RuntimeChooserMessages.showRestartMessage(runtimeName)

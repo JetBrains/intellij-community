@@ -11,12 +11,24 @@ public class DocumentUtilTest {
   @Test
   public void testGetIndent() {
     final Document doc = new DocumentImpl("""
-                                            line1
-                                             \t line2
+                                            no indent
+                                             \t some indent
+                                            
+                                            \s\s\s
+                                            \s
                                             """);
-    assertEquals("", DocumentUtil.getIndent(doc, doc.getLineStartOffset(0) + 2).toString());
-    assertEquals(" \t ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(1) + 2).toString());
-    assertEquals("", DocumentUtil.getIndent(doc, doc.getLineStartOffset(2)).toString());
+    assertEquals("no indent",
+                 "", DocumentUtil.getIndent(doc, doc.getLineStartOffset(0) + 2).toString());
+    assertEquals("some indent",
+                 " \t ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(1) + 2).toString());
+    assertEquals("empty line",
+                 "", DocumentUtil.getIndent(doc, doc.getLineStartOffset(2)).toString());
+    assertEquals("line with spaces",
+                 "   ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(3) + 1).toString());
+    assertEquals("line with a single space",
+                 " ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(4)).toString());
+    assertEquals("end of the document",
+                 "", DocumentUtil.getIndent(doc, doc.getLineStartOffset(5)).toString());
   }
 
   @Test

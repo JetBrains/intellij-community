@@ -5,7 +5,7 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.uast.UastLazyPart
@@ -16,7 +16,7 @@ class UastKotlinPsiSetterParameter<T : KtCallableDeclaration> internal construct
     parameterType: PsiType,
     parent: PsiElement,
     ktOrigin: T,
-    private val nullability: KtTypeNullability?,
+    private val nullability: KaTypeNullability?,
 ) : UastKotlinPsiParameterBase<T>(
     name = SpecialNames.IMPLICIT_SET_PARAMETER.asString(),
     type = parameterType,

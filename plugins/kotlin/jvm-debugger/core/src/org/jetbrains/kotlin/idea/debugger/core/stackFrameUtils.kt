@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
@@ -25,6 +26,12 @@ class VariableWithLocation(
     override fun compareTo(other: VariableWithLocation): Int =
         location.compareTo(other.location).takeIf { it != 0 }
             ?: name.compareTo(other.name)
+
+    override fun equals(other: Any?): Boolean =
+        (other is VariableWithLocation) && (this compareTo other == 0)
+
+    override fun hashCode(): Int =
+        31 * location.hashCode() + name.hashCode()
 
     val name: String
         get() = variable.name()
@@ -129,7 +136,7 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
 // For Java, this kind of filtering is done in [StackFrame.visibleVariables], but for
 // Kotlin this needs to be done separately for every (inline) stack frame.
 fun filterRepeatedVariables(sortedVariables: List<LocalVariable>): List<LocalVariable> =
-    sortedVariables.associateBy { it.name() }.values.toList()
+    sortedVariables.associateBy { it.name().dropInlineScopeInfo() }.values.toList()
 
 private fun LocalVariable.toDebugString() : String {
     val scope = getBorders()?.let {

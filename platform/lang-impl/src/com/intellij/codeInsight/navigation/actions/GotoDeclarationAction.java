@@ -48,6 +48,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
 
   private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
   private static List<EventPair<?>> ourCurrentEventData = null; // accessed from EDT only
+  private static final DataKey<GotoDeclarationReporter> GO_TO_DECLARATION_REPORTER_DATA_KEY = DataKey.create("GoToDeclarationReporterKey");
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
@@ -60,12 +61,27 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     );
     List<EventPair<?>> savedEventData = ourCurrentEventData;
     ourCurrentEventData = currentEventData;
+    AnActionEvent patchedEvent = getEventWithReporter(e);
     try {
-      super.actionPerformed(e);
+      super.actionPerformed(patchedEvent);
     }
     finally {
       ourCurrentEventData = savedEventData;
     }
+  }
+
+  private static @NotNull AnActionEvent getEventWithReporter(@NotNull AnActionEvent e) {
+    GotoDeclarationReporter reporter = new GotoDeclarationFUSReporter();
+    CustomizedDataContext context = CustomizedDataContext.create(e.getDataContext(), new DataProvider() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+        if (GO_TO_DECLARATION_REPORTER_DATA_KEY.is(dataId)) {
+          return reporter;
+        }
+        return null;
+      }
+    });
+    return e.withDataContext(context);
   }
 
   static @NotNull List<@NotNull EventPair<?>> getCurrentEventData() {
@@ -76,7 +92,17 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
-    return GotoDeclarationOrUsageHandler2.INSTANCE;
+    return new GotoDeclarationOrUsageHandler2(null);
+  }
+
+  @Nullable
+  GotoDeclarationReporter getReporter(@NotNull DataContext dataContext) {
+    return GO_TO_DECLARATION_REPORTER_DATA_KEY.getData(dataContext);
+  }
+
+  @Override
+  protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
+    return new GotoDeclarationOrUsageHandler2(getReporter(dataContext));
   }
 
   @Override

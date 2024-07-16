@@ -1,7 +1,6 @@
 package com.intellij.settingsSync.git.renderers
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.settingsSync.SettingsSyncBundle
 import com.intellij.settingsSync.git.record.HistoryRecord
 import com.intellij.settingsSync.git.table.SettingsHistoryTable
@@ -22,7 +21,7 @@ internal class SettingsHistoryRestoreCellRenderer : SettingsHistoryCellRenderer(
       HistoryRecord.RecordPosition.TOP -> {
         val numberOfChanges = row.record.changes.size
         toolTipText = SettingsSyncBundle.message("ui.toolwindow.undo.tooltip.text", numberOfChanges)
-        ExpUiIcons.General.Delete
+        AllIcons.General.Delete
       }
       HistoryRecord.RecordPosition.MIDDLE, HistoryRecord.RecordPosition.BOTTOM -> {
         addTooltipTextFragment(TooltipTextFragment(SettingsSyncBundle.message("ui.toolwindow.reset.tooltip.text"), false, false))

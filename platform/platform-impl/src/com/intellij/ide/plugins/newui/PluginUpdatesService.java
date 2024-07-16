@@ -7,12 +7,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.updateSettings.impl.InternalPluginResults;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.PluginUpdates;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,17 +33,16 @@ public class PluginUpdatesService {
   private static final @NotNull Condition<IdeaPluginDescriptor> DEFAULT_FILTER = // only enabled plugins by default
     descriptor -> !PluginManagerCore.isDisabled(descriptor.getPluginId());
 
-  // clients should receive filtered updates by default
-  private static @Nullable Collection<IdeaPluginDescriptor> ourAllUpdates;
+  // FIXME it is strange that users of this class need to known which updates came from custom repositories (IJPL-6087)
+  /** clients should receive filtered updates by default */
+  private static @Nullable InternalPluginResults ourAllUpdates;
   private static @NotNull Condition<? super IdeaPluginDescriptor> ourFilter = DEFAULT_FILTER;
-  // ourFilteredUpdates is in sync with ourAllUpdates at all times
-  private static @Nullable Collection<IdeaPluginDescriptor> ourFilteredUpdates;
   private static boolean ourPrepared;
   private static boolean ourPreparing;
   private static boolean ourReset;
 
   private Consumer<? super Integer> myCountCallback;
-  private List<Consumer<? super Collection<IdeaPluginDescriptor>>> myUpdateCallbacks;
+  private List<Consumer<InternalPluginResults>> myUpdateCallbacks;
   private boolean mySetFilter;
 
   static {
@@ -57,36 +59,50 @@ public class PluginUpdatesService {
     });
   }
 
+  @ApiStatus.Internal
   public static @NotNull PluginUpdatesService connectWithCounter(@NotNull Consumer<? super Integer> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
     service.myCountCallback = callback;
-
     synchronized (ourLock) {
       SERVICES.add(service);
-
       if (ourPrepared) {
-        callback.accept(getCount());
+        callback.accept(getCount(getFilteredUpdateResult()));
         return service;
       }
     }
-
     calculateUpdates();
     return service;
   }
 
-  public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
+  @ApiStatus.Internal
+  public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<@Nullable InternalPluginResults> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
     service.myUpdateCallbacks = Collections.singletonList(callback);
-
     synchronized (ourLock) {
       SERVICES.add(service);
-
       if (ourPrepared) {
-        callback.accept(ourFilteredUpdates);
+        callback.accept(getFilteredUpdateResult());
       }
     }
-
     return service;
+  }
+
+  private static @Nullable InternalPluginResults getFilteredUpdateResult() {
+    synchronized (ourLock) {
+      if (ourAllUpdates == null) {
+        return null;
+      }
+      final var filter = ourFilter;
+      return new InternalPluginResults(
+        new PluginUpdates(
+          ContainerUtil.filter(ourAllUpdates.getPluginUpdates().getAllEnabled(), d -> filter.test(d.getDescriptor())),
+          ContainerUtil.filter(ourAllUpdates.getPluginUpdates().getAllDisabled(), d -> filter.test(d.getDescriptor())),
+          ourAllUpdates.getPluginUpdates().getIncompatible()
+        ),
+        ourAllUpdates.getPluginNods(),
+        ourAllUpdates.getErrors()
+      );
+    }
   }
 
   public void calculateUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
@@ -94,10 +110,10 @@ public class PluginUpdatesService {
       if (myUpdateCallbacks == null) {
         myUpdateCallbacks = new ArrayList<>();
       }
-      myUpdateCallbacks.add(callback);
-
+      final var adaptedCallback = adaptDescriptorConsumerToUpdateResultConsumer(callback);
+      myUpdateCallbacks.add(adaptedCallback);
       if (ourPrepared) {
-        callback.accept(ourFilteredUpdates);
+        adaptedCallback.accept(getFilteredUpdateResult());
         return;
       }
     }
@@ -109,23 +125,31 @@ public class PluginUpdatesService {
       if (!ourPrepared || ourAllUpdates == null) {
         return;
       }
-
-      for (Iterator<IdeaPluginDescriptor> I = ourAllUpdates.iterator(); I.hasNext(); ) {
-        IdeaPluginDescriptor downloadedDescriptor = I.next();
-
-        if (Objects.equals(downloadedDescriptor.getPluginId(), descriptor.getPluginId())) {
-          I.remove();
-          syncFilteredUpdates();
-
-          Integer countValue = getCount();
-          for (PluginUpdatesService service : SERVICES) {
-            service.runCountCallbacks(countValue);
-          }
-
-          return;
+      boolean removed = removeUpdate(descriptor.getPluginId());
+      if (removed) {
+        Integer countValue = getCount(getFilteredUpdateResult());
+        for (PluginUpdatesService service : SERVICES) {
+          service.runCountCallbacks(countValue);
         }
       }
     }
+  }
+
+  private static boolean removeUpdate(@NotNull PluginId pluginId) {
+    if (ourAllUpdates == null ||
+        !ContainerUtil.exists(ourAllUpdates.getPluginUpdates().getAll(), d -> Objects.equals(d.getDescriptor().getPluginId(), pluginId))) {
+      return false;
+    }
+    ourAllUpdates = new InternalPluginResults(
+      new PluginUpdates(
+        ContainerUtil.filter(ourAllUpdates.getPluginUpdates().getAllEnabled(), d -> !Objects.equals(d.getDescriptor().getPluginId(), pluginId)),
+        ContainerUtil.filter(ourAllUpdates.getPluginUpdates().getAllDisabled(), d -> !Objects.equals(d.getDescriptor().getPluginId(), pluginId)),
+        ourAllUpdates.getPluginUpdates().getIncompatible()
+      ),
+      ourAllUpdates.getPluginNods(),
+      ourAllUpdates.getErrors()
+    );
+    return true;
   }
 
   public void finishUpdate() {
@@ -133,8 +157,7 @@ public class PluginUpdatesService {
       if (!ourPrepared || ourAllUpdates == null) {
         return;
       }
-
-      Integer countValue = getCount();
+      Integer countValue = getCount(getFilteredUpdateResult());
       for (PluginUpdatesService service : SERVICES) {
         service.runCountCallbacks(countValue);
       }
@@ -146,7 +169,6 @@ public class PluginUpdatesService {
       for (PluginUpdatesService service : SERVICES) {
         service.runAllCallbacks(null);
       }
-
       if (ourPreparing) {
         resetUpdates();
       }
@@ -160,6 +182,7 @@ public class PluginUpdatesService {
     ourReset = true;
   }
 
+  @ApiStatus.Internal
   public void setFilter(@NotNull Condition<? super IdeaPluginDescriptor> filter) {
     synchronized (ourLock) {
       if (!mySetFilter && ourFilter != DEFAULT_FILTER) {
@@ -178,15 +201,12 @@ public class PluginUpdatesService {
 
   public static void reapplyFilter() {
     synchronized (ourLock) {
-      syncFilteredUpdates();
-
       for (PluginUpdatesService service : SERVICES) {
         service.runAllCallbacks(null);
       }
-
-      Integer countValue = getCount();
+      final var filteredUpdates = getFilteredUpdateResult();
       for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(countValue);
+        service.runAllCallbacks(filteredUpdates);
       }
     }
   }
@@ -204,9 +224,8 @@ public class PluginUpdatesService {
   private static void dispose(@NotNull PluginUpdatesService service) {
     synchronized (ourLock) {
       SERVICES.remove(service);
-
       if (SERVICES.isEmpty()) {
-        setAllUpdates(null);
+        ourAllUpdates = null;
         ourPrepared = false;
         ourPreparing = false;
       }
@@ -215,23 +234,23 @@ public class PluginUpdatesService {
 
   public static boolean isNeedUpdate(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId pluginId = descriptor.getPluginId();
-
     synchronized (ourLock) {
-      if (ourPrepared && ourFilteredUpdates != null) {
-        for (IdeaPluginDescriptor downloader : ourFilteredUpdates) {
-          if (pluginId.equals(downloader.getPluginId())) {
-            return true;
-          }
-        }
+      if (ourPrepared && ourAllUpdates != null) {
+        final var filteredUpdates = getFilteredUpdateResult();
+        assert filteredUpdates != null;
+        return ContainerUtil.exists(filteredUpdates.getPluginUpdates().getAll(), d -> Objects.equals(d.getDescriptor().getPluginId(), pluginId));
       }
     }
-
     return InstalledPluginsState.getInstance().hasNewerVersion(pluginId);
   }
 
   public static @Nullable Collection<IdeaPluginDescriptor> getUpdates() {
     synchronized (ourLock) {
-      return !ourPrepared || ourPreparing || ourFilteredUpdates == null ? null : ourFilteredUpdates;
+      if (!ourPrepared || ourPreparing) {
+        return null;
+      }
+      final var filteredUpdates = getFilteredUpdateResult();
+      return filteredUpdates == null ? null : ContainerUtil.map(filteredUpdates.getPluginUpdates().getAll(), PluginDownloader::getDescriptor);
     }
   }
 
@@ -249,46 +268,39 @@ public class PluginUpdatesService {
         return;
       }
       ourPreparing = true;
-      setAllUpdates(null);
+      ourAllUpdates = null;
     }
-
     // for example, if executed as part of Traverse UI - don't wait check updates
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       return;
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      List<IdeaPluginDescriptor> cache = ContainerUtil.map(UpdateChecker.getInternalPluginUpdates().getPluginUpdates().getAll(),
-                                                           PluginDownloader::getDescriptor);
-
+      final InternalPluginResults updates = UpdateChecker.getInternalPluginUpdates();
       ApplicationManager.getApplication().invokeLater(() -> {
         synchronized (ourLock) {
           ourPreparing = false;
-
           if (ourReset) {
             ourReset = false;
             calculateUpdates();
             return;
           }
-
           ourPrepared = true;
-          setAllUpdates(cache);
-
-          Integer countValue = getCount();
+          ourAllUpdates = updates;
+          final var filteredUpdates = getFilteredUpdateResult();
           for (PluginUpdatesService service : SERVICES) {
-            service.runAllCallbacks(countValue);
+            service.runAllCallbacks(filteredUpdates);
           }
         }
       }, ModalityState.any());
     });
   }
 
-  private void runAllCallbacks(@Nullable Integer countValue) {
-    runCountCallbacks(countValue);
-
+  private void runAllCallbacks(@Nullable InternalPluginResults filteredUpdates) {
+    runCountCallbacks(getCount(filteredUpdates));
     if (myUpdateCallbacks != null) {
       for (var callback : myUpdateCallbacks) {
-        callback.accept(countValue == null ? null : ourFilteredUpdates);
+        callback.accept(filteredUpdates);
       }
     }
   }
@@ -299,16 +311,16 @@ public class PluginUpdatesService {
     }
   }
 
-  private static @Nullable Integer getCount() {
-    return ourFilteredUpdates == null ? null : ourFilteredUpdates.size();
+  private static @Nullable Integer getCount(@Nullable InternalPluginResults filteredUpdates) {
+    return filteredUpdates == null ? null : filteredUpdates.getPluginUpdates().getAll().size();
   }
 
-  private static void setAllUpdates(@Nullable Collection<IdeaPluginDescriptor> updates) {
-    ourAllUpdates = updates;
-    syncFilteredUpdates();
-  }
-
-  private static void syncFilteredUpdates() {
-    ourFilteredUpdates = ourAllUpdates == null ? null : ContainerUtil.filter(ourAllUpdates, ourFilter);
+  private static @NotNull Consumer<InternalPluginResults> adaptDescriptorConsumerToUpdateResultConsumer(
+    @NotNull Consumer<? super Collection<IdeaPluginDescriptor>> consumer
+  ) {
+    return updateResult -> {
+      if (updateResult == null) consumer.accept(null);
+      else consumer.accept(ContainerUtil.map(updateResult.getPluginUpdates().getAll(), PluginDownloader::getDescriptor));
+    };
   }
 }

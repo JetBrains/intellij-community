@@ -8,6 +8,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
+import git4idea.branch.RecentProjectBranchUpdater
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlin.reflect.KProperty1
@@ -16,6 +17,7 @@ internal class GitSetupProjectConfig : ProjectActivity {
   override suspend fun execute(project: Project): Unit = blockingContext {
     ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
       setupConfigIfNeeded(project)
+      RecentProjectBranchUpdater.updateRecentProjectBranch(project)
     }
   }
 

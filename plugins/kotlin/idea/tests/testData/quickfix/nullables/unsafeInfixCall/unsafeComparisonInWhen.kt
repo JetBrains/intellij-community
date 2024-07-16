@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (w?.x!!) call
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Flip '<='

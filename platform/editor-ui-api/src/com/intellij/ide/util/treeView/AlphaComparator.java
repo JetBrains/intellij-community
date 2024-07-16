@@ -4,7 +4,16 @@ package com.intellij.ide.util.treeView;
 import java.util.Comparator;
 
 public final class AlphaComparator implements Comparator<NodeDescriptor<?>> {
+
+  /**
+   * @deprecated use {@link #getInstance()} instead
+   */
+  @Deprecated
   public static final AlphaComparator INSTANCE = new AlphaComparator();
+
+  public static AlphaComparator getInstance() {
+    return INSTANCE;
+  }
 
   private AlphaComparator() {
   }
@@ -21,6 +30,6 @@ public final class AlphaComparator implements Comparator<NodeDescriptor<?>> {
     if (s1 == null) return s2 == null ? 0 : -1;
     if (s2 == null) return +1;
 
-    return FileNameComparator.INSTANCE.compare(s1, s2);
+    return FileNameComparator.getInstance().compare(s1, s2);
   }
 }

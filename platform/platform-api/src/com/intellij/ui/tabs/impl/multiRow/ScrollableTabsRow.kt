@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl.multiRow
@@ -8,14 +8,15 @@ import java.awt.Rectangle
 import kotlin.math.abs
 import kotlin.math.max
 
-class ScrollableTabsRow(infos: List<TabInfo>,
-                        withTitle: Boolean,
-                        withEntryPointToolbar: Boolean
+internal class ScrollableTabsRow(
+  infos: List<TabInfo>,
+  withTitle: Boolean,
+  withEntryPointToolbar: Boolean,
 ) : TabsRow(infos, withTitle, withEntryPointToolbar) {
   override fun layoutTabs(data: MultiRowPassInfo, x: Int, y: Int, maxLength: Int) {
     val tabs = data.tabs
     val lengths = infos.map { info ->
-      val len = tabs.infoToLabel.get(info)!!.preferredSize.width
+      val len = tabs.getTabLabel(info)!!.preferredSize.width
       data.lengths[info] = len
       len
     }
@@ -40,7 +41,7 @@ class ScrollableTabsRow(infos: List<TabInfo>,
       if (curX + len > x + tabsLength) {
         len = max(0, x + tabsLength - curX)
       }
-      val label = tabs.infoToLabel.get(info)!!
+      val label = tabs.getTabLabel(info)!!
       val effectiveLen = if (len <= abs(hGap)) 0 else len
       tabs.layout(label, curX, y, effectiveLen, data.rowHeight)
       curX += len + hGap

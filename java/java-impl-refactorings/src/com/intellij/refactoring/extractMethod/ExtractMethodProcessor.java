@@ -709,7 +709,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private Nullability initNullability() {
-    if (!PsiUtil.isLanguageLevel5OrHigher(myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, myElements[0]) || PsiUtil.resolveClassInType(myReturnType) == null) return null;
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
     final PsiClass nullableAnnotationClass = JavaPsiFacade.getInstance(myProject)
       .findClass(manager.getDefaultNullable(), myElements[0].getResolveScope());

@@ -1,24 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true))
-public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
+public class UpdateSettings implements PersistentStateComponentWithModificationTracker<UpdateOptions> {
   public static UpdateSettings getInstance() {
     return ApplicationManager.getApplication().getService(UpdateSettings.class);
   }
@@ -50,6 +48,10 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   public void setCheckNeeded(boolean value) {
     myState.setCheckNeeded(value);
   }
+
+  public boolean isPluginsAutoUpdateEnabled() { return myState.isPluginsAutoUpdateEnabled(); }
+
+  public void setPluginsAutoUpdateEnabled(boolean value) { myState.setPluginsAutoUpdateEnabled(value); }
 
   public boolean isPluginsCheckNeeded() {
     return myState.isPluginsCheckNeeded();
@@ -103,15 +105,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   }
 
   public @NotNull List<String> getPluginHosts() {
-    List<String> hosts = new ArrayList<>(myState.getPluginHosts());
-    String pluginHosts = System.getProperty("idea.plugin.hosts");
-    if (pluginHosts != null) {
-      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
-    }
-
-    hosts.addAll(UpdateSettingsProviderHelper.getPluginRepositories());
-    ContainerUtil.removeDuplicates(hosts);
-    return hosts;
+    return myState.getPluginHosts();
   }
 
   public void forceCheckForUpdateAfterRestart() {
@@ -137,5 +131,10 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
 
   public void setObsoleteCustomRepositoriesCleanNeeded(boolean value) {
     myState.setObsoleteCustomRepositoriesCleanNeeded(value);
+  }
+
+  @Override
+  public long getStateModificationCount() {
+    return myState.getModificationCount();
   }
 }

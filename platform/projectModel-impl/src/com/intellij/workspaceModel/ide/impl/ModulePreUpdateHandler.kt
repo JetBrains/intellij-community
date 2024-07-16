@@ -12,7 +12,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 
-class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
+internal class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
   @OptIn(EntityStorageInstrumentationApi::class)
   override fun update(before: EntityStorage, builder: MutableEntityStorage): Boolean {
     // TODO: 21.12.2020 We need an api to find removed modules faster
@@ -21,8 +21,8 @@ class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
     val removedModuleSymbolicIds = LinkedHashSet<ModuleId>()
     changes[ModuleEntity::class.java]?.asSequence()?.forEach { change ->
       when (change) {
-        is EntityChange.Added -> removedModuleSymbolicIds.remove((change.entity as ModuleEntity).symbolicId)
-        is EntityChange.Removed -> removedModuleSymbolicIds.add((change.entity as ModuleEntity).symbolicId)
+        is EntityChange.Added -> removedModuleSymbolicIds.remove((change.newEntity as ModuleEntity).symbolicId)
+        is EntityChange.Removed -> removedModuleSymbolicIds.add((change.oldEntity as ModuleEntity).symbolicId)
         else -> {
         }
       }

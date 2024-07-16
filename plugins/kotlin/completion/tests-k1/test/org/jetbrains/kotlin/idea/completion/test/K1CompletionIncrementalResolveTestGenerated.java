@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -25,6 +26,12 @@ public abstract class K1CompletionIncrementalResolveTestGenerated extends Abstra
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/incrementalResolve/basic/localChange")
         public static class LocalChange extends AbstractK1CompletionIncrementalResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -48,6 +55,12 @@ public abstract class K1CompletionIncrementalResolveTestGenerated extends Abstra
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/incrementalResolve/basic")
         public static class Uncategorized extends AbstractK1CompletionIncrementalResolveTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -82,6 +95,12 @@ public abstract class K1CompletionIncrementalResolveTestGenerated extends Abstra
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/incrementalResolve/smart")
     public static class Smart extends AbstractK1CompletionIncrementalResolveTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

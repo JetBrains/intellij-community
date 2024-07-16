@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -44,7 +30,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
   private final Project myProject;
 
   public PsiBasedFormatterModelWithShiftIndentInside(final PsiFile file,
-                                                     @NotNull final Block rootBlock,
+                                                     final @NotNull Block rootBlock,
                                                      final FormattingDocumentModelImpl documentModel) {
     super(file, rootBlock, documentModel);
     myProject = file.getProject();
@@ -77,7 +63,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
          if(type == TokenType.WHITE_SPACE) {
            final String text = prevNode.getText();
 
-           @NonNls final String cdataStartMarker = "<![CDATA[";
+           final @NonNls String cdataStartMarker = "<![CDATA[";
            final int cdataPos = text.indexOf(cdataStartMarker);
            if (cdataPos != -1 && !whiteSpace.contains(cdataStartMarker)) {
              whiteSpace = DocumentBasedFormattingModel.mergeWsWithCdataMarker(whiteSpace, text, cdataPos);
@@ -88,7 +74,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
            type = prevNode != null ? prevNode.getElementType():null;
          }
 
-         @NonNls final String cdataEndMarker = "]]>";
+         final @NonNls String cdataEndMarker = "]]>";
          if(type == XmlTokenType.XML_CDATA_END && !whiteSpace.contains(cdataEndMarker)) {
            final ASTNode at = findElementAt(prevNode.getStartOffset());
 

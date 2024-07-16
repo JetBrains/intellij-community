@@ -157,7 +157,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
    * @return the primitive type, or null if the type does not represent a boxed primitive type.
    */
   @Nullable
-  public static PsiPrimitiveType getUnboxedType(PsiType type) {
+  public static PsiPrimitiveType getUnboxedType(@Nullable PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
 
     PsiUtil.ensureValidType(type);
@@ -174,7 +174,7 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
   }
 
   @Nullable
-  public static PsiPrimitiveType getOptionallyUnboxedType(PsiType type) {
+  public static PsiPrimitiveType getOptionallyUnboxedType(@Nullable PsiType type) {
     return type instanceof PsiPrimitiveType ? (PsiPrimitiveType)type : getUnboxedType(type);
   }
 

@@ -12,10 +12,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.util.restrictByFileType
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.createConstructorHandle
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
 
@@ -32,22 +33,24 @@ fun PsiElement.buildProcessDelegationCallConstructorUsagesTask(scope: SearchScop
     return { task1() && task2() }
 }
 
-private fun PsiElement.buildProcessDelegationCallKotlinConstructorUsagesTask(
+fun PsiElement.buildProcessDelegationCallKotlinConstructorUsagesTask(
     scope: SearchScope,
     process: (KtCallElement) -> Boolean
 ): () -> Boolean {
     val element = unwrapped
     if (element != null && element !in scope) return { true }
 
-    val klass = when (element) {
-        is KtConstructor<*> -> element.getContainingClassOrObject()
-        is KtClass -> element
+    val elementInSource = element?.navigationElement ?: element
+
+    val klass = when (elementInSource) {
+        is KtConstructor<*> -> elementInSource.getContainingClassOrObject()
+        is KtClass -> elementInSource
         else -> return { true }
     }
 
-    if (klass !is KtClass || element !is KtDeclaration) return { true }
+    if (klass !is KtClass || elementInSource !is KtDeclaration) return { true }
 
-    val constructorHandler = createConstructorHandle(element)
+    val constructorHandler = createConstructorHandle(elementInSource)
 
     if (!processClassDelegationCallsToSpecifiedConstructor(klass, constructorHandler, process)) return { false }
 
@@ -76,7 +79,7 @@ private fun processInheritorsDelegatingCallToSpecifiedConstructor(
     constructorCallComparator: KotlinSearchUsagesSupport.ConstructorCallHandle,
     process: (KtCallElement) -> Boolean
 ): Boolean {
-    return HierarchySearchRequest(klass, scope, false).searchInheritors().all {
+    return runReadAction { KotlinFindUsagesSupport.searchInheritors(klass, scope.restrictByFileType(KotlinFileType.INSTANCE), false) }.all {
         runReadAction {
             val unwrapped = it.takeIf { it.isValid }?.unwrapped
             if (unwrapped is KtClass)
@@ -115,6 +118,7 @@ private fun processClassDelegationCallsToSpecifiedConstructor(
     return true
 }
 
+@Deprecated("Use ReferencesSearch directly to avoid light classes involvement")
 fun PsiElement.searchReferencesOrMethodReferences(): Collection<PsiReference> {
     val lightMethods = toLightMethods()
     return if (lightMethods.isNotEmpty()) {

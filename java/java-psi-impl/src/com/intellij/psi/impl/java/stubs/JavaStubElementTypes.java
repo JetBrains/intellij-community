@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -43,17 +43,15 @@ public interface JavaStubElementTypes {
     new JavaPackageAccessibilityStatementElementType("OPENS_STATEMENT", BasicJavaElementType.BASIC_OPENS_STATEMENT);
 
   JavaClassElementType CLASS = new JavaClassElementType("CLASS", BasicJavaElementType.BASIC_CLASS) {
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new ClassElement(this);
     }
   };
 
   JavaClassElementType IMPLICIT_CLASS = new JavaClassElementType("IMPLICIT_CLASS", BasicJavaElementType.BASIC_IMPLICIT_CLASS) {
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new ImplicitClassElement();
     }
 
@@ -67,56 +65,49 @@ public interface JavaStubElementTypes {
   };
 
   JavaClassElementType ANONYMOUS_CLASS = new JavaClassElementType("ANONYMOUS_CLASS", BasicJavaElementType.BASIC_ANONYMOUS_CLASS) {
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new AnonymousClassElement();
     }
   };
   JavaClassElementType ENUM_CONSTANT_INITIALIZER =
     new JavaClassElementType("ENUM_CONSTANT_INITIALIZER", BasicJavaElementType.BASIC_ENUM_CONSTANT_INITIALIZER) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new EnumConstantInitializerElement();
       }
     };
 
   JavaMethodElementType METHOD = new JavaMethodElementType("METHOD", BasicJavaElementType.BASIC_METHOD) {
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new MethodElement();
     }
   };
   JavaMethodElementType ANNOTATION_METHOD = new JavaMethodElementType("ANNOTATION_METHOD", BasicJavaElementType.BASIC_ANNOTATION_METHOD) {
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new AnnotationMethodElement();
     }
   };
 
   JavaFieldStubElementType FIELD = new JavaFieldStubElementType("FIELD", BasicJavaElementType.BASIC_FIELD) {
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new FieldElement();
     }
   };
   JavaFieldStubElementType ENUM_CONSTANT = new JavaFieldStubElementType("ENUM_CONSTANT", BasicJavaElementType.BASIC_ENUM_CONSTANT) {
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new EnumConstantElement();
     }
   };
 
   JavaClassReferenceListElementType EXTENDS_LIST =
     new JavaClassReferenceListElementType("EXTENDS_LIST", BasicJavaElementType.BASIC_EXTENDS_LIST) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.EXTENDS_KEYWORD, PsiKeyword.EXTENDS);
       }
 
@@ -128,9 +119,8 @@ public interface JavaStubElementTypes {
 
   JavaClassReferenceListElementType PERMITS_LIST =
     new JavaClassReferenceListElementType("PERMITS_LIST", BasicJavaElementType.BASIC_PERMITS_LIST) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.PERMITS_KEYWORD, PsiKeyword.PERMITS);
       }
 
@@ -141,9 +131,8 @@ public interface JavaStubElementTypes {
     };
   JavaClassReferenceListElementType IMPLEMENTS_LIST =
     new JavaClassReferenceListElementType("IMPLEMENTS_LIST", BasicJavaElementType.BASIC_IMPLEMENTS_LIST) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.IMPLEMENTS_KEYWORD, PsiKeyword.IMPLEMENTS);
       }
 
@@ -154,9 +143,8 @@ public interface JavaStubElementTypes {
     };
   JavaClassReferenceListElementType THROWS_LIST =
     new JavaClassReferenceListElementType("THROWS_LIST", BasicJavaElementType.BASIC_THROWS_LIST) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.THROWS_KEYWORD, PsiKeyword.THROWS);
       }
 
@@ -167,9 +155,8 @@ public interface JavaStubElementTypes {
     };
   JavaClassReferenceListElementType EXTENDS_BOUND_LIST =
     new JavaClassReferenceListElementType("EXTENDS_BOUND_LIST", BasicJavaElementType.BASIC_EXTENDS_BOUND_LIST) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new TypeParameterExtendsBoundsListElement();
       }
 
@@ -180,26 +167,23 @@ public interface JavaStubElementTypes {
     };
   JavaClassReferenceListElementType PROVIDES_WITH_LIST =
     new JavaClassReferenceListElementType("PROVIDES_WITH_LIST", BasicJavaElementType.BASIC_PROVIDES_WITH_LIST) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new ReferenceListElement(this, JavaTokenType.WITH_KEYWORD, PsiKeyword.WITH);
       }
     };
 
   JavaImportStatementElementType IMPORT_STATEMENT =
     new JavaImportStatementElementType("IMPORT_STATEMENT", BasicJavaElementType.BASIC_IMPORT_STATEMENT) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new ImportStatementElement();
       }
     };
   JavaImportStatementElementType IMPORT_STATIC_STATEMENT =
     new JavaImportStatementElementType("IMPORT_STATIC_STATEMENT", BasicJavaElementType.BASIC_IMPORT_STATIC_STATEMENT) {
-      @NotNull
       @Override
-      public ASTNode createCompositeNode() {
+      public @NotNull ASTNode createCompositeNode() {
         return new ImportStaticStatementElement();
       }
     };

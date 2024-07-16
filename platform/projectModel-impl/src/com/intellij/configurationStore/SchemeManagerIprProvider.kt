@@ -12,11 +12,13 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.toByteArray
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.util.concurrent.locks.StampedLock
 
 private val LOG = logger<SchemeManagerIprProvider>()
 
+@ApiStatus.Internal
 class SchemeManagerIprProvider(private val subStateTagName: String,
                                private val comparator: Comparator<String>? = null) : StreamProvider, SimpleModificationTracker() {
   private val lock = StampedLock()

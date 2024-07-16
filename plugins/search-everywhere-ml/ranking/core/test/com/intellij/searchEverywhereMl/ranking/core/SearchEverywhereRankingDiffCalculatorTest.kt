@@ -24,7 +24,7 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
 
         SearchEverywhereFoundElementInfoBeforeDiff(
           element = Any(),
-          sePriority = sePriority,
+          heuristicPriority = sePriority,
           contributor = MockSearchEverywhereContributor(),
           mlWeight = mlWeight,
           mlFeatures = emptyList()
@@ -39,7 +39,7 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
                                       mlFeatures: List<EventPair<*>> = emptyList()): SearchEverywhereFoundElementInfoWithMl {
       return SearchEverywhereFoundElementInfoWithMl(
         element = element,
-        sePriority = sePriority,
+        heuristicPriority = sePriority,
         contributor = contributor,
         mlWeight = mlWeight,
         mlFeatures = mlFeatures
@@ -53,7 +53,7 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
                                           mlFeatures: List<EventPair<*>> = emptyList()): SearchEverywhereFoundElementInfoBeforeDiff {
       return SearchEverywhereFoundElementInfoBeforeDiff(
         element = element,
-        sePriority = sePriority,
+        heuristicPriority = sePriority,
         contributor = contributor,
         mlWeight = mlWeight,
         mlFeatures = mlFeatures
@@ -62,7 +62,7 @@ class SearchEverywhereRankingDiffCalculatorTest : BasePlatformTestCase() {
 
     private fun getRankingDiffInfos(elementInfos: List<SearchEverywhereFoundElementInfo>): List<SearchEverywhereRankingDiffCalculator.RankingDiffInfo> {
       val beforeDiffs = elementInfos.filterIsInstance<SearchEverywhereFoundElementInfoBeforeDiff>()
-      val seOrdered = beforeDiffs.sortedByDescending { it.sePriority }
+      val seOrdered = beforeDiffs.sortedByDescending { it.heuristicPriority }
       val updatedElements = SearchEverywhereRankingDiffCalculator.calculateDiffIfApplicable(seOrdered)
       val mlOrdered = updatedElements?.sortedByDescending { it.priority } ?: emptyList()
       return SearchEverywhereRankingDiffCalculator.getRankingDiffInfos(mlOrdered)

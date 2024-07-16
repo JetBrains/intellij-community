@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/smartStepInto")
 public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -163,6 +170,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/invoke.kt");
     }
 
+    @TestMetadata("javaLambda.kt")
+    public void testJavaLambda() throws Exception {
+        runTest("testData/smartStepInto/javaLambda.kt");
+    }
+
     @TestMetadata("javaSyntheticPropertyReference.kt")
     public void testJavaSyntheticPropertyReference() throws Exception {
         runTest("testData/smartStepInto/javaSyntheticPropertyReference.kt");
@@ -178,6 +190,16 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/libraryFun.kt");
     }
 
+    @TestMetadata("libraryFunReference.kt")
+    public void testLibraryFunReference() throws Exception {
+        runTest("testData/smartStepInto/libraryFunReference.kt");
+    }
+
+    @TestMetadata("methodReference.kt")
+    public void testMethodReference() throws Exception {
+        runTest("testData/smartStepInto/methodReference.kt");
+    }
+
     @TestMetadata("multiline.kt")
     public void testMultiline() throws Exception {
         runTest("testData/smartStepInto/multiline.kt");
@@ -191,6 +213,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
     @TestMetadata("object.kt")
     public void testObject() throws Exception {
         runTest("testData/smartStepInto/object.kt");
+    }
+
+    @TestMetadata("ordinals.kt")
+    public void testOrdinals() throws Exception {
+        runTest("testData/smartStepInto/ordinals.kt");
     }
 
     @TestMetadata("param.kt")

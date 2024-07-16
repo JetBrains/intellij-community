@@ -1,0 +1,2 @@
+@A("main")
+class Main { }

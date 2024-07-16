@@ -140,7 +140,11 @@ public abstract class Ikv implements AutoCloseable {
     int keyDataSize = entryCount * (withSize ? Long.BYTES : Integer.BYTES);
     int offsetAndSizePairsDataSize = entryCount * (withSize ? Long.BYTES : Integer.BYTES);
 
-    mappedBuffer.position(position - (keyDataSize + offsetAndSizePairsDataSize));
+    int newPosition = position - (keyDataSize + offsetAndSizePairsDataSize);
+    if (newPosition < 0) {
+      throw new MissingIkvException("Buffer position is negative: " + newPosition);
+    }
+    mappedBuffer.position(newPosition);
     if (withSize) {
       long[] metadata = new long[entryCount * 2];
       mappedBuffer.asLongBuffer().get(metadata);

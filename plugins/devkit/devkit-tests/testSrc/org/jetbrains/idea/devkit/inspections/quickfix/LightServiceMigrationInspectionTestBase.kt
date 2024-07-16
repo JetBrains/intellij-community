@@ -64,6 +64,9 @@ abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFi
         @Attribute("preload")
         public PreloadMode preload;
 
+        @Attribute("configurationSchemaKey")
+        public String configurationSchemaKey;
+
         public enum PreloadMode {}
       }
     """)

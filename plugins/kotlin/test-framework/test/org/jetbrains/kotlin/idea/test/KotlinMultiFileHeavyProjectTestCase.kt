@@ -19,7 +19,9 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import java.nio.file.Path
 import kotlin.io.path.*
 
-abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
+abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase(),
+                                                     ExpectedPluginModeProvider {
+
     open val testDataDirectory: Path by lazy {
         Path(TestMetadataUtil.getTestDataPath(javaClass))
     }
@@ -32,6 +34,10 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
     override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
 
     private var mockLibraryFacility: MockLibraryFacility? = null
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
 
     override fun tearDown(): Unit = runAll(
         { mockLibraryFacility?.tearDown(module) },

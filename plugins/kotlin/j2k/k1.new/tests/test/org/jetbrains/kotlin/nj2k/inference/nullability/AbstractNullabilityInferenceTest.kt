@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.inference.nullability
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CallExpressionConstraintCollector
@@ -12,14 +13,13 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.nj2k.descriptorByFileDirective
+import org.jetbrains.kotlin.j2k.J2K_PROJECT_DESCRIPTOR
 import org.jetbrains.kotlin.nj2k.inference.AbstractConstraintCollectorTest
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import java.io.File
 
 abstract class AbstractNullabilityInferenceTest : AbstractConstraintCollectorTest() {
     override fun createInferenceFacade(resolutionFacade: ResolutionFacade): InferenceFacade {
@@ -72,5 +72,5 @@ abstract class AbstractNullabilityInferenceTest : AbstractConstraintCollectorTes
         )
     }
 
-    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataDirectory, fileName()))
+    override fun getProjectDescriptor(): LightProjectDescriptor = J2K_PROJECT_DESCRIPTOR
 }

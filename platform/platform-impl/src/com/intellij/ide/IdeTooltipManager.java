@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,10 +9,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
-import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
@@ -29,8 +25,10 @@ import com.intellij.openapi.util.registry.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBHtmlPane;
+import com.intellij.ui.components.JBHtmlPaneConfiguration;
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
@@ -40,18 +38,9 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.List;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
 public class IdeTooltipManager implements Disposable {
@@ -69,13 +58,13 @@ public class IdeTooltipManager implements Disposable {
   private HelpTooltipManager helpTooltipManager;
   private boolean myHideHelpTooltip;
 
-  private volatile Component myCurrentComponent;
-  private volatile Component myQueuedComponent;
-  private volatile Component myProcessingComponent;
+  private volatile Component currentComponent;
+  private volatile Component queuedComponent;
+  private volatile Component processingComponent;
 
-  private Balloon myBalloon;
+  private Balloon balloon;
 
-  private MouseEvent myCurrentEvent;
+  private MouseEvent currentEvent;
   private boolean myCurrentTipIsCentered;
 
   private Disposable lastDisposable;
@@ -90,8 +79,8 @@ public class IdeTooltipManager implements Disposable {
   private int myY;
 
   private IdeTooltip currentTooltip;
-  private Runnable myShowRequest;
-  private IdeTooltip myQueuedTooltip;
+  private Runnable showRequest;
+  private IdeTooltip queuedTooltip;
 
   public IdeTooltipManager(@NotNull CoroutineScope coroutineScope) {
     SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
@@ -138,61 +127,79 @@ public class IdeTooltipManager implements Disposable {
     }
 
     MouseEvent me = (MouseEvent)event;
-    myProcessingComponent = me.getComponent();
+    processingComponent = me.getComponent();
     try {
       if (me.getID() == MouseEvent.MOUSE_ENTERED) {
+        if (processingComponent != null && StartupUiUtil.isWaylandToolkit()) {
+          if (helpTooltipManager != null && helpTooltipManager.fromSameWindowAs(processingComponent)) {
+            // Since we don't fully control popups positions in Wayland, they are
+            // a lot more likely to appear right under the mouse pointer.
+            // Don't cancel the popup just because the mouse has left its
+            // parent component as it may have entered the popup itself.
+            myAlarm.cancelAllRequests();
+            return;
+          }
+        }
         boolean canShow = true;
-        if (componentContextHasChanged(myProcessingComponent)) {
+        if (componentContextHasChanged(processingComponent)) {
           canShow = hideCurrent(me, null, null);
         }
         if (canShow) {
-          maybeShowFor(myProcessingComponent, me);
+          maybeShowFor(processingComponent, me);
         }
       }
       else if (me.getID() == MouseEvent.MOUSE_EXITED) {
         // we hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
-        if (myProcessingComponent == myCurrentComponent &&
+        if (processingComponent == currentComponent &&
             currentTooltip != null &&
             !currentTooltip.isHint() &&
-            myBalloon != null) {
-          myBalloon.setAnimationEnabled(false);
+            balloon != null) {
+          balloon.setAnimationEnabled(false);
           hideCurrent(null, null, null, null, false);
         }
-        else if (myProcessingComponent == myCurrentComponent || myProcessingComponent == myQueuedComponent) {
-          hideCurrent(me, null, null);
+        else if (processingComponent == currentComponent || processingComponent == queuedComponent) {
+          if (StartupUiUtil.isWaylandToolkit()) {
+            // The mouse pointer has left the tooltip's "parent" component. Don't immediately
+            // cancel the popup, wait a moment to see if the mouse entered the popup itself.
+            myAlarm.addRequest(() -> {
+              hideCurrent(me, null, null);
+            }, 200);
+          } else {
+            hideCurrent(me, null, null);
+          }
         }
       }
       else if (me.getID() == MouseEvent.MOUSE_MOVED) {
-        if (myProcessingComponent == myCurrentComponent || myProcessingComponent == myQueuedComponent) {
-          if (myBalloon != null && myBalloon.wasFadedIn()) {
-            maybeShowFor(myProcessingComponent, me);
+        if (processingComponent == currentComponent || processingComponent == queuedComponent) {
+          if (balloon != null && balloon.wasFadedIn()) {
+            maybeShowFor(processingComponent, me);
           }
           else {
             if (!myCurrentTipIsCentered) {
               myX = me.getX();
               myY = me.getY();
-              if (myProcessingComponent instanceof JComponent &&
-                  !isTooltipDefined((JComponent)myProcessingComponent, me) &&
-                  (myQueuedTooltip == null || !myQueuedTooltip.isHint())) {
+              if (processingComponent instanceof JComponent &&
+                  !isTooltipDefined((JComponent)processingComponent, me) &&
+                  (queuedTooltip == null || !queuedTooltip.isHint())) {
                 hideCurrent(me, null, null);//There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
               }
               else {
-                maybeShowFor(myProcessingComponent, me);
+                maybeShowFor(processingComponent, me);
               }
             }
           }
         }
-        else if (myCurrentComponent == null && myQueuedComponent == null) {
-          maybeShowFor(myProcessingComponent, me);
+        else if (currentComponent == null && queuedComponent == null) {
+          maybeShowFor(processingComponent, me);
         }
-        else if (myQueuedComponent == null) {
+        else if (queuedComponent == null) {
           hideCurrent(me);
         }
       }
       else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
-        boolean clickOnTooltip = myBalloon != null &&
-                                 myBalloon == JBPopupFactory.getInstance().getParentBalloonFor(myProcessingComponent);
-        if (myProcessingComponent == myCurrentComponent || (clickOnTooltip && !isClickProcessor(myBalloon))) {
+        boolean clickOnTooltip = balloon != null &&
+                                 balloon == JBPopupFactory.getInstance().getParentBalloonFor(processingComponent);
+        if (processingComponent == currentComponent || (clickOnTooltip && !isClickProcessor(balloon))) {
           hideCurrent(me, null, null, null, !clickOnTooltip);
         }
       }
@@ -201,20 +208,20 @@ public class IdeTooltipManager implements Disposable {
       }
     }
     finally {
-      myProcessingComponent = null;
+      processingComponent = null;
     }
   }
 
   private boolean componentContextHasChanged(Component eventComponent) {
-    if (eventComponent == myCurrentComponent) return false;
+    if (eventComponent == currentComponent) return false;
 
-    if (myQueuedTooltip != null) {
+    if (queuedTooltip != null) {
       // The case when a tooltip is going to appear on the Component but the MOUSE_ENTERED event comes to the Component before it,
       // we dont want to hide the tooltip in that case (IDEA-194208)
-      Point tooltipPoint = myQueuedTooltip.getPoint();
+      Point tooltipPoint = queuedTooltip.getPoint();
       if (tooltipPoint != null) {
         Component realQueuedComponent =
-          SwingUtilities.getDeepestComponentAt(myQueuedTooltip.getComponent(), tooltipPoint.x, tooltipPoint.y);
+          SwingUtilities.getDeepestComponentAt(queuedTooltip.getComponent(), tooltipPoint.x, tooltipPoint.y);
         return eventComponent != realQueuedComponent;
       }
     }
@@ -266,10 +273,9 @@ public class IdeTooltipManager implements Disposable {
     showTooltipForEvent(comp, me, centerStrict || centerDefault, shift, -shift, -shift, now);
   }
 
-  private boolean isTooltipDefined(JComponent comp, MouseEvent me) {
-    return !StringUtil.isEmpty(comp.getToolTipText(me)) || getCustomTooltip(comp) != null;
+  private boolean isTooltipDefined(JComponent component, MouseEvent event) {
+    return !StringUtil.isEmpty(component.getToolTipText(event)) || getCustomTooltip(component) != null;
   }
-
 
   private void showTooltipForEvent(final JComponent c,
                                    final MouseEvent me,
@@ -281,7 +287,7 @@ public class IdeTooltipManager implements Disposable {
     IdeTooltip tooltip = getCustomTooltip(c);
     if (tooltip == null) {
       if (helpTooltipManager != null) {
-        myCurrentComponent = c;
+        currentComponent = c;
         myHideHelpTooltip = true;
         helpTooltipManager.showTooltip(c, me);
         return;
@@ -291,11 +297,11 @@ public class IdeTooltipManager implements Disposable {
       tooltip = new IdeTooltip(c, me.getPoint(), null, /*new Object()*/c, aText) {
         @Override
         protected boolean beforeShow() {
-          myCurrentEvent = me;
+          currentEvent = me;
 
           if (!c.isShowing()) return false;
 
-          String text = c.getToolTipText(myCurrentEvent);
+          String text = c.getToolTipText(currentEvent);
           if (text == null || text.trim().isEmpty()) return false;
 
           Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() :
@@ -327,9 +333,9 @@ public class IdeTooltipManager implements Disposable {
   @ApiStatus.Experimental
   @Contract(value = "null -> false", pure = true)
   public boolean isProcessing(@Nullable Component tooltipOwner) {
-    return tooltipOwner != null && (tooltipOwner == myCurrentComponent
-                                    || tooltipOwner == myQueuedComponent
-                                    || tooltipOwner == myProcessingComponent);
+    return tooltipOwner != null && (tooltipOwner == currentComponent
+                                    || tooltipOwner == queuedComponent
+                                    || tooltipOwner == processingComponent);
   }
 
   /**
@@ -341,32 +347,32 @@ public class IdeTooltipManager implements Disposable {
    */
   @ApiStatus.Experimental
   public void updateShownTooltip(@Nullable Component tooltipOwner) {
-    if (!hasCurrent() || myCurrentComponent == null || myCurrentComponent != tooltipOwner) {
+    if (!hasCurrent() || currentComponent == null || currentComponent != tooltipOwner) {
       return;
     }
 
     try {
       MouseEvent reposition;
       if (GraphicsEnvironment.isHeadless()) {
-        reposition = myCurrentEvent;
+        reposition = currentEvent;
       }
       else {
-        Point topLeftComponent = myCurrentComponent.getLocationOnScreen();
+        Point topLeftComponent = currentComponent.getLocationOnScreen();
         Point screenLocation = MouseInfo.getPointerInfo().getLocation();
         reposition = new MouseEvent(
-          myCurrentEvent.getComponent(),
-          myCurrentEvent.getID(),
-          myCurrentEvent.getWhen(),
-          myCurrentEvent.getModifiers(),
+          currentEvent.getComponent(),
+          currentEvent.getID(),
+          currentEvent.getWhen(),
+          currentEvent.getModifiers(),
           screenLocation.x - topLeftComponent.x,
           screenLocation.y - topLeftComponent.y,
           screenLocation.x,
           screenLocation.y,
-          myCurrentEvent.getClickCount(),
-          myCurrentEvent.isPopupTrigger(),
-          myCurrentEvent.getButton());
+          currentEvent.getClickCount(),
+          currentEvent.isPopupTrigger(),
+          currentEvent.getButton());
       }
-      showForComponent(myCurrentComponent, reposition, true);
+      showForComponent(currentComponent, reposition, true);
     }
     catch (IllegalComponentStateException ignore) {
     }
@@ -396,15 +402,15 @@ public class IdeTooltipManager implements Disposable {
 
     hideCurrent(null, tooltip);
 
-    myQueuedComponent = tooltip.getComponent();
-    myQueuedTooltip = tooltip;
+    queuedComponent = tooltip.getComponent();
+    queuedTooltip = tooltip;
 
-    myShowRequest = () -> {
-      if (myShowRequest == null) {
+    showRequest = () -> {
+      if (showRequest == null) {
         return;
       }
 
-      if (myQueuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
+      if (queuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
         hideCurrent(null, tooltip, null, null, animationEnabled);
         return;
       }
@@ -418,10 +424,10 @@ public class IdeTooltipManager implements Disposable {
     };
 
     if (now) {
-      myShowRequest.run();
+      showRequest.run();
     }
     else {
-      myAlarm.addRequest(myShowRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
+      myAlarm.addRequest(showRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
     }
 
     return tooltip;
@@ -457,12 +463,12 @@ public class IdeTooltipManager implements Disposable {
       effectivePoint.y = toCenterY ? bounds.height / 2 : effectivePoint.y;
     }
 
-    if (myCurrentComponent == tooltip.getComponent() && myBalloon != null && !myBalloon.isDisposed()) {
-      myBalloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
+    if (currentComponent == tooltip.getComponent() && balloon != null && !balloon.isDisposed()) {
+      balloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
       return;
     }
 
-    if (myCurrentComponent == tooltip.getComponent() && effectivePoint.equals(new Point(myX, myY))) {
+    if (currentComponent == tooltip.getComponent() && effectivePoint.equals(new Point(myX, myY))) {
       return;
     }
 
@@ -492,20 +498,20 @@ public class IdeTooltipManager implements Disposable {
       builder.setPointerShiftedToStart(true).setCornerRadius(JBUI.scale(8));
     }
 
-    myBalloon = builder.createBalloon();
+    balloon = builder.createBalloon();
 
-    myBalloon.setAnimationEnabled(animationEnabled);
-    tooltip.setUi(myBalloon instanceof IdeTooltip.Ui ? (IdeTooltip.Ui)myBalloon : null);
-    myCurrentComponent = tooltip.getComponent();
+    balloon.setAnimationEnabled(animationEnabled);
+    tooltip.setUi(balloon instanceof IdeTooltip.Ui ? (IdeTooltip.Ui)balloon : null);
+    currentComponent = tooltip.getComponent();
     myX = effectivePoint.x;
     myY = effectivePoint.y;
     myCurrentTipIsCentered = toCenter;
     currentTooltip = tooltip;
-    myShowRequest = null;
-    myQueuedComponent = null;
-    myQueuedTooltip = null;
+    showRequest = null;
+    queuedComponent = null;
+    queuedTooltip = null;
 
-    lastDisposable = myBalloon;
+    lastDisposable = balloon;
     Disposer.register(lastDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -513,7 +519,7 @@ public class IdeTooltipManager implements Disposable {
       }
     });
 
-    myBalloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
+    balloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
     myAlarm.addRequest(() -> {
       if (currentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
         hideCurrent(null, null, null);
@@ -576,12 +582,12 @@ public class IdeTooltipManager implements Disposable {
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
-    return hideCurrent(me, null, action, event, isAnimationEnabled(myBalloon));
+    return hideCurrent(me, null, action, event, isAnimationEnabled(balloon));
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me,
                               @Nullable IdeTooltip tooltipToShow) {
-    return hideCurrent(me, tooltipToShow, null, null, isAnimationEnabled(myBalloon));
+    return hideCurrent(me, tooltipToShow, null, null, isAnimationEnabled(balloon));
   }
 
   private boolean hideCurrent(@Nullable MouseEvent me,
@@ -595,21 +601,21 @@ public class IdeTooltipManager implements Disposable {
     }
 
     if (currentTooltip != null && me != null && currentTooltip.isInside(new RelativePoint(me))) {
-      if (me.getButton() == MouseEvent.NOBUTTON || myBalloon == null || isBlockClicks(myBalloon)) {
+      if (me.getButton() == MouseEvent.NOBUTTON || balloon == null || isBlockClicks(balloon)) {
         return false;
       }
     }
 
-    myShowRequest = null;
-    myQueuedComponent = null;
-    myQueuedTooltip = null;
+    showRequest = null;
+    queuedComponent = null;
+    queuedTooltip = null;
 
     if (currentTooltip == null) return true;
 
-    if (myBalloon != null) {
+    if (balloon != null) {
       RelativePoint target = me != null ? new RelativePoint(me) : null;
       boolean isInsideOrMovingForward = target != null &&
-                                        (isInside(myBalloon, target) || isMovingForward(myBalloon, target));
+                                        (isInside(balloon, target) || isMovingForward(balloon, target));
       boolean canAutoHide = currentTooltip.canAutohideOn(new TooltipEvent(me, isInsideOrMovingForward, action, event));
       boolean implicitMouseMove = me != null &&
                                   (me.getID() == MouseEvent.MOUSE_MOVED ||
@@ -649,24 +655,24 @@ public class IdeTooltipManager implements Disposable {
       helpTooltipManager.hideTooltip();
     }
 
-    if (myBalloon != null) {
-      myBalloon.setAnimationEnabled(animationEnabled);
-      myBalloon.hide();
+    if (balloon != null) {
+      balloon.setAnimationEnabled(animationEnabled);
+      balloon.hide();
       currentTooltip.onHidden();
       myShowDelay = false;
       myAlarm.addRequest(() -> myShowDelay = true, RegistryManager.getInstance().intValue("ide.tooltip.reshowDelay"));
     }
 
     myHideHelpTooltip = false;
-    myShowRequest = null;
+    showRequest = null;
     currentTooltip = null;
 
-    myBalloon = null;
+    balloon = null;
 
-    myCurrentComponent = null;
-    myQueuedComponent = null;
-    myQueuedTooltip = null;
-    myCurrentEvent = null;
+    currentComponent = null;
+    queuedComponent = null;
+    queuedTooltip = null;
+    currentEvent = null;
     myCurrentTipIsCentered = false;
     myX = -1;
     myY = -1;
@@ -704,7 +710,7 @@ public class IdeTooltipManager implements Disposable {
   }
 
   public void hide(@Nullable IdeTooltip tooltip) {
-    if (currentTooltip == tooltip || tooltip == null || tooltip == myQueuedTooltip) {
+    if (currentTooltip == tooltip || tooltip == null || tooltip == queuedTooltip) {
       hideCurrent(null, null, null);
     }
   }
@@ -717,88 +723,25 @@ public class IdeTooltipManager implements Disposable {
     return initPane(new Html(text), hintHint, layeredPane, true);
   }
 
-  public static JEditorPane initPane(@Tooltip Html html, HintHint hintHint, @Nullable JLayeredPane layeredPane, boolean limitWidthToScreen) {
-    @NonNls String text = HintUtil.prepareHintText(html, hintHint);
+  public static JEditorPane initPane(@Tooltip Html html,
+                                     HintHint hintHint,
+                                     @Nullable JLayeredPane layeredPane,
+                                     boolean limitWidthToScreen) {
 
-    boolean[] prefSizeWasComputed = {false};
-    JEditorPane pane = !limitWidthToScreen ? new JEditorPane() : new JEditorPane() {
-      private Dimension prefSize = null;
-
-      @Override
-      public Dimension getPreferredSize() {
-        if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
-          JLayeredPane lp = layeredPane;
-          if (lp == null) {
-            JRootPane rootPane = UIUtil.getRootPane(this);
-            if (rootPane != null && rootPane.getSize().width > 0) {
-              lp = rootPane.getLayeredPane();
-            }
-          }
-
-          Dimension size;
-          if (lp != null) {
-            AppUIUtil.targetToDevice(this, lp);
-            size = lp.getSize();
-            prefSizeWasComputed[0] = true;
-          }
-          else {
-            size = ScreenUtil.getScreenRectangle(0, 0).getSize();
-          }
-          int fitWidth = (int)(size.width * 0.8);
-          Dimension prefSizeOriginal = super.getPreferredSize();
-          if (prefSizeOriginal.width > fitWidth) {
-            setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
-            Dimension fixedWidthSize = super.getPreferredSize();
-            Dimension minSize = super.getMinimumSize();
-            prefSize = new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height);
-          }
-          else {
-            prefSize = new Dimension(prefSizeOriginal);
-          }
-        }
-
-        Dimension s = prefSize != null ? new Dimension(prefSize) : super.getPreferredSize();
-        Border b = getBorder();
-        if (b != null) {
-          JBInsets.addTo(s, b.getBorderInsets(this));
-        }
-        return s;
-      }
-
-      @Override
-      public void setPreferredSize(Dimension preferredSize) {
-        super.setPreferredSize(preferredSize);
-        prefSize = preferredSize;
-      }
-    };
-
-    HTMLEditorKit kit = new HTMLEditorKitBuilder()
-      .withViewFactoryExtensions((elem, view) -> {
-        AttributeSet attrs = elem.getAttributes();
-        if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
-            attrs.getAttribute(StyleConstants.NameAttribute) == HTML.Tag.HR) {
-          try {
-            Field field = view.getClass().getDeclaredField("size");
-            field.setAccessible(true);
-            field.set(view, JBUIScale.scale(1));
-          }
-          catch (Exception ignored) { }
-        }
-        return view;
-      })
-      .withFontResolver(EditorCssFontResolver.getGlobalInstance())
+    JBHtmlPaneStyleConfiguration styleConfiguration = new JBHtmlPaneStyleConfiguration();
+    JBHtmlPaneConfiguration paneConfiguration = JBHtmlPaneConfiguration.builder()
+      .customStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}")
       .build();
-    Ref<StyleSheet> currentDefaultStyleSheet = new Ref<>();
-    updateHintPaneDefaultCssRules(pane, kit, currentDefaultStyleSheet);
-    // Remove <style> rule for <code> added by prepareHintText() call above
+
+
+    Ref<Boolean> prefSizeWasComputed = new Ref<>(false);
+    JBHtmlPane pane = !limitWidthToScreen
+                      ? new JBHtmlPane(styleConfiguration, paneConfiguration)
+                      : new LimitedWidthJBHtmlPane(styleConfiguration, paneConfiguration, prefSizeWasComputed, hintHint, layeredPane);
+
+    @NonNls String text = HintUtil.prepareHintText(html, hintHint);
+    // Remove <style> rule for <code> added by prepareHintText() call
     text = text.replaceFirst("code \\{font-size:[0-9.]*pt;}", "");
-    pane.addPropertyChangeListener(evt -> {
-      var propertyName = evt.getPropertyName();
-      if ("background".equals(propertyName) || "UI".equals(propertyName)) {
-        updateHintPaneDefaultCssRules(pane, kit, currentDefaultStyleSheet);
-      }
-    });
-    pane.setEditorKit(kit);
 
     if (hintHint.isOwnBorderAllowed()) {
       setBorder(pane);
@@ -809,15 +752,13 @@ public class IdeTooltipManager implements Disposable {
     }
 
     if (!hintHint.isAwtTooltip()) {
-      prefSizeWasComputed[0] = true;
+      prefSizeWasComputed.set(true);
     }
 
     pane.setOpaque(hintHint.isOpaqueAllowed());
     pane.setBackground(hintHint.getTextBackground());
 
     pane.setText(text);
-    pane.setCaretPosition(0);
-    pane.setEditable(false);
 
     if (!limitWidthToScreen) {
       AppUIUtil.targetToDevice(pane, layeredPane);
@@ -840,7 +781,7 @@ public class IdeTooltipManager implements Disposable {
   }
 
   public boolean isQueuedToShow(IdeTooltip tooltip) {
-    return Comparing.equal(myQueuedTooltip, tooltip);
+    return Comparing.equal(queuedTooltip, tooltip);
   }
 
   private static boolean isClickProcessor(Balloon balloon) {
@@ -863,29 +804,69 @@ public class IdeTooltipManager implements Disposable {
     return balloon instanceof IdeTooltip.Ui && ((IdeTooltip.Ui)balloon).isInside(target);
   }
 
-  private static void updateHintPaneDefaultCssRules(
-    @NotNull JEditorPane editorPane,
-    @NotNull HTMLEditorKit editorKit,
-    @NotNull Ref<StyleSheet> currentDefaultStyleSheet
-    ) {
-    StyleSheet editorStyleSheet = editorKit.getStyleSheet();
-    if (currentDefaultStyleSheet.get() != null) {
-      editorStyleSheet.removeStyleSheet(currentDefaultStyleSheet.get());
-    }
-    var newDefaultStyleSheet = new StyleSheet();
-    for (String rule : getHintPaneStyleSheetRules(editorPane.getBackground())) {
-      newDefaultStyleSheet.addRule(rule);
-    }
-    newDefaultStyleSheet.addRule("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}");
-    editorStyleSheet.addStyleSheet(newDefaultStyleSheet);
-    currentDefaultStyleSheet.set(newDefaultStyleSheet);
-  }
+  private static class LimitedWidthJBHtmlPane extends JBHtmlPane {
+    private final Ref<Boolean> myPrefSizeWasComputed;
+    private final HintHint myHintHint;
+    private final @Nullable JLayeredPane myLayeredPane;
+    private Dimension prefSize;
 
-  private static List<String> getHintPaneStyleSheetRules(@NotNull Color background) {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    return StyleSheetRulesProviderForCodeHighlighting.getRules(
-      globalScheme, background, Collections.singletonList(""), Collections.emptyList(),
-      true, true, "5px 0 5px 0"
-    );
+    private LimitedWidthJBHtmlPane(JBHtmlPaneStyleConfiguration styleConfiguration,
+                                   JBHtmlPaneConfiguration paneConfiguration,
+                                   Ref<Boolean> prefSizeWasComputed,
+                                   HintHint hintHint,
+                                   @Nullable JLayeredPane layeredPane) {
+      super(styleConfiguration, paneConfiguration);
+      myPrefSizeWasComputed = prefSizeWasComputed;
+      myHintHint = hintHint;
+      myLayeredPane = layeredPane;
+      prefSize = null;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      if (!myPrefSizeWasComputed.get() && myHintHint.isAwtTooltip()) {
+        JLayeredPane lp = myLayeredPane;
+        if (lp == null) {
+          JRootPane rootPane = UIUtil.getRootPane(this);
+          if (rootPane != null && rootPane.getSize().width > 0) {
+            lp = rootPane.getLayeredPane();
+          }
+        }
+
+        Dimension size;
+        if (lp != null) {
+          AppUIUtil.targetToDevice(this, lp);
+          size = lp.getSize();
+          myPrefSizeWasComputed.set(true);
+        }
+        else {
+          size = ScreenUtil.getScreenRectangle(0, 0).getSize();
+        }
+        int fitWidth = (int)(size.width * 0.8);
+        Dimension prefSizeOriginal = super.getPreferredSize();
+        if (prefSizeOriginal.width > fitWidth) {
+          setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
+          Dimension fixedWidthSize = super.getPreferredSize();
+          Dimension minSize = super.getMinimumSize();
+          prefSize = new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height);
+        }
+        else {
+          prefSize = new Dimension(prefSizeOriginal);
+        }
+      }
+
+      Dimension s = prefSize != null ? new Dimension(prefSize) : super.getPreferredSize();
+      Border b = getBorder();
+      if (b != null) {
+        JBInsets.addTo(s, b.getBorderInsets(this));
+      }
+      return s;
+    }
+
+    @Override
+    public void setPreferredSize(Dimension preferredSize) {
+      super.setPreferredSize(preferredSize);
+      prefSize = preferredSize;
+    }
   }
 }

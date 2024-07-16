@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.gradle.api.Project;
@@ -62,6 +63,9 @@ public class ScalaModelBuilderImpl implements ModelBuilderService {
     ScalaModelImpl scalaModel = new ScalaModelImpl();
     scalaModel.setScalaClasspath(new LinkedHashSet<>(scalaCompile.getScalaClasspath().getFiles()));
     scalaModel.setZincClasspath(new LinkedHashSet<>(scalaCompile.getZincClasspath().getFiles()));
+    if (GradleVersionUtil.isCurrentGradleAtLeast("6.4")) {
+      scalaModel.setScalaCompilerPlugins(new LinkedHashSet<>(scalaCompile.getScalaCompilerPlugins().getFiles()));
+    }
     scalaModel.setScalaCompileOptions(create(scalaCompile.getScalaCompileOptions()));
     scalaModel.setTargetCompatibility(scalaCompile.getTargetCompatibility());
     scalaModel.setSourceCompatibility(scalaCompile.getSourceCompatibility());

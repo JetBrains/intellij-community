@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
@@ -56,9 +56,8 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     return true;
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("if.can.be.switch.problem.descriptor");
   }
 
@@ -83,8 +82,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     this.onlySuggestNullSafe = onlySuggestNullSafe;
   }
 
-  @IntentionFamilyName
-  public static @NotNull String getReplaceWithSwitchFixName(){
+  public static @IntentionFamilyName @NotNull String getReplaceWithSwitchFixName(){
     return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
   }
 
@@ -97,8 +95,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return getReplaceWithSwitchFixName();
     }
 
@@ -117,8 +114,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       replaceIfWithSwitch(ifStatement, updater);
     }
 
-    @NotNull
-    private PsiIfStatement concatenateIfStatements(@NotNull PsiIfStatement originalIfStatement) {
+    private @NotNull PsiIfStatement concatenateIfStatements(@NotNull PsiIfStatement originalIfStatement) {
       if (myAdditionalIfStatementsCount == 0) return originalIfStatement;
       StringBuilder sb = new StringBuilder();
       CommentTracker commentTracker = new CommentTracker();
@@ -149,7 +145,9 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
             PsiElement nextSibling = upperIf.getNextSibling();
             while (nextSibling != null && nextSibling != nextIfStatement) {
               sb.append(commentTracker.text(nextSibling));
-              toDeleteElements.add(nextSibling);
+              if (!(nextSibling instanceof PsiWhiteSpace)) {
+                toDeleteElements.add(nextSibling);
+              }
               nextSibling = nextSibling.getNextSibling();
             }
             addText = true;
@@ -163,9 +161,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         break;
       }
       for (PsiElement toDelete : toDeleteElements) {
-        if (!(toDelete instanceof PsiWhiteSpace)) {
-          commentTracker.delete(toDelete);
-        }
+        toDelete.delete();
       }
       PsiElement replaced = commentTracker.replace(originalIfStatement, sb.toString());
       return replaced instanceof PsiIfStatement ? (PsiIfStatement)replaced : originalIfStatement;
@@ -245,8 +241,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
-  @NotNull
-  private static List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
+  private static @NotNull List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
     return SyntaxTraverser.psiTraverser(expression)
       .filter(PsiTypeCastExpression.class)
       .filter(cast -> InstanceOfUtils.findPatternCandidate(cast) == targetInstanceOf)
@@ -322,7 +317,8 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       }
     }
 
-    if (SwitchUtils.canBePatternSwitchCase(ifStatement.getCondition(), switchExpression)) {
+    if (ContainerUtil.or(branches, branch -> branch.hasPattern() && !(switchExpression.getType() instanceof PsiPrimitiveType)) ||
+        SwitchUtils.isExtendedPrimitives(PsiPrimitiveType.getOptionallyUnboxedType(switchExpression.getType()))) {
       final boolean hasDefaultElse = ContainerUtil.exists(branches, (branch) -> branch.isElse());
       if (!hasDefaultElse && !hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
@@ -333,11 +329,18 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         final IfStatementBranch defaultBranch = ContainerUtil.find(branches, (branch) -> branch.isElse());
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
         final PsiExpression condition = factory.createExpressionFromText("null", switchExpression.getContext());
-        if (defaultBranch != null) defaultBranch.addCaseExpression(condition);
+        if (defaultBranch != null){
+          defaultBranch.addCaseExpression(condition);
+        }
+        else {
+          IfStatementBranch nullBranch = new IfStatementBranch(new PsiEmptyStatementImpl(), !hasUnconditionalPatternCheck(ifStatement, switchExpression));
+          nullBranch.addCaseExpression(condition);
+          branches.add(nullBranch);
+        }
       }
     }
 
-    @NonNls final StringBuilder switchStatementText = new StringBuilder();
+    final @NonNls StringBuilder switchStatementText = new StringBuilder();
     switchStatementText.append("switch(").append(switchExpression.getText()).append("){");
     final PsiType type = switchExpression.getType();
     final boolean castToInt = type != null && type.equalsToText(CommonClassNames.JAVA_LANG_INTEGER);
@@ -373,10 +376,10 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
+
   @SafeVarargs
-  @Nullable
-  public static <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement element, @NotNull Class<T> aClass,
-                                                              Class<? extends PsiElement> @NotNull ... stopAt) {
+  public static @Nullable <T extends PsiElement> T getPrevSiblingOfType(@Nullable PsiElement element, @NotNull Class<T> aClass,
+                                                                        Class<? extends PsiElement> @NotNull ... stopAt) {
     if (element == null) {
       return null;
     }
@@ -451,7 +454,10 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       else if (operands.length == 2) {
         final PsiExpression lhs = operands[0];
         final PsiExpression rhs = operands[1];
-        if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, rhs)) {
+        if (polyadicExpression.getOperationTokenType() != JavaTokenType.EQEQ) {
+          branch.addCaseExpression(polyadicExpression);
+        }
+        else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, rhs)) {
           branch.addCaseExpression(lhs);
         }
         else {
@@ -483,8 +489,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     dumpBody(branch.getStatement(), wrap, renameBreaks, breakLabelName, switchStatementText);
   }
 
-  @NonNls
-  private static String getCaseLabelText(PsiExpression expression, boolean castToInt) {
+  private static @NonNls String getCaseLabelText(PsiExpression expression, boolean castToInt) {
     if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiEnumConstant enumConstant) {
@@ -683,8 +688,9 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
           return false;
         }
         Nullability nullability = getNullability(switchExpression);
-        if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, switchExpression) && !ClassUtils.isPrimitive(switchExpression.getType())) {
-          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null || hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
+        if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, switchExpression) &&
+            !ClassUtils.isPrimitive(switchExpression.getType())) {
+          if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null) {
             nullability = Nullability.NOT_NULL;
           }
         }

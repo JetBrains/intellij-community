@@ -23,18 +23,18 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
-public final class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleDependencyImpl> implements JpsModuleDependency {
+final class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleDependencyImpl> implements JpsModuleDependency {
   private static final JpsElementChildRole<JpsModuleReference>
     MODULE_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("module reference");
 
   private volatile Ref<JpsModule> myCachedModule = null;
 
-  public JpsModuleDependencyImpl(final JpsModuleReference moduleReference) {
+  JpsModuleDependencyImpl(final JpsModuleReference moduleReference) {
     super();
     myContainer.setChild(MODULE_REFERENCE_CHILD_ROLE, moduleReference);
   }
 
-  public JpsModuleDependencyImpl(JpsModuleDependencyImpl original) {
+  JpsModuleDependencyImpl(JpsModuleDependencyImpl original) {
     super(original);
   }
 

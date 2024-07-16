@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
@@ -52,13 +53,12 @@ import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.notification.asText
 import org.jetbrains.kotlin.idea.notification.catchNotificationTextAsync
 import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.idea.test.resetCodeStyle
 import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -68,7 +68,6 @@ import org.junit.Assert
 import org.junit.Assert.assertNotEquals
 import org.junit.Assume
 import org.junit.Test
-import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolders: Boolean = true) : KotlinMavenImportingTestCase() {
@@ -105,8 +104,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             waitForScheduledArtifactDownloads()
         } finally {
             runAll(
-                    ThrowableRunnable { resetCodeStyle(project) },
-                    ThrowableRunnable { super.tearDown() },
+                { resetCodeStyle(project) },
+                { super.tearDown() },
             )
         }
     }
@@ -652,7 +651,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
         fun testJvmFacetConfiguration() = runBlocking {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
 
-            val kotlinMavenPluginVersion = "1.6.20"
+            val kotlinMavenPluginVersion = "1.7.22"
             importProjectAsync(
                 """
             <groupId>test</groupId>
@@ -2288,7 +2287,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             val kotlinMainPluginVersion = "1.5.10"
-            val kotlinMavenPluginVersion1 = "1.6.21"
+            val kotlinMavenPluginVersion1 = "1.7.21"
             val kotlinMavenPluginVersion2 = "1.5.31"
             val notifications = catchNotificationsAsync(project, "Kotlin JPS plugin") {
                 val mainPom = createProjectPom(
@@ -2919,7 +2918,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             importProjectsAsync(pomMain, pomA, pomB)
             withContext(Dispatchers.EDT) {
-                project.waitIndexingComplete()
+                IndexingTestUtil.waitUntilIndexesAreReady(project)
             }
             assertModules("module-with-kotlin", "module-with-java", "mvnktest")
 
@@ -3583,7 +3582,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             // Some version won't be imported into JPS (because it's some milestone version which wasn't published to MC) => explicit
             // JPS version during import will be dropped => we will fall back to the bundled JPS =>
             // we have to load 1.6 jvmTarget as 1.8 KTIJ-21515
-            val (facet, notifications) = doJvmTarget6Test("1.6.20-RC")
+            val (facet, notifications) = doJvmTarget6Test("1.7.0-RC")
 
             Assert.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
             Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
@@ -3924,10 +3923,61 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertEmpty(testModuleSources)
         }
     }
-}
 
-fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
-    val kotlincDirectory = KotlinPluginLayout.kotlinc
-    require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
-    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(kotlincDirectory)}"
+    internal class ApiVersionExceedingLanguageVersion : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testApiVersionExceedingLanguageVersion() = runBlocking {
+            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+
+            val kotlinMavenPluginVersion = "1.6.20"
+            importProjectAsync(
+                """
+            <groupId>test</groupId>
+            <artifactId>project</artifactId>
+            <version>1.0.0</version>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib</artifactId>
+                    <version>$kotlinVersion</version>
+                </dependency>
+            </dependencies>
+
+            <build>
+                <sourceDirectory>src/main/kotlin</sourceDirectory>
+
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-plugin</artifactId>
+                        <version>$kotlinMavenPluginVersion</version>
+
+                        <executions>
+                            <execution>
+                                <id>compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <languageVersion>1.1</languageVersion>
+                            <apiVersion>1.2</apiVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            """
+            )
+
+            with(facetSettings) {
+                Assert.assertEquals("1.1", languageLevel!!.versionString)
+                Assert.assertEquals("1.1", compilerArguments!!.languageVersion)
+                Assert.assertEquals("1.2", apiLevel!!.versionString)
+                Assert.assertEquals("1.2", compilerArguments!!.apiVersion)
+            }
+        }
+    }
 }

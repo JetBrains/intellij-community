@@ -15,7 +15,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +49,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -92,16 +90,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static final boolean LOG_NON_CACHED_ROOTS_LIST = getBooleanProperty("PersistentFSImpl.LOG_NON_CACHED_ROOTS_LIST", false);
 
-  /** Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds] */
+  /**
+   * Show notification about successful VFS recovery if VFS init takes longer than [nanoseconds]
+   * <br/>
+   * By default notification is <b>off completely</b>: there is too much controversy about it's
+   * usefulness and wording, and from the other side -- so far recovery seems to work smoothly
+   * enough, so user doesn't really need to even know about it.
+   * TODO RC: consider removing it completely in the v243, if not re-requested
+   */
   private static final long NOTIFY_OF_RECOVERY_IF_LONGER_NS = SECONDS.toNanos(
-    getLongProperty("vfs.notify-user-if-recovery-longer-sec", defaultLongRecoveryThresholdSec())
+    getLongProperty("vfs.notify-user-if-recovery-longer-sec", Long.MAX_VALUE)
   );
-
-  private static long defaultLongRecoveryThresholdSec() {
-    Application app = ApplicationManager.getApplication();
-    return (app != null && app.isEAP()) ? 10 : Long.MAX_VALUE;
-  }
-
+  
   /**
    * Sometimes PFS got request for the files with lost (missed) roots. We try to resolve each root against persistence,
    * and it is quite expensive, so we don't want to repeat that attempt for the same root, if it is found to be missed.
@@ -132,7 +132,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   public PersistentFSImpl(@NotNull Application app) {
     this.app = app;
-    myVfsData = new VfsData(app, this);
     myRoots = SystemInfoRt.isFileSystemCaseSensitive
               ? new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount())
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
@@ -178,9 +177,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @ApiStatus.Internal
   synchronized public void connect() {
+    LOG.assertTrue(!myConnected.get());// vfsPeer could be !=null after disconnect
     myIdToDirCache.clear();
     myVfsData = new VfsData(app, this);
-    LOG.assertTrue(!myConnected.get());// vfsPeer could be !=null after disconnect
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
@@ -792,11 +791,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    return contentsToByteArray(file, true);
+    // We _should_ cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
+    // But caching of readOnly (which 99% means 'archived') file content is useless
+    boolean cacheContent = !getFileSystem(file).isReadOnly();
+    return contentsToByteArray(file, cacheContent);
   }
 
   @Override
-  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean forceCacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean mayCacheContent) throws IOException {
     InputStream contentStream;
     boolean outdated;
     int fileId;
@@ -829,16 +831,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         setLength(fileId, content.length);
       }
 
-      if (!shouldCache(content.length)) {
-        return content;
-      }
-      // We _should_ cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
-      // But caching of readOnly (which 99% means 'archived') file content is useless, if not explicitly asked
-      boolean fileContentCouldChange = !fs.isReadOnly();
-      if (fileContentCouldChange || forceCacheContent) {
+      if (mayCacheContent && shouldCache(content.length)) {
         myInputLock.writeLock().lock();
         try {
-          writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ !fileContentCouldChange);
+          writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ fs.isReadOnly());
           setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
         }
         finally {
@@ -903,9 +899,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static boolean shouldCache(long len) {
     if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
-      return false;
-    }
-    if (HeavyProcessLatch.INSTANCE.isRunning()) {
       return false;
     }
     return true;
@@ -1208,7 +1201,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static String getAlternativePath(@NotNull VFileEvent event) {
     if (event instanceof VFilePropertyChangeEvent pce
-        && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        && pce.getPropertyName().equals(VirtualFile.PROP_NAME)) {
       VirtualFile parent = pce.getFile().getParent();
       String newName = (String)pce.getNewValue();
       return parent == null ? newName : parent.getPath() + "/" + newName;
@@ -1690,7 +1683,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       try {
         String pathBeforeSlash = UriUtil.trimTrailingSlashes(rootPath);
-        newRoot = new FsRoot(rootId, rootNameId, myVfsData, fs, pathBeforeSlash, attributes, path, this);
+        newRoot = new FsRoot(rootId, myVfsData, fs, pathBeforeSlash, attributes, path, this);
       }
       catch (VfsData.FileAlreadyCreatedException e) {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
@@ -2165,7 +2158,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public String toString() {
-    return "PersistentFS";
+    return "PersistentFS[connected: " + isConnected() + ", ownData: " + myVfsData + "]";
   }
 
   private void executeCreateChild(@NotNull VirtualFile parent,
@@ -2317,8 +2310,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void executeRename(@NotNull VirtualFile file, @NotNull String newName) {
-    int id = getFileId(file);
-    vfsPeer.setName(id, newName);
     ((VirtualFileSystemEntry)file).setNewName(newName);
   }
 
@@ -2376,8 +2367,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                             long newTimestamp) {
     if (reloadContentFromFS) {
       setFlag(file, Flags.MUST_RELOAD_CONTENT, true);
-      //TODO RC: but this flag is immediately reset back to false in .setLength() below -- so reloadContentFromFS
-      //         has no effect at all!
     }
 
     int fileId = getFileId(file);

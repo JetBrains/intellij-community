@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
@@ -14,11 +14,10 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class HighlightRecordComponentsRecordFactory extends HighlightUsagesHandlerFactoryBase {
-  @Nullable
   @Override
-  public HighlightUsagesHandlerBase<PsiRecordComponent> createHighlightUsagesHandler(@NotNull Editor editor,
-                                                                                     @NotNull PsiFile file,
-                                                                                     @NotNull PsiElement target) {
+  public @Nullable HighlightUsagesHandlerBase<PsiRecordComponent> createHighlightUsagesHandler(@NotNull Editor editor,
+                                                                                               @NotNull PsiFile file,
+                                                                                               @NotNull PsiElement target) {
     if (!(target instanceof PsiIdentifier)) return null;
     PsiElement parent = target.getParent();
     if (!(parent instanceof PsiReferenceExpression)) return null;

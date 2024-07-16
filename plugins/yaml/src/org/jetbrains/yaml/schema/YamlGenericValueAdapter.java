@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.TextRange;
@@ -19,11 +19,11 @@ import java.util.regex.Pattern;
 public final class YamlGenericValueAdapter implements JsonValueAdapter {
   private static final Pattern FLOAT_PATTERN = Pattern.compile("[-+]?(\\.[0-9]+|[0-9]+(\\.[0-9]*)?)([eE][-+]?[0-9]+)?");
 
-  @NotNull private static final Set<String> NULLS = Set.of("null", "Null", "NULL", "~");
-  @NotNull private static final Set<String> BOOLS = Set.of("true", "True", "TRUE", "false", "False", "FALSE");
-  @NotNull private static final Set<String> INFS = Set.of(".inf", ".Inf", ".INF");
-  @NotNull private static final Set<String> NANS = Set.of(".nan", ".NaN", ".NAN");
-  @NotNull private final YAMLValue myValue;
+  private static final @NotNull Set<String> NULLS = Set.of("null", "Null", "NULL", "~");
+  private static final @NotNull Set<String> BOOLS = Set.of("true", "True", "TRUE", "false", "False", "FALSE");
+  private static final @NotNull Set<String> INFS = Set.of(".inf", ".Inf", ".INF");
+  private static final @NotNull Set<String> NANS = Set.of(".nan", ".NaN", ".NAN");
+  private final @NotNull YAMLValue myValue;
 
   public YamlGenericValueAdapter(@NotNull YAMLValue value) {myValue = value;}
 
@@ -81,21 +81,18 @@ public final class YamlGenericValueAdapter implements JsonValueAdapter {
     return NULLS.contains(text) || hasTag(text, "null");
   }
 
-  @NotNull
   @Override
-  public PsiElement getDelegate() {
+  public @NotNull PsiElement getDelegate() {
     return myValue;
   }
 
-  @Nullable
   @Override
-  public JsonObjectValueAdapter getAsObject() {
+  public @Nullable JsonObjectValueAdapter getAsObject() {
     return null;
   }
 
-  @Nullable
   @Override
-  public JsonArrayValueAdapter getAsArray() {
+  public @Nullable JsonArrayValueAdapter getAsArray() {
     return null;
   }
 
@@ -149,8 +146,7 @@ public final class YamlGenericValueAdapter implements JsonValueAdapter {
     return FLOAT_PATTERN.matcher(s).matches();
   }
 
-  @NotNull
-  private static String trimSign(@NotNull String s) {
+  private static @NotNull String trimSign(@NotNull String s) {
     if (s.isEmpty()) return s;
     char c = s.charAt(0);
     return c == '+' || c == '-' ? s.substring(1) : s;

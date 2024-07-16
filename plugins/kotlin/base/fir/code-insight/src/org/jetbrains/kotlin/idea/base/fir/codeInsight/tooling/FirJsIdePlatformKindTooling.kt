@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractJsIdePlatformKindTooling
 
-class FirJsIdePlatformKindTooling : AbstractJsIdePlatformKindTooling() {
+internal class FirJsIdePlatformKindTooling : AbstractJsIdePlatformKindTooling() {
+
     override val testIconProvider: AbstractGenericTestIconProvider
         get() = SymbolBasedGenericTestIconProvider
 }

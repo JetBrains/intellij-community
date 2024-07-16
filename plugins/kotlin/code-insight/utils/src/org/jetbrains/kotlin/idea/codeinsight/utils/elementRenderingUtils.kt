@@ -110,12 +110,24 @@ fun KtElement.renderTrimmed(): String {
 
         override fun visitCallExpression(expression: KtCallExpression) {
             expression.calleeExpression?.accept(this)
+            expression.typeArgumentList?.accept(this)
             expression.valueArgumentList?.accept(this)
-            repeat(expression.lambdaArguments.size) { builder.append("{...}") }
+            repeat(expression.lambdaArguments.size) { builder.append("{$ellipsis}") }
         }
 
         override fun visitValueArgumentList(list: KtValueArgumentList) {
-            builder.append(if (list.arguments.isEmpty()) "()" else "(...)")
+            val arguments = list.arguments
+            builder.append("(")
+            if (arguments.isNotEmpty()) {
+                if (arguments.size <= 3 &&
+                    arguments.all { it.getArgumentExpression() is KtConstantExpression } &&
+                    arguments.sumOf { it.text.length } < 8) {
+                    arguments.joinTo(builder) { it.text }
+                } else {
+                    builder.append(ellipsis)
+                }
+            }
+            builder.append(")")
         }
 
         override fun visitQualifiedExpression(expression: KtQualifiedExpression) {
@@ -171,7 +183,7 @@ fun KtElement.renderTrimmed(): String {
             if (expression.parent is KtFunctionLiteral) {
                 super.visitBlockExpression(expression)
             } else {
-                builder.append("{...}")
+                builder.append("{$ellipsis}")
             }
         }
 
@@ -196,7 +208,7 @@ fun KtElement.renderTrimmed(): String {
                 it.accept(this)
                 builder.append(')')
             }
-            builder.append(" {...}")
+            builder.append(" {$ellipsis}")
         }
 
         override fun visitForExpression(expression: KtForExpression) {
@@ -233,7 +245,7 @@ fun KtElement.renderTrimmed(): String {
         }
 
         override fun visitTryExpression(expression: KtTryExpression) {
-            builder.append("try {...}")
+            builder.append("try {$ellipsis}")
         }
 
         // Declarations
@@ -277,7 +289,7 @@ fun KtElement.renderTrimmed(): String {
 
             classOrObject.name?.let { builder.append(" $it") }
             classOrObject.getSuperTypeList()?.accept(this)
-            classOrObject.body?.let { builder.append(" {...}") }
+            classOrObject.body?.let { builder.append(" {$ellipsis}") }
         }
 
         override fun visitSuperTypeList(list: KtSuperTypeList) {
@@ -315,11 +327,13 @@ fun KtElement.renderTrimmed(): String {
     return Renderer().render(this)
 }
 
+internal const val ellipsis = "${Typography.ellipsis}"
+
 @NlsSafe
-fun getExpressionShortText(element: KtElement): String {
-    val text = element.renderTrimmed().trimStart()
+fun getExpressionShortText(element: PsiElement): String {
+    val text = ((element as? KtElement)?.renderTrimmed() ?: element.text).trimStart()
     val firstNewLinePos = text.indexOf('\n')
     var trimmedText = text.substring(0, if (firstNewLinePos != -1) firstNewLinePos else min(100, text.length))
-    if (trimmedText.length != text.length) trimmedText += " ..."
+    if (trimmedText.length != text.length) trimmedText += " $ellipsis"
     return trimmedText
 }

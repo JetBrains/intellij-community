@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.dsl.DependencyLockingHandler
 import org.gradle.api.component.SoftwareComponentContainer
 import org.gradle.api.file.*
 import org.gradle.api.plugins.ObjectConfigurationAction
+import org.gradle.api.project.IsolatedProject
 import org.gradle.normalization.InputNormalizationHandler
 import org.gradle.process.ExecSpec
 import org.gradle.process.JavaExecSpec
@@ -288,4 +289,6 @@ class DummyProject(
   override fun getDependencyLocking() = throw UnsupportedOperationException()
 
   override fun getBuildTreePath(): String? = throw UnsupportedOperationException()
+
+  override fun getIsolated(): IsolatedProject = throw UnsupportedOperationException()
 }

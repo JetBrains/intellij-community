@@ -1,4 +1,5 @@
 // "Replace with 'newFun<String>(*elements)'" "true"
+// K2_ACTION: "Replace with 'newFun(*elements)'" "true"
 // WITH_STDLIB
 
 @Deprecated("", ReplaceWith("newFun(*elements)"))
@@ -13,3 +14,4 @@ fun foo() {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

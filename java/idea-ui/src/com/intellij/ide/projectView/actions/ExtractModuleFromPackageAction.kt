@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.roots.*
@@ -29,6 +28,7 @@ import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -127,7 +127,7 @@ class ExtractModuleFromPackageAction : AnAction() {
       }
 
       val newModule = ModuleManager.getInstance(module.project).newModule(imlFileDirectory.resolve("$moduleName.iml"),
-                                                                          ModuleTypeId.JAVA_MODULE)
+                                                                          JAVA_MODULE_ENTITY_TYPE_ID_NAME)
 
       ModuleRootModificationUtil.updateModel(newModule) { model ->
         if (ModuleRootManager.getInstance(module).isSdkInherited) {

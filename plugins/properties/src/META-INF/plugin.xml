@@ -10,6 +10,9 @@
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
   </dependencies>
+  <content>
+    <module name="intellij.properties/copyright"/>
+  </content>
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider"
@@ -22,8 +25,6 @@
                     interface="com.intellij.lang.properties.DuplicatePropertyKeyAnnotationSuppressor"
                     dynamic="true"/>
   </extensionPoints>
-
-  <depends optional="true" config-file="properties-copyright.xml">com.intellij.copyright</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <properties.files.provider implementation="com.intellij.lang.properties.provider.PropertiesProviderImpl"/>

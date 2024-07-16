@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.hasErrorElementInRange
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.suggested.*
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes

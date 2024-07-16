@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixBackedByIntentionAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,15 +55,15 @@ public final class Annotation implements Segment {
 
   public static final class QuickFixInfo {
     public final @NotNull IntentionAction quickFix;
-    public final @Nullable LocalQuickFix localQuickFix;
+    private final @NotNull LocalQuickFix localQuickFix;
     public final @NotNull TextRange textRange;
     public final HighlightDisplayKey key;
 
     QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
-      this(fix, ObjectUtils.tryCast(fix, LocalQuickFix.class), range, key);
+      this(fix, fix instanceof LocalQuickFix lqf ? lqf : new LocalQuickFixBackedByIntentionAction(fix), range, key);
     }
 
-    QuickFixInfo(@NotNull IntentionAction fix, @Nullable LocalQuickFix localQuickFix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
+    QuickFixInfo(@NotNull IntentionAction fix, @NotNull LocalQuickFix localQuickFix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
       this.localQuickFix = localQuickFix;
@@ -74,7 +74,13 @@ public final class Annotation implements Segment {
     public String toString() {
       return quickFix.toString();
     }
+
+    public @NotNull LocalQuickFix getLocalQuickFix() {
+      return localQuickFix;
+    }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
 
   /**
    * Creates an instance of the annotation.
@@ -219,6 +225,8 @@ public final class Annotation implements Segment {
     myNeedsUpdateOnTyping = b;
   }
 
+  //</editor-fold>
+
   /**
    * Gets a flag indicating what happens with the annotation when the user starts typing.
    *
@@ -344,6 +352,8 @@ public final class Annotation implements Segment {
     return myTooltip;
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * Sets the tooltip for the annotation (shown when hovering the mouse in the gutter bar).
    * @deprecated Use {@link AnnotationBuilder#tooltip(String)} instead
@@ -377,6 +387,8 @@ public final class Annotation implements Segment {
   public void setTextAttributes(final TextAttributesKey enforcedAttributes) {
     myEnforcedAttributesKey = enforcedAttributes;
   }
+
+  //</editor-fold>
 
   /**
    * Returns the flag indicating whether the annotation is shown after the end of line containing it.
@@ -467,6 +479,8 @@ public final class Annotation implements Segment {
            ")";
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
@@ -483,4 +497,6 @@ public final class Annotation implements Segment {
   public PsiReference getUnresolvedReference() {
     return unresolvedReference;
   }
+
+  //</editor-fold>
 }

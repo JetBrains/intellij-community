@@ -165,10 +165,8 @@ open class ModuleImpl @ApiStatus.Internal constructor(
 
   override fun isLoaded(): Boolean = isModuleAdded
 
-  @Suppress("removal", "DEPRECATION")
-  override fun moduleAdded(oldComponents: MutableList<com.intellij.openapi.module.ModuleComponent>) {
+  override fun markAsLoaded() {
     isModuleAdded = true
-    processInitializedComponents(com.intellij.openapi.module.ModuleComponent::class.java, oldComponents::add)
   }
 
   override fun setOption(key: String, value: String?) {

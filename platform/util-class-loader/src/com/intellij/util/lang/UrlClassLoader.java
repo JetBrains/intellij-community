@@ -42,13 +42,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
+  @ApiStatus.Internal
   protected final ClassPath classPath;
   private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
   private final boolean isSystemClassLoader;
 
-  private final boolean enableCoroutineDump;
-
+  @ApiStatus.Internal
   protected final @NotNull ClassPath.ClassDataConsumer classDataConsumer =
     ClassPath.recordLoadingTime ? new ClassPath.MeasuringClassDataConsumer(this) : this;
 
@@ -148,13 +148,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     isSystemClassLoader = builder.isSystemClassLoader;
 
-    enableCoroutineDump = Boolean.parseBoolean(System.getProperty("idea.enable.coroutine.dump.using.classloader", "false"));
     classPath = new ClassPath(builder.files, builder, resourceFileFactory, mimicJarUrlConnection);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
     classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
   }
 
+  @ApiStatus.Internal
   protected UrlClassLoader(@NotNull ClassPath classPath) {
     super(null);
 
@@ -162,7 +162,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     isBootstrapResourcesAllowed = false;
     isSystemClassLoader = false;
     classLoadingLocks = new ClassLoadingLocks();
-    enableCoroutineDump = false;
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
@@ -214,9 +213,9 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     // then it gets defined twice, which leads to CCEs later.
     // To avoid double-loading, the loading of a select number of packages is delegated to AppClassLoader.
     //
-    // com.intellij.util.lang org.jetbrains.ikv
+    // com.intellij.util.lang
     // see XxHash3Test.packages
-    if (isSystemClassLoader && (packageNameHash == -9217824570049207139L || packageNameHash == -1976620678582843062L)) {
+    if (isSystemClassLoader && packageNameHash == -9217824570049207139L) {
       // these two classes from com.intellij.util.lang are located in intellij.platform.util module, which shouldn't be loaded by appClassLoader (IDEA-331043)
       if (!fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion")) {
         return appClassLoader.loadClass(name);
@@ -225,20 +224,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     Class<?> clazz;
     try {
-      if (enableCoroutineDump &&
-          packageNameHash == -3930079881136890558L &&
-          name.equals("kotlin.coroutines.jvm.internal.DebugProbesKt")) {
-        String resourceName = "DebugProbesKt.bin";
-        Resource resource = classPath.findResource(resourceName);
-        if (resource == null) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.err.println("Cannot find " + resourceName);
-        }
-        else {
-          return classDataConsumer.consumeClassData(name, resource.getByteBuffer());
-        }
-      }
-
       clazz = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
     }
     catch (IOException e) {
@@ -405,12 +390,14 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * @see #createCachePool()
    * @see Builder#useCache
    */
+  @ApiStatus.Internal
   public interface CachePool { }
 
   /**
    * @return a new pool to be able to share internal caches between different class loaders if they contain the same URLs
    * in their class paths.
    */
+  @ApiStatus.Internal
   public static @NotNull CachePool createCachePool() {
     return new CachePoolImpl();
   }
@@ -665,6 +652,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * @param pool      cache pool
      * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
      */
+    @ApiStatus.Internal
     public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<? super Path> condition) {
       useCache = true;
       cachePool = (CachePoolImpl)pool;

@@ -9,6 +9,7 @@ import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -63,6 +64,7 @@ public final class ListPluginComponent extends JPanel {
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
   private final boolean myIsAvailable;
+  private final boolean myIsEssential;
   private @NotNull IdeaPluginDescriptor myPlugin;
   private PluginNode myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
@@ -103,10 +105,12 @@ public final class ListPluginComponent extends JPanel {
     myPluginModel = pluginModel;
     mySearchListener = searchListener;
     myMarketplace = marketplace;
+    PluginId pluginId = plugin.getPluginId();
     boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
-                         ? !"com.intellij.kmm".equals(plugin.getPluginId().getIdString()) || SystemInfoRt.isMac
+                         ? !"com.intellij.kmm".equals(pluginId.getIdString()) || SystemInfoRt.isMac
                          : PluginManagerCore.INSTANCE.getIncompatibleOs(plugin) == null;
     myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
+    myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
     pluginModel.addComponent(this);
 
     setOpaque(true);
@@ -342,6 +346,7 @@ public final class ListPluginComponent extends JPanel {
 
     myLayout.addButtonComponent(myEnableDisableButton);
     myEnableDisableButton.setOpaque(false);
+    myEnableDisableButton.setEnabled(!myIsEssential);
     myEnableDisableButton.getAccessibleContext()
       .setAccessibleName(IdeBundle.message("plugins.configurable.enable.checkbox.accessible.name"));
   }
@@ -874,6 +879,10 @@ public final class ListPluginComponent extends JPanel {
     return myMarketplace;
   }
 
+  public boolean isEssential() {
+    return myIsEssential;
+  }
+
   public boolean isRestartEnabled() {
     return myRestartButton != null && myRestartButton.isVisible();
   }
@@ -896,6 +905,10 @@ public final class ListPluginComponent extends JPanel {
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
                               @NotNull List<? extends ListPluginComponent> selection) {
+    if (selection.isEmpty()) {
+      return;
+    }
+
     if (!myIsAvailable) {
       return;
     }
@@ -983,6 +996,10 @@ public final class ListPluginComponent extends JPanel {
 
   public void handleKeyAction(@NotNull KeyEvent event,
                               @NotNull List<? extends ListPluginComponent> selection) {
+    if (selection.isEmpty()) {
+      return;
+    }
+
     // If the focus is not on a ListPluginComponent, the focused component will handle the event.
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (event.getKeyCode() == KeyEvent.VK_SPACE && !(focusOwner instanceof ListPluginComponent)) {

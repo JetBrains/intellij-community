@@ -106,7 +106,6 @@
       <inputs>
         <pathelement location="${ant.file}"/>
         <pathelement location="${jps.bootstrap.dir}/src/main/java"/>
-        <pathelement location="${community.home}/platform/build-scripts/downloader/src"/>
         <pathelement location="${jps.bootstrap.dir}/pom.xml"/>
         <pathelement location="${community.home}/.idea/kotlinc.xml"/>
       </inputs>
@@ -129,7 +128,6 @@
           <arg value="-classpath"/>
           <arg pathref="classpath.buildscripts"/>
           <arg path="${jps.bootstrap.dir}/src/main/java"/>
-          <arg path="${community.home}/platform/build-scripts/downloader/src"/>
           <arg value="-d"/>
           <arg value="${classes.dir}"/>
         </java>

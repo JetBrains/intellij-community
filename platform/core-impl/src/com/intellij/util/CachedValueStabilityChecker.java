@@ -150,11 +150,11 @@ final class CachedValueStabilityChecker {
   }
 
   private static @NotNull @NonNls String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
-    return "Incorrect CachedValue use: same CV with different captured context, this can cause unstable results and invalid PSI access." +
+    return "Incorrect CachedValue use: same CachedValue with different captured context, this can cause unstable results and invalid PSI access." +
            "\nField " + field.getName() + " in " + objectClass + " has non-equivalent values:" +
            "\n  " + v1 + (v1 == null ? "" : " (" + v1.getClass().getName() + ")") + " and" +
            "\n  " + v2 + (v2 == null ? "" : " (" + v2.getClass().getName() + ")") +
-           "\nEither make `equals()` hold for these values, or avoid this dependency, e.g. by extracting CV provider into a static method.";
+           "\nEither make `equals()` hold for these values, or avoid this dependency, e.g. by extracting CachedValueProvider into a static method.";
   }
 
   private static void complain(@NonNls String message, String key, @NotNull Class<?> pluginClass) {

@@ -4,7 +4,9 @@ package com.jetbrains.python.packaging.toolwindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -15,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -56,7 +59,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.ListSelectionListener
 
-class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolWindow) : SimpleToolWindowPanel(false, true), Disposable  {
+class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolWindow) : SimpleToolWindowPanel(false, true), Disposable {
   internal val packagingScope = CoroutineScope(Dispatchers.IO)
   private var selectedPackage: DisplayablePackage? = null
   private var selectedPackageDetails: PythonPackageDetails? = null
@@ -131,18 +134,17 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
 
     val uninstallToolbar = ActionManager.getInstance()
       .createActionToolbar(ActionPlaces.TOOLWINDOW_CONTENT, DefaultActionGroup(DefaultActionGroup().apply {
-        add(object : AnAction(message("python.toolwindow.packages.delete.package")) {
-          override fun actionPerformed(e: AnActionEvent) {
-            if (selectedPackage is InstalledPackage) {
-              packagingScope.launch(Dispatchers.Main) {
-                startProgress()
-                withContext(Dispatchers.IO) {
-                  service.deletePackage(selectedPackage as InstalledPackage)
-                }
-                stopProgress()
+        add(DumbAwareAction.create(message("python.toolwindow.packages.delete.package")) {
+          if (selectedPackage is InstalledPackage) {
+            packagingScope.launch(Dispatchers.Main) {
+              startProgress()
+              withContext(Dispatchers.IO) {
+                service.deletePackage(selectedPackage as InstalledPackage)
               }
-            } else error("Trying to delete package, that is not InstalledPackage")
+              stopProgress()
+            }
           }
+          else error("Trying to delete package, that is not InstalledPackage")
         })
         isPopup = true
         with(templatePresentation) {
@@ -200,7 +202,7 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
         preferredSize = Dimension(250, 30)
         minimumSize = Dimension(250, 30)
         maximumSize = Dimension(250, 30)
-        textEditor.border = JBUI.Borders.empty(0, 6, 0, 0)
+        textEditor.border = JBUI.Borders.emptyLeft(6)
         textEditor.isOpaque = true
         textEditor.emptyText.text = message("python.toolwindow.packages.search.text.placeholder")
       }
@@ -211,15 +213,14 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     }
 
     searchAlarm = SingleAlarm({
-      service.handleSearch(searchTextField.text.trim())
-    }, 500, service, ThreadToUse.SWING_THREAD, ModalityState.nonModal())
+                                service.handleSearch(searchTextField.text.trim())
+                              }, 500, service, ThreadToUse.SWING_THREAD, ModalityState.nonModal())
 
     searchTextField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         searchAlarm.cancelAndRequest()
       }
     })
-
 
     initOrientation(service, true)
     trackOrientation(service)
@@ -234,17 +235,13 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     }
 
     val actionGroup = DefaultActionGroup()
-    actionGroup.add(object : AnAction({ message("python.toolwindow.packages.reload.repositories.action")}, AllIcons.Actions.Refresh) {
-      override fun actionPerformed(e: AnActionEvent) {
-        service.reloadPackages()
-      }
+    actionGroup.add(DumbAwareAction.create(message("python.toolwindow.packages.reload.repositories.action"), AllIcons.Actions.Refresh) {
+      service.reloadPackages()
     })
-    actionGroup.add(object : AnAction({ message("python.toolwindow.packages.manage.repositories.action") }, AllIcons.General.GearPlain) {
-      override fun actionPerformed(e: AnActionEvent) {
-        service.manageRepositories()
-      }
+    actionGroup.add(DumbAwareAction.create(message("python.toolwindow.packages.manage.repositories.action"), AllIcons.General.GearPlain) {
+      service.manageRepositories()
     })
-    val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_CONTENT, actionGroup,true)
+    val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_CONTENT, actionGroup, true)
     actionToolbar.targetComponent = this
 
 
@@ -414,8 +411,6 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
     })
   }
 
-
-
   fun packageSelected(selectedPackage: DisplayablePackage) {
     val service = project.service<PyPackagingToolWindowService>()
     val managementEnabled = PyPackageUtil.packageManagementEnabled(service.currentSdk, true, false)
@@ -448,7 +443,8 @@ class PyPackagingToolWindowPanel(private val project: Project, toolWindow: ToolW
               .asSequence().drop(1).map { wrapAction(it, packageDetails) }.toList().toTypedArray()
           }
           installButton.repaint()
-        } else hideInstallableControls()
+        }
+        else hideInstallableControls()
 
         documentationUrl = packageDetails.documentationUrl
         documentationLink.isVisible = documentationUrl != null

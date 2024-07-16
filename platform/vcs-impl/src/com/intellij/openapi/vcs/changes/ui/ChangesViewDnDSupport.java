@@ -72,8 +72,7 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
   @Override
   public void drop(DnDEvent aEvent) {
     Object attached = aEvent.getAttachedObject();
-    if (attached instanceof ShelvedChangeListDragBean) {
-      ShelvedChangeListDragBean dragBean = (ShelvedChangeListDragBean)attached;
+    if (attached instanceof ShelvedChangeListDragBean dragBean) {
       ChangesBrowserNode<?> dropRootNode = getDropRootNode(myTree, aEvent);
       LocalChangeList targetChangeList;
       if (dropRootNode != null) {
@@ -87,8 +86,7 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
       }
       unshelveSilentlyWithDnd(myProject, dragBean, targetChangeList, !isCopyAction(aEvent));
     }
-    else if (attached instanceof ChangeListDragBean) {
-      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
+    else if (attached instanceof ChangeListDragBean dragBean) {
       final ChangesBrowserNode<?> changesBrowserNode = dragBean.getTargetNode();
       if (changesBrowserNode != null) {
         changesBrowserNode.acceptDrop(new DefaultChangeListOwner(myProject), dragBean);

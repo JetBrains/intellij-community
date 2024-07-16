@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model
 
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.lang.JavaVersion
+import com.intellij.util.system.CpuArch
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JdkVersionDetector.Variant.*
 import org.junit.Assert.assertEquals
@@ -306,6 +308,19 @@ class JdkVariantDetectorTest {
        |IMAGE_TYPE="JDK"
     """.trimMargin()
 
+  private val RELEASE_HOMEBREW_OPENJDK_17_0_11 =
+    """|IMPLEMENTOR="Homebrew"
+       |IMPLEMENTOR_VERSION="Homebrew"
+       |JAVA_RUNTIME_VERSION="17.0.11+0"
+       |JAVA_VERSION="17.0.11"
+       |JAVA_VERSION_DATE="2024-04-16"
+       |LIBC="default"
+       |MODULES="java.base ..."
+       |OS_ARCH="aarch64"
+       |OS_NAME="Darwin"
+       |SOURCE=""
+    """.trimMargin()
+
   @Rule @JvmField val tempDir = TempDirectory()
 
   @Test fun `Oracle OpenJDK 8`() = assertVariant(Unknown, RELEASE_ORACLE_OPEN_1_8_0_41, MANIFEST_ORACLE_OPEN_1_8_0_41)  // no vendor info
@@ -327,6 +342,11 @@ class JdkVariantDetectorTest {
   @Test fun `GraalVM CE 16`() = assertVariant(GraalVMCE, RELEASE_GRAALVM_CE_16_0_1)
   @Test fun `Semeru 16`() = assertVariant(Semeru, RELEASE_SEMERU_16_0_2)
   @Test fun `Temurin 17`() = assertVariant(Temurin, RELEASE_TEMURIN_17_0_1)
+  @Test fun `Homebrew 17`() = assertVariant(Homebrew, RELEASE_HOMEBREW_OPENJDK_17_0_11)
+
+  @Test fun `GraalVM 21 - version string`() = assertEquals(
+    "GraalVM CE 17.0.7 - VM 23.0.0",
+    JdkVersionDetector.JdkVersionInfo(JavaVersion.parse("17.0.7"), GraalVMCE, CpuArch.X86_64, "23.0.0").displayVersionString())
 
   private fun assertVariant(expectedVariant: JdkVersionDetector.Variant, releaseText: String, manifestText: String = "") {
     tempDir.newFile("release", releaseText.toByteArray())

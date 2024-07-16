@@ -270,7 +270,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
     if (entity.propertiesXmlTag == newXmlTag) return false
 
-    builder.modifyEntity(entity) {
+    builder.modifyLibraryPropertiesEntity(entity) {
       propertiesXmlTag = newXmlTag
     }
     return true
@@ -283,7 +283,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
     if (isInfoNotificationDisabled && type == NotificationType.INFORMATION) return
 
     /* Reuse [JarRepositoryManager]'s notification group */
-    val notification = JarRepositoryManager.GROUP.createNotification(
+    val notification = JarRepositoryManager.getNotificationGroup().createNotification(
       JavaUiBundle.message("repository.library.utils.library.update.title"),
       content,
       type
@@ -585,7 +585,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
   }
 }
 
-private fun LibraryPropertiesEntity.isRepositoryLibraryProperties() = propertiesXmlTag != null && REPOSITORY_LIBRARY_KIND.kindId == libraryType
+private fun LibraryPropertiesEntity.isRepositoryLibraryProperties() = propertiesXmlTag != null && REPOSITORY_LIBRARY_KIND.kindId == library.typeId?.name
 
 private fun LibraryPropertiesEntity.toRepositoryLibraryProperties(): RepositoryLibraryProperties? {
   return if (isRepositoryLibraryProperties()) deserialize(JDOMUtil.load(checkNotNull(propertiesXmlTag))) else null

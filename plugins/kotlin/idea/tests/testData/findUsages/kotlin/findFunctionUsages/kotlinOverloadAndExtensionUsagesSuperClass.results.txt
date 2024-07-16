@@ -1,0 +1,2 @@
+Function call 14 foo()
+Function call 15 a.foo()

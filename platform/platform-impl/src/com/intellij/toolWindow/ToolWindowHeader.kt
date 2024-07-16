@@ -26,7 +26,6 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.migLayout.createLayoutConstraints
 import com.intellij.ui.layout.migLayout.patched.MigLayout
 import com.intellij.ui.popup.PopupState
-import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -53,7 +52,7 @@ abstract class ToolWindowHeader internal constructor(
   private val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val gearProducer: Supplier<ActionGroup>
-) : BorderLayoutPanel(), DataProvider, PropertyChangeListener {
+) : BorderLayoutPanel(), PropertyChangeListener {
 
   private val actionGroup = DefaultActionGroup()
   private val toolbar: ActionToolbar
@@ -267,15 +266,6 @@ abstract class ToolWindowHeader internal constructor(
 
   fun getToolbarActions(): DefaultActionGroup = actionGroup
 
-  override fun getData(dataId: String): Any? {
-    if (MorePopupAware.KEY.`is`(dataId)) {
-      return contentUi.getData(dataId)
-    }
-    else {
-      return null
-    }
-  }
-
   fun setAdditionalTitleActions(actions: List<AnAction>) {
     actionGroup.removeAll()
     actionGroup.addAll(actions)
@@ -329,7 +319,7 @@ abstract class ToolWindowHeader internal constructor(
         if (toolWindow.toolWindowManager.isNewUi) JBUI.CurrentTheme.ToolWindow.headerHeight() else SingleHeightTabs.UNSCALED_PREF_HEIGHT
     val insets = insets
     val top = if (InternalDecoratorImpl.headerNeedsTopBorder(this)) 1 else 0
-    val height = JBUI.scale(unscaledHeight) + top - insets.top - insets.bottom - 1 // -1 to match the editors area header.
+    val height = JBUI.scale(unscaledHeight) + top - insets.top - insets.bottom
     val size = super.getPreferredSize()
     return Dimension(size.width, height)
   }

@@ -39,6 +39,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneViewModel
+import javax.swing.JComponent
 import javax.swing.JSeparator
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
@@ -89,7 +90,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
         cell(directoryField)
           .align(AlignX.FILL)
           .validationOnApply {
-            CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
+            CloneDvcsValidationUtils.checkDirectory(it.text, it.textField as JComponent)
           }
       }
     }.apply {

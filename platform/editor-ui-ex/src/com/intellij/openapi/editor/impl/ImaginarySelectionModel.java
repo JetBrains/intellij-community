@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class ImaginarySelectionModel implements SelectionModel {
   private final ImaginaryEditor myEditor;
   private static final Logger LOG = Logger.getInstance(ImaginarySelectionModel.class);

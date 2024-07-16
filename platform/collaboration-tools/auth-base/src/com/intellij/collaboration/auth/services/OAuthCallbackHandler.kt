@@ -56,7 +56,7 @@ abstract class OAuthCallbackHandler {
       else if (res != null) {
         when (res) {
           is AcceptCodeHandleResult.Page -> {
-            response("text/html", Unpooled.wrappedBuffer(res.html.toByteArray(Charsets.UTF_8)))
+            response("text/html;charset=utf-8", Unpooled.wrappedBuffer(res.html.toByteArray(Charsets.UTF_8)))
               .send(context.channel(), request)
           }
           is AcceptCodeHandleResult.Redirect -> {

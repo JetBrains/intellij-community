@@ -16,15 +16,10 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -83,14 +78,12 @@ public final class TooBroadCatchInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OverlyBroadCatchBlock";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final List<PsiType> typesMasked = (List<PsiType>)infos[0];
     String typesMaskedString = typesMasked.get(0).getPresentableText();
     if (typesMasked.size() == 1) {
@@ -114,9 +107,8 @@ public final class TooBroadCatchInspection extends BaseInspection {
   }
 
   private static class ReplaceWithRuntimeExceptionFix extends PsiUpdateModCommandQuickFix {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.with.catch.clause.for.runtime.exception.quickfix");
     }
 
@@ -142,14 +134,12 @@ public final class TooBroadCatchInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("too.broad.catch.quickfix", myText);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("add.catch.section.fix.family.name");
     }
 

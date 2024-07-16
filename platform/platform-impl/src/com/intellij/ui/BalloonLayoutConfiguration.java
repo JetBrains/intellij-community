@@ -120,10 +120,9 @@ public final class BalloonLayoutConfiguration {
                                      int contentActionsSpaceHeight,
                                      int titleActionsSpaceHeight,
                                      int bottomSpaceHeight) {
-    this(JBUIScale.scale(32), iconOffset,
-         topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight, titleActionsSpaceHeight, bottomSpaceHeight,
-         JBUIScale.scale(16),
-         new JBDimension(8, 6), JBUIScale.scale(7), JBUIScale.scale(5), JBUIScale.scale(15));
+    this(JBUIScale.scale(32), iconOffset, topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight, titleActionsSpaceHeight,
+         bottomSpaceHeight, JBUIScale.scale(16), ExperimentalUI.isNewUI() ? new JBDimension(9, 9) : new JBDimension(8, 6),
+         JBUIScale.scale(7), JBUIScale.scale(5), JBUIScale.scale(15));
   }
 
   private BalloonLayoutConfiguration(int iconPanelWidth,

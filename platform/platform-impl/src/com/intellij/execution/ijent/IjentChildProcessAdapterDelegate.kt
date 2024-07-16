@@ -9,8 +9,10 @@ import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.future.asCompletableFuture
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -23,12 +25,33 @@ internal class IjentChildProcessAdapterDelegate(
   val ijentId: IjentId,
   val coroutineScope: CoroutineScope,
   val ijentChildProcess: IjentChildProcess,
+  redirectStderr: Boolean,
 ) {
-  val inputStream: InputStream = ChannelInputStream(coroutineScope, ijentChildProcess.stdout)
+  val inputStream: InputStream
 
   val outputStream: OutputStream = IjentStdinOutputStream(coroutineScope.coroutineContext, ijentChildProcess)
 
-  val errorStream: InputStream = ChannelInputStream(coroutineScope, ijentChildProcess.stderr)
+  val errorStream: InputStream
+
+  init {
+    if (redirectStderr) {
+      val merged = Channel<ByteArray>()
+
+      coroutineScope.launch {
+        ijentChildProcess.stdout.consumeEach { chunk -> merged.send(chunk) }
+      }
+      coroutineScope.launch {
+        ijentChildProcess.stderr.consumeEach { chunk -> merged.send(chunk) }
+      }
+
+      inputStream = ChannelInputStream(coroutineScope, merged)
+      errorStream = ByteArrayInputStream(byteArrayOf())
+    }
+    else {
+      inputStream = ChannelInputStream(coroutineScope, ijentChildProcess.stdout)
+      errorStream = ChannelInputStream(coroutineScope, ijentChildProcess.stderr)
+    }
+  }
 
   @RequiresBackgroundThread
   @Throws(InterruptedException::class)

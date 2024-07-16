@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Orphanage - storage that contains content roots/source roots/excludes that currently don't have an associated parent in the storage.
@@ -30,6 +31,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
  * - If we create a custom *source root*, the created content root has [com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource] entity source in orphan storage and
  *     have `dumb="true"` tag in iml file.
  */
+@ApiStatus.Internal
 interface EntitiesOrphanage {
   val currentSnapshot: ImmutableEntityStorage
 
@@ -37,10 +39,6 @@ interface EntitiesOrphanage {
   fun update(updater: (MutableEntityStorage) -> Unit)
 
   companion object {
-    const val orphanageKey: String = "ide.workspace.model.separate.component.for.roots"
-    val isEnabled: Boolean
-      get() = Registry.`is`(orphanageKey, false)
-
     fun getInstance(project: Project): EntitiesOrphanage = project.service()
   }
 }

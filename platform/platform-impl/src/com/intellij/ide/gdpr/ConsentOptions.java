@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
+  private static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
@@ -118,7 +119,7 @@ public final class ConsentOptions {
     myBackend = backend;
     myIsEap = () -> {
       ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      return appInfo.isEAP() && appInfo.isVendorJetBrains();
+      return appInfo.isEAP() && appInfo.isVendorJetBrains() && !Agreements.isReleaseAgreementsEnabled();
     };
   }
 
@@ -390,6 +391,10 @@ public final class ConsentOptions {
 
       final Version confirmedVersion = confirmedConsent.getVersion();
       final Version defaultVersion = defConsent.getVersion();
+      // for test purpose only
+      if (Boolean.getBoolean(RECONFIRM_CONSENTS_PROPERTY)) {
+        return true;
+      }
       // consider only major version differences
       if (confirmedVersion.isOlder(defaultVersion) && confirmedVersion.getMajor() != defaultVersion.getMajor()) {
         return true;

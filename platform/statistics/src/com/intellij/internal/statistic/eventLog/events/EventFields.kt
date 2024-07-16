@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Version
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.NonNls
@@ -364,6 +365,11 @@ object EventFields {
   @JvmOverloads
   fun IntList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): IntListEventField = IntListEventField(name, description)
 
+  @JvmStatic
+  @JvmOverloads
+  inline fun <reified T : Enum<*>> EnumList(@NonNls @EventFieldName name: String, @NonNls description: String? = null, noinline transform: (T) -> String =
+    defaultEnumTransform): EnumListEventField<T> = EnumListEventField(name, description, T::class.java, transform)
+
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
@@ -715,7 +721,14 @@ object EventFields {
   @JvmOverloads
   fun createAdditionalDataField(groupId: String, eventId: String, @NonNls description: String? = null): ObjectEventField {
     val additionalFields = mutableListOf<EventField<*>>()
-    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensionsIfPointIsRegistered) {
+
+    val extensions = Cancellation.withNonCancelableSection().use {
+      // Non-cancellable section, because this function is often used in
+      // static initializer code of `object`, and any exception (namely, CancellationException)
+      // breaks the object with ExceptionInInitializerError, and subsequent NoClassDefFoundError
+      FeatureUsageCollectorExtension.EP_NAME.extensionsIfPointIsRegistered
+    }
+    for (ext in extensions) {
       if (ext.groupId == groupId && ext.eventId == eventId) {
         for (field in ext.extensionFields) {
           if (field != null) {

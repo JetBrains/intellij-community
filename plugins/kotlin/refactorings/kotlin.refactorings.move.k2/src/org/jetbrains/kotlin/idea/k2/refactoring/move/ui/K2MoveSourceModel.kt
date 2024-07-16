@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.components.JBList
@@ -16,51 +18,39 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDesc
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.JComponent
 
-sealed interface K2MoveSourceModel<T : KtElement> {
+sealed interface K2MoveSourceModel<T : PsiElement> {
     val elements: Set<T>
 
     fun toDescriptor(): K2MoveSourceDescriptor<T>?
 
-    context(Panel)
-    fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
+    fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
-    class FileSource(files: Set<KtFile>) : K2MoveSourceModel<KtFile> {
-        override var elements: Set<KtFile> = files
-            internal set
+    class FileSource(fsItems: Set<PsiFileSystemItem>) : K2MoveSourceModel<PsiFileSystemItem> {
+        override var elements: Set<PsiFileSystemItem> = fsItems
 
         override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
 
-        context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = elements.firstOrNull()?.project ?: return
-
-            class PresentableFile(val file: KtFile, val presentation: TargetPresentation)
 
             val presentableFiles = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
                 elements.map { file ->
-                    val presentation = TargetPresentation.builder(file.name)
+                    TargetPresentation.builder(file.name)
                         .icon(file.getIcon(0))
-                        .locationText(file.virtualFile.parent.path)
                         .presentation()
-                    PresentableFile(file, presentation)
                 }
             }
 
-            group(RefactoringBundle.message("move.files.group")) {
-                lateinit var list: JBList<PresentableFile>
+            panel.group(RefactoringBundle.message("move.files.group")) {
+                lateinit var list: JBList<TargetPresentation>
                 row {
-                    list = JBList(CollectionListModel(presentableFiles))
-                    list.cellRenderer = createTargetPresentationRenderer { presentableFile -> presentableFile.presentation }
-                    cell(list).resizableColumn()
-                }
-                onApply {
-                    elements = (list.model as CollectionListModel).items.map { it.file }.toSet()
-                }
+                    list = cell(JBList(CollectionListModel(presentableFiles)).apply {
+                        cellRenderer = createTargetPresentationRenderer { it }
+                    }).align(Align.FILL).component
+                }.resizableRow()
             }.topGap(TopGap.NONE).bottomGap(BottomGap.NONE).resizableRow()
         }
     }
@@ -73,8 +63,7 @@ sealed interface K2MoveSourceModel<T : KtElement> {
 
         override fun toDescriptor(): K2MoveSourceDescriptor.ElementSource = K2MoveSourceDescriptor.ElementSource(elements)
 
-        context(Panel)
-        override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
+        override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
                 .mapNotNull { it.parent as? KtDeclarationContainer }
                 .toSet()
@@ -101,7 +90,7 @@ sealed interface K2MoveSourceModel<T : KtElement> {
                 return@underModalProgress memberInfos(elements, allDeclarations.toList())
             }
 
-            group(RefactoringBundle.message("move.declarations.group"), indent = false) {
+            panel.group(RefactoringBundle.message("move.declarations.group"), indent = false) {
                 row {
                     memberSelectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
                     val table = memberSelectionPanel.table

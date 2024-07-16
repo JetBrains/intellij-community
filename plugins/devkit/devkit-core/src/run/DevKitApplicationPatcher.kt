@@ -2,20 +2,23 @@
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.compiler.options.MakeProjectStepBeforeRun
+import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.configurations.*
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.ijent.community.buildConstants.ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
+import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.idea.devkit.requestHandlers.CompileHttpRequestHandlerToken
+import org.jetbrains.idea.devkit.requestHandlers.passDataAboutBuiltInServer
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -27,21 +30,29 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(configuration: T,
                                                                   javaParameters: JavaParameters,
                                                                   runnerSettings: RunnerSettings?) {
-    val appConfiguration = configuration as? ApplicationConfiguration ?: return
-    val project = appConfiguration.project
+    val project = configuration.project
     if (!PsiUtil.isIdeaProject(project)) {
       return
     }
-
+    if (configuration !is JavaRunConfigurationBase) {
+      return
+    }
+    val mainClass = configuration.runClass ?: return
+    
+    passDataAboutBuiltInServer(javaParameters, project)
     val vmParameters = javaParameters.vmParametersList
-    val isDev = configuration.mainClassName == "org.jetbrains.intellij.build.devServer.DevMainKt"
+    val module = configuration.configurationModule.module
+    val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return
+    if (!vmParameters.getPropertyValue("intellij.devkit.skip.automatic.add.opens").toBoolean()) {
+      JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
+    }
+
+    val isDevBuild = mainClass == "org.jetbrains.intellij.build.devServer.DevMainKt"
     val vmParametersAsList = vmParameters.list
-    if (vmParametersAsList.contains("--add-modules") || (!isDev && configuration.mainClassName != "com.intellij.idea.Main")) {
+    if (vmParametersAsList.contains("--add-modules") || (!isDevBuild && mainClass != "com.intellij.idea.Main")) {
       return
     }
 
-    val module = configuration.configurationModule.module
-    val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return
     if (!vmParameters.hasProperty(JUnitDevKitPatcher.SYSTEM_CL_PROPERTY)) {
       val qualifiedName = "com.intellij.util.lang.PathClassLoader"
       if (JUnitDevKitPatcher.loaderValid(project, module, qualifiedName)) {
@@ -49,8 +60,6 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
         vmParameters.addProperty(UrlClassLoader.CLASSPATH_INDEX_PROPERTY_NAME, "true")
       }
     }
-
-    JUnitDevKitPatcher.appendAddOpensWhenNeeded(project, jdk, vmParameters)
 
     val is17 = javaParameters.jdk?.versionString?.contains("17") == true
     if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
@@ -68,7 +77,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       "-ea",
     )
 
-    vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false")
+    if (runnerSettings is DebuggingRunnerData) {
+      vmParameters.defineProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "true")
+    }
 
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")
@@ -80,11 +91,19 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
 
-    if (!isDev) {
-      return
+    if (isIjentWslFsEnabledByDefaultForProduct(vmParameters.getPropertyValue("idea.platform.prefix"))) {
+      vmParameters.addAll(ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS)
+      vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
     }
 
-    if (appConfiguration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
+    if (isDevBuild) {
+      updateParametersForDevBuild(javaParameters, configuration, project)
+    }
+  }
+
+  private fun updateParametersForDevBuild(javaParameters: JavaParameters, configuration: JavaRunConfigurationBase, project: Project) {
+    val vmParameters = javaParameters.vmParametersList
+    if (configuration.beforeRunTasks.none { it.providerId === MakeProjectStepBeforeRun.ID }) {
       vmParameters.addProperty("compile.server.port", BuiltInServerManager.getInstance().port.toString())
       vmParameters.addProperty("compile.server.project", project.locationHash)
       vmParameters.addProperty("compile.server.token", service<CompileHttpRequestHandlerToken>().acquireToken())
@@ -142,6 +161,8 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
   override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean {
     return configuration is ApplicationConfiguration
+           //use this instead of 'is KotlinRunConfiguration' to avoid having dependency on Kotlin plugin here
+           || configuration.factory?.id == "JetRunConfigurationType"
   }
 }
 

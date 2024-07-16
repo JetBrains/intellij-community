@@ -33,8 +33,7 @@ public final class AnonymousInnerClassInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("anonymous.inner.class.problem.descriptor");
   }
 

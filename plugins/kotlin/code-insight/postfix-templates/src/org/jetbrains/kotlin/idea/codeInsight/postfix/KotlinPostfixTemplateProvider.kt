@@ -19,6 +19,7 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
             KotlinSpreadPostfixTemplate(this),
             KotlinForPostfixTemplate(this),
             KotlinIterPostfixTemplate(this),
+            KotlinItorPostfixTemplate(this),
             KotlinForReversedPostfixTemplate(this),
             KotlinForWithIndexPostfixTemplate(this),
             KotlinForLoopNumbersPostfixTemplate(this),
@@ -40,7 +41,9 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
         )
     }
 
-    override fun getTemplates(): Set<PostfixTemplate> = templateSet
+    override fun getTemplates(): Set<PostfixTemplate> {
+        return templateSet
+    }
 
     override fun isTerminalSymbol(currentChar: Char): Boolean = currentChar == '.' || currentChar == '!'
 

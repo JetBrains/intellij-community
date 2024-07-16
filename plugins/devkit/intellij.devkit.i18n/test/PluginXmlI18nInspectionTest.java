@@ -79,6 +79,21 @@ public class PluginXmlI18nInspectionTest extends JavaCodeInsightFixtureTestCase 
                             </idea-plugin>""");
   }
 
+  public void testLiveTemplateHighlighting() {
+    myFixture.enableInspections(new LiveTemplateI18nInspection());
+    myFixture.testHighlighting("templates.xml");
+  }
+
+  public void testLiveTemplatesFix() {
+    myFixture.enableInspections(new LiveTemplateI18nInspection());
+    myFixture.addFileToProject("messages/FooBundle.properties", "");
+    IntentionAction action = myFixture.getAvailableIntention(DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "description"),
+                                                             "templates_before.xml");
+    assertNotNull(action);
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile("templates_after.xml");
+  }
+
   private void setupPlatformLibraries202() {
     String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
     File file = new File(platformApiJar);

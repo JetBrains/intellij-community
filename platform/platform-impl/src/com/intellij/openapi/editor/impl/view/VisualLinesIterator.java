@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -150,7 +151,7 @@ public final class VisualLinesIterator {
     return myInlaysBelow;
   }
 
-  public CustomFoldRegion getCustomFoldRegion() {
+  public @Nullable CustomFoldRegion getCustomFoldRegion() {
     checkEnd();
     int foldIndex = myLocation.foldRegion;
     if (foldIndex < myFoldRegions.length) {

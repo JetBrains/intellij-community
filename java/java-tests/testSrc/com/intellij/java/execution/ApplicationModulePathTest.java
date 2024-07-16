@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -34,6 +35,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
     configuration.setVMParameters("--add-modules java.se,java.xml.bind");
     ExecutionEnvironment environment =
       ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+    Disposer.register(getTestRootDisposable(), environment);
     JavaParameters params4Tests = 
       new ApplicationConfiguration.JavaApplicationCommandLineState<>(configuration, environment).createJavaParameters4Test();
     
@@ -57,6 +59,7 @@ public class ApplicationModulePathTest extends BaseConfigurationTestCase {
     
     ExecutionEnvironment environment =
       ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
+    Disposer.register(getTestRootDisposable(), environment);
     JavaParameters params4Tests = 
       new ApplicationConfiguration.JavaApplicationCommandLineState<>(configuration, environment).createJavaParameters4Test();
     

@@ -6,13 +6,15 @@ import com.intellij.collaboration.ui.ComponentListPanelFactory.createVertical
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.setHtmlBody
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import javax.swing.JComponent
 
 internal object GHPRReviewCommentBodyComponentFactory {
   fun createIn(cs: CoroutineScope, vm: GHPRReviewCommentBodyViewModel, maxTextWidth: Int): JComponent =
     createVertical(cs, vm.blocks) { block ->
       when (block) {
-        is GHPRCommentBodyBlock.HTML -> SimpleHtmlPane(customImageLoader = vm.htmlImageLoader).apply {
+        is GHPRCommentBodyBlock.HTML -> SimpleHtmlPane(customImageLoader = vm.htmlImageLoader, addBrowserListener = false).apply {
+          addGithubHyperlinkListener(vm::openPullRequestInfoAndTimeline)
           setHtmlBody(block.body)
         }.let {
           CollaborationToolsUIUtil.wrapWithLimitedSize(it, maxWidth = maxTextWidth)

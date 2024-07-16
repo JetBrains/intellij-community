@@ -93,6 +93,6 @@ final class ModuleXmlSerializer {
     if (moduleName == null) {
       throw new XMLStreamException("Required attribute 'module' is not specified");
     }
-    return new RawRuntimeModuleDescriptor(moduleName, resources, dependencies);
+    return RawRuntimeModuleDescriptor.create(moduleName, resources, dependencies);
   }
 }

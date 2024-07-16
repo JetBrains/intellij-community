@@ -100,11 +100,6 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
     val communityModuleRenames = readModuleRenames(communityModulesXml)
 
     val newCommunityModulesXmlContent = xml("project", "version" to "4") {
-        if (communityModules.isNotEmpty()) {
-            xml("component", "name" to "ModuleRenamingHistory") {
-                communityModuleRenames.forEach { (old, new) -> xml("module", "old-name" to old, "new-name" to new) }
-            }
-        }
         xml("component", "name" to "ProjectModuleManager") {
             xml("modules") {
                 for (module in communityModules.values) {
@@ -125,7 +120,7 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
  */
 private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
     val kotlinGradlePluginVersionsKt = communityRoot.resolve(
-        "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
+        "plugins/kotlin/gradle/gradle-java/tests.shared/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
     )
     updateFile(
         kotlinGradlePluginVersionsKt,

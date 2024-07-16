@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -33,8 +34,7 @@ import java.util.List;
  */
 @Service(Service.Level.PROJECT)
 public final class ProjectIconsAccessor {
-  @NonNls
-  private static final String JAVAX_SWING_ICON = "javax.swing.Icon";
+  private static final @NonNls String JAVAX_SWING_ICON = "javax.swing.Icon";
 
   private static final int ICON_MAX_WEIGHT = 16;
   private static final int ICON_MAX_HEIGHT = 16;
@@ -42,7 +42,7 @@ public final class ProjectIconsAccessor {
 
   private static final List<String> ICON_EXTENSIONS = List.of("png", "ico", "bmp", "gif", "jpg", "svg");
 
-  private final Project project;
+  private final @NotNull Project project;
 
   private final Cache<String, Pair<Long, Icon>> iconCache = Caffeine.newBuilder().maximumSize(500).build();
 
@@ -54,8 +54,7 @@ public final class ProjectIconsAccessor {
     return project.getService(ProjectIconsAccessor.class);
   }
 
-  @Nullable
-  public VirtualFile resolveIconFile(UElement initializerElement) {
+  public @Nullable VirtualFile resolveIconFile(UElement initializerElement) {
     if (initializerElement == null) return null;
     final List<FileReference> refs = new ArrayList<>();
     initializerElement.accept(new AbstractUastVisitor() {
@@ -125,7 +124,7 @@ public final class ProjectIconsAccessor {
     }
 
     try {
-      Icon icon = createOrFindBetterIcon(file, isIdeaProject(project));
+      Icon icon = createOrFindBetterIcon(file, IntelliJProjectUtil.isIntelliJPlatformProject(project));
       iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
       iconCache.put(file.getPath(), iconInfo);
     }
@@ -149,12 +148,12 @@ public final class ProjectIconsAccessor {
            icon.getIconWidth() <= JBUIScale.scale(ICON_MAX_WEIGHT);
   }
 
+  /**
+   * @deprecated Use {@linkplain IntelliJProjectUtil#isIntelliJPlatformProject(Project)} instead.
+   */
+  @Deprecated
   public static boolean isIdeaProject(@Nullable Project project) {
-    if (project == null) return false;
-    VirtualFile baseDir = project.getBaseDir();
-    //has copy in devkit plugin: org.jetbrains.idea.devkit.util.PsiUtil.isIntelliJBasedDir
-    return baseDir != null && (baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null
-           || baseDir.findChild("intellij.idea.community.main.iml") != null || baseDir.findChild("intellij.idea.ultimate.main.iml") != null);
+    return IntelliJProjectUtil.isIntelliJPlatformProject(project);
   }
 
   private static Icon createOrFindBetterIcon(VirtualFile file, boolean useIconLoader) throws IOException {

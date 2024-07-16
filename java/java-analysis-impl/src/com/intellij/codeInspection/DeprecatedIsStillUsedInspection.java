@@ -79,7 +79,7 @@ public final class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
                                       @NotNull SearchScope searchScope) {
     PsiSearchHelper.SearchCostResult cheapEnough 
       = searchScope instanceof GlobalSearchScope ?
-        psiSearchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)searchScope, null, null) : null;
+        psiSearchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)searchScope, null) : null;
     if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
       return ThreeState.NO;
     }

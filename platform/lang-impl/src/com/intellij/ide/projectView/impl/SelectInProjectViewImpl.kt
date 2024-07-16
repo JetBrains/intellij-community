@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.*
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.scopeView.ScopeViewPane
@@ -9,7 +10,9 @@ import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
@@ -23,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import org.jetbrains.annotations.VisibleForTesting
@@ -52,7 +56,7 @@ internal class SelectInProjectViewImpl(
       LOG.debug("Attempting to start $taskName")
     }
     coroutineScope.launch(
-      CoroutineName(taskName),
+      CoroutineName(taskName) + ClientId.coroutineContext(),
       start = CoroutineStart.UNDISPATCHED
     ) {
       try {
@@ -123,7 +127,7 @@ internal class SelectInProjectViewImpl(
   }
 
   private suspend fun allEditors(): List<FileEditor> = withContext(Dispatchers.EDT) {
-    val fileEditorManager = FileEditorManager.getInstance(project)
+    val fileEditorManager = project.serviceAsync<FileEditorManager>()
     val result = mutableListOf<FileEditor?>()
     result.add(fileEditorManager.selectedEditor)
     result.addAll(fileEditorManager.selectedEditors)
@@ -286,19 +290,13 @@ internal class SelectInProjectViewImpl(
   }
 
   private suspend fun doSelectInAnyTarget(context: SelectInContext, targets: Collection<SelectInTarget>, requestFocus: Boolean) {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("doSelectInAnyTarget: context=$context, targets=$targets, requestFocus=$requestFocus")
-    }
+    LOG.debug { "doSelectInAnyTarget: context=$context, targets=$targets, requestFocus=$requestFocus" }
     for (target in targets) {
       val canSelect = readAction { target.canSelect(context) }
-      if (LOG.isDebugEnabled) {
-        LOG.debug("${if (canSelect) "Can" else "Can NOT"} select $context in $target")
-      }
+      LOG.debug { "${if (canSelect) "Can" else "Can NOT"} select $context in $target" }
       if (canSelect) {
         withContext(Dispatchers.EDT) {
-          if (LOG.isDebugEnabled) {
-            LOG.debug("Selecting $context in $target")
-          }
+          LOG.debug { "Selecting $context in $target" }
           target.selectIn(context, requestFocus)
         }
         return
@@ -402,15 +400,12 @@ private class EditorSelectInContext(
   }
 
   override fun getSelectorInFile(): Any? {
-    val file = psiFile
-    if (file != null) {
-      val offset: Int = editor.caretModel.offset
-      val manager = PsiDocumentManager.getInstance(project)
-      LOG.assertTrue(manager.isCommitted(editor.document))
-      val element = file.findElementAt(offset)
-      if (element != null) return element
-    }
-    return file
+    val file = SlowOperations.knownIssue("IDEA-347342, EA-841926").use { psiFile ?: return null }
+    val offset: Int = editor.caretModel.offset
+    val manager = PsiDocumentManager.getInstance(project)
+    LOG.assertTrue(manager.isCommitted(editor.document))
+    val element = file.findElementAt(offset)
+    return element ?: file
   }
 
   override fun toString(): String {

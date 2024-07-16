@@ -20,12 +20,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
@@ -177,54 +175,19 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
       }
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
-        VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
-        DataProvider ourDataProvider = slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId);
-        DataProvider treeDataProvider = (DataProvider)VcsTreeModelData.getData(myProject, this, dataId);
-        DataProvider superDataProvider = (DataProvider)super.getData(dataId);
-        return CompositeDataProvider.compose(Arrays.asList(ourDataProvider, treeDataProvider, superDataProvider));
-      }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      VcsTreeModelData.uiDataSnapshot(sink, myProject, this);
 
-      Object ourData = getFastData(dataId);
-      if (ourData != null) return ourData;
-
-      Object treeData = VcsTreeModelData.getData(myProject, this, dataId);
-      if (treeData != null) return null;
-
-      return super.getData(dataId);
-    }
-
-    private @Nullable Object getFastData(@NotNull String dataId) {
-      if (myShownDataKey.is(dataId)) {
-        return VcsTreeModelData.selected(this)
-          .iterateUserObjects(FilePath.class);
-      }
-      if (VcsDataKeys.FILE_PATHS.is(dataId)) {
-        return VcsTreeModelData.selected(this)
-          .iterateUserObjects(FilePath.class);
-      }
-      if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-        return new VirtualFileDeleteProvider();
-      }
-      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return ChangesListView.HELP_ID;
-      }
-      return super.getData(dataId);
-    }
-
-    @Nullable
-    private static Object getSlowData(@NotNull Project project,
-                                      @NotNull VcsTreeModelData treeSelection,
-                                      @NotNull VcsTreeModelData exactSelection,
-                                      @NotNull String slowId) {
-      if (ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY.is(slowId)) {
-        return VcsTreeModelData.mapToExactVirtualFile(exactSelection);
-      }
-      return null;
+      VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
+      VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
+      sink.lazy(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY, () ->
+        VcsTreeModelData.mapToExactVirtualFile(exactSelection));
+      sink.set(myShownDataKey, treeSelection.iterateUserObjects(FilePath.class));
+      sink.set(VcsDataKeys.FILE_PATHS, treeSelection.iterateUserObjects(FilePath.class));
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
+      sink.set(PlatformCoreDataKeys.HELP_ID, ChangesListView.HELP_ID);
     }
   }
 }

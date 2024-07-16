@@ -6,9 +6,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.utils.plus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -27,7 +29,7 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
 
 
             val isUsedAsExpression by lazy {
-                analyze(expression) { expression.isUsedAsExpression() }
+                analyze(expression) { expression.isUsedAsExpression }
             }
 
             expression.ifKeyword
@@ -74,9 +76,14 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
                 else -> return
             }
 
-            if (body.isEmptyBodyOrNull() && expression.isCalling(controlFlowFunctions)) {
-                holder.registerProblem(expression, callee)
+            if (!body.isEmptyBodyOrNull()) return
+
+            val isCallingControlFlowFunctions = analyze(expression) {
+                expression.isCalling(sequenceOf(KOTLIN_ALSO_FQ_NAME))
             }
+            if (!isCallingControlFlowFunctions) return
+
+            holder.registerProblem(expression, callee)
         }
     }
 
@@ -96,4 +103,4 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
     }
 }
 
-private val controlFlowFunctions: List<FqName> = listOf("kotlin.also").map { FqName(it) }
+private val KOTLIN_ALSO_FQ_NAME: FqName = StandardNames.BUILT_INS_PACKAGE_FQ_NAME + "also"

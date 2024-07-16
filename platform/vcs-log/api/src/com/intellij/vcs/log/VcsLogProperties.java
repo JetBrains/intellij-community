@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,4 +30,8 @@ public final class VcsLogProperties {
    * True if VCS allows incrementally refresh commits in the log. False if full refresh should be performed.
    */
   @NotNull public static final VcsLogProperty<Boolean> SUPPORTS_INCREMENTAL_REFRESH = new VcsLogProperty<>(true);
+  /**
+   * True if ths {@link VcsLogProvider} implementation supports filtering commits by parents count.
+   */
+  @NotNull public static final VcsLogProperty<Boolean> SUPPORTS_PARENTS_FILTER = new VcsLogProperty<>(true);
 }

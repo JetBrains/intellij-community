@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -121,10 +122,13 @@ open class ExportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
 }
 
-fun exportSettings(exportableItems: Set<ExportableItem>,
-                   out: OutputStream,
-                   exportableThirdPartyFiles: Map<FileSpec, Path> = mapOf(),
-                   storageManager: StateStorageManagerImpl = getAppStorageManager()) {
+@Internal
+fun exportSettings(
+  exportableItems: Set<ExportableItem>,
+  out: OutputStream,
+  exportableThirdPartyFiles: Map<FileSpec, Path> = mapOf(),
+  storageManager: StateStorageManagerImpl = getAppStorageManager(),
+) {
   val filter = HashSet<String>()
   Compressor.Zip(out)
     .filter { entryName, _ -> filter.add(entryName) }
@@ -230,9 +234,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
     var thereIsExportableStorage = false
     for (storage in storages) {
-      val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path).isRoamable
-      val exportable = isStorageExportable(storage, isRoamable, withExportable)
-      LOG.debug("Storage for class ${aClass.simpleName} is ${stringify(isRoamable, "roamable")}, ${stringify(exportable, "exportable")}: $storage")
+      val exportable = isStorageExportable(aClass.simpleName, stateAnnotation, storage, withExportable)
       if (exportable) {
         thereIsExportableStorage = true
         val paths = getRelativePaths(storage, storageManager, withDeprecated)
@@ -266,7 +268,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
 private fun stringify(value: Boolean, name: String): String = if (value) name else "not $name"
 
-fun looksLikeDirectory(storage: Storage): Boolean {
+private fun looksLikeDirectory(storage: Storage): Boolean {
   return storage.stateSplitter.java != StateSplitterEx::class.java
 }
 
@@ -303,9 +305,22 @@ private fun getAdditionalExportFile(stateAnnotation: State) = stateAnnotation.ad
 
 private fun getAppStorageManager() = ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl
 
-private fun isStorageExportable(storage: Storage, isRoamable: Boolean, withExportable: Boolean): Boolean =
-  storage.exportable && withExportable ||
-  isRoamable && storage.storageClass == StateStorage::class && storage.path.isNotEmpty()
+internal fun isStorageExportable(
+  simpleName: String,
+  stateAnnotation: State,
+  storage: Storage,
+  withExportable: Boolean,
+): Boolean {
+  if (isSpecialOrNonRoamableStorage(storage.path)) {
+    LOG.debug("Storage for class $simpleName is special (non-roamable, not exportable): $storage")
+    return false
+  }
+  val isRoamable = (getEffectiveRoamingType(storage.roamingType, storage.path).isRoamable
+                    && storage.storageClass == StateStorage::class && storage.path.isNotEmpty())
+  val isExportable = storage.exportable || stateAnnotation.exportable
+  LOG.debug("Storage for class $simpleName is ${stringify(isRoamable, "roamable")}, ${stringify(isExportable, "exportable")}: $storage")
+  return isRoamable || (withExportable && isExportable)
+}
 
 private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDescriptor: PluginDescriptor?): String {
   val presentableName = state.presentableName.java
@@ -356,7 +371,10 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
 private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, @Nls defaultName: String): String {
   try {
     return AbstractBundle.messageOrDefault(
-      DynamicBundle.getResourceBundle(classLoader, bundleName), "exportable.$defaultName.presentable.name", defaultName)
+      bundle = DynamicBundle.getResourceBundle(classLoader, bundleName),
+      key = "exportable.$defaultName.presentable.name",
+      defaultValue = defaultName,
+    )!!
   }
   catch (e: MissingResourceException) {
     LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")

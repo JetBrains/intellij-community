@@ -18,4 +18,3 @@ fun test(n: Int) {
     C(false, n)
     J(n)
 }
-// IGNORE_K2

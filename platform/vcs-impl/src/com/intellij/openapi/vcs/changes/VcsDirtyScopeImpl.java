@@ -7,11 +7,9 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -279,16 +277,6 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
     }
 
     dirtyFiles.add(newcomer);
-  }
-
-  @Override
-  public void iterate(final Processor<? super FilePath> iterator) {
-    VcsRootIterator.iterate(this, iterator);
-  }
-
-  @Override
-  public void iterateExistingInsideScope(Processor<? super VirtualFile> iterator) {
-    VcsRootIterator.iterateExistingInsideScope(this, iterator);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -31,8 +31,7 @@ import java.util.function.Predicate;
 public final class JavaParserUtil {
   public static final TokenSet WS_COMMENTS = TokenSet.orSet(ElementType.JAVA_COMMENT_BIT_SET, TokenSet.WHITE_SPACE);
 
-  @NotNull
-  public static TokenList obtainTokens(@NotNull PsiFile file) {
+  public static @NotNull TokenList obtainTokens(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
         TokenSequence.performLexing(file.getViewProvider().getContents(), JavaParserDefinition.createLexer(PsiUtil.getLanguageLevel(file))),
@@ -57,8 +56,7 @@ public final class JavaParserUtil {
     BasicJavaParserUtil.setLanguageLevel(builder, level);
   }
 
-  @NotNull
-  public static LanguageLevel getLanguageLevel(final PsiBuilder builder) {
+  public static @NotNull LanguageLevel getLanguageLevel(final PsiBuilder builder) {
     return BasicJavaParserUtil.getLanguageLevel(builder);
   }
 
@@ -70,34 +68,30 @@ public final class JavaParserUtil {
     return BasicJavaParserUtil.isParseStatementCodeBlocksDeep(builder);
   }
 
-  @NotNull
-  public static PsiBuilder createBuilder(final ASTNode chameleon) {
+  public static @NotNull PsiBuilder createBuilder(final ASTNode chameleon) {
     return BasicJavaParserUtil.createBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
                                              (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level),
                                              (psi) -> obtainTokens(psi));
   }
 
-  @NotNull
-  public static PsiBuilder createBuilder(final LighterLazyParseableNode chameleon) {
+  public static @NotNull PsiBuilder createBuilder(final LighterLazyParseableNode chameleon) {
     return BasicJavaParserUtil.createBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
                                              (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level));
   }
 
-  @Nullable
-  public static ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper) {
+  public static @Nullable ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper) {
     return BasicJavaParserUtil.parseFragment(chameleon, wrapper,
                                              (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
                                              (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
     );
   }
 
-  @Nullable
-  public static ASTNode parseFragment(final ASTNode chameleon,
-                                      final BasicJavaParserUtil.ParserWrapper wrapper,
-                                      final boolean eatAll,
-                                      final LanguageLevel level) {
+  public static @Nullable ASTNode parseFragment(final ASTNode chameleon,
+                                                final BasicJavaParserUtil.ParserWrapper wrapper,
+                                                final boolean eatAll,
+                                                final LanguageLevel level) {
     return BasicJavaParserUtil.parseFragment(chameleon, wrapper, eatAll, level,
                                              (levelLanguage) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(levelLanguage),
                                              (levelLanguage) -> (BasicJavaLexer)JavaParserDefinition.createLexer(levelLanguage)
@@ -108,8 +102,7 @@ public final class JavaParserUtil {
     BasicJavaParserUtil.done(marker, type, WhiteSpaceAndCommentSetHolder.INSTANCE);
   }
 
-  @Nullable
-  public static IElementType exprType(@Nullable final PsiBuilder.Marker marker) {
+  public static @Nullable IElementType exprType(final @Nullable PsiBuilder.Marker marker) {
     return BasicJavaParserUtil.exprType(marker);
   }
 
@@ -120,7 +113,7 @@ public final class JavaParserUtil {
 
   public static void error(final PsiBuilder builder,
                            @NotNull @NlsContexts.ParsingError String message,
-                           @Nullable final PsiBuilder.Marker before) {
+                           final @Nullable PsiBuilder.Marker before) {
     BasicJavaParserUtil.error(builder, message, before);
   }
 

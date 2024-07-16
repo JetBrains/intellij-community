@@ -62,6 +62,14 @@ public interface CustomizableIntentionAction extends IntentionAction {
     return List.of();
   }
 
+  /**
+   * Determines if there is a separator above the customizable intention action.
+   * @return {@code true} if there is a separator above the action, {@code false} otherwise.
+   */
+  default boolean hasSeparatorAbove() {
+    return false;
+  }
+
   /** The highlighting request to be returned from {@link #getRangesToHighlight} */
   final class RangeToHighlight {
     private final PsiElement psi;

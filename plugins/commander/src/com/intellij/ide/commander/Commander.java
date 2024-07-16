@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.commander;
 
-import com.intellij.diff.actions.CompareFilesAction;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.TwoPaneIdeView;
@@ -310,7 +310,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     panel.getList().addKeyListener(new PsiCopyPasteManager.EscapeHandler());
 
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
-    panel.setBuilder(new ProjectListBuilder(project, panel, treeStructure, AlphaComparator.INSTANCE, true));
+    panel.setBuilder(new ProjectListBuilder(project, panel, treeStructure, AlphaComparator.getInstance(), true));
     panel.setProjectTreeStructure(treeStructure);
 
     final FocusAdapter focusListener = new FocusAdapter() {
@@ -462,7 +462,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     if (LangDataKeys.TARGET_PSI_ELEMENT.is(dataId)) {
       return getNodeElement(inactive.first);
     }
-    else if (CompareFilesAction.DIFF_REQUEST.is(dataId)) {
+    else if (DiffDataKeys.DIFF_REQUEST_TO_COMPARE.is(dataId)) {
       PsiElement primary = getNodeElement(active.second);
       PsiElement secondary = getNodeElement(inactive.second);
       if (primary != null && secondary != null &&

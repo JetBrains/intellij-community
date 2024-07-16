@@ -16,7 +16,7 @@ import java.util.function.BiConsumer;
  * Use {@link ContainerUtil#createConcurrentSoftMap()} to create this
  */
 final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
-  ConcurrentSoftHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
+  ConcurrentSoftHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
     super(evictionListener);
   }
 

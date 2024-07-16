@@ -26,11 +26,11 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -56,7 +56,7 @@ private val LOG: Logger
 private val CLOSE_LOG_TIMEOUT = 10.seconds
 
 @Service(Service.Level.PROJECT)
-class VcsProjectLog(private val project: Project, private val coroutineScope: CoroutineScope) {
+class VcsProjectLog(private val project: Project, @ApiStatus.Internal val coroutineScope: CoroutineScope) {
   private val uiProperties = project.service<VcsLogProjectTabsProperties>()
   private val errorHandler = VcsProjectLogErrorHandler(this, coroutineScope)
 
@@ -69,6 +69,8 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
   private val mutex = Mutex()
 
   val logManager: VcsLogManager? get() = cachedLogManager
+  @get:ApiStatus.Internal
+  val projectLogManager: VcsProjectLogManager? get() = cachedLogManager
   val dataManager: VcsLogData? get() = cachedLogManager?.dataManager
   val tabManager: VcsLogTabsManager? get() = cachedLogManager?.tabsManager
 
@@ -247,8 +249,6 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     return coroutineScope.launch(ModalityState.any().asContextElement(), block = block)
   }
 
-  fun childScope(): CoroutineScope = coroutineScope.childScope()
-
   internal class InitLogStartupActivity : ProjectActivity {
     init {
       val app = ApplicationManager.getApplication()
@@ -320,6 +320,11 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     @JvmStatic
     fun getLogProviders(project: Project): Map<VirtualFile, VcsLogProvider> {
       return VcsLogManager.findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.toList(), project)
+    }
+
+    @JvmStatic
+    fun getSupportedVcs(project: Project): Set<VcsKey> {
+      return getLogProviders(project).values.mapTo(mutableSetOf()) { it.supportedVcs }
     }
 
     @JvmStatic

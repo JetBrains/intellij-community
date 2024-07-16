@@ -46,7 +46,7 @@ internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: List
 }
 
 internal fun TemplateContext.setupTypeElement(typeElement: PsiTypeElement?, types: ExpectedTypes) {
-  setupTypeElement(typeElement ?: return, extractExpectedTypes(project, types))
+  setupTypeElement(typeElement ?: return, extractExpectedTypes(project, types, typeElement))
 }
 
 @JvmName("setupTypeElementJ")

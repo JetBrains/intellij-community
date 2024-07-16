@@ -1,16 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,27 +28,27 @@ class KotlinProjectConfigurationService(private val project: Project, private va
     }
 
     @Volatile
-    private var checkingAutoConfig: Boolean = false
+    private var checkingAndPerformingAutoConfig: Boolean = false
 
     // A small cooldown after configuration was performed, to bridge the gap between the files being created and the Gradle sync starting
     @Volatile
     private var notificationCooldownEnd: Long? = null
 
-    fun shouldShowNotConfiguredDialog(): Boolean {
-        if (checkingAutoConfig) return false
+    fun shouldShowNotConfiguredDialog(module: Module): Boolean {
+        if (isSyncPending(module)) return false
+        if (checkingAndPerformingAutoConfig) return false
+        // If notificationCooldownEnd wasn't set, then the autoconfiguration didn't take place
         val cooldownEnd = notificationCooldownEnd ?: return true
         return System.currentTimeMillis() >= cooldownEnd
     }
 
-    fun isGradleSyncPending(): Boolean {
-        val notificationVisibleProperty =
-            ExternalSystemProjectNotificationAware.isNotificationVisibleProperty(project, ProjectSystemId("GRADLE", "Gradle"))
-        return notificationVisibleProperty.get()
+    fun isSyncPending(module: Module): Boolean {
+        return KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.isProjectSyncPending() == true
     }
 
     fun refreshEditorNotifications() {
         // We want to remove the "Kotlin not configured" notification banner as fast as possible
-        // once a gradle reload was started.
+        // once a Gradle reload was started or Maven reload is pending.
         val openFiles = FileEditorManager.getInstance(project).openFiles
         val openKotlinFiles = openFiles.filter { it.isKotlinFileType() }
         if (openKotlinFiles.isEmpty()) return
@@ -61,37 +60,40 @@ class KotlinProjectConfigurationService(private val project: Project, private va
     }
 
     @Volatile
-    private var gradleSyncInProgress: Boolean = false
+    private var syncInProgress: Boolean = false
 
     @Volatile
-    private var gradleSyncQueued: Boolean = false
+    private var syncQueued: Boolean = false
 
-    fun isGradleSyncInProgress(): Boolean {
-        return gradleSyncInProgress
+    fun isSyncInProgress(): Boolean {
+        return syncInProgress
     }
 
     /**
-     * Executes a Gradle sync now, provided no Gradle sync is currently running.
+     * Executes a build tool sync now, provided no sync is currently running.
      * Otherwise, waits for the current sync to finish and schedules a new sync.
      */
-    fun queueGradleSync() {
-        if (gradleSyncInProgress) {
-            gradleSyncQueued = true
+    fun queueSync() {
+        // prevents this side effect from being actually run from quickfix previews (e.g. in Fleet)
+        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
+
+        if (syncInProgress) {
+            syncQueued = true
         } else {
             ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
         }
     }
 
     @ApiStatus.Internal
-    fun onGradleSyncStarted() {
-        gradleSyncInProgress = true
+    fun onSyncStarted() {
+        syncInProgress = true
     }
 
     @ApiStatus.Internal
-    fun onGradleSyncFinished() {
-        gradleSyncInProgress = false
-        if (gradleSyncQueued) {
-            gradleSyncQueued = false
+    fun onSyncFinished() {
+        syncInProgress = false
+        if (syncQueued) {
+            syncQueued = false
             ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
         }
     }
@@ -102,7 +104,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
      * is displayed, if configuration is necessary.
      */
     fun runAutoConfigurationIfPossible(module: Module) {
-        checkingAutoConfig = true
+        checkingAndPerformingAutoConfig = true
         // Removes the notification showing for a split second
         refreshEditorNotifications()
         coroutineScope.launch(Dispatchers.Default) {
@@ -127,7 +129,7 @@ class KotlinProjectConfigurationService(private val project: Project, private va
                 configured = true
                 notificationCooldownEnd = System.currentTimeMillis() + 2000
             } finally {
-                checkingAutoConfig = false
+                checkingAndPerformingAutoConfig = false
                 if (!configured) {
                     // Immediately refresh editor notifications to show Kotlin not-configured notification, if necessary
                     refreshEditorNotifications()

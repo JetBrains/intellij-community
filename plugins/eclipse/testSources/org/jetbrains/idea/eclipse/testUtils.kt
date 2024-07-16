@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.StartupActivityTestUtil
 import com.intellij.testFramework.loadProject
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.PathUtil
@@ -107,6 +108,7 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
   try {
     runBlocking {
       loadProject(projectDir) { project ->
+        StartupActivityTestUtil.waitForProjectActivitiesToComplete(project)
         withContext(Dispatchers.EDT) {
           ApplicationManager.getApplication().runWriteAction {
             edit(project)

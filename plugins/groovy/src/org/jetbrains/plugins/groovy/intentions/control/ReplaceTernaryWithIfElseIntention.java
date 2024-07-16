@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author Andreas Arledal
  */
-public class ReplaceTernaryWithIfElseIntention extends GrPsiUpdateIntention {
+public final class ReplaceTernaryWithIfElseIntention extends GrPsiUpdateIntention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {

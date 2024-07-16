@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.LighterAST;
@@ -19,33 +19,28 @@ import java.util.List;
 import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 public final class JavaLightTreeUtil {
-  @Nullable
   @Contract("_,null->null")
-  public static List<LighterASTNode> getArgList(@NotNull LighterAST tree, @Nullable LighterASTNode call) {
+  public static @Nullable List<LighterASTNode> getArgList(@NotNull LighterAST tree, @Nullable LighterASTNode call) {
     LighterASTNode anonClass = LightTreeUtil.firstChildOfType(tree, call, ANONYMOUS_CLASS);
     LighterASTNode exprList = LightTreeUtil.firstChildOfType(tree, anonClass != null ? anonClass : call, EXPRESSION_LIST);
     return exprList == null ? null : getExpressionChildren(tree, exprList);
   }
 
-  @Nullable
   @Contract("_,null->null")
-  public static String getNameIdentifierText(@NotNull LighterAST tree, @Nullable LighterASTNode idOwner) {
+  public static @Nullable String getNameIdentifierText(@NotNull LighterAST tree, @Nullable LighterASTNode idOwner) {
     LighterASTNode id = LightTreeUtil.firstChildOfType(tree, idOwner, JavaTokenType.IDENTIFIER);
     return id != null ? RecordUtil.intern(tree.getCharTable(), id) : null;
   }
 
-  @NotNull
-  public static List<LighterASTNode> getExpressionChildren(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
+  public static @NotNull List<LighterASTNode> getExpressionChildren(@NotNull LighterAST tree, @NotNull LighterASTNode node) {
     return LightTreeUtil.getChildrenOfType(tree, node, ElementType.EXPRESSION_BIT_SET);
   }
 
-  @Nullable
-  public static LighterASTNode findExpressionChild(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
+  public static @Nullable LighterASTNode findExpressionChild(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
     return LightTreeUtil.firstChildOfType(tree, node, ElementType.EXPRESSION_BIT_SET);
   }
 
-  @Nullable
-  public static LighterASTNode skipParenthesesCastsDown(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
+  public static @Nullable LighterASTNode skipParenthesesCastsDown(@NotNull LighterAST tree, @Nullable LighterASTNode node) {
     while (node != null) {
       IElementType type = node.getTokenType();
       if (type != PARENTH_EXPRESSION && type != TYPE_CAST_EXPRESSION) break;
@@ -64,8 +59,7 @@ public final class JavaLightTreeUtil {
     return false;
   }
 
-  @Nullable
-  public static LighterASTNode skipParenthesesDown(@NotNull LighterAST tree, @Nullable LighterASTNode expression) {
+  public static @Nullable LighterASTNode skipParenthesesDown(@NotNull LighterAST tree, @Nullable LighterASTNode expression) {
     while (expression != null && expression.getTokenType() == PARENTH_EXPRESSION) {
       expression = findExpressionChild(tree, expression);
     }

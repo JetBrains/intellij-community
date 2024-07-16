@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,10 +16,23 @@ import java.awt.datatransfer.Transferable;
 import java.util.EventListener;
 
 public abstract class CopyPasteManager {
+
+  /**
+   * @deprecated use {@link #getCutColor()} instead
+   */
+  @Deprecated
   public static final Color CUT_COLOR = Gray._160;
+
+  public static @NotNull Color getCutColor() {
+    return CUT_COLOR;
+  }
 
   public static CopyPasteManager getInstance() {
     return ApplicationManager.getApplication().getService(CopyPasteManager.class);
+  }
+
+  @ApiStatus.Internal
+  protected CopyPasteManager() {
   }
 
   /**

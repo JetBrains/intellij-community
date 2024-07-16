@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -23,6 +24,9 @@ public interface SearchListener {
   void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors);
 
   void searchStarted(@NotNull String pattern, @NotNull Collection<? extends SearchEverywhereContributor<?>> contributors);
+
+  @ApiStatus.Experimental
+  default void standardSearchFoundNoResults(@NotNull SearchEverywhereContributor<?> contributor) {}
 
   static SearchListener combine(SearchListener... listeners) {
     return combine(Arrays.asList(listeners));
@@ -58,6 +62,11 @@ public interface SearchListener {
       @Override
       public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
         for (SearchListener l : listeners) l.searchFinished(hasMoreContributors);
+      }
+
+      @Override
+      public void standardSearchFoundNoResults(@NotNull SearchEverywhereContributor<?> contributor) {
+        for (SearchListener l: listeners) l.standardSearchFoundNoResults(contributor);
       }
     };
   }

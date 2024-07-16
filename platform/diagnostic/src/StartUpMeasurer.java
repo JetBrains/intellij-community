@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.LongBinaryOperator;
 
+@ApiStatus.Internal
 public final class StartUpMeasurer {
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
@@ -65,6 +66,7 @@ public final class StartUpMeasurer {
   @ApiStatus.Internal
   public static final Map<String, Object2LongOpenHashMap<String>> pluginCostMap = new ConcurrentHashMap<>();
 
+  @ApiStatus.Internal
   public static long getCurrentTime() {
     return System.nanoTime();
   }

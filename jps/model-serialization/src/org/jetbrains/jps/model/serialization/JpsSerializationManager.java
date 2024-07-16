@@ -29,6 +29,9 @@ public abstract class JpsSerializationManager {
     return JpsServiceManager.getInstance().getService(JpsSerializationManager.class);
   }
 
+  protected JpsSerializationManager() {
+  }
+
   @NotNull
   public JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath) throws IOException {
     return loadModel(projectPath, optionsPath, false);

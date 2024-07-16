@@ -1,6 +1,6 @@
 // WITH_DEFAULT_VALUE: false
-fun foo(a: Int, __dummyTestFun__: (Int) -> Unit) {
-    __dummyTestFun__(a)
+fun foo(a: Int, nothing: (Int) -> Nothing) {
+    nothing(a)
 }
 
 fun test() {

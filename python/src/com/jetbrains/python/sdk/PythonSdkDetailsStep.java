@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.module.Module;
@@ -24,29 +24,29 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
-  @Nullable private final DialogWrapper myShowAll;
-  @Nullable private final Project myProject;
-  @Nullable private final Module myModule;
+  private final @Nullable DialogWrapper myShowAll;
+  private final @Nullable Project myProject;
+  private final @Nullable Module myModule;
   private final Sdk[] myExistingSdks;
   private final NullableConsumer<? super Sdk> mySdkAddedCallback;
 
-  public static void show(@Nullable final Project project,
-                          @Nullable final Module module,
+  public static void show(final @Nullable Project project,
+                          final @Nullable Module module,
                           final Sdk @NotNull [] existingSdks,
-                          @NotNull final DialogWrapper showAllDialog,
+                          final @NotNull DialogWrapper showAllDialog,
                           @NotNull JComponent ownerComponent,
-                          @NotNull final Point popupPoint,
-                          @NotNull final NullableConsumer<? super Sdk> sdkAddedCallback) {
+                          final @NotNull Point popupPoint,
+                          final @NotNull NullableConsumer<? super Sdk> sdkAddedCallback) {
     final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, module, showAllDialog, existingSdks, sdkAddedCallback);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
   }
 
-  public PythonSdkDetailsStep(@Nullable final Project project,
-                              @Nullable final Module module,
-                              @Nullable final DialogWrapper showAllDialog,
+  public PythonSdkDetailsStep(final @Nullable Project project,
+                              final @Nullable Module module,
+                              final @Nullable DialogWrapper showAllDialog,
                               final Sdk @NotNull [] existingSdks,
-                              @NotNull final NullableConsumer<? super Sdk> sdkAddedCallback) {
+                              final @NotNull NullableConsumer<? super Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(showAllDialog != null));
     myProject = project;
     myModule = module;
@@ -64,9 +64,8 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     return options;
   }
 
-  @Nullable
   @Override
-  public ListSeparator getSeparatorAbove(String value) {
+  public @Nullable ListSeparator getSeparatorAbove(String value) {
     return getAll().equals(value) ? new ListSeparator() : null;
   }
 

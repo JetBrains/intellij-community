@@ -148,10 +148,9 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     callback(SubmittedReportInfo(reportUrl, reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
     val content = DiagnosticBundle.message("error.report.gratitude")
     val title = DiagnosticBundle.message("error.report.submitted")
-    Notification("Error Report", title, content, NotificationType.INFORMATION)
-      .setImportant(false)
-      .addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.report.view.action")) { BrowserUtil.browse(reportUrl) })
-      .notify(project)
+    val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
+    notification.addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.report.view.action")) { BrowserUtil.browse(reportUrl) })
+    notification.notify(project)
   }
 
   private suspend fun onError(
@@ -162,7 +161,9 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     newThreadPostUrl: String,
     callback: (SubmittedReportInfo) -> Unit
   ) {
-    Logger.getInstance(ITNReporter::class.java).info("reporting failed: ${e}")
+    val logger = Logger.getInstance(ITNReporter::class.java)
+    logger.info("reporting failed: ${e}")
+    logger.debug(e)
     withContext(Dispatchers.EDT) {
       if (e is UpdateAvailableException) {
         val message = DiagnosticBundle.message("error.report.new.build.message", e.message)

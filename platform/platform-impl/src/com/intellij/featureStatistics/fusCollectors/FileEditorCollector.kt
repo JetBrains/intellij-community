@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -22,17 +22,17 @@ object FileEditorCollector : CounterUsagesCollector() {
                                                            EventFields.Enum<MarkupGraveEvent>("markup_grave_event"),
                                                            EventFields.Int("restored_highlighters"))
 
-  @JvmStatic
   fun logAlternativeFileEditorSelected(project: Project, file: VirtualFile, editor: FileEditor) {
-    ALTERNATIVE_FILE_EDITOR_SELECTED.log(project, FILE_EDITOR_FIELD.with(editor.javaClass), EventFields.AnonymizedPath.with(file.path))
+    ALTERNATIVE_FILE_EDITOR_SELECTED.log(
+      project = project,
+      pairs = listOf(FILE_EDITOR_FIELD.with(editor.javaClass), EventFields.AnonymizedPath.with(file.path)),
+    )
   }
 
-  @JvmStatic
   fun logEditorEmptyState(project: Project, cause: EmptyStateCause) {
     EDITOR_EMPTY_STATE_SHOWN.log(project, cause)
   }
 
-  @JvmStatic
   fun logEditorMarkupGrave(project: Project, file: VirtualFile, graveEvent: MarkupGraveEvent, restoredCount: Int) {
     EDITOR_MARKUP_RESTORED.log(project, file.path, graveEvent, restoredCount)
   }

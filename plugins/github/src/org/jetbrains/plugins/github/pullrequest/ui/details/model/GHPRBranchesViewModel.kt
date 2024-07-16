@@ -94,7 +94,7 @@ class GHPRBranchesViewModel internal constructor(
   }
 
   companion object {
-    private fun GHRepository.getRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote =
+    fun GHRepository.getRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote =
       HostedGitRepositoryRemote(owner.login, server.toURI(), nameWithOwner, url, sshUrl)
 
     fun GHPullRequest.getHeadRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote? =

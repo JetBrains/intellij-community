@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -41,6 +42,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
+//@ApiStatus.Internal
 public final class SoftWrapApplianceManager implements Dumpable {
   private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);
   private static final int QUICK_DUMMY_WRAPPING = Integer.MAX_VALUE; // special value to request a tentative wrapping
@@ -87,6 +89,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   private int                            myAvailableWidth = QUICK_DUMMY_WRAPPING;
 
 
+  @ApiStatus.Internal
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorImpl editor,
                                   @NotNull SoftWrapPainter painter,
@@ -103,10 +106,12 @@ public final class SoftWrapApplianceManager implements Dumpable {
     }));
   }
 
+  @ApiStatus.Internal
   public void registerSoftWrapIfNecessary() {
     recalculateIfNecessary();
   }
 
+  @ApiStatus.Internal
   public void reset() {
     myIsDirty = true;
     for (SoftWrapAwareDocumentParsingListener listener : myListeners) {
@@ -128,6 +133,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     onRecalculationEnd();
   }
 
+  @ApiStatus.Internal
   public void recalculate(@NotNull List<? extends Segment> ranges) {
     if (myIsDirty) {
       return;
@@ -165,6 +171,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     onRecalculationEnd();
   }
 
+  @ApiStatus.Internal
   public void recalculateAll() {
     reset();
     myStorage.removeAll();
@@ -296,6 +303,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
    *         {@code false} otherwise (e.g. we need to perform re-calculation but current editor is now shown, i.e. we don't
    *         have information about viewport width
    */
+  @ApiStatus.Internal
   public boolean recalculateIfNecessary() {
     if (myInProgress) {
       return false;
@@ -393,10 +401,12 @@ public final class SoftWrapApplianceManager implements Dumpable {
    * @param listener    listener to register
    * @return            {@code true} if this collection changed as a result of the call; {@code false} otherwise
    */
+  @ApiStatus.Internal
   public boolean addListener(@NotNull SoftWrapAwareDocumentParsingListener listener) {
     return myListeners.add(listener);
   }
 
+  @ApiStatus.Internal
   public boolean removeListener(@NotNull SoftWrapAwareDocumentParsingListener listener) {
     return myListeners.remove(listener);
   }
@@ -420,10 +430,12 @@ public final class SoftWrapApplianceManager implements Dumpable {
     }
   }
 
+  @ApiStatus.Internal
   public void beforeDocumentChange(DocumentEvent event) {
     myDocumentChangedEvent = new IncrementalCacheUpdateEvent(event, myEditor);
   }
 
+  @ApiStatus.Internal
   public void documentChanged(DocumentEvent event, boolean processAlsoLineEnd) {
     LOG.assertTrue(myDocumentChangedEvent != null);
     recalculate(myDocumentChangedEvent);
@@ -436,11 +448,13 @@ public final class SoftWrapApplianceManager implements Dumpable {
     myDocumentChangedEvent = null;
   }
 
+  //@ApiStatus.Internal
   public void setWidthProvider(@NotNull VisibleAreaWidthProvider widthProvider) {
     myWidthProvider = widthProvider;
     reset();
   }
 
+  //@ApiStatus.Internal
   public @NotNull VisibleAreaWidthProvider getWidthProvider() {
     return myWidthProvider;
   }
@@ -458,11 +472,13 @@ public final class SoftWrapApplianceManager implements Dumpable {
     return dumpState();
   }
 
+  @ApiStatus.Internal
   @TestOnly
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
   }
 
+  @ApiStatus.Internal
   public void updateAvailableArea() {
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     if (visibleArea.isEmpty()) return;

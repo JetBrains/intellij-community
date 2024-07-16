@@ -20,7 +20,7 @@ internal class MappedGHPRReviewEditorThreadViewModel(
   private val sharedVm: GHPRCompactReviewThreadViewModel,
   mapping: Flow<MappingData>
 ) : GHPRReviewFileEditorThreadViewModel, GHPRCompactReviewThreadViewModel by sharedVm {
-  private val cs = parentCs.childScope(classAsCoroutineName())
+  private val cs = parentCs.childScope(javaClass.name)
 
   override val isVisible: StateFlow<Boolean> = mapping.map { it.isVisible }.stateInNow(cs, false)
   override val line: StateFlow<Int?> = mapping.map { it.line }.stateInNow(cs, null)

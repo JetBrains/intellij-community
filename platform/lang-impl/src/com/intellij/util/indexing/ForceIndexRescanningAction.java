@@ -16,11 +16,11 @@ final class ForceIndexRescanningAction extends DumbAwareAction {
     UnindexedFilesScanner task = new UnindexedFilesScanner(project,
                                                            false,
                                                            false,
-                                                           false,
                                                             null,
                                                            null,
                                                            "Force re-scanning",
-                                                           ScanningType.FULL_FORCED);
+                                                           ScanningType.FULL_FORCED,
+                                                           null);
     task.queue();
   }
 

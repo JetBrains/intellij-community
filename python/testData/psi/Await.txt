@@ -35,7 +35,7 @@ PyFile:Await.py
     PsiWhiteSpace('\n    ')
     PyStatementList
       PyAssignmentStatement
-        PsiErrorElement:Cannot assign to await expression
+        PyPrefixExpression
           PsiElement(Py:AWAIT_KEYWORD)('await')
           PsiWhiteSpace(' ')
           PyTargetExpression: x

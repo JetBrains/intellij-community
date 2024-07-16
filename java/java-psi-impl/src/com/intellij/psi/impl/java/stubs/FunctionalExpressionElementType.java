@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.LighterAST;
@@ -37,9 +23,8 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
     dataStream.writeName(stub.getPresentableText());
   }
 
-  @NotNull
   @Override
-  public FunctionalExpressionStub<T> deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull FunctionalExpressionStub<T> deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new FunctionalExpressionStub<>(parentStub, this, dataStream.readNameString());
   }
 
@@ -47,12 +32,10 @@ public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExp
   public void indexStub(@NotNull FunctionalExpressionStub<T> stub, @NotNull IndexSink sink) {
   }
 
-  @NotNull
   @Override
-  public FunctionalExpressionStub<T> createStub(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr, @NotNull StubElement<?> parentStub) {
+  public @NotNull FunctionalExpressionStub<T> createStub(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr, @NotNull StubElement<?> parentStub) {
     return new FunctionalExpressionStub<>(parentStub, this, getPresentableText(tree, funExpr));
   }
 
-  @NotNull
-  protected abstract String getPresentableText(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr);
+  protected abstract @NotNull String getPresentableText(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr);
 }

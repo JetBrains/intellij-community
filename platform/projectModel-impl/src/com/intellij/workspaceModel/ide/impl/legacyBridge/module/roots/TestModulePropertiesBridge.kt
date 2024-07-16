@@ -9,7 +9,9 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TestModulePropertiesBridge(private val currentModule: Module): TestModuleProperties() {
   private val workspaceModel = WorkspaceModel.getInstance(currentModule.project)
 
@@ -32,7 +34,7 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
       if (moduleName == null) return@updateProjectModel
       val productionModuleId = ModuleId(moduleName)
       builder.resolve(productionModuleId) ?: error("Can't find module by name: $moduleName")
-      builder.modifyEntity(moduleEntity) {
+      builder.modifyModuleEntity(moduleEntity) {
         this.testProperties = TestModulePropertiesEntity(productionModuleId, moduleEntity.entitySource)
       }
     }
@@ -48,7 +50,7 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
     if (builder.resolve(productionModuleId) == null) {
       thisLogger().warn("Can't find module by name: $moduleName, but it can be a valid case e.g at gradle import")
     }
-    builder.modifyEntity(moduleEntity) {
+    builder.modifyModuleEntity(moduleEntity) {
       this.testProperties = TestModulePropertiesEntity(productionModuleId, moduleEntity.entitySource)
     }
   }

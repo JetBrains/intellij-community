@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl;
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -47,13 +46,9 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
   }
 
   public ProjectJdkImpl(@NotNull String name, @NotNull SdkTypeId sdkType, String homePath, String version) {
-    if (!GlobalSdkTableBridge.Companion.isEnabled()) {
-      delegate = new LegacyProjectJdkDelegate(name, sdkType, homePath, version);
-    } else {
-      SdkEntity.Builder sdkEntity =
-        SdkBridgeImpl.Companion.createEmptySdkEntity(name, sdkType.getName(),  homePath, version);
-      delegate = new SdkBridgeImpl(sdkEntity);
-    }
+    SdkEntity.Builder sdkEntity =
+      SdkBridgeImpl.Companion.createEmptySdkEntity(name, sdkType.getName(), homePath, version);
+    delegate = new SdkBridgeImpl(sdkEntity);
     // register on VirtualFilePointerManager because we want our virtual pointers to be disposed before VFPM to avoid "pointer leaked" diagnostics fired
     Disposer.register((Disposable)VirtualFilePointerManager.getInstance(), this);
   }
@@ -109,11 +104,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
   }
 
   public final void resetVersionString() {
-    if (delegate instanceof LegacyProjectJdkDelegate legacyDelegate) {
-      legacyDelegate.resetVersionString();
-    } else {
-      LOG.error("Function is unsupported for the new implementation of SDK");
-    }
+    LOG.error("Function is unsupported for the new implementation of SDK");
   }
 
   @Override
@@ -168,11 +159,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
   }
 
   void copyTo(@NotNull ProjectJdkImpl dest) {
-    if (delegate instanceof LegacyProjectJdkDelegate legacyDelegate && dest.delegate instanceof LegacyProjectJdkDelegate legacyDestDelegate) {
-      legacyDelegate.copyTo(legacyDestDelegate);
-    } else {
-      LOG.error("Function is unsupported for the new implementation of SDK");
-    }
+    LOG.error("Function is unsupported for the new implementation of SDK");
   }
 
   @Override
@@ -188,12 +175,8 @@ public class ProjectJdkImpl extends UserDataHolderBase implements SdkBridge, Sdk
     if (modificator != null) {
       LOG.error("Forbidden to call `getSdkModificator` on already modifiable version of SDK");
     }
-    if (delegate instanceof SdkBridgeImpl sdkBridge) {
-      return new ProjectJdkImpl(delegate, sdkBridge.getSdkModificator(this));
-    } else {
-      SdkModificator sdkModificator = delegate.getSdkModificator();
-      return new ProjectJdkImpl(delegate, sdkModificator);
-    }
+    var sdkBridge = (SdkBridgeImpl)delegate;
+    return new ProjectJdkImpl(delegate, sdkBridge.getSdkModificator(this));
   }
 
   @Override

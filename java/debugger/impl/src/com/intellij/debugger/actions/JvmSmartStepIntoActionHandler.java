@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +73,7 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
     mySession.stepInto(true, variant.myHandler.createMethodFilter(variant.myTarget));
   }
 
-  static class JvmSmartStepIntoVariant extends XSmartStepIntoVariant {
+  static class JvmSmartStepIntoVariant extends XSmartStepIntoVariant implements ForceSmartStepIntoSource {
     private final SmartStepTarget myTarget;
     private final JvmSmartStepIntoHandler myHandler;
 
@@ -97,6 +98,11 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
     public TextRange getHighlightRange() {
       PsiElement element = myTarget.getHighlightElement();
       return element != null ? element.getTextRange() : null;
+    }
+
+    @Override
+    public boolean needForceSmartStepInto() {
+      return myTarget instanceof ForceSmartStepIntoSource forceSmartStepIntoSource && forceSmartStepIntoSource.needForceSmartStepInto();
     }
   }
 }

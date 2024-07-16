@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 
 interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
@@ -12,17 +17,21 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
     }
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : FirstEntityWithPId, WorkspaceEntity.Builder<FirstEntityWithPId> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<FirstEntityWithPId> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<FirstEntityWithPId, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FirstEntityWithPId {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -35,9 +44,12 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId,
-                                      modification: FirstEntityWithPId.Builder.() -> Unit): FirstEntityWithPId = modifyEntity(
-  FirstEntityWithPId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyFirstEntityWithPId(
+  entity: FirstEntityWithPId,
+  modification: FirstEntityWithPId.Builder.() -> Unit,
+): FirstEntityWithPId {
+  return modifyEntity(FirstEntityWithPId.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class FirstPId(override val presentableName: String) : SymbolicEntityId<FirstEntityWithPId>
@@ -48,17 +60,21 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
     get() = SecondPId(data)
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : SecondEntityWithPId, WorkspaceEntity.Builder<SecondEntityWithPId> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SecondEntityWithPId> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<SecondEntityWithPId, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SecondEntityWithPId {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -71,9 +87,12 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId,
-                                      modification: SecondEntityWithPId.Builder.() -> Unit): SecondEntityWithPId = modifyEntity(
-  SecondEntityWithPId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifySecondEntityWithPId(
+  entity: SecondEntityWithPId,
+  modification: SecondEntityWithPId.Builder.() -> Unit,
+): SecondEntityWithPId {
+  return modifyEntity(SecondEntityWithPId.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class SecondPId(override val presentableName: String) : SymbolicEntityId<SecondEntityWithPId>

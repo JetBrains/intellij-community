@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,6 +134,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
   }
 
   // clears line modification flags except lines which was not stripped because the caret was in the way
+  @ApiStatus.Internal
   public void clearLineModificationFlags(@NotNull Document document) {
     if (document instanceof DocumentWindow) {
       document = ((DocumentWindow)document).getDelegate();
@@ -181,7 +183,13 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
       activeEditors.add(localEditor);
     }
     for (ClientEditorManager manager : application.getServices(ClientEditorManager.class, ClientKind.REMOTE)) {
-      manager.editors().filter(e -> UIUtil.hasFocus(e.getContentComponent()) && e.getDocument() == document).forEach(activeEditors::add);
+      Iterator<Editor> iterator = manager.editorsSequence().iterator();
+      while (iterator.hasNext()) {
+        Editor editor = iterator.next();
+        if (UIUtil.hasFocus(editor.getContentComponent()) && editor.getDocument() == document) {
+          activeEditors.add(editor);
+        }
+      }
     }
     return activeEditors;
   }
@@ -196,6 +204,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     return activeEditor;
   }
 
+  @ApiStatus.Internal
   public static boolean strip(@NotNull Document document, boolean inChangedLinesOnly, boolean skipCaretLines) {
     if (document instanceof DocumentWindow) {
       document = ((DocumentWindow)document).getDelegate();
@@ -264,6 +273,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     return null;
   }
 
+  @ApiStatus.Internal
   public void documentDeleted(@NotNull Document doc) {
     myDocumentsToStripLater.remove(doc);
   }
@@ -277,10 +287,12 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     DISABLE_FOR_FILE_KEY.set(file, enabled ? null : Boolean.TRUE);
   }
 
+  @ApiStatus.Internal
   public static boolean isEnabled(@NotNull VirtualFile file) {
     return !Boolean.TRUE.equals(DISABLE_FOR_FILE_KEY.get(file));
   }
 
+  @ApiStatus.Internal
   public static @Nullable TrailingSpacesOptions getOptions(@NotNull Document document) {
     if (document.isWritable()) {
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.application.options.CodeStyle;
@@ -68,10 +68,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -90,8 +87,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.*;
@@ -109,8 +106,6 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -231,7 +226,7 @@ public final class DiffUtil {
     Disposable disposable = ((EditorImpl)editor).getDisposable();
     if (project != null) {
       DiffEditorHighlighterUpdater updater = new DiffEditorHighlighterUpdater(project, disposable, editor, content);
-      updater.updateHighlightersAsync();
+      updater.updateHighlighters();
     }
     else {
       ReadAction
@@ -524,7 +519,7 @@ public final class DiffUtil {
       group.addSeparator();
     }
 
-    AnAction[] children = group.getChildren(null);
+    AnAction[] children = group.getChildren(ActionManager.getInstance());
     for (AnAction action : actions) {
       if (action instanceof Separator ||
           !ArrayUtil.contains(action, children)) {
@@ -562,30 +557,6 @@ public final class DiffUtil {
       result.append(HtmlChunk.span("color:#" + ColorUtil.toHex(JBColor.gray) + "; font-size:small").addText(appendix));
     }
     return result.wrapWithHtmlBody().toString();
-  }
-
-  public static void showSuccessPopup(@NotNull @NlsContexts.PopupContent String message,
-                                      @NotNull RelativePoint point,
-                                      @NotNull Disposable disposable,
-                                      @Nullable Runnable hyperlinkHandler) {
-    HyperlinkListener listener = null;
-    if (hyperlinkHandler != null) {
-      listener = new HyperlinkAdapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-          hyperlinkHandler.run();
-        }
-      };
-    }
-
-    Color bgColor = MessageType.INFO.getPopupBackground();
-
-    Balloon balloon = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(message, null, bgColor, listener)
-      .setAnimationCycle(200)
-      .createBalloon();
-    balloon.show(point, Balloon.Position.below);
-    Disposer.register(disposable, balloon);
   }
 
   //
@@ -802,7 +773,7 @@ public final class DiffUtil {
 
   @NotNull
   public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, @NotNull JBValue vGap) {
-    JPanel panel = new JPanel(new VerticalLayout(vGap, VerticalLayout.FILL));
+    JPanel panel = new JBPanel<>(new VerticalLayout(vGap, VerticalLayout.FILL));
     for (JComponent component : components) {
       panel.add(component);
     }

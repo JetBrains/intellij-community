@@ -10,7 +10,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public final class ExternalProcessAuthHelperBundle {
-  public static final @NonNls String BUNDLE = "messages.ExternalProcessAuthHelperBundle";
+  private static final @NonNls String BUNDLE = "messages.ExternalProcessAuthHelperBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(ExternalProcessAuthHelperBundle.class, BUNDLE);
 
   private ExternalProcessAuthHelperBundle() {}

@@ -4,7 +4,6 @@ Reports inappropriate usages of methods in Kotlin coroutines, which uses threadi
 Many of these methods have corresponding coroutine-friendly analogues, that can be used in <code>suspend</code> contexts.
 
 <!-- tooltip end -->
-
 Examples:
 <ul>
   <li><code>com.intellij.openapi.progress.ProgressManager.checkCanceled()</code> should be replaced with <code>com.intellij.openapi.progress.checkCancelled()</code></li>

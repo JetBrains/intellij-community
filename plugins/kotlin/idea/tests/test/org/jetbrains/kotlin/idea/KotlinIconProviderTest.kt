@@ -11,7 +11,7 @@ import javax.swing.Icon
 
 class KotlinIconProviderTest: KotlinLightCodeInsightFixtureTestCase() {
     fun testPublicClassFile() {
-        createFileAndCheckIcon("Foo.kt", "class Foo", "org/jetbrains/kotlin/idea/icons/classKotlin.svg", "nodes/c_public.svg")
+        createFileAndCheckIcon("Foo.kt", "class Foo", "org/jetbrains/kotlin/idea/icons/classKotlin.svg", "Public")
     }
 
     fun testFileSingleFunction() {
@@ -23,7 +23,7 @@ class KotlinIconProviderTest: KotlinLightCodeInsightFixtureTestCase() {
             typealias F = Foo
             class Foo
         """.trimIndent()
-        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/classKotlin.svg", "nodes/c_public.svg")
+        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/classKotlin.svg", "Public")
     }
 
     fun testClassAndPrivateFunction() {
@@ -31,7 +31,7 @@ class KotlinIconProviderTest: KotlinLightCodeInsightFixtureTestCase() {
             class Foo
             private fun bar() {}
         """.trimIndent()
-        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/classKotlin.svg", "nodes/c_public.svg")
+        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/classKotlin.svg", "Public")
     }
 
     fun testClassAndInternalFunction() {

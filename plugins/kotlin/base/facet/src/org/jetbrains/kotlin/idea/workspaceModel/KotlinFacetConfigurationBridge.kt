@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.serialization.KotlinFacetSettingsWorkspaceModel
 
-class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurationBridge<KotlinSettingsEntity> {
+class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurationBridge<KotlinSettingsEntity, KotlinSettingsEntity.Builder> {
     override val settings: IKotlinFacetSettings by lazy { KotlinFacetSettingsWorkspaceModel(kotlinSettingsEntity) }
 
     private val kotlinSettingsEntity: KotlinSettingsEntity.Builder
@@ -31,21 +31,16 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                                      implementedModuleNames = emptyList(),
                                      dependsOnModuleNames = emptyList(),
                                      additionalVisibleModuleNames = emptySet(),
-                                     productionOutputPath = "",
-                                     testOutputPath = "",
                                      sourceSetNames = emptyList(),
                                      isTestModule = false,
                                      externalProjectId = "",
                                      isHmppEnabled = false,
                                      pureKotlinSourceFolders = emptyList(),
                                      kind = KotlinModuleKind.DEFAULT,
-                                     compilerArguments = "",
-                                     compilerSettings = CompilerSettingsData("", "", "", true, "lib", false),
-                                     targetPlatform = "",
                                      externalSystemRunTasks = emptyList(),
                                      version = KotlinFacetSettings.CURRENT_VERSION,
                                      flushNeeded = false,
-                                     entitySource = object : EntitySource {}) as KotlinSettingsEntity.Builder
+                                     entitySource = object : EntitySource {})
             )
 
     constructor(originKotlinSettingsEntity: KotlinSettingsEntity) :
@@ -58,24 +53,23 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                 originKotlinSettingsEntity.implementedModuleNames,
                 originKotlinSettingsEntity.dependsOnModuleNames,
                 originKotlinSettingsEntity.additionalVisibleModuleNames,
-                originKotlinSettingsEntity.productionOutputPath,
-                originKotlinSettingsEntity.testOutputPath,
                 originKotlinSettingsEntity.sourceSetNames,
                 originKotlinSettingsEntity.isTestModule,
                 originKotlinSettingsEntity.externalProjectId,
                 originKotlinSettingsEntity.isHmppEnabled,
                 originKotlinSettingsEntity.pureKotlinSourceFolders,
                 originKotlinSettingsEntity.kind,
-                originKotlinSettingsEntity.compilerArguments,
-                originKotlinSettingsEntity.compilerSettings,
-                originKotlinSettingsEntity.targetPlatform,
                 originKotlinSettingsEntity.externalSystemRunTasks,
                 originKotlinSettingsEntity.version,
                 originKotlinSettingsEntity.flushNeeded,
                 originKotlinSettingsEntity.entitySource
             ) {
-            } as KotlinSettingsEntity.Builder) {
-    }
+                productionOutputPath = originKotlinSettingsEntity.productionOutputPath
+                testOutputPath = originKotlinSettingsEntity.testOutputPath
+                compilerArguments = originKotlinSettingsEntity.compilerArguments
+                compilerSettings = originKotlinSettingsEntity.compilerSettings
+                targetPlatform = originKotlinSettingsEntity.targetPlatform
+            })
 
     override fun init(moduleEntity: ModuleEntity, entitySource: EntitySource) {
         kotlinSettingsEntity.moduleId = moduleEntity.symbolicId
@@ -86,7 +80,7 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
         kotlinSettingsEntity.name = newName
     }
 
-    override fun getEntity(moduleEntity: ModuleEntity): KotlinSettingsEntity {
+    override fun getEntityBuilder(moduleEntity: ModuleEntity.Builder): KotlinSettingsEntity.Builder {
         return KotlinSettingsEntity(
             kotlinSettingsEntity.name,
             kotlinSettingsEntity.moduleId,
@@ -96,23 +90,23 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
             kotlinSettingsEntity.implementedModuleNames,
             kotlinSettingsEntity.dependsOnModuleNames,
             kotlinSettingsEntity.additionalVisibleModuleNames,
-            kotlinSettingsEntity.productionOutputPath,
-            kotlinSettingsEntity.testOutputPath,
             kotlinSettingsEntity.sourceSetNames,
             kotlinSettingsEntity.isTestModule,
             kotlinSettingsEntity.externalProjectId,
             kotlinSettingsEntity.isHmppEnabled,
             kotlinSettingsEntity.pureKotlinSourceFolders,
             kotlinSettingsEntity.kind,
-            kotlinSettingsEntity.compilerArguments,
-            kotlinSettingsEntity.compilerSettings,
-            kotlinSettingsEntity.targetPlatform,
             kotlinSettingsEntity.externalSystemRunTasks,
             kotlinSettingsEntity.version,
             kotlinSettingsEntity.flushNeeded,
             kotlinSettingsEntity.entitySource,
         ) {
             module = moduleEntity
+            productionOutputPath = kotlinSettingsEntity.productionOutputPath
+            testOutputPath = kotlinSettingsEntity.testOutputPath
+            compilerArguments = kotlinSettingsEntity.compilerArguments
+            compilerSettings = kotlinSettingsEntity.compilerSettings
+            targetPlatform = kotlinSettingsEntity.targetPlatform
         }
     }
 

@@ -30,6 +30,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Use {@link #getComponent(Class)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   default @Nullable BaseComponent getComponent(@NotNull String name) {
     return null;
   }
@@ -42,6 +43,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
    * @deprecated Components are deprecated, please see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html">SDK Docs</a> for guidelines on migrating to other APIs.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   <T> T getComponent(@NotNull Class<T> interfaceClass);
 
   /**

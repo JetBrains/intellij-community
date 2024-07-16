@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -15,9 +15,8 @@ class YAMLStructureViewKeyValueDuplicated extends DuplicatedPsiTreeElementBase<Y
     super(kv, path + '.' + kv.getKeyText());
   }
 
-  @NotNull
   @Override
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     return YAMLStructureViewFactory.createChildrenViewTreeElements(getKeyValue().getValue(), getDetails());
   }
 
@@ -26,9 +25,8 @@ class YAMLStructureViewKeyValueDuplicated extends DuplicatedPsiTreeElementBase<Y
     return YAMLStructureViewUtil.getKeyValueLocationString(getKeyValue());
   }
 
-  @Nullable
   @Override
-  public String getPresentableText() {
+  public @Nullable String getPresentableText() {
     return getKeyValue().getKeyText();
   }
 
@@ -37,8 +35,7 @@ class YAMLStructureViewKeyValueDuplicated extends DuplicatedPsiTreeElementBase<Y
     return YAMLStructureViewUtil.getKeyValueIcon(getKeyValue());
   }
 
-  @NotNull
-  private YAMLKeyValue getKeyValue() {
+  private @NotNull YAMLKeyValue getKeyValue() {
     return Objects.requireNonNull(getElement());
   }
 }

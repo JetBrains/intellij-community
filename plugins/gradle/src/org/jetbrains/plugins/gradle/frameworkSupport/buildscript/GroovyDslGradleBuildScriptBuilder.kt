@@ -18,7 +18,7 @@ abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScrip
       callIfNotEmpty("test", configure)
     }
 
-  override fun withKotlinJvmPlugin(version: String?): BSB = apply {
+  override fun withKotlinJvmPlugin(version: String?) = apply {
     withMavenCentral()
     withPlugin("org.jetbrains.kotlin.jvm", version)
   }
@@ -29,6 +29,12 @@ abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScrip
     addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
     configureTestTask {
       call("useJUnitPlatform")
+    }
+  }
+
+  override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
+    call("maven") {
+      call("url", url)
     }
   }
 

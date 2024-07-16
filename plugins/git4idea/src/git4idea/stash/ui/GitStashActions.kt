@@ -9,6 +9,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesOperationsGroup
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI
+import com.intellij.openapi.vfs.VirtualFile
+import git4idea.i18n.GitBundle
 import git4idea.stash.GitStashOperations
 import git4idea.stash.GitStashTracker
 import git4idea.ui.StashInfo
@@ -62,7 +65,45 @@ class GitUnstashAsAction : GitSingleStashAction() {
     }
     return false
   }
+}
 
+class GitClearStashesAction : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    val project = e.project
+    val isVisible = project != null && e.getData(SAVED_PATCHES_UI) != null
+    e.presentation.isVisible = isVisible
+
+    val root = project?.let { getSelectedRoot(it, e) }
+    e.presentation.isEnabled = isVisible && root != null
+
+    val allRoots = project?.serviceIfCreated<GitStashTracker>()?.roots
+    if (root != null && allRoots?.size?.let { it > 1 } == true) {
+      e.presentation.text = GitBundle.message("action.Git.Stash.Clear.in.root.text", root.name)
+      e.presentation.description = GitBundle.message("action.Git.Stash.Clear.in.root.description")
+    }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    val root = getSelectedRoot(project, e) ?: return
+    GitStashOperations.clearStashesWithConfirmation(project, root, e.getData(SAVED_PATCHES_UI))
+  }
+
+  private fun getSelectedRoot(project: Project, e: AnActionEvent): VirtualFile? {
+    val stashInfos = e.getData(STASH_INFO)
+    if (!stashInfos.isNullOrEmpty()) {
+      val roots = stashInfos.mapTo(mutableSetOf()) { it.root }
+      return roots.singleOrNull()
+    }
+    val stashTracker = project.serviceIfCreated<GitStashTracker>()
+    val root = stashTracker?.roots?.singleOrNull() ?: return null
+    if (stashTracker.getStashes(root).isNotEmpty()) return root
+    return null
+  }
 }
 
 class GitStashOperationsGroup : SavedPatchesOperationsGroup() {

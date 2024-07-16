@@ -2,11 +2,13 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.MarkupIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class FilteringMarkupIterator<T> implements MarkupIterator<T> {
   private final @NotNull MarkupIterator<? extends T> myDelegate;
   private final @NotNull Predicate<? super T> myFilter;

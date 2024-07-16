@@ -1,0 +1,5 @@
+fun newFun(a: Int = 0, b: String = "", handler: () -> Unit) {}
+
+fun foo() {
+    newFun { }
+}

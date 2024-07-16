@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.cache.TypeInfo.RefTypeInfo;
@@ -46,10 +45,12 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
   private static final class TypeInfoInnerClassEntry extends ClassEntry {
     private final RefTypeInfo myOuterType;
     private final String myInnerName;
+    private final boolean myStatic;
 
-    private TypeInfoInnerClassEntry(@NotNull RefTypeInfo outerType, @NotNull String innerName) {
+    private TypeInfoInnerClassEntry(@NotNull RefTypeInfo outerType, @NotNull String innerName, boolean aStatic) {
       myOuterType = outerType;
       myInnerName = innerName;
+      myStatic = aStatic;
     }
   }
 
@@ -99,13 +100,20 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
   }
 
   /**
-   * @param jvmNames array of JVM type names (e.g. throws list, implements list)
+   * @param jvmNames array of JVM type names (e.g., throws-list, implements-list)
    * @return list of TypeInfo objects that correspond to given types. GUESSING_MAPPER is not used.
    */
   @Contract("null -> null; !null -> !null")
   List<TypeInfo> createTypes(String @Nullable [] jvmNames) {
     return jvmNames == null ? null :
            ContainerUtil.map(jvmNames, jvmName -> toTypeInfo(jvmName, false));
+  }
+
+  @Override
+  public boolean isKnownStatic(@NotNull String jvmClassName) {
+    ClassEntry entry = myMap.get(jvmClassName);
+    return entry instanceof StringInnerClassEntry && ((StringInnerClassEntry)entry).myStatic ||
+           entry instanceof TypeInfoInnerClassEntry && ((TypeInfoInnerClassEntry)entry).myStatic;
   }
 
   /**
@@ -132,7 +140,7 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
       if (p instanceof StringInnerClassEntry) {
         StringInnerClassEntry entry = (StringInnerClassEntry)p;
         RefTypeInfo outer = toTypeInfo(entry.myOuterName, false);
-        p = new TypeInfoInnerClassEntry(outer, entry.myInnerName);
+        p = new TypeInfoInnerClassEntry(outer, entry.myInnerName, entry.myStatic);
         myMap.put(jvmName, p);
       }
       assert p instanceof TypeInfoInnerClassEntry;
@@ -194,7 +202,9 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
 
       @Override
       public void visitSource(String source, String debug) {
-        if (source != null && StringUtil.endsWithIgnoreCase(source, ".groovy")) {
+        String suffix = ".groovy";
+        if (source != null && source.length() > suffix.length() &&
+            source.regionMatches(true, source.length() - suffix.length(), suffix, 0, suffix.length())) {
           trustInnerClasses = false;
         }
         super.visitSource(source, debug);

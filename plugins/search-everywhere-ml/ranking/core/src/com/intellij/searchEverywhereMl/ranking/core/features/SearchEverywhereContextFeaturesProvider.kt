@@ -7,10 +7,13 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
+import com.intellij.internal.statistic.local.ContributorsGlobalSummaryManager
+import com.intellij.internal.statistic.local.ContributorsLocalSummary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.searchEverywhereMl.ranking.core.features.statistician.ContributorsLocalStatisticsContextFields
 
 internal class SearchEverywhereContextFeaturesProvider {
   companion object {
@@ -19,8 +22,10 @@ internal class SearchEverywhereContextFeaturesProvider {
     internal val LOCAL_MAX_USAGE_SE_COUNT_KEY = EventFields.Int("maxUsageSE")
     internal val LOCAL_MIN_USAGE_SE_COUNT_KEY = EventFields.Int("minUsageSE")
 
-    private val GLOBAL_STATISTICS_CONTEXT_DEFAULT = GlobalStatisticsContextFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
-    private val GLOBAL_STATISTICS_CONTEXT_UPDATED = GlobalStatisticsContextFields(ActionsGlobalSummaryManager.getUpdatedStatisticsVersion())
+    private val ACTIONS_GLOBAL_STATISTICS_CONTEXT_DEFAULT = ActionsGlobalStatisticsContextFields(ActionsGlobalSummaryManager.STATISTICS_VERSION)
+    private val ACTIONS_GLOBAL_STATISTICS_CONTEXT_UPDATED = ActionsGlobalStatisticsContextFields(ActionsGlobalSummaryManager.UPDATED_STATISTICS_VERSION)
+    private val CONTRIBUTORS_GLOBAL_STATISTICS_CONTEXT = ContributorsGlobalStatisticsContextFields()
+    private val CONTRIBUTORS_LOCAL_STATISTICS_CONTEXT = ContributorsLocalStatisticsContextFields()
 
 
     internal val OPEN_FILE_TYPES_KEY = EventFields.StringListValidatedByCustomRule("openFileTypes", FileTypeUsagesCollector.ValidationRule::class.java)
@@ -32,8 +37,10 @@ internal class SearchEverywhereContextFeaturesProvider {
         LOCAL_MAX_USAGE_COUNT_KEY, LOCAL_MIN_USAGE_COUNT_KEY, LOCAL_MAX_USAGE_SE_COUNT_KEY, LOCAL_MIN_USAGE_SE_COUNT_KEY,
         OPEN_FILE_TYPES_KEY, NUMBER_OF_OPEN_EDITORS_KEY, IS_SINGLE_MODULE_PROJECT
       )
-      fields.addAll(GLOBAL_STATISTICS_CONTEXT_DEFAULT.getFieldsDeclaration() +
-                    GLOBAL_STATISTICS_CONTEXT_UPDATED.getFieldsDeclaration())
+      fields.addAll(CONTRIBUTORS_LOCAL_STATISTICS_CONTEXT.getFieldsDeclaration() +
+                    ACTIONS_GLOBAL_STATISTICS_CONTEXT_DEFAULT.getFieldsDeclaration() +
+                    ACTIONS_GLOBAL_STATISTICS_CONTEXT_UPDATED.getFieldsDeclaration() +
+                    CONTRIBUTORS_GLOBAL_STATISTICS_CONTEXT.getFieldsDeclaration())
       return fields
     }
   }
@@ -46,9 +53,15 @@ internal class SearchEverywhereContextFeaturesProvider {
     data.add(LOCAL_MAX_USAGE_SE_COUNT_KEY.with(localTotalStats.maxUsageFromSearchEverywhere))
     data.add(LOCAL_MIN_USAGE_SE_COUNT_KEY.with(localTotalStats.minUsageFromSearchEverywhere))
 
-    val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
-    data.addAll(GLOBAL_STATISTICS_CONTEXT_DEFAULT.getGlobalUsageStatistics(globalSummary.totalSummary) +
-                GLOBAL_STATISTICS_CONTEXT_UPDATED.getGlobalUsageStatistics(globalSummary.updatedTotalSummary))
+    val contributorsSelectionsRange = ContributorsLocalSummary.getInstance().getContributorsSelectionsRange()
+    data.addAll(CONTRIBUTORS_LOCAL_STATISTICS_CONTEXT.getLocalContextStatistics(contributorsSelectionsRange))
+
+    val actionsGlobalSummary = ActionsGlobalSummaryManager.getInstance()
+    val contributorsGlobalSummary = ContributorsGlobalSummaryManager.getInstance()
+    data.addAll(ACTIONS_GLOBAL_STATISTICS_CONTEXT_DEFAULT.getGlobalContextStatistics(actionsGlobalSummary.eventCountRange) +
+                ACTIONS_GLOBAL_STATISTICS_CONTEXT_UPDATED.getGlobalContextStatistics(actionsGlobalSummary.updatedEventCountRange) +
+                CONTRIBUTORS_GLOBAL_STATISTICS_CONTEXT.getGlobalContextStatistics(contributorsGlobalSummary.eventCountRange)
+    )
 
     project?.let {
       if (project.isDisposed) {
@@ -62,19 +75,5 @@ internal class SearchEverywhereContextFeaturesProvider {
     }
 
     return data
-  }
-
-  internal class GlobalStatisticsContextFields(version: Int) {
-    private val globalMaxUsage = EventFields.Long("globalMaxUsageV${version}")
-    private val globalMinUsage = EventFields.Long("globalMinUsageV${version}")
-
-    fun getFieldsDeclaration(): List<EventField<*>> = arrayListOf(globalMaxUsage, globalMinUsage)
-
-    fun getGlobalUsageStatistics(stats: ActionsGlobalSummaryManager.ActionsGlobalTotalSummary): List<EventPair<*>> {
-      return arrayListOf<EventPair<*>>(
-        globalMaxUsage.with(stats.maxUsageCount()),
-        globalMinUsage.with(stats.minUsageCount())
-      )
-    }
   }
 }

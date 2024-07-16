@@ -1,3 +1,4 @@
+// FIX: Replace 'if' expression with safe access expression
 // HIGHLIGHT: INFORMATION
 class My(val x: Int)
 

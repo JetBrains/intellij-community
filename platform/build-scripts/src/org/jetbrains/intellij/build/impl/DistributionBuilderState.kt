@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -8,18 +8,16 @@ import org.jetbrains.intellij.build.BuildContext
 suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
   filterPluginsToPublish(pluginsToPublishEffective, context)
-  val platform = createPlatformLayout(pluginsToPublishEffective, context)
+  val platform = createPlatformLayout(context)
   return DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublishEffective, context = context)
 }
 
 suspend fun createDistributionBuilderState(context: BuildContext): DistributionBuilderState {
-  val platform = createPlatformLayout(pluginsToPublish = emptySet(), context = context)
+  val platform = createPlatformLayout(context = context)
   return DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context)
 }
 
-class DistributionBuilderState(@JvmField val platform: PlatformLayout,
-                               @JvmField val pluginsToPublish: Set<PluginLayout>,
-                               context: BuildContext) {
+class DistributionBuilderState internal constructor(@JvmField val platform: PlatformLayout, @JvmField val pluginsToPublish: Set<PluginLayout>, context: BuildContext) {
   init {
     val releaseDate = context.applicationInfo.majorReleaseDate
     require(!releaseDate.startsWith("__")) {
@@ -27,8 +25,8 @@ class DistributionBuilderState(@JvmField val platform: PlatformLayout,
     }
   }
 
-  val platformModules: Collection<String>
-    get() = (platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()).toList()
+  val platformModules: Sequence<String>
+    get() = platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()
 
   fun getModulesForPluginsToPublish(): Set<String> {
     return getModulesForPluginsToPublish(platform, pluginsToPublish)
@@ -71,9 +69,6 @@ internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: 
 }
 
 /**
- * @return module names which are required to run necessary tools from build scripts
+ * @return module names which are required to run the necessary tools from build scripts
  */
-internal fun getToolModules(): List<String> {
-  return java.util.List.of("intellij.java.rt", "intellij.platform.main",
-                           /*required to build searchable options index*/ "intellij.platform.updater")
-}
+internal fun getToolModules(): List<String> = listOf("intellij.java.rt", "intellij.platform.starter", "intellij.tools.updater")

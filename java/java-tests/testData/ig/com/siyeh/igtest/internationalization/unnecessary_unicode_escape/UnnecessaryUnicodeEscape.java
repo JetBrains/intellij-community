@@ -4,7 +4,7 @@ class UnnecessaryUnicodeEscape {
   // <warning descr="Unicode escape sequence '\uuuuuu0061' can be replaced with 'a'">\uuuuuu0061</warning><warning descr="Unicode escape sequence '\u0062' can be replaced with 'b'">\u0062</warning>
   // control char & not representable char: \u0010 \u00e4
 
-  char[] surrogates = new char[]{'\ud800','\udc00'};<warning descr="Unicode escape sequence '\u0021' can be replaced with '!'"><error descr="Illegal character: \ (U+005C)">\</error><error descr="Cannot resolve symbol 'u0021'">u0021</error></warning><EOLError descr="Identifier expected"></EOLError>
+  char[] surrogates = new char[]{'\ud800','\udc00'};<warning descr="Unicode escape sequence '\u0021' can be replaced with '!'"><error descr="Illegal character: \ (U+005C)"><error descr="Unexpected token">\</error></error><error descr="Cannot resolve symbol 'u0021'">u0021</error></warning><EOLError descr="Identifier expected"></EOLError>
 
   String t = "<warning descr="Unicode escape sequence '\u0020' can be replaced with ' '">\u0020</warning>";
   String u = "\u200B\u200E\u00A0\u200F";

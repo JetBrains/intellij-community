@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-public class GrCharConverter extends GrTypeConverter {
+public final class GrCharConverter extends GrTypeConverter {
 
   @Nullable
   @Override
@@ -41,12 +41,10 @@ public class GrCharConverter extends GrTypeConverter {
 
     { // special case 'c = []' will throw RuntimeError
       final GrExpression rValue;
-      if (context instanceof GrAssignmentExpression) {
-        final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)context;
+      if (context instanceof GrAssignmentExpression assignmentExpression) {
         rValue = assignmentExpression.getRValue();
       }
-      else if (context instanceof GrVariable) {
-        final GrVariable assignmentExpression = (GrVariable)context;
+      else if (context instanceof GrVariable assignmentExpression) {
         rValue = assignmentExpression.getInitializerGroovy();
       }
       else {

@@ -1,7 +1,7 @@
 <idea-plugin package="com.intellij.pycharm.community.ide.impl">
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
-    <module name="intellij.python.community.impl"/>
+    <plugin id="PythonCore"/>
   </dependencies>
 
   <projectListeners>
@@ -75,9 +75,8 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
-    <newUIConfigurable implementation="com.intellij.pycharm.community.ide.impl.configuration.PyExperimentalUIConfigurable"/>
 
-
+    <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

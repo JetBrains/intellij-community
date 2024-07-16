@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Function;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.*;
@@ -21,6 +20,7 @@ import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +34,7 @@ import java.util.function.Predicate;
 /**
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
  */
+@ApiStatus.Internal
 public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private static final @NotNull Logger LOG = Logger.getInstance(VcsLogStorage.class);
   private static final @NotNull @NonNls String HASHES_STORAGE = "hashes";
@@ -97,13 +98,6 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       Disposer.dispose(this);
       throw t;
     }
-  }
-
-  public static @NotNull Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
-    return commitIndex -> {
-      CommitId commitId = storage.getCommitId(commitIndex);
-      return commitId == null ? null : commitId.getHash();
-    };
   }
 
   private @Nullable CommitId doGetCommitId(int index) throws IOException {
@@ -209,12 +203,17 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     return myRefsStorageId;
   }
 
-  @Override
-  public void dispose() {
-  }
-
   private void checkDisposed() {
     if (myDisposed) throw new ProcessCanceledException();
+  }
+
+  @ApiStatus.Internal
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {

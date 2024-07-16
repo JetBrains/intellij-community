@@ -24,7 +24,7 @@ internal class TipOrderUtil {
     val registry = ProductivityFeaturesRegistry.getInstance()
     if (registry == null) {
       thisLogger().warn("ProductivityFeaturesRegistry is not created")
-      return TipsSortingResult(tips.shuffled(), SHUFFLE_ALGORITHM, "1")
+      return TipsSortingResult.create(tips.shuffled(), SHUFFLE_ALGORITHM, "1")
     }
 
     FeatureUsageTracker.getInstance()  // instantiate just to load statistics of feature usage
@@ -56,7 +56,7 @@ internal class TipOrderUtil {
 
     val sortedTips = tipInfoList.sortedWith(getComparator()).map { it.tip }
     val adjustedSortedTips = adjustFirstTip(sortedTips)
-    return TipsSortingResult(adjustedSortedTips, SORTING_ALGORITHM, SORTING_ALGORITHM_VERSION)
+    return TipsSortingResult.create(adjustedSortedTips, SORTING_ALGORITHM, SORTING_ALGORITHM_VERSION)
   }
 
   private fun getComparator(): Comparator<TipInfo> {
@@ -114,8 +114,3 @@ internal class TipOrderUtil {
     fun getInstance(): TipOrderUtil = service()
   }
 }
-
-internal data class TipsSortingResult @JvmOverloads constructor(@JvmField val tips: List<TipAndTrickBean>,
-                                                                @JvmField val algorithm: String = "unknown",
-                                                                @JvmField val version: String? = null)
-

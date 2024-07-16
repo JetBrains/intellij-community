@@ -10,8 +10,11 @@ class RemoteKeyboard(private val robot: Robot) {
   fun escape() = key(KeyEvent.VK_ESCAPE)
   fun down() = key(KeyEvent.VK_DOWN)
   fun up() = key(KeyEvent.VK_UP)
+  fun left() = key(KeyEvent.VK_LEFT)
+  fun right() = key(KeyEvent.VK_RIGHT)
   fun backspace() = key(KeyEvent.VK_BACK_SPACE)
   fun tab() = key(KeyEvent.VK_TAB)
+  fun space() = key(KeyEvent.VK_SPACE)
 
   fun hotKey(vararg keyCodes: Int) {
     keyCodes.forEach {
@@ -35,5 +38,14 @@ class RemoteKeyboard(private val robot: Robot) {
     robot.pressKey(key)
     this.doWhilePress()
     robot.releaseKey(key)
+  }
+
+  fun doublePressing(key: Int, doWhilePress: RemoteKeyboard.() -> Unit) {
+    try {
+      robot.doublePressKeyAndHold(key)
+      this.doWhilePress()
+    } finally {
+      robot.releaseKey(key)
+    }
   }
 }

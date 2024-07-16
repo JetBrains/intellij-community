@@ -27,7 +27,7 @@ internal class MarkdownPdfExportProvider : MarkdownExportProvider {
     if (htmlPanel is MarkdownJCEFHtmlPanel) {
       htmlPanel.savePdf(outputFile, project) { path, ok ->
         if (ok) {
-          val file = VfsUtil.findFileByIoFile(File(path), false)
+          val file = VfsUtil.findFileByIoFile(File(path), true)
           if (file != null) {
             notifyAndRefreshIfExportSuccess(file, project)
           }
@@ -53,7 +53,7 @@ internal class MarkdownPdfExportProvider : MarkdownExportProvider {
 
   private fun MarkdownJCEFHtmlPanel.savePdf(path: String, project: Project, resultCallback: BiConsumer<String, Boolean>) {
     cefBrowser.printToPDF(path, CefPdfPrintSettings()) { _, ok ->
-      val dirToExport = VfsUtil.findFileByIoFile(File(path), false)?.parent
+      val dirToExport = VfsUtil.findFileByIoFile(File(path), true)?.parent
       if (dirToExport != null) {
         MarkdownImportExportUtils.refreshProjectDirectory(project, dirToExport.path)
       }

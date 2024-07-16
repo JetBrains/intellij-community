@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.takeWhileInclusive
 import org.ec4j.core.EditorConfigLoader
 import org.ec4j.core.PropertyTypeRegistry
 import org.ec4j.core.Resource
@@ -41,7 +42,7 @@ class EditorConfigPropertiesService(private val project: Project) : SimpleModifi
   }
 
   // Keys are URLs of the containing directories
-  private val editorConfigsCache = ConcurrentHashMap<String, ValidEditorConfig>()
+  private val editorConfigsCache = ConcurrentHashMap<String, LoadEditorConfigResult>()
 
   fun getRootDirs(): Set<VirtualFile> {
     if (!EditorConfigRegistry.shouldStopAtProjectRoot()) {
@@ -60,65 +61,51 @@ class EditorConfigPropertiesService(private val project: Project) : SimpleModifi
     }
   }
 
-  private fun loadEditorConfigFromDir(dir: VirtualFile): LoadEditorConfigResult {
-    return try {
-      val foundEditorConfig = findAndReadEditorConfigInDir(dir)
-      if (foundEditorConfig != null) {
-        val (file, text) = foundEditorConfig
-        ValidEditorConfig(file, parseEditorConfig(text))
-      }
-      else {
-        NonExistentEditorConfig
-      }
+  private fun loadEditorConfig(file: VirtualFile): LoadEditorConfigResult =
+    try {
+      ValidEditorConfig(file, parseEditorConfig(file.readText()))
+        .also { LOG.debug { "found config: ${file.parent.url}" } }
     }
     catch (e: IOException) {
       LOG.warn(e)
-      InvalidEditorConfig(dir)
+      InvalidEditorConfig(file)
     }
     catch (e: ParseException) {
       LOG.debug(e)
-      InvalidEditorConfig(dir)
+      InvalidEditorConfig(file)
     }
+
+  private fun parentDirsFrom(file: VirtualFile): Sequence<VirtualFile> {
+    val rootDirs = getRootDirs()
+    return generateSequence(if (file.isDirectory) file else file.parent) { it.parent }
+      .takeWhileInclusive { it !in rootDirs }
   }
 
-  private fun relevantEditorConfigsFor(file: VirtualFile): List<ValidEditorConfig> {
-    //assert(file.isFile)
-    val rootDirs = getRootDirs()
+  private fun relevantEditorConfigsFor(file: VirtualFile): List<ValidEditorConfig>  {
     val result = mutableListOf<ValidEditorConfig>()
-    var reachedRoot = false
-    var error = false
-    var dir: VirtualFile? = file.parent
-    while (dir != null && !reachedRoot) {
-      val maybeDirWithConfig = dir
-      // due to a limitation of Kotlin, cannot use computeIfAbsent
-      val cachedEditorConfig = editorConfigsCache.compute(maybeDirWithConfig.url) { _, cached ->
+    for (dir in parentDirsFrom(file)) {
+      val cachedEditorConfig = editorConfigsCache.compute(dir.url) { _, cached ->
         if (cached != null) {
-          LOG.debug { "cached config ${maybeDirWithConfig.url}" }
+          LOG.debug { "cached config: ${dir.url}" }
           return@compute cached
         }
-        when (val loaded = loadEditorConfigFromDir(maybeDirWithConfig)) {
-          is ValidEditorConfig -> loaded.also { LOG.debug { "found config ${maybeDirWithConfig.url}" } }
-          is NonExistentEditorConfig -> null
-          is InvalidEditorConfig -> {
-            error = true
-            null
+        dir.findChild(Utils.EDITOR_CONFIG_FILE_NAME)?.let { loadEditorConfig(it) }
+      }
+      when (cachedEditorConfig) {
+        is InvalidEditorConfig -> {
+          break
+        }
+        is ValidEditorConfig -> {
+          result += cachedEditorConfig
+          if (cachedEditorConfig.parsed.isRoot) {
+            LOG.debug { "reached root config: ${dir.url}" }
+            break
           }
         }
+        null -> {
+          // .editorconfig not found in this dir, continue
+        }
       }
-      if (error) {
-        return emptyList()
-      }
-
-      reachedRoot = dir in rootDirs
-
-      if (cachedEditorConfig != null) {
-        result += cachedEditorConfig
-        reachedRoot = reachedRoot || cachedEditorConfig.parsed.isRoot
-      }
-
-      if (reachedRoot) LOG.debug { "reached root config: ${maybeDirWithConfig.url}" }
-
-      dir = dir.parent
     }
     return result
   }
@@ -136,7 +123,6 @@ class EditorConfigPropertiesService(private val project: Project) : SimpleModifi
   }
 }
 
-private const val TIMEOUT = 10 // Seconds
 private val EMPTY_PROPERTIES = ResourceProperties.builder().build()
 
 private sealed interface LoadEditorConfigResult
@@ -145,8 +131,6 @@ private data class ValidEditorConfig(val file: VirtualFile, val parsed: EditorCo
 
 private data class InvalidEditorConfig(val file: VirtualFile) : LoadEditorConfigResult
 
-private data object NonExistentEditorConfig : LoadEditorConfigResult
-
 private fun parseEditorConfig(text: String): EditorConfig {
   val loader = makeLoader()
   return loader.load(Resource.Resources.ofString(".editorconfig", text))
@@ -154,11 +138,6 @@ private fun parseEditorConfig(text: String): EditorConfig {
 
 private fun makeLoader(): EditorConfigLoader =
   EditorConfigLoader.of(Version.CURRENT, PropertyTypeRegistry.default_(), EditorConfigLoadErrorHandler())
-
-private fun findAndReadEditorConfigInDir(dir: VirtualFile): Pair<VirtualFile, String>? {
-  val editorConfigFile = dir.findChild(Utils.EDITOR_CONFIG_FILE_NAME)
-  return editorConfigFile?.let { Pair(it, it.readText()) }
-}
 
 /**
  * @param editorConfigs the relevant [EditorConfig]s, starting with the one closest to the file for which properties are polled, ending with

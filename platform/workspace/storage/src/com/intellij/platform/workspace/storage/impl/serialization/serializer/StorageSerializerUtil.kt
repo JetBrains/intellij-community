@@ -6,10 +6,7 @@ import com.esotericsoftware.kryo.kryo5.KryoException
 import com.esotericsoftware.kryo.kryo5.Serializer
 import com.esotericsoftware.kryo.kryo5.io.Input
 import com.esotericsoftware.kryo.kryo5.io.Output
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityTypesResolver
-import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap
 import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
@@ -88,7 +85,7 @@ internal class StorageSerializerUtil(
           val typeInfo = kryo.readObject(input, TypeInfo::class.java)
           val entityFamily = kryo.readObject(input, ImmutableEntityFamily::class.java)
 
-          val classId = classCache.getOrPut(typeInfo) { typesResolver.resolveClass(typeInfo.fqName, typeInfo.pluginId).toClassId() }
+          val classId = classCache.getOrPut(typeInfo) { typesResolver.resolveClass(typeInfo.fqName, typeInfo.pluginId, typeInfo.moduleId).toClassId() }
           mutableBarrel.fillEmptyFamilies(classId)
           mutableBarrel.entityFamilies[classId] = entityFamily
         }
@@ -115,10 +112,10 @@ internal class StorageSerializerUtil(
       val childClazzInfo = kryo.readClassAndObject(input) as TypeInfo
 
       val parentClass = classCache.computeIfAbsent(parentClazzInfo, ToIntFunction {
-        (typesResolver.resolveClass(parentClazzInfo.fqName, parentClazzInfo.pluginId) as Class<WorkspaceEntity>).toClassId()
+        (typesResolver.resolveClass(parentClazzInfo.fqName, parentClazzInfo.pluginId, parentClazzInfo.moduleId) as Class<WorkspaceEntity>).toClassId()
       })
       val childClass = classCache.computeIfAbsent(childClazzInfo, ToIntFunction {
-        (typesResolver.resolveClass(childClazzInfo.fqName, childClazzInfo.pluginId) as Class<WorkspaceEntity>).toClassId()
+        (typesResolver.resolveClass(childClazzInfo.fqName, childClazzInfo.pluginId, childClazzInfo.moduleId) as Class<WorkspaceEntity>).toClassId()
       })
 
       val connectionType = ConnectionId.ConnectionType.valueOf(input.readString())
@@ -139,7 +136,7 @@ internal class StorageSerializerUtil(
       val arrayId = input.readInt()
       val clazzInfo = kryo.readClassAndObject(input) as TypeInfo
       val clazz = classCache.computeIfAbsent(clazzInfo, ToIntFunction {
-        typesResolver.resolveClass(clazzInfo.fqName, clazzInfo.pluginId).toClassId()
+        typesResolver.resolveClass(clazzInfo.fqName, clazzInfo.pluginId, clazzInfo.moduleId).toClassId()
       })
       return createEntityId(arrayId, clazz)
     }
@@ -161,12 +158,12 @@ internal class StorageSerializerUtil(
 
       if (urlRelativizer == null) {
         val url = kryo.readObject(input, ArrayList::class.java) as List<String>
-        return (virtualFileManager as VirtualFileUrlManagerImpl).fromUriSegments(url)
+        return (virtualFileManager as VirtualFileUrlManagerImpl).fromUrlSegments(url)
       }
       else {
         val serializedUrl = kryo.readObject(input, String::class.java) as String
         val convertedUrl = urlRelativizer.toAbsoluteUrl(serializedUrl)
-        return virtualFileManager.getOrCreateFromUri(convertedUrl)
+        return virtualFileManager.getOrCreateFromUrl(convertedUrl)
       }
     }
   }
@@ -316,7 +313,7 @@ internal class StorageSerializerUtil(
 
   private fun SerializableEntityId.toEntityId(classCache: Object2IntWithDefaultMap<TypeInfo>): EntityId {
     val classId = classCache.computeIfAbsent(type, ToIntFunction {
-      typesResolver.resolveClass(name = this.type.fqName, pluginId = this.type.pluginId).toClassId()
+      typesResolver.resolveClass(name = this.type.fqName, pluginId = this.type.pluginId, moduleId = this.type.moduleId).toClassId()
     })
     return createEntityId(arrayId = this.arrayId, clazz = classId)
   }
@@ -340,7 +337,7 @@ internal class StorageSerializerUtil(
 
 }
 
-public class UnsupportedClassException(
+internal class UnsupportedClassException(
   pluginId: PluginId, entityClassFqn: String, unsupportedClassFqn: String
 ): Exception(
   "Unsupported class $unsupportedClassFqn in the entity $entityClassFqn with $pluginId plugin." +

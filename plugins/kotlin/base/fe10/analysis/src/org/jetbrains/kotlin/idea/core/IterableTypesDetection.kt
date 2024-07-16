@@ -67,7 +67,7 @@ class IterableTypesDetection(
 
             val expression = KtPsiFactory(project).createExpression("fake")
             val context = ExpressionTypingContext.newContext(
-                BindingTraceContext(), scope, DataFlowInfo.EMPTY, TypeUtils.NO_EXPECTED_TYPE, languageVersionSettings, dataFlowValueFactory
+                BindingTraceContext(project), scope, DataFlowInfo.EMPTY, TypeUtils.NO_EXPECTED_TYPE, languageVersionSettings, dataFlowValueFactory
             )
             val expressionReceiver = ExpressionReceiver.create(expression, type.type, context.trace.bindingContext)
             val elementType = forLoopConventionsChecker.checkIterableConvention(expressionReceiver, context)

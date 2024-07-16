@@ -2,7 +2,10 @@
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,7 +19,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.nio.charset.Charset;
 
 final class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
@@ -63,21 +65,20 @@ final class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
     e.getPresentation().setEnabledAndVisible(true);
   }
 
-  ListPopup createPopup(VirtualFile vFile, Editor editor, Component componentParent) {
-    DataContext dataContext = wrapInDataContext(vFile, editor, componentParent);
+  @NotNull ListPopup createPopup(@NotNull VirtualFile vFile, @NotNull Editor editor) {
+    DataContext dataContext = wrapInDataContext(vFile, editor);
     DefaultActionGroup group = createActionGroup(vFile, editor, null, null, null);
     return JBPopupFactory.getInstance().createActionGroupPopup(getTemplatePresentation().getText(),
                                                                group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  private static DataContext wrapInDataContext(VirtualFile vFile, Editor editor, Component componentParent) {
-    DataContext parent = DataManager.getInstance().getDataContext(componentParent);
+  private static @NotNull DataContext wrapInDataContext(@NotNull VirtualFile vFile, @NotNull Editor editor) {
+    DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
     return SimpleDataContext.builder()
       .setParent(parent)
       .add(CommonDataKeys.VIRTUAL_FILE, vFile)
       .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{vFile})
       .add(CommonDataKeys.PROJECT, editor.getProject())
-      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor.getComponent())
       .build();
   }
 }

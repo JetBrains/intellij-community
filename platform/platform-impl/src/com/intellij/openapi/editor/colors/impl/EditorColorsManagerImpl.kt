@@ -101,7 +101,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     for (defaultScheme in DefaultColorSchemesManager.getInstance().allSchemes) {
       schemeManager.addScheme(defaultScheme)
     }
-    if (!isUnitTestOrHeadlessMode) {
+    if (!isHeadlessMode) {
       schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes))
     }
     schemeManager.loadSchemes()
@@ -267,7 +267,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     if (scheme == null) {
-      val schemeName = if (lookAndFeelInfo != null && lookAndFeelInfo.isDark) "Darcula" else DEFAULT_SCHEME_NAME
+      val schemeName = if (lookAndFeelInfo != null && lookAndFeelInfo.isDark) "Darcula" else getDefaultSchemeName()
       val defaultColorSchemeManager = DefaultColorSchemesManager.getInstance()
       scheme = defaultColorSchemeManager.getScheme(schemeName)
       if (scheme == null) {
@@ -281,7 +281,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     for ((schemeName, value) in additionalTextAttributes) {
       val scheme = schemeManager.findSchemeByName(schemeName)
       if (scheme !is AbstractColorsScheme) {
-        if (!isUnitTestOrHeadlessMode) {
+        if (!isHeadlessMode) {
           LOG.warn("Cannot find scheme: $schemeName from plugins: " +
                    value.joinToString(separator = ";") { it.pluginDescriptor.getPluginId().idString })
         }
@@ -307,7 +307,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     // It is reasonable to fetch attributes from a Default color scheme.
     // Otherwise, if we launch IDE and then try to switch from a custom colors scheme (e.g., with a dark background) to the default one.
     // The editor will show incorrect highlighting with "traces" of a color scheme which was active during IDE startup.
-    return getScheme(if (dark) "Darcula" else EditorColorsScheme.DEFAULT_SCHEME_NAME)?.getAttributes(key)
+    return getScheme(if (dark) "Darcula" else EditorColorsScheme.getDefaultSchemeName())?.getAttributes(key)
   }
 
   override fun addColorScheme(scheme: EditorColorsScheme) {
@@ -374,12 +374,14 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }.getOrLogException(LOG)
   }
 
-  override fun getGlobalScheme(): EditorColorsScheme {
+  override fun getGlobalScheme(): EditorColorsScheme = activeVisibleScheme ?: getDefaultScheme()
+
+  override fun getActiveVisibleScheme(): EditorColorsScheme? {
     val scheme = schemeManager.activeScheme
     if (scheme is AbstractColorsScheme && !scheme.isReadOnly && !scheme.isVisible) {
-      return getDefaultScheme()
+      return null
     }
-    return scheme?.let { getEditableCopy(it) } ?: scheme ?: getDefaultScheme()
+    return scheme?.let { getEditableCopy(it) } ?: scheme
   }
 
   private fun getDefaultScheme(): EditorColorsScheme {
@@ -555,13 +557,20 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     override fun onCurrentSchemeSwitched(oldScheme: EditorColorsScheme?,
                                          newScheme: EditorColorsScheme?,
                                          processChangeSynchronously: Boolean) {
+      // the method receives the base scheme as the argument, but the actual scheme might be different
+      val actualNewScheme = if (schemeManager.activeScheme == newScheme) {
+        activeVisibleScheme
+      }
+      else {
+        newScheme
+      }
       if (processChangeSynchronously) {
-        handleCurrentSchemeSwitched(newScheme)
+        handleCurrentSchemeSwitched(actualNewScheme)
       }
       else {
         // don't do heavy operations right away
         ApplicationManager.getApplication().invokeLater {
-          handleCurrentSchemeSwitched(newScheme)
+          handleCurrentSchemeSwitched(actualNewScheme)
         }
       }
     }
@@ -572,7 +581,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     override val schemeExtension: @NonNls String
-      get() = COLOR_SCHEME_FILE_EXTENSION
+      get() = getColorSchemeFileExtension()
 
     override fun isSchemeEqualToBundled(scheme: EditorColorsSchemeImpl): Boolean {
       if (!scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
@@ -586,7 +595,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     override fun reloaded(schemeManager: SchemeManager<EditorColorsScheme>, schemes: Collection<EditorColorsScheme>) {
-      if (!isUnitTestOrHeadlessMode) {
+      if (!isHeadlessMode) {
         schemeManager.loadBundledSchemes(createLoadBundledSchemeRequests(additionalTextAttributes))
       }
       initEditableDefaultSchemesCopies()
@@ -597,8 +606,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 }
 
-private val isUnitTestOrHeadlessMode: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()
+private val isHeadlessMode: Boolean
+  get() = ApplicationManager.getApplication().isHeadlessEnvironment()
 
 private fun collectAdditionalTextAttributesEPs(): MutableMap<String, MutableList<AdditionalTextAttributesEP>> {
   val result = HashMap<String, MutableList<AdditionalTextAttributesEP>>()

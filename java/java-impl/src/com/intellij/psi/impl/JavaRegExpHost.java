@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.module.Module;
@@ -159,9 +159,8 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     return ref.isNamedGroupRef() && hasAtLeastJdkVersion(ref, JavaSdkVersion.JDK_1_7);
   }
 
-  @NotNull
   @Override
-  public EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+  public @NotNull EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
     if (!hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7)) {
       return EMPTY_NAMED_GROUP_TYPES;
     }
@@ -216,8 +215,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     return getJavaVersion(element).isAtLeast(version);
   }
 
-  @NotNull
-  private static JavaSdkVersion getJavaVersion(PsiElement element) {
+  private static @NotNull JavaSdkVersion getJavaVersion(PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
@@ -346,9 +344,8 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     return myPropertyNames;
   }
 
-  @Nullable
   @Override
-  public String getPropertyDescription(@Nullable String name) {
+  public @Nullable String getPropertyDescription(@Nullable String name) {
     if (StringUtil.isEmptyOrSpaces(name)) {
       return null;
     }

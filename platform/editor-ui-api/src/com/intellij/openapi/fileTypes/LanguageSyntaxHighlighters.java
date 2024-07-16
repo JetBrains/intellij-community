@@ -4,13 +4,20 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.KeyedLazyInstance;
+import org.jetbrains.annotations.ApiStatus;
 
 public final class LanguageSyntaxHighlighters extends LanguageExtension<SyntaxHighlighter> {
+
+  @ApiStatus.Internal
   public static final ExtensionPointName<KeyedLazyInstance<SyntaxHighlighter>> EP_NAME = ExtensionPointName.create("com.intellij.lang.syntaxHighlighter");
 
   private LanguageSyntaxHighlighters() {
     super(EP_NAME);
   }
 
-  public static final LanguageSyntaxHighlighters INSTANCE = new LanguageSyntaxHighlighters();
+  private static final LanguageSyntaxHighlighters INSTANCE = new LanguageSyntaxHighlighters();
+
+  public static LanguageSyntaxHighlighters getInstance() {
+    return INSTANCE;
+  }
 }

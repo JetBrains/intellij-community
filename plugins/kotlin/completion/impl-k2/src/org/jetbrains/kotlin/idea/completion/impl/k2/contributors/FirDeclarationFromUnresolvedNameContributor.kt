@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.completion.contributors
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
@@ -33,7 +33,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
-    context(KtAnalysisSession)
+    context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
@@ -50,7 +50,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun processReference(
         referenceScope: KtElement,
         currentDeclarationInFakeFile: KtNamedDeclaration,
@@ -74,7 +74,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun shouldOfferCompletion(unresolvedRef: KtNameReferenceExpression, currentDeclaration: KtNamedDeclaration): Boolean {
         val refExprParent = unresolvedRef.parent
         val receiver = if (refExprParent is KtCallExpression) {
@@ -82,33 +82,33 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         } else {
             unresolvedRef.getReceiverForSelector()
         }
-        return when (val symbol = currentDeclaration.getSymbol()) {
-            is KtCallableSymbol -> when {
+        return when (val symbol = currentDeclaration.symbol) {
+            is KaCallableSymbol -> when {
                 refExprParent is KtUserType -> false
 
                 // If current declaration is a function, we only offer names of unresolved function calls. For property declarations, we
                 // always offer an unresolved usage because a property may be called if the object has an `invoke` method.
-                refExprParent !is KtCallableReferenceExpression && refExprParent !is KtCallExpression && symbol is KtFunctionLikeSymbol -> false
+                refExprParent !is KtCallableReferenceExpression && refExprParent !is KtCallExpression && symbol is KaFunctionSymbol -> false
 
                 receiver != null -> {
-                    val actualReceiverType = receiver.getKtType() ?: return false
+                    val actualReceiverType = receiver.expressionType ?: return false
                     val expectedReceiverType = getReceiverType(symbol) ?: return false
 
                     // FIXME: this check does not work with generic types (i.e. List<String> and List<T>)
-                    actualReceiverType isSubTypeOf expectedReceiverType
+                    actualReceiverType.isSubTypeOf(expectedReceiverType)
                 }
                 else -> {
                     // If there is no explicit receiver at call-site, we check if any implicit receiver at call-site matches the extension
                     // receiver type for the current declared symbol
                     val extensionReceiverType = symbol.receiverType ?: return true
-                    getImplicitReceiverTypesAtPosition(unresolvedRef).any { it isSubTypeOf extensionReceiverType }
+                    getImplicitReceiverTypesAtPosition(unresolvedRef).any { it.isSubTypeOf(extensionReceiverType) }
                 }
             }
-            is KtClassOrObjectSymbol -> when {
+            is KaClassSymbol -> when {
                 receiver != null -> false
                 refExprParent is KtUserType -> true
-                refExprParent is KtCallExpression -> symbol.classKind == KtClassKind.CLASS
-                else -> symbol.classKind == KtClassKind.OBJECT
+                refExprParent is KtCallExpression -> symbol.classKind == KaClassKind.CLASS
+                else -> symbol.classKind == KaClassKind.OBJECT
             }
             else -> false
         }
@@ -119,9 +119,9 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         return qualifiedExpression.receiverExpression
     }
 
-    context(KtAnalysisSession)
-    private fun getReceiverType(symbol: KtCallableSymbol): KtType? {
-        return symbol.receiverType ?: (symbol as? KtCallableSymbol)?.getDispatchReceiverType()
+    context(KaSession)
+    private fun getReceiverType(symbol: KaCallableSymbol): KaType? {
+        return symbol.receiverType ?: (symbol as? KaCallableSymbol)?.dispatchReceiverType
     }
 
     private fun PsiElement.getCurrentDeclarationAtCaret(): KtNamedDeclaration? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.diagnostic.debug
@@ -40,20 +40,20 @@ internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl:
   override fun createSerializer(fileUrl: String,
                                 entitySource: JpsProjectFileEntitySource.FileInDirectory,
                                 virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<LibraryEntity> {
-    return JpsLibraryEntitiesSerializer(virtualFileManager.getOrCreateFromUri(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
+    return JpsLibraryEntitiesSerializer(virtualFileManager.getOrCreateFromUrl(fileUrl), entitySource, LibraryTableId.ProjectLibraryTableId)
   }
 
   override fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage, configLocation: JpsProjectConfigLocation) {
     builder.entities(LibraryEntity::class.java).forEach {
       if (it.tableId == LibraryTableId.ProjectLibraryTableId) {
-        builder.modifyEntity(it) {
+        builder.modifyLibraryEntity(it) {
           this.entitySource = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
         }
       }
     }
     builder.entities(LibraryPropertiesEntity::class.java).forEach {
       if (it.library.tableId == LibraryTableId.ProjectLibraryTableId) {
-        builder.modifyEntity(it) {
+        builder.modifyLibraryPropertiesEntity(it) {
           this.entitySource = it.library.entitySource
         }
       }
@@ -135,7 +135,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
     reader: JpsFileContentReader,
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager
-  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTime {
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> = loadEntitiesTimeMs.addMeasuredTime {
     val libraryTableTag = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) }
                             .onFailure { return@addMeasuredTime LoadingResult(emptyMap(), null) }
                             .getOrThrow() ?: return@addMeasuredTime LoadingResult(emptyMap(), null)
@@ -159,13 +159,14 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
   @Suppress("UNCHECKED_CAST")
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
                                     orphanage: MutableEntityStorage,
-                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
-    val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity>) ?: emptyList()
+                                    newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>) {
+    val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity.Builder>) ?: emptyList()
     libraries.forEach {
-      if (it.symbolicId in builder) {
+      val symbolicId = LibraryId(it.name, it.tableId)
+      if (symbolicId in builder) {
         thisLogger().error("""Error during entities loading
             |Entity with this library id already exists.
-            |Library id: ${it.symbolicId}
+            |Library id: ${symbolicId}
             |fileUrl: ${fileUrl.presentableUrl}
             |library table id: ${it.tableId}
             |internal entity source: ${internalEntitySource}
@@ -204,9 +205,10 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
       if (legacyName != null) {
         libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
       }
+      val libraryTypeId = library.typeId
       val customProperties = library.libraryProperties
-      if (customProperties != null) {
-        libraryTag.setAttribute(TYPE_ATTRIBUTE, customProperties.libraryType)
+      if (customProperties != null && libraryTypeId != null) {
+        libraryTag.setAttribute(TYPE_ATTRIBUTE, libraryTypeId.name)
         val propertiesXmlTag = customProperties.propertiesXmlTag
         if (propertiesXmlTag != null) {
           libraryTag.addContent(JDOMUtil.load(propertiesXmlTag))
@@ -257,7 +259,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
     }
 
     fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, source: EntitySource,
-                    virtualFileManager: VirtualFileUrlManager): LibraryEntity {
+                    virtualFileManager: VirtualFileUrlManager): LibraryEntity.Builder {
       val roots = ArrayList<LibraryRoot>()
       val excludedRoots = ArrayList<VirtualFileUrl>()
       val jarDirectories = libraryElement.getChildren(JAR_DIRECTORY_TAG).associateBy(
@@ -278,7 +280,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
           "excluded" -> excludedRoots.addAll(
             childElement.getChildren(JpsJavaModelSerializerExtension.ROOT_TAG)
               .map { it.getAttributeValueStrict(JpsModuleRootModelSerializer.URL_ATTRIBUTE) }
-              .map { virtualFileManager.getOrCreateFromUri(it) }
+              .map { virtualFileManager.getOrCreateFromUrl(it) }
           )
           PROPERTIES_TAG -> {
             properties = JDOMUtil.write(childElement)
@@ -290,18 +292,19 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
             for (rootTag in childElement.getChildren(JpsJavaModelSerializerExtension.ROOT_TAG)) {
               val url = rootTag.getAttributeValueStrict(JpsModuleRootModelSerializer.URL_ATTRIBUTE)
               val inclusionOptions = jarDirectories[Pair(rootType, url)] ?: LibraryRoot.InclusionOptions.ROOT_ITSELF
-              roots.add(LibraryRoot(virtualFileManager.getOrCreateFromUri(url), libraryRootTypes[rootType]!!, inclusionOptions))
+              roots.add(LibraryRoot(virtualFileManager.getOrCreateFromUrl(url), libraryRootTypes[rootType]!!, inclusionOptions))
             }
           }
         }
       }
       val libProperties = type?.let {
-        LibraryPropertiesEntity(type, source) {
+        LibraryPropertiesEntity(source) {
           this.propertiesXmlTag = properties
         }
       }
       val excludes = excludedRoots.map { ExcludeUrlEntity(it, source) }
       val libraryEntity = LibraryEntity(name, libraryTableId, roots, source) {
+        this.typeId = type?.let { LibraryTypeId(it) }
         this.excludedRoots = excludes
         this.libraryProperties = libProperties
       }

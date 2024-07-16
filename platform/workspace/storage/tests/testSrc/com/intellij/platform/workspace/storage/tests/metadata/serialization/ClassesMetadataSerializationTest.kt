@@ -22,11 +22,17 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
 
     val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
     Assert.assertEquals("""
-      Start comparing cache: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass"     with current: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass"
-        Start comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass${"$"}SecondKeyPropDataClass"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"
-          Cache: supertypes = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass, Current: supertypes = com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass    Result: not equal
-        End comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"    Result: not equal
-      End comparing cache: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass"     with current: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass"    Result: not equal
+      Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClassEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClassEntity"
+        Start comparing cache: Own property "someData"     with current: Own property "someData"
+          Start comparing cache: Custom type     with current: Custom type
+            Start comparing cache: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass"     with current: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass"
+              Start comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"
+                Cache: supertypes = com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass, Current: supertypes = com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass    Result: not equal
+              End comparing cache: Final class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"     with current: Final class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass${'$'}SecondKeyPropDataClass"    Result: not equal
+            End comparing cache: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClass"     with current: Abstract class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClass"    Result: not equal
+          End comparing cache: Custom type     with current: Custom type    Result: not equal
+        End comparing cache: Own property "someData"     with current: Own property "someData"    Result: not equal
+      End comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SimpleSealedClassEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SimpleSealedClassEntity"    Result: not equal
 
     """.trimIndent(), cacheDiff)
   }
@@ -95,9 +101,15 @@ class ClassesMetadataSerializationTest: MetadataSerializationTest() {
 
     val cacheDiff = calculateCacheDiff(builder.toSnapshot(), VirtualFileUrlManagerImpl())
     Assert.assertEquals("""
-      Start comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum"
-        Cache: enum entries = FIFTH, Current: enum entries = SECOND    Result: not equal
-      End comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum"    Result: not equal
+      Start comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEntity"
+        Start comparing cache: Own property "someEnum"     with current: Own property "someEnum"
+          Start comparing cache: Custom type     with current: Custom type
+            Start comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum"
+              Cache: enum entries = FIFTH, Current: enum entries = SECOND    Result: not equal
+            End comparing cache: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum"     with current: Enum class "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEnum"    Result: not equal
+          End comparing cache: Custom type     with current: Custom type    Result: not equal
+        End comparing cache: Own property "someEnum"     with current: Own property "someEnum"    Result: not equal
+      End comparing cache: Entity "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEntity"     with current: Entity "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetEnumEntity"    Result: not equal
 
     """.trimIndent(), cacheDiff)
   }

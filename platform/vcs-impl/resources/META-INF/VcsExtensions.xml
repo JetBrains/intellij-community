@@ -45,6 +45,8 @@
     <!-- preload only for performance reasons -->
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl" preload="notHeadless"/>
+    <!--suppress LightServiceMigrationXML - see DefaultProjectStoreTest (IDE needs to know correct Storage without service being loaded) -->
+    <projectService serviceImplementation="com.intellij.openapi.vcs.impl.OptionsAndConfirmationsHolder"/>
     <projectService serviceInterface="com.intellij.vcs.console.VcsConsoleTabService"
                     serviceImplementation="com.intellij.vcs.console.VcsConsoleTabServiceImpl"
                     headlessImplementation="com.intellij.vcs.console.MockVcsConsoleTabService"/>
@@ -73,8 +75,6 @@
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool$Unified"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool$SideBySide"/>
-    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
-    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Simple"/>
     <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool$Unified"/>
     <projectService serviceInterface="com.intellij.diff.tools.combined.search.CombinedDiffSearchProvider"
@@ -84,13 +84,16 @@
     <editorActionHandler action="Find"
                          implementationClass="com.intellij.openapi.diff.impl.combined.search.CombinedDiffSearchEditorActionHandler"
                          id="combinedDiffFind" order="first"/>
+    <editorActionHandler action="Replace"
+                         implementationClass="com.intellij.openapi.diff.impl.combined.search.CombinedDiffReplaceEditorActionHandler"
+                         id="combinedDiffReplace" order="first"/>
     <editorActionHandler action="FindNext" implementationClass="com.intellij.openapi.diff.impl.combined.search.SearchNextHandler"
                          id="combinedDiffFindNext" order="first"/>
     <editorActionHandler action="FindPrevious" implementationClass="com.intellij.openapi.diff.impl.combined.search.SearchPreviousHandler"
                          id="combinedDiffFindPrevious" order="first"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.vcs.changes.patch.tool.DiffPatchFileEditorProvider"
-                        id="DiffPatchFileEditorProvider" fileType="PATCH" isDocumentRequired="true"/>
+                        id="DiffPatchFileEditorProvider" fileType="PATCH"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
@@ -233,7 +236,7 @@
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.shelf.ShelfFileWritingAccessProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
-    <customFileDropHandler implementation="com.intellij.openapi.vcs.changes.patch.PatchFileDropHandler"/>
+    <fileDropHandler implementation="com.intellij.openapi.vcs.changes.patch.PatchFileDropHandler"/>
 
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 
@@ -249,12 +252,14 @@
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
     <search.topHitProvider implementation="com.intellij.openapi.vcs.actions.VcsTopHitProvider"/>
     <actionPromoter implementation="com.intellij.openapi.vcs.actions.VcsActionPromoter"/>
+    <actionPromoter implementation="com.intellij.diff.tools.combined.CombinedDiffActionPromoter"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
 
     <getDataRule key="VCS_VIRTUAL_FILES" implementationClass="com.intellij.openapi.vcs.VcsVirtualFilesRule"/>
     <getDataRule key="VCS_REVISION_NUMBERS" implementationClass="com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule"/>
-    <getDataRule key="vcs.ChangesSelection" implementationClass="com.intellij.openapi.vcs.changes.VcsChangesSelectionRule" type="fast"/>
+    <uiDataRule implementation="com.intellij.openapi.vcs.ui.VcsUiDataRule"/>
+
     <jbProtocolCommand implementation="com.intellij.openapi.vcs.checkout.JBProtocolCheckoutCommand"/>
     <diff.DiffExtension implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$MyDiffExtension"/>
 
@@ -295,7 +300,7 @@
 
     <openapi.vcs.changes.vcsPreservingExecutor implementation="com.intellij.openapi.vcs.changes.DefaultPreservingExecutor" order="last" />
 
-    <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$RestoreUpdateTreeStartUpActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$ActivateVcsesStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl$MyStartupActivity"/>

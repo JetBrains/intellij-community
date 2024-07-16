@@ -5,9 +5,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 
+@ApiStatus.Internal
 class JpsProjectLoadingManagerImpl : JpsProjectLoadingManager {
   @TestOnly
   fun isProjectLoaded(): Boolean = projectLoaded.get()

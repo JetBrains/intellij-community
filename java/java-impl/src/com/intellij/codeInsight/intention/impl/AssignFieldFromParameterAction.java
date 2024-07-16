@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -13,7 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,11 +30,13 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
   private final boolean myIsFix;
 
   public AssignFieldFromParameterAction() {
-    this(false);
-  }
-  public AssignFieldFromParameterAction(boolean isFix) {
     super(PsiParameter.class);
-    myIsFix = isFix;
+    myIsFix = false;
+  }
+  
+  public AssignFieldFromParameterAction(@NotNull PsiParameter parameter) {
+    super(parameter);
+    myIsFix = true;
   }
 
   @Override
@@ -68,8 +73,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.assign.field.from.parameter.family");
   }
 
@@ -81,8 +85,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
     }
   }
 
-  @Nullable
-  private static PsiField findFieldToAssign(@NotNull Project project, @NotNull PsiParameter myParameter) {
+  private static @Nullable PsiField findFieldToAssign(@NotNull Project project, @NotNull PsiParameter myParameter) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);

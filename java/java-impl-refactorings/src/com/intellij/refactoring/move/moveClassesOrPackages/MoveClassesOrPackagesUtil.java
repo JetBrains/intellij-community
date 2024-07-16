@@ -284,17 +284,6 @@ public final class MoveClassesOrPackagesUtil {
   }
 
   /**
-   * @deprecated use CommonMoveClassesOrPackagesUtil.buildDirectoryList
-   */
-  @Deprecated(forRemoval = true)
-  public static void buildDirectoryList(@NotNull PackageWrapper aPackage,
-                                        @NotNull List<? extends VirtualFile> contentSourceRoots,
-                                        @NotNull LinkedHashSet<? super PsiDirectory> targetDirectories,
-                                        @NotNull Map<PsiDirectory, String> relativePathsToCreate) {
-    CommonMoveClassesOrPackagesUtil.buildDirectoryList(aPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
-  }
-
-  /**
    * @deprecated use CommonMoveClassesOrPackagesUtil.chooseSourceRoot
    */
   @Deprecated

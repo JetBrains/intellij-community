@@ -262,8 +262,7 @@ public final class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentio
       LOG.assertTrue(toTypeClass != null);
 
       final PsiElement parent = context.getParent();
-      if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression expression = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression expression) {
         final IElementType tokenType = expression.getOperationTokenType();
         if (tokenType == JavaTokenType.EQ) {
           return findSimpleAssignmentConversion(expression);
@@ -272,13 +271,11 @@ public final class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentio
         final String binarySign = sign.substring(0, sign.length() - 1);
         return findCompoundAssignmentConversion(from, expression, sign, binarySign);
       }
-      else if (parent instanceof PsiPostfixExpression) {
-        final PsiPostfixExpression expression = (PsiPostfixExpression)parent;
+      else if (parent instanceof PsiPostfixExpression expression) {
         final TypeConversionDescriptor conversion = getUpdateConversion(expression, expression.getOperationSign(), true);
         if (conversion != null) return conversion;
       }
-      else if (parent instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression expression = (PsiPrefixExpression)parent;
+      else if (parent instanceof PsiPrefixExpression expression) {
         final TypeConversionDescriptor conversion = getUpdateConversion(expression, expression.getOperationSign(), false);
         if (conversion != null) return conversion;
       }

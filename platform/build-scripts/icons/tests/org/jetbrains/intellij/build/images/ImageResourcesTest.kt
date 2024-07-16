@@ -227,7 +227,9 @@ private class MyIconClassFileChecker(private val projectHome: Path, private val 
     generator.getModifiedClasses().forEach { (module, file, details) ->
       failures.add(FailedTest(module, "icon class file should be regenerated using " +
                                       "\"Icons processing | Generate icon classes\" run configuration, " +
-                                      "or new icons be ignored via 'icon-robots.txt'", file, details))
+                                      "or make these files ignored by adding them into 'icon-robots.txt' file. " +
+                                      "You can create the new file or add the icons into the existing one if it has already been there. " +
+                                      "Please, search for 'icon-robots.txt' examples in the project to know the format.", file, details))
     }
   }
 }

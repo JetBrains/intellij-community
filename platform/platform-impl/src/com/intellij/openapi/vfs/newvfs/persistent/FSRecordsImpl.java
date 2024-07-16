@@ -241,14 +241,14 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   public static int currentImplementationVersion() {
-    //bumped main version (60 -> 61) because of PFSRecords header enlargement (HEADER_ERRORS_ACCUMULATED)
-    final int mainVFSFormatVersion = 61;
+    //bumped main version (63 -> 64) because AppendOnlyLog ids assignment algo changed
+    final int mainVFSFormatVersion = 64;
     //@formatter:off (nextMask better be aligned)
-    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
+    return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.storageImplementation().getId()), /* acceptable range is [0..255] */ 8,
            nextMask(!USE_CONTENT_STORAGE_OVER_MMAPPED_FILE,  //former USE_CONTENT_HASHES=true, this is why negation
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
            nextMask(PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED && USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE,//pageSize was changed on old<->new transition
-           nextMask(true,  //former 'inline attributes', feel free to re-use
+           nextMask(true,  // former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
            nextMask(USE_ATTRIBUTES_OVER_MMAPPED_FILE, 
            nextMask(true,  // former USE_SMALL_ATTR_TABLE, feel free to re-use
@@ -704,8 +704,7 @@ public final class FSRecordsImpl implements Closeable {
   /**
    * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
    */
-  @NotNull
-  ListResult list(int parentId) {
+  public @NotNull ListResult list(int parentId) {
     try {
       return treeAccessor.doLoadChildren(parentId);
     }
@@ -1014,7 +1013,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int getNameIdByFileId(int fileId) {
+  public int getNameIdByFileId(int fileId) {
     try {
       checkNotClosed();
       return connection.getRecords().getNameId(fileId);
@@ -1036,7 +1035,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  void setName(int fileId, @NotNull String name) {
+  public void setName(int fileId, @NotNull String name) {
     try {
       checkNotClosed();
       int nameId = getNameId(name);
@@ -1419,23 +1418,6 @@ public final class FSRecordsImpl implements Closeable {
     invertedNameIndexLazy.get().checkConsistency();
   }
 
-  @NotNull
-  String describeAlreadyCreatedFile(int fileId,
-                                    int nameId) {
-    //RC: Actually, this method is better to be in VfsData class from there it is called.
-    //    The only non-public method needed is .list(parentId) -- all other methods are
-    //    open to be called from VfsData.
-    int parentId = getParent(fileId);
-    String description = "fileId=" + fileId +
-                         "; nameId=" + nameId + "(" + getNameByNameId(nameId) + ")" +
-                         "; parentId=" + parentId;
-    if (parentId > 0) {
-      description += "; parent.name=" + getName(parentId)
-                     + "; parent.children=" + list(parentId) + "; ";
-    }
-    return description;
-  }
-
   public int corruptionsDetected() {
     return connection.corruptionsDetected();
   }
@@ -1445,7 +1427,6 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   //========== accessors for diagnostics & sanity checks: ========================
-
 
   public PersistentFSConnection connection() {
     return connection;

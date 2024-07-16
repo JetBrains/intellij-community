@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeyValueExpression;
 import com.jetbrains.python.psi.types.PyTupleType;
@@ -15,6 +16,11 @@ import java.util.Arrays;
 public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValueExpression {
   public PyKeyValueExpressionImpl(ASTNode astNode) {
     super(astNode);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyKeyValueExpression(this);
   }
 
   @Override

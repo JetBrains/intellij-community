@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ public final class RawRuntimeModuleRepositoryData {
   /**
    * Use {@link RuntimeModuleRepositorySerialization#loadFromJar(Path)} to create an instance in production code.
    */
+  @ApiStatus.Internal
   public RawRuntimeModuleRepositoryData(@NotNull Map<String, RawRuntimeModuleDescriptor> descriptors, @NotNull Path basePath, @Nullable String mainPluginModuleId) {
     myDescriptors = descriptors;
     myBasePath = basePath;

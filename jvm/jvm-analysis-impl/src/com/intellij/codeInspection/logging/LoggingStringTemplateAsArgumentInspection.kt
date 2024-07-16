@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -6,8 +6,6 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.logging.LoggingUtil.Companion
 import com.intellij.codeInspection.logging.LoggingUtil.Companion.LOG_MATCHERS
 import com.intellij.codeInspection.logging.LoggingUtil.Companion.countPlaceHolders
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.getLoggerLevel
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.getLoggerType
 import com.intellij.codeInspection.logging.LoggingUtil.Companion.isGuarded
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.lang.Language
@@ -27,33 +25,34 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectionTool() {
 
   @JvmField
-  var myLimitLevelType: LimitLevelType = LimitLevelType.DEBUG_AND_LOWER
+  var myLimitLevelType: LoggingUtil.LimitLevelType = LoggingUtil.LimitLevelType.DEBUG_AND_LOWER
 
   @JvmField
   var mySkipPrimitives: Boolean = true
 
-  enum class LimitLevelType {
-    ALL, WARN_AND_LOWER, INFO_AND_LOWER, DEBUG_AND_LOWER, TRACE
-  }
+  @JvmField
+  var mySkipWithTheOnlyException: Boolean = false
 
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
       OptPane.dropdown(
         "myLimitLevelType",
         JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.warn.on.label"),
-        OptPane.option(LimitLevelType.ALL,
+        OptPane.option(LoggingUtil.LimitLevelType.ALL,
                        JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.all.levels.option")),
-        OptPane.option(LimitLevelType.WARN_AND_LOWER,
+        OptPane.option(LoggingUtil.LimitLevelType.WARN_AND_LOWER,
                        JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.warn.level.and.lower.option")),
-        OptPane.option(LimitLevelType.INFO_AND_LOWER,
+        OptPane.option(LoggingUtil.LimitLevelType.INFO_AND_LOWER,
                        JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.info.level.and.lower.option")),
-        OptPane.option(LimitLevelType.DEBUG_AND_LOWER,
+        OptPane.option(LoggingUtil.LimitLevelType.DEBUG_AND_LOWER,
                        JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.debug.level.and.lower.option")),
-        OptPane.option(LimitLevelType.TRACE,
+        OptPane.option(LoggingUtil.LimitLevelType.TRACE,
                        JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.trace.level.option")),
       ),
       OptPane.checkbox("mySkipPrimitives",
-                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.skip.on.primitives"))
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.skip.on.primitives")),
+      OptPane.checkbox("mySkipWithTheOnlyException",
+                       JvmAnalysisBundle.message("jvm.inspection.logging.string.template.as.argument.skip.on.only.exception"))
     )
   }
 
@@ -71,7 +70,7 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (!LOG_MATCHERS.uCallMatches(node)) return true
-      if (skipAccordingLevel(node)) return true
+      if (LoggingUtil.skipAccordingLevel(node, myLimitLevelType)) return true
       val valueArguments = node.valueArguments
       val uMethod = node.resolve().toUElement() as? UMethod ?: return true
       val uastParameters = uMethod.uastParameters
@@ -104,7 +103,7 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
           parts.addAll(stringExpression.operands)
         }
         else {
-          parts.addAll(stringExpression.operands.flatMap { operand->
+          parts.addAll(stringExpression.operands.flatMap { operand ->
             if (isPattern(operand) && operand is UPolyadicExpression) {
               operand.operands
             }
@@ -119,13 +118,12 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
         return true
       }
 
-      //strange behavior for last parameter as exception. let's ignore this case
       val injected = parts.filter { it !is ULiteralExpression }
-      if ((injected.size == 1 &&
-           InheritanceUtil.isInheritor(injected.first().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE)) ||
-          ((valueArguments.lastIndex - indexStringExpression) == 1 &&
-          InheritanceUtil.isInheritor(valueArguments.last().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE))
-        ) {
+      if ((injected.isNotEmpty() &&
+           InheritanceUtil.isInheritor(injected.last().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE)) ||
+          (mySkipWithTheOnlyException && (valueArguments.lastIndex - indexStringExpression) == 1 &&
+           InheritanceUtil.isInheritor(valueArguments.last().getExpressionType(), CommonClassNames.JAVA_LANG_THROWABLE))
+      ) {
         return true
       }
 
@@ -144,25 +142,6 @@ class LoggingStringTemplateAsArgumentInspection : AbstractBaseUastLocalInspectio
 
     private fun allExpressionsInPatternArePrimitivesOrWrappers(operands: List<UExpression>): Boolean {
       return operands.all { it.getExpressionType().isPrimitiveOrWrappers() }
-    }
-
-    private fun skipAccordingLevel(node: UCallExpression): Boolean {
-      if (myLimitLevelType != LimitLevelType.ALL) {
-        val loggerLevel = getLoggerLevel(node)
-        if (loggerLevel == null) return true
-        val notSkip: Boolean = when (loggerLevel) {
-          Companion.LevelType.FATAL -> false
-          Companion.LevelType.ERROR -> false
-          Companion.LevelType.WARN -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
-          Companion.LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
-          Companion.LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
-          Companion.LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal
-        }
-        return !notSkip
-      }
-      else {
-        return false
-      }
     }
 
     /**
@@ -235,7 +214,7 @@ private class ConvertToPlaceHolderQuickfix(private val indexStringExpression: In
     var indexOuterPlaceholder = indexStringExpression + 1
     if (argument is UPolyadicExpression) {
       val operands = flatPatterns(argument)
-      val loggerType = getLoggerType(uCallExpression)
+      val loggerType = LoggingUtil.getLoggerType(uCallExpression)
       for (operand in operands) {
         if (operand is ULiteralExpression && operand.isString) {
           val text = operand.value.toString()

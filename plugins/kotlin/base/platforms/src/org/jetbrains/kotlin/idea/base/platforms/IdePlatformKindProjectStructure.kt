@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.platforms
 
 import com.intellij.openapi.components.Service
@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
-import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
+import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.utils.PathUtil
 import java.util.regex.Pattern
 
@@ -65,7 +65,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
         fun getInstance(project: Project): IdePlatformKindProjectStructure = project.service()
 
         private val PLATFORM_EXTENSIONS = mapOf(
-            MetadataPackageFragment.METADATA_FILE_EXTENSION to CommonIdePlatformKind,
+            METADATA_FILE_EXTENSION to CommonIdePlatformKind,
             "js" to JsIdePlatformKind,
             "kjsm" to JsIdePlatformKind
         )
@@ -78,7 +78,9 @@ class IdePlatformKindProjectStructure(private val project: Project) {
             return when {
                 file.isKlibLibraryRootForPlatform(CommonPlatforms.defaultCommonPlatform) -> CommonIdePlatformKind
                 file.isKlibLibraryRootForPlatform(JsPlatforms.defaultJsPlatform) -> JsIdePlatformKind
-                file.isKlibLibraryRootForPlatform(WasmPlatforms.Default) -> WasmIdePlatformKind
+                file.isKlibLibraryRootForPlatform(WasmPlatforms.wasmWasi) -> WasmWasiIdePlatformKind
+                file.isKlibLibraryRootForPlatform(WasmPlatforms.wasmJs) -> WasmJsIdePlatformKind
+                file.isKlibLibraryRootForPlatform(WasmPlatforms.unspecifiedWasmPlatform) -> WasmJsIdePlatformKind
                 file.isKlibLibraryRootForPlatform(NativePlatforms.unspecifiedNativePlatform) -> NativeIdePlatformKind
                 else -> null
             }
@@ -89,7 +91,8 @@ class IdePlatformKindProjectStructure(private val project: Project) {
                 is CommonIdePlatformKind -> KotlinCommonLibraryKind
                 is JvmIdePlatformKind -> KotlinJvmEffectiveLibraryKind
                 is JsIdePlatformKind -> KotlinJavaScriptLibraryKind
-                is WasmIdePlatformKind -> KotlinWasmLibraryKind
+                is WasmJsIdePlatformKind -> KotlinWasmJsLibraryKind
+                is WasmWasiIdePlatformKind -> KotlinWasmWasiLibraryKind
                 is NativeIdePlatformKind -> KotlinNativeLibraryKind
                 else -> error("Unsupported platform kind: $platformKind")
             }

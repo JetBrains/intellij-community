@@ -206,7 +206,7 @@ public class Alarm implements Disposable {
   }
 
   void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
-    ChildContext childContext = AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : null;
+    ChildContext childContext = AppExecutorUtil.propagateContext() && !(request instanceof ContextAwareRunnable) ? Propagation.createChildContext() : null;
     Request requestToSchedule = new Request(request, modalityState, delayMillis, childContext);
     synchronized (LOCK) {
       checkDisposed();
@@ -365,9 +365,13 @@ public class Alarm implements Disposable {
         if (!myDisposed && task != null) {
           try (AccessToken ignored = ClientId.withClientId(myClientId)) {
             if (myChildContext != null) {
-              try (AccessToken ignored2 = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
-                QueueProcessor.runSafely(() -> myChildContext.runAsCoroutine(task));
-              }
+              QueueProcessor.runSafely(() -> {
+                myChildContext.runAsCoroutine(() -> {
+                  try (AccessToken ignored2 = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
+                    task.run();
+                  }
+                });
+              });
             }
             else {
               QueueProcessor.runSafely(task);

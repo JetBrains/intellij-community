@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 
-data class SnippetRenderingData(
+internal data class SnippetRenderingData(
   val project: Project,
   val language: Language,
   val selectionRange: TextRange,

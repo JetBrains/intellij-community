@@ -132,7 +132,6 @@ class JCefImageViewer(private val myFile: VirtualFile,
   override fun dispose() {
     ourCefClient.removeRequestHandler(myRequestHandler, myBrowser.cefBrowser)
     ourCefClient.removeLoadHandler(myLoadHandler, myBrowser.cefBrowser)
-    myViewerStateJSQuery.clearHandlers()
     myDocument.removeDocumentListener(this)
   }
 
@@ -236,8 +235,8 @@ class JCefImageViewer(private val myFile: VirtualFile,
     Disposer.register(this, myUIComponent)
     Disposer.register(this, myBrowser)
 
-    @Suppress("DEPRECATION")
-    myViewerStateJSQuery = JBCefJSQuery.create(myBrowser)
+    myViewerStateJSQuery = JBCefJSQuery.create(myBrowser as JBCefBrowserBase)
+    Disposer.register(this, myViewerStateJSQuery)
     myViewerStateJSQuery.addHandler { s: String ->
       val oldState = myState
       try {

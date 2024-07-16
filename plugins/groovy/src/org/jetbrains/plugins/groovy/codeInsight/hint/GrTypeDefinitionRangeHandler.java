@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-public class GrTypeDefinitionRangeHandler implements DeclarationRangeHandler<GrTypeDefinition>{
+public final class GrTypeDefinitionRangeHandler implements DeclarationRangeHandler<GrTypeDefinition>{
   @NotNull
   @Override
   public TextRange getDeclarationRange(@NotNull GrTypeDefinition aClass) {

@@ -3,12 +3,13 @@ package org.jetbrains.kotlin.base.fe10.analysis
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade.AnalysisMode
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -34,22 +35,22 @@ import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.util.CancellationChecker
 
-@OptIn(FrontendInternals::class)
+@OptIn(FrontendInternals::class, KaPlatformInterface::class)
 internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10AnalysisFacade {
 
     @OptIn(Frontend10ApiUsage::class)
-    override fun getAnalysisContext(ktModule: KtModule, token: KtLifetimeToken): Fe10AnalysisContext {
+    override fun getAnalysisContext(ktModule: KaModule, token: KaLifetimeToken): Fe10AnalysisContext {
         val moduleInfo = ktModule.moduleInfo
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo, ktModule.platform)
+        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo, ktModule.targetPlatform)
         return resolutionFacade.getAnalysisContext(token)
     }
 
-    override fun getAnalysisContext(element: KtElement, token: KtLifetimeToken): Fe10AnalysisContext {
+    override fun getAnalysisContext(element: KtElement, token: KaLifetimeToken): Fe10AnalysisContext {
         val resolutionFacade = element.getResolutionFacade()
         return resolutionFacade.getAnalysisContext(token)
     }
 
-    private fun ResolutionFacade.getAnalysisContext(token: KtLifetimeToken): Fe10AnalysisContext {
+    private fun ResolutionFacade.getAnalysisContext(token: KaLifetimeToken): Fe10AnalysisContext {
         return Fe10AnalysisContext(
             facade = this@IdeFe10AnalysisFacade,
             resolveSession = getFrontendService(ResolveSession::class.java),
@@ -97,7 +98,7 @@ internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10Analysi
         val kotlinCacheService = KotlinCacheService.getInstance(project)
 
         if (elements.size == 1) {
-            kotlinCacheService.getResolutionFacade(elements.single())
+            return kotlinCacheService.getResolutionFacade(elements.single())
         }
 
         val files = elements
@@ -131,7 +132,7 @@ internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10Analysi
         return kotlinCacheService.getResolutionFacade(files)
     }
 
-    override fun getOrigin(file: VirtualFile): KtSymbolOrigin {
-        return KtSymbolOrigin.SOURCE
+    override fun getOrigin(file: VirtualFile): KaSymbolOrigin {
+        return KaSymbolOrigin.SOURCE
     }
 }

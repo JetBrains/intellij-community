@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.spellchecker;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -10,8 +10,8 @@ import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PyStringFormatParser;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyStringElement;
@@ -75,9 +75,8 @@ public final class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
   private final StringLiteralTokenizer myStringLiteralTokenizer = new StringLiteralTokenizer();
   private final FormatStringTokenizer myFormatStringTokenizer = new FormatStringTokenizer();
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PyStringLiteralExpression) {
       final InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(element.getProject());
       if (element.getTextLength() >= 2 && injectionManager.getInjectedPsiFiles(element) != null) {

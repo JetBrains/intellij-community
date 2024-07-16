@@ -21,6 +21,7 @@ import io.grpc.protobuf.lite.ProtoLiteUtils;
 import io.grpc.stub.AbstractStub;
 import io.perfmark.PerfMark;
 import kotlin.KotlinVersion;
+import kotlin.coroutines.jvm.internal.DebugProbesKt;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public final class DaemonProcessRuntimeClasspath {
     kotlin.internal.jdk7.JDK7PlatformImplementations.class, // kotlin-stdlib-jdk7
     CoroutineScope.class, // kotlinx-coroutines-core
     FutureKt.class, // kotlinx-coroutines-jdk8
+    DebugProbesKt.class, // kotlin coroutine debug
 
     Grpc.class, // grpc-api
     ServerImpl.class, // grpc-core

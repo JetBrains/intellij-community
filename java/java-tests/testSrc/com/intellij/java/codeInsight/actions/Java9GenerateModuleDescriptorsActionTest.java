@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import kotlinx.coroutines.CoroutineScopeKt;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
 
+@NeedsIndex.SmartMode(reason = "The module descriptors generator is not supported in the dumb mode")
 public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTestCase {
   private MultiModuleProjectDescriptor myDescriptor;
 

@@ -1,10 +1,8 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.tools.projectWizard
 
+import com.intellij.openapi.progress.Cancellation
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionState
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
@@ -15,7 +13,10 @@ object Versions {
     // However, we are keeping these fields for API compatibility reasons
 
     private fun loadVersion(default: String, f: (KotlinWizardVersionState).() -> String?): Version {
-        val version = KotlinWizardVersionStore.getInstance().state?.let(f) ?: default
+        val store = Cancellation.forceNonCancellableSectionInClassInitializer {
+            KotlinWizardVersionStore.getInstance()
+        }
+        val version = store.state?.let(f) ?: default
         return Version.fromString(version)
     }
 

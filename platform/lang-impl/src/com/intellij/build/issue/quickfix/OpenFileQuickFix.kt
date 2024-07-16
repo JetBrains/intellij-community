@@ -13,6 +13,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -44,14 +46,26 @@ class OpenFileQuickFix(private val path: Path, private val search: String?) : Bu
     fun showFile(project: Project, path: Path, search: String?) {
       ApplicationManager.getApplication().invokeLater {
         val file = VfsUtil.findFileByIoFile(path.toFile(), false) ?: return@invokeLater
-        val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), false)
-        if (search == null || editor == null) return@invokeLater
-
-        val findModel = FindModel().apply { FindModel.initStringToFind(this, search) }
-        val findResult = FindManager.getInstance(project).findString(editor.document.charsSequence, 0, findModel, file)
-        val highlightManager = HighlightManager.getInstance(project)
-        HighlightUsagesHandler.highlightRanges(highlightManager, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, listOf(findResult))
+        doShowFile(project, file, search)
       }
+    }
+
+    @JvmStatic
+    fun showFile(project: Project, file: VirtualFile, search: String?) {
+      ApplicationManager.getApplication().invokeLater {
+        doShowFile(project, file, search)
+      }
+    }
+
+    @RequiresEdt
+    private fun doShowFile(project: Project, file: VirtualFile, search: String?) {
+      val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), false)
+      if (search == null || editor == null) return
+
+      val findModel = FindModel().apply { FindModel.initStringToFind(this, search) }
+      val findResult = FindManager.getInstance(project).findString(editor.document.charsSequence, 0, findModel, file)
+      val highlightManager = HighlightManager.getInstance(project)
+      HighlightUsagesHandler.highlightRanges(highlightManager, editor, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, listOf(findResult))
     }
   }
 }

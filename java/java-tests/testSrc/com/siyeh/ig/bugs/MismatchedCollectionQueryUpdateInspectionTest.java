@@ -41,6 +41,10 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightJavaInsp
   public void testMismatchedCollectionQueryUpdate() {
     doTest();
   }
+  
+  public void testUsedAssignmentResult() {
+    doTest();
+  }
 
   @NotNull
   @Override

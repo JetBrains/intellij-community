@@ -7,3 +7,5 @@ class InvokeContainer {
 fun test(k: InvokeContainer) {
     myInvoke(k::invoke)
 }
+
+// IGNORE_K2

@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 
-public class FlipConditionalIntention extends GrPsiUpdateIntention {
+public final class FlipConditionalIntention extends GrPsiUpdateIntention {
 
 
   @Override

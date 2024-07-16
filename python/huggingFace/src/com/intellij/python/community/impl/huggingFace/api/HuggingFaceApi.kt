@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.huggingFace.api
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -56,6 +57,16 @@ object HuggingFaceApi {
   private fun extractNextPageUrl(linkHeader: String?): String? {
     val nextLinkMatch = nextLinkRegex.find(linkHeader ?: "")
     return nextLinkMatch?.groupValues?.get(1)
+  }
+
+  suspend fun fetchDataForSingleModel(modelId: String): HuggingFaceEntityBasicApiData? {
+    val modelUrl = HuggingFaceURLProvider.fetchApiDataForModel(modelId)
+    val response = HuggingFaceHttpClient.downloadContentAndHeaders(modelUrl.toString()).getOrNull()
+    return response?.content?.let { json ->
+      val objectMapper = ObjectMapper().registerKotlinModule()
+      val jsonObject: JsonNode = objectMapper.readTree(json)
+      objectMapper.treeToValue(jsonObject, HuggingFaceEntityBasicApiData::class.java).copy(kind = HuggingFaceEntityKind.MODEL)
+    }
   }
 
   private fun parseBasicEntityData(

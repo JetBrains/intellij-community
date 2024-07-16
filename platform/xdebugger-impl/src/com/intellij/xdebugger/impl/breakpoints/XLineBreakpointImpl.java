@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -97,7 +95,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
               myHighlighter = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(file, getLine(), 0, true);
               callOnUpdate.run();
             }
-          });
+          }, getProject().getDisposed());
           return;
         }
         document = FileDocumentManager.getInstance().getDocument(file);
@@ -131,6 +129,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
         if (highlighter != null &&
             (!highlighter.isValid()
+             || !highlighter.getTextRange().equals(range) //breakpoint range marker is out-of-sync with actual breakpoint text range
              || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
              || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
              // it seems that this check is not needed - we always update line number from the highlighter
@@ -141,14 +140,15 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           highlighter = null;
         }
 
-        MarkupModelEx markupModel;
+        updateIcon();
+
         if (highlighter == null) {
           int line = getLine();
           if (line >= finalDocument.getLineCount()) {
             callOnUpdate.run();
             return;
           }
-          markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), true);
+          MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), true);
           if (range != null && !range.isEmpty()) {
             TextRange lineRange = DocumentUtil.getLineTextRange(finalDocument, line);
             if (range.intersects(lineRange)) {
@@ -173,13 +173,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           redrawInlineInlays();
         }
         else {
-          markupModel = null;
-        }
-
-        updateIcon();
-
-        if (markupModel == null) {
-          markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), false);
+          MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), false);
           if (markupModel != null) {
             // renderersChanged false - we don't change gutter size
             MarkupEditorFilter filter = highlighter.getEditorFilter();
@@ -341,16 +335,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return false;
   }
 
-  int getOffset() {
-    return myHighlighter != null && myHighlighter.isValid() ? myHighlighter.getStartOffset() : -1;
-  }
-
   public void updatePosition() {
     if (myHighlighter != null && myHighlighter.isValid()) {
       mySourcePosition = null; // reset the source position even if the line number has not changed, as the offset may be cached inside
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-323746, EA-674953")) {
-        setLine(myHighlighter.getDocument().getLineNumber(getOffset()), false);
-      }
+      setLine(myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()), false);
     }
   }
 
@@ -373,7 +361,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   private void setLine(final int line, boolean visualLineMightBeChanged) {
     if (getLine() != line) {
-      if (visualLineMightBeChanged && !myType.changeLine(this, line, getProject())) {
+      if (visualLineMightBeChanged && !myType.lineShouldBeChanged(this, line, getProject())) {
         return;
       }
       var oldLine = getLine();

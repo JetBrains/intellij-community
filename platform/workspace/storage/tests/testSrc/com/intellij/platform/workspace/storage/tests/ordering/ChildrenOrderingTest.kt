@@ -3,10 +3,7 @@ package com.intellij.platform.workspace.storage.tests.ordering
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
-import com.intellij.platform.workspace.storage.testEntities.entities.MySource
-import com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.from
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Test
@@ -63,7 +60,7 @@ class ChildrenOrderingTest {
       )
     }
 
-    builder.modifyEntity(entity) {
+    builder.modifyNamedEntity(entity) {
       this.children = listOf(this.children[2], this.children[1], this.children[0])
     }
     val newEntity = when (enState) {
@@ -80,18 +77,17 @@ class ChildrenOrderingTest {
   @EnumSource(EntityState::class)
   fun `removing first and adding last has proper ordering`(enState: EntityState) {
     val builder = MutableEntityStorage.create()
-    val firstChild = NamedChildEntity("One", MySource)
     val entity = builder addEntity NamedEntity("123", MySource) {
       this.children = listOf(
-        firstChild,
+        NamedChildEntity("One", MySource),
         NamedChildEntity("Two", MySource),
         NamedChildEntity("Three", MySource),
       )
     }
     val builder2 = builder.toSnapshot().toBuilder()
 
-    builder2.removeEntity(firstChild.from(builder2))
-    builder2.modifyEntity(entity.from(builder2)) {
+    builder2.removeEntity(entity.children.first().from(builder2))
+    builder2.modifyNamedEntity(entity.from(builder2)) {
       this.children += NamedChildEntity("Four", MySource)
     }
 
@@ -109,17 +105,16 @@ class ChildrenOrderingTest {
   @EnumSource(EntityState::class)
   fun `removing second entity keeps proper ordering`(enState: EntityState) {
     val builder = MutableEntityStorage.create()
-    val secondChild = NamedChildEntity("Two", MySource)
-    builder addEntity NamedEntity("123", MySource) {
+    val entity = builder addEntity NamedEntity("123", MySource) {
       this.children = listOf(
         NamedChildEntity("One", MySource),
-        secondChild,
+        NamedChildEntity("Two", MySource),
         NamedChildEntity("Three", MySource),
       )
     }
     val builder2 = builder.toSnapshot().toBuilder()
 
-    builder2.removeEntity(secondChild.from(builder2))
+    builder2.removeEntity(entity.children[1].from(builder2))
 
     val newEntity = when (enState) {
       EntityState.FROM_IMMUTABLE -> builder2.toSnapshot().entities<NamedEntity>().single()

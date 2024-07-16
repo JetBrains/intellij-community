@@ -172,7 +172,7 @@ public class JavaExecutionStack extends XExecutionStack {
     }
 
     List<XStackFrame> customFrames = myDebugProcess.getPositionManager().createStackFrames(descriptor);
-    if (!customFrames.isEmpty()) {
+    if (customFrames != null) {
       return customFrames;
     }
 
@@ -189,7 +189,9 @@ public class JavaExecutionStack extends XExecutionStack {
   @Override
   public void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
     if (container.isObsolete()) return;
-    myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(myDebugProcess.getDebuggerContext().getSuspendContext()) {
+    SuspendContextImpl pausedContext = SuspendManagerUtil.getPausedSuspendingContext(myDebugProcess.getSuspendManager(), myThreadProxy);
+    SuspendContextImpl context = pausedContext != null ? pausedContext : myDebugProcess.getDebuggerContext().getSuspendContext();
+    myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(context) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
@@ -233,6 +235,7 @@ public class JavaExecutionStack extends XExecutionStack {
     private int myAdded;
     private final int mySkip;
     private final List<? extends StackFrameItem> myAsyncStack;
+    private final List<? extends StackFrameItem> myCreationStack;
     private int myAddedAsync;
     private boolean mySeparator;
 
@@ -248,6 +251,7 @@ public class JavaExecutionStack extends XExecutionStack {
                        int skip,
                        List<XStackFrame> hiddenFrames,
                        @Nullable List<? extends StackFrameItem> asyncStack,
+                       @Nullable List<? extends StackFrameItem> creationStack,
                        int addedAsync,
                        boolean separator) {
       super(suspendContext);
@@ -257,6 +261,7 @@ public class JavaExecutionStack extends XExecutionStack {
       mySkip = skip;
       myHiddenFrames = hiddenFrames;
       myAsyncStack = asyncStack;
+      myCreationStack = creationStack;
       myAddedAsync = addedAsync;
       mySeparator = separator;
     }
@@ -266,8 +271,7 @@ public class JavaExecutionStack extends XExecutionStack {
                        XStackFrameContainer container,
                        int added,
                        int firstFrameIndex) {
-      this(suspendContext, iterator, container, added, firstFrameIndex,
-           new SmartList<>(), null, 0, true);
+      this(suspendContext, iterator, container, added, firstFrameIndex, new SmartList<>(), null, null, 0, true);
     }
 
     @Override
@@ -346,30 +350,38 @@ public class JavaExecutionStack extends XExecutionStack {
 
           // replace the rest with the related stack (if available)
           if (myAsyncStack != null) {
-            schedule(suspendContext, null, myAsyncStack, true);
+            schedule(suspendContext, null, myAsyncStack, null, true);
             return;
           }
 
           List<StackFrameItem> relatedStack = null;
+          var creationStack = myCreationStack;
           XStackFrame topFrame = ContainerUtil.getFirstItem(frames);
           if (AsyncStacksToggleAction.isAsyncStacksEnabled(
             (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
-              topFrame instanceof JavaStackFrame) {
+              topFrame instanceof JavaStackFrame frame) {
+            if (creationStack == null) {
+              creationStack = DebuggerUtilsImpl.computeSafeIfAny(CreationStackTraceProvider.EP,
+                                                                 p -> p.getCreationStackTrace(frame, suspendContext));
+            }
             relatedStack = DebuggerUtilsImpl.computeSafeIfAny(AsyncStackTraceProvider.EP,
-                                                              p -> p.getAsyncStackTrace(((JavaStackFrame)topFrame), suspendContext));
+                                                              p -> p.getAsyncStackTrace(frame, suspendContext));
             if (relatedStack != null) {
-              schedule(suspendContext, null, relatedStack, true);
+              schedule(suspendContext, null, relatedStack, null, true);
               return;
             }
             // append agent stack after the next frame
             relatedStack = AsyncStacksUtils.getAgentRelatedStack(frameProxy, suspendContext);
           }
 
-          schedule(suspendContext, myStackFramesIterator, relatedStack, false);
+          schedule(suspendContext, myStackFramesIterator, relatedStack, creationStack, false);
         }).exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
       }
       else if (myAsyncStack != null && myAddedAsync < myAsyncStack.size()) {
         appendRelatedStack(suspendContext, myAsyncStack.subList(myAddedAsync, myAsyncStack.size()));
+      }
+      else if (myCreationStack != null && myAddedAsync < myCreationStack.size()) {
+        appendRelatedStack(suspendContext, myCreationStack.subList(myAddedAsync, myCreationStack.size()));
       }
       else {
         addStackFrames(Collections.emptyList(), true);
@@ -379,10 +391,11 @@ public class JavaExecutionStack extends XExecutionStack {
     private void schedule(@NotNull SuspendContextImpl suspendContext,
                           @Nullable Iterator<StackFrameProxyImpl> stackFramesIterator,
                           @Nullable List<? extends StackFrameItem> asyncStackFrames,
+                          @Nullable List<? extends StackFrameItem> creationStackFrames,
                           boolean separator) {
       myDebugProcess.getManagerThread().schedule(
         new AppendFrameCommand(suspendContext, stackFramesIterator, myContainer,
-                               myAdded, mySkip, myHiddenFrames, asyncStackFrames, myAddedAsync, separator));
+                               myAdded, mySkip, myHiddenFrames, asyncStackFrames, creationStackFrames, myAddedAsync, separator));
     }
 
     void appendRelatedStack(@NotNull SuspendContextImpl suspendContext, List<? extends StackFrameItem> asyncStack) {
@@ -433,7 +446,7 @@ public class JavaExecutionStack extends XExecutionStack {
             }
           }
         }
-        schedule(suspendContext, null, myAsyncStack, mySeparator);
+        schedule(suspendContext, null, myAsyncStack, myCreationStack, mySeparator);
         return;
       }
     }
