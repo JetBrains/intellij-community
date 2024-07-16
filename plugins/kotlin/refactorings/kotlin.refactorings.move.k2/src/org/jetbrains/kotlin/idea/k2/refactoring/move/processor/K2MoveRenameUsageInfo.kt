@@ -69,7 +69,7 @@ sealed class K2MoveRenameUsageInfo(
         override fun retarget(to: PsiNamedElement): PsiElement? {
             if (to !is KtNamedDeclaration) error("Usage must reference a Kotlin element")
             val element = element ?: return element
-            val newLightElement = to.toLightElements()[lightElementIndex]
+            val newLightElement = to.toLightElements()[lightElementIndex].nameDeterminant()
             if (element.reference?.isReferenceTo(newLightElement) == true) return element
             if (element is PsiReferenceExpression
                 && wasMember
