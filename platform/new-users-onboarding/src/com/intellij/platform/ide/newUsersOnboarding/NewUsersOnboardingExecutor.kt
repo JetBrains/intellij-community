@@ -38,7 +38,7 @@ internal class NewUsersOnboardingExecutor(
     Disposer.register(disposable) {
       coroutineScope.cancel()
       // Restore initial tool windows layout on the tour end
-      ToolWindowManagerEx.getInstanceEx(project).setLayout(initialToolWindowsLayout)
+      restoreToolWindowLayout(initialToolWindowsLayout)
     }
 
     // log if user aborted the onboarding by closing the project
@@ -140,5 +140,23 @@ internal class NewUsersOnboardingExecutor(
     else {
       NewUsersOnboardingStatistics.logOnboardingFinished(project, tourStartMillis)
     }
+  }
+
+  private fun restoreToolWindowLayout(initialLayout: DesktopLayout) {
+    val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project)
+    val currentLayout = toolWindowManager.getLayout()
+
+    // Do not reset the state of showing the stripe button.
+    // It is needed to leave all demonstrated in the tour tool windows in stripe.
+    val windowInfoMap = initialLayout.getInfos()
+    for ((windowId, initialInfo) in windowInfoMap.entries) {
+      val currentInfo = currentLayout.getInfo(windowId)
+      if (currentInfo != null) {
+        initialInfo.isShowStripeButton = currentInfo.isShowStripeButton
+      }
+    }
+
+    val adjustedLayout = DesktopLayout(windowInfoMap.toMutableMap(), initialLayout.unifiedWeights)
+    toolWindowManager.setLayout(adjustedLayout)
   }
 }
