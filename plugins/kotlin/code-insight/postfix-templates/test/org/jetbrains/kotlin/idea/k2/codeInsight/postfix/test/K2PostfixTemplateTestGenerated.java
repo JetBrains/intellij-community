@@ -670,6 +670,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
                 performTest();
             }
 
+            @TestMetadata("valInsideLambda.kt")
+            public void testValInsideLambda() throws Exception {
+                performTest();
+            }
+
             @TestMetadata("var.kt")
             public void testVar() throws Exception {
                 performTest();

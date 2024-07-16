@@ -1,0 +1,7 @@
+fun main(): Unit {
+    val nanoTime = System.nanoTime()
+    run {
+        nanoTime
+        println("yo")
+    }
+}

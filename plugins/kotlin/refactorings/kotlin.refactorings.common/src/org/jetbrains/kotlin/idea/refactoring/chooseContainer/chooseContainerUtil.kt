@@ -116,20 +116,19 @@ private fun <T, E : PsiElement> choosePsiContainerElement(
     psi2Container: (E) -> T,
     onSelect: (T) -> Unit,
 ) {
-    val popup = getPsiElementPopup(
-        editor,
-        elements,
-        popupPresentationProvider(),
-        title,
-        highlightSelection,
-        selection,
-    ) { psiElement ->
-        @Suppress("UNCHECKED_CAST")
-        onSelect(psi2Container(psiElement as E))
-        true
-    }
-
     invokeLater {
+        val popup = getPsiElementPopup(
+            editor,
+            elements,
+            popupPresentationProvider(),
+            title,
+            highlightSelection,
+            selection,
+        ) { psiElement ->
+            @Suppress("UNCHECKED_CAST")
+            onSelect(psi2Container(psiElement as E))
+            true
+        }
         popup.showInBestPositionFor(editor)
     }
 }

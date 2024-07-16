@@ -52,6 +52,8 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
             IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
                 check(postfixTemplate != null) { "Unable to find PostfixTemplate for `$templateKey`" }
 
+                KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
+
                 if (template != null) {
                     myFixture.type(template.replace("\\t", "\t"))
                 } else {
