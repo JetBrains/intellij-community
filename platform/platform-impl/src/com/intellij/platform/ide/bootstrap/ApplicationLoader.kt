@@ -266,7 +266,8 @@ internal suspend fun loadApp(
 
 private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob: Job) {
   coroutineScope {
-    launch { // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
+    launch {
+      // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
       initLafJob.join()
 
       launch(CoroutineName("CustomActionsSchema preloading")) {
@@ -280,7 +281,10 @@ private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob:
     }
 
     launch(CoroutineName("actionConfigurationCustomizer preloading")) {
-      ActionConfigurationCustomizer.EP.lazySequence().forEach { /* just preload */ }
+      @Suppress("ControlFlowWithEmptyBody")
+      for (ignored in ActionConfigurationCustomizer.EP.lazySequence()) {
+        // just preload
+      }
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
