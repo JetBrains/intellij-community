@@ -26,33 +26,32 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
             val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
             psiDocumentManager.commitDocument(context.document)
 
-            val file = context.file
-            val o = item.`object`
-            if (file is KtFile && o is DescriptorBasedDeclarationLookupObject) {
-                val descriptor = o.descriptor as? CallableDescriptor ?: return
-                if (descriptor.extensionReceiverParameter != null || callType is CallType.CallableReference) {
-                    if (DescriptorUtils.isTopLevelDeclaration(descriptor) && !descriptor.isArtificialImportAliasedDescriptor) {
-                        ImportInsertHelper.getInstance(context.project).importDescriptor(file, descriptor)
-                    }
-                } else if (callType == CallType.DEFAULT) {
-                    if (descriptor.isArtificialImportAliasedDescriptor) return
-                    val fqName = descriptor.importableFqName ?: return
-                    context.document.replaceString(
-                        context.startOffset,
-                        context.tailOffset,
-                        fqName.withRootPrefixIfNeeded().render() + " "
-                    ) // insert space after for correct parsing
+            val file = context.file as? KtFile ?: return
+            val o = item.`object` as? DescriptorBasedDeclarationLookupObject ?: return
+            val descriptor = o.descriptor as? CallableDescriptor ?: return
 
-                    psiDocumentManager.commitDocument(context.document)
+            if (descriptor.extensionReceiverParameter != null || callType is CallType.CallableReference) {
+                if (DescriptorUtils.isTopLevelDeclaration(descriptor) && !descriptor.isArtificialImportAliasedDescriptor) {
+                    ImportInsertHelper.getInstance(context.project).importDescriptor(file, descriptor)
+                }
+            } else if (callType == CallType.DEFAULT) {
+                if (descriptor.isArtificialImportAliasedDescriptor) return
+                val fqName = descriptor.importableFqName ?: return
+                context.document.replaceString(
+                    context.startOffset,
+                    context.tailOffset,
+                    fqName.withRootPrefixIfNeeded().render() + " "
+                ) // insert space after for correct parsing
 
-                    shortenReferences(context, context.startOffset, context.tailOffset - 1, SHORTEN_REFERENCES)
+                psiDocumentManager.commitDocument(context.document)
 
-                    psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
+                shortenReferences(context, context.startOffset, context.tailOffset - 1, SHORTEN_REFERENCES)
 
-                    // delete space
-                    if (context.document.isTextAt(context.tailOffset - 1, " ")) { // sometimes space can be lost because of reformatting
-                        context.document.deleteString(context.tailOffset - 1, context.tailOffset)
-                    }
+                psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
+
+                // delete space
+                if (context.document.isTextAt(context.tailOffset - 1, " ")) { // sometimes space can be lost because of reformatting
+                    context.document.deleteString(context.tailOffset - 1, context.tailOffset)
                 }
             }
         }
