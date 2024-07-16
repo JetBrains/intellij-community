@@ -14,7 +14,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.uploader.EventLogExternalSendConfig
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nullable
 import java.util.*
 
 /**
@@ -73,8 +72,8 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
                                                                    errorLoadingConfigFailedField,
                                                                    errorTSLoadingConfigFailedField)
 
-  fun logMetadataLoaded(@Nullable version: String) = metadataLoadedEvent.log(version)
-  fun logMetadataUpdated(@Nullable version: String) = metadataUpdatedEvent.log(version)
+  fun logMetadataLoaded(version: String?) = metadataLoadedEvent.log(version)
+  fun logMetadataUpdated(version: String?) = metadataUpdatedEvent.log(version)
   fun logMetadataLoadFailed(error: EventLogMetadataUpdateError) {
     metadataLoadFailedEvent.log(error.updateStage, error.errorType, error.errorCode)
   }
