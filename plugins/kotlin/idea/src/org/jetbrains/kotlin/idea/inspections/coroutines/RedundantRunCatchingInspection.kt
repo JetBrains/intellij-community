@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.group
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker
 import org.jetbrains.kotlin.name.FqName
@@ -35,7 +35,7 @@ class RedundantRunCatchingInspection : AbstractCallChainChecker() {
             holder.registerProblem(descriptor)
         })
 
-    private val conversionGroups = conversions.group()
+    private val conversionGroups: Map<ConversionId, List<CallChainConversion>> = conversions.groupBy { conversion -> conversion.id }
 }
 
 private val conversions: List<CallChainConversion> = listOf(

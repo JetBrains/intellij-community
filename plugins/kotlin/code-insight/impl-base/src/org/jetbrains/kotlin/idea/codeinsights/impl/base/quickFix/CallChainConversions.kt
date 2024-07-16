@@ -278,10 +278,7 @@ object CallChainConversions {
         }.flatten()
     }
 
-    fun List<CallChainConversion>.group(): Map<ConversionId, List<CallChainConversion>> =
-        groupBy { conversion -> conversion.id }
-
     val conversionGroups: Map<ConversionId, List<CallChainConversion>> by lazy {
-        conversionsList.group()
+        conversionsList.groupBy { conversion -> conversion.id }
     }
 }
