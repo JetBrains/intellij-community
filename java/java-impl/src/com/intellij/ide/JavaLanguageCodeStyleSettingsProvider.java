@@ -557,6 +557,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
 
       import javax.swing.*;
       import java.util.Vector;
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
 
       public class Foo {
         private int field1;
@@ -578,6 +580,21 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       }
       class AnotherClass {
       }
+      
+      public class ClassWithAnnotatedFields {
+          @Nullable
+          public static Boolean PUBLIC_STATIC_ANNOTATED_FIELD = null;
+          public static Boolean PUBLIC_STATIC_NON_ANNOTATED_FIELD = false;
+          public Boolean publicNonAnnotatedField = true;
+          @NotNull
+          public Boolean publicAnnotatedField = true;
+          @NotNull Boolean typeAnnotatedField = false;
+          @NotNull
+          private Boolean firstPrivateAnnotatedField = true;
+          @NotNull
+          private Boolean secondPrivateAnnotatedField = true;
+      }
+      
       interface TestInterface {
           int MAX = 10;
           int MIN = 1;
