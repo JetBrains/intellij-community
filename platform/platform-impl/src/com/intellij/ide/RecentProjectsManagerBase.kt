@@ -130,7 +130,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   final override fun getState(): RecentProjectManagerState = state
 
-  fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
+  internal fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
     val path = getProjectPath(projectStoreBaseDir) ?: return null
     synchronized(stateLock) {
       return state.additionalInfo.get(path)

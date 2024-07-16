@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode")
 
 package com.intellij.ide.trustedProjects
@@ -26,9 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 object TrustedProjectsDialog {
-
-  private val LOG = logger<TrustedProjects>()
-
   /**
    * Shows the "Trust project?" dialog, if the user wasn't asked yet if they trust this project,
    * and sets the project trusted state according to the user choice.
@@ -49,7 +46,7 @@ object TrustedProjectsDialog {
     val locatedProject = TrustedProjectsLocator.locateProject(projectRoot, project)
     val projectTrustedState = TrustedProjects.getProjectTrustedState(locatedProject)
     if (projectTrustedState == ThreeState.YES) {
-      TrustedProjects.setProjectTrusted(locatedProject, true)
+      TrustedProjects.setProjectTrusted(locatedProject = locatedProject, isTrusted = true)
     }
     if (projectTrustedState != ThreeState.UNSURE) {
       return true
@@ -72,7 +69,7 @@ object TrustedProjectsDialog {
       distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
       cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
       else -> {
-        LOG.error("Illegal choice $choice")
+        logger<TrustedProjects>().error("Illegal choice $choice")
         return false
       }
     }
@@ -172,7 +169,7 @@ object TrustedProjectsDialog {
       distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
       cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
       else -> {
-        LOG.error("Illegal choice $choice")
+        logger<TrustedProjects>().error("Illegal choice $choice")
         return false
       }
     }

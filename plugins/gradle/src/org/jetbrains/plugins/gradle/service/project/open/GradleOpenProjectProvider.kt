@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.open
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.action.DetachExternalProjectAction.detachProject
@@ -16,7 +19,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLinkingUntrustedProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -41,23 +43,33 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
 
     val projectPath = getProjectDirectory(projectFile).toNioPath()
 
-    if (confirmLinkingUntrustedProject(project, systemId, projectPath)) {
-      val settings = createLinkSettings(projectPath, project)
+    if (!TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
+        projectPath,
+        project,
+        IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectPath.fileName),
+        IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
+        IdeBundle.message("untrusted.project.dialog.trust.button"),
+        IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+        IdeBundle.message("untrusted.project.link.dialog.cancel.button")
+      )) {
+      return
+    }
 
-      validateJavaHome(project, projectPath, settings.resolveGradleVersion())
+    val settings = createLinkSettings(projectPath, project)
 
-      val externalProjectPath = settings.externalProjectPath
-      ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
+    validateJavaHome(project, projectPath, settings.resolveGradleVersion())
 
-      if (!Registry.`is`("external.system.auto.import.disabled")) {
-        ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
-          val importSpec = ImportSpecBuilder(project, SYSTEM_ID)
-          if (!project.isTrusted()) {
-            importSpec.usePreviewMode()
-          }
-          importSpec.callback(createFinalImportCallback(project, externalProjectPath))
-          ExternalSystemUtil.refreshProject(externalProjectPath, importSpec)
+    val externalProjectPath = settings.externalProjectPath
+    ExternalSystemApiUtil.getSettings(project, SYSTEM_ID).linkProject(settings)
+
+    if (!Registry.`is`("external.system.auto.import.disabled")) {
+      ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
+        val importSpec = ImportSpecBuilder(project, SYSTEM_ID)
+        if (!project.isTrusted()) {
+          importSpec.usePreviewMode()
         }
+        importSpec.callback(createFinalImportCallback(project, externalProjectPath))
+        ExternalSystemUtil.refreshProject(externalProjectPath, importSpec)
       }
     }
   }

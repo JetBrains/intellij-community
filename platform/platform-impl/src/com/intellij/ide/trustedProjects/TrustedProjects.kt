@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
 import com.intellij.ide.impl.TrustedPaths
@@ -12,27 +12,20 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object TrustedProjects {
-
-  fun isProjectTrusted(locatedProject: LocatedProject): Boolean {
-    return getProjectTrustedState(locatedProject) == ThreeState.YES
-  }
+  fun isProjectTrusted(locatedProject: LocatedProject): Boolean = getProjectTrustedState(locatedProject) == ThreeState.YES
 
   fun getProjectTrustedState(locatedProject: LocatedProject): ThreeState {
     val explicitTrustedState = TrustedPaths.getInstance().getProjectTrustedState(locatedProject)
-    if (explicitTrustedState != ThreeState.UNSURE) {
-      return explicitTrustedState
+    return when {
+      explicitTrustedState != ThreeState.UNSURE -> explicitTrustedState
+      isTrustedCheckDisabledForProduct() -> ThreeState.YES
+      LightEdit.owns(locatedProject.project) -> ThreeState.YES
+      TrustedPathsSettings.getInstance().isProjectTrusted(locatedProject) -> {
+        TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(locatedProject.project)
+        ThreeState.YES
+      }
+      else -> ThreeState.UNSURE
     }
-    if (isTrustedCheckDisabledForProduct()) {
-      return ThreeState.YES
-    }
-    if (LightEdit.owns(locatedProject.project)) {
-      return ThreeState.YES
-    }
-    if (TrustedPathsSettings.getInstance().isProjectTrusted(locatedProject)) {
-      TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(locatedProject.project)
-      return ThreeState.YES
-    }
-    return ThreeState.UNSURE
   }
 
   fun setProjectTrusted(locatedProject: LocatedProject, isTrusted: Boolean) {
@@ -52,12 +45,10 @@ object TrustedProjects {
   /**
    * Checks that IDEA is loaded with safe environment. In this mode, trusted checks aren't needed at all.
    */
-  fun isTrustedCheckDisabled(): Boolean =
-    ApplicationManager.getApplication().isUnitTestMode ||
-    ApplicationManager.getApplication().isHeadlessEnvironment ||
-    java.lang.Boolean.getBoolean("idea.trust.all.projects")
+  fun isTrustedCheckDisabled(): Boolean {
+    val app = ApplicationManager.getApplication()
+    return app.isUnitTestMode || app.isHeadlessEnvironment || java.lang.Boolean.getBoolean("idea.trust.all.projects")
+  }
 
-  private fun isTrustedCheckDisabledForProduct(): Boolean =
-    isTrustedCheckDisabled() ||
-    java.lang.Boolean.getBoolean("idea.trust.disabled")
+  private fun isTrustedCheckDisabledForProduct(): Boolean = isTrustedCheckDisabled() || java.lang.Boolean.getBoolean("idea.trust.disabled")
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.*;
@@ -102,7 +102,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -660,19 +659,6 @@ public final class ExternalSystemUtil {
     var eventMessage = BuildBundle.message("build.status.cancelled");
     var eventResult = new FailureResultImpl();
     return new FinishBuildEventImpl(taskId, null, eventTime, eventMessage, eventResult);
-  }
-
-  /**
-   * @deprecated Use {@link ExternalSystemTrustedProjectDialog} instead
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static boolean confirmLinkingUntrustedProject(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull Path projectRoot
-  ) {
-    return ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProject(project, systemId, projectRoot);
   }
 
   /**

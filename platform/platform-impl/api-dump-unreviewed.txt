@@ -4081,7 +4081,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - f:getProjectIcon(java.lang.String,Z):javax.swing.Icon
 - f:getProjectIcon(java.lang.String,Z,I,java.lang.String):javax.swing.Icon
 - bs:getProjectIcon$default(com.intellij.ide.RecentProjectsManagerBase,java.lang.String,Z,I,java.lang.String,I,java.lang.Object):javax.swing.Icon
-- f:getProjectMetaInfo(java.nio.file.Path):com.intellij.ide.RecentProjectMetaInfo
 - f:getProjectName(java.lang.String):java.lang.String
 - getProjectPath(com.intellij.openapi.project.Project):java.lang.String
 - getProjectPath(java.nio.file.Path):java.lang.String
