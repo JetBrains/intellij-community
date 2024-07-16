@@ -34,7 +34,7 @@ import java.util.concurrent.Future;
  * <p>
  * The compatibility matrix for these locks is reflected below.
  * <table>
- *   <tr><th style="width: 20px;"></th><th style="width: 15px;">R</th><th style="width: 15px;">IW</th><th style="width: 15px;">W</th></tr>
+ *   <tr><th style="width: 20px;"></th><th style="width: 20px;">R</th><th style="width: 20px;">IW</th><th style="width: 20px;">W</th></tr>
  *   <tr><th>R</th><td>+</td><td>+</td><td>-</td></tr>
  *   <tr><th>IW</th><td>+</td><td>-</td><td>-</td></tr>
  *   <tr><th>W</th><td>-</td><td>-</td><td>-</td></tr>
