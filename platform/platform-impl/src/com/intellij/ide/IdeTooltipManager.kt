@@ -278,81 +278,82 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     val mouseEvent = event as MouseEvent
     processingComponent = mouseEvent.component
     try {
-      if (mouseEvent.id == MouseEvent.MOUSE_ENTERED) {
-        if (processingComponent != null && isWaylandToolkit()) {
-          if (helpTooltipManager != null && helpTooltipManager!!.fromSameWindowAs(processingComponent!!)) {
-            // Since we don't fully control popups positions in Wayland, they are
-            // a lot more likely to appear right under the mouse pointer.
-            // Don't cancel the popup just because the mouse has left its
-            // parent component as it may have entered the popup itself.
-            alarm.cancelAllRequests()
-            showRequests.tryEmit(null)
-            cancelAutoHide()
-            return
+      when (mouseEvent.id) {
+        MouseEvent.MOUSE_ENTERED -> {
+          if (processingComponent != null && isWaylandToolkit()) {
+            if (helpTooltipManager != null && helpTooltipManager!!.fromSameWindowAs(processingComponent!!)) {
+              // Since we don't fully control popups positions in Wayland, they are
+              // a lot more likely to appear right under the mouse pointer.
+              // Don't cancel the popup just because the mouse has left its
+              // parent component as it may have entered the popup itself.
+              alarm.cancelAllRequests()
+              showRequests.tryEmit(null)
+              cancelAutoHide()
+              return
+            }
           }
-        }
-        var canShow = true
-        if (componentContextHasChanged(processingComponent)) {
-          canShow = hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null, action = null)
-        }
-        if (canShow) {
-          maybeShowFor(processingComponent, mouseEvent)
-        }
-      }
-      else if (mouseEvent.id == MouseEvent.MOUSE_EXITED) {
-        // we hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
-        if (processingComponent === currentComponent && currentTooltip != null && !currentTooltip!!.isHint && balloon != null) {
-          balloon!!.setAnimationEnabled(false)
-          hideCurrent(null, null, null, null, false)
-        }
-        else if (processingComponent === currentComponent || processingComponent === queuedComponent) {
-          if (isWaylandToolkit()) {
-            // The mouse pointer has left the tooltip's "parent" component. Don't immediately
-            // cancel the popup, wait a moment to see if the mouse entered the popup itself.
-            alarm.addRequest({ hideCurrent(mouseEvent = mouseEvent) }, 200)
+          var canShow = true
+          if (componentContextHasChanged(processingComponent)) {
+            canShow = hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null, action = null)
           }
-          else {
-            hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null, action = null)
-          }
-        }
-      }
-      else if (mouseEvent.id == MouseEvent.MOUSE_MOVED) {
-        if (processingComponent === currentComponent || processingComponent === queuedComponent) {
-          if (balloon != null && balloon!!.wasFadedIn()) {
+          if (canShow) {
             maybeShowFor(processingComponent, mouseEvent)
           }
-          else {
-            if (!currentTipIsCentered) {
-              x = mouseEvent.x
-              y = mouseEvent.y
-              if (processingComponent is JComponent &&
-                  !isTooltipDefined(processingComponent as JComponent, mouseEvent) &&
-                  (queuedTooltip == null || !queuedTooltip!!.isHint)
-              ) {
-                hideCurrent(mouseEvent, null, null) //There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
-              }
-              else {
-                maybeShowFor(processingComponent, mouseEvent)
-              }
+        }
+        MouseEvent.MOUSE_EXITED -> {
+          // we hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
+          if (processingComponent === currentComponent && currentTooltip != null && !currentTooltip!!.isHint && balloon != null) {
+            balloon!!.setAnimationEnabled(false)
+            hideCurrent(null, null, null, null, false)
+          }
+          else if (processingComponent === currentComponent || processingComponent === queuedComponent) {
+            if (isWaylandToolkit()) {
+              // The mouse pointer has left the tooltip's "parent" component. Don't immediately
+              // cancel the popup, wait a moment to see if the mouse entered the popup itself.
+              alarm.addRequest({ hideCurrent(mouseEvent = mouseEvent) }, 200)
+            }
+            else {
+              hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null, action = null)
             }
           }
         }
-        else if (currentComponent == null && queuedComponent == null) {
-          maybeShowFor(processingComponent, mouseEvent)
+        MouseEvent.MOUSE_MOVED -> {
+          if (processingComponent === currentComponent || processingComponent === queuedComponent) {
+            if (balloon != null && balloon!!.wasFadedIn()) {
+              maybeShowFor(processingComponent, mouseEvent)
+            }
+            else {
+              if (!currentTipIsCentered) {
+                x = mouseEvent.x
+                y = mouseEvent.y
+                if (processingComponent is JComponent &&
+                    !isTooltipDefined(processingComponent as JComponent, mouseEvent) &&
+                    (queuedTooltip == null || !queuedTooltip!!.isHint)) {
+                  // there is no tooltip or hint here, let's proceed it as MOUSE_EXITED
+                  hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null, action = null)
+                }
+                else {
+                  maybeShowFor(processingComponent, mouseEvent)
+                }
+              }
+            }
+          }
+          else if (currentComponent == null && queuedComponent == null) {
+            maybeShowFor(processingComponent, mouseEvent)
+          }
+          else if (queuedComponent == null) {
+            hideCurrent(mouseEvent)
+          }
         }
-        else if (queuedComponent == null) {
-          hideCurrent(mouseEvent)
+        MouseEvent.MOUSE_PRESSED -> {
+          val clickOnTooltip = balloon != null && balloon === JBPopupFactory.getInstance().getParentBalloonFor(processingComponent)
+          if (processingComponent === currentComponent || (clickOnTooltip && !isClickProcessor(balloon))) {
+            hideCurrent(mouseEvent, null, null, null, !clickOnTooltip)
+          }
         }
-      }
-      else if (mouseEvent.id == MouseEvent.MOUSE_PRESSED) {
-        val clickOnTooltip = balloon != null &&
-                             balloon === JBPopupFactory.getInstance().getParentBalloonFor(processingComponent)
-        if (processingComponent === currentComponent || (clickOnTooltip && !isClickProcessor(balloon))) {
-          hideCurrent(mouseEvent, null, null, null, !clickOnTooltip)
+        MouseEvent.MOUSE_DRAGGED -> {
+          hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null, action = null)
         }
-      }
-      else if (mouseEvent.id == MouseEvent.MOUSE_DRAGGED) {
-        hideCurrent(mouseEvent, null, null)
       }
     }
     finally {
@@ -361,15 +362,16 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
   }
 
   private fun componentContextHasChanged(eventComponent: Component?): Boolean {
-    if (eventComponent === currentComponent) return false
+    if (eventComponent === currentComponent) {
+      return false
+    }
 
     if (queuedTooltip != null) {
       // The case when a tooltip is going to appear on the Component but the MOUSE_ENTERED event comes to the Component before it,
       // we don't want to hide the tooltip in that case (IDEA-194208)
       val tooltipPoint = queuedTooltip!!.point
       if (tooltipPoint != null) {
-        val realQueuedComponent =
-          SwingUtilities.getDeepestComponentAt(queuedTooltip!!.component, tooltipPoint.x, tooltipPoint.y)
+        val realQueuedComponent = SwingUtilities.getDeepestComponentAt(queuedTooltip!!.component, tooltipPoint.x, tooltipPoint.y)
         return eventComponent !== realQueuedComponent
       }
     }
@@ -377,41 +379,41 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     return true
   }
 
-  private fun maybeShowFor(c: Component?, me: MouseEvent) {
-    showForComponent(c, me, false)
+  private fun maybeShowFor(component: Component?, me: MouseEvent) {
+    showForComponent(component = component, me = me, now = false)
   }
 
-  private fun showForComponent(c: Component?, me: MouseEvent, now: Boolean) {
-    if (c !is JComponent) return
-
-    val wnd = SwingUtilities.getWindowAncestor(c)
-    if (wnd == null) return
-
-    if (!wnd.isActive) {
-      if (JBPopupFactory.getInstance().isChildPopupFocused(wnd)) return
-    }
-
-    if (!isTooltipDefined(c, me)) {
-      hideCurrent(null)
+  private fun showForComponent(component: Component?, me: MouseEvent, now: Boolean) {
+    if (component !is JComponent) {
       return
     }
 
-    val centerDefault = c.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT) == true
-    val centerStrict = c.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT) == true
+    val window = SwingUtilities.getWindowAncestor(component) ?: return
+    if (!window.isActive && JBPopupFactory.getInstance().isChildPopupFocused(window)) {
+      return
+    }
+
+    if (!isTooltipDefined(component, me)) {
+      hideCurrent(mouseEvent = null)
+      return
+    }
+
+    val centerDefault = component.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT) == true
+    val centerStrict = component.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT) == true
     var shift = if (centerStrict) 0 else if (centerDefault) 4 else 0
 
     // Balloon may appear exactly above useful content, such behavior is rather annoying.
     var rowBounds: Rectangle? = null
-    if (c is JTree) {
-      val path = c.getClosestPathForLocation(me.x, me.y)
+    if (component is JTree) {
+      val path = component.getClosestPathForLocation(me.x, me.y)
       if (path != null) {
-        rowBounds = c.getPathBounds(path)
+        rowBounds = component.getPathBounds(path)
       }
     }
-    else if (c is JList<*>) {
-      val row = c.locationToIndex(me.point)
+    else if (component is JList<*>) {
+      val row = component.locationToIndex(me.point)
       if (row > -1) {
-        rowBounds = c.getCellBounds(row, row)
+        rowBounds = component.getCellBounds(row, row)
       }
     }
     if (rowBounds != null && rowBounds.y + 4 < me.y) {
@@ -419,7 +421,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     }
 
     showTooltipForEvent(
-      c = c,
+      c = component,
       me = me,
       toCenter = centerStrict || centerDefault,
       shift = shift,
@@ -444,15 +446,15 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
   ) {
     var tooltip = getCustomTooltip(c)
     if (tooltip == null) {
-      if (helpTooltipManager != null) {
+      helpTooltipManager?.let {
         currentComponent = c
         hideHelpTooltip = true
-        helpTooltipManager!!.showTooltip(c, me)
+        it.showTooltip(c, me)
         return
       }
 
       val aText = c.getToolTipText(me).toString()
-      tooltip = object : IdeTooltip(c, me.point, null,  /*new Object()*/c, aText) {
+      tooltip = object : IdeTooltip(c, me.point, null, /*new Object()*/c, aText) {
         override fun beforeShow(): Boolean {
           currentEvent = me
 
@@ -465,15 +467,12 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
             return false
           }
 
-          val visibleRect = if (c.parent is JViewport) {
-            (c.parent as JViewport).viewRect
+          val visibleRect = when {
+            c.parent is JViewport -> (c.parent as JViewport).viewRect
+            IdeMouseEventDispatcher.isDiagramViewComponent(c) -> c.bounds
+            else -> c.visibleRect
           }
-          else if (IdeMouseEventDispatcher.isDiagramViewComponent(c)) {
-            c.bounds
-          }
-          else {
-            c.visibleRect
-          }
+
           if (!visibleRect.contains(point)) {
             return false
           }
@@ -495,7 +494,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       return
     }
 
-    show(tooltip!!, now)
+    show(tooltip = tooltip!!, now = now)
   }
 
   /**
@@ -547,7 +546,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
           currentEvent.isPopupTrigger,
           currentEvent.button)
       }
-      showForComponent(c = currentComponent, me = reposition, now = true)
+      showForComponent(component = currentComponent, me = reposition, now = true)
     }
     catch (ignore: IllegalComponentStateException) {
     }
@@ -658,7 +657,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       .setLayer(tooltip.layer)
     tooltip.tipComponent.foreground = fg
     tooltip.tipComponent.border = tooltip.componentBorder
-    tooltip.tipComponent.font = if (tooltip.font != null) tooltip.font else getTextFont(true)
+    tooltip.tipComponent.font = if (tooltip.font == null) getTextFont(awtTooltip = true) else tooltip.font
 
     if (tooltip.isPointerShiftedToStart) {
       builder.setPointerShiftedToStart(true).setCornerRadius(JBUI.scale(8))
