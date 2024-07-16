@@ -1454,7 +1454,6 @@
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler"/>
     <codeInsight.parameterNameHints language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider"/>
-    <!--suppress PluginXmlValidity -->
     <codeInsight.declarativeInlayProviderCustomSettingsProvider language="JAVA"
                                                                 providerId="java.method.chains"
                                                                 implementationClass="com.intellij.codeInsight.hints.chain.DeclarativeCallChainCustomSettingsProvider"/>

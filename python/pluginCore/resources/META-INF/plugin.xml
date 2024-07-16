@@ -140,7 +140,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <enterBetweenBracesDelegate language="Python"
                                 implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
-    <!--suppress PluginXmlValidity -->
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
 
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>

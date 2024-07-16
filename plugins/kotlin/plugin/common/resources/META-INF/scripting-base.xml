@@ -76,7 +76,6 @@
 
     <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
 
-    <!--suppress PluginXmlValidity -->
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
 
     <registryKey

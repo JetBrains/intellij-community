@@ -11,10 +11,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!--suppress PluginXmlValidity -->
     <applicationService serviceInterface="com.intellij.platform.kernel.rpc.RemoteApiProviderService"
                         serviceImplementation="com.intellij.platform.kernel.backend.RemoteApiRegistry"/>
-    <!--suppress PluginXmlValidity -->
     <applicationService serviceInterface="com.intellij.platform.kernel.KernelService"
                         serviceImplementation="com.intellij.platform.kernel.backend.BackendKernelService"/>
   </extensions>

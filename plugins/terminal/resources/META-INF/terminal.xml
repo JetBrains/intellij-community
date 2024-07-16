@@ -79,7 +79,6 @@
              id="terminalCommandSpec"
              order="before stats"
              implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
-    <!--suppress PluginXmlValidity -->
     <inline.completion.provider implementation="org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletionProvider"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurvey"/>
 
