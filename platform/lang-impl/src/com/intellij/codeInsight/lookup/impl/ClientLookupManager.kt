@@ -135,9 +135,5 @@ class GuestLookupManager(session: ClientProjectSession) : ClientLookupManagerBas
     override fun isAvailableToUser(): Boolean {
       return myShown
     }
-
-    override fun suppressHidingOnChange(): Boolean {
-      return true
-    }
   }
 }

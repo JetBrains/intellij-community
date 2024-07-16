@@ -711,7 +711,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public boolean vetoesHiding() {
     // the second condition means that the Lookup belongs to another connected client
-    return myGuardedChanges > 0 || mySession != ClientSessionsManager.getProjectSession(this.project);
+    return myGuardedChanges > 0 || mySession != ClientSessionsManager.getProjectSession(this.project) || LookupImplVetoPolicy.anyVetoesHiding(this);
   }
 
   public boolean isAvailableToUser() {
@@ -844,7 +844,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
-        if (canHide()) {
+        if (canHideOnChange()) {
           hideLookup(false);
         }
       }
@@ -861,7 +861,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     editor.getCaretModel().addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
-        if (canHide()) {
+        if (canHideOnChange()) {
           hideLookup(false);
         }
       }
@@ -869,7 +869,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     editor.getSelectionModel().addSelectionListener(new SelectionListener() {
       @Override
       public void selectionChanged(final @NotNull SelectionEvent e) {
-        if (canHide()) {
+        if (canHideOnChange()) {
           hideLookup(false);
         }
       }
@@ -950,12 +950,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }, this);
   }
 
-  private boolean canHide() {
-    return myGuardedChanges == 0 && !myFinishing && !suppressHidingOnChange() && ClientId.isCurrentlyUnderLocalId();
+  private boolean canHideOnChange() {
+    return myGuardedChanges == 0 && !myFinishing && !vetoesHidingOnChange() && ClientId.isCurrentlyUnderLocalId();
   }
 
-  protected boolean suppressHidingOnChange() {
-    return false;
+  private boolean vetoesHidingOnChange() {
+    return LookupImplVetoPolicy.anyVetoesHidingOnChange(this);
   }
 
   @Override
