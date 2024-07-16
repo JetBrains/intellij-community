@@ -61,7 +61,7 @@ public class SuspendManagerImpl implements SuspendManager {
         LOG.debug("Start resuming...");
         switch (getSuspendPolicy()) {
           case EventRequest.SUSPEND_ALL -> {
-            myDebugProcess.getVirtualMachineProxy().resume();
+            getVirtualMachine().resume();
             LOG.debug("VM resumed ");
           }
           case EventRequest.SUSPEND_EVENT_THREAD -> {
@@ -92,7 +92,7 @@ public class SuspendManagerImpl implements SuspendManager {
           LOG.debug("Start resuming eventSet " + set + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
         }
         switch (getSuspendPolicy()) {
-          case EventRequest.SUSPEND_ALL -> myDebugProcess.getVirtualMachineProxy().resumedSuspendAllContext();
+          case EventRequest.SUSPEND_ALL -> getVirtualMachine().resumedSuspendAllContext();
           case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(getEventThread()).threadWasResumed();
         }
         DebuggerUtilsAsync.resume(set);

@@ -888,6 +888,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myRequestManager;
   }
 
+  /**
+   * Get the current VM proxy connected to the process.
+   * The VM can change due to a single debug process can be connected to several VMs (see {@link DebugProcessImpl#reattach(DebugEnvironment, boolean, Runnable)})
+   * Prefer {@link SuspendContextImpl#getVirtualMachine()} when possible.
+   */
   @NotNull
   @Override
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
@@ -1641,7 +1646,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       ReferenceType result;
-      List<ReferenceType> types = ContainerUtil.filter(getVirtualMachineProxy().classesByName(className), ReferenceType::isPrepared);
+      List<ReferenceType> types = ContainerUtil.filter(getCurrentVm(evaluationContext).classesByName(className), ReferenceType::isPrepared);
       // first try to quickly find the equal classloader only
       result = ContainerUtil.find(types, refType -> Objects.equals(classLoader, refType.classLoader()));
       // now do the full visibility check
@@ -1659,6 +1664,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
+  }
+
+  private VirtualMachineProxyImpl getCurrentVm(@Nullable EvaluationContext evaluationContext) {
+    return evaluationContext != null
+           ? ((SuspendContextImpl)evaluationContext.getSuspendContext()).getVirtualMachine()
+           : getVirtualMachineProxy();
   }
 
   private static boolean isVisibleFromClassLoader(@NotNull ClassLoaderReference fromLoader, final ReferenceType refType) {
@@ -1702,7 +1713,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
     DebuggerManagerThreadImpl.assertIsManagerThread();
     qName = reformatArrayName(qName);
-    VirtualMachineProxyImpl virtualMachine = getVirtualMachineProxy();
+    VirtualMachineProxyImpl virtualMachine = getCurrentVm(evaluationContext);
     ClassType classClassType = (ClassType)ContainerUtil.getFirstItem(virtualMachine.classesByName(CommonClassNames.JAVA_LANG_CLASS));
     if (classClassType == null) {
       logError("Unable to find loaded class " + CommonClassNames.JAVA_LANG_CLASS);
@@ -2470,7 +2481,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     });
 
-    getManagerThread().schedule(new DebuggerCommandImpl() {
+    getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
       @Override
       protected void action() {
         VirtualMachine vm = null;
@@ -2526,7 +2537,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         if (vm != null) {
           final VirtualMachine vm1 = vm;
-          afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
+          afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
             @Override
             protected void action() {
               try {
