@@ -14,7 +14,9 @@ import com.intellij.inspectopedia.extractor.data.Inspection
 import com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
 import com.intellij.inspectopedia.extractor.utils.HtmlUtils
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
@@ -50,12 +52,12 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: IOException) {
       LOG.error("Output directory does not exist and could not be created")
-      exitProcess(-1)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
     }
 
     if (!Files.isDirectory(outputPath) || !Files.isWritable(outputPath)) {
       LOG.error("Output path is invalid")
-      exitProcess(-1)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
     }
 
     try {
@@ -113,7 +115,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
         catch (e: Throwable) {
           System.err.println("Error while processing ${wrapper.extension}")
           e.printStackTrace()
-          exitProcess(-1)
+          ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
         }
       }
 
@@ -139,9 +141,9 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: Exception) {
       e.printStackTrace()
-      exitProcess(-1)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
     }
-    exitProcess(0)
+    ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true )
   }
 }
 

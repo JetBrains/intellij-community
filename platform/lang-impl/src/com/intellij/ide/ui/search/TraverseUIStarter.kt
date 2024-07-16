@@ -21,8 +21,10 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -44,7 +46,6 @@ import java.nio.charset.CodingErrorAction
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.system.exitProcess
 
 /**
  * Used in installer's "build searchable options" step.
@@ -61,7 +62,7 @@ private class TraverseUIStarter : ModernApplicationStarter() {
         options = LinkedHashMap(),
         outputPath = Path.of(args[1]).toAbsolutePath().normalize(),
       )
-      exitProcess(0)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true )
     }
     catch (e: Throwable) {
       try {
@@ -70,7 +71,7 @@ private class TraverseUIStarter : ModernApplicationStarter() {
       }
       catch (ignored: Throwable) {
       }
-      exitProcess(-1)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
     }
   }
 }
