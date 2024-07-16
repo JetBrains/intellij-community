@@ -307,6 +307,10 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 getInstance().BLANK_LINES);
 
       consumer.renameStandardOption(
+        "BLANK_LINES_AROUND_FIELD_IN_INTERFACE",
+        JavaBundle.message("editbox.blank.lines.field.in.interface"));
+
+      consumer.renameStandardOption(
         "BLANK_LINES_AROUND_FIELD",
         JavaBundle.message("editbox.blank.lines.field.without.annotations"));
 
