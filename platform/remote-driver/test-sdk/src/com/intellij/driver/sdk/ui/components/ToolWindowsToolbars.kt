@@ -5,6 +5,7 @@ import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
+import com.intellij.driver.sdk.ui.should
 
 class ToolWindowLeftToolbarUi(data: ComponentData) : UiComponent(data) {
   val projectButton = stripeButton { byAccessibleName("Project") }
@@ -46,6 +47,14 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
       val activateToolWindowAction = driver.utility(ActivateToolWindowActionManager::class)
         .getActionIdForToolWindow(toolWindow.getId())
       driver.invokeAction(activateToolWindowAction)
+    }
+  }
+
+  fun close() {
+    val toolWindow = button.getToolWindow()
+    if (toolWindow.isVisible()) {
+      this.click()
+      should ("Tool window is still visible"){ !toolWindow.isVisible() }
     }
   }
 
