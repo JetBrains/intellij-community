@@ -307,7 +307,7 @@ public final class CompilerTester {
         properties.load(config);
       }
 
-      properties.setProperty("log4j.rootLogger", "debug, file");
+      properties.setProperty(".level", "FINER");
       Path logFile = logDirectory.resolve(LogSetup.LOG_CONFIG_FILE_NAME);
       try (OutputStream output = new BufferedOutputStream(Files.newOutputStream(logFile))) {
         properties.store(output, null);
