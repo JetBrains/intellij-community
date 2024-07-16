@@ -1,15 +1,15 @@
-LineBreakpoint created at smartStepIntoAndStepOverCoroutineScope.kt:9
+LineBreakpoint created at smartStepIntoAndStepOverCoroutineScope.kt:18
 Run Java
 Connected to the target VM
-smartStepIntoAndStepOverCoroutineScope.kt:9
-smartStepIntoAndStepOverCoroutineScope.kt:10
-smartStepIntoAndStepOverCoroutineScope.kt:11
-smartStepIntoAndStepOverCoroutineScope.kt:12
-smartStepIntoAndStepOverCoroutineScope.kt:13
-smartStepIntoAndStepOverCoroutineScope.kt:15
-smartStepIntoAndStepOverCoroutineScope.kt:16
+smartStepIntoAndStepOverCoroutineScope.kt:18
+smartStepIntoAndStepOverCoroutineScope.kt:20
 smartStepIntoAndStepOverCoroutineScope.kt:21
 smartStepIntoAndStepOverCoroutineScope.kt:22
+smartStepIntoAndStepOverCoroutineScope.kt:23
+smartStepIntoAndStepOverCoroutineScope.kt:25
+smartStepIntoAndStepOverCoroutineScope.kt:26
+smartStepIntoAndStepOverCoroutineScope.kt:31
+smartStepIntoAndStepOverCoroutineScope.kt:32
 Disconnected from the target VM
 
 Process finished with exit code 0
