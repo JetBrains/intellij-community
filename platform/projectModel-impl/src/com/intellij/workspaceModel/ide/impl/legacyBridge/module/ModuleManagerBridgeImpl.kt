@@ -190,7 +190,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
     @Suppress("OPT_IN_USAGE")
     val result = coroutineScope {
-      LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
+      LOG.debug { "Loading modules for ${loadedEntities.size} entities: [${loadedEntities.joinToString { it.name }}]" }
 
       val precomputedExtensionModel = precomputeModuleLevelExtensionModel()
       val result = loadedEntities.map { moduleEntity ->
