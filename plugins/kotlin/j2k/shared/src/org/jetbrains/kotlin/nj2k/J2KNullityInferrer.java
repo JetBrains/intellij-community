@@ -446,14 +446,14 @@ class J2KNullityInferrer {
         }
 
         private boolean processReference(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expr, PsiElement parent) {
-            if (NullabilityKt.isUsedInAutoUnboxingContext(expr)) {
+            if (NullabilityUtilsKt.isUsedInAutoUnboxingContext(expr)) {
                 registerNotNullAnnotation(variable);
                 return true;
             }
 
             if (PsiUtil.isAccessedForWriting(expr)) return true;
 
-            if (NullabilityKt.getDfaNullability(expr) == DfaNullability.NOT_NULL) {
+            if (NullabilityUtilsKt.getDfaNullability(expr) == DfaNullability.NOT_NULL) {
                 // If Java DFA can determine that the nullability of the reference is definitely not-null,
                 // we are probably inside an "instance of" check (which is like a smart cast for Java DFA).
                 // So we give up trying to guess the nullability of the declaration from this reference.
