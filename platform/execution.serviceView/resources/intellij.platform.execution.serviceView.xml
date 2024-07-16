@@ -13,6 +13,7 @@
   </extensions>
   <actions>
     <group id="ServiceViewTreeToolbar">
+      <!-- Suppres unresolved reference to NewElement -->
       <!--suppress PluginXmlValidity -->
       <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
              class="com.intellij.platform.execution.serviceView.AddServiceActionGroup"/>
@@ -42,10 +43,8 @@
       <reference id="ServiceView.SplitByType"/>
       <action id="ServiceView.OpenInToolWindow" class="com.intellij.platform.execution.serviceView.OpenInToolWindowAction"/>
       <separator/>
-      <!--suppress PluginXmlValidity -->
       <reference id="$Delete"/>
       <separator/>
-      <!--suppress PluginXmlValidity -->
       <reference id="EditSource"/>
       <action id="ServiceView.JumpToServices" use-shortcut-of="ShowNavBar"
               class="com.intellij.platform.execution.serviceView.JumpToServicesAction"/>
