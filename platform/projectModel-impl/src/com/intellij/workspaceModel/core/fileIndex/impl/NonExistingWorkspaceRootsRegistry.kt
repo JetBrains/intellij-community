@@ -24,8 +24,8 @@ import java.util.*
 internal class NonExistingWorkspaceRootsRegistry(private val project: Project, private val indexData: WorkspaceFileIndexDataImpl) {
   private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
-  /** access guarded by the global read/write locks; todo: replace by MostlySingularMultiMap to reduce memory usage  */
-  private val nonExistingFiles = MultiMap.create<VirtualFileUrl, NonExistingFileSetData>()
+  /** todo: replace by MostlySingularMultiMap to reduce memory usage  */
+  private val nonExistingFiles = MultiMap.createConcurrent<VirtualFileUrl, NonExistingFileSetData>()
   
   fun registerUrl(root: VirtualFileUrl, entity: WorkspaceEntity, storageKind: EntityStorageKind, fileSetKind: NonExistingFileSetKind) {
     registerUrl(root, entity.createPointer(), storageKind, fileSetKind)
@@ -46,7 +46,6 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
       kind == storageKind && ref == reference
     }
   }
-
 
   fun removeUrl(url: VirtualFileUrl) {
     nonExistingFiles.remove(url)
