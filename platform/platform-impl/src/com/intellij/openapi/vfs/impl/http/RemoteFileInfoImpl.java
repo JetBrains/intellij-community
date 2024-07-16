@@ -127,7 +127,21 @@ public final class RemoteFileInfoImpl implements RemoteContentProvider.Downloadi
     }
 
     VfsImplUtil.refreshAndFindFileByPath(LocalFileSystem.getInstance(), localIOFile.toString(), localFile -> {
-      LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
+      if (localFile == null) {
+        LOG.warn("Virtual local file not found for " + localIOFile.getAbsolutePath());
+        var errorMessage = IdeCoreBundle.message("vfs.file.not.exist.error", localIOFile.getAbsolutePath());
+        synchronized (myLock) {
+          myLocalVirtualFile = null;
+          myPrevLocalFile = null;
+          myState = RemoteFileState.ERROR_OCCURRED;
+          myErrorMessage = errorMessage;
+        }
+        for (FileDownloadingListener listener : myListeners) {
+          listener.errorOccurred(errorMessage);
+        }
+        return;
+      }
+
       LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
       synchronized (myLock) {
         myLocalVirtualFile = localFile;
