@@ -11,6 +11,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.*;
+import com.intellij.idea.IJIgnore;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
@@ -790,6 +791,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(new VirtualFile[]{findVirtualFile(getFullRelativeTestName()), findVirtualFile(BASE_PATH + location)}, false, false);
   }
 
+  @IJIgnore(issue = "IDEA-356247")
   public void testMavenValidation() throws Exception {
     doTest(getFullRelativeTestName(), false, false);
   }
