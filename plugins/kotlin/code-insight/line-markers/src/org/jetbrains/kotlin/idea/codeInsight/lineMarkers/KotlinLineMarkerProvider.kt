@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 
@@ -77,7 +78,7 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
         val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         if (!gutter.isEnabled) return
         if (element.findAllOverridings().firstOrNull() == null &&
-            !isUsedSamInterface(klass)) return
+            (element.hasBody() || !isUsedSamInterface(klass))) return
 
         val anchor = element.nameIdentifier ?: element
 
