@@ -108,7 +108,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   public void setThread(@Nullable ThreadReference thread) {
     assertCanBeUsed();
-    ThreadReferenceProxyImpl threadProxy = myDebugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
+    ThreadReferenceProxyImpl threadProxy = myVirtualMachine.getThreadReferenceProxy(thread);
     assertInLog(myThread == null || myThread == threadProxy,
                 () -> "Invalid thread setting in " + this + ": myThread = " + myThread + ", thread = " + thread);
     setThread(threadProxy);
@@ -464,7 +464,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         CompletableFuture.completedFuture(pausedThreads)
           .thenCompose(tds -> addThreads(tds, THREAD_NAME_COMPARATOR, false))
           .thenCompose(res -> res
-                              ? getDebugProcess().getVirtualMachineProxy().allThreadsAsync()
+                              ? suspendContext.getVirtualMachine().allThreadsAsync()
                               : CompletableFuture.completedFuture(Collections.emptyList()))
           .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true))
           .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));

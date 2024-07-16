@@ -15,7 +15,7 @@ public class ReturnEvaluator implements Evaluator {
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object returnValue = myReturnValueEvaluator == null ?
-                         context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid() :
+                         context.getSuspendContext().getVirtualMachine().mirrorOfVoid() :
                          myReturnValueEvaluator.evaluate(context);
     throw new ReturnException(returnValue);
   }

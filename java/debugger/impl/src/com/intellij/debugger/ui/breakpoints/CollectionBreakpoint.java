@@ -235,8 +235,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
   }
 
   private List<ReferenceType> getTrackedClassesInJVM(SuspendContextImpl context) {
-    DebugProcessImpl debugProcess = context.getDebugProcess();
-    VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    VirtualMachineProxyImpl virtualMachineProxy = context.getVirtualMachine();
 
     return myClassesNames
       .stream()
@@ -293,7 +292,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       }
     }
 
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachine();
 
     for (ThreadReferenceProxyImpl thread : vm.allThreads()) {
       try {
@@ -331,7 +330,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       captureInstanceField(instance, field, context.getDebugProcess(), context);
     }
 
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachine();
 
     for (ThreadReferenceProxyImpl thread : vm.allThreads()) {
       try {

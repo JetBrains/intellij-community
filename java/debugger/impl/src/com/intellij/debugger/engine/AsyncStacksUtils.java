@@ -100,7 +100,7 @@ public final class AsyncStacksUtils {
       return null;
     }
 
-    VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
+    VirtualMachineProxyImpl virtualMachineProxy = evalContext.getSuspendContext().getVirtualMachine();
     List<Value> args = Collections.singletonList(virtualMachineProxy.mirrorOf(getMaxStackLength()));
     Pair<ClassType, Method> finalMethodPair = methodPair;
     String value = DebuggerUtils.processCollectibleValue(
@@ -212,8 +212,8 @@ public final class AsyncStacksUtils {
           StringWriter writer = new StringWriter();
           try {
             properties.store(writer, null);
-            List<StringReference> args =
-              Collections.singletonList(DebuggerUtilsEx.mirrorOfString(writer.toString(), process.getVirtualMachineProxy(), evalContext));
+            var stringArgs = DebuggerUtilsEx.mirrorOfString(writer.toString(), evalContext.getSuspendContext().getVirtualMachine(), evalContext);
+            List<StringReference> args = Collections.singletonList(stringArgs);
             process.invokeMethod(evaluationContext, captureClass, method, args, ObjectReference.INVOKE_SINGLE_THREADED, true);
           }
           catch (Exception e) {

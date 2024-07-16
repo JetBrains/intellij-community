@@ -73,7 +73,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
         suspendWhenNoEvaluation(suspendContext, performOnSuspendAll);
 
       case IMMEDIATE_PAUSE -> {
-        suspendContext.getDebugProcess().getVirtualMachineProxy().suspend();
+        suspendContext.getVirtualMachine().suspend();
         switchToSuspendAll(suspendContext, performOnSuspendAll);
       }
     }
@@ -100,18 +100,18 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
             process.removeEvaluationListener(this);
           }
           else {
-            process.getVirtualMachineProxy().resume();
+            suspendContext.getVirtualMachine().resume();
           }
         }
       });
-      process.getVirtualMachineProxy().resume();
+      suspendContext.getVirtualMachine().resume();
     }
   }
 
   private static boolean switchContextWithSuspend(@NotNull DebugProcessImpl process,
                                                   @NotNull SuspendContextImpl suspendContext,
                                                   @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
-    process.getVirtualMachineProxy().suspend();
+    suspendContext.getVirtualMachine().suspend();
     if (getNumberOfEvaluations(process) == 0) {
       switchToSuspendAll(suspendContext, performOnSuspendAll);
       return true;

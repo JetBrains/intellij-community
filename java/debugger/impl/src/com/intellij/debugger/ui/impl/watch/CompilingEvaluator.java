@@ -58,7 +58,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
     autoLoadContext.setClassLoader(classLoader);
 
-    JavaSdkVersion version = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
+    JavaSdkVersion version = JavaSdkVersion.fromVersionString(autoLoadContext.getSuspendContext().getVirtualMachine().version());
     Collection<ClassObject> classes = compile(version);
     defineClasses(classes, autoLoadContext, process, classLoader);
 

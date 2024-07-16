@@ -29,7 +29,7 @@ class CoroutineFrameBuilder {
             val activeThread = coroutine.activeThread ?: return null
 
             val coroutineStackFrameList = mutableListOf<CoroutineStackFrameItem>()
-            val threadReferenceProxyImpl = ThreadReferenceProxyImpl(suspendContext.debugProcess.virtualMachineProxy, activeThread)
+            val threadReferenceProxyImpl = ThreadReferenceProxyImpl(suspendContext.virtualMachine, activeThread)
             val realFrames = threadReferenceProxyImpl.forceFrames()
             for (runningStackFrameProxy in realFrames) {
                 val preflightStackFrame = coroutineExitFrame(runningStackFrameProxy, suspendContext)

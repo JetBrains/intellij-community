@@ -467,7 +467,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         LOG.debug("DO_STEP: creating step request for " + stepThreadReference);
       }
       deleteStepRequests(stepThreadReference);
-      EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
+      EventRequestManager requestManager = suspendContext.getVirtualMachine().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
       if (!(hint != null && hint.isIgnoreFilters()) && !isPositionFiltered(getLocation(stepThread, suspendContext))) {
         getActiveFilters().forEach(f -> stepRequest.addClassExclusionFilter(f.getPattern()));

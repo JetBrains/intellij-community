@@ -36,7 +36,7 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
     }
     DebugProcess process = suspendContext.getDebugProcess();
     DebuggerManagerThreadImpl managerThread = ((DebuggerManagerThreadImpl)process.getManagerThread());
-    VirtualMachine virtualMachine = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).getVirtualMachine();
+    VirtualMachine virtualMachine = suspendContext.getVirtualMachine().getVirtualMachine();
     if (!(virtualMachine instanceof VirtualMachineImpl) ||
         !managerThread.hasAsyncCommands() && ((VirtualMachineImpl)virtualMachine).isIdle()) {
       return false;

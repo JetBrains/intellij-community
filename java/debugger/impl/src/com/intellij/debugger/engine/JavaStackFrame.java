@@ -271,7 +271,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
-                              final EvaluationContextImpl evaluationContext,
+                              @NotNull final EvaluationContextImpl evaluationContext,
                               @NotNull DebugProcessImpl debugProcess,
                               XValueChildrenList children,
                               ObjectReference thisObjectReference,
@@ -280,7 +280,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     int positionOfLocalVariablesAsFields = children.size();
     final List<FieldDescriptorImpl> outerLocalVariablesAsFields = new SmartList<>();
     if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
-      if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute()) {
+      if (thisObjectReference != null && evaluationContext.getSuspendContext().getVirtualMachine().canGetSyntheticAttribute()) {
         final ReferenceType thisRefType = thisObjectReference.referenceType();
         if (thisRefType instanceof ClassType && location != null
             && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
@@ -296,9 +296,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     boolean myAutoWatchMode = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
-    if (evaluationContext == null) {
-      return;
-    }
 
     try {
       if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isAutoExpressions() && !myAutoWatchMode) {

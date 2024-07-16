@@ -25,7 +25,7 @@ public class TryEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object result = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
+    Object result = context.getSuspendContext().getVirtualMachine().mirrorOfVoid();
     try {
       result = myBodyEvaluator.evaluate(context);
     }

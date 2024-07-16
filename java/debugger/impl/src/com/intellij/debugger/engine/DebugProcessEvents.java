@@ -185,7 +185,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
                 if (isResumeOnlyCurrentThread() && locatableEvent != null) {
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
-                    ThreadReferenceProxyImpl threadProxy = getVirtualMachineProxy().getThreadReferenceProxy(locatableEvent.thread());
+                    ThreadReferenceProxyImpl threadProxy = context.getVirtualMachine().getThreadReferenceProxy(locatableEvent.thread());
                     if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL &&
                         context.isExplicitlyResumed(threadProxy)) {
                       context.myResumedThreads.remove(threadProxy);
@@ -334,7 +334,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     if (oldThread == null) {
       switch (suspendContext.getSuspendPolicy()) {
-        case EventRequest.SUSPEND_ALL -> suspendContext.getDebugProcess().getVirtualMachineProxy().addedSuspendAllContext();
+        case EventRequest.SUSPEND_ALL -> suspendContext.getVirtualMachine().addedSuspendAllContext();
         case EventRequest.SUSPEND_EVENT_THREAD -> Objects.requireNonNull(suspendContext.getEventThread()).threadWasSuspended();
       }
       //this is the first event in the eventSet that we process
@@ -488,7 +488,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
   private void processVMDeathEvent(SuspendContextImpl suspendContext, @Nullable Event event) {
     // do not destroy another process on reattach
     if (isAttached()) {
-      VirtualMachine vm = getVirtualMachineProxy().getVirtualMachine();
+      var vmProxy = suspendContext != null ? suspendContext.getVirtualMachine() : getVirtualMachineProxy();
+      VirtualMachine vm = vmProxy.getVirtualMachine();
       if (event == null || vm == event.virtualMachine()) {
         try {
           preprocessEvent(suspendContext, null);
@@ -852,7 +853,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
 
       noStandardSuspendNeeded = true;
-      ThreadReferenceProxyImpl threadProxy = debugProcess.getVirtualMachineProxy().getThreadReferenceProxy(thread);
+      ThreadReferenceProxyImpl threadProxy = suspendContext.getVirtualMachine().getThreadReferenceProxy(thread);
       if (suspendManager.myExplicitlyResumedThreads.contains(threadProxy)) {
         for (SuspendContextImpl context : suspendManager.getEventContexts()) {
           if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL && !context.suspends(threadProxy)) {
@@ -904,7 +905,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     SkippedBreakpointReason reason = SkippedBreakpointReason.EVALUATION_IN_ANOTHER_THREAD;
     if (event != null) {
-      ThreadReferenceProxyImpl proxy = getVirtualMachineProxy().getThreadReferenceProxy(event.thread());
+      ThreadReferenceProxyImpl proxy = suspendContext.getVirtualMachine().getThreadReferenceProxy(event.thread());
       if (proxy != null && proxy.isEvaluating()) {
         reason = SkippedBreakpointReason.EVALUATION_IN_THE_SAME_THREAD;
       }

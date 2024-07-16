@@ -44,7 +44,7 @@ public class TypeCastEvaluator implements Evaluator {
       }
       return null;
     }
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachine();
     if (DebuggerUtils.isInteger(value)) {
       value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, ((PrimitiveValue)value).longValue());
       if (value == null) {

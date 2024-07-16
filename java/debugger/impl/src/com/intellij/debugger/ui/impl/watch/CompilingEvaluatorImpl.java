@@ -189,9 +189,8 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   public static JavaSdkVersion getJavaVersion(@Nullable XDebugSession session) {
     if (session != null) {
       XSuspendContext suspendContext = session.getSuspendContext();
-      if (suspendContext instanceof SuspendContextImpl) {
-        DebugProcessImpl debugProcess = ((SuspendContextImpl)suspendContext).getDebugProcess();
-        return JavaSdkVersion.fromVersionString(debugProcess.getVirtualMachineProxy().version());
+      if (suspendContext instanceof SuspendContextImpl suspendContextImpl) {
+        return JavaSdkVersion.fromVersionString(suspendContextImpl.getVirtualMachine().version());
       }
     }
 

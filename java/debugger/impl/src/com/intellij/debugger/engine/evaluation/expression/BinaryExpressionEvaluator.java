@@ -48,7 +48,7 @@ class BinaryExpressionEvaluator implements Evaluator {
                                   final Evaluator rightOperand,
                                   final String expectedType,
                                   final EvaluationContextImpl context) throws EvaluateException {
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachine();
     if (leftResult instanceof BooleanValue) {
       boolean v1 = ((PrimitiveValue)leftResult).booleanValue();
       if (opType == JavaTokenType.OROR && v1) {
