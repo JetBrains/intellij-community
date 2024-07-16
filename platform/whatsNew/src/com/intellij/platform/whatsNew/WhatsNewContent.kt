@@ -279,24 +279,9 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
 }
 
 fun getCurrentLanguageTag(): String {
-  val lang = LocalizationStateService.getInstance()?.getSelectedLocale()?.lowercase() ?: run {
+  return LocalizationStateService.getInstance()?.getSelectedLocale()?.lowercase() ?: run {
     logger.error("Cannot get a LocalizationStateService instance. Default to en-us locale.")
-    return "en-us"
-  }
-  if (lang.contains('-')) {
-    logger.error("Failed assumption: it is expected that the IDE language tag \"$lang\" doesn't contain \"-\".")
-    return lang
-  }
-
-  return when(lang) {
-    "en" -> "en-us"
-    "ja" -> "ja-jp"
-    "zh" -> "zh-cn"
-    "ko" -> "ko-kr"
-    else -> {
-      logger.error("Unknown language tag for What's New: \"$lang\".")
-      lang
-    }
+    "en-us"
   }
 }
 
