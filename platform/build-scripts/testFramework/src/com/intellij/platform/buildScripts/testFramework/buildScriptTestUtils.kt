@@ -196,7 +196,6 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
           copyDebugLog(context.productProperties, context.messages)
 
           if (ExceptionUtilRt.causedBy(e, HttpConnectTimeoutException::class.java)) {
-            //todo use com.intellij.platform.testFramework.io.ExternalResourcesChecker after next update of jps-bootstrap library
             error = TestAbortedException("failed to load data for build scripts", e)
           }
           else {
