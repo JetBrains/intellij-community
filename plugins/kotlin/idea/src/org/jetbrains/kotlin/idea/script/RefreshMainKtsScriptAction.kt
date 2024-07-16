@@ -6,23 +6,16 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.LightVirtualFileBase
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
-import org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider
-import org.jetbrains.kotlin.idea.core.script.ScriptModel
-import org.jetbrains.kotlin.idea.core.script.createScriptModules
+import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDependenciesSource
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.script.experimental.api.valueOrNull
 
 internal class RefreshMainKtsScriptAction : AnAction() {
 
@@ -33,23 +26,14 @@ internal class RefreshMainKtsScriptAction : AnAction() {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val file = getKotlinScriptFile(editor) ?: return
 
-        val configurationResult = K2ScriptDependenciesProvider.getInstance(project)
-            .addConfiguration(VirtualFileScriptSource(file))
-
-        val configuration = configurationResult.valueOrNull()
-
-        val model =
-            ScriptModel(file, configuration?.dependenciesClassPath?.map { it.absolutePath } ?: emptyList())
-
-        GlobalScope.launch {
-            project.createScriptModules(setOf(model))
-
-            writeAction {
-                project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
-            }
+        runWithModalProgressBlocking(
+            project,
+            "Compiling script..."
+        ) {
+            MainKtsScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(
+                listOf(BaseScriptModel(file))
+            )
         }
-
-        lastModifiedPerScript[file] = file.modificationStamp
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT

@@ -119,6 +119,7 @@
     <scriptDefinitionContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor" order="first"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource"/>
+    <scriptDependenciesSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDependenciesSource"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptAdditionalIdeaDependenciesProvider"/>
 

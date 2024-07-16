@@ -4,50 +4,36 @@ import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
+import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import java.nio.file.Path
 import kotlin.script.experimental.api.valueOrNull
-import kotlin.time.measureTime
 
 const val KOTLIN_SCRIPTS_MODULE_NAME = "Kotlin Scripts"
 
 data class KotlinScriptEntitySourceK2(override val virtualFileUrl: VirtualFileUrl) : EntitySource
 
-suspend fun Project.createScriptModules(scripts: Set<ScriptModel>, storage: MutableEntityStorage? = null) {
-    val workspaceModel = workspaceModel
-    val storageSnapshot = workspaceModel.currentSnapshot
-    val tempStorage = MutableEntityStorage.from(storageSnapshot)
-
-    val duration = measureTime { createPureScriptModules(this, scripts, storage ?: tempStorage) }
-
-    scriptingDebugLog { "createPureScriptModules duration = $duration" }
-
-    if (storage == null) {
-        workspaceModel.update("Updating kotlin scripts modules") {
-            it.applyChangesFrom(tempStorage)
-        }
-    }
-}
-
-private fun createPureScriptModules(project: Project, scriptPaths: Set<ScriptModel>, storage: MutableEntityStorage) {
+fun creteScriptModules(project: Project, dependenciesData: ScriptDependenciesData, storage: MutableEntityStorage) {
     val projectPath = project.basePath?.let { Path.of(it) } ?: return
 
-    val sourcesToUpdate: MutableSet<KotlinScriptEntitySourceK2> = mutableSetOf<KotlinScriptEntitySourceK2>()
+    val sourcesToUpdate: MutableSet<KotlinScriptEntitySourceK2> = mutableSetOf()
     val updatedStorage = MutableEntityStorage.create()
 
-    for (scriptFile in scriptPaths.map { it.virtualFile }) {
+    for ((scriptFile, configurationWrapper) in dependenciesData.configurations) {
         if (ScratchUtil.isScratch(scriptFile)) {
             continue
         }
+
+        val configuration = configurationWrapper.valueOrNull() ?: continue
 
         val basePath = projectPath.toFile()
         val file = Path.of(scriptFile.path).toFile()
@@ -63,7 +49,16 @@ private fun createPureScriptModules(project: Project, scriptPaths: Set<ScriptMod
 
         val source = KotlinScriptEntitySourceK2(scriptFile.toVirtualFileUrl(WorkspaceModel.getInstance(project).getVirtualFileUrlManager()))
         sourcesToUpdate += source
-        val dependencies = updatedStorage.createDependencies(moduleName, scriptFile, project, source)
+
+        val sdkDependency =
+            configuration.javaHome?.toPath()
+                ?.let { dependenciesData.sdks[it] }
+                ?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
+
+        val dependencies = listOfNotNull(
+            updatedStorage.createLibraryDependency(moduleName, project, source, configuration),
+            sdkDependency
+        )
 
         updatedStorage.addEntity(ModuleEntity(moduleName, dependencies, source))
     }
@@ -71,49 +66,36 @@ private fun createPureScriptModules(project: Project, scriptPaths: Set<ScriptMod
     storage.replaceBySource({ entitySource -> entitySource in sourcesToUpdate }, updatedStorage)
 }
 
-private data class DependenciesFiles(
-    val dependenciesClassFiles: List<VirtualFile>,
-    val dependenciesSourceFiles: List<VirtualFile>,
-    val sdk: SdkDependency?
-) {
-    companion object {
-        val EMPTY = DependenciesFiles(listOf(), listOf(), null)
-    }
-}
-
-private fun getDependenciesFiles(scriptFile: VirtualFile, project: Project): DependenciesFiles {
-    val dependenciesProvider = K2ScriptDependenciesProvider.getInstance(project)
-    val wrapper = dependenciesProvider.getConfiguration(scriptFile)?.valueOrNull() ?: return DependenciesFiles.EMPTY
-
-    val sdk = dependenciesProvider.getScriptSdk(scriptFile)?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
-
-    val dependenciesClassFiles = toVfsRoots(wrapper.dependenciesClassPath)
-    val dependenciesSourceFiles = toVfsRoots(wrapper.dependenciesSources)
-
-    return DependenciesFiles(dependenciesClassFiles, dependenciesSourceFiles, sdk)
-}
-
-fun MutableEntityStorage.createDependencies(
+fun MutableEntityStorage.createLibraryDependency(
     moduleName: String,
-    scriptFile: VirtualFile,
     project: Project,
-    entitySource: EntitySource
-): List<ModuleDependencyItem> {
-    val (dependenciesClassFiles, dependenciesSourceFiles, sdk) = getDependenciesFiles(scriptFile, project)
+    entitySource: EntitySource,
+    configurationWrapper: ScriptCompilationConfigurationWrapper
+): LibraryDependency {
 
+    val roots = getLibraryRoots(project, configurationWrapper)
+    val libraryTableId = LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(moduleName))
+    val dependencyEntity =
+        addEntity(LibraryEntity("$moduleName dependencies", libraryTableId, roots, entitySource))
+
+    return LibraryDependency(dependencyEntity.symbolicId, false, DependencyScope.COMPILE)
+}
+
+private fun getLibraryRoots(
+    project: Project,
+    configurationWrapper: ScriptCompilationConfigurationWrapper
+): List<LibraryRoot> {
     val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
-    val classRoots = dependenciesClassFiles.map {
-        LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.COMPILED)
+    val roots = buildList {
+        toVfsRoots(configurationWrapper.dependenciesClassPath).mapTo(this) {
+            LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.COMPILED)
+        }
+
+        toVfsRoots(configurationWrapper.dependenciesSources).mapTo(this) {
+            LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.SOURCES)
+        }
     }
 
-    val sourceRoots = dependenciesSourceFiles.map {
-        LibraryRoot(it.toVirtualFileUrl(fileUrlManager), LibraryRootTypeId.SOURCES)
-    }
-
-    val libraryTableId = LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(moduleName))
-    val dependencyLibrary =
-        addEntity(LibraryEntity("$moduleName dependencies", libraryTableId, classRoots + sourceRoots, entitySource))
-
-    return listOfNotNull(LibraryDependency(dependencyLibrary.symbolicId, false, DependencyScope.COMPILE), sdk)
+    return roots
 }

@@ -8,8 +8,6 @@ import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.ScriptModel
-import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
@@ -72,20 +70,21 @@ class ProjectGradleSettingsListener(
         settings: GradleProjectSettings
     ) {
         val definitions = loadGradleDefinitions(settings.externalProjectPath, root.data.gradleHome, root.data.javaHome, project)
-        GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
 
-        val scripts = root.data.models.mapNotNull {
+        val gradleScripts = root.data.models.mapNotNull {
             val path = Paths.get(it.file)
             VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
-                ScriptModel(
+                GradleScriptModel(
                     virtualFile,
                     it.classPath,
                     it.sourcePath,
-                    it.imports
+                    it.imports,
+                    root.data.javaHome
                 )
             }
         }.toSet()
 
-        configureGradleScriptsK2(project, scripts, root.data.javaHome, storage = null)
+        GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
+        GradleScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(gradleScripts)
     }
 }

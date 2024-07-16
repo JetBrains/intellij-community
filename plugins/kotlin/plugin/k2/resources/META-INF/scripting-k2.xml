@@ -7,6 +7,12 @@
             dynamic="true"/>
 
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDependenciesSource"
+            interface="org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesSource"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scripting.definitions.scriptDefinitionProvider"
             interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
             area="IDEA_PROJECT"/>
@@ -67,13 +73,13 @@
             restartRequired="true"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.K2ScriptDefinitionProvider"/>
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider"/>
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationDataProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink"/>
@@ -106,7 +112,8 @@
     <idea.base.projectStructure.moduleInfoProviderExtension
             implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.MainKtsScriptDefinitionSourceK2"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDefinitionSource"/>
+    <scriptDependenciesSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDependenciesSource"/>
   </extensions>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">

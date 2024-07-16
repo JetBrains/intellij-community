@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.core.script.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
