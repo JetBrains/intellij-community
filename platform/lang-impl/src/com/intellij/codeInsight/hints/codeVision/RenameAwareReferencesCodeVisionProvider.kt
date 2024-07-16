@@ -59,6 +59,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
                               project: Project,
                               stamp: Long?,
                               cacheService: CodeVisionCacheService): CodeVisionState {
+    if (DumbService.isDumb(project)) return CodeVisionState.READY_EMPTY
     val file = FileDocumentManager.getInstance().getFile(editor.document)?.findPsiFile(project) ?: return CodeVisionState.READY_EMPTY
 
     if (file.project.isDefault) return CodeVisionState.READY_EMPTY
