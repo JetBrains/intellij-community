@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -42,7 +42,9 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @Override
   public PsiFile getContainingFile() {
-    return SharedImplUtil.getContainingFile(getNode());
+    PsiFile file = SharedImplUtil.getContainingFile(getNode());
+    if (file == null) throw new PsiInvalidElementAccessException(this);
+    return file;
   }
 
   @Override
