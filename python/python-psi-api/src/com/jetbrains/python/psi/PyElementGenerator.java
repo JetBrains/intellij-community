@@ -33,10 +33,17 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
    * @param destination where the literal is destined to; used to determine the encoding.
    * @param unescaped   the string
    * @param preferUTF8 try to use UTF8 (would use ascii if false)
+   * @param preferDoubleQuotes try to use double/single quotes
    * @return a newly created literal
    */
+  protected abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
+                                                                          @NotNull String unescaped,
+                                                                          boolean preferUTF8, boolean preferDoubleQuotes);
+
   public abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped,
                                                                           boolean preferUTF8);
+
+  public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped, boolean preferDoubleQuotes);
 
   public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped);
 
@@ -50,7 +57,7 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
 
   @NotNull
   public abstract PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
-  
+
   @NotNull
   public abstract PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
 

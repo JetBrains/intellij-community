@@ -80,10 +80,11 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
 
 
   @Override
-  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
+  protected PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
                                                                  @NotNull String unescaped,
-                                                                 final boolean preferUTF8) {
-    boolean useDouble = !unescaped.contains("\"");
+                                                                 final boolean preferUTF8,
+                                                                 boolean preferDoubleQuotes) {
+    boolean useDouble = (!unescaped.contains("\"") && preferDoubleQuotes) || unescaped.contains("'");
     boolean useMulti = unescaped.matches(".*(\r|\n).*");
     String quotes;
     if (useMulti) {
@@ -137,6 +138,18 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
     if (unicode) buf.insert(0, "u");
 
     return createStringLiteralAlreadyEscaped(buf.toString());
+  }
+
+  @Override
+  public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
+                                                                 @NotNull String unescaped,
+                                                                 final boolean preferUTF8) {
+    return createStringLiteralFromString(destination, unescaped, preferUTF8, true);
+  }
+
+  @Override
+  public PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped, boolean preferDoubleQuotes) {
+    return createStringLiteralFromString(null, unescaped, true, preferDoubleQuotes);
   }
 
   @Override
