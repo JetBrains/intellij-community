@@ -16,10 +16,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.Logger
@@ -30,9 +27,9 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.Computable
@@ -51,7 +48,6 @@ import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
 import com.intellij.util.IconUtil
-import com.intellij.util.ModalityUiUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -60,9 +56,11 @@ import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -165,14 +163,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
 
   // When readExternal not all configuration may be loaded, so we need to remember the selected configuration
   // so that when it is eventually loaded, we can mark is as a selected.
-  // See also notYetAppliedInitialSelectedConfigurationId,
-  // which helps when the initially selected RC is stored in some arbitrary *.run.xml file in a project
   protected open var selectedConfigurationId: String? = null
-  // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace and from .idea/runConfigurations.
-  // This var helps if initially selected RC is a one from such a file.
-  // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
-  private var notYetAppliedInitialSelectedConfigurationId: String? = null
-  private var selectedRCSetupScheduled: Boolean = false
 
   private val iconAndInvalidCache = RunConfigurationIconAndInvalidCache()
 
@@ -422,28 +413,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
           continue
         }
 
-        if (!StartupManager.getInstance(project).postStartupActivityPassed()) {
-          // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
-          if (!selectedRCSetupScheduled && (notYetAppliedInitialSelectedConfigurationId == runConfig.uniqueID ||
-                                            notYetAppliedInitialSelectedConfigurationId == "" && runConfig.type.isManaged)) {
-            selectedRCSetupScheduled = true
-            // The Project is being loaded.
-            // Finally, we can set the right RC as 'selected' in the RC combo box.
-            // Need to set selectedConfiguration in EDT
-            // to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
-            StartupManager.getInstance(project).runAfterOpened {
-              ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), project.disposed, Runnable {
-                // Empty string means that there's no information about initially selected RC in workspace.xml
-                // => IDE should select any if still none selected (CLion could have set the selected RC itself).
-                if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {
-                  selectedConfiguration = runConfig
-                }
-                notYetAppliedInitialSelectedConfigurationId = null
-              })
-            }
-          }
-        }
-        else if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
+        if (selectedConfigurationId == null && runConfig.uniqueID == oldSelectedId) {
           // don't loosely currently select RC in case of any external changes in the file
           selectedConfigurationId = oldSelectedId
         }
@@ -943,14 +913,44 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     }
 
     if (selectedConfiguration == null) {
-      // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
-      notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId ?: ""
+      val runConfigIdToSelect = selectedConfigurationId.nullize()
+
       selectAnyConfiguration()
+
+      // More run configurations may get loaded later by RunConfigurationInArbitraryFileScanner.
+      // We may need to update the selected RC when it's done.
+      if (runConfigIdToSelect != null || selectedConfiguration == null) {
+        updateSelectedRunConfigWhenFileScannerIsDone(runConfigIdToSelect)
+      }
     }
   }
 
   private fun selectAnyConfiguration() {
     selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
+  }
+
+  private fun updateSelectedRunConfigWhenFileScannerIsDone(runConfigIdToSelect: String?) {
+    val currentSelectedConfigId = selectedConfigurationId
+
+    (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Default) {
+      project.serviceAsync<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
+
+      // RunConfigurationInArbitraryFileScanner has finished its initial scanning, all RCs are loaded.
+      // Now we can set the right RC as 'selected' in the RC combo box.
+      // EDT is needed to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
+      withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        val runConfigToSelect = lock.read {
+          // don't change the selected RC if it has been already changed and is not null
+          if (currentSelectedConfigId != selectedConfigurationId && selectedConfigurationId != null) return@read null
+          // select the 'correct' RC if it is available
+          runConfigIdToSelect?.let { idToSettings[runConfigIdToSelect] }?.let { return@read it }
+          // select any RC if none is selected
+          if (selectedConfiguration == null) return@read allSettings.firstOrNull { it.type.isManaged }
+          return@read null
+        }
+        runConfigToSelect?.let { selectedConfiguration = it }
+      }
+    }
   }
 
   fun readContext(parentNode: Element) {
