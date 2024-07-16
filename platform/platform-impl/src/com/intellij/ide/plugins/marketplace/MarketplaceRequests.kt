@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -309,7 +309,6 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   @RequiresBackgroundThread
   @JvmOverloads
-  @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
     try {
       return readOrUpdateFile(
@@ -320,25 +319,15 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         ::parseXmlIds,
       )
     }
-    catch (e: UnknownHostException) {
+    catch (e: IOException) {
       LOG.infoOrDebug("Cannot get plugins from Marketplace", e)
-      return emptySet()
-    }
-    catch (es: SocketTimeoutException) {
-      LOG.infoOrDebug("Cannot get plugins from Marketplace", es)
       return emptySet()
     }
   }
 
   override fun loadPlugins(indicator: ProgressIndicator?): Future<Set<PluginId>> {
     return ApplicationManager.getApplication().executeOnPooledThread(Callable {
-      try {
-        getMarketplacePlugins(indicator)
-      }
-      catch (e: IOException) {
-        LOG.infoOrDebug("Cannot get plugins from Marketplace", e)
-        emptySet()
-      }
+      getMarketplacePlugins(indicator)
     })
   }
 
