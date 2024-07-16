@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil;
+import com.intellij.codeInsight.highlighting.BackgroundHighlighter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -41,7 +41,7 @@ public final class IdentifierHighlighterPassFactory {
   @TestOnly
   public static void doWithHighlightingEnabled(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull Runnable r) {
     ThreadingAssertions.assertEventDispatchThread();
-    BackgroundHighlightingUtil.enableListenersInTest(project, parentDisposable);
+    BackgroundHighlighter.Companion.enableListenersInTest(project, parentDisposable);
     TestModeFlags.set(ourTestingIdentifierHighlighting, true);
     try {
       r.run();
