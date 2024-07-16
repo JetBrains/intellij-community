@@ -15,7 +15,7 @@ object ExternalSystemTrustedProjectDialog {
     systemId: ProjectSystemId,
     projectRoot: Path
   ): Boolean {
-    return TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync(
+    return TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
       projectRoot,
       project,
       title = IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectRoot.fileName),

@@ -6598,12 +6598,6 @@ f:com.intellij.ide.impl.SelectInEditorManagerImpl
 - focusGained(java.awt.event.FocusEvent):V
 - focusLost(java.awt.event.FocusEvent):V
 - selectInEditor(com.intellij.openapi.vfs.VirtualFile,I,I,Z,Z):V
-f:com.intellij.ide.impl.ShowTrustProjectDialogAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.ide.impl.TrustStateListener
 - sf:Companion:com.intellij.ide.impl.TrustStateListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -6624,7 +6618,6 @@ f:com.intellij.ide.impl.TrustedHostsConfigurable
 - createPanel():com.intellij.openapi.ui.DialogPanel
 - getId():java.lang.String
 *f:com.intellij.ide.impl.TrustedProjects
-- sf:TRUSTED_PROJECTS_HELP_TOPIC:java.lang.String
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
 - sf:getTrustedState(com.intellij.openapi.project.Project):com.intellij.util.ThreeState
 - sf:isTrusted(com.intellij.openapi.project.Project):Z
@@ -8713,9 +8706,8 @@ f:com.intellij.ide.trustedProjects.TrustedProjectsDialog
 - sf:INSTANCE:com.intellij.ide.trustedProjects.TrustedProjectsDialog
 - f:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
 - f:confirmLoadingUntrustedProjectAsync(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- f:confirmOpeningOrLinkingUntrustedProject(java.nio.file.Path,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):Z
-- f:confirmOpeningOrLinkingUntrustedProjectAsync(java.nio.file.Path,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- bs:confirmOpeningOrLinkingUntrustedProjectAsync$default(com.intellij.ide.trustedProjects.TrustedProjectsDialog,java.nio.file.Path,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:confirmOpeningOrLinkingUntrustedProject(java.nio.file.Path,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- bs:confirmOpeningOrLinkingUntrustedProject$default(com.intellij.ide.trustedProjects.TrustedProjectsDialog,java.nio.file.Path,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *:com.intellij.ide.trustedProjects.TrustedProjectsListener
 - *sf:Companion:com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic

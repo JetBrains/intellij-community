@@ -44,13 +44,13 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     val projectPath = getProjectDirectory(projectFile).toNioPath()
 
     if (!TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
-        projectPath,
-        project,
-        IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectPath.fileName),
-        IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
-        IdeBundle.message("untrusted.project.dialog.trust.button"),
-        IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-        IdeBundle.message("untrusted.project.link.dialog.cancel.button")
+        projectRoot = projectPath,
+        project = project,
+        title = IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectPath.fileName),
+        message = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
+        trustButtonText = IdeBundle.message("untrusted.project.dialog.trust.button"),
+        distrustButtonText = IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+        cancelButtonText = IdeBundle.message("untrusted.project.link.dialog.cancel.button")
       )) {
       return
     }

@@ -1239,7 +1239,6 @@ c:com.intellij.openapi.externalSystem.service.project.manage.TaskActivationState
 - isEmpty():Z
 f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 - sf:INSTANCE:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
-- sf:confirmLinkingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.nio.file.Path):Z
 - f:confirmLinkingUntrustedProjectAsync(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.util.Collection):Z
@@ -1871,7 +1870,6 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 - s:showUi(java.lang.Object,Z):V
 f:com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 - sf:HASHING_STRATEGY:com.intellij.util.containers.HashingStrategy
-- s:confirmLinkingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.nio.file.Path):Z
 - s:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
 - s:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.util.Collection):Z
 - s:convert(com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent):com.intellij.build.events.BuildEvent

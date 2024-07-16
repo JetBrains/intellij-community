@@ -22,7 +22,7 @@ import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
-import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -1199,7 +1199,7 @@ private fun removeProjectConfigurationAndCaches(projectFile: Path) {
  */
 private suspend fun checkOldTrustedStateAndMigrate(project: Project, projectStoreBaseDir: Path): Boolean {
   // The trusted state will be migrated inside TrustedProjects.isTrustedProject, because now we have project instance.
-  return confirmOpeningOrLinkingUntrustedProjectAsync(
+  return confirmOpeningOrLinkingUntrustedProject(
     projectRoot = projectStoreBaseDir,
     project = project,
     title = IdeBundle.message("untrusted.project.open.dialog.title", project.name),
@@ -1404,7 +1404,7 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
     return true
   }
 
-  return confirmOpeningOrLinkingUntrustedProjectAsync(
+  return confirmOpeningOrLinkingUntrustedProject(
     projectRoot = projectStoreBaseDir,
     project = null,
     title = IdeBundle.message("untrusted.project.open.dialog.title", projectStoreBaseDir.fileName)
