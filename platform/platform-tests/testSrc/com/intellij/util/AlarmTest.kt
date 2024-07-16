@@ -30,6 +30,20 @@ import java.util.concurrent.atomic.AtomicInteger
 @TestApplication
 class AlarmTest {
   @Test
+  fun `cancel request by task`(@TestDisposable disposable: Disposable): Unit = runBlocking(Dispatchers.EDT) {
+    val alarm = Alarm(threadToUse = Alarm.ThreadToUse.SWING_THREAD, parentDisposable = disposable)
+    val list = ConcurrentLinkedQueue<String>()
+    val r1 = Runnable { list.add("1") }
+    val r2 = Runnable { list.add("2") }
+    alarm.addRequest(request = r1, delayMillis = 100, modalityState = ModalityState.nonModal())
+    alarm.addRequest(request = r2, delayMillis = 200, modalityState = ModalityState.nonModal())
+    assertThat(list).isEmpty()
+    alarm.cancelRequest(r1)
+    alarm.drainRequestsInTest()
+    assertThat(list).containsExactly("2")
+  }
+
+  @Test
   fun alarmRequestsShouldExecuteSequentiallyInEdt(@TestDisposable disposable: Disposable) {
     assertRequestsExecuteSequentially(Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable))
   }

@@ -226,20 +226,24 @@ open class Alarm @Internal constructor(
 
   fun cancelRequest(request: Runnable): Boolean {
     synchronized(LOCK) {
-      cancelAndRemoveRequestFrom(request, requests)
-      cancelAndRemoveRequestFrom(request, pendingRequests)
+      if (!cancelAndRemoveRequestFrom(request, requests)) {
+        cancelAndRemoveRequestFrom(request, pendingRequests)
+      }
     }
     return true
   }
 
-  private fun cancelAndRemoveRequestFrom(request: Runnable, list: MutableList<Request>) {
-    for ((i, r) in list.asReversed().withIndex()) {
+  private fun cancelAndRemoveRequestFrom(request: Runnable, list: MutableList<Request>): Boolean {
+    val iterator = list.asReversed().iterator()
+    while (iterator.hasNext()) {
+      val r = iterator.next()
       if (r.task === request) {
         r.cancel()
-        list.removeAt(i)
-        break
+        iterator.remove()
+        return true
       }
     }
+    return false
   }
 
   // returns number of requests canceled
