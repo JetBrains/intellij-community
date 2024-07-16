@@ -184,6 +184,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "blockmap",
                    url = "https://github.com/JetBrains/plugin-blockmap-patches")
       .apache("https://github.com/JetBrains/plugin-blockmap-patches/blob/master/LICENSE"),
+    LibraryLicense(name = "Bodymovin", url = "https://github.com/airbnb/lottie-web",
+                   version = "5.5.10", attachedTo = "intellij.platform.ide.newUiOnboarding")
+      .mit("https://github.com/airbnb/lottie-web/blob/master/LICENSE.md"),
     LibraryLicense(libraryName = "bouncy-castle-pgp", url = "https://www.bouncycastle.org")
       .mit("https://www.bouncycastle.org/license.html")
       .suppliedByOrganizations("The Legion of the Bouncy Castle Inc."),
