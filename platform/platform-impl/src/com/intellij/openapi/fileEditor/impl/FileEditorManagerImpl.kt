@@ -1460,7 +1460,7 @@ open class FileEditorManagerImpl(
 
   override fun getSelectedTextEditor(): Editor? = getSelectedTextEditor(isLockFree = false)
 
-  fun getSelectedTextEditor(isLockFree: Boolean): Editor? {
+  final override fun getSelectedTextEditor(isLockFree: Boolean): Editor? {
     if (!initJob.isCompleted) {
       return null
     }
