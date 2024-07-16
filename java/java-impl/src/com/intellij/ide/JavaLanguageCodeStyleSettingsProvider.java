@@ -322,7 +322,13 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
                                 "BLANK_LINES_AROUND_FIELD");
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
-      consumer.showAllStandardOptions();
+      consumer.showStandardOptions(
+        "LINE_COMMENT_ADD_SPACE",
+        "LINE_COMMENT_ADD_SPACE_ON_REFORMAT",
+        "LINE_COMMENT_AT_FIRST_COLUMN",
+        "BLOCK_COMMENT_AT_FIRST_COLUMN",
+        "BLOCK_COMMENT_ADD_SPACE"
+      );
     }
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",
