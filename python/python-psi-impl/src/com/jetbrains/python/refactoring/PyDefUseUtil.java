@@ -87,9 +87,9 @@ public final class PyDefUseUtil {
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
                                     // not a back edge
-                                    if (instruction.num() < startNum && context.getOrigin() != null) {
-                                      // switch back to code analysis, since all other analyses are too aggressive
-                                      var newContext = TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin());
+                                    if (instruction.num() < startNum && context.getOrigin() == callInstruction.getElement().getContainingFile()) {
+                                      var newContext = TypeEvalContext.codeAnalysis(context.getOrigin().getProject(),
+                                                                                    context.getOrigin());
                                       if (callInstruction.isNoReturnCall(newContext)) return ControlFlowUtil.Operation.CONTINUE;
                                     }
                                   }
@@ -98,9 +98,9 @@ public final class PyDefUseUtil {
                                   if (acceptTypeAssertions
                                       && instruction instanceof ConditionalInstruction conditionalInstruction
                                       && instruction.num() < startNum) {
-                                    if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() != null) {
-                                      // switch back to code analysis, since all other analyses are too aggressive
-                                      TypeEvalContext newContext = TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin());
+                                    if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
+                                      var newContext = TypeEvalContext.codeAnalysis(context.getOrigin().getProject(),
+                                                                                    context.getOrigin());
                                       if (newContext.getType(typedElement) instanceof PyNarrowedType narrowedType) {
                                         if (narrowedType.getQname().equals(varName)) {
                                           pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);
