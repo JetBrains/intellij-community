@@ -34,10 +34,12 @@ class MavenSearcherTest : MavenIndicesTestCase() {
 
 
   @Throws(Exception::class)
-  override fun setUp() = runBlocking(Dispatchers.EDT) {
+  override fun setUp()  {
     super.setUp()
-    myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
-    myIndicesFixture.setUp()
+    runBlocking(Dispatchers.EDT) {
+      myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
+      myIndicesFixture.setUp()
+    }
     runBlocking {
       MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
       myRepo = MavenIndexUtils.getLocalRepository(project)!!
@@ -60,7 +62,6 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   }
 
   @Test
-  @Ignore
   fun testClassSearch() = runBlocking(Dispatchers.EDT) {
     assertClassSearchResults("TestCas",
                              "TestCase(junit.framework) junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",
@@ -111,7 +112,6 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   }
 
   @Test
-  @Ignore
   fun testArtifactSearch() = runBlocking(Dispatchers.EDT) {
     assertArtifactSearchResults("")
     assertArtifactSearchResults("j:j", *(JMOCK_VERSIONS + JUNIT_VERSIONS))
@@ -128,7 +128,6 @@ class MavenSearcherTest : MavenIndicesTestCase() {
   }
 
   @Test
-  @Ignore
   fun testArtifactSearchDash() = runBlocking(Dispatchers.EDT) {
     assertArtifactSearchResults("commons", *COMMONS_IO_VERSIONS)
     assertArtifactSearchResults("commons-", *COMMONS_IO_VERSIONS)
