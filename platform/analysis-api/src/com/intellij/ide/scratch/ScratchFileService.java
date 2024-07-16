@@ -13,6 +13,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -36,6 +37,7 @@ public abstract class ScratchFileService implements VirtualFileEnumerationAware 
     return ourInstance.get();
   }
 
+  @SystemIndependent
   public abstract @NotNull String getRootPath(@NotNull RootType rootType);
 
   public abstract @Nullable RootType getRootType(@Nullable VirtualFile file);
