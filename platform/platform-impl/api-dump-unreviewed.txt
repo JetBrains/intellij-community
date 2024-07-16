@@ -8747,11 +8747,6 @@ f:com.intellij.ide.trustedProjects.TrustedProjectsLocator$Companion
 com.intellij.ide.trustedProjects.TrustedProjectsLocator$LocatedProject
 - a:getProject():com.intellij.openapi.project.Project
 - a:getProjectRoots():java.util.List
-f:com.intellij.ide.trustedProjects.impl.DefaultTrustedProjectsLocator
-- com.intellij.ide.trustedProjects.TrustedProjectsLocator
-- <init>():V
-- getProjectRoots(com.intellij.openapi.project.Project):java.util.List
-- getProjectRoots(java.nio.file.Path,com.intellij.openapi.project.Project):java.util.List
 f:com.intellij.ide.trustedProjects.impl.UntrustedProjectEditorNotificationPanel
 - com.intellij.ui.EditorNotificationPanel
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor,kotlin.jvm.functions.Function0):V

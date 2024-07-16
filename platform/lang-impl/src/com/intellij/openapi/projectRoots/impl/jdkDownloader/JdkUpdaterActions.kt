@@ -21,11 +21,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.time.Duration.Companion.milliseconds
 
 @Service(Service.Level.APP)
+@Internal
 class JdkUpdaterNotifications(private val coroutineScope: CoroutineScope) {
   private val lock = ReentrantLock()
   private val pendingNotifications = HashMap<Sdk, JdkUpdateNotification>()
