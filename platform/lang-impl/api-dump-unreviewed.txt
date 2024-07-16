@@ -21392,14 +21392,6 @@ f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateNotification$Jdk
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - f:getJdkUpdateNotification():com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateNotification
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterNotifications
-- com.intellij.openapi.Disposable
-- <init>():V
-- dispose():V
-- f:getActions():java.util.List
-- f:hideNotification(com.intellij.openapi.projectRoots.Sdk):V
-- f:showNotification(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem,Z):com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateNotification
-- bs:showNotification$default(com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterNotifications,com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem,Z,I,java.lang.Object):com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateNotification
 f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkVersionItem
 - <init>(java.lang.String,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkVersionVendorItem,java.util.List,java.util.List):V
 - f:getExcludedItems():java.util.List
