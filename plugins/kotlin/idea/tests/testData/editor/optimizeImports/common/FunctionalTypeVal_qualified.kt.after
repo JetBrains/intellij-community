@@ -1,0 +1,5 @@
+package test
+
+fun test() {
+    dependency.TOP_LEVEL_VAL()
+}

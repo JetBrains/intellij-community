@@ -1,0 +1,10 @@
+// IGNORE_K2
+package test
+
+class TopLevel {
+    class Nested
+}
+
+fun usage() {
+    TopLevel.Nested()
+}

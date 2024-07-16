@@ -1,0 +1,5 @@
+package p2
+
+fun test() {
+    p1.TOP_LEVEL_VAL(10)
+}
