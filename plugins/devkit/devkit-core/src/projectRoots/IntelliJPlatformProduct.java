@@ -89,6 +89,15 @@ public enum IntelliJPlatformProduct {
     return IDEA;
   }
 
+  public static @Nullable IntelliJPlatformProduct fromProductCode(String productCode) {
+    for (IntelliJPlatformProduct product : values()) {
+      if (Objects.equals(product.myProductCode, productCode)) {
+        return product;
+      }
+    }
+    return null;
+  }
+
   public static @Nullable IntelliJPlatformProduct fromMavenCoordinates(String groupId, String artifactId) {
     return ContainerUtil.find(values(), product -> Objects.equals(product.getMavenCoordinates(), groupId + ":" + artifactId));
   }
