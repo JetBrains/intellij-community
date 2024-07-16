@@ -69,6 +69,8 @@ public interface Application extends ComponentManager {
 
   /**
    * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * <hr>
+   *
    * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open).
@@ -83,6 +85,8 @@ public interface Application extends ComponentManager {
 
   /**
    * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * <hr>
+   *
    * <p>
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open)
@@ -223,6 +227,8 @@ public interface Application extends ComponentManager {
    * or use {@link ThreadingAssertions#assertReadAccess()},
    * or use {@link ThreadingAssertions#softAssertReadAccess} instead.
    * </p>
+   * <hr>
+   *
    * Asserts that read access is allowed.
    */
   @ApiStatus.Obsolete
@@ -234,6 +240,8 @@ public interface Application extends ComponentManager {
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
    * Annotate the function with {@link RequiresWriteLock} (in Java) or use {@link ThreadingAssertions#assertWriteAccess()} instead.
    * </p>
+   * <hr>
+   *
    * Asserts that write access is allowed.
    */
   @ApiStatus.Obsolete
@@ -245,6 +253,8 @@ public interface Application extends ComponentManager {
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
    * Annotate the function with {@link RequiresReadLockAbsence} (in Java) or use {@link ThreadingAssertions#assertNoReadAccess()} instead.
    * </p>
+   * <hr>
+   *
    * Asserts that read access is not allowed.
    */
   @ApiStatus.Experimental
@@ -257,6 +267,8 @@ public interface Application extends ComponentManager {
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
    * Annotate the function with {@link RequiresEdt} (in Java) or use {@link ThreadingAssertions#assertEventDispatchThread()} instead.
    * </p>
+   * <hr>
+   *
    * Asserts that the method is being called from the event dispatch thread.
    */
   @ApiStatus.Obsolete
@@ -268,6 +280,8 @@ public interface Application extends ComponentManager {
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
    * Annotate the function with {@link RequiresBackgroundThread} (in Java) or use {@link ThreadingAssertions#assertBackgroundThread()} instead.
    * </p>
+   * <hr>
+   *
    * Asserts that the method is being called from any thread outside EDT.
    */
   @ApiStatus.Experimental
@@ -280,6 +294,8 @@ public interface Application extends ComponentManager {
    * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
    * Use {@link ThreadingAssertions#assertWriteIntentReadAccess()} instead.
    * </p>
+   * <hr>
+   *
    * Asserts that the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
