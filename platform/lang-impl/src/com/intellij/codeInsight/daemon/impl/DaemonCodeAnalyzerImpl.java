@@ -506,17 +506,18 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
 
     FileStatusMap fileStatusMap = getFileStatusMap();
-    boolean old = fileStatusMap.allowDirt(canChangeDocument);
-    for (int ignoreId : passesToIgnore) {
-      fileStatusMap.markFileUpToDate(document, ignoreId);
-    }
 
+    Boolean oldAllowDirt = null;
     try {
+      oldAllowDirt = fileStatusMap.allowDirt(canChangeDocument);
+      for (int ignoreId : passesToIgnore) {
+        fileStatusMap.markFileUpToDate(document, ignoreId);
+      }
       doRunPasses(textEditor, passesToIgnore, canChangeDocument, callbackWhileWaiting);
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
-      fileStatusMap.allowDirt(old);
+      if (oldAllowDirt != null) fileStatusMap.allowDirt(oldAllowDirt);
     }
   }
 
