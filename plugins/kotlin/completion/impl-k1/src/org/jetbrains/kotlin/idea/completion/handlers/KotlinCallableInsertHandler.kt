@@ -29,13 +29,13 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
             val file = context.file as? KtFile ?: return
             val o = item.`object` as? DescriptorBasedDeclarationLookupObject ?: return
             val descriptor = o.descriptor as? CallableDescriptor ?: return
+            if (descriptor.isArtificialImportAliasedDescriptor) return
 
             if (descriptor.extensionReceiverParameter != null || callType is CallType.CallableReference) {
-                if (DescriptorUtils.isTopLevelDeclaration(descriptor) && !descriptor.isArtificialImportAliasedDescriptor) {
+                if (DescriptorUtils.isTopLevelDeclaration(descriptor)) {
                     ImportInsertHelper.getInstance(context.project).importDescriptor(file, descriptor)
                 }
             } else if (callType == CallType.DEFAULT) {
-                if (descriptor.isArtificialImportAliasedDescriptor) return
                 val fqName = descriptor.importableFqName ?: return
                 context.document.replaceString(
                     context.startOffset,
