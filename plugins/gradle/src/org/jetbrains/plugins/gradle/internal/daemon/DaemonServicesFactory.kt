@@ -63,7 +63,7 @@ private fun getDaemonServicesAfter8Dot8(daemonClientFactory: DaemonClientFactory
     )
     val serviceLookupDelegate = getGradleServiceLookup()
     val serviceLookup: Any = GradleServiceLookupProxy.newProxyInstance(serviceLookupDelegate)
-    val requestContext = getDaemonRequestContext()
+    val requestContext = getDaemonRequestContextAfter8Dot8()
     return createBuildClientServicesMethod.invoke(
       daemonClientFactory,
       serviceLookup,
@@ -101,7 +101,7 @@ private fun getGradleServiceLookup(): GradleServiceLookup {
   }
 }
 
-private fun getDaemonRequestContext(): Any {
+private fun getDaemonRequestContextAfter8Dot8(): Any {
   val requestContextClass = Class.forName("org.gradle.launcher.daemon.context.DaemonRequestContext")
   val nativeServicesClass = Class.forName("org.gradle.internal.nativeintegration.services.NativeServices")
   val nativeServicesModeClass = nativeServicesClass.declaredClasses.find { it.name.contains("NativeServicesMode") }
@@ -112,8 +112,23 @@ private fun getDaemonRequestContext(): Any {
   }
   val daemonJvmCriteriaClass = Class.forName("org.gradle.launcher.daemon.toolchain.DaemonJvmCriteria")
   val nativeServiceModeValue = nativeServicesModeClass.enumConstants[2]
-  val isGradle88 = GradleVersionUtil.isCurrentGradleAtLeast("8.8") && GradleVersionUtil.isCurrentGradleOlderThan("8.9")
-  if (isGradle88) {
+  if (GradleVersionUtil.isCurrentGradleAtLeast("8.9")) {
+    val requestContextConstructor = requestContextClass.getDeclaredConstructor(
+      daemonJvmCriteriaClass,
+      Collection::class.java,
+      Boolean::class.java,
+      nativeServicesModeClass,
+      DaemonParameters.Priority::class.java
+    )
+    return requestContextConstructor.newInstance(
+      /*DaemonJvmCriteria*/ null,
+      /*daemonOpts*/ emptyList<String>(),
+      /*applyInstrumentationAgent*/ false,
+      /*nativeServicesMode*/ nativeServiceModeValue,
+      /*priority*/ DaemonParameters.Priority.NORMAL
+    )
+  }
+  else {
     val requestContextConstructor = requestContextClass.getDeclaredConstructor(
       JavaInfo::class.java,
       daemonJvmCriteriaClass,
@@ -124,22 +139,6 @@ private fun getDaemonRequestContext(): Any {
     )
     return requestContextConstructor.newInstance(
       /*JavaInfo*/ null,
-      /*DaemonJvmCriteria*/ null,
-      /*daemonOpts*/ emptyList<String>(),
-      /*applyInstrumentationAgent*/ false,
-      /*nativeServicesMode*/ nativeServiceModeValue,
-      /*priority*/ DaemonParameters.Priority.NORMAL
-    )
-  }
-  else {
-    val requestContextConstructor = requestContextClass.getDeclaredConstructor(
-      daemonJvmCriteriaClass,
-      Collection::class.java,
-      Boolean::class.java,
-      nativeServicesModeClass,
-      DaemonParameters.Priority::class.java
-    )
-    return requestContextConstructor.newInstance(
       /*DaemonJvmCriteria*/ null,
       /*daemonOpts*/ emptyList<String>(),
       /*applyInstrumentationAgent*/ false,
