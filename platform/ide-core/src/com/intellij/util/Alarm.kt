@@ -328,7 +328,7 @@ open class Alarm @Internal constructor(
     fun schedule(owner: Alarm) {
       assert(job == null)
 
-      job = owner.taskCoroutineScope.launch {
+      job = owner.taskCoroutineScope.launch(CoroutineName("${task.toString()} (Alarm)")) {
         delay(delayMillis)
 
         var taskContext = clientIdContext ?: EmptyCoroutineContext
