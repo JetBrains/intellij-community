@@ -3191,7 +3191,6 @@ f:com.intellij.util.ui.update.MergingQueueUtil
 c:com.intellij.util.ui.update.MergingUpdateQueue
 - com.intellij.openapi.Disposable
 - com.intellij.util.ui.update.Activatable
-- java.lang.Runnable
 - sf:ANY_COMPONENT:javax.swing.JComponent
 - sf:Companion:com.intellij.util.ui.update.MergingUpdateQueue$Companion
 - <init>(java.lang.String,I,Z,javax.swing.JComponent):V
@@ -3211,13 +3210,11 @@ c:com.intellij.util.ui.update.MergingUpdateQueue
 - f:isActive():Z
 - f:isEmpty():Z
 - f:isFlushing():Z
-- p:isModalityStateCorrect():Z
 - f:isPassThrough():Z
 - f:isSuspended():Z
 - queue(com.intellij.util.ui.update.Update):V
 - f:restartTimer():V
 - resume():V
-- run():V
 - f:run(com.intellij.util.ui.update.Update):V
 - f:sendFlush():V
 - f:setMergingTimeSpan(I):V

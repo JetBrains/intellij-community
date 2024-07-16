@@ -4,6 +4,7 @@ package com.intellij.util.ui.update;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
@@ -298,12 +299,12 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
     }
 
     @Override
-    public void run() {
-
+    protected @NotNull Runnable getFlushTask() {
+      return EmptyRunnable.getInstance();
     }
 
     private void onTimer() {
-      super.run();
+      super.getFlushTask().run();
     }
 
     @Override
@@ -322,7 +323,7 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
     }
   }
 
-  private static void waitForExecution(final MyQueue queue) {
+  private static void waitForExecution(@NotNull MyQueue queue) {
     queue.onTimer();
     new WaitFor(5000) {
       @Override
@@ -333,9 +334,8 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
   }
 
   public void testReallyMergeEqualIdentityEqualPriority() {
-    final MyQueue queue = new MyQueue();
-
-    final AtomicInteger count = new AtomicInteger();
+    MyQueue queue = new MyQueue();
+    AtomicInteger count = new AtomicInteger();
     for (int i = 0; i < 100; i++) {
       for (int j = 0; j < 100; j++) {
         queue.queue(new Update("foo" + j) {
@@ -451,7 +451,7 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
   }
 
   public void testMustRejectOnDispose() {
-    MergingUpdateQueue queue = new MergingUpdateQueue(getTestName(false), 1000_000, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
+    MergingUpdateQueue queue = new MergingUpdateQueue(getTestName(false), 1_000_000, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
     Update update = new Update(this) {
       @Override
       public void run() {

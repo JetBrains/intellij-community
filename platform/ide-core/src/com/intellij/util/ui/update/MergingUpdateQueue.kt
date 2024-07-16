@@ -19,8 +19,10 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -56,13 +58,19 @@ open class MergingUpdateQueue(
   parent: Disposable?,
   activationComponent: JComponent?,
   thread: Alarm.ThreadToUse
-) : Runnable, Disposable, Activatable {
-  @Volatile
-  var isActive: Boolean = false
-    private set
-
+) : Disposable, Activatable {
   @Volatile
   var isSuspended: Boolean = false
+    private set
+
+  private val flushTask = Runnable {
+    if (!isSuspended) {
+      flush()
+    }
+  }
+
+  @Volatile
+  var isActive: Boolean = false
     private set
 
   private val scheduledUpdates = ConcurrentCollectionFactory.createConcurrentIntObjectMap<MutableMap<Update, Update>>()
@@ -232,6 +240,9 @@ open class MergingUpdateQueue(
     restart(mergingTimeSpan)
   }
 
+  @ApiStatus.Internal
+  open protected fun getFlushTask(): Runnable = flushTask
+
   private fun restart(mergingTimeSpanMillis: Int) {
     if (!isActive) {
       return
@@ -243,17 +254,11 @@ open class MergingUpdateQueue(
       // MergingUpdateQueue is considered to be a Flow + debounce
       // The updates must be executed independently of the caller; so here we forcefully release them from the context
       if (executeInDispatchThread) {
-        waiterForMerge.addRequest(this, mergingTimeSpanMillis, mergerModalityState)
+        waiterForMerge.addRequest(getFlushTask(), mergingTimeSpanMillis, mergerModalityState)
       }
       else {
-        waiterForMerge.addRequest(this, mergingTimeSpanMillis)
+        waiterForMerge.addRequest(getFlushTask(), mergingTimeSpanMillis)
       }
-    }
-  }
-
-  override fun run() {
-    if (!isSuspended) {
-      flush()
     }
   }
 
@@ -270,7 +275,7 @@ open class MergingUpdateQueue(
     if (isFlushing) {
       return
     }
-    if (!isModalityStateCorrect) {
+    if (!isModalityStateCorrect()) {
       return
     }
 
@@ -310,16 +315,17 @@ open class MergingUpdateQueue(
     this.modalityStateComponent = modalityStateComponent
   }
 
-  protected open val isModalityStateCorrect: Boolean
-    get() {
-      if (!executeInDispatchThread || modalityStateComponent === ANY_COMPONENT) {
-        return true
-      }
-
-      val current = ModalityState.current()
-      val modalityState = modalityState
-      return !current.dominates(modalityState)
+  @VisibleForTesting
+  @Internal
+  protected open fun isModalityStateCorrect(): Boolean {
+    if (!executeInDispatchThread || modalityStateComponent === ANY_COMPONENT) {
+      return true
     }
+
+    val current = ModalityState.current()
+    val modalityState = modalityState
+    return !current.dominates(modalityState)
+  }
 
   protected open fun execute(update: Array<Update>) {
     for (each in update) {
