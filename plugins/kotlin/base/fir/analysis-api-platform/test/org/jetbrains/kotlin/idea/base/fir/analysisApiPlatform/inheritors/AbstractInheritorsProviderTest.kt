@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors
 import com.google.gson.JsonObject
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -18,7 +20,7 @@ abstract class AbstractInheritorsProviderTest : AbstractProjectStructureTest<Inh
     /**
      * Resolves the inheritors of [targetClass]. This function will be called in a read action.
      */
-    protected abstract fun resolveInheritors(targetClass: KtClass): List<ClassId>
+    protected abstract fun resolveInheritors(targetClass: KtClass, useSiteModule: KaModule): List<ClassId>
 
     override fun doTestWithProjectStructure(testDirectory: String) {
         testProjectStructure.targets.forEach { checkTargetFile(it, testDirectory) }
@@ -27,13 +29,14 @@ abstract class AbstractInheritorsProviderTest : AbstractProjectStructureTest<Inh
     private fun checkTargetFile(testTarget: InheritorsProviderTestTarget, testDirectory: String) {
         val module = modulesByName[testTarget.moduleName] ?: error("The target module `${testTarget.moduleName}` does not exist.")
         val ktFile = module.findSourceKtFile(testTarget.filePath)
+        val kaModule = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)
 
         val targetClass = ktFile.findReferenceAt(getCaretPosition(ktFile))?.resolve() as? KtClass
             ?: error("Expected a `${KtClass::class.simpleName}` reference at the caret position.")
 
         val actualInheritors = runBlocking {
             readAction {
-                resolveInheritors(targetClass)
+                resolveInheritors(targetClass, kaModule)
             }
         }
 

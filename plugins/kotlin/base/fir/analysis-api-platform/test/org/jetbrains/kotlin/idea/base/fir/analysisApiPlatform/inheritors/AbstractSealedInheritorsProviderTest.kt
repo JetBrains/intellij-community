@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.inheritors
 
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.name.ClassId
@@ -12,12 +13,12 @@ abstract class AbstractSealedInheritorsProviderTest : AbstractInheritorsProvider
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-platform").resolve("testData").resolve("sealedInheritors")
 
-    override fun resolveInheritors(targetClass: KtClass): List<ClassId> {
+    override fun resolveInheritors(targetClass: KtClass, useSiteModule: KaModule): List<ClassId> {
         assertTrue("Expected the target type `${targetClass.classIdIfNonLocal}` to be sealed.", targetClass.isSealed())
 
-        return analyze(targetClass) {
+        return analyze(useSiteModule) {
             val classSymbol = targetClass.namedClassSymbol
-                ?: error("Expected the target class `${targetClass.classIdIfNonLocal}` to have a class or object symbol.")
+                ?: error("Expected the target class `${targetClass.classIdIfNonLocal}` to have a named class or object symbol.")
 
             classSymbol.sealedClassInheritors.map { it.classId ?: error("Sealed class inheritors should not be local.") }
         }
