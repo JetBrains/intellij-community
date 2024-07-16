@@ -101,6 +101,7 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
         if (it !is EntityChange.Added<ModuleEntity>) return@mapNotNull null
         if (it.newEntity.findModule(builder) != null) return@mapNotNull null
 
+        LOG.debug { "Creating async block for ${it.newEntity.name}" }
         async(Dispatchers.Default) {
           LOG.debug { "Creating module instance for ${it.newEntity.name}" }
           val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
