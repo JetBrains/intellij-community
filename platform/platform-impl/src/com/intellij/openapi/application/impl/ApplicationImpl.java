@@ -413,8 +413,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       throw new IllegalStateException("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    Runnable r =
-      myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope(runnable), modalityState);
+    Runnable capturingRunnable = AppImplKt.rethrowExceptions(AppScheduledExecutorService::captureContextCancellationForRunnableThatDoesNotOutliveContextScope, runnable);
+
+    Runnable r = myTransactionGuard.wrapLaterInvocation(capturingRunnable, modalityState);
     LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
   }
 

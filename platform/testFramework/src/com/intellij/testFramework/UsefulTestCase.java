@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -38,6 +39,7 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import kotlinx.coroutines.Job;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -296,6 +298,7 @@ public abstract class UsefulTestCase extends TestCase {
   protected void tearDown() throws Exception {
     // to make stack trace reading easier, don't use method references here
     new RunAll(
+      () -> checkContextJobCanceled(),
       () -> {
         if (isIconRequired()) {
           IconManager.Companion.deactivate();
@@ -321,6 +324,16 @@ public abstract class UsefulTestCase extends TestCase {
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
       () -> clearFields(this)
     ).run(mySuppressedExceptions);
+  }
+
+  private static void checkContextJobCanceled() {
+    Job currentJob = Cancellation.currentJob();
+    if (currentJob != null && currentJob.isCancelled()) {
+      throw new IllegalStateException("""
+The context job for test framework was canceled during execution. It can cause incomplete cleanup of the test.
+Most likely there was an uncaught exception in asynchronous execution that resulted in a failure of the whole computation tree for the test.
+""", currentJob.getCancellationException());
+    }
   }
 
   protected final void disposeRootDisposable() {
