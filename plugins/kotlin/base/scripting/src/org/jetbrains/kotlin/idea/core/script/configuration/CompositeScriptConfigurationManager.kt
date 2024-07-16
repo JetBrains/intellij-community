@@ -66,6 +66,14 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
         override fun afterUpdate() {
             plugins.forEach { it.afterUpdate() }
         }
+
+        override fun onTrivialUpdate() {
+            plugins.forEach { it.onTrivialUpdate() }
+        }
+
+        override fun onUpdateException(exception: Exception) {
+            plugins.forEach { it.onUpdateException(exception) }
+        }
     }
 
     fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
