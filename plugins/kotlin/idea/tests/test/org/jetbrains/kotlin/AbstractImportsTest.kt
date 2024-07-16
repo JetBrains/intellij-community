@@ -4,6 +4,8 @@ package org.jetbrains.kotlin
 
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -18,6 +20,19 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
     protected var userNotificationInfo: String? = null
+
+    private fun findAfterFile(testPath: File): File {
+        val regularAfterFile = testPath.resolveSibling(testPath.name + ".after")
+
+        if (pluginMode == KotlinPluginMode.K2) {
+            val k2AfterFileName = IgnoreTests.deriveK2FileName(regularAfterFile.name, IgnoreTests.FileExtension.K2)
+            val k2AfterFile = testPath.resolveSibling(k2AfterFileName)
+
+            if (k2AfterFile.exists()) return k2AfterFile
+        }
+
+        return regularAfterFile
+    }
 
     protected open fun doTest(unused: String) {
         val testPath = dataFilePath(fileName())
@@ -76,7 +91,8 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 doTest(file)
             }
 
-            KotlinTestUtils.assertEqualsToFile(File("$testPath.after"), myFixture.file.text)
+            val afterFile = findAfterFile(File(testPath))
+            KotlinTestUtils.assertEqualsToFile(afterFile, myFixture.file.text)
             if (log != null) {
                 val logFile = File("$testPath.log")
                 if (log.isNotEmpty()) {
