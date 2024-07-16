@@ -327,7 +327,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void setUpShutDownTask() {
-    myShutDownTask = new MyShutDownTask(true);
+    myShutDownTask = new ShutDownIndexesTask(/*byShutDownHook: */ true);
     ShutDownTracker.getInstance().registerCacheShutdownTask(myShutDownTask);
   }
 
@@ -1251,10 +1251,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  static final class MyShutDownTask implements Runnable {
+  static final class ShutDownIndexesTask implements Runnable {
     private final boolean calledByShutdownHook;
 
-    MyShutDownTask(boolean calledByShutdownHook) { this.calledByShutdownHook = calledByShutdownHook; }
+    ShutDownIndexesTask(boolean calledByShutdownHook) { this.calledByShutdownHook = calledByShutdownHook; }
 
     @Override
     public void run() {

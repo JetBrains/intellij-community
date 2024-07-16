@@ -155,7 +155,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
   private static class ShutdownTaskAsDisposable implements Disposable {
     @Override
     public void dispose() {
-      new FileBasedIndexImpl.MyShutDownTask(false).run();
+      new FileBasedIndexImpl.ShutDownIndexesTask(/*byShutDownHook: */ false).run();
     }
   }
 
