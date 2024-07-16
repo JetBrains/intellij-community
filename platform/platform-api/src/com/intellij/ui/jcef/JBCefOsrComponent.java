@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
@@ -53,7 +56,8 @@ class JBCefOsrComponent extends JPanel {
     addPropertyChangeListener("graphicsConfiguration",
                               e -> {
                                 double pixelDensity = JreHiDpiUtil.isJreHiDPIEnabled() ? JCefAppConfig.getDeviceScaleFactor(this) : 1.0;
-                                myScale = JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this);
+                                myScale = (JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this)) *
+                                          UISettings.getInstance().getIdeScale();
                                 myRenderHandler.setScreenInfo(pixelDensity, myScale);
                                 myBrowser.notifyScreenInfoChanged();
                               });
@@ -120,6 +124,14 @@ class JBCefOsrComponent extends JPanel {
     myDisposable = Disposer.newDisposable();
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     myWheelEventsAccumulator = new MouseWheelEventsAccumulator(myDisposable);
+
+    ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(UISettingsListener.TOPIC, uiSettings -> {
+      double pixelDensity = JreHiDpiUtil.isJreHiDPIEnabled() ? JCefAppConfig.getDeviceScaleFactor(this) : 1.0;
+      myScale = (JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this)) *
+                uiSettings.getIdeScale();
+      myRenderHandler.setScreenInfo(pixelDensity, myScale);
+      myBrowser.notifyScreenInfoChanged();
+    });
 
     if (!JBCefBrowserBase.isCefBrowserCreationStarted(myBrowser)) {
       myBrowser.createImmediately();
