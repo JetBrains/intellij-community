@@ -368,10 +368,16 @@ fun <T : CommandChain> T.convertJavaToKotlin(moduleName: String, filePath: Strin
   addCommand("${CMD_PREFIX}convertJavaToKotlin $moduleName $filePath")
 }
 
+/**
+ * @see [com.jetbrains.performancePlugin.commands.IdeEditorKeyCommand]
+ */
 fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
   addCommand("${CMD_PREFIX}pressKey", key.name)
 }
 
+/**
+ * @see [com.jetbrains.performancePlugin.commands.DelayTypeCommand]
+ */
 fun <T : CommandChain> T.delayType(
   delayMs: Int,
   text: String,
