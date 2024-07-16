@@ -36,7 +36,7 @@ abstract class AbstractInheritorsProviderTest : AbstractProjectStructureTest<Inh
 
         val actualInheritors = runBlocking {
             readAction {
-                resolveInheritors(targetClass, kaModule)
+                resolveInheritors(targetClass, kaModule).sortedBy { it.toString() }
             }
         }
 
