@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.getCallExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -36,28 +35,51 @@ data class CallChainConversion(
 
 class CallChainExpressions private constructor(
     val firstExpression: KtExpression,
-    val secondExpression: KtExpression,
     val firstCallExpression: KtCallExpression,
     val secondCallExpression: KtCallExpression,
     val firstCalleeExpression: KtExpression,
     val secondCalleeExpression: KtExpression,
+    val qualifiedExpression: KtQualifiedExpression,
 ) {
+    // it's the same as the whole qualified expression, but it makes it more readable in some places
+    val secondExpression: KtExpression
+        get() = qualifiedExpression
+
     companion object {
         fun from(expression: KtQualifiedExpression): CallChainExpressions? {
             val firstExpression = expression.receiverExpression
-            val secondExpression = expression
-            val firstCallExpression = getCallExpression(firstExpression) ?: return null
+            val firstCallExpression = getFirstCallExpression(firstExpression) ?: return null
             val secondCallExpression = expression.selectorExpression as? KtCallExpression ?: return null
             val firstCalleeExpression = firstCallExpression.calleeExpression ?: return null
             val secondCalleeExpression = secondCallExpression.calleeExpression ?: return null
             return CallChainExpressions(
-                firstExpression,
-                secondExpression,
-                firstCallExpression,
-                secondCallExpression,
-                firstCalleeExpression,
-                secondCalleeExpression,
+                firstExpression = firstExpression,
+                firstCallExpression = firstCallExpression,
+                secondCallExpression = secondCallExpression,
+                firstCalleeExpression = firstCalleeExpression,
+                secondCalleeExpression = secondCalleeExpression,
+                qualifiedExpression = expression,
             )
+        }
+
+        fun getFirstCallExpression(firstExpression: KtExpression): KtCallExpression? =
+            (firstExpression as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
+                ?: firstExpression as? KtCallExpression
+
+        fun KtExpression?.isLiteralValue(): Boolean {
+            return this != null && when (val expr = KtPsiUtil.safeDeparenthesize(this)) {
+                is KtBinaryExpression -> expr.left.isLiteralValue() && expr.right.isLiteralValue()
+
+                is KtIfExpression -> expr.then?.lastBlockStatementOrThis().isLiteralValue() &&
+                        expr.`else`?.lastBlockStatementOrThis().isLiteralValue()
+
+                is KtWhenExpression -> expr.entries.all { it.expression?.lastBlockStatementOrThis().isLiteralValue() }
+
+                is KtTryExpression -> expr.tryBlock.lastBlockStatementOrThis().isLiteralValue() &&
+                        expr.catchClauses.all { c -> c.catchBody?.lastBlockStatementOrThis().isLiteralValue() }
+
+                else -> expr is KtConstantExpression
+            }
         }
     }
 }
@@ -262,30 +284,4 @@ object CallChainConversions {
     val conversionGroups: Map<ConversionId, List<CallChainConversion>> by lazy {
         conversionsList.group()
     }
-
-    fun KtExpression?.isLiteralValue(): Boolean {
-        return this != null && when (val expr = KtPsiUtil.safeDeparenthesize(this)) {
-            is KtBinaryExpression -> expr.left.isLiteralValue() && expr.right.isLiteralValue()
-
-            is KtIfExpression -> expr.then?.lastBlockStatementOrThis().isLiteralValue() &&
-                    expr.`else`?.lastBlockStatementOrThis().isLiteralValue()
-
-            is KtWhenExpression -> expr.entries.all { it.expression?.lastBlockStatementOrThis().isLiteralValue() }
-
-            is KtTryExpression -> expr.tryBlock.lastBlockStatementOrThis().isLiteralValue() &&
-                    expr.catchClauses.all { c -> c.catchBody?.lastBlockStatementOrThis().isLiteralValue() }
-
-            else -> expr is KtConstantExpression
-        }
-    }
-
-    fun KtQualifiedExpression.firstCalleeExpression(): KtExpression? {
-        val firstExpression = receiverExpression
-        val firstCallExpression = getCallExpression(firstExpression) ?: return null
-        return firstCallExpression.calleeExpression
-    }
-
-    fun getCallExpression(firstExpression: KtExpression): KtCallExpression? =
-        (firstExpression as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
-            ?: firstExpression as? KtCallExpression
 }

@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.getCallExpression
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -41,7 +40,7 @@ class SimplifyCallChainFix(
 
         val receiverExpressionOrEmptyString = if (firstExpression is KtQualifiedExpression) firstExpression.receiverExpression.text else ""
 
-        val firstCallExpression = getCallExpression(firstExpression) ?: return
+        val firstCallExpression = CallChainExpressions.getFirstCallExpression(firstExpression) ?: return
         psiFactory.modifyArguments(firstCallExpression)
         val firstCallArgumentList = firstCallExpression.valueArgumentList
 

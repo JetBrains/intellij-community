@@ -40,8 +40,8 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConver
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM_OF
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.TO_MAP
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.isLiteralValue
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -157,14 +157,16 @@ class SimplifiableCallChainInspection :
     @OptIn(KaExperimentalApi::class)
     private fun isMapNotNullOnPrimitiveArrayConversion(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
         if (conversion.replacement != CallChainConversions.MAP_NOT_NULL) return false
-        val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type ?: return false
+        val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type
+            ?: return false
         return extensionReceiverType.isArrayOrPrimitiveArray && extensionReceiverType.symbol?.typeParameters.orEmpty().isEmpty()
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun isAppliedOnMapReceiver(firstCall: KaCallInfo): Boolean {
-        val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type ?: return false
+        val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type
+            ?: return false
         return extensionReceiverType.isSubTypeOfClassId(ClassId.topLevel(StandardNames.FqNames.map))
     }
 
@@ -257,7 +259,8 @@ class SimplifiableCallChainInspection :
         lastFunctionalArgumentWithSignatureOrNull()?.first as? KtLambdaExpression
 
     context(KaSession)
-    private fun KaType.lambdaReturnTypeOrNull(): KaType? = (this as? KaFunctionType)?.returnType
+    private fun KaType.lambdaReturnTypeOrNull(): KaType? =
+        (this as? KaFunctionType)?.returnType
 
     context(KaSession)
     private fun KaType.isApplicableTypeForSumOf(): Boolean =

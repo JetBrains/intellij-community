@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConver
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM_OF
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.TO_MAP
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.firstCalleeExpression
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.isLiteralValue
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
@@ -51,8 +51,9 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 class SimplifiableCallChainInspection : AbstractCallChainChecker() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
         return qualifiedExpressionVisitor(fun(expression) {
+            val callChainExpressions = CallChainExpressions.from(expression) ?: return
             var conversion = findQualifiedConversion(
-                expression,
+                callChainExpressions,
                 CallChainConversions.conversionGroups
             ) check@{ conversion, firstResolvedCall, _, context ->
                 // Do not apply on maps due to lack of relevant stdlib functions
@@ -113,7 +114,7 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             val replacement = conversion.replacement
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
-                expression.firstCalleeExpression()!!.textRange.shiftRight(-expression.startOffset),
+                callChainExpressions.firstCalleeExpression.textRange.shiftRight(-expression.startOffset),
                 KotlinBundle.message("call.chain.on.collection.type.may.be.simplified"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 isOnTheFly,

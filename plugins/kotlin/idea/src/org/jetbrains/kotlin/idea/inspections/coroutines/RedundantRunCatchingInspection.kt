@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.firstCalleeExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.group
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker
 import org.jetbrains.kotlin.name.FqName
@@ -21,11 +21,12 @@ class RedundantRunCatchingInspection : AbstractCallChainChecker() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         qualifiedExpressionVisitor(fun(expression) {
-            val conversion = findQualifiedConversion(expression, conversionGroups) { _, _, _, _ -> true } ?: return
+            val callChainExpressions = CallChainExpressions.from(expression) ?: return
+            val conversion = findQualifiedConversion(callChainExpressions, conversionGroups) { _, _, _, _ -> true } ?: return
             val replacement = conversion.replacement
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
-                expression.firstCalleeExpression()!!.textRange.shiftRight(-expression.startOffset),
+                callChainExpressions.firstCalleeExpression.textRange.shiftRight(-expression.startOffset),
                 KotlinBundle.message("redundant.runcatching.call.may.be.reduced.to.0", replacement),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 isOnTheFly,

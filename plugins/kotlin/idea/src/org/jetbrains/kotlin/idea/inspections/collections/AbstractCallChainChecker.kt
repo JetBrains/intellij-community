@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -19,13 +18,11 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
 
     protected fun findQualifiedConversion(
-        expression: KtQualifiedExpression,
+        callChainExpressions: CallChainExpressions,
         conversionGroups: Map<ConversionId, List<CallChainConversion>>,
         additionalCallCheck: (CallChainConversion, ResolvedCall<*>, ResolvedCall<*>, BindingContext) -> Boolean
     ): CallChainConversion? {
-        val callChainExpressions = CallChainExpressions.from(expression) ?: return null
-
-        val apiVersion by lazy { expression.languageVersionSettings.apiVersion }
+        val apiVersion by lazy { callChainExpressions.qualifiedExpression.languageVersionSettings.apiVersion }
         val actualConversions = conversionGroups[ConversionId(
             callChainExpressions.firstCalleeExpression,
             callChainExpressions.secondCalleeExpression,
@@ -34,7 +31,7 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
             replaceableApiVersion == null || apiVersion >= replaceableApiVersion
         }?.sortedByDescending { it.removeNotNullAssertion } ?: return null
 
-        val context = expression.analyze()
+        val context = callChainExpressions.secondExpression.analyze()
         val firstResolvedCall = callChainExpressions.firstExpression.getResolvedCall(context) ?: return null
         val secondResolvedCall = callChainExpressions.secondExpression.getResolvedCall(context) ?: return null
         val conversion = actualConversions.firstOrNull {
