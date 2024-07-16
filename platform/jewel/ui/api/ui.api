@@ -25,7 +25,7 @@ public final class org/jetbrains/jewel/ui/ComponentStyling$DefaultImpls {
 
 public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrains/jewel/ui/ComponentStyling {
 	public static final field $stable I
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/DividerStyle;Lorg/jetbrains/jewel/ui/component/styling/TabStyle;Lorg/jetbrains/jewel/ui/component/styling/GroupHeaderStyle;Lorg/jetbrains/jewel/ui/component/styling/HorizontalProgressBarStyle;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCheckboxStyle ()Lorg/jetbrains/jewel/ui/component/styling/CheckboxStyle;
 	public final fun getChipStyle ()Lorg/jetbrains/jewel/ui/component/styling/ChipStyle;
@@ -44,6 +44,8 @@ public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrain
 	public final fun getOutlinedButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
 	public final fun getRadioButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;
 	public final fun getScrollbarStyle ()Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;
+	public final fun getSegmentedControlButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;
+	public final fun getSegmentedControlStyle ()Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;
 	public final fun getSliderStyle ()Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;
 	public final fun getTextAreaStyle ()Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;
 	public final fun getTextFieldStyle ()Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;
@@ -564,6 +566,90 @@ public final class org/jetbrains/jewel/ui/component/ScrollbarsKt {
 	public static final fun HorizontalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun TabStripHorizontalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun VerticalScrollbar (Landroidx/compose/foundation/v2/ScrollbarAdapter;Landroidx/compose/ui/Modifier;ZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class org/jetbrains/jewel/ui/component/SegmentedControlButtonData {
+	public static final field $stable I
+	public fun <init> (ZLkotlin/jvm/functions/Function4;Lkotlin/jvm/functions/Function0;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContent ()Lkotlin/jvm/functions/Function4;
+	public final fun getOnSelect ()Lkotlin/jvm/functions/Function0;
+	public final fun getSelected ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class org/jetbrains/jewel/ui/component/SegmentedControlButtonScope {
+}
+
+public final class org/jetbrains/jewel/ui/component/SegmentedControlButtonState : org/jetbrains/jewel/foundation/state/SelectableComponentState {
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/SegmentedControlButtonState$Companion;
+	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/SegmentedControlButtonState;
+	public static fun constructor-impl (J)J
+	public static final fun copy-Um8v6X4 (JZZZZZ)J
+	public static synthetic fun copy-Um8v6X4$default (JZZZZZILjava/lang/Object;)J
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (JLjava/lang/Object;)Z
+	public static final fun equals-impl0 (JJ)Z
+	public final fun getState-s-VKNKU ()J
+	public fun hashCode ()I
+	public static fun hashCode-impl (J)I
+	public fun isActive ()Z
+	public static fun isActive-impl (J)Z
+	public fun isEnabled ()Z
+	public static fun isEnabled-impl (J)Z
+	public fun isHovered ()Z
+	public static fun isHovered-impl (J)Z
+	public fun isPressed ()Z
+	public static fun isPressed-impl (J)Z
+	public fun isSelected ()Z
+	public static fun isSelected-impl (J)Z
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (J)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()J
+}
+
+public final class org/jetbrains/jewel/ui/component/SegmentedControlButtonState$Companion {
+	public final fun of-Um8v6X4 (ZZZZZ)J
+	public static synthetic fun of-Um8v6X4$default (Lorg/jetbrains/jewel/ui/component/SegmentedControlButtonState$Companion;ZZZZZILjava/lang/Object;)J
+}
+
+public final class org/jetbrains/jewel/ui/component/SegmentedControlKt {
+	public static final fun SegmentedControl (Ljava/util/List;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class org/jetbrains/jewel/ui/component/SegmentedControlState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/SegmentedControlState$Companion;
+	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/SegmentedControlState;
+	public fun chooseValue (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static fun chooseValue-impl (JLjava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Landroidx/compose/runtime/Composer;I)Ljava/lang/Object;
+	public static fun constructor-impl (J)J
+	public static final fun copy-bhrFvog (JZZZZZ)J
+	public static synthetic fun copy-bhrFvog$default (JZZZZZILjava/lang/Object;)J
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (JLjava/lang/Object;)Z
+	public static final fun equals-impl0 (JJ)Z
+	public final fun getState-s-VKNKU ()J
+	public fun hashCode ()I
+	public static fun hashCode-impl (J)I
+	public fun isActive ()Z
+	public static fun isActive-impl (J)Z
+	public fun isEnabled ()Z
+	public static fun isEnabled-impl (J)Z
+	public fun isFocused ()Z
+	public static fun isFocused-impl (J)Z
+	public fun isHovered ()Z
+	public static fun isHovered-impl (J)Z
+	public fun isPressed ()Z
+	public static fun isPressed-impl (J)Z
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (J)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()J
+}
+
+public final class org/jetbrains/jewel/ui/component/SegmentedControlState$Companion {
+	public final fun of-bhrFvog (ZZZZZ)J
+	public static synthetic fun of-bhrFvog$default (Lorg/jetbrains/jewel/ui/component/SegmentedControlState$Companion;ZZZZZILjava/lang/Object;)J
 }
 
 public final class org/jetbrains/jewel/ui/component/SliderKt {
@@ -1747,6 +1833,113 @@ public final class org/jetbrains/jewel/ui/component/styling/ScrollbarStyle$Compa
 
 public final class org/jetbrains/jewel/ui/component/styling/ScrollbarStylingKt {
 	public static final fun getLocalScrollbarStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlButtonColors {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonColors$Companion;
+	public synthetic fun <init> (Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;JJLandroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun backgroundFor-6xSfq1s (JZLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun borderFor-6xSfq1s (JZLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun contentFor-OIjbplg (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackground ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBackgroundHovered ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBackgroundPressed ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBackgroundSelected ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBackgroundSelectedFocused ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBorder ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBorderSelected ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBorderSelectedDisabled ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBorderSelectedFocused ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getContent-0d7_KjU ()J
+	public final fun getContentDisabled-0d7_KjU ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlButtonColors$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlButtonMetrics {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonMetrics$Companion;
+	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBorderWidth-D9Ej5fM ()F
+	public final fun getCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getMinSize-MYxV2XQ ()J
+	public final fun getSegmentedButtonPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlButtonMetrics$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle$Companion;
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonColors;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonMetrics;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonColors;
+	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonMetrics;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStylingKt {
+	public static final fun getLocalSegmentedControlButtonStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlColors {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlColors$Companion;
+	public fun <init> (Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;Landroidx/compose/ui/graphics/Brush;)V
+	public final fun borderFor-ASBgGNQ (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBorder ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBorderDisabled ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBorderFocused ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBorderHovered ()Landroidx/compose/ui/graphics/Brush;
+	public final fun getBorderPressed ()Landroidx/compose/ui/graphics/Brush;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlColors$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlMetrics {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlMetrics$Companion;
+	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBorderWidth-D9Ej5fM ()F
+	public final fun getCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlMetrics$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlStyle {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle$Companion;
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlColors;Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlMetrics;)V
+	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlColors;
+	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlMetrics;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlStyle$Companion {
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/SegmentedControlStylingKt {
+	public static final fun getLocalSegmentedControlStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/SliderColors {
@@ -3906,6 +4099,8 @@ public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
 	public static final fun getOutlinedButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
 	public static final fun getRadioButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/RadioButtonStyle;
 	public static final fun getScrollbarStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;
+	public static final fun getSegmentedControlButtonStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlButtonStyle;
+	public static final fun getSegmentedControlStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/SegmentedControlStyle;
 	public static final fun getSliderStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/SliderStyle;
 	public static final fun getTextAreaStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;
 	public static final fun getTextFieldStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;

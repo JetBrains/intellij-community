@@ -36,6 +36,8 @@ import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
+import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
@@ -119,6 +121,8 @@ public fun ComponentStyling.dark(
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
     scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
+    segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.dark(),
+    segmentedControlStyle: SegmentedControlStyle = SegmentedControlStyle.dark(),
     sliderStyle: SliderStyle = SliderStyle.dark(),
     textAreaStyle: TextAreaStyle = TextAreaStyle.dark(),
     textFieldStyle: TextFieldStyle = TextFieldStyle.dark(),
@@ -144,6 +148,8 @@ public fun ComponentStyling.dark(
             outlinedButtonStyle = outlinedButtonStyle,
             radioButtonStyle = radioButtonStyle,
             scrollbarStyle = scrollbarStyle,
+            segmentedControlButtonStyle = segmentedControlButtonStyle,
+            segmentedControlStyle = segmentedControlStyle,
             sliderStyle = sliderStyle,
             textAreaStyle = textAreaStyle,
             textFieldStyle = textFieldStyle,
@@ -171,6 +177,8 @@ public fun ComponentStyling.light(
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.light(),
     scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
+    segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.light(),
+    segmentedControlStyle: SegmentedControlStyle = SegmentedControlStyle.light(),
     sliderStyle: SliderStyle = SliderStyle.light(),
     textAreaStyle: TextAreaStyle = TextAreaStyle.light(),
     textFieldStyle: TextFieldStyle = TextFieldStyle.light(),
@@ -196,6 +204,8 @@ public fun ComponentStyling.light(
             outlinedButtonStyle = outlinedButtonStyle,
             radioButtonStyle = radioButtonStyle,
             scrollbarStyle = scrollbarStyle,
+            segmentedControlButtonStyle = segmentedControlButtonStyle,
+            segmentedControlStyle = segmentedControlStyle,
             sliderStyle = sliderStyle,
             textAreaStyle = textAreaStyle,
             textFieldStyle = textFieldStyle,
