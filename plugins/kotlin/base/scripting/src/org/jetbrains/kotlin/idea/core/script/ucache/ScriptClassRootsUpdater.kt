@@ -24,7 +24,9 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
@@ -307,15 +309,20 @@ abstract class ScriptClassRootsUpdater(
             readAction {
                 if (project.isDisposed) return@readAction
 
-                updateHighlighting(project) { file -> updates.isScriptChanged(file.path) }
+                runCatching {
+                    updateHighlighting(project) { file -> updates.isScriptChanged(file.path) }
+                }.onFailure {
+                    LOG.error("Failed to update highlighting", it)
+                }
             }
         }
     }
 
-    private fun updateModificationTracker() {
-        runInEdt(ModalityState.nonModal()) {
-            runWriteAction {
-                if (project.isDisposed) return@runWriteAction
+    private fun updateModificationTracker() = scope.async {
+        withContext(Dispatchers.EDT) {
+            writeAction {
+                if (project.isDisposed) return@writeAction
+
                 ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
             }
         }
