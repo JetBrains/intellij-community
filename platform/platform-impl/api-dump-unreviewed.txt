@@ -15414,7 +15414,6 @@ f:com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
 - f:setBalloon(com.intellij.openapi.ui.popup.Balloon):V
 - f:setEditor(com.intellij.openapi.editor.ex.EditorEx):V
 f:com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager$Companion
-- f:isEnabled():Z
 f:com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorView
 - javax.swing.JPanel
 - <init>(com.intellij.openapi.editor.impl.EditorImpl):V

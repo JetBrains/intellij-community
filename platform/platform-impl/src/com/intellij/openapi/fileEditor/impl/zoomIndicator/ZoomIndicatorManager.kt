@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.zoomIndicator
 
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
@@ -29,7 +28,7 @@ class ZoomIndicatorManager(project: Project) {
     val SUPPRESS_ZOOM_INDICATOR: Key<Boolean> = Key.create("SUPPRESS_ZOOM_INDICATOR")
     @JvmField
     val SUPPRESS_ZOOM_INDICATOR_ONCE: Key<Boolean> = Key.create("SUPPRESS_ZOOM_INDICATOR_ONCE")
-    val isEnabled: Boolean
+    internal val isEditorZoomIndicatorEnabled: Boolean
       get() = AdvancedSettings.getBoolean("editor.show.zoom.indicator")
   }
   private val alarm = Alarm(project)
