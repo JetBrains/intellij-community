@@ -253,7 +253,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       updatesCounter.incrementAndGet()
     }
 
-    log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    log.debug("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info("Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m")
     }
