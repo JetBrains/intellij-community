@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
@@ -169,7 +168,7 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   protected void updateToolTipText() {
     String description = myPresentation.getDescription();
-    if (Registry.is("ide.helptooltip.enabled")) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
       HelpTooltip.dispose(this);
       HelpTooltip tooltip = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
       if (StringUtil.isNotEmpty(description) && tooltip == null) {

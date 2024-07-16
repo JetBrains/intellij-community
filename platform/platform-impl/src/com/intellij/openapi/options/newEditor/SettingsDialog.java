@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.plugins.newui.EventHandler;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -15,7 +16,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -122,7 +122,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   @Override
   protected void setHelpTooltip(@NotNull JButton helpButton) {
     //noinspection SpellCheckingInspection
-    if (Registry.is("ide.helptooltip.enabled")) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
       new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }
     else {

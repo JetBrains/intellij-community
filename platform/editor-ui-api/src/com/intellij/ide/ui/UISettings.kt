@@ -558,6 +558,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       }
     }
 
+    @Suppress("SpellCheckingInspection")
+    // enables new style help context tooltips
+    private val isHelpTooltipEnabled = System.getProperty("ide.helptooltip.enabled", "true").toBoolean()
+
+    @Internal
+    @JvmStatic
+    fun isIdeHelpTooltipEnabled(): Boolean = isHelpTooltipEnabled
+
     const val ANIMATION_DURATION: Int = 300 // Milliseconds
 
     /** Not tabbed pane.  */

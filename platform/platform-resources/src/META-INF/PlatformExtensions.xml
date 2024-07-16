@@ -1827,6 +1827,7 @@
 
     <postStartupActivity implementation="com.intellij.execution.wsl.ijent.nio.toggle.IjentInProjectStarter"
                          os="windows"/>
+    <applicationInitializedListener implementation="com.intellij.ide.SwingTooltipManagerCustomizer"/>
   </extensions>
 
   <applicationListeners>

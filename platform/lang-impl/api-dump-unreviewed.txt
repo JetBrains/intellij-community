@@ -15884,20 +15884,6 @@ com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener
 - a:refreshVisibility():V
 f:com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener$Companion
 - f:getTOPIC():com.intellij.util.messages.Topic
-f:com.intellij.ide.navigationToolbar.rider.SearchEverywhereRiderMainToolbarAction
-- com.intellij.ide.actions.SearchEverywhereAction
-- com.intellij.openapi.actionSystem.ex.AnActionListener
-- com.intellij.openapi.project.DumbAware
-- sf:Companion:com.intellij.ide.navigationToolbar.rider.SearchEverywhereRiderMainToolbarAction$Companion
-- sf:SHOW_HOT_KEY_TIP:java.lang.String
-- <init>():V
-- afterActionPerformed(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.AnActionResult):V
-- beforeActionPerformed(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
-- createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
-- f:getSeManager():com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
-- f:setSeManager(com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.navigationToolbar.rider.SearchEverywhereRiderMainToolbarAction$Companion
 com.intellij.ide.projectView.HelpID
 - sf:PROJECT_VIEWS:java.lang.String
 a:com.intellij.ide.projectView.ProjectView

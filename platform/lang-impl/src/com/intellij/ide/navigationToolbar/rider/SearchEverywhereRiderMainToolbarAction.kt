@@ -9,6 +9,7 @@ import com.intellij.ide.actions.GotoClassPresentationUpdater.getActionTitlePlura
 import com.intellij.ide.actions.SearchEverywhereAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowStateService
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBInsets
@@ -47,7 +47,7 @@ import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 /**
  * Search Everywhere action's item on the main Rider toolbar for the classic UI.
  */
-class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
+private class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
   companion object {
     const val SHOW_HOT_KEY_TIP: String = "com.intellij.ide.navigationToolbar.rider.showSearchEverywhereHotKeyTip"
   }
@@ -116,7 +116,7 @@ class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction(), AnActio
         val shortcutText = "Double" + if (SystemInfo.isMac) FontUtil.thinSpace() + MacKeymapUtil.SHIFT else " Shift"
 
         val classesTabName = java.lang.String.join("/", getActionTitlePluralized())
-        if (Registry.`is`("ide.helptooltip.enabled")) {
+        if (UISettings.isIdeHelpTooltipEnabled()) {
           HelpTooltip.dispose(this)
           if (presentation.isEnabledAndVisible) {
             HelpTooltip()

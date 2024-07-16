@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.PowerSaveMode
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -21,7 +22,6 @@ import com.intellij.openapi.editor.markup.StatusItem
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColorUtil
@@ -190,7 +190,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
         override fun getMargins(): Insets = JBUI.insets(0, 3)
 
         override fun updateToolTipText() {
-          if (Registry.`is`("ide.helptooltip.enabled")) {
+          if (UISettings.isIdeHelpTooltipEnabled()) {
             HelpTooltip.dispose(this)
             val tooltip = HelpTooltip()
               .setTitle(title)

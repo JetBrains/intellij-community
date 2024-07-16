@@ -240,9 +240,6 @@
     <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$ReparseListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
 
-    <listener class="com.intellij.ide.IdeTooltipManager$MyRegistryListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-
     <listener class="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 

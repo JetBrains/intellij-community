@@ -3928,6 +3928,7 @@ f:com.intellij.ide.IdeTooltipManager
 - f:setCustomTooltip(javax.swing.JComponent,com.intellij.ide.IdeTooltip):V
 - f:show(com.intellij.ide.IdeTooltip,Z):com.intellij.ide.IdeTooltip
 - f:show(com.intellij.ide.IdeTooltip,Z,Z):com.intellij.ide.IdeTooltip
+- bs:show$default(com.intellij.ide.IdeTooltipManager,com.intellij.ide.IdeTooltip,Z,Z,I,java.lang.Object):com.intellij.ide.IdeTooltip
 - *f:updateShownTooltip(java.awt.Component):V
 f:com.intellij.ide.IdeTooltipManager$Companion
 - f:getInstance():com.intellij.ide.IdeTooltipManager
