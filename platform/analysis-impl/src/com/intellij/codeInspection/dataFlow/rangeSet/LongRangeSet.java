@@ -361,7 +361,11 @@ public abstract class LongRangeSet {
    * @return true if result may overflow, false if it never overflows
    */
   public boolean additionMayOverflow(@NotNull LongRangeSet other, LongRangeType lrType) {
-    return subtractionMayOverflow(other.negate(lrType), lrType);
+    long leftMin = min();
+    long leftMax = max();
+    long rightMin = other.min();
+    long rightMax = other.max();
+    return lrType.additionMayOverflow(leftMin, rightMin) || lrType.additionMayOverflow(leftMax, rightMax);
   }
 
   /**
