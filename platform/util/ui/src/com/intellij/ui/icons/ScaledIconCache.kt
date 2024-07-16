@@ -30,7 +30,7 @@ internal class ScaledIconCache {
   fun getCachedIcon(host: CachedImageIcon, gc: GraphicsConfiguration?, attributes: IconAttributes): Icon {
     val sysScale = JBUIScale.sysScale(gc)
     val pixScale = if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale * JBUIScale.scale(1f) else JBUIScale.scale(1f)
-    val cacheKey = getCacheKey(pixScale, attributes)
+    val cacheKey = getCacheKey(pixScale, sysScale, attributes)
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
     }
@@ -45,7 +45,11 @@ internal class ScaledIconCache {
 
   @Synchronized
   fun getOrScaleIcon(host: CachedImageIcon, scaleContext: ScaleContext, attributes: IconAttributes): Icon {
-    val cacheKey = getCacheKey(pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat(), attributes)
+    val cacheKey = getCacheKey(
+      pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat(),
+      sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat(),
+      attributes
+    )
     // don't worry that empty ref in the map, we compute and put a new icon by the same key, so no need to remove invalid entry
     cache.getAndMoveToFirst(cacheKey)?.get()?.let {
       return it
@@ -110,9 +114,19 @@ internal class ScaledResultIcon(@JvmField internal val image: Image,
   override fun toString(): String = "ScaledResultIcon for $original"
 }
 
-private fun getCacheKey(pixScale: Float, cacheFlags: IconAttributes): Long {
-  return packTwoIntToLong(pixScale.toRawBits(), cacheFlags.flags)
+private fun getCacheKey(pixScale: Float, sysScale: Float, cacheFlags: IconAttributes): Long {
+  return packTwoIntToLong(
+    packTwoShortsToInt(
+      pixScale.toRawBits().mostSignificantHalf(),
+      sysScale.toRawBits().mostSignificantHalf(),
+    ),
+    cacheFlags.flags
+  )
 }
+
+private fun Int.mostSignificantHalf(): Int = (this shr 16) and 0xFFFF
+
+private fun packTwoShortsToInt(v1: Int, v2: Int): Int = (v1 shl 16) or v2
 
 private fun packTwoIntToLong(v1: Int, v2: Int): Long {
   return (v1.toLong() shl 32) or (v2.toLong() and 0xffffffffL)
