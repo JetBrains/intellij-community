@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
@@ -57,11 +56,7 @@ import kotlin.system.measureTimeMillis
 
 class JavaToKotlinAction : AnAction() {
     object Handler {
-        val title: String
-            get() {
-                val messageKey = if (isK2Mode()) "action.j2k.k2.name" else "action.j2k.name"
-                return KotlinBundle.message(messageKey)
-            }
+        val title: String = KotlinBundle.message("action.j2k.name")
 
         @OptIn(KaAllowAnalysisOnEdt::class)
         fun convertFiles(
@@ -100,9 +95,10 @@ class JavaToKotlinAction : AnAction() {
             }
 
             // Perform user interaction first to avoid interrupting J2K in the middle of conversion and breaking "undo"
+            val question = KotlinBundle.message("action.j2k.correction.required")
             val shouldProcessExternalCode = enableExternalCodeProcessing &&
                     (!askExternalCodeProcessing ||
-                            Messages.showYesNoDialog(project, getQuestionText(), title, Messages.getQuestionIcon()) == Messages.YES)
+                            Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES)
 
             var newFiles: List<KtFile> = emptyList()
 
@@ -149,13 +145,6 @@ class JavaToKotlinAction : AnAction() {
             }
 
             return newFiles
-        }
-
-        @NlsContexts.DialogMessage
-        private fun getQuestionText(): String {
-            val prefix = if (isK2Mode()) KotlinBundle.message("action.j2k.k2.warning") + "\n\n" else ""
-            val question = KotlinBundle.message("action.j2k.correction.required")
-            return prefix + question
         }
 
         private fun prepareExternalCodeUpdate(project: Project, processing: ExternalCodeProcessing?, isEnabled: Boolean): (() -> Unit)? {
