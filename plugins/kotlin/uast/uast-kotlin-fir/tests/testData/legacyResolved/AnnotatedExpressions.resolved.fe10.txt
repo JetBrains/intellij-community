@@ -8,7 +8,7 @@ UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identi
     UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
     UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
-    UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> Decompiled_Method: compareTo
+    UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> null: null
     UIfExpression -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
     UIfExpression -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
     ULocalVariable (name = varae507364) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Variable: a
@@ -26,4 +26,4 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolve
 UBinaryExpression (operator = !=) -> UQualifiedReferenceExpression -> Decompiled_Method: isNotEmpty
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isNotEmpty) -> Decompiled_Method: isNotEmpty
-UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> Decompiled_Method: equals
+UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> null: null

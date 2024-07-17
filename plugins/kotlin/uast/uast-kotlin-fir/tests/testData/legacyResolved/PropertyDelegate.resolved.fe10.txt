@@ -2,4 +2,4 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolve
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = lazy) -> Decompiled_Method: lazy
 UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = lazy) -> Decompiled_Method: lazy
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Decompiled_Method: plus
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null

@@ -50,8 +50,8 @@ interface UastResolveApiTestBase : ExpectedPluginModeProvider {
                 return super.visitPrefixExpression(node)
             }
         })
-        Assert.assertEquals("Kotlin built-in >= (int.compareTo) and == (int.equals)", 2, resolvedBinaryOperators.size)
-        Assert.assertEquals("Kotlin built-in ++ (int.inc), ++i and ++j", 2, resolvedUnaryOperators.size)
+        Assert.assertEquals("Kotlin built-in >= (int.compareTo) and == (int.equals) are not resolvable", 0, resolvedBinaryOperators.size)
+        Assert.assertEquals("Kotlin built-in ++ (int.inc), ++i and ++j are not resolvable", 0, resolvedUnaryOperators.size)
     }
 
     fun checkCallbackForIf(filePath: String, uFile: UFile) {
@@ -66,7 +66,7 @@ interface UastResolveApiTestBase : ExpectedPluginModeProvider {
                 return super.visitBinaryExpression(node)
             }
         })
-        Assert.assertEquals("Kotlin built-in * (int.times) and + (int.plus)", 2, resolvedOperators.size)
+        Assert.assertEquals("Kotlin built-in * (int.times) and + (int.plus) are not resolvable", 0, resolvedOperators.size)
     }
 
     fun checkCallbackForMethodReference(filePath: String, uFile: UFile) {

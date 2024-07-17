@@ -1137,7 +1137,12 @@ interface UastResolveApiFixtureTestBase {
             object : AbstractUastVisitor() {
                 override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
                     val resolved = node.resolveOperator()
-                    TestCase.assertEquals(node.sourcePsi?.text, "plus", resolved?.name)
+                    val receiverType = node.leftOperand.getExpressionType()
+                    if (receiverType in PsiTypes.primitiveTypes()) {
+                        TestCase.assertNull("${resolved?.containingClass?.name}#${resolved?.name}", resolved)
+                    } else {
+                        TestCase.assertEquals(node.sourcePsi?.text, "plus", resolved?.name)
+                    }
                     count++
                     return super.visitBinaryExpression(node)
                 }
@@ -1374,7 +1379,7 @@ interface UastResolveApiFixtureTestBase {
         val plusEq = uFile.findElementByTextFromPsi<UBinaryExpression>("x.foo +=", strict = false)
             .orFail("cant convert to UBinaryExpression")
         val wholePlusEq = plusEq.resolveOperator()
-        TestCase.assertEquals("plus", wholePlusEq?.name)
+        TestCase.assertNull("${wholePlusEq?.containingClass?.name}#${wholePlusEq?.name}", wholePlusEq)
         // `x.foo` from `x.foo += 42`
         val left = (plusEq.leftOperand as? UResolvable)?.resolve() as? PsiMethod
         if (isK2) {
@@ -1394,7 +1399,7 @@ interface UastResolveApiFixtureTestBase {
         val plusPlus = uFile.findElementByTextFromPsi<UUnaryExpression>("x.foo++", strict = false)
             .orFail("cant convert to UUnaryExpression")
         val wholePlusPlus = plusPlus.resolveOperator()
-        TestCase.assertEquals("inc", wholePlusPlus?.name)
+        TestCase.assertNull("${wholePlusPlus?.containingClass?.name}#${wholePlusPlus?.name}", wholePlusPlus)
         // `x.foo` from `x.foo++`
         val operand = (plusPlus.operand as? UResolvable)?.resolve() as? PsiMethod
         if (isK2) {
