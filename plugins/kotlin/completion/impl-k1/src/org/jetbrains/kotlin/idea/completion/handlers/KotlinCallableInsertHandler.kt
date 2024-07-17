@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLooku
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -23,17 +24,18 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
         val SHORTEN_REFERENCES = ShortenReferences { ShortenReferences.Options.DEFAULT.copy(dropBracesInStringTemplates = false) }
 
         fun addImport(context: InsertionContext, item: LookupElement, callType: CallType<*>) {
-            val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+            val project = context.project
+            val psiDocumentManager = PsiDocumentManager.getInstance(project)
             psiDocumentManager.commitDocument(context.document)
 
             val file = context.file as? KtFile ?: return
-            val o = item.`object` as? DescriptorBasedDeclarationLookupObject ?: return
-            val descriptor = o.descriptor as? CallableDescriptor ?: return
+            val lookupObject = item.`object` as? DescriptorBasedDeclarationLookupObject ?: return
+            val descriptor = lookupObject.descriptor as? CallableDescriptor ?: return
             if (descriptor.isArtificialImportAliasedDescriptor) return
 
-            if (descriptor.extensionReceiverParameter != null || callType is CallType.CallableReference) {
+            if (cannotBeFullyQualified(callType, descriptor)) {
                 if (DescriptorUtils.isTopLevelDeclaration(descriptor)) {
-                    ImportInsertHelper.getInstance(context.project).importDescriptor(file, descriptor)
+                    ImportInsertHelper.getInstance(project).importDescriptor(file, descriptor)
                 }
             } else if (callType == CallType.DEFAULT) {
                 val fqName = descriptor.importableFqName ?: return
@@ -54,6 +56,18 @@ abstract class KotlinCallableInsertHandler(val callType: CallType<*>) : BaseDecl
                     context.document.deleteString(context.tailOffset - 1, context.tailOffset)
                 }
             }
+        }
+
+        /**
+         * Determines that the declaration cannot be called with a full qualified name (FQN):
+         *  - All callable references
+         *  - Extension properties/functions
+         *  - Root declarations
+         */
+        private fun cannotBeFullyQualified(callType: CallType<*>, descriptor: CallableDescriptor): Boolean {
+            return callType is CallType.CallableReference ||
+                    descriptor.extensionReceiverParameter != null ||
+                    descriptor.importableFqName?.parentOrNull()?.isRoot == true
         }
     }
 
