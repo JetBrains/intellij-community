@@ -5607,10 +5607,19 @@ a:com.intellij.codeInsight.highlighting.AbstractCodeBlockSupportHandler
 f:com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 - <init>():V
 f:com.intellij.codeInsight.highlighting.BraceHighlightingHandler
-- s:createLineMarkerRenderer(Z):com.intellij.openapi.editor.markup.LineMarkerRenderer
-- s:getLazyParsableHighlighterIfAny(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.highlighter.EditorHighlighter
-- s:lineMarkFragment(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.editor.Document,I,I,Z):V
-- s:showScopeHint(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,I):V
+- sf:Companion:com.intellij.codeInsight.highlighting.BraceHighlightingHandler$Companion
+- sf:LAYER:I
+- f:clearBraceHighlighters():V
+- sf:getLazyParsableHighlighterIfAny(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.highlighter.EditorHighlighter
+- f:highlightBraces(com.intellij.openapi.util.TextRange,com.intellij.openapi.util.TextRange,Z,Z,com.intellij.openapi.fileTypes.FileType):V
+- sf:lineMarkFragment(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.editor.Document,I,I,Z):V
+- sf:showScopeHint(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,I):V
+- f:updateBraces():V
+f:com.intellij.codeInsight.highlighting.BraceHighlightingHandler$Companion
+- f:createLineMarkerRenderer(Z):com.intellij.openapi.editor.markup.LineMarkerRenderer
+- f:getLazyParsableHighlighterIfAny(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.openapi.editor.highlighter.EditorHighlighter
+- f:lineMarkFragment(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.editor.Document,I,I,Z):V
+- f:showScopeHint(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,I):V
 com.intellij.codeInsight.highlighting.BraceMatcher
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getBraceTokenGroupId(com.intellij.psi.tree.IElementType):I
