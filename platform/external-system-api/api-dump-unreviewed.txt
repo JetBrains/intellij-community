@@ -938,13 +938,6 @@ com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
 - a:getEventId():java.lang.String
 - a:getEventTime():J
 - a:getParentEventId():java.lang.String
-com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupported
-- java.io.Serializable
-- a:getDisplayName():java.lang.String
-c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl
-- com.intellij.openapi.externalSystem.model.task.event.BaseExternalSystemProgressEvent
-- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupported
-- <init>(java.lang.String):V
 com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStartEvent
 - com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
 c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStartEventImpl
