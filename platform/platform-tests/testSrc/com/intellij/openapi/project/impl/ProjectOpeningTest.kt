@@ -43,42 +43,34 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   }
 
   @Test fun cancelOnRunPostStartUpActivities() {
+    val passed = AtomicBoolean()
     var job: Job? = null
-    class MyStartupActivity : InitProjectActivity {
-      val passed = AtomicBoolean()
-
+    val activity = object : InitProjectActivity {
       override suspend fun run(project: Project) {
         passed.set(true)
         job!!.cancel("test")
       }
     }
-
-    val activity = MyStartupActivity()
     val ep = ExtensionPointName<InitProjectActivity>("com.intellij.initProjectActivity")
     ExtensionTestUtil.maskExtensions(ep, listOf(activity), testRootDisposable, fireEvents = false)
     runBlocking {
       job = launch {
-        assertThat(doOpenProject()).isNull()
+        assertProjectOpenIsCancelled(createTestOpenProjectOptions())
       }
     }
-    // 1 on maskExtensions call, second call our call
-    assertThat(activity.passed.get()).isTrue()
+    assertThat(passed.get()).isTrue()
   }
 
   @Test fun cancelOnLoadingModules() {
     runBlocking {
       var job: Job? = null
       job = launch {
-        assertThat(doOpenProject(createTestOpenProjectOptions().copy(beforeOpen = {
-          job!!.cancel("test")
-          job!!
-          true
-        }))).isNull()
+        assertProjectOpenIsCancelled(createTestOpenProjectOptions(beforeOpen = { job!!.cancel("test") }))
       }
     }
   }
 
-  private suspend fun doOpenProject(options: OpenProjectTask = createTestOpenProjectOptions()) {
+  private suspend fun assertProjectOpenIsCancelled(options: OpenProjectTask) {
     val project = ProjectManagerEx.getInstanceEx().openProjectAsync(inMemoryFs.fs.getPath("/p"), options)
     if (project != null) {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
@@ -87,9 +79,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   }
 
   @Test fun isSameProjectForDirectoryBasedProject() {
-    val projectDir = inMemoryFs.fs.getPath("/p")
-    projectDir.createDirectories()
-
+    val projectDir = inMemoryFs.fs.getPath("/p").createDirectories()
     val dirBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir, createTestOpenProjectOptions())!!
     dirBasedProject.useProject {
       assertThat(ProjectUtil.isSameProject(projectDir, dirBasedProject)).isTrue()
@@ -104,8 +94,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   }
 
   @Test fun isSameProjectForFileBasedProject() {
-    val projectDir = inMemoryFs.fs.getPath("/p")
-    projectDir.createDirectories()
+    val projectDir = inMemoryFs.fs.getPath("/p").createDirectories()
     val fileBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir.resolve("project.ipr"), createTestOpenProjectOptions())!!
     fileBasedProject.useProject {
       assertThat(ProjectUtil.isSameProject(projectDir, fileBasedProject)).isTrue()
