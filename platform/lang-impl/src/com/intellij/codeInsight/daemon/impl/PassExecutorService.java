@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.Disposable;
@@ -433,6 +432,9 @@ final class PassExecutorService implements Disposable {
               }
               //in case some smart asses throw PCE just for fun
               ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopProcess(true, "PCE was thrown by visitor");
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("PCE was thrown by " + myPass.getClass(), new RuntimeException(e));
+              }
             }
           }
           catch (RuntimeException | Error e) {
@@ -561,13 +563,12 @@ final class PassExecutorService implements Disposable {
       Document document = pass instanceof TextEditorHighlightingPass text ? text.getDocument() : null;
       CharSequence docText = document == null ? "" : ": '" + StringUtil.first(document.getCharsSequence(), 10, true)+ "'";
       synchronized (PassExecutorService.class) {
-        String infos = StringUtil.join(info, Functions.TO_STRING(), " ");
         String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
                          + " " + (pass == null ? "" : pass + " ")
-                         + infos
+                         + StringUtil.join(info, Functions.TO_STRING(), " ")
                          + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
-                         + " " + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
-                         + docText;
+                         + (progressIndicator == null ? "" : progressIndicator.isCanceled() ? "X" : "V")
+                         + " " + docText;
         LOG.debug(message);
       }
     }
