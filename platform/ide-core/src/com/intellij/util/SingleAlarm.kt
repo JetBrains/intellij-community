@@ -288,6 +288,11 @@ class SingleAlarm @Internal constructor(
     request(forceRun = false, delay = delay)
   }
 
+  @Internal
+  fun cancelAndRequestWithCustomDelay(delay: Int) {
+    request(forceRun = false, delay = delay, cancelCurrent = true)
+  }
+
   private fun request(forceRun: Boolean, delay: Int, cancelCurrent: Boolean = false) {
     val effectiveDelay = if (forceRun) 0 else delay.toLong()
     synchronized(LOCK) {
