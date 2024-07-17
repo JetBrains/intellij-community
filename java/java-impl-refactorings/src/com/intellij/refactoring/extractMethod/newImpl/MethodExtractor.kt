@@ -61,17 +61,21 @@ class MethodExtractor {
     val preparePlacesTime = System.currentTimeMillis() - prepareStart
     val selectedDescriptorFuture = selectOptionWithTargetClass(editor, file.project, descriptorsForAllTargetPlaces)
     if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
-      selectedDescriptorFuture.thenApply { options ->
-        val templateStart = System.currentTimeMillis()
-        runInplaceExtract(editor, range, options)
-        val prepareTemplateTime = System.currentTimeMillis() - templateStart
-        reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
-      }
+      selectedDescriptorFuture
+        .thenApply { options ->
+          val templateStart = System.currentTimeMillis()
+          runInplaceExtract(editor, range, options)
+          val prepareTemplateTime = System.currentTimeMillis() - templateStart
+          reportPerformanceStatistics(preparePlacesTime, prepareTemplateTime, descriptorsForAllTargetPlaces.size)
+        }
+        .exceptionally { e -> LOG.error(e) }
     }
     else {
-      selectedDescriptorFuture.thenApply { options ->
-        extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
-      }
+      selectedDescriptorFuture
+        .thenApply { options ->
+          extractInDialog(options.targetClass, options.elements, "", JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD)
+        }
+        .exceptionally { e -> LOG.error(e) }
     }
   }
 
@@ -271,6 +275,7 @@ class MethodExtractor {
     @NonNls const val refactoringId: String = "refactoring.extract.method"
 
     internal fun sendRefactoringDoneEvent(extractedMethod: PsiMethod) {
+      LOG.debug("Extract method finished")
       val data = RefactoringEventData()
       data.addElement(extractedMethod)
       extractedMethod.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
@@ -278,6 +283,7 @@ class MethodExtractor {
     }
 
     internal fun sendRefactoringStartedEvent(elements: Array<PsiElement>) {
+      LOG.debug("Extract method started")
       val project = elements.firstOrNull()?.project ?: return
       val data = RefactoringEventData()
       data.addElements(elements)
