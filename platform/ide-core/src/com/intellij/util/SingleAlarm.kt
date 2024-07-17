@@ -288,14 +288,18 @@ class SingleAlarm @Internal constructor(
     request(forceRun = false, delay = delay)
   }
 
-  private fun request(forceRun: Boolean, delay: Int) {
+  private fun request(forceRun: Boolean, delay: Int, cancelCurrent: Boolean = false) {
     val effectiveDelay = if (forceRun) 0 else delay.toLong()
     synchronized(LOCK) {
-      if (currentJob != null) {
+      var prevCurrentJob = currentJob
+      if (!cancelCurrent && prevCurrentJob != null) {
         return
       }
 
       currentJob = taskCoroutineScope.launch {
+        prevCurrentJob?.cancelAndJoin()
+        prevCurrentJob = null
+
         delay(effectiveDelay)
         withContext(taskContext) {
           try {
@@ -336,8 +340,7 @@ class SingleAlarm @Internal constructor(
    */
   @JvmOverloads
   fun cancelAndRequest(forceRun: Boolean = false) {
-    cancel()
-    request(forceRun = forceRun, delay = delay)
+    request(forceRun = forceRun, delay = delay, cancelCurrent = true)
   }
 
   @Deprecated("Use cancel")
