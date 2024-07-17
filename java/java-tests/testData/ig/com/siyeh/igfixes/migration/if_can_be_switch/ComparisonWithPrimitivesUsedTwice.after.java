@@ -6,8 +6,8 @@ class Test {
           case 100 -> "Continue";
           case 200 -> "OK";
           case 301 -> "Moved permanently";
-          case Integer i when i > 502 && i < 600 -> "Server error";
+          case Integer i when 301 > i -> "Server error";
           default -> "unknown code";
       };
-    }
+  }
 }

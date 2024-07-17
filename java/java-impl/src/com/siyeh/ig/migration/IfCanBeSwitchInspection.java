@@ -318,7 +318,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     }
 
     if (ContainerUtil.or(branches, branch -> branch.hasPattern() && !(switchExpression.getType() instanceof PsiPrimitiveType)) ||
-        SwitchUtils.isExtendedPrimitives(PsiPrimitiveType.getOptionallyUnboxedType(switchExpression.getType()))) {
+        SwitchUtils.isExtendedSwitchSelectorType(switchExpression.getType())) {
       final boolean hasDefaultElse = ContainerUtil.exists(branches, (branch) -> branch.isElse());
       if (!hasDefaultElse && !hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
