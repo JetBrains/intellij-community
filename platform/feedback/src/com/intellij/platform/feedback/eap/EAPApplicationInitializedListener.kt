@@ -8,10 +8,12 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -93,11 +95,7 @@ class EAPApplicationInitializedListener : ApplicationInitializedListener {
 }
 
 fun executeEAPFeedbackAction() {
-  BrowserUtil.browse(
-    "https://surveys.jetbrains.com/s3/${getProductName().lowercase()}-${
-      getProductVersion().replace('.', '-')
-    }-eap-user-survey",
-    null)
+  BrowserUtil.browse(application.service<EAPFeedbackUrlProvider>().surveyUrl(), null)
 }
 
 fun isEAPEnv(): Boolean {
