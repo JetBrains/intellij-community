@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirPairMatcherTest
 import org.jetbrains.kotlin.idea.k2.copyPaste.AbstractK2InsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
+import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtParameterHintsProviderTest
@@ -139,6 +140,9 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/hierarchy/class/super", pattern = DIRECTORY, isRecursive = false, testMethodName = "doSuperClassHierarchyTest")
             model("../../../idea/tests/testData/hierarchy/class/sub", pattern = DIRECTORY, isRecursive = false, testMethodName = "doSubClassHierarchyTest")
             model("../../../idea/tests/testData/hierarchy/overrides", pattern = DIRECTORY, isRecursive = false, testMethodName = "doOverrideHierarchyTest")
+        }
+        testClass<AbstractFirHierarchyWithLibTest> {
+            model("../../../idea/tests/testData/hierarchy/withLib", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractKotlinFirJoinLinesTest> {
