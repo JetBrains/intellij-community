@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 
@@ -6,9 +6,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.*
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.*
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
+@ApiStatus.Internal
 class ProjectStatus(private val debugName: String? = null) {
   private var state = AtomicReference(Synchronized(-1) as ProjectState)
 
