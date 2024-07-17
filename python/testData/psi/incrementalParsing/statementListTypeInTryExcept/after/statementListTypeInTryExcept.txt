@@ -2,13 +2,16 @@ Original text:
 ---------------
 try:
   print("Hello")
+  print("World")
 except:
   print("World!")
 ---------------
 Subtree: Language: Python
 ---------------
 try:
-  <reparse>print("Hello,")</reparse>
+  <reparse>print("Hello")
+  print(", ")
+  print("World")</reparse>
 except:
   print("World!")
 ---------------

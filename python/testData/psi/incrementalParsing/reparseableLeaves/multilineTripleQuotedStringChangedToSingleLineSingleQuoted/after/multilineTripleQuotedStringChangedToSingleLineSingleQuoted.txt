@@ -1,0 +1,14 @@
+Original text:
+---------------
+first = """first"""
+second = """this is a
+            multi-line
+            string"""
+third = """third"""
+---------------
+Subtree: Language: Python
+---------------
+<reparse>first = """first"""
+second = "this is a single-line string"
+third = """third"""</reparse>
+---------------

@@ -99,16 +99,6 @@ public interface PyElementTypes {
   PyElementType DICT_COMP_EXPRESSION = new PyElementType("DICT_COMP_EXPRESSION", Companion.getINSTANCE().getDictCompExpressionConstructor());
   TokenSet STATEMENT_LISTS = TokenSet.create(STATEMENT_LIST);
 
-  TokenSet BINARY_OPS = TokenSet.create(PyTokenTypes.OR_KEYWORD, PyTokenTypes.AND_KEYWORD, PyTokenTypes.LT, PyTokenTypes.GT,
-                                        PyTokenTypes.OR, PyTokenTypes.XOR, PyTokenTypes.AND, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
-                                        PyTokenTypes.EQEQ, PyTokenTypes.GE, PyTokenTypes.LE, PyTokenTypes.NE, PyTokenTypes.NE_OLD,
-                                        PyTokenTypes.IN_KEYWORD, PyTokenTypes.IS_KEYWORD, PyTokenTypes.NOT_KEYWORD, PyTokenTypes.PLUS,
-                                        PyTokenTypes.MINUS, PyTokenTypes.MULT, PyTokenTypes.AT, PyTokenTypes.FLOORDIV, PyTokenTypes.DIV,
-                                        PyTokenTypes.PERC, PyTokenTypes.EXP);
-
-  TokenSet UNARY_OPS = TokenSet.create(PyTokenTypes.NOT_KEYWORD, PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.TILDE,
-                                       PyTokenTypes.AWAIT_KEYWORD);
-
   // Parts
   PyElementType IF_PART_IF = new PyElementType("IF_IF", Companion.getINSTANCE().getIfPartIfConstructor());
   PyElementType IF_PART_ELIF = new PyElementType("IF_ELIF", Companion.getINSTANCE().getIfPartElifConstructor());

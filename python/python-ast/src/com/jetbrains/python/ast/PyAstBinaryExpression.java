@@ -8,7 +8,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
@@ -43,7 +42,7 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
   @Nullable
   default PsiElement getPsiOperator() {
     ASTNode node = getNode();
-    final ASTNode child = node.findChildByType(PyElementTypes.BINARY_OPS);
+    final ASTNode child = node.findChildByType(PyTokenTypes.BINARY_OPS);
     if (child != null) return child.getPsi();
     return null;
   }
@@ -53,7 +52,7 @@ public interface PyAstBinaryExpression extends PyAstQualifiedExpression, PyAstCa
     StringBuilder buf = new StringBuilder();
     while (child != null) {
       IElementType elType = child.getElementType();
-      if (elType instanceof PyElementType && PyElementTypes.BINARY_OPS.contains(elType)) {
+      if (elType instanceof PyElementType && PyTokenTypes.BINARY_OPS.contains(elType)) {
         buf.append(child.getText());
       }
       child = child.getTreeNext();

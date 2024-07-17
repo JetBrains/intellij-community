@@ -1,0 +1,18 @@
+Original text:
+---------------
+class Clazz:
+
+    # this function does nothing
+    def foo(): ...
+---------------
+Subtree: Language: Python
+---------------
+<reparse>class Clazz:
+
+    """
+    This function does nothing
+    Accepts nothing
+    Returns nothing
+    """
+    def foo(): ...</reparse>
+---------------
