@@ -30,7 +30,7 @@ public final class StringTemplateReverseMigrationInspection extends AbstractBase
         PsiTemplate template = expression.getTemplate();
         PsiLiteralExpression literal = expression.getLiteralExpression();
         if (template == null && literal == null) return;
-        if (!JavaPsiStringTemplateUtil.isStrTemplate(expression.getProcessor())) return;
+        if (!JavaPsiStringTemplateUtil.isStrTemplate(expression.getProcessor(), true)) return;
         if (template != null && ContainerUtil.exists(template.getFragments(), f -> f.getValue() == null)) return;
         if (literal != null && literal.getValue() == null) return;
         holder.registerProblem(expression,
