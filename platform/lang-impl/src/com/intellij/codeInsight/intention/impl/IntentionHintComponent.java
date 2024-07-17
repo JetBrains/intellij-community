@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
@@ -761,10 +762,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                   @NotNull IntentionHintComponent.IntentionPopup popup) {
       IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
 
+      Document document = popup.myEditor.getDocument();
+      long oldTimeStamp = document.getModificationStamp();
+
       if (context.mayHaveHighlighting(action)) {
         ReadAction.nonBlocking(() -> context.computeHighlightsToApply(action))
           .coalesceBy(popup)
           .finishOnUiThread(ModalityState.any(), Runnable::run)
+          .expireWhen(() -> document.getModificationStamp() == oldTimeStamp)
           .submit(AppExecutorUtil.getAppExecutorService());
       }
       else {
