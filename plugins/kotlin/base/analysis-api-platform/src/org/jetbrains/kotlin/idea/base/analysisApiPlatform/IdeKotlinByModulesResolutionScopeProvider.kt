@@ -6,7 +6,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
-import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
@@ -53,7 +52,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
             }
         }
         return if (module is KtSourceModuleByModuleInfo) {
-            KotlinResolveScopeEnlarger.enlargeScope(scope, module.ideaModule, isTestScope = module.ideaModule.isTestModule)
+            KotlinResolveScopeEnlarger.enlargeScope(scope, module.ideaModule, isTestScope = module.ideaModuleInfo is ModuleTestSourceInfo)
         } else {
             scope
         }
