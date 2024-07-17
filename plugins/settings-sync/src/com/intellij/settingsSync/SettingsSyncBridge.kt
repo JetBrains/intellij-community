@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.util.progress.withProgressText
@@ -515,6 +516,13 @@ class SettingsSyncBridge(
   fun waitForAllExecuted() {
     runBlocking {
       processPendingEvents(force = true)
+      val startTime = System.currentTimeMillis()
+      while (System.currentTimeMillis() - startTime < 10000 && queueSize > 0) {
+        delay(10)
+      }
+      if (queueSize > 0) {
+        LOG.warn("Queue size > 0 !!!!!!")
+      }
     }
   }
 
