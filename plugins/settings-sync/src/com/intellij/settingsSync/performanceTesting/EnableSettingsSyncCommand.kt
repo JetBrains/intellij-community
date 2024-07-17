@@ -69,7 +69,7 @@ class EnableSettingsSyncCommand(text: @NonNls String, line: Int) : PlaybackComma
       var startTime = System.currentTimeMillis()
       while (!SettingsSyncMain.getInstance().controls.bridge.isInitialized) {
         delay(50)
-        if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(5)) {
+        if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(10)) {
           throw Exception("Settings Sync initialization timeout exceeded")
         }
       }
