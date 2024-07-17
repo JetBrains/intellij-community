@@ -1926,6 +1926,16 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   @Nullable
+  public static PyType removeNarrowedTypeIfNeeded(@Nullable PyType type) {
+    if (type instanceof PyNarrowedType pyNarrowedType) {
+      return PyBuiltinCache.getInstance(pyNarrowedType.getOriginal()).getBoolType();
+    }
+    else {
+      return type;
+    }
+  }
+
+  @Nullable
   private static PyType wrapInCoroutineType(@Nullable PyType returnType, @NotNull PsiElement resolveAnchor) {
     final PyClass coroutine = PyPsiFacade.getInstance(resolveAnchor.getProject()).createClassByQName(COROUTINE, resolveAnchor);
     return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;

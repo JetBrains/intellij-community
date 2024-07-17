@@ -1845,6 +1845,28 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  public void testTypeGuardCannotBeReturned() {
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 return is_str_list(val)
+              
+             def func2(val):
+                 expr = func1(val)                    
+             """);
+    final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    final Project project = expr.getProject();
+    final PsiFile containingFile = expr.getContainingFile();
+    final PyType type = TypeEvalContext.userInitiated(project, containingFile).getType(expr);
+    assertFalse("type is instance of PyNarrowedType ", type instanceof PyNarrowedType);
+  }
+
   public void testTypeGuardResultIsAssigned()  {
     doTest("list[str]",
            """
