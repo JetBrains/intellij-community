@@ -52,6 +52,7 @@ interface ClientLookupManagerListener {
   fun lookupDisposed(session: ClientProjectSession, lookupImpl: LookupImpl, editor: Editor) = Unit
 }
 
+@Internal
 abstract class ClientLookupManagerBase(val session: ClientProjectSession): ClientLookupManager {
   private var myActiveLookup: LookupImpl? = null
 
@@ -113,12 +114,14 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession): Clien
 }
 
 
+@Internal
 class LocalClientLookupManager(session: ClientProjectSession) : ClientLookupManagerBase(session) {
   override fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl {
     return LookupImpl(session, editor, arranger)
   }
 }
 
+@Internal
 class GuestLookupManager(session: ClientProjectSession) : ClientLookupManagerBase(session) {
   override fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl {
     return GuestLookupImpl(session, editor, arranger)
