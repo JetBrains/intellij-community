@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public final class TeamCityLogger {
   private static final Logger LOG = Logger.getInstance(TeamCityLogger.class);
@@ -77,6 +78,11 @@ public final class TeamCityLogger {
     else {
       runnable.run();
     }
+  }
+
+  public static void publishArtifact(@NotNull Path artifactPath, @Nullable String artifactName) {
+    String suffix = artifactName != null ? "=>" + artifactName : "";
+    System.out.println("##teamcity[publishArtifacts '" + escapeTeamcityServiceMessage(artifactPath.toString()) + suffix + "']");
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

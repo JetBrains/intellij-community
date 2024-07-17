@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
@@ -61,6 +62,8 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
 
   private static final AtomicInteger myRethrowErrorsNumber = new AtomicInteger(0);
+
+  private final AtomicReference<DebugArtifactPublisher> myDebugArtifactPublisher = new AtomicReference<>();
 
   private TestLoggerFactory() { }
 
@@ -260,6 +263,10 @@ public final class TestLoggerFactory implements Logger.Factory {
     TestLoggerFactory factory = getTestLoggerFactory();
     if (factory != null) {
       factory.clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
+      DebugArtifactPublisher publisher = factory.myDebugArtifactPublisher.getAndSet(null);
+      if (publisher != null) {
+        publisher.cleanup();
+      }
       factory.myTestStartedMillis = System.currentTimeMillis();
     }
   }
@@ -276,6 +283,15 @@ public final class TestLoggerFactory implements Logger.Factory {
     TestLoggerFactory factory = getTestLoggerFactory();
     if (factory != null) {
       factory.myTestStartedMillis = 0;
+      DebugArtifactPublisher publisher = factory.myDebugArtifactPublisher.getAndSet(null);
+      if (publisher != null) {
+        if (!success) {
+          publisher.publishArtifacts(testName);
+        }
+        else {
+          publisher.cleanup();
+        }
+      }
       factory.dumpLogBuffer(success, testName);
     }
   }
@@ -287,6 +303,28 @@ public final class TestLoggerFactory implements Logger.Factory {
       String message = comparisonFailures != null ? "test failed: " + comparisonFailures : "Test failed";
       factory.buffer(LogLevel.ERROR, "#TestFramework", message, t);
     }
+  }
+
+  /**
+   * Publishes {@code artifactPath} as a build artifact if the current test fails on TeamCity under 'debug-artifacts' directory.
+   * @param artifactPath path to a file or directory to be published
+   * @param artifactName meaningful name under which the artifact will be published; the name of the current test will be added as a prefix
+   *                     automatically; and if multiple artifacts with the same {@code artifactName} are added during execution of the test,
+   *                     unique suffix will also be added automatically.
+   */
+  public static void publishArtifactIfTestFails(@NotNull Path artifactPath, @NotNull String artifactName) {
+    TestLoggerFactory factory = getTestLoggerFactory();
+    if (factory != null) {
+      factory.getOrCreateDebugArtifactPublisher().storeArtifact(artifactPath, artifactName);
+    }
+  }
+
+  private DebugArtifactPublisher getOrCreateDebugArtifactPublisher() {
+    DebugArtifactPublisher publisher = myDebugArtifactPublisher.get();
+    if (publisher != null) return publisher;
+    Path storagePath = PathManager.getLogDir().resolve("debug-artifacts");
+    myDebugArtifactPublisher.compareAndSet(null, new DebugArtifactPublisher(storagePath));
+    return myDebugArtifactPublisher.get();
   }
 
   private void clearLogBuffer() {
