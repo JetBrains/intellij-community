@@ -30,7 +30,7 @@ var Project.copyNewName: String? by UserDataProperty(Key.create("NEW_NAME"))
 fun PsiElement.getCopyableElement() =
     parentsWithSelf.firstOrNull { it is KtFile || (it is KtNamedDeclaration && it.parent is KtFile) } as? KtElement
 
-private fun PsiElement.getDeclarationsToCopy(): List<KtElement> = when (val declarationOrFile = getCopyableElement()) {
+fun PsiElement.getDeclarationsToCopy(): List<KtElement> = when (val declarationOrFile = getCopyableElement()) {
     is KtFile -> declarationOrFile.declarations.filterIsInstance<KtNamedDeclaration>().ifEmpty { listOf(declarationOrFile) }
     is KtNamedDeclaration -> listOf(declarationOrFile)
     else -> emptyList()

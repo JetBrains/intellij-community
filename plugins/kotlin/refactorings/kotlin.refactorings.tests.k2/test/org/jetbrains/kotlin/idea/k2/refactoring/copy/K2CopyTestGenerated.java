@@ -235,6 +235,11 @@ public class K2CopyTestGenerated extends AbstractK2CopyTest {
         runTest("../../idea/tests/testData/refactoring/copy/kt18149/kt18149.test");
     }
 
+    @TestMetadata("operationReferenceToJavaDecl/operationReferenceToJavaDecl.test")
+    public void testOperationReferenceToJavaDecl_OperationReferenceToJavaDecl() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/copy/operationReferenceToJavaDecl/operationReferenceToJavaDecl.test");
+    }
+
     @TestMetadata("protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test")
     public void testProtectedConstructorRefInSuperListEntry_ProtectedConstructorRefInSuperListEntry() throws Exception {
         runTest("../../idea/tests/testData/refactoring/copy/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test");

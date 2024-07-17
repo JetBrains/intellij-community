@@ -235,6 +235,11 @@ public class CopyTestGenerated extends AbstractCopyTest {
         runTest("testData/refactoring/copy/kt18149/kt18149.test");
     }
 
+    @TestMetadata("operationReferenceToJavaDecl/operationReferenceToJavaDecl.test")
+    public void testOperationReferenceToJavaDecl_OperationReferenceToJavaDecl() throws Exception {
+        runTest("testData/refactoring/copy/operationReferenceToJavaDecl/operationReferenceToJavaDecl.test");
+    }
+
     @TestMetadata("protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test")
     public void testProtectedConstructorRefInSuperListEntry_ProtectedConstructorRefInSuperListEntry() throws Exception {
         runTest("testData/refactoring/copy/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test");
