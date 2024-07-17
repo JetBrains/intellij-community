@@ -2564,6 +2564,7 @@ c:com.intellij.psi.impl.PomTargetPsiElementImpl
 - setName(java.lang.String):com.intellij.psi.PsiElement
 a:com.intellij.psi.impl.PsiCachedValue
 - com.intellij.util.CachedValueBase
+- p:getIdempotenceFailureContext():java.lang.String
 - p:getTimeStamp(java.lang.Object):J
 - p:isDependencyOutOfDate(java.lang.Object,J):Z
 - isFromMyProject(com.intellij.openapi.project.Project):Z
@@ -4373,6 +4374,7 @@ a:com.intellij.util.CachedValueBase
 - p:<init>(Z):V
 - clear():V
 - pa:doCompute(java.lang.Object):com.intellij.psi.util.CachedValueProvider$Result
+- p:getIdempotenceFailureContext():java.lang.String
 - pa:getRawData():com.intellij.util.CachedValueBase$Data
 - p:getTimeStamp(java.lang.Object):J
 - f:getUpToDateOrNull():com.intellij.util.CachedValueBase$Data

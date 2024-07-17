@@ -243,7 +243,7 @@ public abstract class CachedValueBase<T> {
         Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && checkUpToDate(alreadyComputed);
         if (reuse) {
-          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass(), calcData);
+          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass(), calcData, this::getIdempotenceFailureContext);
         }
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
@@ -255,6 +255,13 @@ public abstract class CachedValueBase<T> {
       }
     }
     return data.getValue();
+  }
+
+  /**
+   * @return an additional context to report upon idempotence failure
+   */
+  protected @NotNull String getIdempotenceFailureContext() {
+    return "";
   }
 
   protected abstract <P> CachedValueProvider.@Nullable Result<T> doCompute(P param);

@@ -78,9 +78,57 @@ public final class IdempotenceChecker {
                                           @Nullable T fresh,
                                           @NotNull Class<?> providerClass,
                                           @Nullable Computable<? extends T> recomputeValue) {
+    checkEquivalence(existing, fresh, providerClass, recomputeValue, null);
+  }
+
+  /**
+   * Perform some basic checks whether the two given objects are equivalent and interchangeable,
+   * as described in e.g {@link com.intellij.psi.util.CachedValue} contract. This method should be used
+   * in places caching results of various computations, which are expected to be idempotent:
+   * they can be performed several times, or on multiple threads, and the results should be interchangeable.<p></p>
+   * <p>
+   * What to do if you get an error from here:
+   * <ul>
+   *   <li>
+   *     Start by looking carefully at the computation (which usually can be found by navigating the stack trace)
+   *     and find out why it could be non-idempotent. See common culprits below.</li>
+   *   <li>
+   *     Add logging inside the computation by using {@link #logTrace}.
+   *   </li>
+   *   <li>
+   *     If the computation is complex and depends on other caches, you could try to perform
+   *     {@code IdempotenceChecker.checkEquivalence()} for their results as well, localizing the error.</li>
+   *   <li>
+   *     If it's a test, you could try reproducing and debugging it. To increase the probability of failure,
+   *     you can temporarily add {@code Registry.get("platform.random.idempotence.check.rate").setValue(1, getTestRootDisposable())}
+   *     to perform the idempotence check on every cache access. Note that this can make your test much slower.
+   *   </li>
+   * </ul>
+   * <p>
+   * Common culprits:
+   * <ul>
+   *   <li>Caching and returning a mutable object (e.g. array or List), which clients then mutate from different threads;
+   *   to fix, either clone the return value or use unmodifiable wrappers</li>
+   *   <li>Depending on a {@link ThreadLocal} or method parameters with different values.</li>
+   *   <li>For failures from {@link #applyForRandomCheck}: outdated cached value (not all dependencies are specified, or their modification counters aren't properly incremented)</li>
+   * </ul>
+   *  @param existing the value computed on the first invocation
+   *
+   * @param fresh               the value computed a bit later, expected to be equivalent
+   * @param providerClass       a class of the function performing the computation, used to prevent reporting the same error multiple times
+   * @param recomputeValue      optionally, a way to recalculate the value one more time with {@link #isLoggingEnabled()} true,
+   *                            and include the log collected via {@link #logTrace} into exception report.
+   * @param contextInfoSupplier a supplier that may provide additional contextual information to log
+   */
+  static <T> void checkEquivalence(@Nullable T existing,
+                                   @Nullable T fresh,
+                                   @NotNull Class<?> providerClass,
+                                   @Nullable Computable<? extends T> recomputeValue,
+                                   @Nullable Supplier<String> contextInfoSupplier) {
     String msg = checkValueEquivalence(existing, fresh);
     if (msg != null) {
-      reportFailure(existing, fresh, providerClass, recomputeValue, msg);
+      reportFailure(existing, fresh, providerClass, recomputeValue,
+                    msg + (contextInfoSupplier == null ? "" : "\n" + contextInfoSupplier.get()));
     }
   }
 

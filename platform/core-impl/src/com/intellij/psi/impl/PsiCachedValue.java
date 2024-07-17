@@ -3,6 +3,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
@@ -104,6 +105,14 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     }
 
     return super.getTimeStamp(dependency);
+  }
+
+  @Override
+  protected @NotNull String getIdempotenceFailureContext() {
+    Project project = myManager.getProject();
+    DumbService dumbService = DumbService.getInstance(project);
+    boolean dumb = dumbService.isDumb();
+    return "Dumb mode: " + dumb + "\nAlternative resolve: " + dumbService.isAlternativeResolveEnabled();
   }
 
   @Override
