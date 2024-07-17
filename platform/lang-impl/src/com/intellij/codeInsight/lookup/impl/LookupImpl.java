@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -919,8 +920,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         }
 
         if (clickCount == 2) {
-          CommandProcessor.getInstance()
-            .executeCommand(project, () -> finishLookup(NORMAL_SELECT_CHAR), "", null, editor.getDocument());
+          // try to finish completion item using the action subsystem to avoid the difference between mouse and shortcut complete
+          AnAction completeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
+          // the execution is wrapped into a command inside EditorAction
+          if (completeAction != null && editor instanceof EditorEx) {
+            AnActionEvent dataContext =
+              AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
+            ActionUtil.performActionDumbAwareWithCallbacks(completeAction, dataContext);
+          }
+          else {
+            CommandProcessor.getInstance()
+              .executeCommand(project, () -> finishLookup(NORMAL_SELECT_CHAR), "", null, editor.getDocument());
+          }
         }
         return true;
       }
