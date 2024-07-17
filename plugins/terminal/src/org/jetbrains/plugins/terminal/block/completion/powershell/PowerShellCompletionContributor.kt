@@ -10,7 +10,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.DocumentUtil
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.BLOCK_TERMINAL_AUTOCOMPLETION
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
@@ -30,6 +32,11 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
     val promptModel = parameters.editor.terminalPromptModel ?: return
 
     if (session.model.isCommandRunning || parameters.completionType != CompletionType.BASIC) {
+      return
+    }
+
+    if (parameters.isAutoPopup && !Registry.`is`(BLOCK_TERMINAL_AUTOCOMPLETION)) {
+      result.stopHere()
       return
     }
 

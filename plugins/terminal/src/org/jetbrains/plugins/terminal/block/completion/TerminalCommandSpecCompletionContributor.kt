@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -18,6 +19,7 @@ import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.BLOCK_TERMINAL_AUTOCOMPLETION
 import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.getNextSuggestionsString
@@ -46,6 +48,11 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val promptModel = parameters.editor.terminalPromptModel ?: return
 
     if (session.model.isCommandRunning || parameters.completionType != CompletionType.BASIC) {
+      return
+    }
+
+    if (parameters.isAutoPopup && !Registry.`is`(BLOCK_TERMINAL_AUTOCOMPLETION)) {
+      result.stopHere()
       return
     }
 
