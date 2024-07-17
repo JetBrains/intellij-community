@@ -428,6 +428,9 @@ final class PassExecutorService implements Disposable {
             log(myUpdateProgress, myPass, "Canceled ");
 
             if (!myUpdateProgress.isCanceled()) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("PCE was thrown by visitor:" + myPass, e);
+              }
               //in case some smart asses throw PCE just for fun
               ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopProcess(true, "PCE was thrown by visitor");
             }
