@@ -38,7 +38,7 @@ class KotlinMultiplatformAllInDirectoryConfigurationProducer
         }
 
         val module = context.module ?: return null
-        if (module.platform.isCommon()) {
+        if (module.platform.isCommon() || module.isMultiPlatformModule) {
             return null
         }
 
