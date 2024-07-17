@@ -46,6 +46,7 @@ class SingleAlarm @Internal constructor(
 ) : Disposable {
   // it is a supervisor coroutine scope
   private val taskCoroutineScope: CoroutineScope
+
   private val taskContext: CoroutineContext
 
   private val LOCK = Any()
@@ -241,11 +242,16 @@ class SingleAlarm @Internal constructor(
   }
 
   override fun dispose() {
+    isDisposed = true
     cancel()
   }
 
-  val isDisposed: Boolean
-    get() = !taskCoroutineScope.isActive
+  // SingleAlarm can be created without `parentDisposable`.
+  // So, we cannot create child scope. So, we cannot use `!taskCoroutineScope.isActive` to implement `isDisposed`.
+  @Volatile
+  var isDisposed: Boolean = false
+    get() = field || !taskCoroutineScope.isActive
+    private set
 
   val isEmpty: Boolean
     get() = synchronized(LOCK) { currentJob == null }

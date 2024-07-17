@@ -9,6 +9,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
@@ -29,6 +31,17 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class AlarmTest {
+  @Test
+  fun `isDisposed is true if parentDisposable used`() {
+    val disposable = Disposer.newDisposable()
+    disposable.use {
+      @Suppress("DEPRECATION")
+      val alarm = SingleAlarm.pooledThreadSingleAlarm(delay = 100, parentDisposable = disposable) { }
+      Disposer.dispose(disposable)
+      assertThat(alarm.isDisposed).isTrue()
+    }
+  }
+
   @Test
   fun `cancel request by task`(@TestDisposable disposable: Disposable): Unit = runBlocking(Dispatchers.EDT) {
     val alarm = Alarm(threadToUse = Alarm.ThreadToUse.SWING_THREAD, parentDisposable = disposable)
