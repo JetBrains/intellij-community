@@ -59,7 +59,7 @@ public abstract class XDebugView implements Disposable {
     DataContext dataContext = DataManager.getInstance().getDataContext(component);
     ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(dataContext);
     ContentManager contentManager = viewContext == null ? null : viewContext.getContentManager();
-    if (contentManager != null) {
+    if (contentManager != null && !contentManager.isDisposed()) {
       T data = key.getData(DataManager.getInstance().getDataContext(contentManager.getComponent()));
       if (data != null) {
         return data;
