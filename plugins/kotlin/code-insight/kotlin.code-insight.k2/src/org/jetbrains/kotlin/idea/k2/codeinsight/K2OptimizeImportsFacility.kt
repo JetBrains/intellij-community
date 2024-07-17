@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KaImportOptimizerResult
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.idea.base.psi.imports.KotlinImportPathComparator
+import org.jetbrains.kotlin.idea.k2.codeinsight.imports.UsedReferencesCollector
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -25,7 +25,8 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(file) {
-                    analyzeImportsToOptimize(file)
+                    val referenceCollector = UsedReferencesCollector(file)
+                    referenceCollector.run { collectUsedReferences() }
                 }
             }
         }
@@ -34,7 +35,7 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
         return K2ImportData(unusedImports.toList())
     }
 
-    private fun computeUnusedImports(file: KtFile, result: KaImportOptimizerResult): Set<KtImportDirective> {
+    private fun computeUnusedImports(file: KtFile, result: UsedReferencesCollector.Result): Set<KtImportDirective> {
         val existingImports = file.importDirectives
         if (existingImports.isEmpty()) return emptySet()
 
