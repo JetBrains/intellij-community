@@ -605,6 +605,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
     }
 
+    LOG.debug("Serializers count: ${serializersToRun.size}")
     serializersToRun.forEach {
       saveEntitiesBySerializer(it.key, it.value.mapValues { entitiesMapEntry -> entitiesMapEntry.value.toList() }, storage, writer)
     }
