@@ -21,20 +21,20 @@ import java.io.File
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
-internal enum class PluginSourceArchives(
-  val pluginId: String,
+internal enum class ApiSourceArchive(
+  val id: String,
+  val displayName: String,
   val archiveName: String,
-  val messageKey: String,
 ) {
-  CSS("com.intellij.css", "src_css-api.zip", "css"),
-  DATABASE("com.intellij.database", "src_database-openapi.zip", "database"),
-  JAVA("com.intellij.java", "src_jam-openapi.zip", "java"),
-  JAVAEE("com.intellij.javaee", "src_javaee-openapi.zip", "javaee"),
-  PERSISTENCE("com.intellij.persistence", "src_persistence-openapi.zip", "persistence"),
-  SPRING("com.intellij.spring", "src_spring-openapi.zip", "spring"),
-  SPRING_BOOT("com.intellij.spring.boot", "src_spring-boot-openapi.zip", "springBoot"),
-  TOMCAT("Tomcat", "src_tomcat.zip", "tomcat"),
-  LSP("LSP", "src_lsp-openapi.zip", "lsp"),
+  CSS("com.intellij.css", "CSS plugin API", "src_css-api.zip"),
+  DATABASE("com.intellij.database", "Database plugin API", "src_database-openapi.zip"),
+  JAM("com.intellij.java", "JAM plugin API", "src_jam-openapi.zip"),
+  JAVAEE("com.intellij.javaee", "JavaEE plugin API", "src_javaee-openapi.zip"),
+  PERSISTENCE("com.intellij.persistence", "Persistence plugin API", "src_persistence-openapi.zip"),
+  SPRING("com.intellij.spring", "Spring plugin API", "src_spring-openapi.zip"),
+  SPRING_BOOT("com.intellij.spring.boot", "SpringBoot plugin API", "src_spring-boot-openapi.zip"),
+  TOMCAT("Tomcat", "Tomcat plugin API", "src_tomcat.zip"),
+  LSP("LSP", "IntelliJ Platform LSP-API", "src_lsp-openapi.zip"),
 }
 
 /**
@@ -119,7 +119,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
     return when {
       // We're handing LSP API class, but IU is lower than 242 -> attach a standalone sources file
-      isLspApi && majorVersion < 242 -> createAttachSourcesArchiveAction(psiFile, PluginSourceArchives.LSP)
+      isLspApi && majorVersion < 242 -> createAttachSourcesArchiveAction(psiFile, ApiSourceArchive.LSP)
 
       // Create the actual IntelliJ Platform sources attaching action
       else -> createAttachPlatformSourcesAction(psiFile, productCoordinates, version)
@@ -149,9 +149,9 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     val productInfo = resolveProductInfo(psiFile) ?: return null
     val product = IntelliJPlatformProduct.fromProductCode(productInfo.productCode) ?: return null
     val version = coordinates.version.substringBefore('+')
+    val apiSourceArchive = ApiSourceArchive.entries.firstOrNull { it.id == coordinates.artifactId }
 
-    val pluginSourceArchive = PluginSourceArchives.entries.firstOrNull { it.pluginId == coordinates.artifactId }
-    return createAttachSourcesArchiveAction(psiFile, pluginSourceArchive)
+    return createAttachSourcesArchiveAction(psiFile, apiSourceArchive)
            ?: resolveIntelliJPlatformAction(psiFile, product, version)
   }
 
@@ -159,18 +159,19 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * Attach the provided sources archive.
    *
    * @param psiFile The PSI file that represents the currently handled class.
-   * @param pluginSourceArchive Plugin sources archive metadata.
+   * @param apiSourceArchive API sources archive metadata.
    */
-  private fun createAttachSourcesArchiveAction(psiFile: PsiFile, pluginSourceArchive: PluginSourceArchives?): AttachSourcesAction? {
-    if (pluginSourceArchive == null) {
+  private fun createAttachSourcesArchiveAction(psiFile: PsiFile, apiSourceArchive: ApiSourceArchive?): AttachSourcesAction? {
+    if (apiSourceArchive == null) {
       return null
     }
 
-    return resolveSourcesArchive(psiFile, pluginSourceArchive.archiveName)?.let {
+    return resolveSourcesArchive(psiFile, apiSourceArchive.archiveName)?.let {
       object : AttachSourcesAction {
-        override fun getName() = DevKitGradleBundle.message("attachSources.${pluginSourceArchive.messageKey}.action.name")
 
-        override fun getBusyText() = DevKitGradleBundle.message("attachSources.${pluginSourceArchive.messageKey}.action.busyText")
+        override fun getName() = DevKitGradleBundle.message("attachSources.api.action.name", apiSourceArchive.displayName)
+
+        override fun getBusyText() = DevKitGradleBundle.message("attachSources.api.action.busyText", apiSourceArchive.displayName)
 
         override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
           val executionResult = ActionCallback()

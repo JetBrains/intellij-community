@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -49,19 +48,10 @@ fun resolveIdeHomeVariable(path: String, ideHome: String) =
  */
 @Serializable
 data class ProductInfo(
-  val name: String? = null,
   val version: String = "",
-  val versionSuffix: String? = null,
   val buildNumber: String = "",
   val productCode: String = "",
-  val dataDirectoryName: String? = null,
-  val svgIconPath: String? = null,
-  val productVendor: String? = null,
   val launch: List<Launch> = mutableListOf(),
-  val customProperties: List<CustomProperty> = mutableListOf(),
-  val bundledPlugins: List<String> = mutableListOf(),
-  val fileExtensions: List<String> = mutableListOf(),
-  val modules: List<String> = mutableListOf(),
   val layout: List<LayoutItem> = mutableListOf(),
 ) {
 
@@ -77,13 +67,20 @@ data class ProductInfo(
         isEmpty() -> null // older SDKs or Maven releases don't provide architecture information, null is used in such a case
         contains(architecture) -> architecture
         contains("amd64") && architecture == "x86_64" -> "amd64"
-        else -> throw Exception("Unsupported JVM architecture for running Gradle tasks: '$architecture'. Supported architectures: ${joinToString()}")
+        else -> throw Exception("Unsupported JVM architecture: '$architecture'. Available architectures : ${joinToString()}")
       }
     }
 
+    val os = when {
+      SystemInfo.isLinux -> Linux
+      SystemInfo.isWindows -> Windows
+      SystemInfo.isMac -> macOS
+      else -> throw Exception("Unsupported OS: ${SystemInfo.OS_NAME}")
+    }
+
     return launch
-      .find { ProductInfo.Launch.OS.current == it.os && arch == it.arch }
-      .let { requireNotNull(it) { "Could not find launch information for the current OS: $name ($arch)" } }
+      .find { os == it.os && arch == it.arch }
+      .let { requireNotNull(it) { "Could not find launch information for the current OS: $os ($arch)" } }
       .run { copy(additionalJvmArguments = additionalJvmArguments.map { it.trim('"') }) }
   }
 
@@ -98,44 +95,13 @@ data class ProductInfo(
   data class Launch(
     val os: OS? = null,
     val arch: String? = null,
-    val launcherPath: String? = null,
-    val javaExecutablePath: String? = null,
-    val vmOptionsFilePath: String? = null,
-    val startupWmClass: String? = null,
     val bootClassPathJarNames: List<String> = mutableListOf(),
     val additionalJvmArguments: List<String> = mutableListOf(),
   ) {
 
     @Suppress("EnumEntryName")
-    enum class OS {
-      Linux,
-      Windows,
-      macOS;
-
-      companion object {
-        val current by lazy {
-          when {
-            SystemInfo.isLinux -> Linux
-            SystemInfo.isWindows -> Windows
-            SystemInfo.isMac -> macOS
-            else -> throw Exception("Unsupported OS: ${SystemInfo.OS_NAME}")
-          }
-        }
-      }
-    }
+    enum class OS { Linux, Windows, macOS; }
   }
-
-  /**
-   * Represents a custom property with a key-value pair.
-   *
-   * @property key The key of the custom property.
-   * @property value The value of the custom property.
-   */
-  @Serializable
-  data class CustomProperty(
-    val key: String? = null,
-    val value: String? = null,
-  )
 
   @Serializable
   data class LayoutItem(
