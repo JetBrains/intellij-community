@@ -16,8 +16,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -38,12 +36,7 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
 
   public TodoIndex() {
     ApplicationManager.getApplication().getMessageBus().simpleConnect()
-      .subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          FileBasedIndex.getInstance().requestRebuild(NAME);
-        }
-      });
+      .subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, __ -> FileBasedIndex.getInstance().requestRebuild(NAME));
   }
 
   private final DataExternalizer<Map<TodoIndexEntry, Integer>> myValueExternalizer = new DataExternalizer<>() {
@@ -52,7 +45,7 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
                      @NotNull Map<TodoIndexEntry, Integer> value) throws IOException {
       int size = value.size();
       DataInputOutputUtil.writeINT(out, size);
-      if (size <= 0) return;
+      if (size == 0) return;
       for (TodoIndexEntry entry : value.keySet()) {
         IOUtil.writeUTF(out, entry.pattern);
         out.writeBoolean(entry.caseSensitive);
