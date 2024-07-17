@@ -191,7 +191,6 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(configHighlightType)
         .range(importStatement)
         .descriptionAndTooltip(description)
-        .group(GeneralHighlightingPass.POST_UPDATE_ALL)
         .problemGroup(problemGroup);
 
     builder.registerFix(new RemoveAllUnusedImportsFix(), null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);

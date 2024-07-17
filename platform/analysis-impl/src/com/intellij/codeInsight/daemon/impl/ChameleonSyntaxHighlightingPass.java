@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -122,7 +122,7 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
       IElementType type = PsiUtilCore.getElementType(token);
       @NotNull HighlightInfoHolder holder = priorityRange.contains(tokenRange) ? inside : outside;
       TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(type);
-      List<HighlightInfo> infos = InjectedGeneralHighlightingPass.addSyntaxInjectedFragmentInfo(scheme, tokenRange, keys);
+      List<HighlightInfo> infos = InjectedLanguageFragmentSyntaxUtil.addSyntaxInjectedFragmentInfo(scheme, tokenRange, keys);
       for (HighlightInfo info : infos) {
         holder.add(info);
       }

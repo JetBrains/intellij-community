@@ -33,7 +33,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.util.Processor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.containers.ContainerUtil;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -405,7 +407,6 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   void waitForFilesQueuedForInvalidationAreProcessed() {
     myWolfListeners.waitForFilesQueuedForInvalidationAreProcessed();
   }
-
   @TestOnly
   public static @NotNull WolfTheProblemSolver createTestInstance(@NotNull Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
@@ -413,43 +414,4 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     return new WolfTheProblemSolverImpl(project, ((ComponentManagerEx)project).getCoroutineScope());
   }
 
-  /**
-   * GHP, which throws as soon as it found an error in the file
-   */
-  private static final class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
-    private final @NotNull AtomicReference<? super HighlightInfo> myError;
-
-    NasueousGeneralHighlightingPass(@NotNull PsiFile psiFile,
-                                    @NotNull Document document,
-                                    @NotNull ProperTextRange visibleRange,
-                                    @NotNull AtomicReference<? super HighlightInfo> error) {
-      super(psiFile, document, 0, document.getTextLength(), false, visibleRange, null, true, true, true,
-            HighlightInfoUpdater.EMPTY);
-      myError = error;
-    }
-
-    @Override
-    protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
-      return new HighlightInfoHolder(file) {
-        @Override
-        public boolean add(@Nullable HighlightInfo info) {
-          if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
-            myError.set(info);
-            throw new ProcessCanceledException();
-          }
-          return super.add(info);
-        }
-      };
-    }
-
-    @Override
-    protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-      try {
-        super.collectInformationWithProgress(progress);
-      }
-      catch (Exception ignored) {
-        // could throw PCE now
-      }
-    }
-  }
 }
