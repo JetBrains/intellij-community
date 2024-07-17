@@ -474,7 +474,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/intellij.junit.iml" filepath="$PROJECT_DIR$/plugins/junit/intellij.junit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/groovy-tests/intellij.junit.groovy.tests.iml" filepath="$PROJECT_DIR$/plugins/junit/groovy-tests/intellij.junit.groovy.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/java-tests/intellij.junit.java.tests.iml" filepath="$PROJECT_DIR$/plugins/junit/java-tests/intellij.junit.java.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/junit/kotlin-tests/intellij.junit.kotlin.tests.iml" filepath="$PROJECT_DIR$/plugins/junit/kotlin-tests/intellij.junit.kotlin.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/junit/kotlin-tests-k1/intellij.junit.kotlin.tests.k1.iml" filepath="$PROJECT_DIR$/plugins/junit/kotlin-tests-k1/intellij.junit.kotlin.tests.k1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/junit/kotlin-tests-k2/intellij.junit.kotlin.tests.k2.iml" filepath="$PROJECT_DIR$/plugins/junit/kotlin-tests-k2/intellij.junit.kotlin.tests.k2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/junit/kotlin-tests-shared/intellij.junit.kotlin.tests.shared.iml" filepath="$PROJECT_DIR$/plugins/junit/kotlin-tests-shared/intellij.junit.kotlin.tests.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit_rt/intellij.junit.rt.iml" filepath="$PROJECT_DIR$/plugins/junit_rt/intellij.junit.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/testFramework/intellij.junit.testFramework.iml" filepath="$PROJECT_DIR$/plugins/junit/testFramework/intellij.junit.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit5_rt/intellij.junit.v5.rt.iml" filepath="$PROJECT_DIR$/plugins/junit5_rt/intellij.junit.v5.rt.iml" />
