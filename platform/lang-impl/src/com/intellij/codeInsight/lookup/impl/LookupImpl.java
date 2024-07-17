@@ -119,7 +119,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   boolean myUpdating;
   private LookupUi myUi;
   private LookupPresentation myPresentation = new LookupPresentation.Builder().build();
-  private final ClientId myClientId = ClientId.getCurrent();
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
   private boolean myFirstElementAdded = false;
@@ -1196,8 +1195,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (isLookupDisposed()) {
       LOG.error(formatDisposeTrace());
     }
-    if (!myClientId.equals(ClientId.getCurrent())) {
-      LOG.error(ClientId.getCurrent() + " tries to hide lookup of " + myClientId);
+    if (!mySession.getClientId().equals(ClientId.getCurrent())) {
+      LOG.error(ClientId.getCurrent() + " tries to hide lookup of " + mySession.getClientId());
     }
     else {
       myHidden = true;
