@@ -34,8 +34,7 @@ private val LOG: Logger = logger<SingleAlarm>()
  * Alarm is deprecated.
  * Allows scheduling a single `Runnable` instance ([task]) to be executed after a specific time interval on a specific thread.
  * [request] adds a request if it's not scheduled yet, i.e., it does not delay execution of the request
- * [cancelAndRequest] cancels the current request and schedules a new one instead, i.e., it delays execution of the request
- *
+ * [cancelAndRequest] cancels the current request and schedules a new one instead, i.e., it delays execution of the request.
  */
 class SingleAlarm @Internal constructor(
   private val task: Runnable,
