@@ -3,7 +3,7 @@ package com.intellij.terminal.completion.spec
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 fun interface ShellCommandExecutor {
   /**
