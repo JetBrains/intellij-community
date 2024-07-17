@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang
 
+import com.intellij.DynamicBundle
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.plugins.LocalizationPluginHelper
 import com.intellij.ide.plugins.PluginManager
@@ -13,6 +14,7 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.util.text.DateTimeFormatManager
 import org.jetbrains.annotations.ApiStatus.Internal
 
 private const val DEFAULT_LOCALE = "en"
@@ -54,6 +56,8 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
     localizationState.lastSelectedLocale = localizationState.selectedLocale
     localizationState.selectedLocale = locale
     ApplicationManager.getApplication().messageBus.syncPublisher(LocalizationListener.Companion.UPDATE_TOPIC).localeChanged()
+    DynamicBundle.clearCache()
+    DateTimeFormatManager.getInstance().resetFormats()
   }
 }
 

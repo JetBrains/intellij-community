@@ -31,7 +31,6 @@ public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
 
   private static final ConcurrentMap<String, ResourceBundle> bundles = CollectionFactory.createConcurrentWeakValueMap();
-  private boolean isInitializedBeforeL10n;
   /**
    * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
    * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
@@ -41,7 +40,6 @@ public class DynamicBundle extends AbstractBundle {
    */
   public DynamicBundle(@NotNull Class<?> bundleClass, @NotNull String pathToBundle) {
     super(bundleClass, pathToBundle);
-    isInitializedBeforeL10n = !LocalizationUtil.INSTANCE.isLocalizationInitialized();
   }
 
   /**
@@ -55,7 +53,6 @@ public class DynamicBundle extends AbstractBundle {
   @Obsolete
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
-    isInitializedBeforeL10n = !LocalizationUtil.INSTANCE.isLocalizationInitialized();
   }
 
   // see BundleUtil
@@ -63,15 +60,30 @@ public class DynamicBundle extends AbstractBundle {
   protected @NotNull ResourceBundle findBundle(@NotNull String pathToBundle,
                                                @NotNull ClassLoader baseLoader,
                                                @NotNull ResourceBundle.Control control) {
-    return resolveResourceBundle(
-      getBundleClassLoader(),
-      baseLoader,
-      pathToBundle,
-      getResolveLocale(),
-      (loader, locale) -> super.findBundle(pathToBundle, loader, control, locale)
-    );
+    return (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
+      .computeIfAbsent(baseLoader, __ -> CollectionFactory.createConcurrentSoftValueMap())
+      .computeIfAbsent(pathToBundle, __ ->
+        resolveResourceBundle(
+          getBundleClassLoader(),
+          baseLoader,
+          pathToBundle,
+          getResolveLocale(),
+          (loader, locale) -> super.findBundle(pathToBundle, loader, control, locale)
+        ));
   }
 
+  private static boolean isBundlePresentInCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
+    Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
+    if (loaderCache == null) return false;
+    return loaderCache.get(pathToBundle) != null;
+  }
+
+  private static ResourceBundle getBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
+    Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
+    if (loaderCache == null) return null;
+    return loaderCache.get(pathToBundle);
+  }
+  
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader bundleClassLoader,
                                                                @NotNull ClassLoader baseLoader,
                                                                @NotNull String defaultPath,
@@ -209,12 +221,18 @@ public class DynamicBundle extends AbstractBundle {
 
   @Override
   @ApiStatus.Internal
-  protected ResourceBundle getBundle(boolean isDefault) {
-    if (!isDefault && LocalizationUtil.INSTANCE.isLocalizationInitialized() && isInitializedBeforeL10n) {
-      isInitializedBeforeL10n = false;
+  protected ResourceBundle getBundle(boolean isDefault, @NotNull ClassLoader classLoader) {
+    ResourceBundle bundle = super.getBundle(isDefault, classLoader);
+    if (bundle != null && !isDefault && (!isBundlePresentInCache(classLoader, bundle.getBaseBundleName()) || getBundleFromCache(classLoader, bundle.getBaseBundleName()) != bundle)) {
+      LOG.info("Cleanup bundle cache for " + bundle.getBaseBundleName());
       return null;
     }
-    return super.getBundle(isDefault);
+    return bundle;
+  }
+  
+  @ApiStatus.Internal
+  public static void clearCache() {
+    ourCache.clear();
   }
 
   /**
