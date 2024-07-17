@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
+final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPass.class);
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
@@ -461,9 +461,14 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
     return Collections.unmodifiableList(myInfos);
   }
 
-  public static final class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {
+  private static final class InspectionHighlightInfoType extends HighlightInfoType.HighlightInfoTypeImpl {
     InspectionHighlightInfoType(@NotNull HighlightInfoType level, @NotNull PsiElement element) {
       super(level.getSeverity(element), level.getAttributesKey());
+    }
+
+    @Override
+    public boolean isInspectionHighlightInfoType() {
+      return true;
     }
   }
 }
