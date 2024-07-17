@@ -18,7 +18,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -50,14 +50,15 @@ import kotlin.concurrent.Volatile
  * @param activationComponent    if not `null` the tasks will be processing only when the given component is showing
  * @param thread                 specifies on which thread the tasks are executed
  */
-open class MergingUpdateQueue(
+open class MergingUpdateQueue @JvmOverloads constructor(
   private val name: @NonNls String,
   private var mergingTimeSpan: Int,
   isActive: Boolean,
   private var modalityStateComponent: JComponent?,
   parent: Disposable?,
   activationComponent: JComponent?,
-  thread: Alarm.ThreadToUse
+  thread: Alarm.ThreadToUse,
+  coroutineScope: CoroutineScope? = null,
 ) : Disposable, Activatable {
   @Volatile
   var isSuspended: Boolean = false
@@ -111,6 +112,7 @@ open class MergingUpdateQueue(
     parent = parent,
     activationComponent = activationComponent,
     thread = if (executeInDispatchThread) Alarm.ThreadToUse.SWING_THREAD else Alarm.ThreadToUse.POOLED_THREAD,
+    coroutineScope = null,
   )
 
   init {
@@ -119,7 +121,17 @@ open class MergingUpdateQueue(
       Disposer.register(parent, this)
     }
 
-    waiterForMerge = if (executeInDispatchThread) Alarm(threadToUse = thread) else Alarm(threadToUse = thread, parentDisposable = this)
+    waiterForMerge = if (coroutineScope == null) {
+      if (executeInDispatchThread) {
+        Alarm(threadToUse = thread)
+      }
+      else {
+        Alarm(threadToUse = thread, parentDisposable = this)
+      }
+    }
+    else {
+      Alarm(threadToUse = thread, coroutineScope = coroutineScope)
+    }
 
     if (isActive) {
       showNotify()
@@ -139,6 +151,42 @@ open class MergingUpdateQueue(
     @JvmField
     val ANY_COMPONENT: JComponent = object : JComponent() {}
 
+    @Internal
+    fun edtMergingUpdateQueue(
+      name: String,
+      mergingTimeSpan: Int,
+      coroutineScope: CoroutineScope,
+    ): MergingUpdateQueue {
+      return MergingUpdateQueue(
+        name = name,
+        mergingTimeSpan = mergingTimeSpan,
+        isActive = true,
+        modalityStateComponent = null,
+        parent = null,
+        activationComponent = null,
+        thread = Alarm.ThreadToUse.SWING_THREAD,
+        coroutineScope = coroutineScope,
+      )
+    }
+
+    @Internal
+    fun mergingUpdateQueue(
+      name: String,
+      mergingTimeSpan: Int,
+      coroutineScope: CoroutineScope,
+    ): MergingUpdateQueue {
+      return MergingUpdateQueue(
+        name = name,
+        mergingTimeSpan = mergingTimeSpan,
+        isActive = true,
+        modalityStateComponent = null,
+        parent = null,
+        activationComponent = null,
+        thread = Alarm.ThreadToUse.POOLED_THREAD,
+        coroutineScope = coroutineScope,
+      )
+    }
+
     private val queues: MutableSet<MergingUpdateQueue>? = if (SystemProperties.getBooleanProperty("intellij.MergingUpdateQueue.enable.global.flusher", false)) {
       ConcurrentCollectionFactory.createConcurrentSet()
     }
@@ -146,7 +194,7 @@ open class MergingUpdateQueue(
       null
     }
 
-    @ApiStatus.Internal
+    @Internal
     fun flushAllQueues() {
       if (queues != null) {
         for (queue in queues) {
@@ -185,7 +233,7 @@ open class MergingUpdateQueue(
    * It is needed to support some old tests, which expect such behaviour.
    * @return this instance for the sequential creation (the Builder pattern)
    */
-  @ApiStatus.Internal
+  @Internal
   @Deprecated(
     """use {@link #waitForAllExecuted(long, TimeUnit)} instead in tests
     """)
@@ -240,8 +288,8 @@ open class MergingUpdateQueue(
     restart(mergingTimeSpan)
   }
 
-  @ApiStatus.Internal
-  open protected fun getFlushTask(): Runnable = flushTask
+  @Internal
+  protected open fun getFlushTask(): Runnable = flushTask
 
   private fun restart(mergingTimeSpanMillis: Int) {
     if (!isActive) {

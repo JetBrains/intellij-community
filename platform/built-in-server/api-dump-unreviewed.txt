@@ -283,9 +283,7 @@ f:org.jetbrains.ide.ToolboxIdeExitHandler$ExitParameters
 f:org.jetbrains.ide.ToolboxRestServiceKt
 - sf:getToolboxHandlerEP():com.intellij.openapi.extensions.ExtensionPointName
 f:org.jetbrains.ide.ToolboxSettingsActionRegistry
-- com.intellij.openapi.Disposable
-- <init>():V
-- dispose():V
+- <init>(kotlinx.coroutines.CoroutineScope):V
 - f:getActions():java.util.List
 - f:isNewAction(java.lang.String):Z
 - f:markAsRead(java.lang.String):V

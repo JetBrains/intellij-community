@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.ide.actions.SettingsEntryPointAction
@@ -7,24 +7,38 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.Alarm
 import com.intellij.util.messages.Topic
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.Nls
 import java.util.*
 
+@OptIn(FlowPreview::class)
 @Service(Service.Level.APP)
-class ToolboxSettingsActionRegistry : Disposable {
+class ToolboxSettingsActionRegistry(coroutineScope: CoroutineScope) {
   private val readActions = Collections.synchronizedSet(HashSet<String>())
   private val pendingActions = Collections.synchronizedList(LinkedList<ToolboxUpdateAction>())
 
-  private val alarm = MergingUpdateQueue("toolbox-updates", 500, true, null, this, null, Alarm.ThreadToUse.SWING_THREAD).usePassThroughInUnitTestMode()
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  override fun dispose() = Unit
+  init {
+    coroutineScope.launch {
+      updateRequests
+        .debounce(500)
+        .collectLatest {
+          withContext(Dispatchers.EDT) {
+            SettingsEntryPointAction.updateState()
+          }
+        }
+    }
+  }
 
   fun isNewAction(actionId: String) = actionId !in readActions
 
@@ -33,11 +47,12 @@ class ToolboxSettingsActionRegistry : Disposable {
   }
 
   fun scheduleUpdate() {
-    alarm.queue(object: Update(this){
-      override fun run() {
-        SettingsEntryPointAction.updateState()
-      }
-    })
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      SettingsEntryPointAction.updateState()
+    }
+    else {
+      check(updateRequests.tryEmit(Unit))
+    }
   }
 
   internal fun registerUpdateAction(action: ToolboxUpdateAction) {

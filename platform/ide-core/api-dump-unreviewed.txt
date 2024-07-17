@@ -3196,6 +3196,8 @@ c:com.intellij.util.ui.update.MergingUpdateQueue
 - <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent):V
 - <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,com.intellij.util.Alarm$ThreadToUse):V
+- <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,com.intellij.util.Alarm$ThreadToUse,kotlinx.coroutines.CoroutineScope):V
+- b:<init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,com.intellij.util.Alarm$ThreadToUse,kotlinx.coroutines.CoroutineScope,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,Z):V
 - b:<init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:activate():V
