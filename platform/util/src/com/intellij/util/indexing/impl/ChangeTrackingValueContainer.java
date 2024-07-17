@@ -195,8 +195,6 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   public void saveDiffTo(@NotNull DataOutput out,
                          @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
-    assert !needsCompacting() : "Full state must be written, instead of diff";
-
     IntSet set = myInvalidated;
     if (set != null && !set.isEmpty()) {
       for (int inputId : myInvalidated.toIntArray()) {
