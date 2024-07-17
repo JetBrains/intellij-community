@@ -20,12 +20,7 @@ import java.util.EventObject;
 public abstract class XDebugView implements Disposable {
   public enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
 
-  private final SingleAlarm clearAlarm;
-  private static final int VIEW_CLEAR_DELAY = 100; //ms
-
-  public XDebugView() {
-    clearAlarm = SingleAlarm.Companion.singleEdtAlarm(VIEW_CLEAR_DELAY, this, () -> clear());
-  }
+  private final SingleAlarm clearAlarm = SingleAlarm.Companion.singleEdtAlarm(100, this, () -> clear());
 
   protected final void requestClear() {
     // no delay in tests
