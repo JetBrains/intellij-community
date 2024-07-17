@@ -1,1 +1,3 @@
-pytest_plugins = ("fixtures.first", "fixtures.second")
+from .fixtures import second
+
+pytest_plugins = ("fixtures.first", fixtures.second)
