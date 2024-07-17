@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.completion
 
 import com.intellij.terminal.completion.ShellCommandTreeAssertions
 import com.intellij.terminal.completion.ShellCommandTreeBuilderFixture
+import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -11,7 +12,6 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellAliasSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
-import org.jetbrains.plugins.terminal.block.util.TestGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.util.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.block.util.TestRuntimeContextProvider
 import org.junit.Test
@@ -366,7 +366,7 @@ internal class ShellCommandTreeBuilderTest {
 
   private suspend fun doTestImpl(arguments: List<String>, assertions: ShellCommandTreeAssertions.() -> Unit) {
     // Mock fileSuggestionsGenerator result
-    val generatorCommandsRunner = TestGeneratorCommandsRunner { command ->
+    val generatorCommandsRunner = ShellCommandExecutor { command ->
       if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
         val path = command.removePrefix("__jetbrains_intellij_get_directory_files").trim()
       val files = filePathSuggestions[path]

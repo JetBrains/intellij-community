@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.completion
 
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
+import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -9,7 +10,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
 import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
-import org.jetbrains.plugins.terminal.block.util.TestGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.util.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.block.util.TestRuntimeContextProvider
 import org.junit.Before
@@ -396,7 +396,7 @@ internal class ShellCommandSpecSuggestionsTest {
     mockFiles: List<String> = emptyList(),
   ): ShellCommandSpecCompletion {
     // Mock fileSuggestionsGenerator result
-    val generatorCommandsRunner = TestGeneratorCommandsRunner {
+    val generatorCommandsRunner = ShellCommandExecutor {
       val output = mockFiles.joinToString("\n")
       ShellCommandResult.create(output, exitCode = 0)
     }

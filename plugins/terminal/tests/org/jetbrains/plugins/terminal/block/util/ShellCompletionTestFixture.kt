@@ -78,7 +78,7 @@ class ShellCompletionTestFixture private constructor(
      * because this test fixture is not running the real shell session.
      */
     fun mockShellCommandResults(mock: suspend (command: String) -> ShellCommandResult): Builder {
-      generatorCommandsRunner = TestGeneratorCommandsRunner(mock)
+      generatorCommandsRunner = ShellCommandExecutor(mock)
       return this
     }
 
