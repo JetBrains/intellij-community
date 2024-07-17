@@ -398,7 +398,20 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     if (shouldProcessClasses && !processOnDemandTypeImports(state, place, processor)) return false;
 
+    if (shouldProcessClasses && !processModules(state, place, processor)) return false;
+
     return !shouldProcessClasses || processImplicitImports(state, place, processor);
+  }
+
+  private boolean processModules(@NotNull ResolveState state, @NotNull PsiElement place, @NotNull PsiScopeProcessor processor) {
+    for (PsiImportModuleStatement statement : getImportModuleStatements()) {
+      PsiElement resolved = statement.resolve();
+      if (resolved != null) {
+        processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, statement);
+        if (!processOnDemandTarget(resolved, state, place, processor)) return false;
+      }
+    }
+    return true;
   }
 
   private PsiImportStaticStatement @NotNull [] getImportStaticStatements() {
@@ -407,6 +420,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private PsiImportStatement @NotNull [] getImportStatements() {
     return getImportList() != null ? getImportList().getImportStatements() : PsiImportStatement.EMPTY_ARRAY;
+  }
+
+  private PsiImportModuleStatement @NotNull [] getImportModuleStatements() {
+    return getImportList() != null ? getImportList().getImportModuleStatements() : PsiImportModuleStatement.EMPTY_ARRAY;
   }
 
   private boolean processCurrentPackage(@NotNull ResolveState state, @NotNull PsiElement place, @NotNull PsiScopeProcessor processor) {
@@ -488,10 +505,32 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         if (!processor.execute(inner, substitutor)) return false;
       }
     }
+    else if (target instanceof PsiJavaModule) {
+      return processModuleDeclaration(substitutor, place, (PsiJavaModule)target, processor);
+    }
     else {
       LOG.error("Unexpected target type: " + target);
     }
     return true;
+  }
+
+  private static boolean processModuleDeclaration(@NotNull ResolveState state,
+                                                  @NotNull PsiElement place,
+                                                  @NotNull PsiJavaModule target,
+                                                  @NotNull PsiScopeProcessor processor) {
+    processor = new DelegatingScopeProcessor(processor) {
+      @Override
+      public @Nullable <T> T getHint(@NotNull Key<T> hintKey) {
+        if (hintKey == ElementClassHint.KEY) {
+          //noinspection unchecked
+          return (T)(ElementClassHint)kind -> kind == ElementClassHint.DeclarationKind.CLASS;
+        } else {
+          return super.getHint(hintKey);
+        }
+      }
+    };
+
+    return target.processDeclarations(processor, state, null, place);
   }
 
   @Override

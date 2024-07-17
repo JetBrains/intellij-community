@@ -8,8 +8,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
@@ -138,6 +140,14 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   @Override
   public int getTextOffset() {
     return getNameIdentifier().getTextOffset();
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return JavaResolveUtil.processJavaModuleExports(this, processor, state, lastParent, place);
   }
 
   @Override
