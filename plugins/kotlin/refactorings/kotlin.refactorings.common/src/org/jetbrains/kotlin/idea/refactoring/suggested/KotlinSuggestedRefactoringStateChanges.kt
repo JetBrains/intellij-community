@@ -60,7 +60,7 @@ class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefact
     override fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
         anchor as KtDeclaration
         val name = anchor.name ?: return null
-        if (anchor !is KtCallableDeclaration || KotlinSuggestedRefactoringSupport.isOnlyRenameSupported(anchor)) {
+        if (anchor !is KtCallableDeclaration || KotlinSuggestedRefactoringSupportBase.isOnlyRenameSupported(anchor)) {
             return Signature.create(name, null, emptyList(), null)
         }
 

@@ -261,20 +261,20 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
         val psiMethod = changeInfo.method
         val oldName = if (p.oldIndex >= 0) changeInfo.oldParameterNames[p.oldIndex] else p.name
         return KotlinParameterInfo(
-            p.oldIndex,
-            KotlinTypeInfo(p.typeWrapper.getType(psiMethod).canonicalText, useSiteKtElement),
-            oldName,
-            KotlinValVar.None,
-            p.defaultValue?.let {
+            originalIndex = p.oldIndex,
+            originalType = KotlinTypeInfo(p.typeWrapper.getType(psiMethod).canonicalText, useSiteKtElement),
+            name = oldName,
+            valOrVar = KotlinValVar.None,
+            defaultValueForCall = p.defaultValue?.let {
                 try {
                     KtPsiFactory(psiMethod.project).createExpression(it)
                 } catch (_: Throwable) {
                     null
                 }
             },
-            false,
-            null,
-            useSiteKtElement
+            defaultValueAsDefaultParameter = false,
+            defaultValue = null,
+            context = useSiteKtElement
         ).apply {
             name = p.name
         }

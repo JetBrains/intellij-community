@@ -26,6 +26,11 @@
             order="before kotlinProcessor"/>
     <refactoring.changeSignatureUsageProcessor
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProcessor"/>
+
+    <suggestedRefactoringSupport
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.suggested.KotlinSuggestedRefactoringSupport"/>
+
     <java.changeSignature.converter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinJavaChangeInfoConverter"/>
     <changeSignature.usageProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProvider"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlinePropertyHandler"/>

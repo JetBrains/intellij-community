@@ -70,8 +70,14 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
                 }.firstOrNull() ?: "receiver"
 
                 KotlinParameterInfo(
-                    0, KotlinTypeInfo(ktType, callable), receiverName,
-                    KotlinValVar.None, null, false, null, callable
+                    originalIndex = 0,
+                    originalType = KotlinTypeInfo(ktType, callable),
+                    name = receiverName,
+                    valOrVar = KotlinValVar.None,
+                    defaultValueForCall = null,
+                    defaultValueAsDefaultParameter = false,
+                    defaultValue = null,
+                    context = callable
                 )
             }
         }
@@ -88,10 +94,14 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
                 (callable as? KtCallableDeclaration)
                     ?.valueParameters?.forEach { p ->
                         val parameterInfo = KotlinParameterInfo(
-                            params.size, KotlinTypeInfo(p.returnType, callable),
-                            p.name ?: "",
-                            p.valOrVarKeyword.toValVar(),
-                            p.defaultValue, p.defaultValue != null, p.defaultValue, callable
+                            originalIndex = params.size,
+                            originalType = KotlinTypeInfo(p.returnType, callable),
+                            name = p.name ?: "",
+                            valOrVar = p.valOrVarKeyword.toValVar(),
+                            defaultValueForCall = p.defaultValue,
+                            defaultValueAsDefaultParameter = p.defaultValue != null,
+                            defaultValue = p.defaultValue,
+                            context = callable
                         )
                         params.add(parameterInfo)
                     }

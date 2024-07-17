@@ -1,34 +1,49 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.refactoring.suggested
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.refactoring.suggested
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.*
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.analyzeCopy
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.projectStructure.forcedModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
+import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSignatureAdditionalData
+import org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSuggestedRefactoringSupportBase
+import org.jetbrains.kotlin.idea.refactoring.suggested.defaultValue
+import org.jetbrains.kotlin.idea.refactoring.suggested.modifiers
+import org.jetbrains.kotlin.idea.refactoring.suggested.receiverType
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.psi.simpleNameExpressionRecursiveVisitor
+import org.jetbrains.kotlin.types.Variance
 
 class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactoringSupport) :
-    SuggestedRefactoringAvailability(refactoringSupport)
-{
+    SuggestedRefactoringAvailability(refactoringSupport) {
     private val HAS_USAGES = Key<Boolean>("KotlinSuggestedRefactoringAvailability.HAS_USAGES")
 
     override fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> {
@@ -37,20 +52,49 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
                 val declarationCopy = state.restoredDeclarationCopy()
                 val useScope = declarationCopy?.useScope
                 if (useScope is LocalSearchScope) {
-                    val hasUsages = ReferencesSearch.search(declarationCopy, useScope).findFirst() != null
+                    val hasUsages = useScope.scope.any { scope ->
+                        var hasReferences = false
+                        scope.accept(
+                            simpleNameExpressionRecursiveVisitor { r ->
+                                hasReferences = hasReferences || analyzeCopy(scope as KtElement, KaDanglingFileResolutionMode.PREFER_SELF) {
+                                    r.mainReference.resolveToSymbol()?.psi == declarationCopy
+                                }
+                            })
+                        hasReferences
+                    }
                     yield(state.withAdditionalData(HAS_USAGES, hasUsages))
                 }
             }
         }
     }
 
+    context(KaSession)
+    private fun KaType.toTypeInfo(): TypeInfo = TypeInfo(fqText(), this is KaErrorType)
+
+    private data class TypeInfo(val typeFQN: String, val typeError: Boolean)
+    private data class SignatureTypes(val returnType: TypeInfo, val parameterTypes: List<TypeInfo>, val receiverType: TypeInfo?)
+
+
+    context(KaSession)
+    private fun signatureTypes(declaration: KtCallableDeclaration): SignatureTypes? {
+        val symbol = declaration.symbol as? KaFunctionSymbol
+        return if (symbol == null) {
+            null
+        } else SignatureTypes(
+            symbol.returnType.toTypeInfo(),
+            symbol.valueParameters.map { it.returnType.toTypeInfo() },
+            symbol.receiverType?.toTypeInfo()
+        )
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun refineSignaturesWithResolve(state: SuggestedRefactoringState): SuggestedRefactoringState {
         val newDeclaration = state.declaration as? KtCallableDeclaration ?: return state
         val oldDeclaration = state.restoredDeclarationCopy() as? KtCallableDeclaration ?: return state
         oldDeclaration.containingKtFile.forcedModuleInfo = newDeclaration.moduleInfo
 
-        val descriptorWithOldSignature = oldDeclaration.resolveToDescriptorIfAny() as CallableDescriptor?
-        val descriptorWithNewSignature = newDeclaration.resolveToDescriptorIfAny() as CallableDescriptor?
+        val descriptorWithOldSignature = allowAnalysisOnEdt { analyzeCopy(oldDeclaration, KaDanglingFileResolutionMode.PREFER_SELF) { signatureTypes(oldDeclaration) } } ?: return state
+        val descriptorWithNewSignature = allowAnalysisOnEdt { analyze(newDeclaration) { signatureTypes(newDeclaration) }  } ?: return state
 
         val oldSignature = state.oldSignature
         val newSignature = state.newSignature
@@ -58,8 +102,10 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         val (oldReturnType, newReturnType) = refineType(
             oldSignature.type,
             newSignature.type,
-            descriptorWithOldSignature?.returnType,
-            descriptorWithNewSignature?.returnType
+            descriptorWithOldSignature.returnType.typeFQN,
+            descriptorWithOldSignature.returnType.typeError,
+            descriptorWithNewSignature.returnType.typeFQN,
+            descriptorWithNewSignature.returnType.typeError
         )
 
         val improvedOldParameterTypesById = mutableMapOf<Any, String>()
@@ -72,10 +118,11 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
             val (oldType, newType) = refineType(
                 oldParameter.type,
                 newParameter.type,
-                descriptorWithOldSignature?.valueParameters?.get(oldIndex)?.type,
-                descriptorWithNewSignature?.valueParameters?.get(newIndex)?.type
-            )
-            // oldType and newType may not be null because arguments of refineType call were all non-null
+                descriptorWithOldSignature.parameterTypes[oldIndex].typeFQN,
+                descriptorWithOldSignature.parameterTypes[oldIndex].typeError,
+                descriptorWithNewSignature.parameterTypes[newIndex].typeFQN,
+                descriptorWithNewSignature.parameterTypes[newIndex].typeError,
+            ) // oldType and newType may not be null because arguments of refineType call were all non-null
             improvedOldParameterTypesById[id] = oldType!!
             improvedNewParameterTypesById[id] = newType!!
         }
@@ -87,15 +134,15 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         val (oldReceiverType, newReceiverType) = refineType(
             oldAdditionalData?.receiverType,
             newAdditionalData?.receiverType,
-            descriptorWithOldSignature?.extensionReceiverParameter?.type,
-            descriptorWithNewSignature?.extensionReceiverParameter?.type
+            descriptorWithOldSignature.receiverType?.typeFQN,
+            descriptorWithOldSignature.receiverType?.typeError,
+            descriptorWithNewSignature.receiverType?.typeFQN,
+            descriptorWithNewSignature.receiverType?.typeError
         )
 
-        return state
-            .withOldSignature(
+        return state.withOldSignature(
                 Signature.create(oldSignature.name, oldReturnType, oldParameters, oldAdditionalData?.copy(receiverType = oldReceiverType))!!
-            )
-            .withNewSignature(
+            ).withNewSignature(
                 Signature.create(newSignature.name, newReturnType, newParameters, newAdditionalData?.copy(receiverType = newReceiverType))!!
             )
     }
@@ -103,30 +150,31 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
     private fun refineType(
         oldTypeInCode: String?,
         newTypeInCode: String?,
-        oldTypeResolved: KotlinType?,
-        newTypeResolved: KotlinType?
+        oldTypeResolved: String?,
+        oldResolvedTypeError: Boolean?,
+        newTypeResolved: String?,
+        newResolvedTypeError: Boolean?
     ): Pair<String?, String?> {
-        if (oldTypeResolved?.isError == true || newTypeResolved?.isError == true) {
+        if (oldResolvedTypeError == true || newResolvedTypeError == true) {
             return oldTypeInCode to newTypeInCode
         }
 
-        val oldTypeFQ = oldTypeResolved?.fqText()
-        val newTypeFQ = newTypeResolved?.fqText()
-
         if (oldTypeInCode != newTypeInCode) {
-            if (oldTypeFQ == newTypeFQ) {
+            if (oldTypeResolved == newTypeResolved) {
                 return newTypeInCode to newTypeInCode
             }
         } else {
-            if (oldTypeFQ != newTypeFQ) {
-                return oldTypeFQ to newTypeFQ
+            if (oldTypeResolved != newTypeResolved) {
+                return oldTypeResolved to newTypeResolved
             }
         }
 
         return oldTypeInCode to newTypeInCode
     }
 
-    private fun KotlinType.fqText() = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(this)
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun KaType.fqText() = render(position = Variance.INVARIANT)
 
     override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
         val declaration = state.declaration
@@ -145,8 +193,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
 
         if (newSignature.parameters.size > oldSignature.parameters.size) {
             val newParametersAtEndWithDefaults = newSignature.parameters.drop(oldSignature.parameters.size)
-                .all { oldSignature.parameterById(it.id) == null && it.defaultValue != null }
-            // special case if added new parameters with default values to the end
+                .all { oldSignature.parameterById(it.id) == null && it.defaultValue != null } // special case if added new parameters with default values to the end
             // we don't need to update usages if it's the only change
             if (newParametersAtEndWithDefaults) {
                 val truncatedNewSignature = Signature.create(
@@ -173,12 +220,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         }
 
         return detectAvailableRefactoring(
-            oldSignature,
-            newSignature,
-            updateUsagesData,
-            updateOverridesData,
-            declaration,
-            declaration.valueParameters
+            oldSignature, newSignature, updateUsagesData, updateOverridesData, declaration, declaration.valueParameters
         )
     }
 
@@ -198,10 +240,8 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
         val (nameChanges, renameData) = nameChanges(oldSignature, newSignature, declaration, parameters)
 
         if (hasTypeChanges(oldSignature, newSignature)) {
-            return if (nameChanges > 0)
-                updateUsagesData
-            else
-                updateOverridesData
+            return if (nameChanges > 0) updateUsagesData
+            else updateOverridesData
         }
 
         return when {
@@ -210,7 +250,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
             else -> null
         }
     }
-    
+
     private fun KtCallableDeclaration.overridesName(): String? {
         return when {
             hasModifier(KtTokens.ABSTRACT_KEYWORD) -> RefactoringBundle.message("suggested.refactoring.implementations")
@@ -220,15 +260,14 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
             } else {
                 RefactoringBundle.message("suggested.refactoring.implementations")
             }
+
             isExpectDeclaration() -> "actual declarations"
             else -> null
         }
     }
 
     private fun KtCallableDeclaration.isExpectDeclaration(): Boolean {
-        return parentsWithSelf
-            .filterIsInstance<KtDeclaration>()
-            .takeWhile { it == this || it is KtClassOrObject }
+        return parentsWithSelf.filterIsInstance<KtDeclaration>().takeWhile { it == this || it is KtClassOrObject }
             .any { it.hasModifier(KtTokens.EXPECT_KEYWORD) }
     }
 

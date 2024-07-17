@@ -229,14 +229,14 @@ object ChangeSignatureFixFactory {
             val paramName = paramInfo.name
             changeInfo.addParameter(
                 KotlinParameterInfo(
-                    -1,
-                    KotlinTypeInfo(paramInfo.type, callable),
-                    suggestNameByName(paramName, nameValidator),
-                    KotlinValVar.None,
-                    null,
-                    false,
-                    null,
-                    callable
+                    originalIndex = -1,
+                    originalType = KotlinTypeInfo(paramInfo.type, callable),
+                    name = suggestNameByName(paramName, nameValidator),
+                    valOrVar = KotlinValVar.None,
+                    defaultValueForCall = null,
+                    defaultValueAsDefaultParameter = false,
+                    defaultValue = null,
+                    context = callable
                 )
             )
         }

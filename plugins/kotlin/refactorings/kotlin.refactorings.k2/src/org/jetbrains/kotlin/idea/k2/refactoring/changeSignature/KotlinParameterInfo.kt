@@ -35,6 +35,7 @@ class KotlinParameterInfo(
     override var defaultValueForCall: KtExpression?,
     override var defaultValueAsDefaultParameter: Boolean,
     override var defaultValue: KtExpression?,
+    val modifierList: KtModifierList? = null,
     val context: KtElement
 ) : KotlinModifiableParameterInfo {
     val oldName: String = name
@@ -135,6 +136,9 @@ class KotlinParameterInfo(
         val psiFactory = KtPsiFactory(context.project)
 
         val buffer = StringBuilder()
+        if (modifierList != null) {
+            buffer.append(modifierList.text).append(' ')
+        }
 
         if (valOrVar != KotlinValVar.None && !(baseFunction is KtNamedDeclaration && baseFunction.isExpectDeclaration())) {
             buffer.append(valOrVar).append(' ')
