@@ -24,8 +24,6 @@ class SharedEventsFlow(
   private var serverJob: Job? = null
 
   fun endServerProcess() {
-    runBlocking { serverJob?.cancelAndJoin() }
-    serverJob = null
     client.endServerProcess()
   }
 
@@ -84,6 +82,8 @@ class SharedEventsFlow(
   }
 
   override fun unsubscribeAll() {
+    runBlocking { serverJob?.cancelAndJoin() }
+    serverJob = null
     processedEvents.clear()
     client.clear()
   }
