@@ -12,7 +12,7 @@ internal class ShellRuntimeContextImpl(
   override val typedPrefix: String,
   override val shellName: ShellName,
   private val generatorCommandsRunner: ShellCommandExecutor
-) : ShellRuntimeContext, UserDataHolderBase(), ShellCommandExecutor {
+) : ShellRuntimeContext, UserDataHolderBase() {
 
   override suspend fun runShellCommand(command: String): ShellCommandResult {
     return generatorCommandsRunner.runShellCommand(command)
