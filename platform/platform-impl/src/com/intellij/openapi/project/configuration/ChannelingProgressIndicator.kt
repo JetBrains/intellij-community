@@ -49,7 +49,7 @@ class ChannelingProgressIndicator(private val prefix: String) : ProgressIndicato
 
     val v = (100.0 * fraction).toInt()
     val total = 18
-    val completed = (total * fraction).toInt().coerceAtLeast(0)
+    val completed = (total * fraction).toInt().coerceIn(0, total)
     val d = ".".repeat(completed).padEnd(total, ' ')
     val verboseReport = verboseText.take(100).padEnd(105) + "$d $v%"
     return verboseReport
