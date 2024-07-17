@@ -749,40 +749,40 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8174
   public void testChangeSignatureKeywordAndPositionalParameters() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of f(x, foo, <b>bar</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of f(x, foo)</html>", true, true);
   }
 
   // PY-8174
   public void testChangeSignatureAddKeywordOnlyParameter() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
-      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
+      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(x, *args, foo)</html>", true, true)
     );
   }
 
   // PY-8174
   public void testChangeSignatureNewParametersNames() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1)</html>", true, true);
   }
 
   // PY-53671
   public void testChangeSignatureOfExportedBoundMethod() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doMultiFilesInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of method(self, a, b, <b>i</b>)</html>", "mod.py");
+      doMultiFilesInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of method(self, a, b)</html>", "mod.py");
     });
   }
 
   // PY-8174
   public void testChangeSignatureParametersDefaultValues() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func()</html>", true, true);
   }
 
   public void testAddKwargsToNewMethodIncompatibleWithInit() {
-    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change the signature of __new__(cls, <b>**kwargs</b>)</html>", true, true);
+    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change the signature of __new__(cls)</html>", true, true);
   }
 
   public void testAddKwargsToIncompatibleOverridingMethod() {
-    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change the signature of m(self, <b>**kwargs</b>)</html>", true, true);
+    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change the signature of m(self)</html>", true, true);
   }
 
   // PY-30789

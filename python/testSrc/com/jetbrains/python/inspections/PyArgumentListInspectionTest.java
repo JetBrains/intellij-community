@@ -18,6 +18,11 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testBadarglist() {
     doTest();
   }
+
+  // PY-73886
+  public void testBadarglistMultiFile() {
+    doMultiFileTest();
+  }
   
   public void testKwargsMapToNothing() {
     doTest();
