@@ -93,40 +93,31 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
   @Suppress("SSBasedInspection", "UNCHECKED_CAST")
   private fun initializeModuleBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
-    // `runBlocking` usage approved: https://jetbrains.team/im/thread/2dJ00M3nYBxT/DA2Jg0U6sRs?message=D9Bh40U795a&channel=1Dx4720YRoCU
-    runBlocking {
-      LOG.debug { "Starting initialize bridges for ${moduleChanges.size} modules" }
-      /// Loading similar to ModuleManagerBridgeImpl.loadModules
-      val moduleData = moduleChanges.mapNotNull {
-        if (it !is EntityChange.Added<ModuleEntity>) return@mapNotNull null
-        if (it.newEntity.findModule(builder) != null) return@mapNotNull null
+    LOG.debug { "Starting initialize bridges for ${moduleChanges.size} modules" }
 
-        LOG.debug { "Creating async block for ${it.newEntity.name}" }
-        async(Dispatchers.Default) {
-          LOG.debug { "Creating module instance for ${it.newEntity.name}" }
-          val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
-          val bridge = blockingContext {
-            createModuleInstanceWithoutCreatingComponents(
-              moduleEntity = it.newEntity,
-              versionedStorage = entityStore,
-              diff = builder,
-              isNew = true,
-              precomputedExtensionModel = null,
-              plugins = plugins,
-              corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID },
-            )
-          }
-          LOG.debug { "Creating components ${it.newEntity.name}" }
-          bridge.callCreateComponentsNonBlocking()
-          LOG.debug { "${it.newEntity.name} module initialized" }
-          bridge to it.newEntity
-        }
-      }.map { it.await() }
+    // Theoretically, the module initialization can be parallized using fork-join approach, see IJPL-149482
+    //   This approach is used in ModuleManagerBridgeImpl.loadModules
+    // However, simple use of Dispatchers.Default while being inside of write action, may cause threading issues, see IDEA-355596
+    moduleChanges.forEach {
+      if (it !is EntityChange.Added<ModuleEntity>) return@forEach
+      if (it.newEntity.findModule(builder) != null) return@forEach
 
-      LOG.debug("All modules initialized, adding to the builder mappings")
-      for ((bridge, entity) in moduleData) {
-        builder.mutableModuleMap.addMapping(entity, bridge)
-      }
+      LOG.debug { "Creating module instance for ${it.newEntity.name}" }
+      val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
+      val bridge = createModuleInstanceWithoutCreatingComponents(
+        moduleEntity = it.newEntity,
+        versionedStorage = entityStore,
+        diff = builder,
+        isNew = true,
+        precomputedExtensionModel = null,
+        plugins = plugins,
+        corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID },
+      )
+      LOG.debug { "Creating components ${it.newEntity.name}" }
+      bridge.callCreateComponents()
+
+      LOG.debug { "${it.newEntity.name} module initialized" }
+      builder.mutableModuleMap.addMapping(it.newEntity, bridge)
     }
   }
 
