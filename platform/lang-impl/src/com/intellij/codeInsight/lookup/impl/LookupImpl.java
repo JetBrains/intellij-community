@@ -89,7 +89,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
 
   private final LookupOffsets myOffsets;
-  private final Project project;
   private final Editor editor;
   private final Object uiLock = new Object();
   private final JBList<LookupElement> list = new LookupList();
@@ -133,13 +132,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     setResizable(true);
 
     mySession = session;
-    this.project = session.getProject();
     this.editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     myArranger = arranger;
     myPresentableArranger = arranger;
     this.editor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
 
-    DaemonCodeAnalyzer.getInstance(this.project).disableUpdateByTimer(this);
+    DaemonCodeAnalyzer.getInstance(session.getProject()).disableUpdateByTimer(this);
 
     cellRenderer = new LookupCellRenderer(this, this.editor.getContentComponent());
     cellRenderer.itemAdded(myDummyItem, LookupElementPresentation.renderElement(myDummyItem));
@@ -583,7 +581,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       hideWithItemSelected(null, completionChar);
       return;
     }
-    CommandProcessor.getInstance().executeCommand(project, () -> {
+    CommandProcessor.getInstance().executeCommand(mySession.getProject(), () -> {
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346621, EA-1083788")) {
         finishLookupInWritableFile(completionChar, item);
       }
@@ -643,7 +641,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   protected void insertLookupString(LookupElement item, final int prefix) {
-    insertLookupString(project, getTopLevelEditor(), item, itemMatcher(item), itemPattern(item), prefix);
+    insertLookupString(mySession.getProject(), getTopLevelEditor(), item, itemMatcher(item), itemPattern(item), prefix);
   }
 
   public static void insertLookupString(final Project project,
@@ -711,7 +709,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public boolean vetoesHiding() {
     // the second condition means that the Lookup belongs to another connected client
-    return myGuardedChanges > 0 || mySession != ClientSessionsManager.getProjectSession(this.project) || LookupImplVetoPolicy.anyVetoesHiding(this);
+    return myGuardedChanges > 0 || mySession != ClientSessionsManager.getProjectSession(mySession.getProject()) || LookupImplVetoPolicy.anyVetoesHiding(this);
   }
 
   public boolean isAvailableToUser() {
@@ -935,7 +933,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           }
           else {
             CommandProcessor.getInstance()
-              .executeCommand(project, () -> finishLookup(NORMAL_SELECT_CHAR), "", null, editor.getDocument());
+              .executeCommand(mySession.getProject(), () -> finishLookup(NORMAL_SELECT_CHAR), "", null, editor.getDocument());
           }
         }
         return true;
@@ -1020,7 +1018,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void fireItemSelected(final @Nullable LookupElement item, char completionChar) {
     if (item != null && item.requiresCommittedDocuments()) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      PsiDocumentManager.getInstance(mySession.getProject()).commitAllDocuments();
     }
     myArranger.itemSelected(item, completionChar);
     if (!myListeners.isEmpty()) {
@@ -1083,7 +1081,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public @Nullable PsiFile getPsiFile() {
-    return PsiDocumentManager.getInstance(project).getPsiFile(getEditor().getDocument());
+    return PsiDocumentManager.getInstance(mySession.getProject()).getPsiFile(getEditor().getDocument());
   }
 
   @Override
@@ -1123,9 +1121,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public @NotNull Editor getEditor() {
-    DocumentWindow documentWindow = getInjectedDocument(project, editor, editor.getCaretModel().getOffset());
+    DocumentWindow documentWindow = getInjectedDocument(mySession.getProject(), editor, editor.getCaretModel().getOffset());
     if (documentWindow != null) {
-      PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(documentWindow);
+      PsiFile injectedFile = PsiDocumentManager.getInstance(mySession.getProject()).getPsiFile(documentWindow);
       return InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
     }
     return editor;
@@ -1138,7 +1136,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public @NotNull Project getProject() {
-    return project;
+    return mySession.getProject();
   }
 
   @Override
@@ -1300,7 +1298,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return;
     }
 
-    UIEventLogger.LookupShowElementActions.log(project);
+    UIEventLogger.LookupShowElementActions.log(mySession.getProject());
 
     Rectangle itemBounds = getCurrentItemBounds();
     Rectangle visibleRect = SwingUtilities.convertRectangle(list, list.getVisibleRect(), getComponent());
