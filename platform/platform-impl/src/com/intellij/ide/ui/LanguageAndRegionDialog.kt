@@ -28,11 +28,11 @@ import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
 
-private val localeMappings = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans", "CN"), Locale.JAPANESE to listOf("ja", "JP"),
-                                   Locale.KOREAN to listOf("ko", "KR", "KP"))
+private val languageMapping = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans"), Locale.JAPANESE to listOf("ja"),
+                                    Locale.KOREAN to listOf("ko"))
+private val regionMapping = mapOf(Region.CHINA to "CN")
 
-private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
-  private var region = getRegionForLocale(selectedLanguage)
+private class LanguageAndRegionDialog(private var selectedLanguage: Locale, private var selectedRegion: Region) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
   init {
     isResizable = false
     init()
@@ -74,7 +74,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
     ButtonPanel(createButton(false, getLocaleName(selectedLanguage), AllIcons.General.ChevronDown) { createLanguagePopup(it) })
 
   private fun getRegionButton() = ButtonPanel(
-    createButton(false, getRegionLabel(region), AllIcons.General.ChevronDown) { createRegionPopup(it) })
+    createButton(false, getRegionLabel(selectedRegion), AllIcons.General.ChevronDown) { createRegionPopup(it) })
 
   private fun getNextButton() = ButtonPanel(createButton(true, getMessageBundle().getString("button.next"), null) { this.doOKAction() })
 
@@ -90,12 +90,12 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
       .setRenderer { list, value, _, selected, _ ->
         createRendererComponent(getRegionName(value), list, selected)
       }
-      .setSelectedValue(region, true)
+      .setSelectedValue(selectedRegion, true)
       .setMinSize(Dimension(280, 100))
       .setResizable(false)
       .setCancelOnClickOutside(true)
       .setItemChosenCallback {
-        region = it
+        selectedRegion = it
         button.text = getRegionLabel(it)
       }
       .createPopup()
@@ -103,7 +103,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
   }
 
   private fun createLanguagePopup(button: JButton) {
-    val locales = mutableListOf(Locale.ENGLISH) + localeMappings.keys
+    val locales = mutableListOf(Locale.ENGLISH) + languageMapping.keys
     val popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(locales)
       .setRequestFocus(true)
@@ -137,14 +137,6 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
     return panel
   }
 
-  private fun getRegionForLocale(locale: Locale): Region {
-    return when (locale) {
-      Locale.CHINA -> Region.CHINA
-      Locale.JAPANESE, Locale.KOREAN -> Region.APAC
-      else -> Region.NOT_SET
-    }
-  }
-
   @Nls
   private fun getLocaleName(locale: Locale): String {
     return getMessageBundle().getString("language." + locale.toLanguageTag().replace("-", ""))
@@ -162,7 +154,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
 
   override fun doOKAction() {
     LocalizationStateService.getInstance()?.setSelectedLocale(selectedLanguage.toLanguageTag())
-    RegionSettings.setRegion(region)
+    RegionSettings.setRegion(selectedRegion)
     super.doOKAction()
   }
 
@@ -173,12 +165,13 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
 internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Document?): (suspend () -> Boolean)? {
   if (document == null) return null
   val locale = Locale.getDefault()
-  val matchingLanguage = localeMappings.values.flatten().find { locale.toLanguageTag().contains(it) }
-  if (matchingLanguage == null) return null
+  val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true }
+                       ?: Locale.ENGLISH
+  var matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] } ?: Region.NOT_SET
+  if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
   return suspend {
     withContext(RawSwingDispatcher) {
-      val matchingLocale = localeMappings.entries.find { it.value.contains(matchingLanguage) }!!.key
-      LanguageAndRegionDialog(matchingLocale).showAndGet()
+      LanguageAndRegionDialog(matchingLocale, matchingRegion).showAndGet()
     }
   }
 }
