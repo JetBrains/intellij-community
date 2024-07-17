@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -19,11 +18,10 @@ private val json = Json { ignoreUnknownKeys = true }
  */
 fun loadProductInfo(ideaJdkHome: String): ProductInfo? {
   val ideHomePath = Path.of(ideaJdkHome)
-  val productInfoJsonPath = when {
-    SystemInfo.isMac -> ideHomePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC)
-    else -> ideHomePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME)
-  }
-  if (Files.notExists(productInfoJsonPath)) return null
+  val productInfoJsonPath = listOf(
+    ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC,
+    ApplicationEx.PRODUCT_INFO_FILE_NAME,
+  ).firstNotNullOfOrNull { ideHomePath.resolve(it).takeIf(Path::exists) } ?: return null
 
   return runCatching { json.decodeFromString<ProductInfo>(productInfoJsonPath.readText()) }
     .onFailure { logger<ProductInfo>().error("error parsing '$productInfoJsonPath'", it) }
