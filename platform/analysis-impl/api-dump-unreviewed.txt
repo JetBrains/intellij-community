@@ -628,16 +628,6 @@ f:com.intellij.codeInsight.daemon.impl.FileStatusMap
 - markFileUpToDate(com.intellij.openapi.editor.Document,I):V
 - setErrorFoundFlag(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,Z):V
 - toString(com.intellij.openapi.editor.Document):java.lang.String
-c:com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
-- com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass
-- com.intellij.openapi.project.DumbAware
-- sf:POST_UPDATE_ALL:I
-- p:myHasErrorElement:Z
-- p:applyInformationWithProgress():V
-- s:assertHighlightingPassNotRunning():V
-- p:collectInformationWithProgress(com.intellij.openapi.progress.ProgressIndicator):V
-- p:createInfoHolder(com.intellij.psi.PsiFile):com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-- f:getInfos():java.util.List
 c:com.intellij.codeInsight.daemon.impl.HighlightInfo
 - com.intellij.openapi.util.Segment
 - f:endOffset:I

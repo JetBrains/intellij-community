@@ -799,7 +799,7 @@
                         serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <applicationService serviceInterface="com.intellij.util.PerformanceAssertions"
-                        serviceImplementation="com.intellij.util.PerformanceAssertionsImpl"/>
+                        serviceImplementation="com.intellij.codeInsight.daemon.impl.PerformanceAssertionsImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorFactory"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorFactoryImpl" preload="notHeadless"/>
