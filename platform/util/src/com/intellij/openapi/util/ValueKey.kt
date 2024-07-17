@@ -7,7 +7,7 @@ import java.util.function.Supplier
 /**
  * A key with string name which allows fetching or computing a typed value.
  * @param <T> type of the value
-</T> */
+ */
 @ApiStatus.Obsolete
 interface ValueKey<out T> {
   /**
@@ -26,7 +26,7 @@ interface ValueKey<out T> {
   /**
    * Represents a matching chain which matches a selector key against one or more "case" keys
    * @param <T> type of the result
-  </T> */
+   */
   interface BeforeIf<out T> {
     /**
      * @return the name of the key
@@ -40,7 +40,7 @@ interface ValueKey<out T> {
      * @param key "case" key to compare with selector key
      * @param <TT> type of the "case" key
      * @return a matching chain in the then-state (then-branches are accepted afterwards)
-    </TT> */
+     */
     fun <TT> ifEq(key: ValueKey<TT>): BeforeThen<out T, TT>
 
     /**
@@ -65,7 +65,7 @@ interface ValueKey<out T> {
    * Represents a matching chain in the "then-state"
    * @param <T> type of the whole chain result
    * @param <TT> type of the currently matched "case"-key value
-  </TT></T> */
+   */
   interface BeforeThen<T, TT> {
     /**
      * Adds an alternative "case"-key: the subsequent then-branch will take effect if
