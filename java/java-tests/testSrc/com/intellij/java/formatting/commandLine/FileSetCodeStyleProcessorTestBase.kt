@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase.*
@@ -27,7 +28,9 @@ abstract class FileSetCodeStyleProcessorTestBase : LightPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    codeStyleSettings = CodeStyle.createTestSettings().apply {
+    CodeStyle.dropTemporarySettings(project)
+    resetToDefaults()
+    codeStyleSettings = CodeStyleSettingsManager.getInstance().createSettings().apply {
       getCommonSettings(JavaLanguage.INSTANCE).apply {
         indentOptions!!.INDENT_SIZE = 2
         CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
@@ -45,6 +48,22 @@ abstract class FileSetCodeStyleProcessorTestBase : LightPlatformTestCase() {
             LOG.debug(String(cbuf!!, off, len))
           }
         }), PrintWriter(System.err))
+  }
+
+  override fun tearDown() {
+    try {
+      resetToDefaults()
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
+  private fun resetToDefaults() {
+    CodeStyle.setMainProjectSettings(project, CodeStyleSettingsManager.getInstance().createSettings())
   }
 
 }

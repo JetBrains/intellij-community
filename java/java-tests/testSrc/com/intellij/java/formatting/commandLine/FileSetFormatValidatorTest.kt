@@ -9,7 +9,7 @@ import java.io.File
 class FileSetFormatValidatorTest : FileSetCodeStyleProcessorTestBase() {
 
   fun testFormatDryRun_needsFormatting() {
-    FileSetFormatValidator(messageOutput!!, true, defaultCodeStyle = codeStyleSettings).use {
+    FileSetFormatValidator(messageOutput!!, true, defaultCodeStyle = codeStyleSettings, project = project).let {
       it.addFileMask(Regex(".*\\.java"))
       val sourceDir = createSourceDir("baseTest/original")
       it.addEntry(sourceDir.canonicalPath)
@@ -20,7 +20,7 @@ class FileSetFormatValidatorTest : FileSetCodeStyleProcessorTestBase() {
   }
 
   fun testFormatDryRun_wellFormatted() {
-    FileSetFormatValidator(messageOutput!!, true, defaultCodeStyle = codeStyleSettings).use {
+    FileSetFormatValidator(messageOutput!!, true, defaultCodeStyle = codeStyleSettings, project = project).let {
       it.addFileMask(Regex(".*\\.java"))
       val sourceDir = createSourceDir("baseTest/expected")
       it.addEntry(sourceDir.canonicalPath)

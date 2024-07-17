@@ -12366,7 +12366,7 @@ f:com.intellij.formatting.commandLine.CodeStyleProcessorBuildException$ShowUsage
 f:com.intellij.formatting.commandLine.CodeStyleProcessorBuilder
 - <init>(com.intellij.formatting.commandLine.MessageOutput):V
 - f:allowFactoryDefaults():com.intellij.formatting.commandLine.CodeStyleProcessorBuilder
-- f:build():com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
+- f:build(com.intellij.openapi.project.Project):com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
 - f:dryRun():com.intellij.formatting.commandLine.CodeStyleProcessorBuilder
 - f:getCharset():java.nio.charset.Charset
 - f:getEntries():java.util.ArrayList
@@ -12380,22 +12380,20 @@ f:com.intellij.formatting.commandLine.CodeStyleProcessorBuilder
 - f:withFileMasks(java.lang.String):com.intellij.formatting.commandLine.CodeStyleProcessorBuilder
 a:com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
 - com.intellij.formatting.commandLine.FileSetProcessor
-- java.io.Closeable
-- <init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings):V
-- b:<init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- close():V
+- <init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.project.Project):V
+- b:<init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getDefaultCodeStyle():com.intellij.psi.codeStyle.CodeStyleSettings
 - a:getOperationContinuous():java.lang.String
 - a:getOperationPerfect():java.lang.String
-- pf:getProject():com.intellij.openapi.project.Project
+- f:getProject():com.intellij.openapi.project.Project
 - isResultSuccessful():Z
 - printReport():V
 - a:processFileInternal(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - processVirtualFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.codeStyle.CodeStyleSettings):V
 f:com.intellij.formatting.commandLine.FileSetFormatValidator
 - com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
-- <init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings):V
-- b:<init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.project.Project):V
+- b:<init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - getOperationContinuous():java.lang.String
 - getOperationPerfect():java.lang.String
 - isResultSuccessful():Z
@@ -12403,8 +12401,8 @@ f:com.intellij.formatting.commandLine.FileSetFormatValidator
 - processFileInternal(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 f:com.intellij.formatting.commandLine.FileSetFormatter
 - com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
-- <init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings):V
-- b:<init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.project.Project):V
+- b:<init>(com.intellij.formatting.commandLine.MessageOutput,Z,java.nio.charset.Charset,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - getOperationContinuous():java.lang.String
 - getOperationPerfect():java.lang.String
 - processFileInternal(com.intellij.openapi.vfs.VirtualFile):java.lang.String
@@ -12433,8 +12431,8 @@ a:com.intellij.formatting.commandLine.FileSetProcessor
 - f:processFiles():V
 - a:processVirtualFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.codeStyle.CodeStyleSettings):V
 f:com.intellij.formatting.commandLine.FormatterStarterKt
-- sf:createFormatter(java.util.List,com.intellij.formatting.commandLine.MessageOutput):com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
-- bs:createFormatter$default(java.util.List,com.intellij.formatting.commandLine.MessageOutput,I,java.lang.Object):com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
+- sf:createBuilder(java.util.List,com.intellij.formatting.commandLine.MessageOutput):com.intellij.formatting.commandLine.CodeStyleProcessorBuilder
+- bs:createBuilder$default(java.util.List,com.intellij.formatting.commandLine.MessageOutput,I,java.lang.Object):com.intellij.formatting.commandLine.CodeStyleProcessorBuilder
 - sf:readSettings(java.io.File):com.intellij.psi.codeStyle.CodeStyleSettings
 c:com.intellij.formatting.commandLine.MessageOutput
 - <init>(java.io.PrintWriter,java.io.PrintWriter):V

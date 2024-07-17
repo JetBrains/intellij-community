@@ -4,7 +4,6 @@ package com.intellij.formatting.commandLine
 import com.intellij.application.options.CodeStyle
 import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingServiceUtil
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
@@ -14,9 +13,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -27,12 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.LocalTimeCounter
-import com.intellij.util.PlatformUtils
-import org.jetbrains.jps.model.serialization.PathMacroUtil
-import java.io.Closeable
 import java.nio.charset.Charset
-import java.nio.file.Files
-import java.util.*
 
 
 private val LOG = Logger.getInstance(FileSetCodeStyleProcessor::class.java)
@@ -53,8 +44,9 @@ class FileSetFormatter(
   isRecursive: Boolean,
   charset: Charset? = null,
   primaryCodeStyle: CodeStyleSettings? = null,
-  defaultCodeStyle: CodeStyleSettings? = null
-) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle) {
+  defaultCodeStyle: CodeStyleSettings? = null,
+  project: Project
+) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle, project) {
 
   override val operationContinuous: String = "Formatting"
   override val operationPerfect: String = "formatted"
@@ -120,8 +112,9 @@ class FileSetFormatValidator(
   isRecursive: Boolean,
   charset: Charset? = null,
   primaryCodeStyle: CodeStyleSettings? = null,
-  defaultCodeStyle: CodeStyleSettings? = null
-) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle) {
+  defaultCodeStyle: CodeStyleSettings? = null,
+  project: Project
+) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle, project) {
 
   override val operationContinuous: String = "Checking"
   override val operationPerfect: String = "checked"
@@ -183,11 +176,12 @@ abstract class FileSetCodeStyleProcessor(
   isRecursive: Boolean,
   charset: Charset? = null,
   private val primaryCodeStyle: CodeStyleSettings? = null,
-  val defaultCodeStyle: CodeStyleSettings? = null
-) : FileSetProcessor(messageOutput, isRecursive, charset), Closeable {
+  val defaultCodeStyle: CodeStyleSettings? = null,
+  val project: Project
+) : FileSetProcessor(messageOutput, isRecursive, charset) {
 
-  private val projectUID = UUID.randomUUID().toString()
-  protected val project: Project = createProject(projectUID)
+
+  //protected val project: Project = formattingProject ?: createProject(projectUID)
 
   abstract val operationContinuous: String
   abstract val operationPerfect: String
@@ -201,10 +195,6 @@ abstract class FileSetCodeStyleProcessor(
   }
 
   open fun isResultSuccessful(): Boolean = true
-
-  override fun close() {
-    ProjectManager.getInstance().closeAndDispose(project)
-  }
 
   override fun processVirtualFile(virtualFile: VirtualFile, projectSettings: CodeStyleSettings?) {
     messageOutput.info("$operationContinuous ${virtualFile.canonicalPath}...")
@@ -244,22 +234,6 @@ abstract class FileSetCodeStyleProcessor(
 }
 
 
-private val PROJECT_DIR_PREFIX = PlatformUtils.getPlatformPrefix() + ".format."
-private const val PROJECT_DIR_SUFFIX = ".tmp"
-
-private fun createProjectDir(projectUID: String) = FileUtil
-  .createTempDirectory(PROJECT_DIR_PREFIX, projectUID + PROJECT_DIR_SUFFIX)
-  .toPath()
-  .resolve(PathMacroUtil.DIRECTORY_STORE_NAME)
-  .also { Files.createDirectories(it) }
-
-private fun createProject(projectUID: String) =
-  ProjectManagerEx.getInstanceEx()
-    .openProject(createProjectDir(projectUID), OpenProjectTask(isNewProject = true))
-    ?.also {
-      CodeStyle.setMainProjectSettings(it, CodeStyleSettingsManager.getInstance().createSettings())
-    }
-  ?: throw RuntimeException("Failed to create temporary project $projectUID")
 
 private fun PsiFile.isFormattingSupported(): Boolean {
   val formattingService = FormattingServiceUtil.findService(this, true, true)
