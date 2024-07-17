@@ -126,6 +126,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
 
+  @ApiStatus.Internal
   public LookupImpl(ClientProjectSession session, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
     setForceShowAsPopup(true);

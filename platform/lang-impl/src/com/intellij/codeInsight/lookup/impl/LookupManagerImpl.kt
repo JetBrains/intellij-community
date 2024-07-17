@@ -21,10 +21,12 @@ import com.intellij.ui.HintHint
 import com.intellij.ui.LightweightHint
 import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 
+@ApiStatus.Internal
 open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
 
   @Deprecated("Deprecated as the methods using the field")
