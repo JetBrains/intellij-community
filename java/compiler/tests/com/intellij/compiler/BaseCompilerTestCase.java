@@ -6,6 +6,7 @@ import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
@@ -43,6 +44,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -240,6 +242,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
 
     PlatformTestUtil.saveProject(myProject);
     CompilerTestUtil.saveApplicationSettings();
+    TestLoggerFactory.publishArtifactIfTestFails(Paths.get(PathManager.getOptionsPath()), "config-before-compilation");
     CompilerTests.saveWorkspaceModelCaches(myProject);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       CompilerTester.enableDebugLogging();
