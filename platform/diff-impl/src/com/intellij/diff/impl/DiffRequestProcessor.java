@@ -451,6 +451,11 @@ public abstract class DiffRequestProcessor
           myState = createState(frameTool);
           try {
             myState.init();
+
+            boolean isLoading = request instanceof LoadingDiffRequest || request instanceof NoDiffRequest;
+            if (!isLoading) {
+              DiffUsageTriggerCollector.logShowDiffTool(myProject, frameTool, myContext.getUserData(DiffUserDataKeys.PLACE));
+            }
           }
           catch (Throwable e) {
             myState.destroy();

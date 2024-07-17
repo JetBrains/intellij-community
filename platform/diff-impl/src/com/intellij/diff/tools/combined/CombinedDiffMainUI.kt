@@ -47,7 +47,6 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
-import java.lang.Runnable
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
@@ -106,6 +105,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     if (bottomPanel is Disposable) Disposer.register(ourDisposable, bottomPanel)
 
     contentPanel.setContent(DiffUtil.createMessagePanel(CommonBundle.getLoadingTreeNodeText()))
+
+    DiffUsageTriggerCollector.logShowCombinedDiffTool(model.project, diffToolChooser.getActiveTool(), model.context.getUserData(DiffUserDataKeys.PLACE))
   }
 
   @RequiresEdt
