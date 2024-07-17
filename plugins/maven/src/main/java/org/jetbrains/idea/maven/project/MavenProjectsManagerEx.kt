@@ -105,7 +105,7 @@ interface MavenAsyncProjectsManager {
   }
 }
 
-open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project) {
+open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project, cs) {
   override suspend fun addManagedFilesWithProfiles(files: List<VirtualFile>,
                                                    profiles: MavenExplicitProfiles,
                                                    modelsProvider: IdeModifiableModelsProvider?,

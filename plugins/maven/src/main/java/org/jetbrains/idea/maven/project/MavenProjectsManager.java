@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
@@ -33,6 +33,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,12 +106,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return project.getServiceIfCreated(MavenProjectsManager.class);
   }
 
-  public MavenProjectsManager(@NotNull Project project) {
+  public MavenProjectsManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     super(project);
 
     myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
-    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), this);
+    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !MavenUtil.isMavenUnitTestModeEnabled(), coroutineScope);
     MavenRehighlighter.install(project, this);
     Disposer.register(this, this::projectClosed);
     CacheForCompilerErrorMessages.connectToJdkListener(project, this);

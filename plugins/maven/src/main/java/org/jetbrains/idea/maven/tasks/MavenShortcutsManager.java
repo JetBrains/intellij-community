@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -145,7 +145,7 @@ public final class MavenShortcutsManager implements Disposable {
     void shortcutsUpdated();
   }
 
-  private class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
+  private final class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
     private final Map<MavenProject, Boolean> mySheduledProjects = new HashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue("MavenShortcutsManager: Keymap Update",
                                                                                  500, true, MavenShortcutsManager.this).usePassThroughInUnitTestMode();
