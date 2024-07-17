@@ -115,6 +115,15 @@ internal class ScaledResultIcon(@JvmField internal val image: Image,
 }
 
 private fun getCacheKey(pixScale: Float, sysScale: Float, cacheFlags: IconAttributes): Long {
+  // The pixScale is the effective scale combining everything, and it determines the size of the actual raster to produce.
+  // However, it's not enough to use just it for caching, because an image is not just a raster,
+  // but also a combination of certain properties that determine its user-space size and how it's rendered without losing image quality.
+  // For example, if the user scale = 150% and sys scale = 100%, then an image with the original size of 16x16 will have
+  // both the user-space and actual sizes of 24x24, and it'll be an instance of BufferedImage.
+  // However, if the user scale = 100% and sys scale = 150%, then the same image will have the user-space size of 16x16,
+  // but the actual size will be 24x24, and it'll be an instance of JBHiDPIScaledImage to render properly.
+  // The effective pixScale in both cases will be 150%, however, so we can't rely on it alone.
+  // That's why we pack both pixScale and sysScale here, ignoring the lower part as scaling factors don't need that much precision anyway.
   return packTwoIntToLong(
     packTwoShortsToInt(
       pixScale.toRawBits().mostSignificantHalf(),
