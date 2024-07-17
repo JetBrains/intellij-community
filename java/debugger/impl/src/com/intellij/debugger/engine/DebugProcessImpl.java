@@ -37,6 +37,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -68,7 +69,7 @@ import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -108,6 +109,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -163,7 +166,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   List<Runnable> mySuspendAllListeners = new ArrayList<>();
 
-  private SingleAlarm myOtherThreadsAlarm = null;
+  private ScheduledFuture<?> otherThreadsAlarm;
   private int myOtherThreadsReachBreakpointNumber = 0;
 
   protected DebugProcessImpl(Project project) {
@@ -2771,12 +2774,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   protected void notifyStoppedOtherThreads() {
     myOtherThreadsReachBreakpointNumber++;
-    if (myOtherThreadsAlarm != null) myOtherThreadsAlarm.cancel();
-    myOtherThreadsAlarm = new SingleAlarm(() -> {
+    if (otherThreadsAlarm != null) {
+      otherThreadsAlarm.cancel(false);
+    }
+    otherThreadsAlarm = EdtScheduledExecutorService.getInstance().schedule(() -> {
       showNotification(myOtherThreadsReachBreakpointNumber);
       myOtherThreadsReachBreakpointNumber = 0;
-    }, 300);
-    myOtherThreadsAlarm.request();
+    }, ModalityState.defaultModalityState(), 300, TimeUnit.MILLISECONDS);
   }
 
   private void showNotification(int number) {
