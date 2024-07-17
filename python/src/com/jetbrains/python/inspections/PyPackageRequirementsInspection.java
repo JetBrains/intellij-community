@@ -547,9 +547,11 @@ public final class PyPackageRequirementsInspection extends PyInspection {
   }
 
   public static class InstallAllPackagesQuickFix implements LocalQuickFix {
-    public static final String CONFIRM_PACKAGE_INSTALLATION_PROPERTY = "python.confirm.package.installation";
+    public void setPackageNames(@NotNull List<String> packageNames) {
+      myPackageNames = packageNames;
+    }
 
-    protected final @NotNull List<String> myPackageNames;
+    protected @NotNull List<String> myPackageNames;
 
     public InstallAllPackagesQuickFix(@NotNull List<String> packageNames) {
       myPackageNames = packageNames;
@@ -578,17 +580,12 @@ public final class PyPackageRequirementsInspection extends PyInspection {
                 @Override
                 public void finished(List<ExecutionException> exceptions) {
                   super.finished(exceptions);
-                  if (exceptions.isEmpty()) {
-                    onSuccess(descriptor);
-                  }
                 }
               }
             ).applyFix(module.getProject(), descriptor);
           }
         });
     }
-
-    protected void onSuccess(@NotNull ProblemDescriptor descriptor) { }
 
     @Override
     public boolean startInWriteAction() {

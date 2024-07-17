@@ -73,11 +73,21 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
   }
 
   public static class Visitor extends PyUnresolvedReferencesVisitor {
+    private static final PyPackageRequirementsInspection.InstallAllPackagesQuickFix installAllPackagesQuickFix =
+      new PyPackageRequirementsInspection.InstallAllPackagesQuickFix(Collections.emptyList());
+
     public Visitor(@Nullable ProblemsHolder holder,
                    List<String> ignoredIdentifiers,
                    @NotNull PyInspection inspection,
                    @NotNull TypeEvalContext context) {
       super(holder, ignoredIdentifiers, inspection, context);
+    }
+
+    @Override
+    public void visitPyFile(@NotNull PyFile node) {
+      super.visitPyFile(node);
+
+      installAllPackagesQuickFix.setPackageNames(myUnresolvedNames.stream().toList());
     }
 
     @Override
@@ -102,6 +112,11 @@ public final class PyUnresolvedReferencesInspection extends PyUnresolvedReferenc
         }
       }
       return Collections.emptyList();
+    }
+
+    @Override
+    public Iterable<LocalQuickFix> getInstallAllPackagesQuickFixes() {
+      return StreamEx.of(installAllPackagesQuickFix);
     }
 
     @Override
