@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.google.common.hash.Hashing
@@ -39,7 +39,6 @@ import kotlin.concurrent.withLock
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.readBytes
 import kotlin.math.absoluteValue
 
 interface JdkInstallRequest {
@@ -402,7 +401,7 @@ abstract class JdkInstallerBase {
                          .mapNotNull { markerFile(it) }
                          .firstOrNull { it.isRegularFile() } ?: return null
 
-      val json = JdkListParser.readTree(markerFile.readBytes())
+      val json = JdkListParser.readTree(Files.readString(markerFile))
       return JdkListParser.parseJdkItem(json, predicate).firstOrNull()
     }
     catch (e: Throwable) {
