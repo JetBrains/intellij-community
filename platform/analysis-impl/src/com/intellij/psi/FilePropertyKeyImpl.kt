@@ -31,13 +31,15 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
 
   private fun getRaw(virtualFile: VirtualFile): RAW? {
     @Suppress("UNCHECKED_CAST")
-    val memValue = userDataKey[virtualFile] as RAW?
+    val memValue = virtualFile.getUserData(userDataKey) as RAW?
     if (memValue != null) {
       return if (memValue === NULL_MARKER) null else memValue
     }
 
     val persisted = readValue(virtualFile)
-    userDataKey[virtualFile] = persisted ?: NULL_MARKER
+    // Value in virtualFile can be null only before the very first assignment,
+    // so we can be sure that we don't overwrite a value of a set operation that happened in the middle of get operation.
+    virtualFile.replace(userDataKey, null, persisted ?: NULL_MARKER)
     return persisted
   }
 
@@ -50,7 +52,18 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     }
     else {
       writeValue(virtualFile, rawNewValue)
-      userDataKey[virtualFile] = if (newValue == null) NULL_MARKER else rawNewValue
+      if (!virtualFile.replace(userDataKey, oldValue ?: NULL_MARKER, if (newValue == null) NULL_MARKER else rawNewValue)) {
+        // Concurrent update is not supported.
+        // At this point it's not known in which order calls to writeValue were executed and which value was actually persisted to disk.
+        // And therefore we don't know which value should be written to VirtualFile.
+
+        // todo: Check why concurrent update happens and uncomment the LOG.error()
+        //       Check SqlImportStateTest, SqlJoinCardinalityInlayTest
+        //       But in general this doesn't seem to lead to problems because value is updated to same same value concurrently,
+        //       so result is deterministic.
+        //LOG.error("Value for key $userDataKey in file $virtualFile is updated concurrently. Trying to update it from $oldValue to $rawNewValue. " +
+        //          "Current value is ${getRaw(virtualFile)}")
+      }
       return true
     }
   }
