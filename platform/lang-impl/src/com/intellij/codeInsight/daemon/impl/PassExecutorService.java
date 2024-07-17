@@ -41,7 +41,9 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Functions;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Propagation;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -436,6 +438,9 @@ final class PassExecutorService implements Disposable {
             if (!myUpdateProgress.isCanceled()) {
               //in case some smart asses throw PCE just for fun
               ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopProcess(true, "PCE was thrown by visitor");
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("PCE was thrown by " + myPass.getClass(), new RuntimeException(e));
+              }
             }
           }
           catch (RuntimeException | Error e) {
@@ -565,13 +570,12 @@ final class PassExecutorService implements Disposable {
       Document document = pass instanceof TextEditorHighlightingPass text ? text.getDocument() : null;
       CharSequence docText = document == null ? "" : ": '" + StringUtil.first(document.getCharsSequence(), 10, true)+ "'";
       synchronized (PassExecutorService.class) {
-        String infos = StringUtil.join(info, Functions.TO_STRING(), " ");
         String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
                          + " " + (pass == null ? "" : pass + " ")
-                         + infos
+                         + StringUtil.join(info, Functions.TO_STRING(), " ")
                          + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
-                         + " " + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
-                         + docText;
+                         + (progressIndicator == null ? "" : progressIndicator.isCanceled() ? "X" : "V")
+                         + " " + docText;
         LOG.debug(message);
       }
     }
