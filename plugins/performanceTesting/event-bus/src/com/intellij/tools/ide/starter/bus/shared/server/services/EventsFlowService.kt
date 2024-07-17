@@ -49,13 +49,13 @@ class EventsFlowService {
 
   fun newSubscriber(subscriber: SubscriberDto) {
     synchronized(subscriber.eventName) {
-      LOG.debug("New subscriber $subscriber")
       eventsPerProcessLock.writeLock().withLock {
         eventsPerProcess
           .computeIfAbsent(subscriber.processId) { HashMap() }
           .computeIfAbsent(subscriber.eventName) { EventsWithTimeout(subscriber.timeoutMs, mutableListOf()) }
       }
     }
+    LOG.info("New subscriber $subscriber")
   }
 
   fun getEvents(processId: String): Map<String, MutableList<SharedEventDto>> {
