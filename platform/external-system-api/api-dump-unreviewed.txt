@@ -893,65 +893,34 @@ f:com.intellij.openapi.externalSystem.model.task.TaskData
 - setJvmTest(Z):V
 - setTest(Z):V
 - setType(java.lang.String):V
-c:com.intellij.openapi.externalSystem.model.task.event.BaseExternalSystemProgressEvent
+*c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
+- com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
+- <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.build.events.BuildEvent):V
+- getBuildEvent():com.intellij.build.events.BuildEvent
+c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent
 - com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
+- <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,com.intellij.openapi.externalSystem.model.task.event.OperationResult):V
+- getOperationResult():com.intellij.openapi.externalSystem.model.task.event.OperationResult
+c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEvent
+- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
+- <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,Z,java.lang.String,java.lang.String):V
+- getDescription():java.lang.String
+- getMessage():java.lang.String
+- isStdOut():Z
+c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
+- java.io.Serializable
 - <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor):V
 - getDescriptor():com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
 - getDisplayName():java.lang.String
 - getEventId():java.lang.String
 - getEventTime():J
 - getParentEventId():java.lang.String
-c:com.intellij.openapi.externalSystem.model.task.event.DefaultOperationResult
-- com.intellij.openapi.externalSystem.model.task.event.OperationResult
-- <init>(J,J):V
-- getEndTime():J
-- getStartTime():J
-*c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
-- com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-- <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.build.events.BuildEvent):V
-- getBuildEvent():com.intellij.build.events.BuildEvent
-com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent
+c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStartEvent
 - com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
-- a:getOperationResult():com.intellij.openapi.externalSystem.model.task.event.OperationResult
-c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEventImpl
-- com.intellij.openapi.externalSystem.model.task.event.BaseExternalSystemProgressEvent
-- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent
-- <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,com.intellij.openapi.externalSystem.model.task.event.OperationResult):V
-- getOperationResult():com.intellij.openapi.externalSystem.model.task.event.OperationResult
-com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEvent
-- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
-- getDescription():java.lang.String
-- getMessage():java.lang.String
-- isStdOut():Z
-c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEventImpl
-- com.intellij.openapi.externalSystem.model.task.event.BaseExternalSystemProgressEvent
-- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEvent
-- <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,java.lang.String):V
-- <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,Z,java.lang.String,java.lang.String):V
-- getDescription():java.lang.String
-- getMessage():java.lang.String
-- isStdOut():Z
-com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
-- java.io.Serializable
-- a:getDescriptor():com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
-- a:getDisplayName():java.lang.String
-- a:getEventId():java.lang.String
-- a:getEventTime():J
-- a:getParentEventId():java.lang.String
-com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStartEvent
-- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
-c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStartEventImpl
-- com.intellij.openapi.externalSystem.model.task.event.BaseExternalSystemProgressEvent
-- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStartEvent
 - <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor):V
-com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent
-- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemMessageEvent
-- a:getProgress():J
-- a:getTotal():J
-- a:getUnit():java.lang.String
-c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEventImpl
-- com.intellij.openapi.externalSystem.model.task.event.BaseExternalSystemProgressEvent
-- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent
+c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent
+- com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
 - <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,J,J,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor,J,J,java.lang.String,java.lang.String):V
 - getDescription():java.lang.String
@@ -962,60 +931,35 @@ c:com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecuti
 - com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 - <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent):V
 - getProgressEvent():com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent
-com.intellij.openapi.externalSystem.model.task.event.Failure
-- a:getCauses():java.util.List
-- a:getDescription():java.lang.String
-- a:getMessage():java.lang.String
-c:com.intellij.openapi.externalSystem.model.task.event.FailureImpl
-- com.intellij.openapi.externalSystem.model.task.event.Failure
+c:com.intellij.openapi.externalSystem.model.task.event.Failure
 - <init>(java.lang.String,java.lang.String,java.util.List):V
 - getCauses():java.util.List
 - getDescription():java.lang.String
 - getMessage():java.lang.String
-com.intellij.openapi.externalSystem.model.task.event.FailureResult
+c:com.intellij.openapi.externalSystem.model.task.event.FailureResult
 - com.intellij.openapi.externalSystem.model.task.event.OperationResult
-- a:getFailures():java.util.List
-c:com.intellij.openapi.externalSystem.model.task.event.FailureResultImpl
-- com.intellij.openapi.externalSystem.model.task.event.DefaultOperationResult
-- com.intellij.openapi.externalSystem.model.task.event.FailureResult
 - <init>(J,J,java.util.List):V
 - getFailures():java.util.List
-com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
-- java.io.Serializable
-- a:getDisplayName():java.lang.String
-- a:getEventTime():J
-- a:getHint():java.lang.String
-c:com.intellij.openapi.externalSystem.model.task.event.OperationDescriptorImpl
-- com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
+c:com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
 - <init>(java.lang.String,J):V
 - getDisplayName():java.lang.String
 - getEventTime():J
 - getHint():java.lang.String
 - setHint(java.lang.String):V
-com.intellij.openapi.externalSystem.model.task.event.OperationResult
+c:com.intellij.openapi.externalSystem.model.task.event.OperationResult
 - java.io.Serializable
-- a:getEndTime():J
-- a:getStartTime():J
-com.intellij.openapi.externalSystem.model.task.event.SkippedResult
-- com.intellij.openapi.externalSystem.model.task.event.OperationResult
-c:com.intellij.openapi.externalSystem.model.task.event.SkippedResultImpl
-- com.intellij.openapi.externalSystem.model.task.event.DefaultOperationResult
-- com.intellij.openapi.externalSystem.model.task.event.SkippedResult
 - <init>(J,J):V
-com.intellij.openapi.externalSystem.model.task.event.SuccessResult
+- getEndTime():J
+- getStartTime():J
+c:com.intellij.openapi.externalSystem.model.task.event.SkippedResult
 - com.intellij.openapi.externalSystem.model.task.event.OperationResult
-- a:isUpToDate():Z
-c:com.intellij.openapi.externalSystem.model.task.event.SuccessResultImpl
-- com.intellij.openapi.externalSystem.model.task.event.DefaultOperationResult
-- com.intellij.openapi.externalSystem.model.task.event.SuccessResult
+- <init>(J,J):V
+c:com.intellij.openapi.externalSystem.model.task.event.SuccessResult
+- com.intellij.openapi.externalSystem.model.task.event.OperationResult
 - <init>(J,J,Z):V
 - isUpToDate():Z
-com.intellij.openapi.externalSystem.model.task.event.TaskOperationDescriptor
+c:com.intellij.openapi.externalSystem.model.task.event.TaskOperationDescriptor
 - com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
-- a:getTaskName():java.lang.String
-c:com.intellij.openapi.externalSystem.model.task.event.TaskOperationDescriptorImpl
-- com.intellij.openapi.externalSystem.model.task.event.OperationDescriptorImpl
-- com.intellij.openapi.externalSystem.model.task.event.TaskOperationDescriptor
 - <init>(java.lang.String,J,java.lang.String):V
 - getTaskName():java.lang.String
 c:com.intellij.openapi.externalSystem.model.task.event.TestAssertionFailure
@@ -1027,19 +971,13 @@ c:com.intellij.openapi.externalSystem.model.task.event.TestAssertionFailure
 - getExpectedFile():java.lang.String
 - getExpectedText():java.lang.String
 c:com.intellij.openapi.externalSystem.model.task.event.TestFailure
-- com.intellij.openapi.externalSystem.model.task.event.FailureImpl
+- com.intellij.openapi.externalSystem.model.task.event.Failure
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List,Z):V
 - getExceptionName():java.lang.String
 - getStackTrace():java.lang.String
 - isTestError():Z
-com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
+c:com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 - com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
-- a:getClassName():java.lang.String
-- a:getMethodName():java.lang.String
-- a:getSuiteName():java.lang.String
-c:com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptorImpl
-- com.intellij.openapi.externalSystem.model.task.event.OperationDescriptorImpl
-- com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 - <init>(java.lang.String,J,java.lang.String,java.lang.String,java.lang.String):V
 - getClassName():java.lang.String
 - getMethodName():java.lang.String

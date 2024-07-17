@@ -19,16 +19,37 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  */
-public interface Failure {
+public class Failure implements Serializable {
 
-  @Nullable @Nls String getMessage();
+  private final @Nullable @Nls String myMessage;
+  private final @Nullable @Nls String myDescription;
+  private final @NotNull List<? extends Failure> myCauses;
 
-  @Nullable @Nls String getDescription();
+  public Failure(
+    @Nullable @Nls String message,
+    @Nullable @Nls String description,
+    @NotNull List<? extends Failure> causes
+  ) {
+    myMessage = message;
+    myDescription = description;
+    myCauses = causes;
+  }
 
-  @NotNull List<? extends Failure> getCauses();
+  public @Nullable @Nls String getMessage() {
+    return myMessage;
+  }
+
+  public @Nullable @Nls String getDescription() {
+    return myDescription;
+  }
+
+  public @NotNull List<? extends Failure> getCauses() {
+    return myCauses;
+  }
 }

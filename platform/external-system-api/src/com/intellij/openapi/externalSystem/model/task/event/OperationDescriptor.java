@@ -16,16 +16,37 @@
 package com.intellij.openapi.externalSystem.model.task.event;
 
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
  */
-public interface OperationDescriptor extends Serializable {
-  long getEventTime();
+public class OperationDescriptor implements Serializable {
 
-  @Nls String getDisplayName();
+  private final long myEventTime;
+  private final @Nls String myDisplayName;
+  private @Nullable @Nls String myHint;
 
-  @Nls String getHint();
+  public OperationDescriptor(@Nls String displayName, long eventTime) {
+    myDisplayName = displayName;
+    myEventTime = eventTime;
+  }
+
+  public long getEventTime() {
+    return myEventTime;
+  }
+
+  public @Nls String getDisplayName() {
+    return myDisplayName;
+  }
+
+  public @Nullable @Nls String getHint() {
+    return myHint;
+  }
+
+  public void setHint(@Nullable @Nls String hint) {
+    myHint = hint;
+  }
 }

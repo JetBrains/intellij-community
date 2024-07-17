@@ -126,12 +126,12 @@ internal class GradleFileComparisonEventPatcher {
           xmlFailure.expectedFile,
           xmlFailure.actualFile
         )
-        val failureResult = FailureResultImpl(
+        val failureResult = FailureResult(
           tapiOperationResult.startTime,
           tapiOperationResult.endTime,
           listOf(failure)
         )
-        return ExternalSystemFinishEventImpl<TestOperationDescriptor>(
+        return ExternalSystemFinishEvent<TestOperationDescriptor>(
           tapiEvent.eventId,
           tapiEvent.parentEventId,
           tapiEvent.descriptor,

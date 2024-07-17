@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
-import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptorImpl
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -102,7 +101,7 @@ class GradleExecutionOutputFixture(
     val descriptor = executionEvent.progressEvent.descriptor as? TestOperationDescriptor ?: return null
     val className = descriptor.className ?: ""
     val methodName = descriptor.methodName?.removeSuffix("()") ?: ""
-    return TestOperationDescriptorImpl("", -1, "", className, methodName)
+    return TestOperationDescriptor("", -1, "", className, methodName)
   }
 
   private fun extractTestOperationDescriptors(text: String): List<TestOperationDescriptor> {
@@ -124,7 +123,7 @@ class GradleExecutionOutputFixture(
                        ?.let { StringUtil.substringBefore(it, "' displayName='") }
                        ?.removeSuffix("()")
                      ?: return null
-    return TestOperationDescriptorImpl("", -1, "", className, methodName)
+    return TestOperationDescriptor("", -1, "", className, methodName)
   }
 
   private class Output {

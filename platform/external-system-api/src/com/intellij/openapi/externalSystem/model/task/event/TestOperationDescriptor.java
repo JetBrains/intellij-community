@@ -15,19 +15,41 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public interface TestOperationDescriptor extends OperationDescriptor {
+public class TestOperationDescriptor extends OperationDescriptor {
+
+  private final String mySuiteName;
+  private final String myClassName;
+  private final String myMethodName;
+
+  public TestOperationDescriptor(@Nls String displayName,
+                                     long eventTime,
+                                     String suiteName,
+                                     String className,
+                                     String methodName) {
+    super(displayName, eventTime);
+    mySuiteName = suiteName;
+    myClassName = className;
+    myMethodName = methodName;
+  }
 
   @Nullable
-  String getSuiteName();
+  public String getSuiteName() {
+    return mySuiteName;
+  }
 
   @Nullable
-  String getClassName();
+  public String getClassName() {
+    return myClassName;
+  }
 
   @Nullable
-  String getMethodName();
+  public String getMethodName() {
+    return myMethodName;
+  }
 }

@@ -15,30 +15,65 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
- * An event that informs about an interim results of the operation.
+ * An event that informs about an interim result of the operation.
  *
  * @author Vladislav.Soroka
  */
-public interface ExternalSystemStatusEvent<T extends OperationDescriptor> extends ExternalSystemMessageEvent<T> {
+public class ExternalSystemStatusEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
+
+  private final long myTotal;
+  private final long myProgress;
+  private final String myUnit;
+  @Nullable
+  private final String myDescription;
+
+  public ExternalSystemStatusEvent(@NotNull String eventId, @Nullable String parentEventId, @NotNull T descriptor,
+                                   long total, long progress, String unit) {
+    this(eventId, parentEventId, descriptor, total, progress, unit, null);
+  }
+
+  public ExternalSystemStatusEvent(@NotNull String eventId, @Nullable String parentEventId, @NotNull T descriptor,
+                                   long total, long progress, String unit, @Nullable String description) {
+    super(eventId, parentEventId, descriptor);
+    myTotal = total;
+    myProgress = progress;
+    myUnit = unit;
+    myDescription = description;
+  }
+
   /**
    * The amount of work already performed by the build operation.
    *
    * @return The amount of performed work
    */
-  long getProgress();
+  public long getProgress() {
+    return myProgress;
+  }
 
   /**
    * The total amount of work that the build operation is in the progress of performing, or -1 if not known.
    *
    * @return The total amount of work, or -1 if not known.
    */
-  long getTotal();
+  public long getTotal() {
+    return myTotal;
+  }
 
   /**
    * The measure used to express the amount of work.
    *
    * @return The measure used to express the amount of work.
    */
-  String getUnit();
+  public String getUnit() {
+    return myUnit;
+  }
+
+  @Nullable
+  public String getDescription() {
+    return myDescription;
+  }
 }

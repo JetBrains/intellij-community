@@ -15,9 +15,26 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Vladislav.Soroka
  */
-public interface ExternalSystemFinishEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
-  OperationResult getOperationResult();
+public class ExternalSystemFinishEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
+
+  @NotNull
+  private final OperationResult myResult;
+
+  public ExternalSystemFinishEvent(@NotNull String eventId,
+                                   @Nullable String parentEventId,
+                                   @NotNull T descriptor,
+                                   @NotNull OperationResult result) {
+    super(eventId, parentEventId, descriptor);
+    myResult = result;
+  }
+
+  public OperationResult getOperationResult() {
+    return myResult;
+  }
 }

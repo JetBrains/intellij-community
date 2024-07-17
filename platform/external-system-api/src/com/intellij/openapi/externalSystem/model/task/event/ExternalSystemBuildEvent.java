@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Experimental
 public class ExternalSystemBuildEvent extends ExternalSystemTaskNotificationEvent {
-  private static final long serialVersionUID = 1L;
 
   @NotNull private final BuildEvent myBuildEvent;
 

@@ -23,17 +23,43 @@ import java.io.Serializable;
 /**
  * @author Vladislav.Soroka
  */
-public interface ExternalSystemProgressEvent<T extends OperationDescriptor> extends Serializable {
+public class ExternalSystemProgressEvent<T extends OperationDescriptor> implements Serializable {
+
+  private static final long serialVersionUID = 1L;
+
+  @NotNull private final String myEventId;
+  @NotNull private final T myDescriptor;
+  @Nullable private final String myParentEventId;
+
+  public ExternalSystemProgressEvent(@NotNull String eventId,
+                                     @Nullable String parentEventId,
+                                     @NotNull T descriptor) {
+    myEventId = eventId;
+    myDescriptor = descriptor;
+    myParentEventId = parentEventId;
+  }
+
   @NotNull
-  String getEventId();
+  public String getEventId() {
+    return myEventId;
+  }
+
   @Nullable
-  String getParentEventId();
+  public String getParentEventId() {
+    return myParentEventId;
+  }
 
   @NotNull
-  String getDisplayName();
-
-  long getEventTime();
+  public T getDescriptor() {
+    return myDescriptor;
+  }
 
   @NotNull
-  T getDescriptor();
+  public String getDisplayName() {
+    return myDescriptor.getDisplayName();
+  }
+
+  public long getEventTime() {
+    return myDescriptor.getEventTime();
+  }
 }

@@ -15,8 +15,14 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Vladislav.Soroka
  */
-public interface ExternalSystemStartEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
+public class ExternalSystemStartEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
+  public ExternalSystemStartEvent(@NotNull String eventId, @Nullable String parentEventId, @NotNull T descriptor) {
+    super(eventId, parentEventId, descriptor);
+  }
 }

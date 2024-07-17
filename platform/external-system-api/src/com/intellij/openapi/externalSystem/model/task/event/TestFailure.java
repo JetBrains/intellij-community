@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class TestFailure extends FailureImpl {
+public class TestFailure extends Failure {
 
   private final @Nullable String exceptionName;
   private final @Nullable String stackTrace;

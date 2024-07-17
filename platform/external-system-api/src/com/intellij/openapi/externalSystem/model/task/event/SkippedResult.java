@@ -18,5 +18,9 @@ package com.intellij.openapi.externalSystem.model.task.event;
 /**
  * @author Vladislav.Soroka
  */
-public interface SkippedResult extends OperationResult {
+public class SkippedResult extends OperationResult {
+
+  public SkippedResult(long startTime, long endTime) {
+    super(startTime, endTime);
+  }
 }

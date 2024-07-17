@@ -20,6 +20,16 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public interface FailureResult extends OperationResult {
-  List<? extends Failure> getFailures();
+public class FailureResult extends OperationResult {
+
+  private final List<? extends Failure> myFailures;
+
+  public FailureResult(long startTime, long endTime, List<? extends Failure> failures) {
+    super(startTime, endTime);
+    myFailures = failures;
+  }
+
+  public List<? extends Failure> getFailures() {
+    return myFailures;
+  }
 }

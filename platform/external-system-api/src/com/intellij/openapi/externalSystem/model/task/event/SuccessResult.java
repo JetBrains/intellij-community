@@ -18,6 +18,16 @@ package com.intellij.openapi.externalSystem.model.task.event;
 /**
  * @author Vladislav.Soroka
  */
-public interface SuccessResult extends OperationResult {
-  boolean isUpToDate();
+public class SuccessResult extends OperationResult {
+
+  private final boolean myUpToDate;
+
+  public SuccessResult(long startTime, long endTime, boolean isUpToDate) {
+    super(startTime, endTime);
+    myUpToDate = isUpToDate;
+  }
+
+  public boolean isUpToDate() {
+    return myUpToDate;
+  }
 }
