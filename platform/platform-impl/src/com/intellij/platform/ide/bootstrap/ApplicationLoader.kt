@@ -23,7 +23,6 @@ import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
 import com.intellij.idea.IdeStarter
-import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.*
@@ -52,7 +51,6 @@ import com.intellij.platform.ide.ideFingerprint
 import com.intellij.platform.settings.SettingsController
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.ArrayUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
@@ -196,20 +194,8 @@ internal suspend fun loadApp(
 
       if (!app.isHeadlessEnvironment) {
         cssInit?.join()
-        val languageOkPressed = languageAndRegionTaskDeferred?.await()?.invoke()
-        euaTaskDeferred?.await()?.let {
-          it()
-          if (languageOkPressed == true) {
-            val localizationStateService = LocalizationStateService.getInstance() ?: return@launch
-            if (localizationStateService.getLastSelectedLocale() != localizationStateService.getSelectedLocale()) {
-              preloadJob.cancel()
-              applicationStarter.cancel()
-              ConfigImportHelper.writeOptionsForRestartIfNeeded(logDeferred.await())
-              logDeferred.await().info("Running application restart")
-              app.restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, ArrayUtilRt.EMPTY_STRING_ARRAY)
-            }
-          }
-        }
+        languageAndRegionTaskDeferred?.join()
+        euaTaskDeferred?.join()
       }
 
       preloadJob.join()

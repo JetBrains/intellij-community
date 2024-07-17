@@ -137,7 +137,7 @@ open class AbstractBundle {
   @ApiStatus.Internal
   fun getResourceBundle(classLoader: ClassLoader): ResourceBundle {
     val isDefault = DefaultBundleService.isDefaultBundle()
-    var bundle = getBundle(isDefault)
+    var bundle = getBundle(isDefault, classLoader)
     if (bundle == null) {
       bundle = resolveResourceBundleWithFallback(loader = classLoader, pathToBundle = pathToBundle) {
         findBundle(pathToBundle = pathToBundle, loader = classLoader, control = IntelliJResourceControl)
@@ -154,7 +154,7 @@ open class AbstractBundle {
   }
 
   @ApiStatus.Internal
-  protected open fun getBundle(isDefault: Boolean): ResourceBundle? = (if (isDefault) defaultBundle else bundle)?.get()
+  protected open fun getBundle(isDefault: Boolean, classLoader: ClassLoader): ResourceBundle? = (if (isDefault) defaultBundle else bundle)?.get()
 
   protected open fun findBundle(pathToBundle: @NonNls String, loader: ClassLoader, control: ResourceBundle.Control): ResourceBundle {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control)

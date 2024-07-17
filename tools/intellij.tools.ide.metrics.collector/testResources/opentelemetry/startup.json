@@ -6689,21 +6689,6 @@
         },
         {
           "traceID": "0197cfe71eb229985a55f08911b18168",
-          "spanID": "91024e7b12226e40",
-          "operationName": "com.intellij.ide.LanguageBundleListener: scheduled",
-          "processID": "p1",
-          "startTimeNano": 1699257575731665,
-          "durationNano": 45000,
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "0197cfe71eb229985a55f08911b18168",
-              "spanID": "91024e7b4e5832f9"
-            }
-          ]
-        },
-        {
-          "traceID": "0197cfe71eb229985a55f08911b18168",
           "spanID": "91024e7b409a4b63",
           "operationName": "com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator: scheduled",
           "processID": "p1",
@@ -6754,21 +6739,6 @@
           "processID": "p1",
           "startTimeNano": 1699257575731704,
           "durationNano": 834000,
-          "references": [
-            {
-              "refType": "CHILD_OF",
-              "traceID": "0197cfe71eb229985a55f08911b18168",
-              "spanID": "91024e7b4e5832f9"
-            }
-          ]
-        },
-        {
-          "traceID": "0197cfe71eb229985a55f08911b18168",
-          "spanID": "91024e7b04fbc779",
-          "operationName": "com.intellij.ide.LanguageBundleListener",
-          "processID": "p1",
-          "startTimeNano": 1699257575731711,
-          "durationNano": 442000,
           "references": [
             {
               "refType": "CHILD_OF",

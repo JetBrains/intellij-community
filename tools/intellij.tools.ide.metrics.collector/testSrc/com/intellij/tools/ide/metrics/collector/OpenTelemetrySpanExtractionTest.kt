@@ -23,7 +23,7 @@ class OpenTelemetrySpanExtractionTest {
   fun startupMetricsCollected() {
     val file = (openTelemetryReports / "startup.json")
     val result = getMetricsForStartup(file)
-    result.shouldHaveSize(560)
+    result.shouldHaveSize(557)
     result.shouldContain(Metric.newDuration("bootstrap", 58))
     result.shouldContain(Metric.newDuration("startApplication", 3035))
     result.shouldContain(Metric.newDuration("status bar pre-init", 136))

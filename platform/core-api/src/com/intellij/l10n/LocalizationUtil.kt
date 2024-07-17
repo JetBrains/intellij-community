@@ -17,8 +17,6 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
 object LocalizationUtil {
-  @Volatile
-  private var isL10nInitialized: Boolean = false
   private const val LOCALIZATION_FOLDER_NAME: String = "localization"
   @Internal
   const val LOCALIZATION_KEY: String = "i18n.locale"
@@ -166,17 +164,6 @@ object LocalizationUtil {
       path.convertPathToLocaleSuffixUsage(locale, false))
       .map { FileUtil.toSystemIndependentName(it.toString()) }
   }
-
-  @Internal
-  fun setLocalizationInitialized() {
-    isL10nInitialized = true
-  }
-
-  @Internal
-  fun isLocalizationInitialized(): Boolean {
-    return isL10nInitialized
-  }
-
 
   @Internal
   @JvmOverloads
