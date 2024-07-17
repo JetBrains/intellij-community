@@ -138,6 +138,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("../../../idea/tests/testData/hierarchy/class/type", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTypeClassHierarchyTest")
             model("../../../idea/tests/testData/hierarchy/class/super", pattern = DIRECTORY, isRecursive = false, testMethodName = "doSuperClassHierarchyTest")
             model("../../../idea/tests/testData/hierarchy/class/sub", pattern = DIRECTORY, isRecursive = false, testMethodName = "doSubClassHierarchyTest")
+            model("../../../idea/tests/testData/hierarchy/overrides", pattern = DIRECTORY, isRecursive = false, testMethodName = "doOverrideHierarchyTest")
         }
 
         testClass<AbstractKotlinFirJoinLinesTest> {

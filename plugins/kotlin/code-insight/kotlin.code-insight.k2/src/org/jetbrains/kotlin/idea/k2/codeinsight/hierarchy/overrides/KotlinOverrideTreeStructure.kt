@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.hierarchy.overrides
+package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.overrides
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
@@ -26,10 +26,7 @@ class KotlinOverrideTreeStructure(project: Project, declaration: KtCallableDecla
         val psiElement = nodeDescriptor.psiElement ?: return ArrayUtil.EMPTY_OBJECT_ARRAY
         val subclasses = KotlinFindUsagesSupport.searchInheritors(psiElement, psiElement.useScope(), false).toList()
         return subclasses.mapNotNull {
-            val subclass = it.unwrapped ?: return@mapNotNull null
-            KotlinOverrideHierarchyNodeDescriptor(nodeDescriptor, subclass, baseElement)
-        }
-            .filter { it.calculateState() != AllIcons.Hierarchy.MethodNotDefined }
-            .toTypedArray()
+            it.unwrapped?.let { subclass -> KotlinOverrideHierarchyNodeDescriptor(nodeDescriptor, subclass, baseElement) }
+        }.filter { it.calculateState() != AllIcons.Hierarchy.MethodNotDefined }.toTypedArray()
     }
 }

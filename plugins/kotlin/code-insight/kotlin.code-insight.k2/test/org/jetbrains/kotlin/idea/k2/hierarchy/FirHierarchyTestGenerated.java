@@ -552,4 +552,53 @@ public abstract class FirHierarchyTestGenerated extends AbstractFirHierarchyTest
             runTest("../../idea/tests/testData/hierarchy/class/sub/TypeAlias/");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/hierarchy/overrides")
+    public static class Overrides extends AbstractFirHierarchyTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doOverrideHierarchyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("kotlinBuiltInMemberFunction")
+        public void testKotlinBuiltInMemberFunction() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinBuiltInMemberFunction/");
+        }
+
+        @TestMetadata("kotlinFunctionInClass")
+        public void testKotlinFunctionInClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinFunctionInClass/");
+        }
+
+        @TestMetadata("kotlinFunctionInInterface")
+        public void testKotlinFunctionInInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinFunctionInInterface/");
+        }
+
+        @TestMetadata("kotlinPropertyInClass")
+        public void testKotlinPropertyInClass() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinPropertyInClass/");
+        }
+
+        @TestMetadata("kotlinPropertyInInterface")
+        public void testKotlinPropertyInInterface() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinPropertyInInterface/");
+        }
+
+        @TestMetadata("kotlinTopLevelFunction")
+        public void testKotlinTopLevelFunction() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinTopLevelFunction/");
+        }
+
+        @TestMetadata("kotlinVarParameter")
+        public void testKotlinVarParameter() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/overrides/kotlinVarParameter/");
+        }
+    }
 }

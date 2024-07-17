@@ -6,6 +6,7 @@ import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx
 import com.intellij.ide.hierarchy.HierarchyProvider
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.ide.hierarchy.LanguageCallHierarchy
+import com.intellij.ide.hierarchy.LanguageMethodHierarchy
 import com.intellij.ide.hierarchy.LanguageTypeHierarchy
 import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure
@@ -25,12 +26,14 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinHierarchyViewTestBase
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCalleeTreeStructure
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.calls.KotlinCallerTreeStructure
+import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.overrides.KotlinOverrideTreeStructure
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinSubtypesHierarchyTreeStructure
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinSupertypesHierarchyTreeStructure
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinTypeHierarchyTreeStructure
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.createTextEditorBasedDataContext
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
@@ -92,6 +95,13 @@ abstract class AbstractFirHierarchyTest : KotlinHierarchyViewTestBase() {
             project,
             getElementAtCaret(LanguageTypeHierarchy.INSTANCE) as KtClassOrObject,
             HierarchyBrowserBaseEx.SCOPE_PROJECT
+        )
+    }
+
+    protected fun doOverrideHierarchyTest(folderName: String) = doHierarchyTest(folderName) {
+        KotlinOverrideTreeStructure(
+            project,
+            (getElementAtCaret(LanguageMethodHierarchy.INSTANCE) as KtCallableDeclaration)
         )
     }
 
