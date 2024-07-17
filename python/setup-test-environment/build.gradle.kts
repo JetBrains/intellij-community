@@ -75,12 +75,11 @@ tasks.register("build") {
 }
 
 fun createPython(
-  id: String, version: String?, packages: List<String> = listOf(),
+  id: String, version: String, packages: List<String> = listOf(),
   tags: List<String> = listOf(), type: PythonType = PythonType.PYTHON,
 ) {
-  check(version != null)
-
   val pythonHome = File(pythonsDirectory, id)
+  val packages = packages + listOf("virtualenv")
 
   envs {
     when (type) {
