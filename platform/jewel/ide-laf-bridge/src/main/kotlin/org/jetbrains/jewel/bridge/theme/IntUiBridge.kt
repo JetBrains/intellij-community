@@ -737,7 +737,7 @@ private fun readMenuStyle(): MenuStyle {
                 contentPadding = PaddingValues(horizontal = 0.dp, vertical = 6.dp),
                 offset = DpOffset(0.dp, 2.dp),
                 shadowSize = 12.dp,
-                borderWidth = retrieveIntAsDpOrUnspecified("Popup.borderWidth").takeOrElse { 2.dp },
+                borderWidth = retrieveIntAsDpOrUnspecified("Popup.borderWidth").takeOrElse { 1.dp },
                 itemMetrics =
                     MenuItemMetrics(
                         selectionCornerSize = CornerSize(JBUI.CurrentTheme.PopupMenu.Selection.ARC.dp / 2),
