@@ -2997,8 +2997,7 @@ f:com.intellij.util.SingleAlarm
 - f:isEmpty():Z
 - f:request():V
 - f:request(Z):V
-- f:request(Z,I):V
-- bs:request$default(com.intellij.util.SingleAlarm,Z,I,I,java.lang.Object):V
+- f:requestWithCustomDelay(I):V
 - sf:singleAlarm(I,kotlinx.coroutines.CoroutineScope,java.lang.Runnable):com.intellij.util.SingleAlarm
 - f:waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
 f:com.intellij.util.SingleAlarm$Companion

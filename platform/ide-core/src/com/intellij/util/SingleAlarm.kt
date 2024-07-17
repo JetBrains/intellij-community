@@ -142,6 +142,7 @@ class SingleAlarm @Internal constructor(
       // maybe not defined in tests
       context += getEdtDispatcher() + modalityState.asContextElement()
     }
+
     // todo fix clients and remove NonCancellable
     taskContext = context + NonCancellable
 
@@ -261,7 +262,7 @@ class SingleAlarm @Internal constructor(
     assert(ApplicationManager.getApplication().isUnitTestMode)
 
     val currentJob = currentJob ?: return
-    @Suppress("RAW_RUN_BLOCKING")
+    @Suppress("RAW_RUN_BLOCKING", "RedundantSuppression")
     runBlocking {
       try {
         withTimeout(timeUnit.toMillis(timeout)) {
@@ -275,8 +276,19 @@ class SingleAlarm @Internal constructor(
     }
   }
 
-  @JvmOverloads
-  fun request(forceRun: Boolean = false, delay: Int = this@SingleAlarm.delay) {
+  fun request() {
+    request(forceRun = false, delay = delay)
+  }
+
+  fun request(forceRun: Boolean) {
+    request(forceRun = forceRun, delay = delay)
+  }
+
+  fun requestWithCustomDelay(delay: Int) {
+    request(forceRun = false, delay = delay)
+  }
+
+  private fun request(forceRun: Boolean, delay: Int) {
     val effectiveDelay = if (forceRun) 0 else delay.toLong()
     synchronized(LOCK) {
       if (currentJob != null) {
@@ -325,7 +337,7 @@ class SingleAlarm @Internal constructor(
   @JvmOverloads
   fun cancelAndRequest(forceRun: Boolean = false) {
     cancel()
-    request(forceRun = forceRun)
+    request(forceRun = forceRun, delay = delay)
   }
 
   @Deprecated("Use cancel")
