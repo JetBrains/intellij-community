@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
+import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.PositionTracker
 import org.jetbrains.annotations.Nls
@@ -76,7 +77,10 @@ class GotItTooltip internal constructor(@NonNls val id: String,
 
   // Ease the access (remove private or val to var) if fine-tuning is needed.
   private val savedCount: (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
-  var showCondition: (String) -> Boolean = { savedCount(it) in 0 until maxCount }
+  var showCondition: (String) -> Boolean = {
+    !SystemProperties.getBooleanProperty("ide.integration.test.disable.got.it.tooltips", false) &&
+    savedCount(it) in 0 until maxCount
+  }
 
   private val gotIt: (String) -> Unit = {
     val count = savedCount(it)
