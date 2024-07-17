@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
@@ -121,17 +123,26 @@ public final class StartupErrorReporter {
     catch (Throwable ignore) { }
 
     try {
-      var options = new String[]{
+      var iconUrl = StartupErrorReporter.class.getResource("/images/questionSign.png");
+      var learnMore = iconUrl != null ? new JLabel(new ImageIcon(iconUrl)) : new JLabel("?");
+      learnMore.setToolTipText(BootstrapBundle.message("bootstrap.error.option.support"));
+      learnMore.setCursor(new Cursor(Cursor.HAND_CURSOR));
+      learnMore.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          supportCenter();
+        }
+      });
+      var options = new Object[]{
         BootstrapBundle.message("bootstrap.error.option.close"),
         BootstrapBundle.message("bootstrap.error.option.reset"),
         BootstrapBundle.message("bootstrap.error.option.report"),
-        BootstrapBundle.message("bootstrap.error.option.support")
+        learnMore
       };
       var choice = JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), prepareMessage(message), title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]);
       switch (choice) {
         case 1 -> cleanStart();
         case 2 -> reportProblem(title, message);
-        case 3 -> supportCenter();
       }
     }
     catch (Throwable t) {
