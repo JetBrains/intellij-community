@@ -21253,9 +21253,9 @@ a:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloaderBase
 - pa:getFeedUrl():java.lang.String
 f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListParser
 - sf:INSTANCE:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListParser
-- f:parseJdkItem(com.fasterxml.jackson.databind.node.ObjectNode,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate):java.util.List
-- f:parseJdkList(com.fasterxml.jackson.databind.node.ObjectNode,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate):java.util.List
-- f:readTree(B[]):com.fasterxml.jackson.databind.node.ObjectNode
+- f:parseJdkItem(kotlinx.serialization.json.JsonObject,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate):java.util.List
+- f:parseJdkList(kotlinx.serialization.json.JsonObject,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate):java.util.List
+- f:readTree(java.lang.String):kotlinx.serialization.json.JsonObject
 e:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPackageType
 - java.lang.Enum
 - sf:Companion:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPackageType$Companion
@@ -21285,9 +21285,9 @@ f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 - bs:copy$default(com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate,com.intellij.openapi.util.BuildNumber,java.util.Set,I,java.lang.Object):com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 - equals(java.lang.Object):Z
 - hashCode():I
-- f:testJdkPackage(com.fasterxml.jackson.databind.node.ObjectNode):Z
-- f:testJdkProduct(com.fasterxml.jackson.databind.node.ObjectNode):Z
-- f:testPredicate(com.fasterxml.jackson.databind.JsonNode):java.lang.Boolean
+- f:testJdkPackage(kotlinx.serialization.json.JsonObject):Z
+- f:testJdkProduct(kotlinx.serialization.json.JsonObject):Z
+- f:testPredicate(kotlinx.serialization.json.JsonElement):java.lang.Boolean
 f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate$Companion
 - f:default():com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 - f:forCurrentProcess():com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
