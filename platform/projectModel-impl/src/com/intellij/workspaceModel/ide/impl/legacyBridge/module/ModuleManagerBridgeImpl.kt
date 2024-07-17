@@ -55,6 +55,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 
 private val loadAllModulesTimeMs = MillisecondsMeasurer()
@@ -82,7 +83,7 @@ internal class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
 abstract class ModuleManagerBridgeImpl(private val project: Project,
                                        private val coroutineScope: CoroutineScope,
                                        moduleRootListenerBridge: ModuleRootListenerBridge) : ModuleManagerEx(), Disposable {
-  private val moduleNameToUnloadedModuleDescription: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
+  private val moduleNameToUnloadedModuleDescription: MutableMap<String, UnloadedModuleDescription> = ConcurrentHashMap()
 
   private val moduleNamesQuery = entities<ModuleEntity>().map { it.name }
 
