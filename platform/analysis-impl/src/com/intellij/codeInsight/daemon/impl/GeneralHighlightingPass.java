@@ -43,7 +43,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
-public /*sealed */class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware
+  permits ChameleonSyntaxHighlightingPass, NasueousGeneralHighlightingPass {
   static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
