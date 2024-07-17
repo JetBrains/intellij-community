@@ -161,7 +161,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
         delay(serviceAsync<RegistryManager>().intValue("ide.tooltip.autoDismissDeadZone").milliseconds)
 
         withContext(Dispatchers.EDT) {
-          hideCurrentNow(animationEnabled = animationEnabled)
+          hideCurrentNow(animationEnabled)
         }
       }
     }
@@ -183,9 +183,8 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     fun getInstance(): IdeTooltipManager = service()
 
     @JvmStatic
-    fun initPane(text: @NlsContexts.Tooltip String?, hintHint: HintHint, layeredPane: JLayeredPane?): JEditorPane {
-      return initPane(html = Html(text), hintHint = hintHint, layeredPane = layeredPane, limitWidthToScreen = true)
-    }
+    fun initPane(text: @NlsContexts.Tooltip String?, hintHint: HintHint, layeredPane: JLayeredPane?): JEditorPane =
+      initPane(Html(text), hintHint, layeredPane, limitWidthToScreen = true)
 
     @JvmStatic
     fun initPane(
@@ -201,13 +200,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
 
       val prefSizeWasComputed = Ref(false)
       val pane = if (limitWidthToScreen) {
-        LimitedWidthJBHtmlPane(
-          styleConfiguration = styleConfiguration,
-          paneConfiguration = paneConfiguration,
-          prefSizeWasComputed = prefSizeWasComputed,
-          hintHint = hintHint,
-          layeredPane = layeredPane,
-        )
+        LimitedWidthJBHtmlPane(styleConfiguration, paneConfiguration, prefSizeWasComputed, hintHint, layeredPane)
       }
       else {
         JBHtmlPane(styleConfiguration, paneConfiguration)
@@ -267,18 +260,17 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
 
   private fun doShowNow(tooltip: IdeTooltip, animationEnabled: Boolean) {
     if (queuedComponent !== tooltip.component || !tooltip.component.isShowing) {
-      hideCurrent(mouseEvent = null, tooltipToShow = tooltip, action = null, event = null, animationEnabled = animationEnabled)
+      hideCurrent(mouseEvent = null, tooltip, action = null, event = null, animationEnabled)
       return
     }
 
     if (tooltip.beforeShow()) {
-      doShow(tooltip = tooltip, animationEnabled = animationEnabled)
+      doShow(tooltip = tooltip, animationEnabled)
     }
     else {
-      hideCurrent(mouseEvent = null, tooltipToShow = tooltip, action = null, event = null, animationEnabled = animationEnabled)
+      hideCurrent(mouseEvent = null, tooltip, action = null, event = null, animationEnabled)
     }
   }
-
 
   internal fun eventDispatched(event: MouseEvent) {
     processingComponent = event.component
@@ -299,14 +291,14 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
           }
           var canShow = true
           if (componentContextHasChanged(processingComponent)) {
-            canShow = hideCurrent(mouseEvent = event, tooltipToShow = null, action = null)
+            canShow = hideCurrent(event, tooltipToShow = null, action = null)
           }
           if (canShow) {
             maybeShowFor(processingComponent, event)
           }
         }
         MouseEvent.MOUSE_EXITED -> {
-          // we hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
+          // we hide the tooltip (but not the hint!) when it's shown over myComponent and the mouse exits this component
           if (processingComponent === currentComponent && currentTooltip != null && !currentTooltip!!.isHint && balloon != null) {
             balloon!!.setAnimationEnabled(false)
             hideCurrent(mouseEvent = null, tooltipToShow = null, action = null, event = null, animationEnabled = false)
@@ -315,10 +307,10 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
             if (isWaylandToolkit()) {
               // The mouse pointer has left the tooltip's "parent" component. Don't immediately
               // cancel the popup, wait a moment to see if the mouse entered the popup itself.
-              alarm.addRequest(request = { hideCurrent(mouseEvent = event) }, delayMillis = 200)
+              alarm.addRequest(request = { hideCurrent(event) }, delayMillis = 200)
             }
             else {
-              hideCurrent(mouseEvent = event, tooltipToShow = null, action = null)
+              hideCurrent(event, tooltipToShow = null, action = null)
             }
           }
         }
@@ -333,8 +325,8 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
               if (processingComponent is JComponent &&
                   !isTooltipDefined(processingComponent as JComponent, event) &&
                   (queuedTooltip == null || !queuedTooltip!!.isHint)) {
-                // there is no tooltip or hint here, let's proceed it as MOUSE_EXITED
-                hideCurrent(mouseEvent = event, tooltipToShow = null, action = null)
+                // there is no tooltip or hint here, let's process it as `MOUSE_EXITED`
+                hideCurrent(event, tooltipToShow = null, action = null)
               }
               else {
                 maybeShowFor(processingComponent, event)
@@ -355,7 +347,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
           }
         }
         MouseEvent.MOUSE_DRAGGED -> {
-          hideCurrent(mouseEvent = event, tooltipToShow = null, action = null)
+          hideCurrent(event, tooltipToShow = null, action = null)
         }
       }
     }
@@ -433,9 +425,8 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     )
   }
 
-  private fun isTooltipDefined(component: JComponent, event: MouseEvent): Boolean {
-    return !component.getToolTipText(event).isNullOrEmpty() || getCustomTooltip(component) != null
-  }
+  private fun isTooltipDefined(component: JComponent, event: MouseEvent): Boolean =
+    !component.getToolTipText(event).isNullOrEmpty() || getCustomTooltip(component) != null
 
   private fun showTooltipForEvent(
     c: JComponent,
@@ -507,13 +498,12 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
    */
   @ApiStatus.Experimental
   @Contract(value = "null -> false", pure = true)
-  fun isProcessing(tooltipOwner: Component?): Boolean {
-    return tooltipOwner != null &&
-           (tooltipOwner === currentComponent || tooltipOwner === queuedComponent || tooltipOwner === processingComponent)
-  }
+  fun isProcessing(tooltipOwner: Component?): Boolean =
+    tooltipOwner != null &&
+    (tooltipOwner === currentComponent || tooltipOwner === queuedComponent || tooltipOwner === processingComponent)
 
   /**
-   * Updates shown tooltip pop-up in current position with actual tooltip text if it is already visible.
+   * Updates the shown tooltip pop-up in the current position with actual tooltip text if it is already visible.
    * The action is useful for background-calculated tooltip (ex. crumbs tooltips).
    * Does nothing in other cases.
    *
@@ -550,7 +540,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       }
       showForComponent(component = currentComponent, me = reposition, now = true)
     }
-    catch (ignore: IllegalComponentStateException) {
+    catch (_: IllegalComponentStateException) {
     }
   }
 
@@ -579,18 +569,18 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     showRequests.tryEmit(null)
     hideRequests.tryEmit(null)
 
-    hideCurrent(mouseEvent = null, tooltipToShow = tooltip)
+    hideCurrent(mouseEvent = null, tooltip)
 
     queuedComponent = tooltip.component
     queuedTooltip = tooltip
 
     if (now) {
-      doShowNow(tooltip = tooltip, animationEnabled = animationEnabled)
+      doShowNow(tooltip = tooltip, animationEnabled)
     }
     else {
       check(showRequests.tryEmit(ShowRequest(
         tooltip = tooltip,
-        animationEnabled = animationEnabled,
+        animationEnabled,
         delay = (if (showDelay) tooltip.showDelay else tooltip.initialReshowDelay).milliseconds,
       )))
     }
@@ -683,40 +673,41 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
 
     balloon.show(RelativePoint(tooltip.component, effectivePoint), tooltip.preferredPosition)
     if (tooltip.canBeDismissedOnTimeout()) {
-      alarm.addRequest({
-                         if (currentTooltip === tooltip && tooltip.canBeDismissedOnTimeout()) {
-                           hideCurrent(mouseEvent = null)
-                         }
-                       }, tooltip.dismissDelay)
+      alarm.addRequest(
+        {
+          if (currentTooltip === tooltip && tooltip.canBeDismissedOnTimeout()) {
+            hideCurrent(mouseEvent = null)
+          }
+        },
+        tooltip.dismissDelay
+      )
     }
   }
 
-  fun getTextForeground(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Color = UIUtil.getToolTipForeground()
+  fun getTextForeground(@Suppress("unused") awtTooltip: Boolean): Color = UIUtil.getToolTipForeground()
 
-  fun getLinkForeground(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Link.Foreground.ENABLED
+  fun getLinkForeground(@Suppress("unused") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Link.Foreground.ENABLED
 
-  fun getTextBackground(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Color {
-    return EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY) ?: UIUtil.getToolTipBackground()
-  }
+  fun getTextBackground(@Suppress("unused") awtTooltip: Boolean): Color =
+    EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY) ?: UIUtil.getToolTipBackground()
 
   @Suppress("SpellCheckingInspection")
-  fun getUlImg(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): String {
-    return if (isDarkTheme) "/general/mdot-white.png" else "/general/mdot.png"
-  }
+  fun getUlImg(@Suppress("unused") awtTooltip: Boolean): String =
+    if (isDarkTheme) "/general/mdot-white.png" else "/general/mdot.png"
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("use {@link JBUI.CurrentTheme.Tooltip#borderColor()} instead.")
-  fun getBorderColor(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Tooltip.borderColor()
+  fun getBorderColor(@Suppress("unused") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Tooltip.borderColor()
 
   fun isOwnBorderAllowed(awtTooltip: Boolean): Boolean = !awtTooltip
 
   fun isOpaqueAllowed(awtTooltip: Boolean): Boolean = !awtTooltip
 
-  fun getTextFont(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Font = UIManager.getFont("ToolTip.font")
+  fun getTextFont(@Suppress("unused") awtTooltip: Boolean): Font = UIManager.getFont("ToolTip.font")
 
   fun hasCurrent(): Boolean = currentTooltip != null
 
-  fun hideCurrent(mouseEvent: MouseEvent?): Boolean = hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null)
+  fun hideCurrent(mouseEvent: MouseEvent?): Boolean = hideCurrent(mouseEvent, tooltipToShow = null)
 
   private fun hideCurrent(
     mouseEvent: MouseEvent?,
@@ -748,12 +739,14 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       val target = if (mouseEvent != null) RelativePoint(mouseEvent) else null
       val isInsideOrMovingForward = target != null && (isInside(balloon!!, target) || isMovingForward(balloon!!, target))
       val canAutoHide = currentTooltip!!.canAutohideOn(TooltipEvent(mouseEvent, isInsideOrMovingForward, action, event))
-      val implicitMouseMove = mouseEvent != null &&
-                              (mouseEvent.id == MouseEvent.MOUSE_MOVED || mouseEvent.id == MouseEvent.MOUSE_EXITED || mouseEvent.id == MouseEvent.MOUSE_ENTERED)
-      if (!canAutoHide
-          || (isInsideOrMovingForward && implicitMouseMove)
-          || (currentTooltip!!.isExplicitClose && implicitMouseMove)
-          || (tooltipToShow != null && !tooltipToShow.isHint && Comparing.equal(currentTooltip, tooltipToShow))
+      val implicitMouseMove =
+        mouseEvent != null &&
+        (mouseEvent.id == MouseEvent.MOUSE_MOVED || mouseEvent.id == MouseEvent.MOUSE_EXITED || mouseEvent.id == MouseEvent.MOUSE_ENTERED)
+      if (
+        !canAutoHide ||
+        (isInsideOrMovingForward && implicitMouseMove) ||
+        (currentTooltip!!.isExplicitClose && implicitMouseMove) ||
+        (tooltipToShow != null && !tooltipToShow.isHint && Comparing.equal(currentTooltip, tooltipToShow))
       ) {
         cancelAutoHide()
         return false
@@ -865,6 +858,7 @@ private class LimitedWidthJBHtmlPane(
     return s
   }
 
+  @Suppress("UsePropertyAccessSyntax")
   override fun setPreferredSize(preferredSize: Dimension) {
     super.setPreferredSize(preferredSize)
     prefSize = preferredSize
