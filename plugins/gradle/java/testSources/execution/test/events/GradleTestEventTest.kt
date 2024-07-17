@@ -168,7 +168,7 @@ class GradleTestEventTest : GradleExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test parametrized test count`(gradleVersion: GradleVersion) {
     assumeThatGradleIsAtLeast(gradleVersion,"7.0")
-    testJunit5Project(GradleVersion.version("8.8")) {
+    testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
       | import org.junit.jupiter.params.ParameterizedTest;
       | import org.junit.jupiter.params.provider.ValueSource;
