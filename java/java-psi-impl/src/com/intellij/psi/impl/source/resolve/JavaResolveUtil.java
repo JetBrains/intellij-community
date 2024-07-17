@@ -4,8 +4,10 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.graphInference.PatternInference;
@@ -14,11 +16,15 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class JavaResolveUtil {
   public static PsiClass getContextClass(@NotNull PsiElement element) {
@@ -35,9 +41,9 @@ public final class JavaResolveUtil {
     return null;
   }
 
-  public static PsiElement findParentContextOfClass(PsiElement element, Class<?> aClass, boolean strict){
+  public static PsiElement findParentContextOfClass(PsiElement element, Class<?> aClass, boolean strict) {
     PsiElement scope = strict ? element.getContext() : element;
-    while(scope != null && !aClass.isInstance(scope)){
+    while (scope != null && !aClass.isInstance(scope)) {
       scope = scope.getContext();
     }
     return scope;
@@ -49,8 +55,8 @@ public final class JavaResolveUtil {
                                      @NotNull PsiElement place,
                                      @Nullable PsiClass accessObjectClass,
                                      @Nullable PsiElement fileResolveScope) {
-    if (place instanceof PsiDirectory && 
-        modifierList != null && 
+    if (place instanceof PsiDirectory &&
+        modifierList != null &&
         accessObjectClass == null &&
         PsiUtil.getAccessLevel(modifierList) == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)place);
@@ -118,7 +124,7 @@ public final class JavaResolveUtil {
       else {
         contextClass = PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
         if (isInClassAnnotationParameterList(place, contextClass)) return false;
-        if (contextClass instanceof PsiAnonymousClass && 
+        if (contextClass instanceof PsiAnonymousClass &&
             PsiTreeUtil.isAncestor(((PsiAnonymousClass)contextClass).getArgumentList(), place, true)) {
           contextClass = PsiTreeUtil.getContextOfType(contextClass, PsiClass.class, true);
         }
@@ -177,8 +183,8 @@ public final class JavaResolveUtil {
   }
 
   public static boolean canAccessProtectedMember(@NotNull PsiMember member,
-                                                  @NotNull PsiClass memberClass,
-                                                  @Nullable PsiClass accessObjectClass, @Nullable PsiClass contextClass, boolean isStatic) {
+                                                 @NotNull PsiClass memberClass,
+                                                 @Nullable PsiClass accessObjectClass, @Nullable PsiClass contextClass, boolean isStatic) {
     while (contextClass != null) {
       if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
         if (member instanceof PsiClass || isStatic || accessObjectClass == null
@@ -204,13 +210,13 @@ public final class JavaResolveUtil {
 
   private static boolean ignoreReferencedElementAccessibility(PsiFile placeFile) {
     return placeFile instanceof FileResolveScopeProvider &&
-           ((FileResolveScopeProvider) placeFile).ignoreReferencedElementAccessibility() &&
+           ((FileResolveScopeProvider)placeFile).ignoreReferencedElementAccessibility() &&
            !PsiImplUtil.isInServerPage(placeFile);
   }
 
   public static boolean isInJavaDoc(@NotNull PsiElement place) {
     PsiElement scope = place;
-    while(scope != null){
+    while (scope != null) {
       if (scope instanceof PsiDocComment) return true;
       if (scope instanceof PsiMember || scope instanceof PsiMethodCallExpression || scope instanceof PsiFile) return false;
       scope = scope.getContext();
@@ -267,8 +273,9 @@ public final class JavaResolveUtil {
           PsiClass resultClass = (PsiClass)resultElement;
           if (resultClass.hasTypeParameters()) {
             PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-            result[i] = pattern != null && ref.getTypeParameterCount() == 0 
-                        ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass, JavaPsiPatternUtil.getContextType(pattern))
+            result[i] = pattern != null && ref.getTypeParameterCount() == 0
+                        ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass,
+                                                                JavaPsiPatternUtil.getContextType(pattern))
                         : new CandidateInfo(resolveResult, substitutor) {
                           @Override
                           public @NotNull PsiSubstitutor getSubstitutor() {
@@ -318,5 +325,50 @@ public final class JavaResolveUtil {
     if (directory == null) return null;
 
     return JavaDirectoryService.getInstance().getPackage(directory);
+  }
+
+  public static boolean processJavaModuleExports(@NotNull PsiJavaModule module,
+                                                 @NotNull PsiScopeProcessor processor,
+                                                 @NotNull ResolveState state,
+                                                 @Nullable PsiElement lastParent,
+                                                 @NotNull PsiElement place) {
+    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, module);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (classHint != null && !classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) return true;
+
+    PsiJavaModule currentModule = JavaModuleGraphHelper.getInstance().findDescriptorByElement(place);
+    List<PsiPackageAccessibilityStatement> exports = getAllDeclaredExports(module);
+    for (PsiPackageAccessibilityStatement export : exports) {
+      PsiJavaCodeReferenceElement aPackage = export.getPackageReference();
+      if (aPackage == null) continue;
+      List<String> accessibleModules = export.getModuleNames();
+      if (!accessibleModules.isEmpty()) {
+        if (currentModule == null || !accessibleModules.contains(currentModule.getName())) continue;
+      }
+      PsiElement resolvedPackage = aPackage.resolve();
+      if (!(resolvedPackage instanceof PsiPackage)) continue;
+      if (!resolvedPackage.processDeclarations(processor, state, lastParent, place)) return false;
+    }
+    return true;
+  }
+
+  private static List<PsiPackageAccessibilityStatement> getAllDeclaredExports(@NotNull PsiJavaModule module) {
+    Project project = module.getProject();
+
+    return CachedValuesManager.getCachedValue(module, () -> {
+      List<PsiPackageAccessibilityStatement> exports = new ArrayList<>();
+      for (PsiPackageAccessibilityStatement export : module.getExports()) {
+        exports.add(export);
+      }
+      for (PsiRequiresStatement require : module.getRequires()) {
+        if (!require.hasModifierProperty(PsiModifier.TRANSITIVE)) continue;
+        PsiJavaModule resolved = require.resolve();
+        if (resolved == null) continue;
+        exports.addAll(getAllDeclaredExports(resolved));
+      }
+      return CachedValueProvider.Result.create(exports,
+                                        PsiJavaModuleModificationTracker.getInstance(project),
+                                        ProjectRootModificationTracker.getInstance(project));
+    });
   }
 }

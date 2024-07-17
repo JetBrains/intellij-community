@@ -260,6 +260,9 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
     if (myCurrentFileContext instanceof PsiImportStatementBase) {
       return ((PsiImportStatementBase)myCurrentFileContext).isOnDemand();
     }
+    if (myCurrentFileContext instanceof PsiImportModuleStatement) {
+      return true;
+    }
     return false;
   }
 

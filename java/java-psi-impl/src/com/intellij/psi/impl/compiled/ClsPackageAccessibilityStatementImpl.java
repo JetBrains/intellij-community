@@ -25,7 +25,7 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
     super(stub);
     myPackageReference = atomicLazyNullable(() -> {
         String packageName = getPackageName();
-        return packageName != null ? new ClsJavaCodeReferenceElementImpl(this, packageName) : null;
+        return packageName != null ? new ClsPackageReferenceElementImpl(this, packageName) : null;
     });
     myModuleReferences = atomicLazy(() -> ContainerUtil.map(getStub().getTargets(), target -> new ClsJavaModuleReferenceElementImpl(this, target)));
   }
