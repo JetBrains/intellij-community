@@ -252,8 +252,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  protected void invokeRatherLater(SuspendContextImpl context, Runnable runnable) {
-    invokeRatherLater(new SuspendContextCommandImpl(context) {
+  protected void invokeRatherLater(@NotNull SuspendContextImpl context, @NotNull Runnable runnable) {
+    invokeRatherLater(context.getDebugProcess(), new SuspendContextCommandImpl(context) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         DebuggerInvocationUtil.invokeLater(myProject, runnable);
