@@ -592,12 +592,9 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       }
       
       public class ClassWithAnnotatedFields {
-          @Nullable
-          public static Boolean PUBLIC_STATIC_ANNOTATED_FIELD = null;
-          public static Boolean PUBLIC_STATIC_NON_ANNOTATED_FIELD = false;
-          public Boolean publicNonAnnotatedField = true;
           @NotNull
           public Boolean publicAnnotatedField = true;
+          public Boolean publicNonAnnotatedField = true;
           @NotNull Boolean typeAnnotatedField = false;
           @NotNull
           private Boolean firstPrivateAnnotatedField = true;
