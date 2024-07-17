@@ -11,17 +11,20 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Objects;
 
 class JavaMethodReferenceElement extends LookupElement implements TypedLookupItem {
   private final PsiMethod myMethod;
   private final PsiElement myRefPlace;
   private final PsiType myType;
+  private final Icon myIcon;
 
   JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace, @Nullable PsiType type) {
     myMethod = method;
     myRefPlace = refPlace;
     myType = type;
+    myIcon = myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY);
   }
 
   @Override
@@ -53,7 +56,7 @@ class JavaMethodReferenceElement extends LookupElement implements TypedLookupIte
 
   @Override
   public void renderElement(@NotNull LookupElementPresentation presentation) {
-    presentation.setIcon(myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+    presentation.setIcon(myIcon);
     super.renderElement(presentation);
   }
 
