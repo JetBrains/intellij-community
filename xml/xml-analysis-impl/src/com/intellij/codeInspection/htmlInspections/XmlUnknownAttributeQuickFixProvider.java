@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -29,7 +28,7 @@ public interface XmlUnknownAttributeQuickFixProvider {
    */
   @NotNull Collection<@NotNull LocalQuickFix> getOrRegisterAttributeFixes(@NotNull XmlTag tag, @NotNull String name, ProblemsHolder holder, boolean isFixRequired);
 
-  default @Nullable ProblemHighlightType getProblemHighlightType(@NotNull PsiElement element) {
+  default @NotNull ProblemHighlightType getProblemHighlightType(@NotNull PsiElement element) {
     return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   }
 }

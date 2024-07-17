@@ -118,7 +118,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     }
   }
 
-  private static ProblemHighlightType addUnknownXmlAttributeQuickFixes(XmlTag tag,
+  private static @NotNull ProblemHighlightType addUnknownXmlAttributeQuickFixes(XmlTag tag,
                                                                        String name,
                                                                        ArrayList<? super LocalQuickFix> quickfixes,
                                                                        ProblemsHolder holder,
