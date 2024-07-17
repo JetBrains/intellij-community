@@ -3,6 +3,8 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.StringTemplateReverseMigrationInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
@@ -12,6 +14,22 @@ import org.jetbrains.annotations.NotNull;
  * @see StringTemplateReverseMigrationInspection
  */
 public class StringTemplateReverseMigrationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+
+  public void testJava23() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      LanguageLevel.JDK_23,
+      () -> doTest("""
+                         class X {{
+                           String s = STR."<caret>xyz\\{1+2}";
+                         }}
+                     """, """
+                         class X {{
+                           String s = "xyz" + (1 + 2);
+                         }}
+                     """));
+  }
+  
   public void testSimple() {
     doTest("""
              class StringTemplateMigration {
