@@ -13,10 +13,29 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
+import org.jetbrains.idea.devkit.run.ProductInfo
+import org.jetbrains.idea.devkit.run.loadProductInfo
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
 import java.io.File
-import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
+
+internal enum class PluginSourceArchives(
+  val pluginId: String,
+  val archiveName: String,
+  val messageKey: String,
+) {
+  CSS("com.intellij.css", "src_css-api.zip", "css"),
+  DATABASE("com.intellij.database", "src_database-openapi.zip", "database"),
+  JAVA("com.intellij.java", "src_jam-openapi.zip", "java"),
+  JAVAEE("com.intellij.javaee", "src_javaee-openapi.zip", "javaee"),
+  PERSISTENCE("com.intellij.persistence", "src_persistence-openapi.zip", "persistence"),
+  SPRING("com.intellij.spring", "src_spring-openapi.zip", "spring"),
+  SPRING_BOOT("com.intellij.spring.boot", "src_spring-boot-openapi.zip", "springBoot"),
+  TOMCAT("Tomcat", "src_tomcat.zip", "tomcat"),
+  LSP("LSP", "src_lsp-openapi.zip", "lsp"),
+}
 
 /**
  * Attaches sources to the IntelliJ Platform dependencies in projects using IntelliJ Platform Gradle Plugin 2.x.
@@ -88,7 +107,8 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         else -> IntelliJPlatformProduct.IDEA_IC
       }.mavenCoordinates ?: return null
 
-    // We're checking if the compiled class belongs to the `/com/intellij/platform/lsp/` package, but not `.../impl` as it's not part of the API
+    // When targeting IntelliJ IDEA Ultimate, it is possible to attach LSP module sources.
+    // If the compiled class belongs to `com/intellij/platform/lsp/`, suggest attaching the relevant ZIP archive with LSP sources.
     val isLspApi = with(psiFile.virtualFile.path.substringAfter('!')) {
       when {
         startsWith("/com/intellij/platform/lsp/impl/") -> false
@@ -99,7 +119,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
     return when {
       // We're handing LSP API class, but IU is lower than 242 -> attach a standalone sources file
-      isLspApi && majorVersion < 242 -> createAttachLSPSourcesAction(psiFile)
+      isLspApi && majorVersion < 242 -> createAttachSourcesArchiveAction(psiFile, PluginSourceArchives.LSP)
 
       // Create the actual IntelliJ Platform sources attaching action
       else -> createAttachPlatformSourcesAction(psiFile, productCoordinates, version)
@@ -130,32 +150,37 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
     val product = IntelliJPlatformProduct.fromProductCode(productInfo.productCode) ?: return null
     val version = coordinates.version.substringBefore('+')
 
-    return resolveIntelliJPlatformAction(psiFile, product, version)
+    val pluginSourceArchive = PluginSourceArchives.entries.firstOrNull { it.pluginId == coordinates.artifactId }
+    return createAttachSourcesArchiveAction(psiFile, pluginSourceArchive)
+           ?: resolveIntelliJPlatformAction(psiFile, product, version)
   }
 
   /**
-   * When targeting IntelliJ IDEA Ultimate, it is possible to attach LSP module sources.
-   * If the compiled class belongs to `com/intellij/platform/lsp/`, suggest attaching relevant ZIP archive with LSP sources.
+   * Attach the provided sources archive.
    *
    * @param psiFile The PSI file that represents the currently handled class.
+   * @param pluginSourceArchive Plugin sources archive metadata.
    */
-  private fun createAttachLSPSourcesAction(psiFile: PsiFile): AttachSourcesAction? {
-    val jarFile = VfsUtilCore.getVirtualFileForJar(psiFile.virtualFile) ?: return null
-    val sources = jarFile.parent.findFile("src/src_lsp-openapi.zip") ?: return null
+  private fun createAttachSourcesArchiveAction(psiFile: PsiFile, pluginSourceArchive: PluginSourceArchives?): AttachSourcesAction? {
+    if (pluginSourceArchive == null) {
+      return null
+    }
 
-    return object : AttachSourcesAction {
-      override fun getName() = DevKitGradleBundle.message("attachLSPSources.action.name")
+    return resolveSourcesArchive(psiFile, pluginSourceArchive.archiveName)?.let {
+      object : AttachSourcesAction {
+        override fun getName() = DevKitGradleBundle.message("attachSources.${pluginSourceArchive.messageKey}.action.name")
 
-      override fun getBusyText() = DevKitGradleBundle.message("attachLSPSources.action.busyText")
+        override fun getBusyText() = DevKitGradleBundle.message("attachSources.${pluginSourceArchive.messageKey}.action.busyText")
 
-      override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
-        val executionResult = ActionCallback()
+        override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
+          val executionResult = ActionCallback()
 
-        attachSources(sources.toNioPath().toFile(), orderEntries) {
-          executionResult.setDone()
+          attachSources(it.toFile(), orderEntries) {
+            executionResult.setDone()
+          }
+
+          return executionResult
         }
-
-        return executionResult
       }
     }
   }
@@ -167,39 +192,36 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * @param productCoordinates The Maven coordinates of the IntelliJ Platform whose sources we load.
    * @param version The version of the product.
    */
-  private fun createAttachPlatformSourcesAction(
-    psiFile: PsiFile,
-    productCoordinates: String,
-    version: String,
-  ) = object : AttachSourcesAction {
-    override fun getName() = DevKitGradleBundle.message("attachSources.action.name")
+  private fun createAttachPlatformSourcesAction(psiFile: PsiFile, productCoordinates: String, version: String) =
+    object : AttachSourcesAction {
+      override fun getName() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.name")
 
-    override fun getBusyText() = DevKitGradleBundle.message("attachSources.action.busyText")
+      override fun getBusyText() = DevKitGradleBundle.message("attachSources.intellijPlatform.action.busyText")
 
-    override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
-      val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(orderEntries.first().ownerModule)?.directoryToRunTask
-                                ?: return ActionCallback.REJECTED
+      override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
+        val externalProjectPath = CachedModuleDataFinder.getGradleModuleData(orderEntries.first().ownerModule)?.directoryToRunTask
+                                  ?: return ActionCallback.REJECTED
 
-      val executionResult = ActionCallback()
-      val project = psiFile.project
-      val sourceArtifactNotation = "$productCoordinates:$version:sources"
+        val executionResult = ActionCallback()
+        val project = psiFile.project
+        val sourceArtifactNotation = "$productCoordinates:$version:sources"
 
-      GradleDependencySourceDownloader
-        .downloadSources(project, name, sourceArtifactNotation, Path.of(externalProjectPath)
-        ).whenComplete { path, error ->
-          if (error != null) {
-            executionResult.reject(error.message)
-          }
-          else {
-            attachSources(path, orderEntries) {
-              executionResult.setDone()
+        GradleDependencySourceDownloader
+          .downloadSources(project, name, sourceArtifactNotation, Path.of(externalProjectPath)
+          ).whenComplete { path, error ->
+            if (error != null) {
+              executionResult.reject(error.message)
+            }
+            else {
+              attachSources(path, orderEntries) {
+                executionResult.setDone()
+              }
             }
           }
-        }
 
-      return executionResult
+        return executionResult
+      }
     }
-  }
 
   /**
    * Attaches sources jar to the specified libraries and executes the provided block of code.
@@ -215,9 +237,19 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
    * Resolve the [ProductInfo] of the current IntelliJ Platform.
    */
   private fun resolveProductInfo(psiFile: PsiFile): ProductInfo? {
-    val jarPath = Path(psiFile.virtualFile.path)
+    val jarPath = Path(psiFile.virtualFile.path.substringBefore('!'))
     return generateSequence(jarPath) { it.parent }
       .takeWhile { it != it.root }
       .firstNotNullOfOrNull { loadProductInfo(it.pathString) }
+  }
+
+  /**
+   * Resolve the [ProductInfo] of the current IntelliJ Platform.
+   */
+  private fun resolveSourcesArchive(psiFile: PsiFile, archiveName: String): Path? {
+    val path = VfsUtilCore.getVirtualFileForJar(psiFile.virtualFile)?.toNioPath() ?: return null
+    return generateSequence(path) { it.parent }
+      .takeWhile { it != it.root }
+      .firstNotNullOfOrNull { it.resolve("lib/src/$archiveName").takeIf(Path::exists) }
   }
 }
