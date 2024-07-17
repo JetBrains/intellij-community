@@ -167,6 +167,9 @@ object TestKotlinArtifacts {
     }
 }
 
+/**
+ * See [org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider.setUpWithKotlinPlugin] where we unwrap the exception if it happens during class initialization
+ */
 @JvmOverloads
 fun downloadOrReportUnavailability(artifactId: String, version: String, suffix: String = ".jar"): File =
     KotlinArtifactsDownloader.downloadArtifactForIdeFromSources(artifactId, version, suffix)
