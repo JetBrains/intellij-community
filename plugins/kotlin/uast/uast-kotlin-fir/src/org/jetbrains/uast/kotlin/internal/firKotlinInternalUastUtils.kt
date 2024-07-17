@@ -248,6 +248,7 @@ private fun toPsiMethodForDeserialized(
             source = null,
             context,
             TypeOwnerKind.DECLARATION,
+            isBoxed = false,
         )?.lookup()?.let { return it }
     }
     // Deserialized top-level function
