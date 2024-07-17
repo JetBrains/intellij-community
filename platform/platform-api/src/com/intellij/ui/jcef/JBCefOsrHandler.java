@@ -203,11 +203,15 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
   }
 
-  public void paint(Graphics2D g) {
+  protected Dimension getCurrentFrameSize() {
     JBHiDPIScaledImage image = myImage;
-    if (image == null) {
+    return image == null ? null : new Dimension(image.getWidth(), image.getHeight());
+  }
+
+  public void paint(Graphics2D g) {
+    Dimension frameSize = getCurrentFrameSize();
+    if (frameSize == null)
       return;
-    }
 
     myFpsMeter.paintFrameStarted();
     VolatileImage vi = myVolatileImage;
@@ -215,8 +219,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     do {
       boolean contentOutdated = myContentOutdated;
       myContentOutdated = false;
-      if (vi == null || vi.getWidth() != image.getWidth() || vi.getHeight() != image.getHeight()) {
-        vi = createVolatileImage(g, image.getWidth(), image.getHeight());
+      if (vi == null || vi.getWidth() != frameSize.width || vi.getHeight() != frameSize.height) {
+        vi = createVolatileImage(g, frameSize.width, frameSize.height);
       }
       else if (contentOutdated) {
         drawVolatileImage(vi);
@@ -224,7 +228,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
       switch (vi.validate(g.getDeviceConfiguration())) {
         case VolatileImage.IMAGE_RESTORED -> drawVolatileImage(vi);
-        case VolatileImage.IMAGE_INCOMPATIBLE -> vi = createVolatileImage(g, image.getWidth(), image.getHeight());
+        case VolatileImage.IMAGE_INCOMPATIBLE -> vi = createVolatileImage(g, frameSize.width, frameSize.height);
       }
 
       g.drawImage(vi, 0, 0, null);
