@@ -12,6 +12,7 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
 import org.jetbrains.idea.devkit.run.loadProductInfo
@@ -23,18 +24,18 @@ import kotlin.io.path.pathString
 
 internal enum class ApiSourceArchive(
   val id: String,
-  val displayName: String,
+  @PropertyKey(resourceBundle = DevKitGradleBundle.BUNDLE) val displayName: String,
   val archiveName: String,
 ) {
-  CSS("com.intellij.css", "CSS plugin API", "src_css-api.zip"),
-  DATABASE("com.intellij.database", "Database plugin API", "src_database-openapi.zip"),
-  JAM("com.intellij.java", "JAM plugin API", "src_jam-openapi.zip"),
-  JAVAEE("com.intellij.javaee", "JavaEE plugin API", "src_javaee-openapi.zip"),
-  PERSISTENCE("com.intellij.persistence", "Persistence plugin API", "src_persistence-openapi.zip"),
-  SPRING("com.intellij.spring", "Spring plugin API", "src_spring-openapi.zip"),
-  SPRING_BOOT("com.intellij.spring.boot", "SpringBoot plugin API", "src_spring-boot-openapi.zip"),
-  TOMCAT("Tomcat", "Tomcat plugin API", "src_tomcat.zip"),
-  LSP("LSP", "IntelliJ Platform LSP-API", "src_lsp-openapi.zip"),
+  CSS("com.intellij.css", "attachSources.api.action.displayName.css", "src_css-api.zip"),
+  DATABASE("com.intellij.database", "attachSources.api.action.displayName.database", "src_database-openapi.zip"),
+  JAM("com.intellij.java", "attachSources.api.action.displayName.jam", "src_jam-openapi.zip"),
+  JAVAEE("com.intellij.javaee", "attachSources.api.action.displayName.javaee", "src_javaee-openapi.zip"),
+  PERSISTENCE("com.intellij.persistence", "attachSources.api.action.displayName.persistence", "src_persistence-openapi.zip"),
+  SPRING("com.intellij.spring", "attachSources.api.action.displayName.spring", "src_spring-openapi.zip"),
+  SPRING_BOOT("com.intellij.spring.boot", "attachSources.api.action.displayName.springBoot", "src_spring-boot-openapi.zip"),
+  TOMCAT("Tomcat", "attachSources.api.action.displayName.tomcat", "src_tomcat.zip"),
+  LSP("LSP", "attachSources.api.action.displayName.lsp", "src_lsp-openapi.zip"),
 }
 
 /**
