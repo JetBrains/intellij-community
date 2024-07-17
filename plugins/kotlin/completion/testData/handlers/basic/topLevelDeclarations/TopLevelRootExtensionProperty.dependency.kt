@@ -1,0 +1,2 @@
+val String.topLevelExtensionProperty
+    get() = ""
