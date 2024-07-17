@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsUtil
@@ -65,13 +66,16 @@ private class SwingTooltipManagerCustomizer : ApplicationInitializedListener {
     asyncScope.launch {
       withContext(Dispatchers.EDT) {
         val ideTooltipManager by lazy {
-          IdeTooltipManager.getInstance()
+          serviceIfCreated<IdeTooltipManager>()
         }
-        Toolkit.getDefaultToolkit().addAWTEventListener({
-                                                          if (isEnabled) {
-                                                            ideTooltipManager.eventDispatched(it as MouseEvent)
-                                                          }
-                                                        }, AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
+        Toolkit.getDefaultToolkit().addAWTEventListener(
+          {
+            if (isEnabled) {
+              ideTooltipManager?.eventDispatched(it as MouseEvent)
+            }
+          },
+          AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK
+        )
       }
     }
   }
