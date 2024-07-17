@@ -155,6 +155,19 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   @Override
   public void flush() throws StorageException {
+    //A subtle thing about flush operation in general is that it is _logically_ a read-op, just a copy of in-memory
+    // state onto a disk -- so it looks quite natural to protect it with readLock only. It is also very _desirable_
+    // to go with readLock, since flush involves an IO, and holding an exclusive writeLock while doing potentially
+    // long IO is undesirable from app responsiveness PoV.
+    //But technically, implementation-wise, a flush is almost never a pure read-op -- it almost always involves
+    // some write-operations, so readLock is almost never enough.
+    //Here the use of readLock is _partially_ justified by a careful (and definitely not obvious) design of
+    // ChangeTrackingValueContainer which is not even mentioned anywhere in MapReduceIndex: CTVContainer is lazy,
+    // but it is designed in such a way that it could save either its fully-loaded state _or_ diff-state in any
+    // moment, and both representations will be correct. All this is very tricky and subtle.
+    //And also it seems only partially correct, because it is not clear are all the accesses properly synchronized
+    // (ordered) from concurrency PoV -- I really believe they are not properly synchronized, but can't point specific
+    // violation now, and also don't have a solution at hand for how to fix it.
     ConcurrencyUtil.withLock(myLock.readLock(), () -> {
       try {
         doFlush();

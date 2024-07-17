@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -195,8 +194,6 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   public void saveDiffTo(@NotNull DataOutput out,
                          @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
-    assert !needsCompacting() : "Full state must be written, instead of diff";
-
     IntSet set = myInvalidated;
     if (set != null && !set.isEmpty()) {
       for (int inputId : myInvalidated.toIntArray()) {
