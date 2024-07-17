@@ -803,7 +803,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     //noinspection UnnecessaryLocalVariable
     boolean hasErrorsBesideUnresolvedImports = !DaemonCodeAnalyzerEx
       .processHighlights(document, file.getProject(), HighlightSeverity.ERROR, 0, document.getTextLength(), error -> {
-        if (error.type instanceof LocalInspectionsPass.InspectionHighlightInfoType) return true;
+        if (error.type.isInspectionHighlightInfoType()) return true;
         int infoStart = error.getActualStartOffset();
         int infoEnd = error.getActualEndOffset();
 

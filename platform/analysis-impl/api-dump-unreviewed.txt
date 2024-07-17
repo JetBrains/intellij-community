@@ -759,6 +759,7 @@ com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - a:getAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
 - a:getSeverity(com.intellij.psi.PsiElement):com.intellij.lang.annotation.HighlightSeverity
 - s:getUnusedSymbolDisplayName():java.lang.String
+- isInspectionHighlightInfoType():Z
 c:com.intellij.codeInsight.daemon.impl.HighlightInfoType$HighlightInfoTypeImpl
 - com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - com.intellij.codeInsight.daemon.impl.HighlightInfoType$UpdateOnTypingSuppressible

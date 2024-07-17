@@ -4081,18 +4081,6 @@ f:com.intellij.codeInsight.daemon.impl.LineMarkersPass
 - doCollectInformation(com.intellij.openapi.progress.ProgressIndicator):V
 - s:getMarkerProviders(com.intellij.lang.Language,com.intellij.openapi.project.Project):java.util.List
 - s:queryLineMarkers(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document):java.util.Collection
-f:com.intellij.codeInsight.daemon.impl.LocalInspectionsPass
-- com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass
-- getInfos():java.util.List
-f:com.intellij.codeInsight.daemon.impl.LocalInspectionsPass$InspectionHighlightInfoType
-- com.intellij.codeInsight.daemon.impl.HighlightInfoType$HighlightInfoTypeImpl
-f:com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory
-- com.intellij.codeHighlighting.MainHighlightingPassFactory
-- com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
-- <init>():V
-- createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeHighlighting.TextEditorHighlightingPass
-- createMainHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor):com.intellij.codeHighlighting.TextEditorHighlightingPass
-- registerHighlightingPassFactory(com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar,com.intellij.openapi.project.Project):V
 f:com.intellij.codeInsight.daemon.impl.MainPassesRunner
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.codeInspection.InspectionProfile):V
 - runMainPasses(java.util.List):java.util.Map
