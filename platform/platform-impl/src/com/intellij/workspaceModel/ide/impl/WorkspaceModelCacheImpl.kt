@@ -15,6 +15,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.assertConsistency
@@ -120,6 +121,8 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       // Make sure we don't save the cache that is broken
       val assertConsistencyDuration = measureTime { storage.assertConsistency() }
 
+      val moduleEntities = storage.entities(ModuleEntity::class.java).toList()
+      LOG.info("Saving WSM caches with ${moduleEntities.size} modules [${moduleEntities.joinToString { it.name }}]")
       val (timeMs, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
       WorkspaceModelFusLogger.logCacheSave(timeMs + assertConsistencyDuration.inWholeMilliseconds, size ?: -1)
       if (!(unloadedStorage as EntityStorageInstrumentation).isEmpty()) {
