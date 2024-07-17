@@ -77,7 +77,7 @@ def _get_external_collection_repr(collection, raise_exception=False):
             raise e
     # ndarray and other numpy types
     try:
-        if typename == 'ndarray' or "numpy" in str(typename_with_package):
+        if typename == 'ndarray' or "numpy." in str(typename_with_package):
             return _get_ndarray_variable_repr(collection)
     except Exception as e:
         pydev_log.warn("Failed to format numpy ndarray: " + str(e))
