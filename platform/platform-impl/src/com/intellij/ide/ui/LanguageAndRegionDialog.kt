@@ -12,6 +12,7 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.VerticalLayout
@@ -19,6 +20,8 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.*
+import com.sun.jna.platform.win32.Advapi32Util
+import com.sun.jna.platform.win32.WinReg
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -168,6 +171,14 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
   val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true }
                        ?: Locale.ENGLISH
   var matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] } ?: Region.NOT_SET
+  if (matchingRegion == Region.NOT_SET && SystemInfo.isWindows) {
+    try {
+      val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
+      matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
+    }
+    catch (_: Throwable) {
+    }
+  }
   if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
   return suspend {
     withContext(RawSwingDispatcher) {
