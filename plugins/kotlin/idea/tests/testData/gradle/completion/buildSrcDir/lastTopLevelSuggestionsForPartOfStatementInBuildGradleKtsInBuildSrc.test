@@ -1,0 +1,12 @@
+// FILE: buildSrc/build.gradle.kts
+// "EXPECTED-SUGGESTION": "[getDependencies, dependencies]"
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}
+
+depen<caret>
+

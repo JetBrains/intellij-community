@@ -1,0 +1,13 @@
+// FILE: build.gradle.kts
+// "EXPECTED-SUGGESTION": "[setGroup, getGroup, group]"
+// "UNEXPECTED-SUGGESTION": "[exceptionGroup_return]"
+plugins {
+    id("java")
+}
+
+group<caret>
+
+repositories {
+    mavenCentral()
+}
+

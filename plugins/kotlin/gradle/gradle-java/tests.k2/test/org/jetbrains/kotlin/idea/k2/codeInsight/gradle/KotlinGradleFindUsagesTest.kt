@@ -64,56 +64,56 @@ class KotlinGradleFindUsagesTest : AbstractGradleCodeInsightTest() {
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("topLevelPropertyNoUsage.test")
-    fun topLevelPropertyNoUsage(gradleVersion: GradleVersion) {
+    fun testTopLevelPropertyNoUsage(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("topLevelPropertyUsageInBuildGradleKts.test")
-    fun topLevelPropertyUsageInBuildGradleKts(gradleVersion: GradleVersion) {
+    fun testTopLevelPropertyUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("topLevelFunctionUsageInBuildGradleKts.test")
-    fun topLevelFunctionUsageInBuildGradleKts(gradleVersion: GradleVersion) {
+    fun testTopLevelFunctionUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("classUsageInBuildGradleKts.test")
-    fun classUsageInBuildGradleKts(gradleVersion: GradleVersion) {
+    fun testClassUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("propertyByProjectUsageInBuildGradleKts.test")
-    fun propertyByProjectUsageInBuildGradleKts(gradleVersion: GradleVersion) {
+    fun testPropertyByProjectUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("propertyBySettingsUsageInSettingsGradleKts.test")
-    fun propertyBySettingsUsageInSettingsGradleKts(gradleVersion: GradleVersion) {
+    fun testPropertyBySettingsUsageInSettingsGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("propertyByExtraUsageInBuildGradleKts.test")
-    fun propertyByExtraUsageInBuildGradleKts(gradleVersion: GradleVersion) {
+    fun testPropertyByExtraUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 
     @ParameterizedTest
     @BaseGradleVersionSource
     @TestMetadata("classFromBuildSrcUsageInBuildGradleKts.test")
-    fun classFromBuildSrcUsageInBuildGradleKts(gradleVersion: GradleVersion) {
+    fun testClassFromBuildSrcUsageInBuildGradleKts(gradleVersion: GradleVersion) {
         verifyFindUsages(gradleVersion)
     }
 

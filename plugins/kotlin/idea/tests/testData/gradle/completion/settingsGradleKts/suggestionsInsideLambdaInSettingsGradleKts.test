@@ -1,0 +1,16 @@
+// FILE: settings.gradle.kts
+// "EXPECTED-SUGGESTION": "[getRepositories, repositories]"
+rootProject.name = "GradleKotlinFixture"
+
+pluginManagement {
+    reposit<caret>
+}
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}

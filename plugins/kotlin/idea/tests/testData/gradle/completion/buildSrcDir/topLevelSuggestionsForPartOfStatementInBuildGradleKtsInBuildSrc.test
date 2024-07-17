@@ -1,0 +1,12 @@
+// FILE: buildSrc/build.gradle.kts
+// "EXPECTED-SUGGESTION": "[getTasks, tasks]"
+plugins {
+    id("java")
+}
+
+tas<caret>
+
+repositories {
+    mavenCentral()
+}
+
