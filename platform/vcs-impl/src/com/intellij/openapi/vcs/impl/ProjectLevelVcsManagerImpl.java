@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -49,6 +49,7 @@ import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
 import com.intellij.vcsUtil.VcsImplUtil;
 import kotlin.Pair;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -79,11 +80,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final FileIndexFacade myExcludedIndex;
 
-  public ProjectLevelVcsManagerImpl(@NotNull Project project) {
+  public ProjectLevelVcsManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myExcludedIndex = FileIndexFacade.getInstance(project);
 
-    myMappings = new NewMappings(myProject, this);
+    myMappings = new NewMappings(myProject, this, coroutineScope);
   }
 
   @Override

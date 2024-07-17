@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
@@ -15,8 +16,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcsUtil.VcsUtil
 import java.io.File
@@ -60,7 +61,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     vcses.registerManually(vcsCVS)
 
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
-    mappings = NewMappings(myProject, vcsManager)
+    mappings = NewMappings(myProject, vcsManager, (myProject as ComponentManagerEx).getCoroutineScope())
     Disposer.register(testRootDisposable, mappings)
     mappings.activateActiveVcses()
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -29,7 +30,7 @@ public class VcsFileWatchRequestManagementTest extends LightPlatformTestCase {
     super.setUp();
 
     Project project = getProject();
-    myNewMappings = new NewMappings(project, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project));
+    myNewMappings = new NewMappings(project, (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project), ((ComponentManagerEx)project).getCoroutineScope());
     Disposer.register(getTestRootDisposable(), myNewMappings);
     myMockLocalFileSystem = new MyMockLocalFileSystem();
     myNewMappings.setFileWatchRequestsManager(new TestFileWatchRequestsManager(project, myNewMappings, myMockLocalFileSystem));

@@ -7190,7 +7190,7 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - addInitializationRequest(com.intellij.openapi.vcs.impl.VcsInitObject,java.lang.Runnable):V
 - addMessageToConsoleWindow(com.intellij.openapi.vcs.VcsConsoleLine):V
 - addMessageToConsoleWindow(java.lang.String,com.intellij.execution.ui.ConsoleViewContentType):V

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.filename.UniqueNameBuilder;
@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +41,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,13 +76,12 @@ public final class NewMappings implements Disposable {
   private final @NotNull MergingUpdateQueue myRootUpdateQueue;
   private final VirtualFilePointerListener myFilePointerListener;
 
-  public NewMappings(@NotNull Project project, @NotNull ProjectLevelVcsManagerImpl vcsManager) {
+  public NewMappings(@NotNull Project project, @NotNull ProjectLevelVcsManagerImpl vcsManager, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myVcsManager = vcsManager;
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
 
-    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
-      .usePassThroughInUnitTestMode();
+    myRootUpdateQueue = MergingUpdateQueue.Companion.mergingUpdateQueue("NewMappings", 1000, coroutineScope).usePassThroughInUnitTestMode();
 
     myFilePointerListener = new VirtualFilePointerListener() {
       @Override
