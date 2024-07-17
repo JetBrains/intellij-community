@@ -3,10 +3,15 @@ package com.intellij.codeInsight.highlighting
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.hint.EditorFragmentComponent
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.injected.editor.EditorWindow
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -37,8 +42,13 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.CharArrayUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import java.util.function.IntUnaryOperator
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
 
 private val BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create<MutableList<RangeHighlighter>>("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY")
 private val LINE_MARKER_IN_EDITOR_KEY = Key.create<RangeHighlighter>("BraceHighlighter.LINE_MARKER_IN_EDITOR_KEY")
@@ -349,16 +359,19 @@ class BraceHighlightingHandler internal constructor(
     val bracePosition = editor.offsetToLogicalPosition(leftBraceStart)
     val braceLocation = editor.logicalPositionToXY(bracePosition)
     val y = braceLocation.y
-    alarm.addRequest(
-      request = {
-        ApplicationManager.getApplication().runReadAction {
-          if (project.isDisposed) {
-            return@runReadAction
-          }
-          PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted {
+    val modalityState = ModalityState.stateForComponent(editor.component).asContextElement()
+    val clientId = ClientId.currentOrNull?.asContextElement() ?: EmptyCoroutineContext
+    alarm.schedule {
+      delay(300.milliseconds)
+      val psiDocumentManager = project.serviceAsync<PsiDocumentManager>()
+      withContext(Dispatchers.EDT + modalityState + clientId) {
+        // yes, despite readAction, we must execute in EDT, see performLaterWhenAllCommitted implementation
+        readAction {
+          psiDocumentManager.performLaterWhenAllCommitted {
             if (editor.isDisposed || !editor.component.isShowing) {
               return@performLaterWhenAllCommitted
             }
+
             val viewRect = editor.scrollingModel.visibleArea
             if (y >= viewRect.y) {
               return@performLaterWhenAllCommitted
@@ -377,14 +390,11 @@ class BraceHighlightingHandler internal constructor(
               (line2 - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(editor) + 1).toDouble(),
             ).toInt()
             range = TextRange(document.getLineStartOffset(line1), range.endOffset)
-            val hint = EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true)
-            editor.putUserData(HINT_IN_EDITOR_KEY, hint)
+            editor.putUserData(HINT_IN_EDITOR_KEY, EditorFragmentComponent.showEditorFragmentHint(editor, range, true, true))
           }
         }
-      },
-      delayMillis = 300,
-      modalityState = ModalityState.stateForComponent(editor.component),
-    )
+      }
+    }
   }
 
   fun clearBraceHighlighters() {

@@ -186,6 +186,18 @@ open class Alarm @Internal constructor(
     doAddRequest(request = request, delayMillis = delayMillis.toLong(), modalityState = modalityState)
   }
 
+  // Allow clients to use modern APIs (e.g., readAction) without first migrating from Alarm,
+  // as this migration can cause concurrency issues and different behavior.
+  @Internal
+  fun schedule(task: suspend CoroutineScope.() -> Unit) {
+    check(activationComponent == null)
+    val requestToSchedule = Request(task = null, modalityState = null, delayMillis = 0)
+    synchronized(LOCK) {
+      requests.add(requestToSchedule)
+      requestToSchedule.schedule(owner = this, nonBlockingTask = task)
+    }
+  }
+
   fun addRequest(request: Runnable, delayMillis: Long, modalityState: ModalityState?) {
     LOG.assertTrue(threadToUse == ThreadToUse.SWING_THREAD)
     doAddRequest(request = request, delayMillis = delayMillis, modalityState = modalityState)
@@ -350,6 +362,19 @@ open class Alarm @Internal constructor(
           synchronized(owner.LOCK) {
             owner.requests.remove(this@Request)
             job = null
+          }
+        }
+      }
+    }
+
+    fun schedule(owner: Alarm, nonBlockingTask: suspend CoroutineScope.() -> Unit) {
+      assert(job == null)
+
+      job = owner.taskCoroutineScope.launch(block = nonBlockingTask).also {
+        it.invokeOnCompletion {
+          synchronized(owner.LOCK) {
+            owner.requests.remove(this@Request)
+            this.job = null
           }
         }
       }
