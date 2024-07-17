@@ -151,13 +151,12 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     private suspend fun getIndexableActions(): List<IndexQueueEntry> {
       val actionManager = serviceAsync<ActionManager>() as ActionManagerImpl
       return readAction {
-        actionManager
-          .actions(canReturnStub = true)
+        actionManager.actions(canReturnStub = true)
           .filter { shouldIndexAction(it) }
           .mapNotNull { action ->
             val id = actionManager.getId(action)
-            val templateText = action.templateText
-            if (id == null || templateText == null) null else IndexQueueEntry(EntityId(id), templateText)
+            val templateText = action.templateText?.removeSuffix("…") ?: ""
+            if (id == null || templateText.isBlank()) null else IndexQueueEntry(EntityId(id), templateText)
           }
           .toList()
       }
