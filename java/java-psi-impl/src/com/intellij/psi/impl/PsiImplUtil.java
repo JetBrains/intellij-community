@@ -885,7 +885,7 @@ public final class PsiImplUtil {
 
     // import module java.base; for implicit classes
     if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) &&
-        PsiUtil.isAvailable(JavaFeature.MODULE_IMPORTS, file) &&
+        PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, file) &&
         file instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)file).getClasses();
       if (classes.length == 1 && classes[0] instanceof PsiImplicitClass) {
