@@ -127,7 +127,8 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     for (XmlUnknownAttributeQuickFixProvider fixProvider : XmlUnknownAttributeQuickFixProvider.EP_NAME.getExtensionList()) {
       quickfixes.addAll(fixProvider.getOrRegisterAttributeFixes(tag, name, holder, isFixRequired));
       var providerHighlightType = fixProvider.getProblemHighlightType(tag);
-      if (providerHighlightType != ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+      if (highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+          && providerHighlightType != ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
         highlightType = providerHighlightType;
       }
     }
