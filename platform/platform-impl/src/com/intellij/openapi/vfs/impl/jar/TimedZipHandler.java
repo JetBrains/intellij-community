@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,6 +45,7 @@ public final class TimedZipHandler extends ZipHandlerBase {
       for (TimedZipHandler handler : openFileLimitGuard.keySet()) {
         handler.clearCaches();
       }
+      openFileLimitGuard.clear();
     }
   }
 
@@ -164,7 +165,10 @@ public final class TimedZipHandler extends ZipHandlerBase {
             return;
           }
         }
-        myInvalidationRequest = null;
+        if (myInvalidationRequest != null) {
+          myInvalidationRequest.cancel(false);
+          myInvalidationRequest = null;
+        }
         long t = doTracing ? System.nanoTime() : 0;
         try {
           myFile.close();
