@@ -28,6 +28,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.application
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.ui.RestartDialog
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.URL
@@ -78,6 +79,8 @@ class LanguageAndRegionUi {
           connection.subscribe(LocalizationListener.UPDATE_TOPIC, object : LocalizationListener {
             override fun localeChanged() {
               model.selectedItem = LocalizationUtil.getLocale()
+              DynamicBundle.clearCache()
+              DateTimeFormatManager.getInstance().resetFormats()
             }
           })
         }

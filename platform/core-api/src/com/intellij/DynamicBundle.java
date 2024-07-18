@@ -72,12 +72,6 @@ public class DynamicBundle extends AbstractBundle {
         ));
   }
 
-  private static boolean isBundlePresentInCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
-    Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
-    if (loaderCache == null) return false;
-    return loaderCache.get(pathToBundle) != null;
-  }
-
   private static ResourceBundle getBundleFromCache(@NotNull ClassLoader loader, @NotNull String pathToBundle) {
     Map<String, ResourceBundle> loaderCache = ourCache.get(loader);
     if (loaderCache == null) return null;
@@ -223,7 +217,10 @@ public class DynamicBundle extends AbstractBundle {
   @ApiStatus.Internal
   protected ResourceBundle getBundle(boolean isDefault, @NotNull ClassLoader classLoader) {
     ResourceBundle bundle = super.getBundle(isDefault, classLoader);
-    if (bundle != null && !isDefault && (!isBundlePresentInCache(classLoader, bundle.getBaseBundleName()) || getBundleFromCache(classLoader, bundle.getBaseBundleName()) != bundle)) {
+    if (bundle != null &&
+        !isDefault &&
+        (getBundleFromCache(classLoader, bundle.getBaseBundleName()) == null ||
+         getBundleFromCache(classLoader, bundle.getBaseBundleName()) != bundle)) {
       LOG.info("Cleanup bundle cache for " + bundle.getBaseBundleName());
       return null;
     }
