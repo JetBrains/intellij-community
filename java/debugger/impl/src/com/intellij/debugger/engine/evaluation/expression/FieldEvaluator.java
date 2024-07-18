@@ -126,7 +126,7 @@ public class FieldEvaluator implements Evaluator {
 
       // expressions like 'array.length' must be treated separately
       if (objRef instanceof ArrayReference && "length".equals(myFieldName)) {
-        return context.getSuspendContext().getVirtualMachine().mirrorOf(((ArrayReference)objRef).length());
+        return context.getSuspendContext().getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length());
       }
 
       Field field = findField(refType);

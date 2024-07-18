@@ -542,7 +542,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         }
 
         if (currentThread == null) {
-          Collection<ThreadReferenceProxyImpl> allThreads = suspendContext.getVirtualMachine().allThreads();
+          Collection<ThreadReferenceProxyImpl> allThreads = suspendContext.getVirtualMachineProxy().allThreads();
           ThreadReferenceProxyImpl lastThread = myLastThread.get();
           if (lastThread != null && allThreads.contains(lastThread)) {
             currentThread = lastThread;

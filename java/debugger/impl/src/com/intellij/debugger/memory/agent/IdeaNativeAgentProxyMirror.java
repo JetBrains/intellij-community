@@ -101,7 +101,7 @@ public class IdeaNativeAgentProxyMirror {
                                                                                                @NotNull ReferenceType classType,
                                                                                                long objectsLimit,
                                                                                                long timeoutInMillis) throws EvaluateException {
-    LongValue objectsLimitValue = evaluationContext.getSuspendContext().getVirtualMachine().mirrorOf(objectsLimit);
+    LongValue objectsLimitValue = evaluationContext.getSuspendContext().getVirtualMachineProxy().mirrorOf(objectsLimit);
     Value result = callMethod(
       evaluationContext,
       ESTIMATE_OBJECTS_SIZES_BY_CLASS,
@@ -205,8 +205,8 @@ public class IdeaNativeAgentProxyMirror {
                                                                                  @NotNull ObjectReference reference,
                                                                                  int pathsNumber, int objectsNumber,
                                                                                  long timeoutInMillis) throws EvaluateException {
-    IntegerValue pathsNumberValue = evaluationContext.getSuspendContext().getVirtualMachine().mirrorOf(pathsNumber);
-    IntegerValue objectsNumberValue = evaluationContext.getSuspendContext().getVirtualMachine().mirrorOf(objectsNumber);
+    IntegerValue pathsNumberValue = evaluationContext.getSuspendContext().getVirtualMachineProxy().mirrorOf(pathsNumber);
+    IntegerValue objectsNumberValue = evaluationContext.getSuspendContext().getVirtualMachineProxy().mirrorOf(objectsNumber);
     Value result = callMethod(
       evaluationContext,
       FIND_PATHS_TO_CLOSEST_GC_ROOTS,
@@ -329,13 +329,13 @@ public class IdeaNativeAgentProxyMirror {
 
   @NotNull
   private static LongValue getLongValue(@NotNull EvaluationContextImpl evaluationContext, long timeoutInMillis) {
-    return evaluationContext.getSuspendContext().getVirtualMachine().mirrorOf(timeoutInMillis);
+    return evaluationContext.getSuspendContext().getVirtualMachineProxy().mirrorOf(timeoutInMillis);
   }
 
   @NotNull
   private static StringReference getStringReference(@NotNull EvaluationContextImpl evaluationContext, @NotNull String string)
     throws EvaluateException {
-    return DebuggerUtilsEx.mirrorOfString(string, evaluationContext.getSuspendContext().getVirtualMachine(), evaluationContext);
+    return DebuggerUtilsEx.mirrorOfString(string, evaluationContext.getSuspendContext().getVirtualMachineProxy(), evaluationContext);
   }
 
   @NotNull

@@ -26,14 +26,14 @@ class PatternLabelEvaluator implements Evaluator {
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {
-      return context.getSuspendContext().getVirtualMachine().mirrorOf(false);
+      return context.getSuspendContext().getVirtualMachineProxy().mirrorOf(false);
     }
     if (!(value instanceof ObjectReference)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.object.reference.expected"));
     }
     try {
       boolean res = myPatternEvaluator.match(value, context);
-      return context.getSuspendContext().getVirtualMachine().mirrorOf(res);
+      return context.getSuspendContext().getVirtualMachineProxy().mirrorOf(res);
     }
     catch (Exception e) {
       LOG.debug(e);

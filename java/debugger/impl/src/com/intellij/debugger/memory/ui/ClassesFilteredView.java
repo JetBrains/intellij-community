@@ -378,7 +378,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       handleTrackers();
 
-      final VirtualMachineProxyImpl proxy = suspendContext.getVirtualMachine();
+      final VirtualMachineProxyImpl proxy = suspendContext.getVirtualMachineProxy();
       final List<ReferenceType> classes = proxy.allClasses();
 
       ClassesTable table = getTable();

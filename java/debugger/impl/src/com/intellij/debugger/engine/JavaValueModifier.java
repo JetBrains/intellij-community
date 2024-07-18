@@ -103,13 +103,13 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
       String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
-        value = DebuggerUtilsEx.mirrorOfString(v, context.getSuspendContext().getVirtualMachine(), context);
+        value = DebuggerUtilsEx.mirrorOfString(v, context.getSuspendContext().getVirtualMachineProxy(), context);
       }
     }
     if (value instanceof DoubleValue) {
       double dValue = ((DoubleValue)value).doubleValue();
       if (varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE) {
-        value = context.getSuspendContext().getVirtualMachine().mirrorOf((float)dValue);
+        value = context.getSuspendContext().getVirtualMachineProxy().mirrorOf((float)dValue);
       }
     }
     if (value != null) {
@@ -148,7 +148,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     if (varType instanceof LongType) {
       try {
         return new ExpressionEvaluatorImpl(new IdentityEvaluator(
-          evaluationContext.getSuspendContext().getVirtualMachine().mirrorOf(Long.decode(expression.getExpression()))));
+          evaluationContext.getSuspendContext().getVirtualMachineProxy().mirrorOf(Long.decode(expression.getExpression()))));
       }
       catch (NumberFormatException ignored) {
       }

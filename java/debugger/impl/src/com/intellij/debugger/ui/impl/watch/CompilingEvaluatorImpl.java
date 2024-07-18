@@ -3,7 +3,6 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -190,7 +189,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     if (session != null) {
       XSuspendContext suspendContext = session.getSuspendContext();
       if (suspendContext instanceof SuspendContextImpl suspendContextImpl) {
-        return JavaSdkVersion.fromVersionString(suspendContextImpl.getVirtualMachine().version());
+        return JavaSdkVersion.fromVersionString(suspendContextImpl.getVirtualMachineProxy().version());
       }
     }
 

@@ -11,7 +11,6 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
@@ -58,7 +57,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
     autoLoadContext.setClassLoader(classLoader);
 
-    JavaSdkVersion version = JavaSdkVersion.fromVersionString(autoLoadContext.getSuspendContext().getVirtualMachine().version());
+    JavaSdkVersion version = JavaSdkVersion.fromVersionString(autoLoadContext.getSuspendContext().getVirtualMachineProxy().version());
     Collection<ClassObject> classes = compile(version);
     defineClasses(classes, autoLoadContext, process, classLoader);
 

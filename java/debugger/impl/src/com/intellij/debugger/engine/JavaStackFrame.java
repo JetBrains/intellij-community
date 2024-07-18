@@ -280,7 +280,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     int positionOfLocalVariablesAsFields = children.size();
     final List<FieldDescriptorImpl> outerLocalVariablesAsFields = new SmartList<>();
     if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
-      if (thisObjectReference != null && evaluationContext.getSuspendContext().getVirtualMachine().canGetSyntheticAttribute()) {
+      if (thisObjectReference != null && evaluationContext.getSuspendContext().getVirtualMachineProxy().canGetSyntheticAttribute()) {
         final ReferenceType thisRefType = thisObjectReference.referenceType();
         if (thisRefType instanceof ClassType && location != null
             && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only

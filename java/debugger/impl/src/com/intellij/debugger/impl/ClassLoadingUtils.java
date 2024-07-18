@@ -40,7 +40,7 @@ public final class ClassLoadingUtils {
                                  DebugProcess process,
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
-      VirtualMachineProxyImpl proxy = ((SuspendContextImpl)context.getSuspendContext()).getVirtualMachine();
+      VirtualMachineProxyImpl proxy = ((SuspendContextImpl)context.getSuspendContext()).getVirtualMachineProxy();
       Method defineMethod =
         DebuggerUtils.findMethod(classLoader.referenceType(), "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
       ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, defineMethod,

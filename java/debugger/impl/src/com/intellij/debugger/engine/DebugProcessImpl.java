@@ -471,7 +471,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         LOG.debug("DO_STEP: creating step request for " + stepThreadReference);
       }
       deleteStepRequests(stepThreadReference);
-      EventRequestManager requestManager = suspendContext.getVirtualMachine().eventRequestManager();
+      EventRequestManager requestManager = suspendContext.getVirtualMachineProxy().eventRequestManager();
       StepRequest stepRequest = requestManager.createStepRequest(stepThreadReference, size, depth);
       if (!(hint != null && hint.isIgnoreFilters()) && !isPositionFiltered(getLocation(stepThread, suspendContext))) {
         getActiveFilters().forEach(f -> stepRequest.addClassExclusionFilter(f.getPattern()));
@@ -895,7 +895,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   /**
    * Get the current VM proxy connected to the process.
    * The VM can change due to a single debug process can be connected to several VMs (see {@link DebugProcessImpl#reattach(DebugEnvironment, boolean, Runnable)})
-   * Prefer {@link SuspendContextImpl#getVirtualMachine()} when possible.
+   * Prefer {@link SuspendContextImpl#getVirtualMachineProxy()} when possible.
    */
   @NotNull
   @Override
@@ -1672,7 +1672,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private VirtualMachineProxyImpl getCurrentVm(@Nullable EvaluationContext evaluationContext) {
     return evaluationContext != null
-           ? ((SuspendContextImpl)evaluationContext.getSuspendContext()).getVirtualMachine()
+           ? ((SuspendContextImpl)evaluationContext.getSuspendContext()).getVirtualMachineProxy()
            : getVirtualMachineProxy();
   }
 

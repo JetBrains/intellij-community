@@ -97,7 +97,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     Disposer.register(debugProcess.myDisposable, this);
   }
 
-  public VirtualMachineProxyImpl getVirtualMachine() {
+  public VirtualMachineProxyImpl getVirtualMachineProxy() {
     return myVirtualMachine;
   }
 
@@ -465,7 +465,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
         CompletableFuture.completedFuture(pausedThreads)
           .thenCompose(tds -> addThreads(tds, THREAD_NAME_COMPARATOR, false))
           .thenCompose(res -> res
-                              ? suspendContext.getVirtualMachine().allThreadsAsync()
+                              ? suspendContext.getVirtualMachineProxy().allThreadsAsync()
                               : CompletableFuture.completedFuture(Collections.emptyList()))
           .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true))
           .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
