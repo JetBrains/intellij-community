@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
 
-internal interface IShellCommandOutputScraper {
+internal interface ShellCommandOutputScraper {
 
   fun scrapeOutput(): StyledCommandOutput
 

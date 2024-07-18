@@ -19,7 +19,7 @@ internal class ShellCommandOutputScraperImpl(
   private val session: BlockTerminalSession,
   textBuffer: TerminalTextBuffer,
   parentDisposable: Disposable,
-) : IShellCommandOutputScraper {
+) : ShellCommandOutputScraper {
 
   constructor(session: BlockTerminalSession) : this(session, session.model.textBuffer, session)
 
