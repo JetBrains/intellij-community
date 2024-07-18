@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -9,13 +10,29 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Segment
 import com.intellij.util.Alarm
+import com.intellij.util.SingleAlarm
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class RangeBlinker(private val editor: Editor, private val attributes: TextAttributes, private var timeToLive: Int) {
+class RangeBlinker(
+  private val editor: Editor,
+  private val attributes: TextAttributes,
+  private var timeToLive: Int,
+  parentDisposable: Disposable?,
+) {
   private val markers = ArrayList<Segment>()
   private var show = true
-  private val blinkingAlarm = Alarm()
+  private val blinkingAlarm = SingleAlarm(
+    threadToUse = Alarm.ThreadToUse.SWING_THREAD,
+    parentDisposable = parentDisposable,
+    delay = 400,
+    task = {
+      if (timeToLive > 0 || show) {
+        timeToLive--
+        show = !show
+        startBlinking()
+      }
+    })
   private val addedHighlighters = ArrayList<RangeHighlighter>()
 
   fun resetMarkers(markers: List<Segment>) {
@@ -60,17 +77,10 @@ class RangeBlinker(private val editor: Editor, private val attributes: TextAttri
     else {
       removeHighlights()
     }
-    stopBlinking()
-    blinkingAlarm.addRequest({
-                                 if (timeToLive > 0 || show) {
-                                   timeToLive--
-                                   show = !show
-                                   startBlinking()
-                                 }
-                               }, 400)
+    blinkingAlarm.scheduleCancelAndRequest()
   }
 
   fun stopBlinking() {
-    blinkingAlarm.cancelAllRequests()
+    blinkingAlarm.cancel()
   }
 }

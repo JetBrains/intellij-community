@@ -348,6 +348,14 @@ class SingleAlarm @Internal constructor(
     request(forceRun = forceRun, delay = delay, cancelCurrent = true)
   }
 
+  // required, if we need to call it from the task
+  @Internal
+  fun scheduleCancelAndRequest() {
+    taskCoroutineScope.launch {
+      cancelAndRequest()
+    }
+  }
+
   @Deprecated("Use cancel")
   fun cancelAllRequests(): Int {
     val currentJob = synchronized(LOCK) {

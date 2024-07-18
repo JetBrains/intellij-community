@@ -267,7 +267,9 @@ final class SearchForUsagesRunnable implements Runnable {
 
   static PsiElement getPsiElement(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor[0];
-    if (!(target instanceof PsiElementUsageTarget)) return null;
+    if (!(target instanceof PsiElementUsageTarget)) {
+      return null;
+    }
     return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);
   }
 
@@ -277,10 +279,13 @@ final class SearchForUsagesRunnable implements Runnable {
     }
 
     Editor editor = usageInfo.openTextEditor(true);
-    if (editor == null) return;
+    if (editor == null) {
+      return;
+    }
+
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
 
-    RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6);
+    RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6, null);
     List<Segment> segments = new ArrayList<>();
     Processor<Segment> processor = Processors.cancelableCollectProcessor(segments);
     usageInfo.processRangeMarkers(processor);

@@ -81,6 +81,7 @@ open class Alarm @Internal constructor(
 
   constructor(threadToUse: ThreadToUse) : this(threadToUse = threadToUse, parentDisposable = null, activationComponent = null)
 
+  @Deprecated("Please flow or at least pass coroutineScope")
   constructor() : this(threadToUse = ThreadToUse.SWING_THREAD, parentDisposable = null, activationComponent = null)
 
   @Internal
