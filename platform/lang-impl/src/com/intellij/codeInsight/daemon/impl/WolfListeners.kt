@@ -1,143 +1,132 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeAdapter;
-import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FileStatusListener
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiTreeChangeAdapter
+import com.intellij.psi.PsiTreeChangeEvent
+import com.intellij.util.CommonProcessors.CollectProcessor
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+internal class WolfListeners(private val project: Project, private val wolfTheProblemSolver: WolfTheProblemSolverImpl) {
+  private val invalidateFileQueue = MergingUpdateQueue(
+    name = "WolfListeners.invalidateFileQueue",
+    mergingTimeSpan = 0,
+    isActive = true,
+    modalityStateComponent = null,
+    parent = wolfTheProblemSolver,
+    activationComponent = null,
+    executeInDispatchThread = false,
+  )
 
-final class WolfListeners {
-  private final Project myProject;
-  private final WolfTheProblemSolverImpl myWolfTheProblemSolver;
-  private final MergingUpdateQueue invalidateFileQueue;
-
-  WolfListeners(@NotNull Project project, @NotNull WolfTheProblemSolverImpl wolfTheProblemSolver) {
-    invalidateFileQueue = new MergingUpdateQueue("WolfListeners.invalidateFileQueue", 0, true, null, wolfTheProblemSolver, null, false);
-
-    myProject = project;
-    myWolfTheProblemSolver = wolfTheProblemSolver;
-    PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-      @Override
-      public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
+  init {
+    PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
+      override fun childAdded(event: PsiTreeChangeEvent) {
+        childrenChanged(event)
       }
 
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
+      override fun childRemoved(event: PsiTreeChangeEvent) {
+        childrenChanged(event)
       }
 
-      @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
+      override fun childReplaced(event: PsiTreeChangeEvent) {
+        childrenChanged(event)
       }
 
-      @Override
-      public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
+      override fun childMoved(event: PsiTreeChangeEvent) {
+        childrenChanged(event)
       }
 
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
+      override fun propertyChanged(event: PsiTreeChangeEvent) {
+        childrenChanged(event)
       }
 
-      @Override
-      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        myWolfTheProblemSolver.clearSyntaxErrorFlag(event);
+      override fun childrenChanged(event: PsiTreeChangeEvent) {
+        this@WolfListeners.wolfTheProblemSolver.clearSyntaxErrorFlag(event)
       }
-    }, wolfTheProblemSolver);
-    var busConnection = project.getMessageBus().simpleConnect();
-    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        boolean dirChanged = false;
-        Set<VirtualFile> toRemove = new HashSet<>();
-        for (VFileEvent event : events) {
-          if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
-            VirtualFile file = event.getFile();
-            if (file.isDirectory()) {
-              dirChanged = true;
+    }, wolfTheProblemSolver)
+    val busConnection = project.messageBus.simpleConnect()
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        var dirChanged = false
+        val toRemove: MutableSet<VirtualFile?> = HashSet()
+        for (event in events) {
+          if (event is VFileDeleteEvent || event is VFileMoveEvent) {
+            val file = event.file
+            if (file!!.isDirectory) {
+              dirChanged = true
             }
             else {
-              toRemove.add(file);
+              toRemove.add(file)
             }
           }
         }
         if (dirChanged) {
-          clearInvalidFiles();
+          clearInvalidFiles()
         }
-        for (VirtualFile file : toRemove) {
-          myWolfTheProblemSolver.doRemove(file);
+        for (file in toRemove) {
+          this@WolfListeners.wolfTheProblemSolver.doRemove(file!!)
         }
       }
-    });
-    busConnection.subscribe(FileStatusListener.TOPIC, new FileStatusListener() {
-      @Override
-      public void fileStatusesChanged() {
-        clearInvalidFiles();
+    })
+    busConnection.subscribe(FileStatusListener.TOPIC, object : FileStatusListener {
+      override fun fileStatusesChanged() {
+        clearInvalidFiles()
       }
 
-      @Override
-      public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-        fileStatusesChanged();
+      override fun fileStatusChanged(virtualFile: VirtualFile) {
+        fileStatusesChanged()
       }
-    });
+    })
 
-    busConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+    busConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         // Ensure we don't have any leftover problems referring to classes from plugin being unloaded
-        Set<VirtualFile> allFiles = new HashSet<>();
-        wolfTheProblemSolver.processProblemFiles(new CommonProcessors.CollectProcessor<>(allFiles));
-        wolfTheProblemSolver.processProblemFilesFromExternalSources(new CommonProcessors.CollectProcessor<>(allFiles));
-        for (VirtualFile file : allFiles) {
-          myWolfTheProblemSolver.doRemove(file);
+        val allFiles: Set<VirtualFile> = HashSet()
+        wolfTheProblemSolver.processProblemFiles(CollectProcessor(allFiles))
+        wolfTheProblemSolver.processProblemFilesFromExternalSources(CollectProcessor(allFiles))
+        for (file in allFiles) {
+          this@WolfListeners.wolfTheProblemSolver.doRemove(file)
         }
       }
-    });
+    })
   }
 
-  private void clearInvalidFiles() {
-    myWolfTheProblemSolver.processProblemFiles(file -> {
-      invalidateFileQueue.queue(Update.create(file, () -> {
-        boolean toRemove = ReadAction.compute(() -> !myProject.isDisposed() && (!file.isValid() || !myWolfTheProblemSolver.isToBeHighlighted(file)));
-        if (toRemove) {
-          myWolfTheProblemSolver.doRemove(file);
+  private fun clearInvalidFiles() {
+    wolfTheProblemSolver.processProblemFiles { file ->
+      invalidateFileQueue.queue(Update.create(file) {
+        val toRemove = ReadAction.compute<Boolean, RuntimeException> {
+          !project.isDisposed && (!file.isValid || !wolfTheProblemSolver.isToBeHighlighted(file))
         }
-      }));
-      return true;
-    });
+        if (toRemove) {
+          wolfTheProblemSolver.doRemove(file)
+        }
+      })
+      true
+    }
   }
 
   @TestOnly
-  void waitForFilesQueuedForInvalidationAreProcessed() {
+  fun waitForFilesQueuedForInvalidationAreProcessed() {
     try {
-      invalidateFileQueue.waitForAllExecuted(1, TimeUnit.MINUTES);
+      invalidateFileQueue.waitForAllExecuted(1, TimeUnit.MINUTES)
     }
-    catch (TimeoutException e) {
-      throw new RuntimeException(e);
+    catch (e: TimeoutException) {
+      throw RuntimeException(e)
     }
   }
 }
