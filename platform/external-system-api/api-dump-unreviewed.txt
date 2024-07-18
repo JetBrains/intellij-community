@@ -944,10 +944,10 @@ c:com.intellij.openapi.externalSystem.model.task.event.FailureResult
 c:com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
 - java.io.Serializable
 - <init>(java.lang.String,J):V
-- getDisplayName():java.lang.String
-- getEventTime():J
-- getHint():java.lang.String
-- setHint(java.lang.String):V
+- f:getDisplayName():java.lang.String
+- f:getEventTime():J
+- f:getHint():java.lang.String
+- f:setHint(java.lang.String):V
 c:com.intellij.openapi.externalSystem.model.task.event.OperationResult
 - java.io.Serializable
 - <init>(J,J):V
@@ -960,10 +960,10 @@ c:com.intellij.openapi.externalSystem.model.task.event.SuccessResult
 - com.intellij.openapi.externalSystem.model.task.event.OperationResult
 - <init>(J,J,Z):V
 - isUpToDate():Z
-c:com.intellij.openapi.externalSystem.model.task.event.TaskOperationDescriptor
+f:com.intellij.openapi.externalSystem.model.task.event.TaskOperationDescriptor
 - com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
 - <init>(java.lang.String,J,java.lang.String):V
-- getTaskName():java.lang.String
+- f:getTaskName():java.lang.String
 f:com.intellij.openapi.externalSystem.model.task.event.TestAssertionFailure
 - com.intellij.openapi.externalSystem.model.task.event.TestFailure
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.util.List,java.lang.String,java.lang.String):V
@@ -980,12 +980,12 @@ c:com.intellij.openapi.externalSystem.model.task.event.TestFailure
 - f:getExceptionName():java.lang.String
 - f:getStackTrace():java.lang.String
 - f:isTestError():Z
-c:com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
+f:com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 - com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
 - <init>(java.lang.String,J,java.lang.String,java.lang.String,java.lang.String):V
-- getClassName():java.lang.String
-- getMethodName():java.lang.String
-- getSuiteName():java.lang.String
+- f:getClassName():java.lang.String
+- f:getMethodName():java.lang.String
+- f:getSuiteName():java.lang.String
 f:com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope
 - com.intellij.psi.search.DelegatingGlobalSearchScope
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,java.lang.String):V
