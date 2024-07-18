@@ -4,10 +4,12 @@ package org.jetbrains.plugins.terminal.block.session
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
+import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration
@@ -15,13 +17,17 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 internal class ShellCommandManager(private val session: BlockTerminalSession) {
+  private val commandEndMarker: String? = session.commandBlockIntegration.commandEndMarker
+  private val terminal: Terminal = session.controller
+  private val shellIntegration: ShellIntegration = session.shellIntegration
+
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
 
   @Volatile
   private var startedCommand: StartedCommand? = null
 
   init {
-    session.controller.addCustomCommandListener(TerminalCustomCommandListener {
+    terminal.addCustomCommandListener(TerminalCustomCommandListener {
       try {
         when (it.getOrNull(0)) {
           "initialized" -> processInitialized(it)
@@ -44,7 +50,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
 
   private fun processInitialized(event: List<String>) {
     val shellInfo = Param.SHELL_INFO.getDecodedValueOrNull(event.getOrNull(1)) ?: "{}"
-    if (session.commandBlockIntegration.commandEndMarker != null) {
+    if (commandEndMarker != null) {
       debug { "Received initialized event, waiting for command end marker" }
       ShellCommandEndMarkerListener(session) {
         fireInitialized(shellInfo)
@@ -66,7 +72,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
   private fun processCommandFinishedEvent(event: List<String>) {
     val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(1))
     val startedCommand = this.startedCommand
-    if (session.commandBlockIntegration.commandEndMarker != null) {
+    if (commandEndMarker != null) {
       debug { "Received command_finished event, waiting for command end marker" }
       ShellCommandEndMarkerListener(session) {
         fireCommandFinished(startedCommand, exitCode)
@@ -89,7 +95,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
       condaEnv = Param.CONDA_ENV.getDecodedNotEmptyValueOrNull(event.getOrNull(6)),
       originalPrompt = Param.ORIGINAL_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(7)),
       originalRightPrompt = Param.ORIGINAL_RIGHT_PROMPT.getDecodedNotEmptyValueOrNull(event.getOrNull(8)),
-      shellName = session.shellIntegration.shellType.toString().lowercase()
+      shellName = shellIntegration.shellType.toString().lowercase()
     )
     firePromptStateUpdated(state)
   }
@@ -103,7 +109,7 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     val requestId = Param.REQUEST_ID.getIntValue(event.getOrNull(1))
     val result = Param.RESULT.getDecodedValue(event.getOrNull(2))
     val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(3))
-    if (session.commandBlockIntegration.commandEndMarker != null) {
+    if (commandEndMarker != null) {
       debug { "Received generator_finished event, waiting for command end marker" }
       ShellCommandEndMarkerListener(session) {
         fireGeneratorFinished(requestId, result, exitCode)
