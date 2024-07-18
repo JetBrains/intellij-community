@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.platforms
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -42,7 +44,9 @@ class LibraryEffectiveKindProvider(private val project: Project) {
         val virtualFile = classRoots.firstOrNull() ?: return null
         virtualFile.putUserData(CLASS_ROOTS_KEY, classRoots)
         try {
-            return runReadAction { KOTLIN_LIBRARY_KIND_GIST.getFileData(project, virtualFile) }
+            return runReadAction {
+                KotlinLibraryKindGistProvider.getInstance().kotlinLibraryKindGist.getFileData(project, virtualFile)
+            }
         } finally {
             virtualFile.removeUserData(CLASS_ROOTS_KEY)
         }
@@ -175,12 +179,13 @@ class LibraryEffectiveKindProvider(private val project: Project) {
 
 }
 
-private val LIBRARY_KIND_KEY: Key<PersistentLibraryKind<*>> = Key.create("LibraryEffectiveKind")
-private val CLASS_ROOTS_KEY: Key<Array<VirtualFile>> = Key.create("LibraryClassRoots")
-private val NEEDS_TO_BE_CLARIFIED_KIND: UnknownLibraryKind = UnknownLibraryKind.getOrCreate("Needs to be clarified")
+@Service(Service.Level.APP)
+private class KotlinLibraryKindGistProvider {
+    val kotlinLibraryKindGist: VirtualFileGist<PersistentLibraryKind<*>> by lazy {
+        createGist()
+    }
 
-private val KOTLIN_LIBRARY_KIND_GIST: VirtualFileGist<PersistentLibraryKind<*>> by lazy {
-    GistManager.getInstance().newVirtualFileGist(
+    private fun createGist(): VirtualFileGist<PersistentLibraryKind<*>> = GistManager.getInstance().newVirtualFileGist(
         "kotlin-library-kind",
         1,
         object : DataExternalizer<PersistentLibraryKind<*>> {
@@ -207,4 +212,13 @@ private val KOTLIN_LIBRARY_KIND_GIST: VirtualFileGist<PersistentLibraryKind<*>> 
         }
         platformKind
     }
+
+    companion object {
+        fun getInstance(): KotlinLibraryKindGistProvider = ApplicationManager.getApplication().service()
+    }
 }
+
+private val LIBRARY_KIND_KEY: Key<PersistentLibraryKind<*>> = Key.create("LibraryEffectiveKind")
+private val CLASS_ROOTS_KEY: Key<Array<VirtualFile>> = Key.create("LibraryClassRoots")
+private val NEEDS_TO_BE_CLARIFIED_KIND: UnknownLibraryKind
+    get() = UnknownLibraryKind.getOrCreate("Needs to be clarified")
