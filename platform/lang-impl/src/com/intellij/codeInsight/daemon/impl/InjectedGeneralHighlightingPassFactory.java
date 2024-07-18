@@ -27,7 +27,7 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
       ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
     int[] runAfterCompletionOf = serialized ? new int[]{Pass.UPDATE_ALL} : null;
     int[] runAfterStartingOf = serialized ? null : new int[]{Pass.UPDATE_ALL};
-    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, Pass.INJECTED_GENERAL_HIGHLIGHTINGS);
+    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, Pass.INJECTED_GENERAL);
   }
 
   @Override
