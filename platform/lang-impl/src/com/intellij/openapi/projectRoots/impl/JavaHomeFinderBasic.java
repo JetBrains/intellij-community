@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public class JavaHomeFinderBasic {
   @SuppressWarnings("NonConstantLogger") private final Logger log = Logger.getInstance(getClass());
   private final List<Supplier<? extends Set<String>>> myFinders = new ArrayList<>();
@@ -159,7 +161,7 @@ public class JavaHomeFinderBasic {
     }
 
     if (myCheckUsedInstallDirs) {
-      paths.addAll(JdkInstallerStore.getInstance().listJdkInstallHomes());
+      paths.addAll(JdkInstallerStore.Companion.getInstance().listJdkInstallHomes());
     }
 
     if (myCheckConfiguredJdks) {

@@ -27,6 +27,7 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -41,12 +42,13 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.math.absoluteValue
 
+@Internal
 interface JdkInstallRequest {
   val item: JdkItem
 
   /**
    * The path where JDK is installed.
-   * On macOS it is likely (depending on the JDK package)
+   * On macOS, it is likely (depending on the JDK package)
    * to contain Contents/Home folders
    */
   val installDir: Path
@@ -55,7 +57,7 @@ interface JdkInstallRequest {
    * The path on the disk where the installed JDK
    * would have the bin/java and bin/javac files.
    *
-   * On macOs this path may differ from the [installDir]
+   * On macOS this path may differ from the [installDir]
    * if the JDK package follows the macOS Bundle layout
    */
   val javaHome: Path
@@ -63,6 +65,7 @@ interface JdkInstallRequest {
 
 private val JDK_INSTALL_LISTENER_EP_NAME = ExtensionPointName<JdkInstallerListener>("com.intellij.jdkDownloader.jdkInstallerListener")
 
+@Internal
 interface JdkInstallerListener {
   /**
    * Executed at the moment, when a download process for
@@ -78,6 +81,7 @@ interface JdkInstallerListener {
 }
 
 @Service
+@Internal
 class JdkInstaller : JdkInstallerBase() {
   companion object {
     @JvmStatic
@@ -148,12 +152,13 @@ class JdkInstaller : JdkInstallerBase() {
   }
 }
 
+@Internal
 interface WSLDistributionForJdkInstaller {
   fun getWslPath(path: Path): String
   fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput
 }
 
-
+@Internal
 abstract class JdkInstallerBase {
   @Suppress("PropertyName", "SSBasedInspection")
   protected val LOG: Logger = Logger.getInstance(javaClass)
@@ -392,7 +397,7 @@ abstract class JdkInstallerBase {
       }
 
       // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
-      val markerFile = generateSequence(jdkPath, { file -> file.parent })
+      val markerFile = generateSequence(jdkPath) { file -> file.parent }
                          .takeWhile {
                            arrayOf<LinkOption>()
                            it.isDirectory()
@@ -534,8 +539,8 @@ private data class LocallyFoundJdk(
   }
 }
 
-
 @Tag("installed-jdk")
+@Internal
 class JdkInstallerStateEntry : BaseState() {
   var fullText: String? by string()
   var versionText: String? by string()
@@ -565,6 +570,7 @@ class JdkInstallerStateEntry : BaseState() {
   }
 }
 
+@Internal
 class JdkInstallerState : BaseState() {
   @get:XCollection
   var installedItems: MutableList<JdkInstallerStateEntry> by list()
@@ -572,6 +578,7 @@ class JdkInstallerState : BaseState() {
 
 @State(name = "JdkInstallerHistory", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)
 @Service
+@Internal
 class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkInstallerState()) {
   private val lock = ReentrantLock()
 
@@ -600,7 +607,6 @@ class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkI
   }
 
   companion object {
-    @JvmStatic
     fun getInstance(): JdkInstallerStore = service<JdkInstallerStore>()
   }
 }

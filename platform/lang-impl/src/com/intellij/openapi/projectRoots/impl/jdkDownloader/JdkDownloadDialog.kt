@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WSLDistribution
@@ -19,14 +19,19 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.event.ItemEvent
 import java.nio.file.Path
 import java.util.function.Function
-import javax.swing.*
+import javax.swing.ComboBoxModel
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
+@Internal
 class JdkDownloaderModel(
   val versionGroups: List<JdkVersionItem>,
   val defaultItem: JdkItem,
@@ -34,6 +39,7 @@ class JdkDownloaderModel(
   val defaultVersionVendor: JdkVersionVendorItem,
 )
 
+@Internal
 class JdkVersionItem(
   @NlsSafe
   val jdkVersion: String,
@@ -60,6 +66,7 @@ class JdkVersionItem(
   }
 }
 
+@Internal
 class JdkVersionVendorItem(
   val item: JdkItem
 ) {
@@ -125,8 +132,10 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorItem>() {
   }
 }
 
-private fun List<JdkVersionVendorItem>.sortedForUI() = this.sortedBy { it.item.product.packagePresentationText.toLowerCase() }
+private fun List<JdkVersionVendorItem>.sortedForUI() = this.sortedBy { it.item.product.packagePresentationText.lowercase() }
 
+@VisibleForTesting
+@Internal
 fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Boolean = { true }): JdkDownloaderModel {
   @NlsSafe
   fun JdkItem.versionGroupId() = this.presentableMajorVersionString

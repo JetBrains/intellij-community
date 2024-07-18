@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConvertSecondaryConstructorToPrimary")
 package com.intellij.openapi.projectRoots.impl
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.io.WindowsRegistryUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -16,6 +17,7 @@ import kotlin.io.path.exists
 import kotlin.text.RegexOption.IGNORE_CASE
 import kotlin.text.RegexOption.MULTILINE
 
+@Internal
 class JavaHomeFinderWindows : JavaHomeFinderBasic {
   companion object {
     const val defaultJavaLocation: String = "C:\\Program Files"

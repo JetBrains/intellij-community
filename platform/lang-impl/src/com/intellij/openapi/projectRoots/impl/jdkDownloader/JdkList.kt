@@ -25,6 +25,7 @@ import com.intellij.util.system.CpuArch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.tukaani.xz.XZInputStream
@@ -38,6 +39,7 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 /** describes vendor + product part of the UI **/
+@Internal
 data class JdkProduct(
   val vendor: @NlsSafe String,
   val product: @NlsSafe String?,
@@ -60,6 +62,7 @@ data class JdkProduct(
 }
 
 /** describes an item behind the version as well as download info **/
+@Internal
 data class JdkItem(
   val product: JdkProduct,
 
@@ -203,16 +206,17 @@ enum class JdkPackageType(@NonNls val type: String) {
   }
 }
 
+@Internal
 data class JdkPlatform(
   val os: String,
   val arch: String,
 )
 
+@Internal
 data class JdkPredicate(
   private val ideBuildNumber: BuildNumber?,
   private val supportedPlatforms: Set<JdkPlatform>,
 ) {
-
   companion object {
     fun none(): JdkPredicate = JdkPredicate(null, emptySet())
 
@@ -371,6 +375,7 @@ data class JdkPredicate(
   }
 }
 
+@Internal
 object JdkListParser {
   fun readTree(rawData: String): JsonObject = Json.decodeFromString<JsonElement>(rawData).jsonObject
 
@@ -455,6 +460,7 @@ class JdkListDownloader : JdkListDownloaderBase() {
     }
 }
 
+@Internal
 abstract class JdkListDownloaderBase {
   protected abstract val feedUrl: String
 
