@@ -64,30 +64,47 @@ class PackageSearchApiClientService : Disposable, DependencySearchProvider {
 
   @Deprecated("Use directly the client instead")
   @ScheduledForRemoval
-  suspend fun searchByString(searchString: String) =
-    client.searchPackages {
-      searchQuery = searchString
-      packagesType {
-        jvmMavenPackages()
-      }
-    }.filterIsInstance<ApiMavenPackage>()
+  suspend fun searchByString(searchString: String): List<ApiMavenPackage> =
+    if (searchString.isEmpty()) {
+      emptyList()
+    }
+    else {
+      client.searchPackages {
+        searchQuery = searchString
+        packagesType {
+          jvmMavenPackages()
+        }
+      }.filterIsInstance<ApiMavenPackage>()
+    }
+
 
   @Deprecated("Use directly the client instead (PackageSearcgApiClientService)")
   @ScheduledForRemoval
   override suspend fun fulltextSearch(searchString: String): List<RepositoryArtifactData> =
-    client.searchPackages {
-      searchQuery = searchString
-      packagesType {
-        jvmMavenPackages()
-      }
+    if (searchString.isEmpty()) {
+      emptyList<RepositoryArtifactData>()
     }
-      .filterIsInstance<ApiMavenPackage>()
-      .map { it.repositoryArtifactData() }
+    else {
+      client.searchPackages {
+        searchQuery = searchString
+        packagesType {
+          jvmMavenPackages()
+        }
+      }
+        .filterIsInstance<ApiMavenPackage>()
+        .map { it.repositoryArtifactData() }
+    }
+
 
   @Deprecated("Use directly the client instead")
   @ScheduledForRemoval
   override suspend fun suggestPrefix(groupId: String, artifactId: String) =
-    fulltextSearch("$groupId:$artifactId")
+    if (groupId.isEmpty() && artifactId.isEmpty()) {
+      emptyList()
+    }
+    else {
+      fulltextSearch("$groupId:$artifactId")
+    }
 
   override fun isLocal() = false
 
