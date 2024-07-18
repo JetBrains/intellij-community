@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.Disposable;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ui.RangeBlinker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -21,12 +22,11 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@ApiStatus.Internal
 public class ActionUsagePanel extends JPanel implements Disposable {
   private static final @NonNls String SPOT_MARKER = "spot";
   protected final EditorEx myEditor;
   protected final RangeBlinker myRangeBlinker;
-
 
   public ActionUsagePanel() {
     myEditor = (EditorEx)createEditor("", 10, 3, -1);

@@ -7523,16 +7523,6 @@ c:com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,Z):V
 - p:showIntentionHint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,Z):V
 - startInWriteAction():Z
-c:com.intellij.codeInsight.intention.impl.config.ActionUsagePanel
-- javax.swing.JPanel
-- com.intellij.openapi.Disposable
-- pf:myEditor:com.intellij.openapi.editor.ex.EditorEx
-- pf:myRangeBlinker:com.intellij.util.ui.RangeBlinker
-- <init>():V
-- ps:createEditor(java.lang.String,I,I,I):com.intellij.openapi.editor.Editor
-- dispose():V
-- getEditor():com.intellij.openapi.editor.ex.EditorEx
-- reset(java.lang.String,com.intellij.openapi.fileTypes.FileType):V
 a:com.intellij.codeInsight.intention.impl.config.BeforeAfterActionMetaData
 - com.intellij.codeInsight.intention.impl.config.BeforeAfterMetaData
 - psf:DESCRIPTION_FILE_NAME:java.lang.String

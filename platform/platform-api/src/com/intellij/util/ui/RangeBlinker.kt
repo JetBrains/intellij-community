@@ -1,97 +1,76 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.ui
 
-package com.intellij.util.ui;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.Segment
+import com.intellij.util.Alarm
+import org.jetbrains.annotations.ApiStatus.Internal
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Segment;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
+@Internal
+class RangeBlinker(private val editor: Editor, private val attributes: TextAttributes, private var timeToLive: Int) {
+  private val markers = ArrayList<Segment>()
+  private var show = true
+  private val blinkingAlarm = Alarm()
+  private val addedHighlighters = ArrayList<RangeHighlighter>()
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class RangeBlinker {
-  private final Editor myEditor;
-  private int myTimeToLive;
-  private final List<Segment> myMarkers = new ArrayList<>();
-  private boolean show = true;
-  private final Alarm myBlinkingAlarm = new Alarm();
-  private final TextAttributes myAttributes;
-  private final List<RangeHighlighter> myAddedHighlighters = new ArrayList<>();
-
-  public RangeBlinker(Editor editor, final TextAttributes attributes, int timeToLive) {
-    myAttributes = attributes;
-    myEditor = editor;
-    myTimeToLive = timeToLive;
+  fun resetMarkers(markers: List<Segment>) {
+    removeHighlights()
+    this.markers.clear()
+    stopBlinking()
+    this.markers.addAll(markers)
+    show = true
   }
 
-  public void resetMarkers(final List<? extends Segment> markers) {
-    removeHighlights();
-    myMarkers.clear();
-    stopBlinking();
-    myMarkers.addAll(markers);
-    show = true;
-  }
+  private fun removeHighlights() {
+    val markupModel = editor.markupModel
+    val allHighlighters = markupModel.allHighlighters
 
-  private void removeHighlights() {
-    MarkupModel markupModel = myEditor.getMarkupModel();
-    RangeHighlighter[] allHighlighters = markupModel.getAllHighlighters();
-    
-    for (RangeHighlighter highlighter : myAddedHighlighters) {
-      if (ArrayUtil.indexOf(allHighlighters, highlighter) != -1) {
-        highlighter.dispose();
+    for (highlighter in addedHighlighters) {
+      if (allHighlighters.indexOf(highlighter) != -1) {
+        highlighter.dispose()
       }
     }
-    myAddedHighlighters.clear();
+    addedHighlighters.clear()
   }
 
-  public void startBlinking() {
-    Project project = myEditor.getProject();
-    if (ApplicationManager.getApplication().isDisposed() || myEditor.isDisposed() || project != null && project.isDisposed()) {
-      return;
+  fun startBlinking() {
+    val project = editor.project
+    if (ApplicationManager.getApplication().isDisposed || editor.isDisposed || project != null && project.isDisposed) {
+      return
     }
 
-    MarkupModel markupModel = myEditor.getMarkupModel();
+    val markupModel = editor.markupModel
     if (show) {
-      for (Segment segment : myMarkers) {
-        if (segment.getEndOffset() > myEditor.getDocument().getTextLength()) continue;
-        RangeHighlighter highlighter = markupModel.addRangeHighlighter(segment.getStartOffset(), segment.getEndOffset(),
-                                                                       HighlighterLayer.ADDITIONAL_SYNTAX, myAttributes,
-                                                                       HighlighterTargetArea.EXACT_RANGE);
-        myAddedHighlighters.add(highlighter);
+      for (segment in markers) {
+        if (segment.endOffset > editor.document.textLength) {
+          continue
+        }
+
+        val highlighter = markupModel.addRangeHighlighter(segment.startOffset, segment.endOffset,
+                                                          HighlighterLayer.ADDITIONAL_SYNTAX, attributes,
+                                                          HighlighterTargetArea.EXACT_RANGE)
+        addedHighlighters.add(highlighter)
       }
     }
     else {
-      removeHighlights();
+      removeHighlights()
     }
-    stopBlinking();
-    myBlinkingAlarm.addRequest(() -> {
-      if (myTimeToLive > 0 || show) {
-        myTimeToLive--;
-        show = !show;
-        startBlinking();
-      }
-    }, 400);
+    stopBlinking()
+    blinkingAlarm.addRequest({
+                                 if (timeToLive > 0 || show) {
+                                   timeToLive--
+                                   show = !show
+                                   startBlinking()
+                                 }
+                               }, 400)
   }
 
-  public void stopBlinking() {
-    myBlinkingAlarm.cancelAllRequests();
+  fun stopBlinking() {
+    blinkingAlarm.cancelAllRequests()
   }
 }

@@ -12578,11 +12578,6 @@ a:com.intellij.util.ui.OptionsMessageDialog
 f:com.intellij.util.ui.PresentableEnumUtil
 - s:fill(com.intellij.openapi.ui.ComboBox,java.lang.Class):com.intellij.openapi.ui.ComboBox
 - s:fill(javax.swing.JComboBox,java.lang.Class):javax.swing.JComboBox
-c:com.intellij.util.ui.RangeBlinker
-- <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.markup.TextAttributes,I):V
-- resetMarkers(java.util.List):V
-- startBlinking():V
-- stopBlinking():V
 com.intellij.util.ui.SortableColumnModel
 - a:getColumnInfos():com.intellij.util.ui.ColumnInfo[]
 - a:getDefaultSortKey():javax.swing.RowSorter$SortKey
