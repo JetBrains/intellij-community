@@ -49,7 +49,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -77,6 +77,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ApiStatus.Internal
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState>, Disposable {
   public static final DataKey<Integer> ACTIVE_LINE_NUMBER = DataKey.create("active.line.number");
@@ -98,9 +99,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myProject = project;
     myCoroutineScope = coroutineScope;
 
-    MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
+    SimpleMessageBusConnection messageBusConnection = project.getMessageBus().connect(coroutineScope);
 
-    myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection);
+    myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
     myWatchesManager = new XDebuggerWatchesManager(project);
     myPinToTopManager = new XDebuggerPinToTopManager();
     myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);

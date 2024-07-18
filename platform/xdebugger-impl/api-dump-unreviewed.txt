@@ -286,30 +286,6 @@ c:com.intellij.xdebugger.impl.XDebuggerLineChangeIconProvider
 - <init>(com.intellij.openapi.project.Project):V
 - getIcon(com.intellij.xdebugger.impl.XSourcePositionImpl,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
 - f:getProject():com.intellij.openapi.project.Project
-f:com.intellij.xdebugger.impl.XDebuggerManagerImpl
-- com.intellij.xdebugger.XDebuggerManager
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.components.PersistentStateComponent
-- sf:ACTIVE_LINE_NUMBER:com.intellij.openapi.actionSystem.DataKey
-- dispose():V
-- getBreakpointManager():com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-- getCurrentSession():com.intellij.xdebugger.impl.XDebugSessionImpl
-- getDebugProcesses(java.lang.Class):java.util.List
-- getDebugSession(com.intellij.execution.ui.ExecutionConsole):com.intellij.xdebugger.XDebugSession
-- getDebugSessions():com.intellij.xdebugger.XDebugSession[]
-- s:getNotificationGroup():com.intellij.notification.NotificationGroup
-- getPinToTopManager():com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager
-- getProject():com.intellij.openapi.project.Project
-- getState():com.intellij.xdebugger.impl.XDebuggerState
-- getWatchesManager():com.intellij.xdebugger.impl.XDebuggerWatchesManager
-- initializeComponent():V
-- loadState(com.intellij.xdebugger.impl.XDebuggerState):V
-- noStateLoaded():V
-- startSession(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
-- startSessionAndShowTab(java.lang.String,com.intellij.execution.ui.RunContentDescriptor,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
-- startSessionAndShowTab(java.lang.String,com.intellij.execution.ui.RunContentDescriptor,Z,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
-- startSessionAndShowTab(java.lang.String,com.intellij.xdebugger.XDebugProcessStarter,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XDebugSession
-- startSessionAndShowTab(java.lang.String,javax.swing.Icon,com.intellij.execution.ui.RunContentDescriptor,Z,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
 c:com.intellij.xdebugger.impl.XDebuggerSupport
 - com.intellij.xdebugger.impl.DebuggerSupport
 - <init>():V
@@ -1027,47 +1003,6 @@ c:com.intellij.xdebugger.impl.breakpoints.XBreakpointDependencyState
 - setId(java.lang.String):V
 - setLeaveEnabled(Z):V
 - setMasterBreakpointId(java.lang.String):V
-f:com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
-- com.intellij.xdebugger.breakpoints.XBreakpointManager
-- <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.XDebuggerManagerImpl,com.intellij.util.messages.MessageBusConnection):V
-- addBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointProperties):com.intellij.xdebugger.breakpoints.XBreakpoint
-- addBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener):V
-- addBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener,com.intellij.openapi.Disposable):V
-- addDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointProperties):com.intellij.xdebugger.breakpoints.XBreakpoint
-- addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties):com.intellij.xdebugger.breakpoints.XLineBreakpoint
-- addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties,Z):com.intellij.xdebugger.breakpoints.XLineBreakpoint
-- addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties,Z,Z):com.intellij.xdebugger.breakpoints.XLineBreakpoint
-- canRestoreLastRemovedBreakpoint():Z
-- findBreakpointAtLine(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.breakpoints.XLineBreakpoint
-- findBreakpointsAtLine(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):java.util.Collection
-- fireBreakpointChanged(com.intellij.xdebugger.impl.breakpoints.XBreakpointBase):V
-- fireBreakpointPresentationUpdated(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession):V
-- getAllBreakpoints():com.intellij.xdebugger.impl.breakpoints.XBreakpointBase[]
-- getAllGroups():java.util.Set
-- getBreakpointDefaults(com.intellij.xdebugger.breakpoints.XBreakpointType):com.intellij.xdebugger.impl.breakpoints.BreakpointState
-- getBreakpoints(com.intellij.xdebugger.breakpoints.XBreakpointType):java.util.Collection
-- getBreakpoints(java.lang.Class):java.util.Collection
-- getBreakpointsDialogSettings():com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
-- getDebuggerManager():com.intellij.xdebugger.impl.XDebuggerManagerImpl
-- getDefaultBreakpoints(com.intellij.xdebugger.breakpoints.XBreakpointType):java.util.Set
-- getDefaultGroup():java.lang.String
-- getDependentBreakpointManager():com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager
-- getLastRemovedBreakpoint():com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-- getLineBreakpointManager():com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
-- getProject():com.intellij.openapi.project.Project
-- init():V
-- isDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
-- noStateLoaded():V
-- rememberRemovedBreakpoint(com.intellij.xdebugger.impl.breakpoints.XBreakpointBase):V
-- removeAllBreakpoints():V
-- removeBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):V
-- removeBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener):V
-- removeDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):V
-- restoreLastRemovedBreakpoint():com.intellij.xdebugger.breakpoints.XBreakpoint
-- setBreakpointsDialogSettings(com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState):V
-- setDefaultGroup(java.lang.String):V
-- s:statesAreDifferent(com.intellij.xdebugger.impl.breakpoints.BreakpointState,com.intellij.xdebugger.impl.breakpoints.BreakpointState,Z):Z
-- updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XLineBreakpoint,javax.swing.Icon,java.lang.String):V
 c:com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider
 - com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
 - <init>():V
@@ -1113,7 +1048,7 @@ com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 - a:dependencyCleared(com.intellij.xdebugger.breakpoints.XBreakpoint):V
 - a:dependencySet(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.breakpoints.XBreakpoint):V
 f:com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager
-- <init>(com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl,com.intellij.util.messages.MessageBusConnection):V
+- <init>(com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl,com.intellij.util.messages.SimpleMessageBusConnection):V
 - clearMasterBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):V
 - getAllSlaveBreakpoints():java.util.Set
 - getMasterBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):com.intellij.xdebugger.breakpoints.XBreakpoint
@@ -1172,7 +1107,7 @@ f:com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
 f:com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 - sf:BREAKPOINT_LINE_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:Companion:com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager$Companion
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:breakpointChanged(com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl):V
 - f:getDocumentBreakpoints(com.intellij.openapi.editor.Document):java.util.Collection
 - f:queueAllBreakpointsUpdate():V
