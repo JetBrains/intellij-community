@@ -168,11 +168,27 @@ fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.Dia
   }
 }
 
+@Deprecated("It doesn't persist changes", ReplaceWith("setAssociationToModule"))
 fun Sdk.associateWithModule(module: Module?, newProjectPath: String?) {
   getOrCreateAdditionalData().apply {
     when {
       newProjectPath != null -> associateWithModulePath(newProjectPath)
       module != null -> associateWithModule(module)
+    }
+  }
+}
+
+fun Sdk.setAssociationToModule(module: Module) {
+  val data = getOrCreateAdditionalData().apply {
+    associateWithModule(module)
+  }
+
+  val modificator = sdkModificator
+  modificator.sdkAdditionalData = data
+
+  runInEdt {
+    ApplicationManager.getApplication().runWriteAction() {
+      modificator.commitChanges()
     }
   }
 }
