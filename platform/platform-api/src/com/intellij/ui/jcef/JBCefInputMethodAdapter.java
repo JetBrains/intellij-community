@@ -32,7 +32,7 @@ class JBCefInputMethodAdapter implements InputMethodRequests, InputMethodListene
   private volatile Rectangle[] myCompositionCharacterBounds;
 
   private volatile String mySelectedText = "";
-  private volatile CefRange mySelectionRange;
+  private volatile CefRange mySelectionRange = DEFAULT_RANGE;
 
   JBCefInputMethodAdapter(JBCefOsrComponent myComponent) { myMyComponent = myComponent; }
 
