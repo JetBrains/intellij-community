@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.Disposable
@@ -7,23 +7,21 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
-internal class UnknownSdkTrackerQueue : UnknownSdkCollectorQueue(700) {
+internal class UnknownSdkTrackerQueue(coroutineScope: CoroutineScope) : UnknownSdkCollectorQueue(mergingTimeSpaceMillis = 700, coroutineScope = coroutineScope) {
   companion object {
-    @JvmStatic
     fun getInstance(project: Project): UnknownSdkTrackerQueue = project.service<UnknownSdkTrackerQueue>()
   }
 }
 
-internal abstract class UnknownSdkCollectorQueue(mergingTimeSpaceMillis : Int) : Disposable {
-  private val myUpdateQueue = MergingUpdateQueue(javaClass.simpleName,
-                                                 mergingTimeSpaceMillis,
-                                                 true,
-                                                 null,
-                                                 this,
-                                                 null,
-                                                 false).usePassThroughInUnitTestMode()
+internal abstract class UnknownSdkCollectorQueue(mergingTimeSpaceMillis : Int, coroutineScope: CoroutineScope) : Disposable {
+  private val myUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
+    name = javaClass.simpleName,
+    mergingTimeSpan = mergingTimeSpaceMillis,
+    coroutineScope = coroutineScope,
+  ).usePassThroughInUnitTestMode()
 
   override fun dispose(): Unit = Unit
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslDistributionManager
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.time.Duration.Companion.seconds
@@ -144,4 +145,5 @@ private class JdkUpdaterStartup : ProjectActivity {
 }
 
 @Service(Service.Level.PROJECT)
-private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue(7_000)
+private class JdkUpdatesCollectorQueue(coroutineScope: CoroutineScope)
+  : UnknownSdkCollectorQueue(mergingTimeSpaceMillis = 7_000, coroutineScope = coroutineScope)
