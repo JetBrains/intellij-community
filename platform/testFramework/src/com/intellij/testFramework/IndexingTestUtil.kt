@@ -64,8 +64,10 @@ class IndexingTestUtil(private val project: Project) {
       val scope = GlobalScope.childScope("Indexing waiter", Dispatchers.IO)
       val waiting = scope.launch { suspendUntilIndexesAreReady() }
       try {
-        PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !waiting.isActive }, 600)
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue() // make sure that all the scheduled write actions are executed
+        do {
+          PlatformTestUtil.waitWithEventsDispatching("Indexing timeout", { !waiting.isActive }, 600)
+        }
+        while (dispatchAllEventsInIdeEventQueue()) // make sure that all the scheduled write actions are executed
       }
       finally {
         waiting.cancel()
@@ -76,6 +78,14 @@ class IndexingTestUtil(private val project: Project) {
         suspendUntilIndexesAreReady()
       }
     }
+  }
+
+  private fun dispatchAllEventsInIdeEventQueue(): Boolean {
+    var hasDispatchedEvents = false
+    while (PlatformTestUtil.dispatchNextEventIfAny() != null) {
+      hasDispatchedEvents = true
+    }
+    return hasDispatchedEvents
   }
 
   private fun shouldWait(): Boolean {
