@@ -12753,9 +12753,6 @@ f:com.intellij.openapi.editor.actions.ResetFontSizeGlobalAction
 - sf:PREVIOUS_COLOR_SCHEME:java.lang.String
 - <init>():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.editor.actions.ReverseLinesAction
-- com.intellij.openapi.editor.actionSystem.EditorAction
-- <init>():V
 f:com.intellij.openapi.editor.actions.ScrollDownAction
 - com.intellij.openapi.editor.actions.InactiveEditorAction
 - <init>():V
@@ -12816,9 +12813,6 @@ f:com.intellij.openapi.editor.actions.SimplePasteAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 - <init>():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.editor.actions.SortLinesAction
-- com.intellij.openapi.editor.actionSystem.EditorAction
-- <init>():V
 f:com.intellij.openapi.editor.actions.SplitLineAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 - s:SPLIT_LINE_KEY:com.intellij.openapi.util.Key

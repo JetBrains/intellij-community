@@ -4,17 +4,16 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import org.jetbrains.annotations.NotNull;
 
-final class ReverseLinesAction extends EditorAction {
-  ReverseLinesAction() {
+import java.util.HashSet;
+
+final class UniqueLinesAction extends EditorAction {
+  UniqueLinesAction() {
     super(new AbstractPermuteLinesHandler() {
       @Override
       public void permute(String @NotNull [] lines) {
-        int halfSize = lines.length / 2;
-        for (int i = 0; i < halfSize; i++) {
-          int oppositeI = lines.length - 1 - i;
-          String tmp = lines[i];
-          lines[i] = lines[oppositeI];
-          lines[oppositeI] = tmp;
+        var set = new HashSet<String>();
+        for (int i = 0; i < lines.length; i++) {
+          if (!set.add(lines[i])) lines[i] = null;
         }
       }
     });

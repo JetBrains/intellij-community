@@ -46,7 +46,24 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
       }
     }
     permute(lines);
-    String newContent = String.join("\n", lines);
+    int nulls = 0;
+    for (String line : lines) {
+      if (line == null) nulls ++;
+    }
+    String newContent;
+    if (nulls != 0) {
+      String[] newLines = new String[lines.length - nulls];
+      for (int index = 0, i = 0; i < lines.length; i++) {
+        if (lines[i] != null) {
+          //noinspection AssignmentToForLoopParameter
+          newLines[index++] = lines[i];
+        }
+      }
+      newContent = String.join("\n", newLines);
+    }
+    else {
+      newContent = String.join("\n", lines);
+    }
     int toReplaceStart = document.getLineStartOffset(startLine);
     int toReplaceEnd = document.getLineEndOffset(endLine);
     document.replaceString(toReplaceStart, toReplaceEnd, newContent);

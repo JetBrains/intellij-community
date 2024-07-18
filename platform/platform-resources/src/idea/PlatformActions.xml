@@ -274,6 +274,7 @@
       <action id="EditorDuplicateLines" class="com.intellij.openapi.editor.actions.DuplicateLinesAction"/>
       <action id="EditorSortLines" class="com.intellij.openapi.editor.actions.SortLinesAction"/>
       <action id="EditorReverseLines" class="com.intellij.openapi.editor.actions.ReverseLinesAction"/>
+      <action id="EditorUniqueLines" class="com.intellij.openapi.editor.actions.UniqueLinesAction"/>
       <action id="EditorToggleInsertState" class="com.intellij.openapi.editor.actions.ToggleInsertStateAction"/>
       <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>
       <action id="EditorIncreaseFontSize" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$IncreaseEditorFontSize"/>
