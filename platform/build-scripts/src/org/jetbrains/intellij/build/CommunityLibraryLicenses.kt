@@ -1101,10 +1101,10 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations("Xerial Project"),
 
     LibraryLicense(name = "xml-apis-ext", libraryName = "xml-apis-ext",
-                   url = "https://xerces.apache.org/xml-commons/components/external").apache()
+                   url = "https://xerces.apache.org/xml-commons/components/external/").apache()
       .suppliedByOrganizations("The Apache Software Foundation"),
     LibraryLicense(name = "xml-resolver", libraryName = "xml-resolver",
-                   url = "https://xml.apache.org/commons/components/resolver/").apache()
+                   url = "https://xerces.apache.org/xml-commons/components/resolver/").apache()
       .suppliedByOrganizations("The Apache Software Foundation"),
     LibraryLicense(name = "XMLBeans", libraryName = "XmlBeans",
                    url = "https://xmlbeans.apache.org/",
