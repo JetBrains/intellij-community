@@ -70,8 +70,8 @@ private fun tryFindParentProcess(pid: UInt, parentProcessesWeLookingFor: List<St
 }
 
 private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInForeground(dataHolder: UserDataHolder, pid: UInt): Boolean {
-  if (tryFindParentProcess(pid, listOf("cmd.exe")) == null) {
-    logger.trace { "The process hasn't been launched under cmd.exe" }
+  if (tryFindParentProcess(pid, listOf("JetBrains.Debugger.Worker.exe")) == null) {
+    logger.trace { "The process hasn't been launched under JetBrains.Debugger.Worker.exe" }
     return false
   }
 
