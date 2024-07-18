@@ -4,7 +4,6 @@
 package com.intellij.util.ui.update
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivity.AsyncBgOperation
 import com.intellij.ide.UiActivityMonitor
@@ -12,10 +11,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
+import com.intellij.util.Alarm.ThreadToUse
+import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.CoroutineScope
@@ -57,17 +61,21 @@ open class MergingUpdateQueue @JvmOverloads constructor(
   private var modalityStateComponent: JComponent?,
   parent: Disposable?,
   activationComponent: JComponent?,
-  thread: Alarm.ThreadToUse,
+  thread: ThreadToUse,
   coroutineScope: CoroutineScope? = null,
 ) : Disposable, Activatable {
   @Volatile
   var isSuspended: Boolean = false
     private set
 
-  private val flushTask = Runnable {
-    if (!isSuspended) {
-      flush()
+  private val flushTask = object : Runnable {
+    override fun run() {
+      if (!isSuspended) {
+        flush()
+      }
     }
+
+    override fun toString() = "MergingUpdateQueueFlushTask(name=$name)"
   }
 
   @Volatile
@@ -75,13 +83,13 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     private set
 
   private val scheduledUpdates = ConcurrentCollectionFactory.createConcurrentIntObjectMap<MutableMap<Update, Update>>()
-  private val waiterForMerge: Alarm
+  private val waiterForMerge: SingleAlarm
 
   @Volatile
   var isFlushing: Boolean = false
     private set
 
-  private val executeInDispatchThread: Boolean = thread == Alarm.ThreadToUse.SWING_THREAD
+  private val executeInDispatchThread: Boolean = thread == ThreadToUse.SWING_THREAD
 
   /**
    * if `true` the tasks won't be postponed but executed immediately instead
@@ -111,7 +119,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     modalityStateComponent = modalityStateComponent,
     parent = parent,
     activationComponent = activationComponent,
-    thread = if (executeInDispatchThread) Alarm.ThreadToUse.SWING_THREAD else Alarm.ThreadToUse.POOLED_THREAD,
+    thread = if (executeInDispatchThread) ThreadToUse.SWING_THREAD else ThreadToUse.POOLED_THREAD,
     coroutineScope = null,
   )
 
@@ -122,15 +130,26 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     }
 
     waiterForMerge = if (coroutineScope == null) {
-      if (executeInDispatchThread) {
-        Alarm(threadToUse = thread)
-      }
-      else {
-        Alarm(threadToUse = thread, parentDisposable = this)
-      }
+      @Suppress("LeakingThis")
+      SingleAlarm(
+        task = getFlushTask(),
+        delay = mergingTimeSpan,
+        // due to historical reasons, we don't pass parent disposable if EDT
+        parentDisposable = if (thread == ThreadToUse.SWING_THREAD) null else this,
+        threadToUse = thread,
+        modalityState = null,
+        coroutineScope = null,
+      )
     }
     else {
-      Alarm(threadToUse = thread, coroutineScope = coroutineScope)
+      @Suppress("LeakingThis")
+      SingleAlarm(
+        task = getFlushTask(),
+        delay = mergingTimeSpan,
+        parentDisposable = null,
+        threadToUse = thread,
+        coroutineScope = coroutineScope,
+      )
     }
 
     if (isActive) {
@@ -166,7 +185,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         modalityStateComponent = modalityStateComponent,
         parent = null,
         activationComponent = null,
-        thread = Alarm.ThreadToUse.SWING_THREAD,
+        thread = ThreadToUse.SWING_THREAD,
         coroutineScope = coroutineScope,
       )
     }
@@ -184,7 +203,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         modalityStateComponent = null,
         parent = null,
         activationComponent = null,
-        thread = Alarm.ThreadToUse.POOLED_THREAD,
+        thread = ThreadToUse.POOLED_THREAD,
         coroutineScope = coroutineScope,
       )
     }
@@ -293,23 +312,22 @@ open class MergingUpdateQueue @JvmOverloads constructor(
   @Internal
   protected open fun getFlushTask(): Runnable = flushTask
 
-  private fun restart(mergingTimeSpanMillis: Int) {
+  private fun restart(mergingTimeSpan: Int) {
     if (!isActive) {
       return
     }
 
-    clearWaiter()
-
-    resetThreadContext().use {
-      // MergingUpdateQueue is considered to be a Flow + debounce
-      // The updates must be executed independently of the caller; so here we forcefully release them from the context
-      if (executeInDispatchThread) {
-        waiterForMerge.addRequest(getFlushTask(), mergingTimeSpanMillis, mergerModalityState)
+    waiterForMerge.request(
+      forceRun = false,
+      delay = mergingTimeSpan,
+      cancelCurrent = true,
+      customModalityState = (if (!executeInDispatchThread || modalityStateComponent === ANY_COMPONENT) {
+        null
       }
       else {
-        waiterForMerge.addRequest(getFlushTask(), mergingTimeSpanMillis)
-      }
-    }
+        getModalityState()
+      })?.asContextElement(),
+    )
   }
 
   /**
@@ -319,21 +337,20 @@ open class MergingUpdateQueue @JvmOverloads constructor(
    * @see .sendFlush that will use correct thread
    */
   fun flush() {
-    if (isEmpty) {
-      return
-    }
-    if (isFlushing) {
-      return
-    }
-    if (!isModalityStateCorrect()) {
+    if (isEmpty || isFlushing || !isModalityStateCorrect()) {
       return
     }
 
-    if (executeInDispatchThread) {
-      EdtInvocationManager.invokeAndWaitIfNeeded { doFlush() }
+    if (!executeInDispatchThread || EDT.isCurrentThreadEdt()) {
+      doFlush()
     }
     else {
-      doFlush()
+      try {
+        EdtInvocationManager.getInstance().invokeAndWait { doFlush() }
+      }
+      catch (e: Exception) {
+        thisLogger().error(e)
+      }
     }
   }
 
@@ -361,6 +378,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     }
   }
 
+  @Suppress("unused")
   fun setModalityStateComponent(modalityStateComponent: JComponent?) {
     this.modalityStateComponent = modalityStateComponent
   }
@@ -373,7 +391,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     }
 
     val current = ModalityState.current()
-    val modalityState = modalityState
+    val modalityState = getModalityState()
     return !current.dominates(modalityState)
   }
 
@@ -385,7 +403,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       }
 
       if (each.executeInWriteAction()) {
-        ApplicationManager.getApplication().runWriteAction({ execute(each) })
+        ApplicationManager.getApplication().runWriteAction { execute(each) }
       }
       else {
         execute(each)
@@ -492,21 +510,17 @@ open class MergingUpdateQueue @JvmOverloads constructor(
   }
 
   private fun clearWaiter() {
-    waiterForMerge.cancelAllRequests()
+    waiterForMerge.cancel()
   }
 
   override fun toString(): String = "$name active=$isActive scheduled=${allScheduledUpdates.size}"
 
-  private val mergerModalityState: ModalityState?
-    get() = if (modalityStateComponent === ANY_COMPONENT) null else modalityState
-
-  val modalityState: ModalityState
-    get() {
-      return when (val modalityStateComponent = modalityStateComponent) {
-        null -> ModalityState.nonModal()
-        else -> ModalityState.stateForComponent(modalityStateComponent)
-      }
+  fun getModalityState(): ModalityState {
+    return when (val modalityStateComponent = modalityStateComponent) {
+      null -> ModalityState.nonModal()
+      else -> ModalityState.stateForComponent(modalityStateComponent)
     }
+  }
 
   fun setRestartTimerOnAdd(restart: Boolean): MergingUpdateQueue {
     restartOnAdd = restart
@@ -520,52 +534,41 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     restart(0)
   }
 
-  protected fun setTrackUiActivity(value: Boolean) {
-    if (trackUiActivity && !value) {
-      finishActivity()
-    }
-
-    trackUiActivity = value
-  }
-
   private fun startActivity() {
     if (trackUiActivity) {
-      UiActivityMonitor.getInstance().addActivity(activityId, modalityState)
+      UiActivityMonitor.getInstance().addActivity(getActivityId(), getModalityState())
     }
   }
 
   private fun finishActivity() {
     if (trackUiActivity) {
-      UiActivityMonitor.getInstance().removeActivity(activityId)
+      UiActivityMonitor.getInstance().removeActivity(getActivityId())
     }
   }
 
-  private val activityId: UiActivity
-    get() {
-      if (computedUiActivity == null) {
-        computedUiActivity = AsyncBgOperation("UpdateQueue:$name${hashCode()}")
-      }
-
-      return computedUiActivity!!
+  private fun getActivityId(): UiActivity {
+    return computedUiActivity ?: AsyncBgOperation("UpdateQueue:$name${hashCode()}").also {
+      computedUiActivity = it
     }
+  }
 
   @TestOnly
   @Throws(TimeoutException::class)
   fun waitForAllExecuted(timeout: Long, unit: TimeUnit) {
     val deadline = System.nanoTime() + unit.toNanos(timeout)
     if (!waiterForMerge.isEmpty) {
-      // to not wait for myMergingTimeSpan ms in tests
+      // to not wait for mergingTimeSpan ms in tests
       restart(0)
     }
 
     waiterForMerge.waitForAllExecuted(timeout, unit)
-    while (!isEmpty) {
+    while (!scheduledUpdates.isEmpty) {
       val toWait = deadline - System.nanoTime()
       if (toWait < 0) {
         throw TimeoutException()
       }
 
-      // to not wait for myMergingTimeSpan ms in tests
+      // to not wait for mergingTimeSpan ms in tests
       restart(0)
       waiterForMerge.waitForAllExecuted(toWait, TimeUnit.NANOSECONDS)
     }

@@ -135,12 +135,11 @@ class SingleAlarm @Internal constructor(
   init {
     var context = ClientId.currentOrNull?.asContextElement() ?: EmptyCoroutineContext
     if (threadToUse == ThreadToUse.SWING_THREAD) {
-      if (modalityState == null) {
-        throw IllegalArgumentException("modalityState must be not null if threadToUse == ThreadToUse.SWING_THREAD")
-      }
-
       // maybe not defined in tests
-      context += getEdtDispatcher() + modalityState.asContextElement()
+      context += getEdtDispatcher()
+      if (modalityState != null) {
+        context += modalityState.asContextElement()
+      }
     }
 
     // todo fix clients and remove NonCancellable
@@ -293,7 +292,7 @@ class SingleAlarm @Internal constructor(
     request(forceRun = false, delay = delay, cancelCurrent = true)
   }
 
-  private fun request(forceRun: Boolean, delay: Int, cancelCurrent: Boolean = false) {
+  internal fun request(forceRun: Boolean, delay: Int, cancelCurrent: Boolean = false, customModalityState: CoroutineContext? = null) {
     val effectiveDelay = if (forceRun) 0 else delay.toLong()
     synchronized(LOCK) {
       var prevCurrentJob = currentJob
@@ -306,7 +305,7 @@ class SingleAlarm @Internal constructor(
         prevCurrentJob = null
 
         delay(effectiveDelay)
-        withContext(taskContext) {
+        withContext(if (customModalityState == null) taskContext else (taskContext + customModalityState)) {
           try {
             task.run()
           }

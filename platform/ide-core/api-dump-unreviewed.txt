@@ -3222,7 +3222,6 @@ c:com.intellij.util.ui.update.MergingUpdateQueue
 - f:setModalityStateComponent(javax.swing.JComponent):V
 - f:setPassThrough(Z):V
 - f:setRestartTimerOnAdd(Z):com.intellij.util.ui.update.MergingUpdateQueue
-- pf:setTrackUiActivity(Z):V
 - f:showNotify():V
 - suspend():V
 - f:waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
