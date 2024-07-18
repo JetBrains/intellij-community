@@ -40,7 +40,7 @@ internal class TerminalOutputController(
 ) : TerminalModel.TerminalListener {
   val outputModel: TerminalOutputModel = TerminalOutputModelImpl(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
-  private val scraper: ShellCommandOutputScraper = ShellCommandOutputScraper(session)
+  private val scraper: IShellCommandOutputScraper = ShellCommandOutputScraperImpl(session)
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(session.colorPalette, outputModel, focusModel, selectionModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
 

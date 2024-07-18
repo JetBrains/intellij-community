@@ -15,11 +15,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 import kotlin.math.min
 
-internal class ShellCommandOutputScraper(
+internal class ShellCommandOutputScraperImpl(
   private val session: BlockTerminalSession,
   textBuffer: TerminalTextBuffer,
-  parentDisposable: Disposable
-) {
+  parentDisposable: Disposable,
+) : IShellCommandOutputScraper {
 
   constructor(session: BlockTerminalSession) : this(session, session.model.textBuffer, session)
 
@@ -39,7 +39,7 @@ internal class ShellCommandOutputScraper(
   /**
    * @param useExtendedDelayOnce whether to send first content update with greater delay than default
    */
-  fun addListener(listener: ShellCommandOutputListener, parentDisposable: Disposable, useExtendedDelayOnce: Boolean = false) {
+  override fun addListener(listener: ShellCommandOutputListener, parentDisposable: Disposable, useExtendedDelayOnce: Boolean) {
     TerminalUtil.addItem(listeners, listener, parentDisposable)
     this.useExtendedDelayOnce = useExtendedDelayOnce
   }
@@ -63,7 +63,7 @@ internal class ShellCommandOutputScraper(
     }
   }
 
-  fun scrapeOutput(): StyledCommandOutput = session.model.withContentLock { scrapeOutput(session) }
+  override fun scrapeOutput(): StyledCommandOutput = session.model.withContentLock { scrapeOutput(session) }
 
   companion object {
     fun scrapeOutput(session: BlockTerminalSession): StyledCommandOutput {
