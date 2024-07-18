@@ -75,7 +75,7 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
         public void run(@NotNull ProgressIndicator indicator) {
           SdkLookupUtil.lookupAndSetupSdkBlocking(project, indicator, JavaSdk.getInstance(), sdk -> {
             JavaSdkUtil.applyJdkToProject(project, sdk);
-            Notifications.Bus.notify(new Notification("Setup SDK", JavaBundle.message("notification.content.was.set.up", sdk.getVersionString()), NotificationType.INFORMATION).addAction(
+            Notifications.Bus.notify(new Notification("Setup JDK", JavaBundle.message("notification.content.was.set.up", sdk.getVersionString()), NotificationType.INFORMATION).addAction(
               new NotificationAction(JavaBundle.message("notification.content.change.jdk")) {
                 @Override
                 public void actionPerformed(@NotNull AnActionEvent e,
