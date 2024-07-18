@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -123,7 +124,9 @@ internal class WorkspaceBuilderChangeLog {
     else {
       when (existingChange) {
         is ChangeEntry.AddEntity -> Unit // Keep the existing change
-        is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event.")
+        is ChangeEntry.RemoveEntity -> {
+          LOG.error("Trying to update removed entity. Skip change event. Entity Id: ${entityId.asString()}, New parent: $newParentId, $newConnectionId")
+        }
         is ChangeEntry.ReplaceEntity -> {
           val event = updateReplaceEvent(existingChange)
           if (event != null) {
@@ -189,7 +192,9 @@ internal class WorkspaceBuilderChangeLog {
     else {
       when (existingChange) {
         is ChangeEntry.AddEntity -> Unit // Keep the existing change
-        is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event.")
+        is ChangeEntry.RemoveEntity -> {
+          LOG.error("Trying to update removed entity Skip change event. Entity Id: ${entityId.asString()}, Removed parent: $removedParentId, $removedConnectionId")
+        }
         is ChangeEntry.ReplaceEntity -> {
           val event = updateReplaceEvent(existingChange)
           if (event != null) {
@@ -276,7 +281,9 @@ internal class WorkspaceBuilderChangeLog {
     else {
       when (existingChange) {
         is ChangeEntry.AddEntity -> Unit // Keep the existing change
-        is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event.")
+        is ChangeEntry.RemoveEntity -> {
+          LOG.error("Trying to update removed entity. Skip change event. Entity Id: ${entityId.asString()}, Added child: $addedChildId, $addedChildConnectionId")
+        }
         is ChangeEntry.ReplaceEntity -> {
           val event = updateReplaceEvent(existingChange)
           if (event != null) {
@@ -363,7 +370,9 @@ internal class WorkspaceBuilderChangeLog {
     else {
       when (existingChange) {
         is ChangeEntry.AddEntity -> Unit // Keep the existing change
-        is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event.")
+        is ChangeEntry.RemoveEntity -> {
+          LOG.error("Trying to update removed entity. Skip change event. Entity Id: ${entityId.asString()}, Removed child: $removedChildId, $removedChildConnectionId")
+        }
         is ChangeEntry.ReplaceEntity -> {
           val event = updateReplaceEvent(existingChange)
           if (event != null) {
@@ -411,7 +420,9 @@ internal class WorkspaceBuilderChangeLog {
     else {
       when (existingChange) {
         is ChangeEntry.AddEntity -> changeLog[entityId] = ChangeEntry.AddEntity(copiedData, entityId.clazz)
-        is ChangeEntry.RemoveEntity -> LOG.error("Trying to update removed entity. Skip change event. $copiedData")
+        is ChangeEntry.RemoveEntity -> {
+          LOG.error("Trying to update removed entity. Skip change event. $copiedData, EntityId: ${entityId.asString()}")
+        }
         is ChangeEntry.ReplaceEntity -> {
           val event = updateReplaceEvent(existingChange)
           if (event != null) {
@@ -469,12 +480,16 @@ internal class WorkspaceBuilderChangeLog {
     val existingChange = changeLog[removedEntityId]
     val removeEvent = ChangeEntry.RemoveEntity(originalData, removedEntityId)
     if (existingChange == null) {
+      LOG.traceThrowable { RuntimeException("Adding remove event for id: ${removedEntityId.asString()}") }
       changeLog[removedEntityId] = removeEvent
     }
     else {
       when (existingChange) {
         is ChangeEntry.AddEntity -> changeLog.remove(removedEntityId)
-        is ChangeEntry.ReplaceEntity -> changeLog[removedEntityId] = removeEvent
+        is ChangeEntry.ReplaceEntity -> {
+          LOG.traceThrowable { RuntimeException("Replace 'replace' event with 'remove' event for id: ${removedEntityId.asString()}") }
+          changeLog[removedEntityId] = removeEvent
+        }
         is ChangeEntry.RemoveEntity ->  error("Already removed ${removedEntityId.asString()}")
       }
     }
