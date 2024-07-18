@@ -1345,4 +1345,39 @@ interface UastApiFixtureTestBase {
         val uEval = uExpression?.evaluate()
         TestCase.assertEquals("nananananana, batman", uEval)
     }
+
+    fun checkLocalPropertyInitializerEvaluation(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                  val foo = "foo"
+                  
+                  fun test(): String {
+                    val bar = "bar"
+                    return foo + bar
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        val names = listOf("foo", "bar")
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+                    val eval = node.evaluate()
+                    TestCase.assertTrue(eval?.toString() ?: "<null>", eval in names)
+                    return super.visitSimpleNameReferenceExpression(node)
+                }
+
+                override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
+                    val eval = node.evaluate()
+                    // TODO(KTIJ-30649)
+                    val expected = if (isK2) null else "foobar"
+                    TestCase.assertEquals(eval?.toString() ?: "<null>", expected, eval)
+                    return super.visitBinaryExpression(node)
+                }
+            }
+        )
+    }
 }
