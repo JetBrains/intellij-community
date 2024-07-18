@@ -937,10 +937,10 @@ c:com.intellij.openapi.externalSystem.model.task.event.Failure
 - f:getCauses():java.util.List
 - f:getDescription():java.lang.String
 - f:getMessage():java.lang.String
-c:com.intellij.openapi.externalSystem.model.task.event.FailureResult
+f:com.intellij.openapi.externalSystem.model.task.event.FailureResult
 - com.intellij.openapi.externalSystem.model.task.event.OperationResult
 - <init>(J,J,java.util.List):V
-- getFailures():java.util.List
+- f:getFailures():java.util.List
 c:com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
 - java.io.Serializable
 - <init>(java.lang.String,J):V
@@ -951,15 +951,15 @@ c:com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
 c:com.intellij.openapi.externalSystem.model.task.event.OperationResult
 - java.io.Serializable
 - <init>(J,J):V
-- getEndTime():J
-- getStartTime():J
-c:com.intellij.openapi.externalSystem.model.task.event.SkippedResult
+- f:getEndTime():J
+- f:getStartTime():J
+f:com.intellij.openapi.externalSystem.model.task.event.SkippedResult
 - com.intellij.openapi.externalSystem.model.task.event.OperationResult
 - <init>(J,J):V
-c:com.intellij.openapi.externalSystem.model.task.event.SuccessResult
+f:com.intellij.openapi.externalSystem.model.task.event.SuccessResult
 - com.intellij.openapi.externalSystem.model.task.event.OperationResult
 - <init>(J,J,Z):V
-- isUpToDate():Z
+- f:isUpToDate():Z
 f:com.intellij.openapi.externalSystem.model.task.event.TaskOperationDescriptor
 - com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor
 - <init>(java.lang.String,J,java.lang.String):V
