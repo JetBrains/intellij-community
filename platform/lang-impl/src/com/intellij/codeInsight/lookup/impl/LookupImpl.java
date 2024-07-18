@@ -190,6 +190,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myArranger = arranger;
   }
 
+  @NotNull
+  public ClientProjectSession getSession() {
+    return mySession;
+  }
+
   @Override
   public boolean isFocused() {
     return getLookupFocusDegree() == LookupFocusDegree.FOCUSED;

@@ -14,11 +14,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.HintHint
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.messages.Topic
-import com.intellij.util.messages.Topic.AppLevel
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 
@@ -40,16 +37,6 @@ interface ClientLookupManager {
   fun createLookup(editor: Editor, items: Array<LookupElement>, prefix: String, arranger: LookupArranger): LookupImpl
   fun clear()
 
-}
-
-@Internal
-interface ClientLookupManagerListener {
-  companion object {
-    @AppLevel
-    val TOPIC = Topic(ClientLookupManagerListener::class.java)
-  }
-  fun lookupInitialized(session: ClientProjectSession, lookupImpl: LookupImpl, editor: Editor) = Unit
-  fun lookupDisposed(session: ClientProjectSession, lookupImpl: LookupImpl, editor: Editor) = Unit
 }
 
 @Internal
@@ -86,7 +73,6 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession): Clien
     val lookup = createLookup(editor, arranger, session)
     Disposer.register(lookup) {
       myActiveLookup = null
-      application.messageBus.syncPublisher(ClientLookupManagerListener.TOPIC).lookupDisposed(session, lookup, editor)
       (LookupManagerImpl.getInstance(session.project) as LookupManagerImpl).fireActiveLookupChanged(lookup, null)
     }
 
@@ -97,8 +83,6 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession): Clien
       }
       lookup.refreshUi(true, true)
     }
-
-    application.messageBus.syncPublisher(ClientLookupManagerListener.TOPIC).lookupInitialized(session, lookup, editor)
 
     myActiveLookup = lookup
     (LookupManagerImpl.getInstance(session.project) as LookupManagerImpl).fireActiveLookupChanged(null, lookup)
