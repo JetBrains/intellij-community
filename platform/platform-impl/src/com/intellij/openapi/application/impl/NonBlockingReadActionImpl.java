@@ -329,7 +329,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       // We need to abort the job only in the first case, but not in the second one.
       // Because in the case of `setResult` there can be a UI callback, and we need to cancel Job strictly after the callback finishes.
       if (!isSucceeded()) {
-        cancelJob(new CancellationException());
+        // we must not create CancellationException here,
+        // because filling the stacktrace causes performance degradation
+        cancelJob(null);
       }
       cleanupIfNeeded();
       return result;

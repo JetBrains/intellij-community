@@ -727,7 +727,7 @@ class CancellationPropagationTest {
   }
 
   @RepeatedTest(1000)
-  fun `synchronous non-blocking read action is awaited`() = runBlocking {
+  fun `synchronous non-blocking read action is awaited`() = timeoutRunBlocking {
     val dummyDisposable = Disposer.newDisposable()
     var allowedToCompleteRA by AtomicReference(false)
     val readActionCompletedSemaphore = Semaphore(1)
@@ -761,7 +761,7 @@ class CancellationPropagationTest {
         .submit(executor)
     }
     Disposer.dispose(dummyDisposable)
-    // if NBRA is not properly canceled, we would have a leaking Job, and `blockingContextScope would never finish`
+    // if NBRA is not properly canceled, we would have a leaking Job, and `blockingContextScope` would never finish
     job.join()
   }
 
