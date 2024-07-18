@@ -20,23 +20,22 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LibraryKind {
   private final String myKindId;
-  private static final Map<String, LibraryKind> ourAllKinds = new HashMap<>();
+  private static final Map<String, LibraryKind> ourAllKinds = new ConcurrentHashMap<>();
 
   /**
    * @param kindId must be unique among all {@link com.intellij.openapi.roots.libraries.LibraryType} and {@link com.intellij.openapi.roots.libraries.LibraryPresentationProvider} implementations
    */
   public LibraryKind(@NotNull @NonNls String kindId) {
     myKindId = kindId;
-    LibraryKind kind = ourAllKinds.get(kindId);
-    if (kind != null && !(kind instanceof TemporaryLibraryKind)) {
+    LibraryKind oldKind = ourAllKinds.put(kindId, this);
+    if (oldKind != null && !(oldKind instanceof TemporaryLibraryKind)) {
       throw new IllegalArgumentException("Kind " + kindId + " is not unique");
     }
-    ourAllKinds.put(kindId, this);
   }
 
   public final String getKindId() {
