@@ -19,7 +19,7 @@ class NotEmptyResultsRatio : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        if (it.suggestions.all { suggestion -> suggestion.text.isBlank() }) {
+        if (it.suggestions.isEmpty() || it.suggestions.all { suggestion -> suggestion.text.isBlank() }) {
           sample.add(0.0)
           fileSample.add(0.0)
         }
