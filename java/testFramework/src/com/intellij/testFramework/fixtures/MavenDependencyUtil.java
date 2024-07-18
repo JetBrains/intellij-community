@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +58,7 @@ public final class MavenDependencyUtil {
   }
 
   /**
-   * Adds a Maven library to {@code model}
+   * Adds a Maven library with the default packaging (JAR) to {@code model}
    * @param additionalRepositories additional Maven repositories where the artifacts should be searched (in addition to repositories
    *                               configured in intellij project)
    */
@@ -66,9 +67,24 @@ public final class MavenDependencyUtil {
                                   boolean includeTransitiveDependencies,
                                   DependencyScope dependencyScope,
                                   List<RemoteRepositoryDescription> additionalRepositories) {
+    addFromMaven(model, mavenCoordinates, includeTransitiveDependencies, dependencyScope, additionalRepositories,
+                 JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING);
+  }
+
+  /**
+   * Adds a Maven library to {@code model}
+   * @param packaging artifact packaging matching {@link org.jetbrains.idea.maven.aether.ArtifactKind} of the requested library
+   */
+  public static void addFromMaven(@NotNull ModifiableRootModel model,
+                                  String mavenCoordinates,
+                                  boolean includeTransitiveDependencies,
+                                  DependencyScope dependencyScope,
+                                  List<RemoteRepositoryDescription> additionalRepositories,
+                                  @NotNull String packaging) {
     List<RemoteRepositoryDescription> remoteRepositoryDescriptions = ContainerUtil.concat(getRemoteRepositoryDescriptions(),
                                                                                           additionalRepositories);
-    RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(mavenCoordinates, includeTransitiveDependencies);
+    RepositoryLibraryProperties libraryProperties =
+      new RepositoryLibraryProperties(mavenCoordinates, packaging, includeTransitiveDependencies);
     Collection<OrderRoot> roots =
       JarRepositoryManager.loadDependenciesModal(model.getProject(), libraryProperties, false, false, null, remoteRepositoryDescriptions);
     LibraryTable.ModifiableModel tableModel = model.getModuleLibraryTable().getModifiableModel();
