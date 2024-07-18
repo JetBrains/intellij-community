@@ -56,6 +56,12 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     return hints
   }
 
+  fun deleteFile() {
+    driver.withWriteAction {
+      editor.getVirtualFile().delete(null)
+    }
+  }
+
   private val document: Document by lazy { editor.getDocument() }
 
   private val caretPosition
