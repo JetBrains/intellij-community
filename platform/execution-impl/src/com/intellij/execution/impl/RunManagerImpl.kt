@@ -26,6 +26,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.options.SchemeManagerFactory
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
@@ -388,7 +389,9 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   private fun loadRunConfigsFromArbitraryFiles() {
     (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Default) {
       readAction {
-        updateRunConfigsFromArbitraryFiles(emptyList(), loadFileWithRunConfigs(project))
+        blockingContextToIndicator {
+          updateRunConfigsFromArbitraryFiles(emptyList(), loadFileWithRunConfigs(project))
+        }
       }
     }
   }
