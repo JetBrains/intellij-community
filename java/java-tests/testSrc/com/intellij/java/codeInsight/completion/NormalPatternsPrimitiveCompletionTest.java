@@ -1,9 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class NormalPatternsPrimitiveCompletionTest extends NormalCompletionTestCase {
   @NotNull
@@ -133,6 +140,7 @@ public class NormalPatternsPrimitiveCompletionTest extends NormalCompletionTestC
                               }
                             }""");
   }
+
   @NeedsIndex.Full
   public void testPrimitiveAfterInstanceof() {
     myFixture.configureByText("a.java", """
@@ -165,5 +173,46 @@ public class NormalPatternsPrimitiveCompletionTest extends NormalCompletionTestC
                                 if (o instanceof float <caret>a
                               }
                             }""");
+  }
+
+  public void testSwitchPatternBoolean() {
+    myFixture.configureByText("a.java", """
+      class X {
+        void test(boolean o) {
+          switch(o){
+            case t<caret>
+          }
+        }
+      }""");
+    myFixture.completeBasic();
+    myFixture.checkResult("""
+                            class X {
+                              void test(boolean o) {
+                                switch(o){
+                                  case true -> <caret>
+                                }
+                              }
+                            }""");
+  }
+
+  public void testSwitchPatternAnotherBoolean() {
+    myFixture.configureByText("a.java", """
+      class X {
+        void test(boolean o) {
+          switch(o){
+            case true -> System.out.println();
+            case <caret>
+          }
+        }
+      }""");
+    myFixture.completeBasic();
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(getEditor());
+    Set<String> lookupStrings = new HashSet<>();
+    for (LookupElement element : lookup == null ? new ArrayList<LookupElement>() : lookup.getItems()) {
+      lookupStrings.add(element.getLookupString());
+    }
+
+    assertContainsElements(lookupStrings, "false");
+    assertDoesntContain(lookupStrings, "true");
   }
 }
