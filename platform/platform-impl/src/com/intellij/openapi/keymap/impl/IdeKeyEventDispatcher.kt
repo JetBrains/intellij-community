@@ -24,6 +24,7 @@ import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -525,7 +526,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (actions.isEmpty()) {
       return false
     }
-
+    LOG.trace { "processAction(shortcut=$shortcut, actions=$actions)" }
     val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
     val wrappedContext = Utils.createAsyncDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
@@ -563,6 +564,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
       Pair(chosen, false)
     } ?: Pair(null, false)
+    LOG.trace { "updateResult: chosen=$chosen, doPerform=$doPerform" }
     val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
     if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
       ignoreNextKeyTypedEvent = true
