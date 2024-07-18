@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 
-class SerializationK2QuickFixContributor : KotlinQuickFixRegistrar() {
+internal class SerializationK2QuickFixContributor : KotlinQuickFixRegistrar() {
     override val list: KotlinQuickFixesList
         get() = KtQuickFixesListBuilder.registerPsiQuickFix {
             registerFactory(JsonRedundantDefaultQuickFixFactory.jsonRedundantDefaultQuickFixFactory)
