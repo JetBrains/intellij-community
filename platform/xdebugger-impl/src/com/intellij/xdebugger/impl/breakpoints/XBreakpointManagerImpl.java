@@ -640,7 +640,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       newState.setFileUrl(fileUrl);
 
       //noinspection unchecked
-      final XLineBreakpointImpl<T> breakpoint = (XLineBreakpointImpl<T>)createBreakpoint(newState);
+      XLineBreakpointImpl<T> breakpoint = (XLineBreakpointImpl<T>)createBreakpoint(newState);
       if (breakpoint != null) {
         addBreakpoint(breakpoint, false, true);
         final XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(source);

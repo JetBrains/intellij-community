@@ -48,8 +48,10 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
 
+@Internal
 class XLineBreakpointManager(private val project: Project, coroutineScope: CoroutineScope) {
   private val myBreakpoints = MultiMap.createConcurrent<String, XLineBreakpointImpl<*>>()
   private val breakpointUpdateQueue: MergingUpdateQueue

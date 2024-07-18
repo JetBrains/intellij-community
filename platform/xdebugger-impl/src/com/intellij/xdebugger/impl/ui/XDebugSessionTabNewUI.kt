@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.execution.actions.CreateAction
@@ -22,9 +22,11 @@ import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 import javax.swing.Icon
 
+@Internal
 open class XDebugSessionTabNewUI(
   session: XDebugSessionImpl,
   icon: Icon?,

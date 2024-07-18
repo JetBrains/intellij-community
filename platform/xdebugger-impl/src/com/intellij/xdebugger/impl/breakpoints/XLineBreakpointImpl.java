@@ -46,6 +46,7 @@ import java.awt.dnd.DragSource;
 import java.io.File;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
   private static final Logger LOG = Logger.getInstance(XLineBreakpointImpl.class);

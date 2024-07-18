@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
@@ -18,7 +19,9 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XDebugView
 import com.intellij.xdebugger.impl.frame.XVariablesView
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class XDebugTabLayoutSettings(
   session: XDebugSessionImpl,
   private val content: Content,

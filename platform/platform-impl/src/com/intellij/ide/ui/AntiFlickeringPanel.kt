@@ -6,13 +6,15 @@ import com.intellij.ui.DirtyUI
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 /** A hacky way to reduce flickering. */
-internal class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout()) {
+@Internal
+class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout()) {
   private var savedSelfieImage: BufferedImage? = null
   private var savedSize: Dimension? = null
   private var savedPreferredSize: Dimension? = null
