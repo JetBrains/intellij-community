@@ -153,4 +153,8 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testStringConcatInAnnotationValue() {
         checkStringConcatInAnnotationValue(myFixture)
     }
+
+    fun testLocalPropertyInitializerEvaluate() {
+        checkLocalPropertyInitializerEvaluation(myFixture, isK2 = false)
+    }
 }

@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
@@ -796,11 +795,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     @OptIn(KaExperimentalApi::class)
     private fun KtExpression.unwrapKotlinValPropertyReference(): KtExpression? {
         if (this !is KtNameReferenceExpression) return this
-        val propertySymbol = resolveToCall()?.successfulVariableAccessCall()?.symbol as? KaPropertySymbol ?: return this
-        if (!propertySymbol.isVal) {
+        val variableSymbol = resolveToCall()?.successfulVariableAccessCall()?.symbol ?: return this
+        if (!variableSymbol.isVal) {
             // can't evaluate non-final variables
             return null
         }
-        return propertySymbol.initializer?.initializerPsi
+        return (variableSymbol as? KaPropertySymbol)?.initializer?.initializerPsi
+            ?: variableSymbol.psiSafe<KtVariableDeclaration>()?.initializer
     }
 }
