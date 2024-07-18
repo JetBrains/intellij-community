@@ -47,7 +47,7 @@ class PyPipEnvSdkProvider : PySdkProvider {
           else -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.module")
         }
       }
-      return PyInterpreterInspectionQuickFixData(UsePipEnvQuickFix(sdk, module), message)
+      return PyInterpreterInspectionQuickFixData(PipEnvAssociationQuickFix(), message)
     }
     return null
   }
