@@ -14,7 +14,6 @@ import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -75,7 +74,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class XDebugSessionImpl implements XDebugSession {
   private static final Logger LOG = Logger.getInstance(XDebugSessionImpl.class);
   private static final Logger PERFORMANCE_LOG = Logger.getInstance("#com.intellij.xdebugger.impl.XDebugSessionImpl.performance");
-  private static final NotificationGroup BP_NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Breakpoint hit");
 
   // TODO[eldar] needed to workaround nullable myAlternativeSourceHandler.
   private static final StateFlow<Boolean> ALWAYS_FALSE_STATE = FlowKt.asStateFlow(StateFlowKt.MutableStateFlow(false));
@@ -852,7 +850,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     }
 
-    BP_NOTIFICATION_GROUP
+    NotificationGroupManager.getInstance().getNotificationGroup("Breakpoint hit")
       .createNotification(XDebuggerBundle.message("xdebugger.breakpoint.reached"), MessageType.INFO)
       .notify(getProject());
 
