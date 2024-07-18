@@ -13,7 +13,7 @@ import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.block.output.*
-import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraper
+import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.ui.normalize
@@ -75,7 +75,7 @@ internal class ShellPromptRenderer(
       emulator.next()
     }
 
-    val output: StyledCommandOutput = ShellCommandOutputScraper.scrapeOutput(textBuffer)
+    val output: StyledCommandOutput = ShellCommandOutputScraperImpl.scrapeOutput(textBuffer)
     val highlightings = output.styleRanges.toHighlightings(output.text.length)
     val logicalPosition = textBuffer.screenBuffer.cursorToLogicalPosition(terminal.cursorX - 1, terminal.cursorY - 1)
     return ExpandedPromptInfo(TextWithHighlightings(output.text, highlightings), logicalPosition.column, logicalPosition.line)
