@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.searching.usages
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
@@ -335,12 +336,9 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun isInheritable(ktClass: KtClass): Boolean {
         if (ApplicationManager.getApplication().isDispatchThread) {
-            return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                Runnable { runReadAction { isOverridableBySymbol(ktClass) } },
-                KotlinBundle.message("dialog.title.resolving.inheritable.status"),
-                true,
-                ktClass.project
-            )
+            return ActionUtil.underModalProgress(ktClass.project, KotlinBundle.message(KotlinBundle.message("dialog.title.resolving.inheritable.status"))) {
+                runReadAction { isOverridableBySymbol(ktClass) }
+            }
         }
         return isOverridableBySymbol(ktClass)
     }
