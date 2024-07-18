@@ -1,0 +1,28 @@
+{
+  "language": "Java",
+  "projectPath": "../../ml-eval/keycloak",
+  "outputDir": "ml-eval-function-calling-java-output",
+  "strategy": {
+    "functionName": "exact_search"
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 10,
+    "filesLimit": 1,
+    "order": "LINEAR",
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}
