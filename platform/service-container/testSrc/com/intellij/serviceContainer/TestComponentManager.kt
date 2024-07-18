@@ -9,6 +9,7 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.TestOnly
@@ -19,10 +20,10 @@ val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("tes
 
 @OptIn(DelicateCoroutinesApi::class)
 @TestOnly
-class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) :
+class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true, val parentScope: CoroutineScope = GlobalScope) :
   ComponentManagerImpl(
     parent = null,
-    parentScope = GlobalScope,
+    parentScope = parentScope,
     additionalContext = EmptyCoroutineContext,
   ) {
   init {
