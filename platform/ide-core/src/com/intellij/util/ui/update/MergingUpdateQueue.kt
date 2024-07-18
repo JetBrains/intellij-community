@@ -152,16 +152,18 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     val ANY_COMPONENT: JComponent = object : JComponent() {}
 
     @Internal
+    @JvmOverloads
     fun edtMergingUpdateQueue(
       name: String,
       mergingTimeSpan: Int,
       coroutineScope: CoroutineScope,
+      modalityStateComponent: JComponent? = null,
     ): MergingUpdateQueue {
       return MergingUpdateQueue(
         name = name,
         mergingTimeSpan = mergingTimeSpan,
         isActive = true,
-        modalityStateComponent = null,
+        modalityStateComponent = modalityStateComponent,
         parent = null,
         activationComponent = null,
         thread = Alarm.ThreadToUse.SWING_THREAD,
