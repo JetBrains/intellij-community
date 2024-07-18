@@ -206,7 +206,10 @@ open class Alarm @Internal constructor(
   private fun doAddRequest(request: Runnable, delayMillis: Long, modalityState: ModalityState?) {
     val requestToSchedule = Request(task = request, modalityState = modalityState, delayMillis = delayMillis)
     synchronized(LOCK) {
-      LOG.assertTrue(!isDisposed, "Already disposed")
+      if (isDisposed) {
+        LOG.warn("Already disposed")
+        return
+      }
 
       if (activationComponent == null || isActivationComponentShowing) {
         add(requestToSchedule)
