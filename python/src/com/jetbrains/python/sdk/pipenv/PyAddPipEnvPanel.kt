@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -21,13 +22,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
-import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import java.awt.BorderLayout
@@ -123,7 +121,7 @@ class PyAddPipEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
-    val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, selectedModule, existingSdks, context)?.homePath
+    val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, selectedModule, existingSdks, context).getOrLogException(LOGGER)?.homePath
     return setupPipEnvSdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
                                        baseSdk, installPackagesCheckBox.isSelected)?.apply {
       PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdk

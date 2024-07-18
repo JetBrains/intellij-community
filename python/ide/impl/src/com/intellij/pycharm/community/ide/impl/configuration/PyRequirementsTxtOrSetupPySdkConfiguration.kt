@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
@@ -21,21 +22,21 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
+import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
-import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerImpl
 import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvFromFilePanel
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
-import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.VirtualEnvResult
-import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import java.awt.BorderLayout
 import java.awt.Insets
@@ -45,27 +46,28 @@ import javax.swing.JPanel
 
 class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override fun createAndAddSdkForConfigurator(module: Module) = createAndAddSdk(module, Source.CONFIGURATOR)
+  override fun createAndAddSdkForConfigurator(module: Module) = createAndAddSdk(module, Source.CONFIGURATOR).getOrLogException(LOGGER)
 
   override fun getIntention(module: Module): @IntentionName String? =
     getRequirementsTxtOrSetupPy(module)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.venv.suggestion", it.name) }
 
-  override fun createAndAddSdkForInspection(module: Module) = createAndAddSdk(module, Source.INSPECTION)
+  override fun createAndAddSdkForInspection(module: Module) = createAndAddSdk(module, Source.INSPECTION).getOrLogException(LOGGER)
 
-  private fun createAndAddSdk(module: Module, source: Source): Sdk? {
+  private fun createAndAddSdk(module: Module, source: Source): Result<Sdk> {
     val existingSdks = ProjectJdkTable.getInstance().allJdks.asList()
 
-    val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = askForEnvData(module, existingSdks, source) ?: return null
-    val baseSdk = installSdkIfNeeded(chosenBaseSdk!!, module, existingSdks) ?: return null
+    val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = askForEnvData(module, existingSdks, source)
+                                                              ?: return Result.failure(Throwable("askForEnvData is null"))
+    val baseSdk = installSdkIfNeeded(chosenBaseSdk!!, module, existingSdks).getOrThrow()
     val systemIndependentLocation = FileUtil.toSystemIndependentName(location)
     val projectPath = module.basePath ?: module.project.basePath
 
     Disposer.newDisposable("Creating virtual environment").use {
       PyTemporarilyIgnoredFileProvider.ignoreRoot(systemIndependentLocation, it)
 
-      return createVirtualEnv(module, baseSdk, location, requirementsTxtOrSetupPy, existingSdks)?.also {
-        PySdkSettings.instance.onVirtualEnvCreated(baseSdk, systemIndependentLocation, projectPath)
-      }
+      val sdk = createVirtualEnv(module, baseSdk, location, requirementsTxtOrSetupPy, existingSdks).getOrElse { err -> return Result.failure(err) }
+      PySdkSettings.instance.onVirtualEnvCreated(baseSdk, systemIndependentLocation, projectPath)
+      return Result.success(sdk)
     }
   }
 
@@ -97,11 +99,13 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     return if (permitted) envData else null
   }
 
-  private fun createVirtualEnv(module: Module,
-                               baseSdk: Sdk,
-                               location: String,
-                               requirementsTxtOrSetupPy: String,
-                               existingSdks: List<Sdk>): Sdk? {
+  private fun createVirtualEnv(
+    module: Module,
+    baseSdk: Sdk,
+    location: String,
+    requirementsTxtOrSetupPy: String,
+    existingSdks: List<Sdk>,
+  ): Result<Sdk> {
     ProgressManager.progress(PySdkBundle.message("python.creating.venv.sentence"))
     thisLogger().debug("Creating virtual environment")
 
@@ -112,16 +116,16 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.CREATION_FAILURE)
       thisLogger().warn("Exception during creating virtual environment", e)
       showSdkExecutionException(baseSdk, e, PySdkBundle.message("python.creating.venv.failed.title"))
-      return null
+      return Result.failure(e)
     }.also {
       LocalFileSystem.getInstance().refreshAndFindFileByPath(it)
     }
 
-    if (module.isDisposed) return null
+    if (module.isDisposed) return Result.failure(Throwable("Module is disposed: $module"))
     val basePath = module.basePath
 
     thisLogger().debug("Setting up associated virtual environment: $path, $basePath")
-    val sdk = PyDetectedSdk(path).setupAssociated(existingSdks, basePath) ?: return null
+    val sdk = PyDetectedSdk(path).setupAssociated(existingSdks, basePath).getOrElse { return Result.failure(it) }
 
     ApplicationManager.getApplication().invokeAndWait {
       thisLogger().debug("Adding associated virtual environment: $path, $basePath")
@@ -157,7 +161,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     }
 
     PySdkConfigurationCollector.logVirtualEnv(module.project, VirtualEnvResult.CREATED)
-    return sdk
+    return Result.success(sdk)
   }
 
   private fun getCommandForPipInstall(requirementsTxtOrSetupPy: VirtualFile): List<String> {
@@ -172,9 +176,11 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
   @NlsSafe
   private fun getAbsPath(file: VirtualFile): String = file.toNioPath().toAbsolutePath().toString()
 
-  private class Dialog(module: Module,
-                       existingSdks: List<Sdk>,
-                       private val requirementsTxtOrSetupPy: VirtualFile) : DialogWrapper(module.project, false, IdeModalityType.PROJECT) {
+  private class Dialog(
+    module: Module,
+    existingSdks: List<Sdk>,
+    private val requirementsTxtOrSetupPy: VirtualFile,
+  ) : DialogWrapper(module.project, false, IdeModalityType.PROJECT) {
 
     private val panel = PyAddNewVirtualEnvFromFilePanel(module, existingSdks, requirementsTxtOrSetupPy)
 

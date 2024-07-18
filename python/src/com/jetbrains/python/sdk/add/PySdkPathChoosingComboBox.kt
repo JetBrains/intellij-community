@@ -108,8 +108,8 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
   val selectedItem: PySdkComboBoxItem?
     get() = childComponent.selectedItem as? PySdkComboBoxItem
 
-  var selectedSdk: Sdk?
-    get() = (childComponent.selectedItem as? ExistingPySdkComboBoxItem)?.sdk
+  var selectedSdk: Sdk
+    get() = (childComponent.selectedItem as ExistingPySdkComboBoxItem).sdk
     /**
      * Does nothing if [selectedSdk] is absent in the items in the combobox.
      */

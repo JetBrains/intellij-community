@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -116,7 +117,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     val currentTargetEnvironmentConfiguration = targetEnvironmentConfiguration
     if (currentTargetEnvironmentConfiguration == null) {
       // this is the local machine case
-      return when (val sdk = installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)) {
+      return when (val sdk = installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context).getOrLogException(LOGGER)) {
         is PyDetectedSdk -> sdk.setup(existingSdks)
         else -> sdk
       }

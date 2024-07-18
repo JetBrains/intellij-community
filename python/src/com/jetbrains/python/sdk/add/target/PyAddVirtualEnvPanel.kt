@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -209,13 +210,13 @@ class PyAddVirtualEnvPanel(project: Project?,
       baseSelectedSdk
     }
     return createVirtualEnvSynchronously(baseSdk, existingSdks, virtualenvRoot, projectBasePath, project, module, context,
-                                         isInheritSitePackages, false, targetPanelExtension)
+                                         isInheritSitePackages, false, targetPanelExtension).getOrLogException(LOGGER)
   }
 
   private fun configureExistingVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?, selectedSdk: Sdk): Sdk? {
     if (targetEnvironmentConfiguration == null) {
       return when (selectedSdk) {
-        is PyDetectedSdk -> selectedSdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath)?.apply {
+        is PyDetectedSdk -> selectedSdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath).getOrLogException(LOGGER)?.apply {
           // TODO [targets] Restore `makeSharedField` flag
           associateWithModule(module, newProjectPath)
         }

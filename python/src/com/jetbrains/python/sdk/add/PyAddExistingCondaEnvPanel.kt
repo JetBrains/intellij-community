@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -91,7 +93,7 @@ open class PyAddExistingCondaEnvPanel(private val project: Project?,
     val sdk = sdkComboBox.selectedSdk
     PyCondaPackageService.onCondaEnvCreated(condaPathField.text)
     return when (sdk) {
-      is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath)?.apply {
+      is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath).getOrLogException(thisLogger())?.apply {
         if (!makeSharedField.isSelected) {
           associateWithModule(module, newProjectPath)
         }

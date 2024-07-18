@@ -100,7 +100,7 @@ object CondaInstallManager {
     }
 
     if (installationWithHighestPython != null) {
-      installBinary(installationWithHighestPython, project)
+      installBinary<Nothing>(installationWithHighestPython, project)
     }
     else {
       error("There is no supported conda installation for the release $latestRelease")

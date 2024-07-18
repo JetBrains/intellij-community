@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -16,6 +17,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.LOGGER
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
@@ -82,7 +84,7 @@ enum class PythonInterpreterSelectionMethod {
 }
 
 internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
-  val installed = installSdkIfNeeded(sdk, null, existingSdks)
+  val installed = installSdkIfNeeded(sdk, null, existingSdks).getOrLogException(LOGGER)
   if (installed == null) {
     val notification = NotificationGroupManager.getInstance()
       .getNotificationGroup("Python interpreter installation")
