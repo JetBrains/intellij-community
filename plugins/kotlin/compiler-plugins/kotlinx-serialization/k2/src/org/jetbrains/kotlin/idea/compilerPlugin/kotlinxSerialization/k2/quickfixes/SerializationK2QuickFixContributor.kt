@@ -9,5 +9,6 @@ class SerializationK2QuickFixContributor : KotlinQuickFixRegistrar() {
     override val list: KotlinQuickFixesList
         get() = KtQuickFixesListBuilder.registerPsiQuickFix {
             registerFactory(JsonRedundantDefaultQuickFixFactory.jsonRedundantDefaultQuickFixFactory)
+            registerFactory(AddKotlinxSerializationTransientImportQuickFixFactory.addKotlinxSerializationTransientImportQuickFixFactory)
         }
 }
