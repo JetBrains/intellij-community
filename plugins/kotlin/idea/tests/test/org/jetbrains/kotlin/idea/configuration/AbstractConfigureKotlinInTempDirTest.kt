@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Ref
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -47,6 +48,8 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
             val kotlinStdlib = projectRoot.resolve(stdlibPath)
             originalStdlibFile.copyTo(kotlinStdlib.toFile(), overwrite = true)
         }
+        // Needed, so the index knows that there are Kotlin files in the project
+        FileBasedIndex.getInstance().invalidateCaches()
 
         return projectRoot
     }
