@@ -54,7 +54,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     myGradleHome = null;
     disableWrapperSourceDistributionNotification = false;
     resolveModulePerSourceSet = true;
-    resolveExternalAnnotations = true;
+    resolveExternalAnnotations = false;
     delegatedBuild = DEFAULT_DELEGATE;
     testRunner = DEFAULT_TEST_RUNNER;
     setupHeadlessProjectSettings();
