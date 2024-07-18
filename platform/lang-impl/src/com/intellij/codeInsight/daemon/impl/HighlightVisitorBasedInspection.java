@@ -108,7 +108,8 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     if (document == null) return Collections.emptyList();
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     // in case the inspection is running in batch mode
-    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, daemonProgressIndicator, ProperTextRange.create(psiFile.getTextRange()));
+    HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, daemonProgressIndicator, ProperTextRange.create(psiFile.getTextRange()),
+                                                           TextRange.EMPTY_RANGE);
     GeneralHighlightingPass ghp =
       new GeneralHighlightingPass(psiFile, document, 0, psiFile.getTextLength(), true, ProperTextRange.create(psiFile.getTextRange()), null,
                                   runAnnotators, runVisitors, highlightErrorElements, HighlightInfoUpdater.EMPTY);

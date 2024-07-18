@@ -32,20 +32,24 @@ abstract class HighlightInfoUpdater {
                                   @NotNull Document hostDocument,
                                   @NotNull PsiFile psiFile,
                                   @NotNull Project project,
-                                  @NotNull HighlightingSession session);
+                                  @NotNull HighlightingSession session,
+                                  @NotNull HighlighterRecyclerPickup invalidElementRecycler);
 
   abstract void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
                                                      @NotNull TextRange restrictRange,
                                                      @NotNull HighlightingSession highlightingSession,
                                                      @NotNull Collection<? extends PsiFile> liveInjectedFiles);
 
+  /**
+   * {@link HighlightInfoUpdater} which doesn't update markup model. Useful for obtaining highlighting without showing anything
+    */
+  @NotNull
   static final HighlightInfoUpdater EMPTY = new HighlightInfoUpdater(){
     @Override
     void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
                                               @NotNull TextRange restrictRange,
                                               @NotNull HighlightingSession highlightingSession,
                                               @NotNull Collection<? extends PsiFile> liveInjectedFiles) {
-
     }
 
     @Override
@@ -55,9 +59,8 @@ abstract class HighlightInfoUpdater {
                            @NotNull Document hostDocument,
                            @NotNull PsiFile psiFile,
                            @NotNull Project project,
-                           @NotNull HighlightingSession session) {
-
+                           @NotNull HighlightingSession session,
+                           @NotNull HighlighterRecyclerPickup invalidElementRecycler) {
     }
   };
-
 }
