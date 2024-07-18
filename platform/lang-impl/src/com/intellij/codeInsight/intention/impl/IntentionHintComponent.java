@@ -769,7 +769,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         ReadAction.nonBlocking(() -> context.computeHighlightsToApply(action))
           .coalesceBy(popup)
           .finishOnUiThread(ModalityState.any(), Runnable::run)
-          .expireWhen(() -> document.getModificationStamp() == oldTimeStamp)
+          .expireWhen(() -> document.getModificationStamp() != oldTimeStamp)
           .submit(AppExecutorUtil.getAppExecutorService());
       }
       else {
