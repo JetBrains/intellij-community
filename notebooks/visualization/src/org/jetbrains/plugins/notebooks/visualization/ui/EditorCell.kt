@@ -7,10 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
-import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
-import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
-import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
-import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
+import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.execution.ExecutionEvent
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
 import java.time.ZonedDateTime
@@ -92,8 +89,12 @@ class EditorCell(
     view?.let { disposeView(it) }
   }
 
-  fun update(force: Boolean = false) {
-    view?.update(force)
+  fun update() {
+    manager.update { ctx -> update(ctx) }
+  }
+
+  fun update(updateCtx: UpdateContext) {
+    view?.update(updateCtx)
   }
 
   fun updateInput() {
@@ -120,7 +121,9 @@ class EditorCell(
   @PublishedApi
   internal fun createLazyControllers(factory: NotebookCellInlayController.LazyFactory) {
     factory.cellOrdinalsInCreationBlock.add(interval.ordinal)
-    update(true)
+    manager.update { ctx ->
+      update(ctx)
+    }
     factory.cellOrdinalsInCreationBlock.remove(interval.ordinal)
   }
 
