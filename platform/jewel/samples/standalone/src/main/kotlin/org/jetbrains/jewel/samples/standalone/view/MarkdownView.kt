@@ -24,11 +24,9 @@ import org.jetbrains.jewel.ui.component.Divider
 fun MarkdownDemo() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
         var currentMarkdown by remember { mutableStateOf(JewelReadme) }
-        var linksAreEnabled by remember { mutableStateOf(true) }
         MarkdownEditor(
             currentMarkdown = currentMarkdown,
             onMarkdownChange = { currentMarkdown = it },
-            onLinksEnabledChange = { linksAreEnabled = it },
             modifier = Modifier.fillMaxHeight().weight(1f),
         )
 
@@ -37,7 +35,6 @@ fun MarkdownDemo() {
         MarkdownPreview(
             modifier = Modifier.fillMaxHeight().weight(1f),
             rawMarkdown = currentMarkdown,
-            linksAreEnabled = linksAreEnabled,
         )
     }
 }

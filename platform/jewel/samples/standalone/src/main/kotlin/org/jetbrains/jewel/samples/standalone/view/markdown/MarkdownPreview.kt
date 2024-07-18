@@ -45,7 +45,6 @@ import java.net.URI
 internal fun MarkdownPreview(
     modifier: Modifier = Modifier,
     rawMarkdown: String,
-    linksAreEnabled: Boolean,
 ) {
     val isDark = JewelTheme.isDark
 
@@ -99,7 +98,6 @@ internal fun MarkdownPreview(
                 contentPadding = PaddingValues(16.dp),
                 state = lazyListState,
                 selectable = true,
-                enabled = linksAreEnabled,
                 onUrlClick = { url -> Desktop.getDesktop().browse(URI.create(url)) },
             )
 

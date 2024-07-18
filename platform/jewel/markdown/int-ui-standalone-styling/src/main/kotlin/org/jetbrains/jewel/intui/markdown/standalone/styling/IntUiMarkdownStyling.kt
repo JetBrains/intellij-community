@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
+import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
 import org.jetbrains.jewel.intui.standalone.theme.createEditorTextStyle
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
@@ -648,20 +650,33 @@ public fun InlinesStyling.Companion.light(
             .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
             .toSpanStyle(),
     link: SpanStyle =
-        textStyle.copy(color = Color(0xFF0969DA), textDecoration = TextDecoration.Underline).toSpanStyle(),
+        textStyle.copy(
+            color = IntUiLightTheme.colors.blue(2),
+            textDecoration = TextDecoration.Underline,
+        ).toSpanStyle(),
+    linkDisabled: SpanStyle = link.copy(color = IntUiLightTheme.colors.grey(8)),
+    linkHovered: SpanStyle = link,
+    linkFocused: SpanStyle = link.copy(background = Color(0x12000000)),
+    linkPressed: SpanStyle = link.copy(background = Color(0x1D000000)),
+    linkVisited: SpanStyle = link,
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
     renderInlineHtml: Boolean = false,
 ): InlinesStyling =
     InlinesStyling(
-        textStyle,
-        inlineCode,
-        link,
-        emphasis,
-        strongEmphasis,
-        inlineHtml,
-        renderInlineHtml,
+        textStyle = textStyle,
+        inlineCode = inlineCode,
+        link = link,
+        linkDisabled = linkDisabled,
+        linkFocused = linkFocused,
+        linkHovered = linkHovered,
+        linkPressed = linkPressed,
+        linkVisited = linkVisited,
+        emphasis = emphasis,
+        strongEmphasis = strongEmphasis,
+        inlineHtml = inlineHtml,
+        renderInlineHtml = renderInlineHtml,
     )
 
 public fun InlinesStyling.Companion.dark(
@@ -671,22 +686,33 @@ public fun InlinesStyling.Companion.dark(
             .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
             .toSpanStyle(),
     link: SpanStyle =
-        textStyle
-            .copy(color = Color(0xFF2F81F7), textDecoration = TextDecoration.Underline)
-            .toSpanStyle(),
+        textStyle.copy(
+            color = IntUiDarkTheme.colors.blue(9),
+            textDecoration = TextDecoration.Underline,
+        ).toSpanStyle(),
+    linkDisabled: SpanStyle = link.copy(color = IntUiDarkTheme.colors.grey(8)),
+    linkHovered: SpanStyle = link,
+    linkFocused: SpanStyle = link.copy(background = Color(0x16FFFFFF)),
+    linkPressed: SpanStyle = link.copy(background = Color(0x26FFFFFF)),
+    linkVisited: SpanStyle = link,
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
     renderInlineHtml: Boolean = false,
 ): InlinesStyling =
     InlinesStyling(
-        textStyle,
-        inlineCode,
-        link,
-        emphasis,
-        strongEmphasis,
-        inlineHtml,
-        renderInlineHtml,
+        textStyle = textStyle,
+        inlineCode = inlineCode,
+        link = link,
+        linkDisabled = linkDisabled,
+        linkFocused = linkFocused,
+        linkHovered = linkHovered,
+        linkPressed = linkPressed,
+        linkVisited = linkVisited,
+        emphasis = emphasis,
+        strongEmphasis = strongEmphasis,
+        inlineHtml = inlineHtml,
+        renderInlineHtml = renderInlineHtml,
     )
 
 private val blockBackgroundColorLight = Color(0xFFF6F8FA)

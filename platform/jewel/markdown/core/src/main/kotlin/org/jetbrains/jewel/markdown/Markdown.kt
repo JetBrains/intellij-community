@@ -87,7 +87,7 @@ public fun Markdown(
         }
     } else {
         Column(
-            modifier.semantics { rawMarkdown = markdown },
+            modifier = modifier.semantics { rawMarkdown = markdown },
             verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
         ) {
             for (block in markdownBlocks) {

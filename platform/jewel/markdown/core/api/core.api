@@ -509,12 +509,17 @@ public final class org/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer
 public final class org/jetbrains/jewel/markdown/rendering/InlinesStyling {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling$Companion;
-	public fun <init> (Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Z)V
+	public fun <init> (Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Landroidx/compose/ui/text/SpanStyle;Z)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getEmphasis ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getInlineCode ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getInlineHtml ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getLink ()Landroidx/compose/ui/text/SpanStyle;
+	public final fun getLinkDisabled ()Landroidx/compose/ui/text/SpanStyle;
+	public final fun getLinkFocused ()Landroidx/compose/ui/text/SpanStyle;
+	public final fun getLinkHovered ()Landroidx/compose/ui/text/SpanStyle;
+	public final fun getLinkPressed ()Landroidx/compose/ui/text/SpanStyle;
+	public final fun getLinkVisited ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getRenderInlineHtml ()Z
 	public final fun getStrongEmphasis ()Landroidx/compose/ui/text/SpanStyle;
 	public final fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;

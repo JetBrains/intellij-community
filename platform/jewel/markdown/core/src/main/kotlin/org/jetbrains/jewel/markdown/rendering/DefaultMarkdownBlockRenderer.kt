@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
@@ -141,11 +142,13 @@ public open class DefaultMarkdownBlockRenderer(
 
         Text(
             modifier =
-                Modifier.clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onTextClick,
-                ),
+                Modifier
+                    .focusProperties { canFocus = false }
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onTextClick,
+                    ),
             text = renderedContent,
             style = mergedStyle,
         )
@@ -212,6 +215,7 @@ public open class DefaultMarkdownBlockRenderer(
             Text(
                 text = renderedContent,
                 style = mergedStyle,
+                modifier = Modifier.focusProperties { canFocus = false },
             )
 
             if (underlineWidth > 0.dp && underlineColor.isSpecified) {
@@ -295,6 +299,7 @@ public open class DefaultMarkdownBlockRenderer(
                         color = styling.numberStyle.color.takeOrElse { LocalContentColor.current },
                         modifier =
                             Modifier
+                                .focusProperties { canFocus = false }
                                 .widthIn(min = styling.numberMinWidth)
                                 .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                         textAlign = styling.numberTextAlign,
@@ -333,7 +338,9 @@ public open class DefaultMarkdownBlockRenderer(
                         text = styling.bullet.toString(),
                         style = styling.bulletStyle,
                         color = styling.bulletStyle.color.takeOrElse { LocalContentColor.current },
-                        modifier = Modifier.pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                        modifier =
+                            Modifier.focusProperties { canFocus = false }
+                                .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                     )
 
                     Spacer(Modifier.width(styling.bulletContentGap))
@@ -384,7 +391,7 @@ public open class DefaultMarkdownBlockRenderer(
                 style = styling.editorTextStyle,
                 color = styling.editorTextStyle.color.takeOrElse { LocalContentColor.current },
                 modifier =
-                    Modifier
+                    Modifier.focusProperties { canFocus = false }
                         .padding(styling.padding)
                         .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
             )
@@ -418,7 +425,9 @@ public open class DefaultMarkdownBlockRenderer(
                     text = block.content,
                     style = styling.editorTextStyle,
                     color = styling.editorTextStyle.color.takeOrElse { LocalContentColor.current },
-                    modifier = Modifier.pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                    modifier =
+                        Modifier.focusProperties { canFocus = false }
+                            .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                 )
 
                 if (block.mimeType != null && styling.infoPosition.verticalAlignment == Alignment.Bottom) {
@@ -447,6 +456,7 @@ public open class DefaultMarkdownBlockRenderer(
                     text = infoText,
                     style = textStyle,
                     color = textStyle.color.takeOrElse { LocalContentColor.current },
+                    modifier = Modifier.focusProperties { canFocus = false },
                 )
             }
         }

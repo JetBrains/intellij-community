@@ -371,19 +371,37 @@ public fun InlinesStyling.Companion.create(
             color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
             textDecoration = TextDecoration.Underline,
         ).toSpanStyle(),
+    linkDisabled: SpanStyle = link.copy(color = JBUI.CurrentTheme.Link.Foreground.DISABLED.toComposeColor()),
+    linkHovered: SpanStyle = link.copy(color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor()),
+    linkFocused: SpanStyle =
+        link.copy(
+            color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
+            background = JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor(),
+        ),
+    linkPressed: SpanStyle =
+        link.copy(
+            color = JBUI.CurrentTheme.Link.Foreground.PRESSED.toComposeColor(),
+            background = JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor(),
+        ),
+    linkVisited: SpanStyle = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor()),
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
     renderInlineHtml: Boolean = false,
 ): InlinesStyling =
     InlinesStyling(
-        textStyle,
-        inlineCode,
-        link,
-        emphasis,
-        strongEmphasis,
-        inlineHtml,
-        renderInlineHtml,
+        textStyle = textStyle,
+        inlineCode = inlineCode,
+        link = link,
+        linkDisabled = linkDisabled,
+        linkHovered = linkHovered,
+        linkFocused = linkFocused,
+        linkPressed = linkPressed,
+        linkVisited = linkVisited,
+        emphasis = emphasis,
+        strongEmphasis = strongEmphasis,
+        inlineHtml = inlineHtml,
+        renderInlineHtml = renderInlineHtml,
     )
 
 private val defaultTextStyle

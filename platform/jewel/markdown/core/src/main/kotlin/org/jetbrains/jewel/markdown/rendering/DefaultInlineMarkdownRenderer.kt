@@ -6,6 +6,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Builder
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import org.commonmark.renderer.text.TextContentRenderer
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -40,6 +41,15 @@ public open class DefaultInlineMarkdownRenderer(
         enabled: Boolean,
         onUrlClicked: ((String) -> Unit)? = null,
     ) {
+        // TODO move to InlineMarkdown to avoid recomputing after #416 is done
+        val linkStyling =
+            TextLinkStyles(
+                styling.link,
+                styling.linkFocused,
+                styling.linkHovered,
+                styling.linkPressed,
+            )
+
         for (child in inlineMarkdown) {
             when (child) {
                 is InlineMarkdown.Text -> append(child.nativeNode.literal)
@@ -62,18 +72,21 @@ public open class DefaultInlineMarkdownRenderer(
                 }
 
                 is InlineMarkdown.Link -> {
-                    withStyles(styling.link.withEnabled(enabled), child) {
+                    val index =
                         if (enabled) {
-                            val destination = it.nativeNode.destination
+                            val destination = child.nativeNode.destination
                             val link =
                                 LinkAnnotation.Clickable(
                                     tag = destination,
                                     linkInteractionListener = { _ -> onUrlClicked?.invoke(destination) },
+                                    styles = linkStyling,
                                 )
                             pushLink(link)
+                        } else {
+                            pushStyle(styling.linkDisabled)
                         }
-                        appendInlineMarkdownFrom(it.children, styling, enabled)
-                    }
+                    appendInlineMarkdownFrom(child.children, styling, enabled)
+                    pop(index)
                 }
 
                 is InlineMarkdown.Code -> {
