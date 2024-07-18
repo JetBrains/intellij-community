@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
@@ -12,17 +12,16 @@ import java.nio.file.Paths
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 
+internal sealed class RuntimeChooserItem
 
-abstract class RuntimeChooserItem
-
-object RuntimeChooserSelectRuntimeItem: RuntimeChooserItem()
+internal object RuntimeChooserSelectRuntimeItem: RuntimeChooserItem()
 
 internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: (Y) -> Unit) {
   action(get())
   afterChange(lifetime, action)
 }
 
-class RuntimeChooserModel {
+internal class RuntimeChooserModel {
   private val graph = PropertyGraph()
 
   val currentRuntime: GraphProperty<RuntimeChooserCurrentItem?> = graph.property(null)

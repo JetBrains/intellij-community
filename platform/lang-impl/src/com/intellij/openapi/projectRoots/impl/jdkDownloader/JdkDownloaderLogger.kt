@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
-object JdkDownloaderLogger : CounterUsagesCollector() {
+internal object JdkDownloaderLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 3)

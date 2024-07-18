@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslDistributionManager
@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.function.Consumer
@@ -32,10 +33,9 @@ import javax.swing.JComponent
 
 private val LOG = logger<JdkDownloader>()
 
-
 internal val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.create("jdk-downloader-extension")
 
-interface JdkDownloaderDialogHostExtension {
+internal interface JdkDownloaderDialogHostExtension {
   fun allowWsl() : Boolean = true
 
   fun createMainPredicate() : JdkPredicate? = null
@@ -45,12 +45,14 @@ interface JdkDownloaderDialogHostExtension {
   fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem) : Boolean = true
 }
 
+@Internal
 data class JdkInstallRequestInfo(override val item: JdkItem,
                                  override val installDir: Path): JdkInstallRequest {
   override val javaHome: Path
     get() = item.resolveJavaHome(installDir)
 }
 
+@Internal
 class JdkDownloader : SdkDownload, JdkDownloaderBase {
   override fun supportsDownload(sdkTypeId: SdkTypeId): Boolean {
     if (!Registry.`is`("jdk.downloader")) return false
@@ -199,6 +201,7 @@ internal fun selectJdkAndPath(
   return JdkDownloadDialog(project, parentComponent, sdkTypeId, mergedModel, okActionText, text).selectJdkAndPath()
 }
 
+@Internal
 interface JdkDownloaderBase {
   companion object {
     fun newDownloadTask(item: JdkItem, request: JdkInstallRequest, project: Project?): SdkDownloadTask {
@@ -207,7 +210,12 @@ interface JdkDownloaderBase {
   }
 }
 
-class JdkDownloadTask(val jdkItem: JdkItem, val request: JdkInstallRequest, val project: Project?): SdkDownloadTask {
+@Internal
+class JdkDownloadTask(
+  @JvmField val jdkItem: JdkItem,
+  @JvmField val request: JdkInstallRequest,
+  @JvmField val project: Project?,
+): SdkDownloadTask {
   override fun getSuggestedSdkName() = request.item.suggestedSdkName
   override fun getPlannedHomeDir() = request.javaHome.toString()
   override fun getPlannedVersion() = request.item.versionString
