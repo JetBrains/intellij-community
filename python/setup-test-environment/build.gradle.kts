@@ -44,6 +44,8 @@ val pythonVersionMapping = mapOf(
   "3.12" to "3.12.0",
 )
 
+val defaultPackages = listOf("virtualenv")
+
 envs {
   bootstrapDirectory = pythonsDirectory
   envsDirectory = venvsDirectory
@@ -75,11 +77,14 @@ tasks.register("build") {
 }
 
 fun createPython(
-  id: String, version: String, packages: List<String> = listOf(),
-  tags: List<String> = listOf(), type: PythonType = PythonType.PYTHON,
+  id: String,
+  version: String,
+  packages: List<String> = listOf(),
+  tags: List<String> = listOf(),
+  type: PythonType = PythonType.PYTHON,
 ) {
   val pythonHome = File(pythonsDirectory, id)
-  val packages = packages + listOf("virtualenv")
+  val packages = packages + defaultPackages
 
   envs {
     when (type) {
