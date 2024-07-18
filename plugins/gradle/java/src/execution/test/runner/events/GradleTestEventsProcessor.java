@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,13 +29,13 @@ public final class GradleTestEventsProcessor {
   ) {
     var descriptor = event.getDescriptor();
     if (event instanceof ExternalSystemStartEvent) {
-      if (StringUtil.isEmpty(descriptor.getMethodName())) {
+      if (StringUtil.isEmpty(descriptor.getMethodName()) || isNewParametrizedTest(descriptor)) {
         return new BeforeSuiteEventProcessor(console);
       }
       return new BeforeTestEventProcessor(console);
     }
     if (event instanceof ExternalSystemFinishEvent) {
-      if (StringUtil.isEmpty(descriptor.getMethodName())) {
+      if (StringUtil.isEmpty(descriptor.getMethodName()) || isNewParametrizedTest(descriptor)) {
         return new AfterSuiteEventProcessor(console);
       }
       return new AfterTestEventProcessor(console);
@@ -44,5 +45,12 @@ public final class GradleTestEventsProcessor {
     }
     LOG.warn("Undefined progress event " + event.getClass().getSimpleName() + " " + event);
     return null;
+  }
+
+  private static boolean isNewParametrizedTest(@NotNull TestOperationDescriptor descriptor) {
+    String className = descriptor.getClassName();
+    String suiteName = descriptor.getSuiteName();
+    String methodName = descriptor.getMethodName();
+    return GradleVersionUtil.isCurrentGradleAtLeast("8.8") && className != null && suiteName != null && suiteName.equals(methodName);
   }
 }

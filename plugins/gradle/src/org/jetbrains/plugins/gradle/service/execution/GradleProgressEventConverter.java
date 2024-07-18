@@ -5,7 +5,6 @@ import com.intellij.build.events.EventResult;
 import com.intellij.build.events.impl.FinishEventImpl;
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
 import com.intellij.build.events.impl.StartEventImpl;
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -219,17 +218,9 @@ public final class GradleProgressEventConverter {
       var suiteName = jvmDescriptor.getSuiteName();
       var className = jvmDescriptor.getClassName();
       var methodName = jvmDescriptor.getMethodName();
-      if (isNewParametrizedTest(suiteName, className, methodName)) {
-        methodName = null;
-        className = null;
-      }
       return new TestOperationDescriptorImpl(displayName, eventTime, suiteName, className, methodName);
     }
     return new TestOperationDescriptorImpl(displayName, eventTime, null, null, null);
-  }
-
-  private static boolean isNewParametrizedTest(@Nullable String suiteName, @Nullable String className, @Nullable String methodName) {
-    return GradleVersionUtil.isCurrentGradleAtLeast("8.8") && className != null && suiteName != null && suiteName.equals(methodName);
   }
 
   public static @Nullable ExternalSystemTaskNotificationEvent legacyConvertProgressBuildEvent(

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,7 @@ import java.util.function.Consumer;
 /**
  * @author Vladislav.Soroka
  */
-public class BeforeTestEventProcessor extends AbstractTestEventProcessor {
+public class BeforeTestEventProcessor extends AbstractBeforeTestEventProcessor {
 
   public BeforeTestEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
@@ -37,19 +36,11 @@ public class BeforeTestEventProcessor extends AbstractTestEventProcessor {
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
     getExecutionConsole().getFileComparisonEventPatcher()
       .setBuiltInTestEventsUsed();
-
-    var testDescriptor = testEvent.getDescriptor();
-    var testId = testEvent.getEventId();
-    var parentTestId = testEvent.getParentEventId();
-    var suiteName = StringUtil.notNullize(testDescriptor.getSuiteName());
-    var fqClassName = StringUtil.notNullize(testDescriptor.getClassName());
-    var methodName = testDescriptor.getMethodName();
-    var displayName = testDescriptor.getDisplayName();
-
-    doProcess(testId, parentTestId, suiteName, fqClassName, methodName, displayName);
+    super.process(testEvent);
   }
 
-  private void doProcess(
+  @Override
+  protected void doProcess(
     @NotNull String testId,
     @Nullable String parentTestId,
     @NotNull String suiteName,
