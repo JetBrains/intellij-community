@@ -23,13 +23,14 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
-import com.intellij.util.Alarm
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -39,7 +40,8 @@ private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
 
 private const val RUN_CONFIGURATIONS_DIRECTORY = "runConfigurations"
 
-class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager, Disposable {
+@Internal
+class VcsIgnoreManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : VcsIgnoreManager, Disposable {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project) = VcsIgnoreManager.getInstance(project) as VcsIgnoreManagerImpl
@@ -51,8 +53,11 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager, Dis
 
   init {
     checkProjectNotDefault(project)
-    ignoreRefreshQueue = MergingUpdateQueue("VcsIgnoreUpdate", 500, true, null, this, null,
-                                            Alarm.ThreadToUse.POOLED_THREAD)
+    ignoreRefreshQueue = MergingUpdateQueue.mergingUpdateQueue(
+      name = "VcsIgnoreUpdate",
+      mergingTimeSpan = 500,
+      coroutineScope = coroutineScope,
+    )
 
     ignoreRefreshQueue.queue(DisposableUpdate.createDisposable(this, "wait Project opening activities scan") {
       runBlockingCancellable {
@@ -61,7 +66,7 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager, Dis
     })
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      project.messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      project.messageBus.connect(coroutineScope).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosing(project: Project) {
           if (this@VcsIgnoreManagerImpl.project === project) {
             try {
