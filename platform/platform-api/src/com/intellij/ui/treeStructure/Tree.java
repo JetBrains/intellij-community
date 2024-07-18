@@ -1379,6 +1379,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     @Override
     public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
+      if (cachedPresentation != null && presentation != null) {
+        // This can happen if the presentation is applied twice too quickly, before the previous one is cleared.
+        // This causes glitches because the new presentation doesn't have the real-to-cache node mapping
+        // for the nodes that have already been loaded.
+        // We could try copying this cache to the new instance here, but it's error-prone and not really necessary
+        // because it's most likely that the new presentation is the same as the previous one.
+        return;
+      }
       cachedPresentation = presentation == null ? null : new CachedPresentationImpl(presentation);
       if (cachedPresentation != null) {
         var rootPath = getRootPath();
