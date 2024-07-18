@@ -318,6 +318,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testJoinTextBlockSlashSAtTheEnd() {doTest();}
   public void testJoinStringTemplateBackSlash() {doTest();}
   public void testJoinStringTemplateBackSlash2() {doTest();}
+  public void testJoinOutsideOfTextBlock() { doTest(); }
 
   private void doTest() {
     doTest(".java");
