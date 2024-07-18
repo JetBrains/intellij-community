@@ -6,8 +6,6 @@ import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.process.BuildProcessHandler;
-import com.intellij.debugger.impl.RemoteConnectionBuilder;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.impl.SingleConfigurationConfigurable;
@@ -20,13 +18,13 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
@@ -37,11 +35,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,9 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter;
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.execution.run.configuration.MavenRunConfigurationSettingsEditor;
 import org.jetbrains.idea.maven.execution.target.MavenCommandLineSetup;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
@@ -83,9 +75,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 public class MavenRunConfiguration extends LocatableConfigurationBase implements ModuleRunProfile, TargetEnvironmentAwareRunProfile {
+  private static final ExtensionPointName<MavenRemoteConnectionCreator> EP_NAME =
+    ExtensionPointName.create("org.jetbrains.idea.maven.mavenRemoteConnectionCreator");
+
   private @NotNull MavenSettings settings = new MavenSettings(getProject());
 
   protected MavenRunConfiguration(Project project, ConfigurationFactory factory, String name) {
@@ -175,7 +169,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @NotNull
   public RemoteConnectionCreator createRemoteConnectionCreator(JavaParameters javaParameters) {
-    return new ExecRemoteConnectionCreator(javaParameters, this);
+    return new MavenExtRemoteConnectionCreator(javaParameters, this);
   }
 
   @Override
@@ -306,115 +300,29 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
   }
 
-  private static class ExecRemoteConnectionCreator implements RemoteConnectionCreator {
-
-    private static final Pattern EXEC_MAVEN_PLUGIN_PATTERN = Pattern.compile("org[.]codehaus[.]mojo:exec-maven-plugin(:[\\d.]+)?:exec");
-
+  private static class MavenExtRemoteConnectionCreator implements RemoteConnectionCreator {
     private final JavaParameters myJavaParameters;
     private final MavenRunConfiguration myRunConfiguration;
 
-    ExecRemoteConnectionCreator(JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
+    MavenExtRemoteConnectionCreator(JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
       myJavaParameters = javaParameters;
       myRunConfiguration = runConfiguration;
     }
 
-    @Nullable
     @Override
-    public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
-      ParametersList programParametersList = myJavaParameters.getProgramParametersList();
-      boolean execGoal = ContainerUtil.exists(
-        programParametersList.getList(),
-        parameter -> parameter.equals("exec:exec") || EXEC_MAVEN_PLUGIN_PATTERN.matcher(parameter).matches()
-      );
-      if (!execGoal) {
-        return null;
+    public @Nullable RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+      for (MavenRemoteConnectionCreator creator : EP_NAME.getExtensionList()) {
+        RemoteConnection connection = creator.createRemoteConnection(myJavaParameters, myRunConfiguration);
+        if (connection != null) {
+          return connection;
+        }
       }
-
-      Project project = myRunConfiguration.getProject();
-      MavenRunnerParameters runnerParameters = myRunConfiguration.getRunnerParameters();
-
-      JavaParameters parameters = new JavaParameters();
-      RemoteConnection connection;
-      try {
-        // there's no easy and reliable way to know the version of target JRE, but without it there won't be any debugger agent settings
-        parameters.setJdk(JavaParametersUtil.createProjectJdk(project, null));
-        connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
-          .asyncAgent(true)
-          .project(environment.getProject())
-          .create(parameters);
-      }
-      catch (ExecutionException e) {
-        throw new RuntimeException("Cannot create debug connection", e);
-      }
-
-      String execArgsStr;
-
-      String execArgsPrefix = "-Dexec.args=";
-      int execArgsIndex = ContainerUtil.indexOf(programParametersList.getList(), s -> s.startsWith(execArgsPrefix));
-      if (execArgsIndex != -1) {
-        execArgsStr = programParametersList.get(execArgsIndex).substring(execArgsPrefix.length());
-      }
-      else {
-        execArgsStr = getExecArgsFromPomXml(project, runnerParameters);
-      }
-
-      ParametersList execArgs = new ParametersList();
-      execArgs.addAll(MavenApplicationConfigurationExecutionEnvironmentProvider.patchVmParameters(parameters.getVMParametersList()));
-
-      execArgs.addParametersString(execArgsStr);
-
-      String classPath = FileUtil.toSystemDependentName(parameters.getClassPath().getPathsString());
-      if (StringUtil.isNotEmpty(classPath)) {
-        appendToClassPath(execArgs, classPath);
-      }
-
-      String execArgsCommandLineArg = execArgsPrefix + execArgs.getParametersString();
-      if (execArgsIndex != -1) {
-        programParametersList.set(execArgsIndex, execArgsCommandLineArg);
-      }
-      else {
-        programParametersList.add(execArgsCommandLineArg);
-      }
-
-      return connection;
+      return null;
     }
 
     @Override
     public boolean isPollConnection() {
       return true;
-    }
-
-    private static String getExecArgsFromPomXml(Project project, MavenRunnerParameters runnerParameters) {
-      VirtualFile workingDir = VfsUtil.findFileByIoFile(runnerParameters.getWorkingDirFile(), false);
-      if (workingDir != null) {
-        String pomFileName = StringUtil.defaultIfEmpty(runnerParameters.getPomFileName(), MavenConstants.POM_XML);
-        VirtualFile pomFile = workingDir.findChild(pomFileName);
-        if (pomFile != null) {
-          MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, pomFile);
-          if (projectModel != null) {
-            return StringUtil.notNullize(MavenPropertyResolver.resolve("${exec.args}", projectModel));
-          }
-        }
-      }
-      return "";
-    }
-
-    private static void appendToClassPath(ParametersList execArgs, String classPath) {
-      List<String> execArgsList = execArgs.getList();
-      int classPathIndex = execArgsList.indexOf("-classpath");
-      if (classPathIndex == -1) {
-        classPathIndex = execArgsList.indexOf("-cp");
-      }
-      if (classPathIndex == -1) {
-        execArgs.prependAll("-classpath", "%classpath" + File.pathSeparator + classPath);
-      }
-      else if (classPathIndex + 1 == execArgsList.size()) { // invalid command line, but we still have to patch it
-        execArgs.add("%classpath" + File.pathSeparator + classPath);
-      }
-      else {
-        String oldClassPath = execArgs.get(classPathIndex + 1);
-        execArgs.set(classPathIndex + 1, oldClassPath + File.pathSeparator + classPath);
-      }
     }
   }
 
