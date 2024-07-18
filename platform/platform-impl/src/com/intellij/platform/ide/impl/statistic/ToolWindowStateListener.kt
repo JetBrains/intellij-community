@@ -15,6 +15,8 @@ import com.intellij.openapi.wm.impl.WindowInfoImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -30,7 +32,7 @@ class ToolWindowStateListener(private val project: Project) : ToolWindowManagerL
 @Service(Service.Level.PROJECT)
 private class ToolWindowStateCollector(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val windowsSize = ConcurrentHashMap<String, Int>()
-  private val eventFlows = mutableMapOf<String, MutableStateFlow<Unit>>()
+  private val eventFlows = mutableMapOf<String, MutableSharedFlow<Unit>>()
 
   private fun reportResizeEvent(toolWindowManager: ToolWindowManager, toolWindow: ToolWindowImpl) {
     val size = if (toolWindow.anchor.isHorizontal) toolWindow.component.height else toolWindow.component.width
@@ -44,12 +46,17 @@ private class ToolWindowStateCollector(private val project: Project, private val
   @OptIn(FlowPreview::class)
   fun stateChanged(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, changeType: ToolWindowManagerListener.ToolWindowManagerEventType) {
     if (changeType == ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized && toolWindow.type == ToolWindowType.DOCKED && toolWindow is ToolWindowImpl) {
-      val flow = eventFlows.getOrPut(toolWindow.id) { MutableStateFlow(Unit) }
-      coroutineScope.launch(Dispatchers.EDT) {
-        flow.debounce(DEBOUNCE_TIMEOUT_MS).collect {
-          reportResizeEvent(toolWindowManager, toolWindow)
+      val flow = eventFlows.getOrPut(toolWindow.id) {
+        MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
+          coroutineScope.launch(Dispatchers.EDT) {
+            debounce(DEBOUNCE_TIMEOUT_MS).collect {
+              reportResizeEvent(toolWindowManager, toolWindow)
+            }
+          }
         }
       }
+
+      flow.tryEmit(Unit)
     }
   }
 
