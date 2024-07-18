@@ -14,7 +14,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -127,7 +126,7 @@ public final class DebuggerContextUtil {
       if (debugSession == null) return null;
 
       final XSourcePosition position = debugSession.getCurrentPosition();
-      Editor editor = ((FileEditorManagerImpl)FileEditorManager.getInstance(file.getProject())).getSelectedTextEditor(true);
+      Editor editor = FileEditorManager.getInstance(file.getProject()).getSelectedTextEditor(true);
       if (editor == null || position == null || !position.getFile().equals(file.getOriginalFile().getVirtualFile())) return null;
 
       PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
