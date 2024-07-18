@@ -84,10 +84,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.getIntention(module) != null }
   }
 
-  fun configureSdk(project: Project,
-                           module: Module,
-                           extension: PyProjectSdkConfigurationExtension?,
-                           indicator: ProgressIndicator) {
+  fun configureSdk(
+    project: Project,
+    module: Module,
+    extension: PyProjectSdkConfigurationExtension?,
+    indicator: ProgressIndicator,
+  ) {
     // please keep this method in sync with com.jetbrains.python.inspections.PyInterpreterInspection.Visitor.getSuitableSdkFix
 
     indicator.isIndeterminate = true
@@ -128,7 +130,10 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     LOGGER.debug("Looking for a virtual environment related to the project")
     guardIndicator(indicator) { detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() }?.let {
       LOGGER.debug { "Detected virtual environment related to the project: $it" }
-      val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
+      val newSdk = it.setupAssociated(existingSdks, module.basePath).getOrElse { err->
+        LOGGER.error(err)
+        return
+      }
       LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 
       runInEdt {

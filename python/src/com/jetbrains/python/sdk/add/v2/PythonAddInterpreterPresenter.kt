@@ -49,7 +49,7 @@ internal fun PythonAddInterpreterPresenter.setupVirtualenv(venvPath: Path, proje
   val venvPathOnTarget = getPathOnTarget(venvPath)
   val savedSdk = installBaseSdk(baseSdk, state.allSdks.get()) ?: return null
   val sdk = createVirtualEnvSynchronously(savedSdk, state.allSdks.get(), venvPathOnTarget,
-                                          projectPath, null, null) ?: error("Failed to create SDK")
+                                          projectPath, null, null).getOrThrow()
   SdkConfigurationUtil.addSdk(sdk)
   return sdk
 }

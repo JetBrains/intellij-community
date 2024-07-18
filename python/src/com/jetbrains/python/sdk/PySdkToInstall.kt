@@ -19,6 +19,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.installer.BinaryInstallation
 import com.jetbrains.python.sdk.installer.installBinary
 import com.jetbrains.python.sdk.installer.toResourcePreview
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 
 val LOGGER = Logger.getInstance(PySdkToInstall::class.java)
@@ -31,14 +32,11 @@ fun getSdksToInstall(): List<PySdkToInstall> {
 }
 
 @RequiresEdt
-fun installSdkIfNeeded(sdk: Sdk?, module: Module?, existingSdks: List<Sdk>): Sdk? {
-  return sdk.let { if (it is PySdkToInstall) it.install(module) { detectSystemWideSdks(module, existingSdks) } else it }
-}
-
-@RequiresEdt
-fun installSdkIfNeeded(sdk: Sdk?, module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): Sdk? {
-  return sdk.let { if (it is PySdkToInstall) it.install(module) { detectSystemWideSdks(module, existingSdks, context) } else it }
-}
+fun installSdkIfNeeded(sdk: Sdk, module: Module?, existingSdks: List<Sdk>, context: UserDataHolder? = null): Result<Sdk> =
+  if (sdk is PySdkToInstall) sdk.install(module) {
+    context?.let { detectSystemWideSdks(module, existingSdks, context) } ?: detectSystemWideSdks(module, existingSdks)
+  }
+  else Result.success(sdk)
 
 
 /**
@@ -74,7 +72,8 @@ class PySdkToInstall(val installation: BinaryInstallation)
   }
 
   @RequiresEdt
-  fun install(module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk? {
+  @Internal
+  fun install(module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): Result<PyDetectedSdk> {
     val project = module?.project
     return installBinary(installation, project) {
       PySdkToInstallManager.findInstalledSdk(

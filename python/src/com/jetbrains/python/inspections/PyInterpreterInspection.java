@@ -529,7 +529,7 @@ public final class PyInterpreterInspection extends PyInspection {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PyUiUtil.clearFileLevelInspectionResults(project);
       final Sdk newSdk = myAssociate
-                         ? PySdkExtKt.setupAssociated(mySdk, myExistingSdks, BasePySdkExtKt.getBasePath(myModule))
+                         ? PySdkExtKt.setupAssociatedLogged(mySdk, myExistingSdks, BasePySdkExtKt.getBasePath(myModule))
                          : PySdkExtKt.setup(mySdk, myExistingSdks);
       if (newSdk == null) return;
 
