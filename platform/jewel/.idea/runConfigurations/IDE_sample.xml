@@ -11,7 +11,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="runIde" />
+          <option value=":samples:ide-plugin:runIde" />
         </list>
       </option>
       <option name="vmOptions" />
