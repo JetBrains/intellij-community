@@ -28,7 +28,11 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
   protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchBlock switchBlock, @NotNull ModPsiUpdater updater) {
     final PsiExpression selector = switchBlock.getExpression();
     if (selector == null) return;
-    final PsiClassType switchType = (PsiClassType)selector.getType();
+    PsiType selectorType = selector.getType();
+    if(selectorType instanceof PsiPrimitiveType primitiveType){
+      selectorType = primitiveType.getBoxedType(selector);
+    }
+    final PsiClassType switchType = (PsiClassType)selectorType;
     if (switchType == null) return;
     final PsiClass psiClass = switchType.resolve();
     if (psiClass == null) return;

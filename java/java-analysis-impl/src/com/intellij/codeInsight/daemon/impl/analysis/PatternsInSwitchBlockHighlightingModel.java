@@ -738,7 +738,14 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       }
     }
     else {
-      errorSink.accept(createCompletenessInfoForSwitch(!elements.isEmpty()));
+      HighlightInfo.Builder completenessInfoForSwitch = createCompletenessInfoForSwitch(!elements.isEmpty());
+      if (mySelectorKind == SelectorKind.BOOLEAN) {
+        IntentionAction fix = getFixFactory().createAddMissingBooleanPrimitiveBranchesFix(myBlock);
+        if (fix != null) {
+          completenessInfoForSwitch.registerFix(fix, null, null, null, null);
+        }
+      }
+      errorSink.accept(completenessInfoForSwitch);
     }
   }
 

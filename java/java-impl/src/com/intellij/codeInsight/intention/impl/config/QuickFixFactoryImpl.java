@@ -875,6 +875,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  public @Nullable IntentionAction createAddMissingBooleanPrimitiveBranchesFix(@NotNull PsiSwitchBlock block) {
+    CreateMissingBooleanPrimitiveBranchesFix fix = CreateMissingBooleanPrimitiveBranchesFix.createFix(block);
+    if (fix == null) return null;
+    return fix.asIntention();
+  }
+
+  @Override
   public @Nullable IntentionAction createAddMissingRecordClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
                                                                           @NotNull PsiClass selectorType,
                                                                           @NotNull Map<PsiType, Set<List<PsiType>>> branches,
