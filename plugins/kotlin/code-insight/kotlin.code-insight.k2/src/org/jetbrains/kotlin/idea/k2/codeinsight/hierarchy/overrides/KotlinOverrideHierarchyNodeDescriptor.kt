@@ -22,19 +22,15 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.name
-import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.k2.refactoring.findCallableMemberBySignature
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
@@ -81,27 +77,7 @@ class KotlinOverrideHierarchyNodeDescriptor(
         val substitution = createInheritanceTypeSubstitutor(classSymbol, baseClassSymbol) ?: return null
         val callableSignature = baseSymbol.substitute(substitution)
 
-        fun KaType?.eq(anotherType: KaType?): Boolean {
-            if (this == null || anotherType == null) return this == anotherType
-            return this.semanticallyEquals(anotherType)
-        }
-
-        return classSymbol.declaredMemberScope.callables.firstOrNull { callable ->
-            fun parametersMatch(): Boolean {
-                if (callableSignature is KaFunctionSignature && callable is KaFunctionSymbol) {
-                    if (callable.valueParameters.size != callableSignature.valueParameters.size) return false
-                    val allMatch = callable.valueParameters.zip(callableSignature.valueParameters)
-                        .all { (it.first.returnType.eq(it.second.returnType)) }
-                    return allMatch
-                } else {
-                    return callableSignature !is KaFunctionSignature && callable !is KaFunctionSymbol
-                }
-            }
-            callable.name == callableSignature.symbol.name &&
-                    callable.returnType.semanticallyEquals(callableSignature.returnType) &&
-                    callable.receiverType.eq(callableSignature.receiverType) &&
-                    parametersMatch()
-        }
+        return classSymbol.findCallableMemberBySignature(callableSignature)
     }
 
     internal fun calculateState(): Icon? {
