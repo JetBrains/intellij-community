@@ -51,6 +51,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -302,8 +303,21 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
       @Override
       public void certificateRemoved(X509Certificate certificate) {
-        getCefBrowser().getRequestContext().ClearCertificateExceptions(null);
-        getCefBrowser().getRequestContext().CloseAllConnections(null);
+        CefRequestContext context = getCefBrowser().getRequestContext();
+        if (context != null) {
+          context.ClearCertificateExceptions(null);
+          context.CloseAllConnections(null);
+        }
+        else {
+          getCefBrowser().createImmediately();
+          // It's a trick to wait until the browser is ready. TODO: introduce CefBrowser#getRequestContextAsync
+          CompletableFuture<String> browserReadyFuture = getCefBrowser().getDevToolsClient().executeDevToolsMethod("");
+          browserReadyFuture.thenRun(() -> {
+            CefRequestContext context1 = Objects.requireNonNull(getCefBrowser().getRequestContext());
+            context1.ClearCertificateExceptions(null);
+            context1.CloseAllConnections(null);
+          });
+        }
       }
     };
 
