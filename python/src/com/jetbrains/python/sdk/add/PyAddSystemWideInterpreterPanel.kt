@@ -67,7 +67,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     val isLocalTarget = targetSupplier == null
     if (isLocalTarget) {
       Runnable {
-        permWarning.isVisible = sdkComboBox.selectedSdk?.adminPermissionsNeeded() ?: false
+        permWarning.isVisible = sdkComboBox.selectedSdkIfExists?.adminPermissionsNeeded() ?: false
       }.apply {
         run()
         addChangeListener(this)
