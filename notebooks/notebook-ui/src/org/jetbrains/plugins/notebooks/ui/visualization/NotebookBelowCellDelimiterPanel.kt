@@ -26,6 +26,10 @@ class NotebookBelowCellDelimiterPanel(
   private val cellTags: List<String>,
   val cellNum: Int,
   isRenderedMarkdown: Boolean,
+  executionCount: Int?,
+  initStatusIcon: Icon?,
+  initTooltipText: String?,
+  initExecutionDurationText: String?
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
   private val plusTagButtonSize = JBUI.scale(18)
@@ -43,10 +47,11 @@ class NotebookBelowCellDelimiterPanel(
   init {
     updateBackgroundColor()
     border = BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
+    cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
 
     val addingTagsRow = (cellTags.isNotEmpty() && !isRenderedMarkdown && Registry.`is`("jupyter.cell.metadata.tags", false))
-
     if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)  // PY-72712
+    updateExecutionStatus(initTooltipText, executionCount, initStatusIcon, initExecutionDurationText)  // PY-73685
   }
 
   private fun createExecutionLabel(): JLabel {
@@ -64,7 +69,6 @@ class NotebookBelowCellDelimiterPanel(
     return labelText
   }
 
-  @Suppress("HardCodedStringLiteral")
   private fun createTagsRow(): Box {
     val tagsRow = Box.createHorizontalBox()
     val plusActionToolbar = createAddTagButton()
@@ -82,7 +86,7 @@ class NotebookBelowCellDelimiterPanel(
   private fun createAddTagButton(): JButton? {
     // todo: refactor
     // ideally, a toolbar with a single action and targetComponent this should've done that
-    // however, the toolbar max height must be not greater than 18, which seemed to be untrivial
+    // however, the toolbar max height must be not greater than 18, which seemed to be non-trivial
     val action = ActionManager.getInstance().getAction("JupyterCellAddTagInlayAction") ?: return null
     val originalIcon = AllIcons.Expui.General.Add
     val transparentIcon = IconLoader.getTransparentIcon(originalIcon)
@@ -100,16 +104,9 @@ class NotebookBelowCellDelimiterPanel(
     }
   }
 
-  private fun createAddTagButtonHoverListener(originalIcon: Icon, transparentIcon: Icon): MouseAdapter {
-    return object : MouseAdapter() {
-      override fun mouseEntered(e: MouseEvent) {
-        (e.source as JButton).icon = originalIcon
-      }
-
-      override fun mouseExited(e: MouseEvent) {
-        (e.source as JButton).icon = transparentIcon
-      }
-    }
+  private fun createAddTagButtonHoverListener(originalIcon: Icon, transparentIcon: Icon) = object : MouseAdapter() {
+    override fun mouseEntered(e: MouseEvent) { (e.source as JButton).icon = originalIcon }
+    override fun mouseExited(e: MouseEvent) { (e.source as JButton).icon = transparentIcon }
   }
 
   private fun createAddTagButtonActionListener(action: AnAction): ActionListener {
@@ -144,13 +141,15 @@ class NotebookBelowCellDelimiterPanel(
     super.updateUI()
   }
 
-  fun updateExecutionStatus(@Nls tooltipText: String?, executionCount: Int?, statusIcon: Icon?, @Nls executionDurationText: String?) {
+  fun updateExecutionStatus(
+    @NlsSafe tooltipText: String?, executionCount: Int?, statusIcon: Icon?, @NlsSafe executionDurationText: String?
+  ) {
     val showStatus = isExecutionCountDefined(executionCount) || (tooltipText != null && statusIcon != AllIcons.Expui.General.GreenCheckmark)
     if (showStatus) {
       getOrCreateExecutionLabel().apply {
         text = getExecutionLabelText(executionCount, executionDurationText)
         icon = statusIcon
-        this.toolTipText = tooltipText
+        toolTipText = tooltipText
       }
     } else {
       remove(executionLabel)
