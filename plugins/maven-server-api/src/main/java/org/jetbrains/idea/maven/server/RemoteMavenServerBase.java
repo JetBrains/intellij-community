@@ -6,7 +6,7 @@ import org.jetbrains.idea.maven.server.security.ssl.SslIDEConfirmingTrustStore;
 
 public class RemoteMavenServerBase extends RemoteServer {
   protected static void startMavenServer(MavenServerBase mavenServer, String[] args) throws Exception {
-    if(System.getProperty("delegate.ssl.to.ide")!=null) {
+    if (Boolean.getBoolean("delegate.ssl.to.ide")) {
       setupDelegatingSsl();
     }
 

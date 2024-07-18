@@ -112,6 +112,10 @@ public class MavenServerCMDState extends CommandLineState {
       params.getVMParametersList().addProperty("maven.collect.local.stat", "true");
     }
 
+    if (Registry.is("maven.delegate.trust.ssl.to.ide")) {
+      params.getVMParametersList().addProperty("delegate.ssl.to.ide", "true");
+    }
+
     String profilerOption = getProfilerVMString();
     if (profilerOption != null) {
       params.getVMParametersList()
