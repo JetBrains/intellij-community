@@ -23,6 +23,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,13 +33,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class XDebuggerWatchesManager {
   private final Map<String, List<XExpression>> watches = new ConcurrentHashMap<>();
   private final Map<String, Set<InlineWatch>> inlineWatches = new ConcurrentHashMap<>();
   private final MergingUpdateQueue myInlinesUpdateQueue;
   private final Project myProject;
 
-  public XDebuggerWatchesManager(@NotNull Project project) {
+  public XDebuggerWatchesManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     editorEventMulticaster.addDocumentListener(new MyDocumentListener(), project);
@@ -48,7 +50,7 @@ public final class XDebuggerWatchesManager {
         getDocumentInlines(document).forEach(InlineWatch::setMarker);
       }
     });
-    myInlinesUpdateQueue = new MergingUpdateQueue("XInlineWatches", 300, true, null, project);
+    myInlinesUpdateQueue = MergingUpdateQueue.Companion.edtMergingUpdateQueue("XInlineWatches", 300, coroutineScope);
   }
 
   public @NotNull List<XExpression> getWatches(String confName) {

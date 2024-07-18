@@ -102,7 +102,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     SimpleMessageBusConnection messageBusConnection = project.getMessageBus().connect(coroutineScope);
 
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
-    myWatchesManager = new XDebuggerWatchesManager(project);
+    myWatchesManager = new XDebuggerWatchesManager(project, coroutineScope);
     myPinToTopManager = new XDebuggerPinToTopManager();
     myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);
 

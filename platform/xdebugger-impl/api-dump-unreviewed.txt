@@ -235,16 +235,6 @@ c:com.intellij.xdebugger.impl.XDebuggerSupport
 - getStepOverHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getToggleLineBreakpointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getToggleTemporaryLineBreakpointHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-f:com.intellij.xdebugger.impl.XDebuggerWatchesManager
-- <init>(com.intellij.openapi.project.Project):V
-- addInlineWatchExpression(com.intellij.xdebugger.XExpression,I,com.intellij.xdebugger.XSourcePosition,Z):V
-- clearContext():V
-- getDocumentInlines(com.intellij.openapi.editor.Document):java.util.Collection
-- getInlineWatches():java.util.List
-- getWatches(java.lang.String):java.util.List
-- inlineWatchesRemoved(java.util.List,com.intellij.xdebugger.impl.inline.XInlineWatchesView):V
-- setWatches(java.lang.String,java.util.List):V
-- showInplaceEditor(com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XExpression):V
 e:com.intellij.xdebugger.impl.XSourceKind
 - java.lang.Enum
 - sf:ALTERNATIVE:com.intellij.xdebugger.impl.XSourceKind
