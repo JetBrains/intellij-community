@@ -155,7 +155,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     boolean hasErrorElement = false;
     try {
       ProperTextRange visibleRange = new ProperTextRange(0, document.getTextLength());
-      HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange);
+      HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange,
+                                                             TextRange.EMPTY_RANGE);
       GeneralHighlightingPass pass = new NasueousGeneralHighlightingPass(psiFile, document, visibleRange, error);
       pass.collectInformation(progressIndicator);
       hasErrorElement = pass.myHasErrorElement;

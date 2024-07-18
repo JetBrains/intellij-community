@@ -1136,9 +1136,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         else {
           VirtualFile virtualFile = getVirtualFile(fileEditor);
           PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(myProject, virtualFile);
-          submitted |= psiFile != null && queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
+          HighlightingSession session = psiFile == null ? null : queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY);
+          submitted |= session != null;
           if (PassExecutorService.LOG.isDebugEnabled()) {
-            PassExecutorService.log(null, null, "submit psiFile:", psiFile + " (" + virtualFile + "); submitted=", submitted);
+            PassExecutorService.log(session==null?null:session.getProgressIndicator(), null, "submit psiFile:", psiFile + " (" + virtualFile + "); submitted=", submitted);
           }
         }
       }
@@ -1184,14 +1185,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     Editor editor = textEditor == null ? null : textEditor.getEditor();
     if (highlighter == null) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
-        PassExecutorService.log(
-          null,
-          null,
-          "couldn't highlight",
-          virtualFile,
-          "because getBackgroundHighlighter() returned null. fileEditor=",
-          fileEditor,
-          fileEditor.getClass(),
+        PassExecutorService.log(null, null,
+          "couldn't highlight", virtualFile, "because getBackgroundHighlighter() returned null. fileEditor=",
+          fileEditor, fileEditor.getClass(),
           (textEditor == null ? "editor is null" : "editor loaded:" + textEditor.isEditorLoaded())
         );
       }
@@ -1214,7 +1210,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
     HighlightingSessionImpl session;
     try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
-      session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress, daemonCancelEventCount);
+      TextRange compositeDocumentDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
+      session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
     }
     JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
       submitInBackground(fileEditor, document, virtualFile, psiFile, highlighter, passesToIgnore, progress, session))),
@@ -1259,8 +1256,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           if (myProject.isDisposed() || !fileEditor.isValid() || !psiFile.isValid()) {
             return HighlightingPass.EMPTY_ARRAY;
           }
-          // remove obsolete infos for invalid psi elements as soon as possible, before highlighting passes start
-          ((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(myProject)).removeInvalidPsiElements(psiFile, this, session);
           if (session.isCanceled()) {
             // editor or something was changed between commit document notification in EDT and this point in the FJP thread
             throw new ProcessCanceledException();
