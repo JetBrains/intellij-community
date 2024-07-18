@@ -14,15 +14,15 @@ enum class PrintFailuresMode {
   ONLY_LAST_FAILURE;
 }
 
-
 /** @return T - if successful; null - otherwise */
-suspend fun <T> withRetry(messageOnFailure: String,
-                          retries: Long = 3,
-                          printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL_FAILURES,
-                          delay: Duration = 10.seconds,
-                          retryAction: suspend () -> T): T? {
-
-  (1..retries).forEach { failureCount ->
+suspend fun <T> withRetry(
+  messageOnFailure: String,
+  retries: Long = 3,
+  printFailuresMode: PrintFailuresMode = PrintFailuresMode.ALL_FAILURES,
+  delay: Duration = 10.seconds,
+  retryAction: suspend () -> T,
+): T? {
+  for (failureCount in 1..retries) {
     try {
       return retryAction()
     }
@@ -30,7 +30,9 @@ suspend fun <T> withRetry(messageOnFailure: String,
       throw e
     }
     catch (t: Throwable) {
-      if (messageOnFailure.isNotBlank()) logError(messageOnFailure)
+      if (messageOnFailure.isNotBlank()) {
+        logError(messageOnFailure)
+      }
 
       when (printFailuresMode) {
         PrintFailuresMode.ALL_FAILURES -> t.printStackTrace()
@@ -70,23 +72,4 @@ fun <T> withRetryBlocking(
     printFailuresMode = printFailuresMode,
     delay = delay
   ) { retryAction() }
-}
-
-fun <T> executeWithRetry(retries: Int = 3, exception: Class<*>,
-                         errorMsg: String = "Fail to execute action after $retries attempts",
-                         delay: Duration,
-                         call: () -> T): T {
-  for (i in 0..retries) {
-    try {
-      return call()
-    }
-    catch (e: Exception) {
-      logError("Got error $e on $i attempt")
-      if (e::class.java == exception) {
-        Thread.sleep(delay.inWholeMilliseconds)
-      }
-      else throw e
-    }
-  }
-  throw IllegalStateException(errorMsg)
 }
