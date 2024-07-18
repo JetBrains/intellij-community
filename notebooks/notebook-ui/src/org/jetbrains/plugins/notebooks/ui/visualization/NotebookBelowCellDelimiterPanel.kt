@@ -170,6 +170,7 @@ class NotebookBelowCellDelimiterPanel(
   fun stopElapsedTimeUpdate() = updateAlarm.cancelAllRequests()
 
   private fun scheduleElapsedTimeUpdate(diffFormatter: (ZonedDateTime, ZonedDateTime) -> String) {
+    if (updateAlarm.isDisposed) return  // PY-73962
     updateAlarm.addRequest({
       elapsedStartTime?.let { startTime ->
         @NlsSafe val elapsedLabel = diffFormatter(startTime, ZonedDateTime.now())
