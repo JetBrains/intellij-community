@@ -185,8 +185,14 @@ public final class VfsEventsMerger {
     @Override
     public String toString() {
       StringBuilder builder = new StringBuilder();
-      builder.append("file: ").append(file.getPath()).append("; ")
-        .append("operation: ");
+      builder.append("file: ");
+      if (file instanceof VirtualFileWithId fileWithId) {
+        builder.append(fileWithId.getId());
+      }
+      else {
+        builder.append(file.getPath());
+      }
+      builder.append("; ").append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
       if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("CONTENT_CHANGE ");
       if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");

@@ -839,24 +839,24 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     VirtualFileManager.getInstance().addAsyncFileListener(listener, myFixture.getTestRootDisposable());
 
-    String fileName = "test.txt";
-    final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile();
+    final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile();
+    final int testFileId = ((VirtualFileWithId)testFile).getId();
 
-    assertEquals(("file: " + fileName + "; operation: CONTENT_CHANGE ADD"), listener.indexingOperation(testFile));
+    assertEquals(("file: " + testFileId + "; operation: CONTENT_CHANGE ADD"), listener.indexingOperation(testFile));
 
     FileContentUtilCore.reparseFiles(Collections.singletonList(testFile));
 
-    assertEquals(("file: " + fileName + "; operation: ADD"), listener.indexingOperation(testFile));
+    assertEquals(("file: " + testFileId + "; operation: ADD"), listener.indexingOperation(testFile));
 
     WriteAction.run(() -> VfsUtil.saveText(testFile, "foo"));
     WriteAction.run(() -> VfsUtil.saveText(testFile, "bar"));
 
-    assertEquals(("file: " + fileName + "; operation: CONTENT_CHANGE"), listener.indexingOperation(testFile));
+    assertEquals(("file: " + testFileId + "; operation: CONTENT_CHANGE"), listener.indexingOperation(testFile));
 
     WriteAction.run(() -> VfsUtil.saveText(testFile, "baz"));
     WriteAction.run(() -> testFile.delete(null));
 
-    assertEquals(("file: " + fileName + "; operation: REMOVE"), listener.indexingOperation(testFile));
+    assertEquals(("file: " + testFileId + "; operation: REMOVE"), listener.indexingOperation(testFile));
   }
 
   public void test_files_inside_copied_directory_are_indexed() throws IOException {

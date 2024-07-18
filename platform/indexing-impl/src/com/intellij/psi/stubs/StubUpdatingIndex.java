@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -87,7 +88,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
         final IFileElementType elementType = parserDefinition.getFileNodeType();
         if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file.getFile())) {
-          logIfStubTraceEnabled(() -> "Should build stub for " + file.getFileName());
+          logIfStubTraceEnabled(() -> "Should build stub for " + ((VirtualFileWithId)file.getFile()).getId());
           return true;
         }
 
