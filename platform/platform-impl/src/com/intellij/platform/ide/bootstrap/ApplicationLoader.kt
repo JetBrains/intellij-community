@@ -105,6 +105,15 @@ internal suspend fun loadApp(
       ApplicationManager.setApplication(app)
     }
 
+    val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("language and region")) {
+        getLanguageAndRegionDialogIfNeeded(euaDocumentDeferred.await())
+      }
+    }
+    
     val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
       null
     }
@@ -114,14 +123,6 @@ internal suspend fun loadApp(
       }
     }
 
-    val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
-      async(CoroutineName("language and region")) {
-        getLanguageAndRegionDialogIfNeeded(euaDocumentDeferred.await())
-      }
-    }
 
     initServiceContainerJob.join()
 
@@ -193,9 +194,11 @@ internal suspend fun loadApp(
       )
 
       if (!app.isHeadlessEnvironment) {
-        cssInit?.join()
-        languageAndRegionTaskDeferred?.join()
-        euaTaskDeferred?.join()
+        euaTaskDeferred?.await()?.let {
+          cssInit?.join()
+          languageAndRegionTaskDeferred?.await()?.invoke()
+          it()
+        }
       }
 
       preloadJob.join()
