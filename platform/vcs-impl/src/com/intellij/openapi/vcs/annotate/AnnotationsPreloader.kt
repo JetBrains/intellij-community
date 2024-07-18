@@ -33,11 +33,16 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcs.CacheableAnnotationProvider
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Runnable
 
 @Service(Level.PROJECT)
-internal class AnnotationsPreloader(private val project: Project) {
-  private val updateQueue = MergingUpdateQueue("Annotations preloader queue", 1000, true, null, project, null, false)
+internal class AnnotationsPreloader(private val project: Project, coroutineScope: CoroutineScope) {
+  private val updateQueue = MergingUpdateQueue.mergingUpdateQueue(
+    name = "Annotations preloader queue",
+    mergingTimeSpan = 1000,
+    coroutineScope = coroutineScope,
+  )
 
   init {
     project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { refreshSelectedFiles() })
