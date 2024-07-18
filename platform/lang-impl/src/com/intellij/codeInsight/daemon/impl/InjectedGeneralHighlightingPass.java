@@ -86,7 +86,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, injected,
                             (injectedPsi, places) ->
       runAnnotatorsAndVisitorsOnInjectedPsi(injectedLanguageManager, injectedPsi, places, fragmentKey, (toolId, psiElement, infos) -> {
-        myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, getHighlightingSession());
+        myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, infos, getDocument(), injectedPsi, myProject, getHighlightingSession(), HighlighterRecyclerPickup.EMPTY);
         if (!infos.isEmpty()) {
           synchronized (myHighlights) {
             myHighlights.addAll(infos);

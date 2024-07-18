@@ -466,6 +466,8 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
 
   @Override
   public @NonNls String toString() {
-    return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip() + (isValid() ? "" : "(invalid)");
+    return "RangeHighlighter: " +
+           (isValid() ? "" : "(invalid)") +
+           "("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip();
   }
 }

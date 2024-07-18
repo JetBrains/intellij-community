@@ -76,6 +76,11 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
           });
         }
       }
+
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        myFileStatusMap.addDocumentDirtyRange(event);
+      }
     }), parentDisposable);
 
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
