@@ -46,10 +46,10 @@ fun createVirtualEnvSynchronously(
   inheritSitePackages: Boolean = false,
   makeShared: Boolean = false,
   targetPanelExtension: TargetPanelExtension? = null,
-): Result<Sdk> {
+): Sdk {
   val targetEnvironmentConfiguration = baseSdk.targetEnvConfiguration
   val installedSdk: Sdk = if (targetEnvironmentConfiguration == null) {
-    installSdkIfNeeded(baseSdk, module, existingSdks, context).getOrElse { return Result.failure(it) }
+    installSdkIfNeeded(baseSdk, module, existingSdks, context).getOrThrow()
   }
   else {
     baseSdk
@@ -79,7 +79,6 @@ fun createVirtualEnvSynchronously(
     if (it == null) {
       // here is the local machine case
       createSdkByGenerateTask(task, existingSdks, installedSdk, associatedPath, null)
-      ?: return Result.failure(Throwable("Error calling createSdkByGenerateTask"))
     }
     else {
       val homePath = ProgressManager.getInstance().run(task)
@@ -99,7 +98,7 @@ fun createVirtualEnvSynchronously(
     // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
     PySdkSettings.instance.onVirtualEnvCreated(installedSdk, FileUtil.toSystemIndependentName(venvRoot), projectPath)
   }
-  return Result.success(venvSdk)
+  return venvSdk
 }
 
 fun findPreferredVirtualEnvBaseSdk(existingBaseSdks: List<Sdk>): Sdk? {

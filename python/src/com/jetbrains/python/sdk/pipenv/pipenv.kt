@@ -148,7 +148,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
       return PythonSdkUtil.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
     }
   }
-  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {
+  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath)).apply {
     associateWithModule(module, newProjectPath)
     isPipEnv = true
   }

@@ -154,7 +154,7 @@ fun createSdkByGenerateTask(
   baseSdk: Sdk?,
   associatedProjectPath: String?,
   suggestedSdkName: String?,
-): Sdk? {
+): Sdk {
   val homeFile = try {
     val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
     StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?: throw ExecutionException(
@@ -163,7 +163,7 @@ fun createSdkByGenerateTask(
   }
   catch (e: ExecutionException) {
     showSdkExecutionException(baseSdk, e, PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
-    return null
+    throw e
   }
   val suggestedName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,

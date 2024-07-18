@@ -173,7 +173,7 @@ class PyAddVirtualEnvPanel(project: Project?,
     }
   }
 
-  override fun getOrCreateSdk(): Sdk? {
+  override fun getOrCreateSdk(): Sdk {
     // applies components' states for bound properties (e.g. selected radio button to `isCreateNewVirtualenv` field)
     contentPanel.apply()
 
@@ -182,25 +182,25 @@ class PyAddVirtualEnvPanel(project: Project?,
 
     if (isCreateNewVirtualenv) return createNewVirtualenvSdk(targetEnvironmentConfiguration)
 
-    val item = interpreterCombobox.selectedItem
+    val item = interpreterCombobox.selectedItem as ExistingPySdkComboBoxItem
     // there should *not* be other items other than `ExistingPySdkComboBoxItem`
-    return if (item is ExistingPySdkComboBoxItem) configureExistingVirtualenvSdk(targetEnvironmentConfiguration, item.sdk) else null
+    return configureExistingVirtualenvSdk(targetEnvironmentConfiguration, item.sdk)
   }
 
   /**
    * Note: there is a careful work with SDK names because of the caching of Python package managers in
    * [com.jetbrains.python.packaging.PyPackageManagersImpl.forSdk].
    */
-  private fun createNewVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
+  private fun createNewVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk {
     // TODO [targets] Do *not* silently `return null`
-    val baseSelectedSdk = baseInterpreterCombobox.selectedSdk ?: return null
+    val baseSelectedSdk = baseInterpreterCombobox.selectedSdk
     val virtualenvRoot = locationField.text
     val baseSdk = if (targetEnvironmentConfiguration != null) {
       // TODO [targets] why don't we use `baseSelectedSdk`
       // tune `baseSelectedSdk`
       val sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, virtualEnvSdkFlavor))
       sdkAdditionalData.targetEnvironmentConfiguration = targetEnvironmentConfiguration
-      val homePath = baseSelectedSdk.homePath ?: return null
+      val homePath = baseSelectedSdk.homePath!!
       // suggesting the proper name for the base SDK fixes the problem with clashing caching key of Python package manager
       val customSdkSuggestedName = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, sdkAdditionalData, version = null)
       sdkAdditionalData.interpreterPath = homePath
@@ -210,13 +210,13 @@ class PyAddVirtualEnvPanel(project: Project?,
       baseSelectedSdk
     }
     return createVirtualEnvSynchronously(baseSdk, existingSdks, virtualenvRoot, projectBasePath, project, module, context,
-                                         isInheritSitePackages, false, targetPanelExtension).getOrLogException(LOGGER)
+                                         isInheritSitePackages, false, targetPanelExtension)
   }
 
-  private fun configureExistingVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?, selectedSdk: Sdk): Sdk? {
+  private fun configureExistingVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?, selectedSdk: Sdk): Sdk {
     if (targetEnvironmentConfiguration == null) {
       return when (selectedSdk) {
-        is PyDetectedSdk -> selectedSdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath).getOrLogException(LOGGER)?.apply {
+        is PyDetectedSdk -> selectedSdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath).getOrThrow().apply {
           // TODO [targets] Restore `makeSharedField` flag
           associateWithModule(module, newProjectPath)
         }

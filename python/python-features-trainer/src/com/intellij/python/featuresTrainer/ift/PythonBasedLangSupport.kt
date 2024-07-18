@@ -95,8 +95,8 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
                            existingSdks: List<Sdk>,
                            module: Module?): Sdk? {
     val venvRoot = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(project.basePath))
-    val venvSdk = createVirtualEnvSynchronously(preferredSdk, existingSdks, venvRoot, project.basePath, project, module, project).getOrLogException(LOGGER)
-    return venvSdk?.also {
+    val venvSdk = createVirtualEnvSynchronously(preferredSdk, existingSdks, venvRoot, project.basePath, project, module, project)
+    return venvSdk.also {
       SdkConfigurationUtil.addSdk(it)
     }
   }

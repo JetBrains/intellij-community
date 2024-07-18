@@ -78,7 +78,7 @@ open class PyAddNewVirtualEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     return createVirtualEnvSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text, newProjectPath, project, module, context,
-                                         inheritSitePackagesField.isSelected, makeSharedField.isSelected).getOrLogException(thisLogger())
+                                         inheritSitePackagesField.isSelected, makeSharedField.isSelected)
   }
 
   override fun getStatisticInfo(): InterpreterStatisticsInfo? {
