@@ -250,7 +250,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
     GCWatcher.tracking(getCachedPsiFile(psiManager, file)).ensureCollected();
 
-    // stroring the current value into a local variable to ensure identity check is correct
+    // storing the current value into a local variable to ensure identity check is correct
     PsiFile newCachedFile = getCachedPsiFile(psiManager, file);
     assertTrue(newCachedFile == null ||
                identity(newCachedFile) != originalIdentity);
