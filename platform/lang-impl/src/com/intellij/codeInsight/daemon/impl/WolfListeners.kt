@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,25 +15,43 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import com.intellij.util.CommonProcessors.CollectProcessor
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import kotlin.time.Duration.Companion.minutes
 
-internal class WolfListeners(private val project: Project, private val wolfTheProblemSolver: WolfTheProblemSolverImpl) {
-  private val invalidateFileQueue = MergingUpdateQueue(
-    name = "WolfListeners.invalidateFileQueue",
-    mergingTimeSpan = 0,
-    isActive = true,
-    modalityStateComponent = null,
-    parent = wolfTheProblemSolver,
-    activationComponent = null,
-    executeInDispatchThread = false,
+internal class WolfListeners(
+  project: Project,
+  private val wolfTheProblemSolver: WolfTheProblemSolverImpl,
+  coroutineScope: CoroutineScope,
+) {
+  // VirtualFile or Runnable to implement waitForFilesQueuedForInvalidationAreProcessed
+  private val invalidateFileRequests = MutableSharedFlow<Any>(
+    extraBufferCapacity = Int.MAX_VALUE,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST,
   )
 
   init {
+    coroutineScope.launch {
+      invalidateFileRequests
+        .collect { file ->
+          if (file is Runnable) {
+            file.run()
+            return@collect
+          }
+
+          file as VirtualFile
+
+          val toRemove = readAction {
+            !file.isValid || !wolfTheProblemSolver.isToBeHighlighted(file)
+          }
+          if (toRemove) {
+            wolfTheProblemSolver.doRemove(file)
+          }
+        }
+    }
+
     PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
       override fun childAdded(event: PsiTreeChangeEvent) {
         childrenChanged(event)
@@ -59,7 +77,7 @@ internal class WolfListeners(private val project: Project, private val wolfThePr
         this@WolfListeners.wolfTheProblemSolver.clearSyntaxErrorFlag(event)
       }
     }, wolfTheProblemSolver)
-    val busConnection = project.messageBus.simpleConnect()
+    val busConnection = project.messageBus.connect(coroutineScope)
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         var dirChanged = false
@@ -96,9 +114,9 @@ internal class WolfListeners(private val project: Project, private val wolfThePr
     busConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         // Ensure we don't have any leftover problems referring to classes from plugin being unloaded
-        val allFiles: Set<VirtualFile> = HashSet()
-        wolfTheProblemSolver.processProblemFiles(CollectProcessor(allFiles))
-        wolfTheProblemSolver.processProblemFilesFromExternalSources(CollectProcessor(allFiles))
+        val allFiles = HashSet<VirtualFile>()
+        wolfTheProblemSolver.consumeProblemFiles(allFiles::add)
+        wolfTheProblemSolver.consumeProblemFilesFromExternalSources(allFiles::add)
         for (file in allFiles) {
           this@WolfListeners.wolfTheProblemSolver.doRemove(file)
         }
@@ -107,26 +125,20 @@ internal class WolfListeners(private val project: Project, private val wolfThePr
   }
 
   private fun clearInvalidFiles() {
-    wolfTheProblemSolver.processProblemFiles { file ->
-      invalidateFileQueue.queue(Update.create(file) {
-        val toRemove = ReadAction.compute<Boolean, RuntimeException> {
-          !project.isDisposed && (!file.isValid || !wolfTheProblemSolver.isToBeHighlighted(file))
-        }
-        if (toRemove) {
-          wolfTheProblemSolver.doRemove(file)
-        }
-      })
-      true
+    wolfTheProblemSolver.consumeProblemFiles { file ->
+      invalidateFileRequests.tryEmit(file)
     }
   }
 
   @TestOnly
   fun waitForFilesQueuedForInvalidationAreProcessed() {
-    try {
-      invalidateFileQueue.waitForAllExecuted(1, TimeUnit.MINUTES)
-    }
-    catch (e: TimeoutException) {
-      throw RuntimeException(e)
+    @Suppress("SSBasedInspection")
+    runBlocking {
+      withTimeout(1.minutes) {
+        val job = CompletableDeferred<Unit>()
+        invalidateFileRequests.emit(Runnable { job.complete(Unit) })
+        job.join()
+      }
     }
   }
 }
