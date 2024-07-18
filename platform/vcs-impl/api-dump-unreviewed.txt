@@ -7053,17 +7053,6 @@ c:com.intellij.openapi.vcs.impl.ElementStatusTrackerImpl
 - com.intellij.openapi.vcs.ElementStatusTracker
 - <init>(com.intellij.openapi.project.Project):V
 - getElementStatus(com.intellij.psi.PsiElement):com.intellij.openapi.vcs.FileStatus
-f:com.intellij.openapi.vcs.impl.FileStatusManagerImpl
-- com.intellij.openapi.vcs.FileStatusManager
-- com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project):V
-- addFileStatusListener(com.intellij.openapi.vcs.FileStatusListener,com.intellij.openapi.Disposable):V
-- dispose():V
-- fileStatusChanged(com.intellij.openapi.vfs.VirtualFile):V
-- fileStatusesChanged():V
-- getRecursiveStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
-- getStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
-- f:waitFor():V
 a:com.intellij.openapi.vcs.impl.GenericNotifierImpl
 - pf:myProject:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.notification.NotificationType):V

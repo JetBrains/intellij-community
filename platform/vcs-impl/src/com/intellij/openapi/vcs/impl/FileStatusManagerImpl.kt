@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("removal", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.vcs.impl
@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Alarm
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -39,14 +38,21 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcsUtil.VcsUtil
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 @VisibleForTesting
-class FileStatusManagerImpl(private val project: Project) : FileStatusManager(), Disposable {
-  private val queue = MergingUpdateQueue("FileStatusManagerImpl", 100, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
+@Internal
+class FileStatusManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : FileStatusManager(), Disposable {
+  private val queue = MergingUpdateQueue.mergingUpdateQueue(
+    name = "FileStatusManagerImpl",
+    mergingTimeSpan = 100,
+    coroutineScope = coroutineScope,
+  )
 
   private val dirtyLock = Any()
   private val dirtyStatuses = HashSet<VirtualFile>()
@@ -55,7 +61,7 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
   private val whetherExactlyParentToChanged = Collections.synchronizedMap(HashMap<VirtualFile, Boolean?>())
 
   init {
-    val connection = project.messageBus.connect()
+    val connection = project.messageBus.connect(coroutineScope)
     connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { fileStatusesChanged() })
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener(::fileStatusesChanged))
     connection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
