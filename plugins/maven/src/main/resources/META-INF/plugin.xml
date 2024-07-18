@@ -402,7 +402,7 @@
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
                  description="During incremental sync, resolve dependencies incrementally"/>
 
-    <registryKey key="maven.delegate.trust.ssl.to.ide" defaultValue="false"
+    <registryKey key="maven.delegate.trust.ssl.to.ide" defaultValue="true"
                  description="Use IDEA confirming trust manager for maven importer"/>
 
     <intentionAction>
