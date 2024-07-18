@@ -162,15 +162,17 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     val start = Nanoseconds.now()
     try {
       ensureIsUpToDate()
-      for (value in fileSets.values) {
-        value.forEach { storedFileSet: StoredFileSet ->
-          when (storedFileSet) {
-            is WorkspaceFileSetImpl -> {
-              visitor.visitIncludedRoot(storedFileSet)
-            }
-            is ExcludedFileSet -> Unit
+      //forEach call below isn't inlined, so the lambda is stored in a variable to prevent creation of many identical instances (IJPL-14542)
+      val action = { storedFileSet: StoredFileSet ->
+        when (storedFileSet) {
+          is WorkspaceFileSetImpl -> {
+            visitor.visitIncludedRoot(storedFileSet)
           }
+          is ExcludedFileSet -> Unit
         }
+      }
+      for (value in fileSets.values) {
+        value.forEach(action)
       }
     }
     finally {
