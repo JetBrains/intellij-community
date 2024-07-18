@@ -22,10 +22,10 @@ import java.awt.font.TextLayout
  * * [TextAttributes.getForegroundColor]
  * * [TextAttributes.getFontType]
  */
-@ApiStatus.Internal
-class InlineCompletionLineRenderer(
+open class InlineCompletionLineRenderer(
   private val editor: Editor,
-  initialBlocks: List<InlineCompletionRenderTextBlock>
+  initialBlocks: List<InlineCompletionRenderTextBlock>,
+  isSuffix: Boolean = false
 ) : EditorCustomElementRenderer {
 
   constructor(editor: Editor, text: String, attributes: TextAttributes = InlineCompletionFontUtils.attributes(editor)) : this(
@@ -52,10 +52,14 @@ class InlineCompletionLineRenderer(
     return maxOf(1, result)
   }
 
+  protected open fun paintBackground(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle) {}
+
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     if (blocks.isEmpty()) {
       return
     }
+
+    paintBackground(inlay, g, targetRegion)
 
     val previousRenderingHint = (g as Graphics2D).getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))

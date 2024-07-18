@@ -103,7 +103,8 @@ internal class InlineCompletionTextRenderManager private constructor(
       suffixInlay = null
 
       editor.inlayModel.execute(true) {
-        val element = editor.inlayModel.addInlineElement(offset, true, InlineCompletionLineRenderer(editor, suffixBlocks))
+        val element = editor.inlayModel.addInlineElement(offset, true,
+                                                         InlineCompletionRendererCustomization.getInlineCompletionLineRenderer(editor, suffixBlocks, true))
         element?.addActionAvailabilityHint(
           EditorActionAvailabilityHint(
             IdeActions.ACTION_INSERT_INLINE_COMPLETION,
@@ -142,15 +143,9 @@ internal class InlineCompletionTextRenderManager private constructor(
     private fun renderBlockInlay(
       editor: Editor,
       offset: Int,
-      blocks: List<InlineCompletionRenderTextBlock>
+      blocks: List<InlineCompletionRenderTextBlock>,
     ): Inlay<InlineCompletionLineRenderer>? {
-      return editor.inlayModel.addBlockElement(
-        offset,
-        true,
-        false,
-        1,
-        InlineCompletionLineRenderer(editor, blocks)
-      )
+      return InlineCompletionRendererCustomization.renderBlockInlay(editor, offset, blocks)
     }
 
     private fun Editor.forceLeanLeft() {
@@ -191,7 +186,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       text: String,
       attributes: TextAttributes,
       offset: Int,
-      disposable: Disposable
+      disposable: Disposable,
     ): RenderedInlineCompletionElementDescriptor {
       ThreadingAssertions.assertEventDispatchThread()
 
