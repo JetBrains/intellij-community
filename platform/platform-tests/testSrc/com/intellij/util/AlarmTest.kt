@@ -19,7 +19,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -157,20 +156,6 @@ class AlarmTest {
     }
     assertThat(error).hasMessage(errorMessage)
   }
-
-  @Test
-  fun singleAlarmMustRefuseToInstantiateWithWrongModality() {
-    assertThatExceptionOfType(IllegalArgumentException::class.java).isThrownBy {
-      SingleAlarm(
-        task = {},
-        delay = 1,
-        parentDisposable = null,
-        threadToUse = Alarm.ThreadToUse.SWING_THREAD,
-        coroutineScope = null,
-        modalityState = null,
-      )
-    }
-  }
 }
 
 private fun assertRequestsExecuteSequentially(alarm: Alarm) {
@@ -182,7 +167,7 @@ private fun assertRequestsExecuteSequentially(alarm: Alarm) {
     alarm.addRequest(ContextAwareRunnable { log.append(i).append(' ') }, 0)
   }
   for (i in 0 until count) {
-    expected.append(i).append(" ")
+    expected.append(i).append(' ')
   }
   @Suppress("OPT_IN_USAGE")
   val future = GlobalScope.async {

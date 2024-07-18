@@ -12,6 +12,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.util.coroutines.childScope
@@ -351,15 +352,26 @@ open class Alarm @Internal constructor(
         if (owner.threadToUse == ThreadToUse.SWING_THREAD) {
           taskContext += SingleAlarm.getEdtDispatcher() + (modalityState ?: ModalityState.nonModal()).asContextElement()
         }
-        // todo fix clients and remove NonCancellable
-        taskContext += NonCancellable
 
         withContext(taskContext) {
           val task = synchronized(owner.LOCK) {
             task?.also { task = null }
           } ?: return@withContext
 
-          runSafely(task)
+          ensureActive()
+
+          //todo fix clients and remove NonCancellable
+          try {
+            Cancellation.withNonCancelableSection().use {
+              task.run()
+            }
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
         }
       }.also {
         it.invokeOnCompletion {
@@ -403,19 +415,6 @@ open class Alarm @Internal constructor(
     }
 
     override fun toString(): String = "${super.toString()} $task; delay=${delayMillis}ms"
-  }
-}
-
-@Async.Execute
-private fun runSafely(task: Runnable) {
-  try {
-    task.run()
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    LOG.error(e)
   }
 }
 

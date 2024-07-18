@@ -15,13 +15,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm.ThreadToUse
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.EventQueue
-import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.coroutines.CoroutineContext
@@ -142,8 +142,7 @@ class SingleAlarm @Internal constructor(
       }
     }
 
-    // todo fix clients and remove NonCancellable
-    taskContext = context + NonCancellable
+    taskContext = context
 
     if (coroutineScope == null) {
       val app = ApplicationManager.getApplication()
@@ -306,8 +305,11 @@ class SingleAlarm @Internal constructor(
 
         delay(effectiveDelay)
         withContext(if (customModalityState == null) taskContext else (taskContext + customModalityState)) {
+          //todo fix clients and remove NonCancellable
           try {
-            task.run()
+            Cancellation.withNonCancelableSection().use {
+              task.run()
+            }
           }
           catch (e: CancellationException) {
             throw e
