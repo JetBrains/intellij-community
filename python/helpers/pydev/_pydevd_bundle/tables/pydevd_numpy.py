@@ -259,6 +259,12 @@ def __get_tables_display_options():
     import sys
     if sys.version_info < (3, 0):
         return None, MAX_COLWIDTH, None
+    try:
+        import pandas as pd
+        if int(pd.__version__.split('.')[0]) < 1:
+            return None, MAX_COLWIDTH_PYTHON_2, None
+    except ImportError:
+        pass
     return None, None, None
 
 
@@ -271,10 +277,7 @@ def _set_pd_options():
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
-    try:
-        pd.set_option('display.max_colwidth', max_colwidth)
-    except ValueError:
-        pd.set_option('display.max_colwidth', MAX_COLWIDTH_PYTHON_2)
+    pd.set_option('display.max_colwidth', max_colwidth)
 
     return _jb_max_cols, _jb_max_colwidth, _jb_max_rows
 
