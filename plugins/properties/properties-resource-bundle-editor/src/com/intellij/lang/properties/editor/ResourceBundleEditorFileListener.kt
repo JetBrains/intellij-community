@@ -1,294 +1,263 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.properties.editor;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang.properties.editor
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.progress.util.ReadTask
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileEvent
+import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
+import java.util.concurrent.atomic.AtomicReference
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
+private val LOG = logger<ResourceBundleEditorFileListener>()
 
-final class ResourceBundleEditorFileListener implements VirtualFileListener {
-  private static final Logger LOG = Logger.getInstance(ResourceBundleEditorFileListener.class);
-  private static final Update FORCE_UPDATE = new Update("FORCE_UPDATE") {
-    @Override
-    public void run() {
-      throw new IllegalStateException();
-    }
-  };
+private val FORCE_UPDATE: Update = object : Update("FORCE_UPDATE") {
+  override fun run() {
+    throw IllegalStateException()
+  }
+}
 
-  private final ResourceBundleEditor myEditor;
-  private final MyVfsEventsProcessor myEventsProcessor;
-  private final Project myProject;
+internal class ResourceBundleEditorFileListener(private val editor: ResourceBundleEditor) : VirtualFileListener {
+  private val eventProcessor = MyVfsEventsProcessor()
+  private val project = editor.resourceBundle.project
 
-  ResourceBundleEditorFileListener(ResourceBundleEditor editor) {
-    myEditor = editor;
-    myEventsProcessor = new MyVfsEventsProcessor();
-    myProject = myEditor.getResourceBundle().getProject();
+  fun flush() {
+    FileDocumentManager.getInstance().saveAllDocuments()
+    eventProcessor.flush()
   }
 
-  public void flush() {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    myEventsProcessor.flush();
+  override fun fileCreated(event: VirtualFileEvent) {
+    eventProcessor.queue(event, EventType.FILE_CREATED)
   }
 
-  @Override
-  public void fileCreated(@NotNull VirtualFileEvent event) {
-    myEventsProcessor.queue(event, EventType.FILE_CREATED);
+  override fun fileDeleted(event: VirtualFileEvent) {
+    eventProcessor.queue(event, EventType.FILE_DELETED)
   }
 
-  @Override
-  public void fileDeleted(@NotNull VirtualFileEvent event) {
-    myEventsProcessor.queue(event, EventType.FILE_DELETED);
+  override fun propertyChanged(event: VirtualFilePropertyEvent) {
+    eventProcessor.queue(event, EventType.PROPERTY_CHANGED)
   }
 
-  @Override
-  public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-    myEventsProcessor.queue(event, EventType.PROPERTY_CHANGED);
+  override fun contentsChanged(event: VirtualFileEvent) {
+    eventProcessor.queue(event, EventType.CONTENT_CHANGED)
   }
 
-  @Override
-  public void contentsChanged(@NotNull VirtualFileEvent event) {
-    myEventsProcessor.queue(event, EventType.CONTENT_CHANGED);
-  }
+  private inner class MyVfsEventsProcessor {
+    private val eventQueue = AtomicReference(ConcurrentCollectionFactory.createConcurrentSet<EventWithType>())
+    private val updateQueue = MyMergingUpdateQueue(project = project, editor = editor, eventQueue = eventQueue)
 
-  private class MyVfsEventsProcessor {
-    private final AtomicReference<Set<EventWithType>> myEventQueue
-      = new AtomicReference<>(ConcurrentCollectionFactory.createConcurrentSet());
-
-    private final MergingUpdateQueue myUpdateQueue =
-      new MergingUpdateQueue("rbe.vfs.listener.queue", 200, true, myEditor.getComponent(), myEditor, myEditor.getComponent(), false) {
-        @Override
-        protected void execute(Update @NotNull [] updates) {
-          final ReadTask task = new ReadTask() {
-            final Set<EventWithType> myEvents = myEventQueue.getAndSet(ConcurrentCollectionFactory.createConcurrentSet());
-
-            @Nullable
-            @Override
-            public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-              if (!myEditor.isValid()) return null;
-              Runnable toDo = null;
-              NotNullLazyValue<Set<VirtualFile>> resourceBundleAsSet = NotNullLazyValue.lazy(() -> {
-                return myEditor.getResourceBundle().getPropertiesFiles().stream().map(PropertiesFile::getVirtualFile)
-                  .collect(Collectors.toSet());
-              });
-              for (EventWithType e : myEvents) {
-                if (e.getType() == EventType.FILE_DELETED || (e.getType() == EventType.PROPERTY_CHANGED && e.getPropertyName().equals(VirtualFile.PROP_NAME))) {
-                  if (myEditor.getTranslationEditors().containsKey(e.getFile())) {
-                    int validFilesCount = 0;
-                    ResourceBundle bundle = myEditor.getResourceBundle();
-                    if (bundle.isValid()) {
-                      for (PropertiesFile file : bundle.getPropertiesFiles()) {
-                        if (file.getContainingFile().isValid()) {
-                          validFilesCount ++;
-                        }
-                        if (validFilesCount == 2) {
-                          break;
-                        }
-                      }
-                    }
-                    if (validFilesCount > 1) {
-                      toDo = myEditor::recreateEditorsPanel;
-                    }
-                    else {
-                      toDo = () -> {
-                        FileEditorManager.getInstance(myProject).closeFile(myEditor.getFile());
-                      };
-                    }
-                    break;
-                  }
-                  else if (resourceBundleAsSet.getValue().contains(e.getFile())) {
-                    //new file in bundle
-                    toDo = myEditor::recreateEditorsPanel;
-                    break;
-                  }
-                }
-                else if (e.getType() == EventType.FILE_CREATED) {
-                  if (resourceBundleAsSet.getValue().contains(e.getFile())) {
-                    toDo = myEditor::recreateEditorsPanel;
-                    break;
-                  }
-                }
-                else if (e.getType() == EventType.PROPERTY_CHANGED && e.getPropertyName().equals(VirtualFile.PROP_WRITABLE)) {
-                  if (myEditor.getTranslationEditors().containsKey(e.getFile())) {
-                    if (toDo == null) {
-                      toDo = new SetViewerPropertyRunnable();
-                    }
-                    if (toDo instanceof SetViewerPropertyRunnable) {
-                      ((SetViewerPropertyRunnable)toDo).addFile(e.getFile(), !(boolean)e.getPropertyNewValue());
-                    } else {
-                      toDo = myEditor::recreateEditorsPanel;
-                      break;
-                    }
-                  }
-                }
-                else {
-                  if (myEditor.getTranslationEditors().containsKey(e.getFile())) {
-                    if ((toDo instanceof SetViewerPropertyRunnable)) {
-                      toDo = myEditor::recreateEditorsPanel;
-                      break;
-                    }
-                    else if (toDo == null) {
-                      toDo = () -> myEditor.updateEditorsFromProperties(true);
-                    }
-                  }
-                }
-              }
-
-              if (toDo == null) {
-                return null;
-              }
-              else {
-                Runnable toDoCopy = toDo;
-                return new Continuation(() -> {
-                  if (myEditor.isValid()) {
-                    toDoCopy.run();
-                  }
-                }, ModalityState.nonModal());
-              }
-            }
-
-            @Override
-            public void onCanceled(@NotNull ProgressIndicator indicator) {
-              myEventQueue.updateAndGet(s -> {
-                s.addAll(myEvents);
-                return s;
-              });
-              myUpdateQueue.queue(FORCE_UPDATE);
-            }
-          };
-          ProgressIndicatorUtils.scheduleWithWriteActionPriority(task);
-        }
-      };
-
-    public void queue(VirtualFileEvent event, EventType type) {
-      myEventQueue.updateAndGet(s -> {
-        s.add(new EventWithType(type, event));
-        return s;
-      });
-      myUpdateQueue.queue(FORCE_UPDATE);
-    }
-
-    public void flush() {
-      myUpdateQueue.flush();
-    }
-  }
-
-  private class SetViewerPropertyRunnable implements Runnable {
-    private final List<VirtualFile> myFiles = new ArrayList<>();
-    private final List<Boolean> myIsViewer = new ArrayList<>();
-
-    public void addFile(VirtualFile virtualFile, boolean isViewer) {
-      myFiles.add(virtualFile);
-      myIsViewer.add(isViewer);
-    }
-
-    @Override
-    public void run() {
-      for (int i = 0; i < myFiles.size(); i++) {
-        VirtualFile file = myFiles.get(i);
-        final Boolean viewer = myIsViewer.get(i);
-        final EditorEx editor = myEditor.getTranslationEditors().get(file);
-        if (editor != null) {
-          editor.setViewer(viewer);
-        }
+    fun queue(event: VirtualFileEvent, type: EventType) {
+      eventQueue.updateAndGet {
+        it.add(EventWithType(type, event))
+        it
       }
-    }
-  }
-
-  private enum EventType {
-    FILE_CREATED,
-    FILE_DELETED,
-    CONTENT_CHANGED, PROPERTY_CHANGED
-  }
-
-  private static final class EventWithType {
-    @NotNull
-    private final EventType myType;
-    @NotNull
-    private final VirtualFile myFile;
-    private final String myPropertyName;
-    private final Object myPropertyNewValue;
-
-    private EventWithType(@NotNull EventType type, @NotNull VirtualFileEvent event) {
-      myType = type;
-      myFile = event.getFile();
-      if (type == EventType.PROPERTY_CHANGED) {
-        myPropertyName = ((VirtualFilePropertyEvent)event).getPropertyName();
-        myPropertyNewValue = ((VirtualFilePropertyEvent)event).getNewValue();
-      } else {
-        myPropertyName = null;
-        myPropertyNewValue = null;
-      }
+      updateQueue.queue(FORCE_UPDATE)
     }
 
-    @NotNull
-    public EventType getType() {
-      return myType;
-    }
-
-    @NotNull
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    @NotNull
-    public String getPropertyName() {
-      LOG.assertTrue(myType == EventType.PROPERTY_CHANGED, "Unexpected event type: " + myType);
-      return Objects.requireNonNull(myPropertyName);
-    }
-
-    @NotNull
-    public Object getPropertyNewValue() {
-      LOG.assertTrue(myType == EventType.PROPERTY_CHANGED, "Unexpected event type: " + myType);
-      return Objects.requireNonNull(myPropertyNewValue);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      EventWithType type = (EventWithType)o;
-
-      if (myType != type.myType) return false;
-      if (!myFile.equals(type.myFile)) return false;
-      if (!Objects.equals(myPropertyName, type.myPropertyName)) return false;
-      if (!Objects.equals(myPropertyNewValue, type.myPropertyNewValue)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myType.hashCode();
-      result = 31 * result + myFile.hashCode();
-      result = 31 * result + (myPropertyName != null ? myPropertyName.hashCode() : 0);
-      result = 31 * result + (myPropertyNewValue != null ? myPropertyNewValue.hashCode() : 0);
-      return result;
+    fun flush() {
+      updateQueue.flush()
     }
   }
 }
+
+private enum class EventType {
+  FILE_CREATED,
+  FILE_DELETED,
+  CONTENT_CHANGED, PROPERTY_CHANGED
+}
+
+private class SetViewerPropertyRunnable(private val editor: ResourceBundleEditor) : Runnable {
+  private val files = ArrayList<VirtualFile>()
+  private val isViewer = ArrayList<Boolean>()
+
+  fun addFile(virtualFile: VirtualFile, isViewer: Boolean) {
+    files.add(virtualFile)
+    this.isViewer.add(isViewer)
+  }
+
+  override fun run() {
+    for ((i, file) in files.withIndex()) {
+      val viewer = isViewer[i]
+      val editor = editor.translationEditors[file]
+      if (editor != null) {
+        editor.isViewer = viewer
+      }
+    }
+  }
+}
+
+private class MyMergingUpdateQueue(
+  private val project: Project,
+  private val editor: ResourceBundleEditor,
+  private val eventQueue: AtomicReference<MutableSet<EventWithType>>,
+) : MergingUpdateQueue(
+  name = "rbe.vfs.listener.queue",
+  mergingTimeSpan = 200,
+  isActive = true,
+  modalityStateComponent = editor.component,
+  parent = editor,
+  activationComponent = editor.component,
+  executeInDispatchThread = false,
+) {
+  override fun execute(updates: List<Update>) {
+    val task: ReadTask = object : ReadTask() {
+      val events: Set<EventWithType> = eventQueue.getAndSet(ConcurrentCollectionFactory.createConcurrentSet())
+
+      override fun performInReadAction(indicator: ProgressIndicator): Continuation? {
+        if (!editor.isValid) {
+          return null
+        }
+
+        var toDo: Runnable? = null
+        val resourceBundleAsSet by lazy {
+          editor.resourceBundle.propertiesFiles.mapTo(HashSet()) { it.virtualFile }
+        }
+
+        for (e in events) {
+          if (e.type == EventType.FILE_DELETED || (e.type == EventType.PROPERTY_CHANGED && e.getPropertyName() == VirtualFile.PROP_NAME)) {
+            if (editor.translationEditors.containsKey(e.file)) {
+              var validFilesCount = 0
+              val bundle = editor.resourceBundle
+              if (bundle.isValid) {
+                for (file in bundle.propertiesFiles) {
+                  if (file.containingFile.isValid) {
+                    validFilesCount++
+                  }
+                  if (validFilesCount == 2) {
+                    break
+                  }
+                }
+              }
+
+              toDo = if (validFilesCount > 1) {
+                Runnable { editor.recreateEditorsPanel() }
+              }
+              else {
+                Runnable { FileEditorManager.getInstance(project).closeFile(editor.file) }
+              }
+              break
+            }
+            else if (resourceBundleAsSet.contains(e.file)) {
+              // new file in the bundle
+              toDo = Runnable { editor.recreateEditorsPanel() }
+              break
+            }
+          }
+          else if (e.type == EventType.FILE_CREATED) {
+            if (resourceBundleAsSet.contains(e.file)) {
+              toDo = Runnable { editor.recreateEditorsPanel() }
+              break
+            }
+          }
+          else if (e.type == EventType.PROPERTY_CHANGED && e.getPropertyName() == VirtualFile.PROP_WRITABLE) {
+            if (editor.translationEditors.containsKey(e.file)) {
+              if (toDo == null) {
+                toDo = SetViewerPropertyRunnable(editor)
+              }
+
+              if (toDo is SetViewerPropertyRunnable) {
+                toDo.addFile(virtualFile = e.file, isViewer = !(e.getPropertyNewValue() as Boolean))
+              }
+              else {
+                toDo = Runnable { editor.recreateEditorsPanel() }
+                break
+              }
+            }
+          }
+          else {
+            if (editor.translationEditors.containsKey(e.file)) {
+              if (toDo is SetViewerPropertyRunnable) {
+                toDo = Runnable { editor.recreateEditorsPanel() }
+                break
+              }
+              else if (toDo == null) {
+                toDo = Runnable { editor.updateEditorsFromProperties(true) }
+              }
+            }
+          }
+        }
+
+        if (toDo == null) {
+          return null
+        }
+        else {
+          return Continuation({
+                                if (editor.isValid) {
+                                  toDo.run()
+                                }
+                              }, ModalityState.nonModal())
+        }
+      }
+
+      override fun onCanceled(indicator: ProgressIndicator) {
+        eventQueue.updateAndGet {
+          it.addAll(events)
+          it
+        }
+        queue(FORCE_UPDATE)
+      }
+    }
+    ProgressIndicatorUtils.scheduleWithWriteActionPriority(task)
+  }
+}
+
+private class EventWithType(@JvmField val type: EventType, event: VirtualFileEvent) {
+  @JvmField
+  val file: VirtualFile = event.file
+
+  private val propertyName: String?
+  private val propertyNewValue: Any?
+
+  init {
+    if (type == EventType.PROPERTY_CHANGED) {
+      propertyName = (event as VirtualFilePropertyEvent).propertyName
+      propertyNewValue = event.newValue
+    }
+    else {
+      propertyName = null
+      propertyNewValue = null
+    }
+  }
+
+  fun getPropertyName(): String? {
+    LOG.assertTrue(type == EventType.PROPERTY_CHANGED, "Unexpected event type: $type")
+    return propertyName
+  }
+
+  fun getPropertyNewValue(): Any? {
+    LOG.assertTrue(type == EventType.PROPERTY_CHANGED, "Unexpected event type: $type")
+    return propertyNewValue
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+
+    other as EventWithType
+
+    if (type != other.type) return false
+    if (file != other.file) return false
+    if (propertyName != other.propertyName) return false
+    if (propertyNewValue != other.propertyNewValue) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result: Int = type.hashCode()
+    result = 31 * result + file.hashCode()
+    result = 31 * result + (propertyName?.hashCode() ?: 0)
+    result = 31 * result + (propertyNewValue?.hashCode() ?: 0)
+    return result
+  }
+}
+
