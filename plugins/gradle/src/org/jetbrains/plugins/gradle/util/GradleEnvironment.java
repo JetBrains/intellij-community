@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.util;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class GradleEnvironment {
 
@@ -19,6 +20,9 @@ public final class GradleEnvironment {
 
   @ApiStatus.Internal
   public static final class Urls {
+
+    public static final @Nullable String MAVEN_REPOSITORY_URL =
+      System.getProperty("idea.gradle.mavenRepositoryUrl", null);
 
     public static final @NotNull String GRADLE_SERVICES_URL =
       System.getProperty("idea.gradle.servicesUrl", "https://services.gradle.org");
