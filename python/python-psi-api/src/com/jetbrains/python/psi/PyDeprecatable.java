@@ -5,5 +5,5 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PyDeprecatable {
   @Nullable
-  String getDeprecationMessage();
+  default String getDeprecationMessage() { return null; }
 }
