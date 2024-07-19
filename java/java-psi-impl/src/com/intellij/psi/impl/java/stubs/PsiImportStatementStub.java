@@ -7,8 +7,20 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
+import com.intellij.psi.stubs.StubElement;
+import org.jetbrains.annotations.Nullable;
 
-public interface PsiImportStatementStub extends PsiImportDeclarationStub<PsiImportStatementBase, PsiJavaCodeReferenceElement> {
+public interface PsiImportStatementStub extends StubElement<PsiImportStatementBase> {
   boolean isStatic();
   boolean isOnDemand();
+  boolean isModule();
+
+  @Nullable
+  String getImportReferenceText();
+
+  @Nullable
+  PsiJavaCodeReferenceElement getReference();
+
+  @Nullable PsiJavaModuleReferenceElement getModuleReference();
 }

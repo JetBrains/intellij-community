@@ -18,8 +18,6 @@ public abstract class StubPsiFactory {
 
   public abstract PsiImportStatementBase createImportStatement(PsiImportStatementStub stub);
 
-  public abstract PsiImportModuleStatement createImportStatement(PsiImportModuleStatementStub stub);
-
   public abstract PsiMethod createMethod(PsiMethodStub stub);
 
   public abstract PsiModifierList createModifierList(PsiModifierListStub stub);

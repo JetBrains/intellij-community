@@ -18,7 +18,7 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   private volatile Map<String,PsiImportStatement> myClassNameToImportMap;
   private volatile Map<String,PsiImportStatement> myPackageNameToImportMap;
   private volatile Map<String,PsiImportModuleStatement> myModuleNameToImportMap;
-  private volatile Map<String,PsiImportDeclaration> myNameToSingleImportMap;
+  private volatile Map<String,PsiImportStatementBase> myNameToSingleImportMap;
 
   public PsiImportListImpl(PsiImportListStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_LIST);
@@ -63,17 +63,12 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
 
   @Override
   public PsiImportModuleStatement @NotNull [] getImportModuleStatements() {
-    return getStubOrPsiChildren(IMPORT_MODULE_STATEMENT_BIT_SET, PsiImportModuleStatementImpl.EMPTY_ARRAY);
+    return getStubOrPsiChildren(IMPORT_MODULE_STATEMENT_BIT_SET, PsiImportModuleStatementImpl.ARRAY_FACTORY);
   }
 
   @Override
   public PsiImportStatementBase @NotNull [] getAllImportStatements() {
     return getStubOrPsiChildren(ElementType.IMPORT_STATEMENT_BASE_BIT_SET, PsiImportStatementBase.ARRAY_FACTORY);
-  }
-
-  @Override
-  public PsiImportDeclaration @NotNull [] getAllImportDeclarations() {
-    return getStubOrPsiChildren(ElementType.IMPORT_STATEMENT_DECLARATION_BIT_SET, PsiImportDeclaration.ARRAY_FACTORY);
   }
 
   @Override
@@ -116,27 +111,9 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   }
 
   @Override
-  public PsiImportStatementBase findSingleImportStatement(String name) {
+  public @Nullable PsiImportStatementBase findSingleImportStatement(String name) {
     while (true) {
-      Map<String, PsiImportDeclaration> map = myNameToSingleImportMap;
-      if (map == null) {
-        initializeMaps();
-      }
-      else {
-        PsiImportDeclaration importDeclaration = map.get(name);
-        if (importDeclaration instanceof PsiImportStatementBase) {
-          return (PsiImportStatementBase)importDeclaration;
-        } else {
-          return null;
-        }
-      }
-    }
-  }
-
-  @Override
-  public @Nullable PsiImportDeclaration findSingleImportDeclaration(String name) {
-    while (true) {
-      Map<String, PsiImportDeclaration> map = myNameToSingleImportMap;
+      Map<String, PsiImportStatementBase> map = myNameToSingleImportMap;
       if (map == null) {
         initializeMaps();
       }
@@ -154,7 +131,7 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
   private void initializeMaps() {
     Map<String, PsiImportStatement> classNameToImportMap = new HashMap<>();
     Map<String, PsiImportStatement> packageNameToImportMap = new HashMap<>();
-    Map<String, PsiImportDeclaration> nameToSingleImportMap = new HashMap<>();
+    Map<String, PsiImportStatementBase> nameToSingleImportMap = new HashMap<>();
     Map<String, PsiImportModuleStatement> moduleNameToImportMap = new HashMap<>();
     PsiImportStatement[] imports = getImportStatements();
     for (PsiImportStatement anImport : imports) {

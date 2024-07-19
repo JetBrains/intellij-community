@@ -45,11 +45,6 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   }
 
   @Override
-  public PsiImportModuleStatement createImportStatement(PsiImportModuleStatementStub stub) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public PsiMethod createMethod(PsiMethodStub stub) {
     return new ClsMethodImpl(stub);
   }

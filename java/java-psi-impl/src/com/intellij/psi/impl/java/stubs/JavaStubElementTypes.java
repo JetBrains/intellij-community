@@ -187,8 +187,8 @@ public interface JavaStubElementTypes {
         return new ImportStaticStatementElement();
       }
     };
-  JavaImportModuleStatementElementType IMPORT_MODULE_STATEMENT =
-    new JavaImportModuleStatementElementType("IMPORT_MODULE_STATEMENT", BasicJavaElementType.BASIC_IMPORT_MODULE_STATEMENT) {
+  JavaImportStatementElementType IMPORT_MODULE_STATEMENT =
+    new JavaImportStatementElementType("IMPORT_MODULE_STATEMENT", BasicJavaElementType.BASIC_IMPORT_MODULE_STATEMENT) {
       @Override
       public @NotNull ASTNode createCompositeNode() {
         return new ImportModuleStatementElement();
