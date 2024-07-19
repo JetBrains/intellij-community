@@ -4,7 +4,6 @@
 
 package org.jetbrains.plugins.notebooks.visualization.r.inlays
 
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -22,5 +21,3 @@ class InlaysManager : EditorFactoryListener {
     InlayDimensions.init(editor as EditorImpl)
   }
 }
-
-fun getEditorManager(editor: Editor): EditorInlaysManager? = null
