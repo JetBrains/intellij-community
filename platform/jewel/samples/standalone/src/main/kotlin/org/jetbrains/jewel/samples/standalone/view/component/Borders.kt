@@ -1,8 +1,11 @@
 package org.jetbrains.jewel.samples.standalone.view.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,9 +31,13 @@ import org.jetbrains.jewel.ui.theme.colorPalette
 @Composable
 @View("Borders", position = 13, icon = "icons/components/borders.svg")
 internal fun Borders() {
-    GroupHeader("Borders")
-    var borderAlignment by remember { mutableStateOf(Stroke.Alignment.Center) }
+    GroupHeader("Group header")
+    Text("This is a group header example")
 
+    Spacer(Modifier.height(16.dp))
+
+    GroupHeader("Border alignment/expand")
+    var borderAlignment by remember { mutableStateOf(Stroke.Alignment.Center) }
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -82,42 +89,57 @@ internal fun Borders() {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        val isDark = JewelTheme.isDark
+        val colorPalette = JewelTheme.colorPalette
+        val borderColor =
+            remember(isDark) {
+                if (isDark) colorPalette.blue(6) else colorPalette.blue(4)
+            }
+        val backgroundColor =
+            remember(isDark) {
+                if (isDark) colorPalette.grey(4) else colorPalette.grey(11)
+            }
+
         Box(
             Modifier.size(28.dp, 28.dp)
+                .background(backgroundColor, shape = CircleShape)
                 .border(
                     borderAlignment,
                     width,
-                    JewelTheme.colorPalette.blue(4),
+                    borderColor,
                     CircleShape,
                     expand,
                 ),
         )
         Box(
             Modifier.size(72.dp, 28.dp)
+                .background(backgroundColor, shape = RectangleShape)
                 .border(
                     borderAlignment,
                     width,
-                    JewelTheme.colorPalette.blue(4),
+                    borderColor,
                     RectangleShape,
                     expand,
                 ),
         )
         Box(
             Modifier.size(72.dp, 28.dp)
+                .background(backgroundColor, shape = RoundedCornerShape(4.dp))
                 .border(
                     borderAlignment,
                     width,
-                    JewelTheme.colorPalette.blue(4),
+                    borderColor,
                     RoundedCornerShape(4.dp),
                     expand,
                 ),
         )
         Box(
             Modifier.size(72.dp, 28.dp)
+                .background(backgroundColor, shape = RoundedCornerShape(4.dp, 0.dp, 4.dp, 0.dp))
                 .border(
                     borderAlignment,
                     width,
-                    JewelTheme.colorPalette.blue(4),
+                    borderColor,
                     RoundedCornerShape(4.dp, 0.dp, 4.dp, 0.dp),
                     expand,
                 ),
