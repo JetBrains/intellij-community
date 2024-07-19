@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.platform.util.coroutines.flow.throttle
@@ -16,7 +18,7 @@ internal class FileTypeIndexChangeNotifier(private val syncPublisher: FileTypeIn
 
   // TODO maybe inject coroutine scope through indexes
   @OptIn(DelicateCoroutinesApi::class)
-  private val worker = GlobalScope.launch(CoroutineName("FileTypeIndex change notificator")) {
+  private val worker = service<FileTypeIndexChangeNotifierService>().cs.launch(CoroutineName("FileTypeIndex change notificator")) {
     sendNotificationsFlow
       .throttle(1)
       .collectLatest {
@@ -50,9 +52,13 @@ internal class FileTypeIndexChangeNotifier(private val syncPublisher: FileTypeIn
   }
 
   override fun close() {
+    @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
       worker.cancelAndJoin()
     }
     notifyPending()
   }
 }
+
+@Service(Service.Level.APP)
+internal class FileTypeIndexChangeNotifierService(val cs: CoroutineScope)
