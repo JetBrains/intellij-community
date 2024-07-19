@@ -68,7 +68,7 @@ public final class GradleScriptType extends GroovyRunnableScriptType {
 
     final Collection<VirtualFile> files = GradleBuildClasspathManager.getInstance(project).getModuleClasspathEntries(modulePath);
 
-    result = new ExternalModuleBuildGlobalSearchScope(project, result.uniteWith(new NonClasspathDirectoriesScope(files)), modulePath);
+    result = new GradleModuleBuildGlobalSearchScope(project, result.uniteWith(new NonClasspathDirectoriesScope(files)), modulePath);
 
     return result;
   }

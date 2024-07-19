@@ -9,13 +9,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-public final class ExternalModuleBuildGlobalSearchScope extends DelegatingGlobalSearchScope {
+public final class GradleModuleBuildGlobalSearchScope extends DelegatingGlobalSearchScope {
   @NotNull
   private final String externalModulePath;
 
-  public ExternalModuleBuildGlobalSearchScope(@NotNull Project project,
-                                              @NotNull GlobalSearchScope baseScope,
-                                              @NotNull String externalModulePath) {
+  public GradleModuleBuildGlobalSearchScope(@NotNull Project project,
+                                            @NotNull GlobalSearchScope baseScope,
+                                            @NotNull String externalModulePath) {
     super(new DelegatingGlobalSearchScope(project, baseScope));
     this.externalModulePath = externalModulePath;
   }
