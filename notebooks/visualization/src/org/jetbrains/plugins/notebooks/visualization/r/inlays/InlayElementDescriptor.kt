@@ -4,9 +4,7 @@
 
 package org.jetbrains.plugins.notebooks.visualization.r.inlays
 
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
@@ -52,13 +50,4 @@ interface InlayElementDescriptor {
 
   fun shouldUpdateInlays(event: DocumentEvent): Boolean =
     event.oldFragment.contains("\n") || event.newFragment.contains("\n")
-}
-
-interface InlayDescriptorProvider {
-
-  fun getInlayDescriptor(editor: Editor): InlayElementDescriptor?
-
-  companion object {
-    val EP = ExtensionPointName.create<InlayDescriptorProvider>("com.intellij.datavis.inlays.inlayDescriptorProvider")
-  }
 }
