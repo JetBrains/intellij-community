@@ -4,6 +4,9 @@ class A {
   int i;
 
   A() {
+    i = 10;
+    (this).i = 11;
+    (A.this).i = 12;
     <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.i++;                   // Error
     <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.hashCode();            // Error
     System.out.print(<error descr="Cannot reference 'this' before superclass constructor is called">this</error>);     // Error
@@ -39,6 +42,8 @@ class B extends A {
     }
   }
   B(boolean b, int i) {
+    <error descr="Cannot reference 'A.i' before superclass constructor is called">super.i</error> = i;
+    <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.i = i;
     if (false) <error descr="return not allowed before 'super()' call">return;</error>
     super(i);
   }
