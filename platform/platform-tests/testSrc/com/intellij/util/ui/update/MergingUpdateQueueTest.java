@@ -288,7 +288,7 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
   }
 
   private static final class MyQueue extends MergingUpdateQueue {
-    private boolean myExecuted;
+    private boolean isExecuted;
 
     private MyQueue() {
       this(400);
@@ -308,13 +308,13 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
     }
 
     @Override
-    protected void execute(final Update @NotNull [] update) {
-      super.execute(update);
-      myExecuted = true;
+    protected void execute(@NotNull List<? extends Update> updates) {
+      super.execute(updates);
+      isExecuted = true;
     }
 
     boolean wasExecuted() {
-      return myExecuted;
+      return isExecuted;
     }
 
     @Override

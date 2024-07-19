@@ -100,8 +100,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
     return myRejected;
   }
 
-  @NotNull
-  public static Update create(@NonNls Object identity, @NotNull Runnable runnable) {
+  public static @NotNull Update create(@NonNls Object identity, @NotNull Runnable runnable) {
     return new Update(identity) {
       @Override
       public void run() {

@@ -23,6 +23,7 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -32,6 +33,9 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.coroutineContext
+
+private val priorityComparator = Comparator.comparingInt<Update> { it.priority }
 
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed, e.g., to reflect in UI status of some
@@ -234,7 +238,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
   fun cancelAllUpdates() {
     synchronized(scheduledUpdates) {
-      for (each in allScheduledUpdates) {
+      for (each in getAllScheduledUpdates()) {
         try {
           each.setRejected()
         }
@@ -246,8 +250,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     }
   }
 
-  private val allScheduledUpdates: List<Update>
-    get() = scheduledUpdates.values().flatMap { it.keys }
+  private fun getAllScheduledUpdates(): List<Update> = scheduledUpdates.values().flatMap { it.keys }
 
   /**
    * Switches on the PassThrough mode if this method is called in unit test (i.e., when [Application.isUnitTestMode] is true).
@@ -255,9 +258,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
    * @return this instance for the sequential creation (the Builder pattern)
    */
   @Internal
-  @Deprecated(
-    """use {@link #waitForAllExecuted(long, TimeUnit)} instead in tests
-    """)
+  @Deprecated("""use {@link #waitForAllExecuted(long, TimeUnit)} instead in tests  """)
   fun usePassThroughInUnitTestMode(): MergingUpdateQueue {
     val app = ApplicationManager.getApplication()
     if (app == null || app.isUnitTestMode) {
@@ -317,24 +318,62 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       return
     }
 
-    waiterForMerge.request(
-      forceRun = false,
-      delay = mergingTimeSpan,
-      cancelCurrent = true,
+    waiterForMerge.scheduleTask(
+      delay = mergingTimeSpan.toLong(),
       customModalityState = (if (!executeInDispatchThread || modalityStateComponent === ANY_COMPONENT) {
         null
       }
       else {
         getModalityState()
       })?.asContextElement(),
-    )
+    ) {
+      if (isSuspended || isEmpty || isFlushing || !isModalityStateCorrect()) {
+        return@scheduleTask
+      }
+
+      isFlushing = true
+      try {
+        val all = flushScheduledUpdates() ?: return@scheduleTask
+
+        coroutineContext.ensureActive()
+
+        for (update in all) {
+          update.setProcessed()
+        }
+        all.sortWith(priorityComparator)
+        executeUpdates(all)
+      }
+      finally {
+        isFlushing = false
+        if (isEmpty) {
+          finishActivity()
+        }
+      }
+    }
+  }
+
+  protected open suspend fun executeUpdates(updates: List<Update>) {
+    for (update in updates) {
+      coroutineContext.ensureActive()
+
+      if (isExpired(update)) {
+        update.setRejected()
+        continue
+      }
+
+      if (update.executeInWriteAction()) {
+        @Suppress("ForbiddenInSuspectContextMethod", "RedundantSuppression")
+        ApplicationManager.getApplication().runWriteAction { execute(update) }
+      }
+      else {
+        execute(update)
+      }
+    }
   }
 
   /**
    * Executes all scheduled requests in the current thread.
    * Please note that requests that started execution before this method call are not waited for completion.
-   *
-   * @see .sendFlush that will use correct thread
    */
   fun flush() {
     if (isEmpty || isFlushing || !isModalityStateCorrect()) {
@@ -357,24 +396,31 @@ open class MergingUpdateQueue @JvmOverloads constructor(
   private fun doFlush() {
     isFlushing = true
     try {
-      var all: List<Update>
-      synchronized(scheduledUpdates) {
-        all = allScheduledUpdates
-        scheduledUpdates.clear()
+      val all = flushScheduledUpdates() ?: return
+      for (update in all) {
+        update.setProcessed()
       }
-
-      for (each in all) {
-        each.setProcessed()
-      }
-      val array = all.toTypedArray<Update>()
-      Arrays.sort(array, Comparator.comparingInt({ it.priority }))
-      execute(array)
+      all.sortWith(priorityComparator)
+      execute(all)
     }
     finally {
       isFlushing = false
       if (isEmpty) {
         finishActivity()
       }
+    }
+  }
+
+  private fun flushScheduledUpdates(): MutableList<Update>? {
+    synchronized(scheduledUpdates) {
+      if (scheduledUpdates.isEmpty) {
+        return null
+      }
+
+      val result = ArrayList<Update>()
+      scheduledUpdates.values().flatMapTo(result) { it.keys }
+      scheduledUpdates.clear()
+      return result
     }
   }
 
@@ -395,28 +441,29 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     return !current.dominates(modalityState)
   }
 
-  protected open fun execute(update: Array<Update>) {
-    for (each in update) {
-      if (isExpired(each)) {
-        each.setRejected()
+  protected open fun execute(updates: List<Update>) {
+    for (update in updates) {
+      if (isExpired(update)) {
+        update.setRejected()
         continue
       }
 
-      if (each.executeInWriteAction()) {
-        ApplicationManager.getApplication().runWriteAction { execute(each) }
+      if (update.executeInWriteAction()) {
+        @Suppress("ForbiddenInSuspectContextMethod", "RedundantSuppression")
+        ApplicationManager.getApplication().runWriteAction { execute(update) }
       }
       else {
-        execute(each)
+        execute(update)
       }
     }
   }
 
-  private fun execute(each: Update) {
+  private fun execute(update: Update) {
     if (isDisposed) {
-      each.setRejected()
+      update.setRejected()
     }
     else {
-      each.run()
+      update.run()
     }
   }
 
@@ -438,7 +485,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       return
     }
 
-    val active: Boolean = isActive
+    val active = isActive
     synchronized(scheduledUpdates) {
       try {
         if (eatThisOrOthers(update)) {
@@ -468,7 +515,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       return false
     }
 
-    for (eachInQueue in allScheduledUpdates) {
+    for (eachInQueue in getAllScheduledUpdates()) {
       if (eachInQueue.canEat(update)) {
         update.setRejected()
         return true
@@ -483,7 +530,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
   }
 
   fun run(update: Update) {
-    execute(arrayOf(update))
+    execute(listOf(update))
   }
 
   private fun put(update: Update) {
@@ -513,7 +560,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     waiterForMerge.cancel()
   }
 
-  override fun toString(): String = "$name active=$isActive scheduled=${allScheduledUpdates.size}"
+  override fun toString(): String = "$name active=$isActive scheduled=${scheduledUpdates.values().asSequence().flatMap { it.keys }.count()}"
 
   fun getModalityState(): ModalityState {
     return when (val modalityStateComponent = modalityStateComponent) {

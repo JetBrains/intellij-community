@@ -2,11 +2,10 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.configurationStore.OLD_NAME_CONVERTER
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
@@ -24,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.SlowOperations
-import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
@@ -36,30 +34,30 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.invariantSeparatorsPathString
 
-private val LOG = Logger.getInstance(VcsIgnoreManagerImpl::class.java)
+private val LOG = logger<VcsIgnoreManagerImpl>()
 
 private const val RUN_CONFIGURATIONS_DIRECTORY = "runConfigurations"
 
 @Internal
-class VcsIgnoreManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : VcsIgnoreManager, Disposable {
+class VcsIgnoreManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : VcsIgnoreManager {
   companion object {
     @JvmStatic
     fun getInstanceImpl(project: Project) = VcsIgnoreManager.getInstance(project) as VcsIgnoreManagerImpl
 
-    val EP_NAME = ExtensionPointName<VcsIgnoreChecker>("com.intellij.vcsIgnoreChecker")
+    @JvmField
+    val EP_NAME: ExtensionPointName<VcsIgnoreChecker> = ExtensionPointName("com.intellij.vcsIgnoreChecker")
   }
 
-  val ignoreRefreshQueue: MergingUpdateQueue
+  val ignoreRefreshQueue: MergingUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
+    name = "VcsIgnoreUpdate",
+    mergingTimeSpan = 500,
+    coroutineScope = coroutineScope,
+  )
 
   init {
     checkProjectNotDefault(project)
-    ignoreRefreshQueue = MergingUpdateQueue.mergingUpdateQueue(
-      name = "VcsIgnoreUpdate",
-      mergingTimeSpan = 500,
-      coroutineScope = coroutineScope,
-    )
 
-    ignoreRefreshQueue.queue(DisposableUpdate.createDisposable(this, "wait Project opening activities scan") {
+    ignoreRefreshQueue.queue(Update.create("wait Project opening activities scan") {
       runBlockingCancellable {
         project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
       }
@@ -80,9 +78,6 @@ class VcsIgnoreManagerImpl(private val project: Project, coroutineScope: Corouti
         }
       })
     }
-  }
-
-  override fun dispose() {
   }
 
   fun awaitRefreshQueue() {

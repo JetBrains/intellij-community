@@ -2,13 +2,14 @@
 package com.intellij.lang.properties.editor
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.progress.util.ReadTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
@@ -16,6 +17,8 @@ import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = logger<ResourceBundleEditorFileListener>()
@@ -108,94 +111,110 @@ private class MyMergingUpdateQueue(
   activationComponent = editor.component,
   executeInDispatchThread = false,
 ) {
-  override fun execute(updates: List<Update>) {
-    val task: ReadTask = object : ReadTask() {
-      val events: Set<EventWithType> = eventQueue.getAndSet(ConcurrentCollectionFactory.createConcurrentSet())
+  @Suppress("DuplicatedCode")
+  override suspend fun executeUpdates(updates: List<Update>) {
+    val events: Set<EventWithType> = eventQueue.getAndSet(ConcurrentCollectionFactory.createConcurrentSet())
 
-      override fun performInReadAction(indicator: ProgressIndicator): Continuation? {
-        if (!editor.isValid) {
-          return null
-        }
+    val toDo = readAction {
+      computeInReadAction(events)
+    } ?: return
 
-        var toDo: Runnable? = null
-        val resourceBundleAsSet by lazy {
-          editor.resourceBundle.propertiesFiles.mapTo(HashSet()) { it.virtualFile }
-        }
+    withContext(Dispatchers.EDT) {
+      if (editor.isValid) {
+        toDo.run()
+      }
+    }
+  }
 
-        for (e in events) {
-          if (e.type == EventType.FILE_DELETED || (e.type == EventType.PROPERTY_CHANGED && e.getPropertyName() == VirtualFile.PROP_NAME)) {
-            if (editor.translationEditors.containsKey(e.file)) {
-              var validFilesCount = 0
-              val bundle = editor.resourceBundle
-              if (bundle.isValid) {
-                for (file in bundle.propertiesFiles) {
-                  if (file.containingFile.isValid) {
-                    validFilesCount++
-                  }
-                  if (validFilesCount == 2) {
-                    break
-                  }
-                }
-              }
+  private fun computeInReadAction(events: Set<EventWithType>): Runnable? {
+    if (!editor.isValid) {
+      return null
+    }
 
-              toDo = if (validFilesCount > 1) {
-                Runnable { editor.recreateEditorsPanel() }
-              }
-              else {
-                Runnable { FileEditorManager.getInstance(project).closeFile(editor.file) }
-              }
-              break
-            }
-            else if (resourceBundleAsSet.contains(e.file)) {
-              // new file in the bundle
-              toDo = Runnable { editor.recreateEditorsPanel() }
-              break
-            }
-          }
-          else if (e.type == EventType.FILE_CREATED) {
-            if (resourceBundleAsSet.contains(e.file)) {
-              toDo = Runnable { editor.recreateEditorsPanel() }
-              break
-            }
-          }
-          else if (e.type == EventType.PROPERTY_CHANGED && e.getPropertyName() == VirtualFile.PROP_WRITABLE) {
-            if (editor.translationEditors.containsKey(e.file)) {
-              if (toDo == null) {
-                toDo = SetViewerPropertyRunnable(editor)
-              }
+    var toDo: Runnable? = null
+    val resourceBundleAsSet by lazy {
+      editor.resourceBundle.propertiesFiles.mapTo(HashSet()) { it.virtualFile }
+    }
 
-              if (toDo is SetViewerPropertyRunnable) {
-                toDo.addFile(virtualFile = e.file, isViewer = !(e.getPropertyNewValue() as Boolean))
+    for (e in events) {
+      if (e.type == EventType.FILE_DELETED || (e.type == EventType.PROPERTY_CHANGED && e.getPropertyName() == VirtualFile.PROP_NAME)) {
+        if (editor.translationEditors.containsKey(e.file)) {
+          var validFilesCount = 0
+          val bundle = editor.resourceBundle
+          if (bundle.isValid) {
+            for (file in bundle.propertiesFiles) {
+              if (file.containingFile.isValid) {
+                validFilesCount++
               }
-              else {
-                toDo = Runnable { editor.recreateEditorsPanel() }
+              if (validFilesCount == 2) {
                 break
               }
             }
+          }
+
+          toDo = if (validFilesCount > 1) {
+            Runnable { editor.recreateEditorsPanel() }
           }
           else {
-            if (editor.translationEditors.containsKey(e.file)) {
-              if (toDo is SetViewerPropertyRunnable) {
-                toDo = Runnable { editor.recreateEditorsPanel() }
-                break
-              }
-              else if (toDo == null) {
-                toDo = Runnable { editor.updateEditorsFromProperties(true) }
-              }
-            }
+            Runnable { FileEditorManager.getInstance(project).closeFile(editor.file) }
+          }
+          break
+        }
+        else if (resourceBundleAsSet.contains(e.file)) {
+          // new file in the bundle
+          toDo = Runnable { editor.recreateEditorsPanel() }
+          break
+        }
+      }
+      else if (e.type == EventType.FILE_CREATED) {
+        if (resourceBundleAsSet.contains(e.file)) {
+          toDo = Runnable { editor.recreateEditorsPanel() }
+          break
+        }
+      }
+      else if (e.type == EventType.PROPERTY_CHANGED && e.getPropertyName() == VirtualFile.PROP_WRITABLE) {
+        if (editor.translationEditors.containsKey(e.file)) {
+          if (toDo == null) {
+            toDo = SetViewerPropertyRunnable(editor)
+          }
+
+          if (toDo is SetViewerPropertyRunnable) {
+            toDo.addFile(virtualFile = e.file, isViewer = !(e.getPropertyNewValue() as Boolean))
+          }
+          else {
+            toDo = Runnable { editor.recreateEditorsPanel() }
+            break
           }
         }
+      }
+      else {
+        if (editor.translationEditors.containsKey(e.file)) {
+          if (toDo is SetViewerPropertyRunnable) {
+            toDo = Runnable { editor.recreateEditorsPanel() }
+            break
+          }
+          else if (toDo == null) {
+            toDo = Runnable { editor.updateEditorsFromProperties(true) }
+          }
+        }
+      }
+    }
 
-        if (toDo == null) {
-          return null
-        }
-        else {
-          return Continuation({
-                                if (editor.isValid) {
-                                  toDo.run()
-                                }
-                              }, ModalityState.nonModal())
-        }
+    return toDo
+  }
+
+  override fun execute(updates: List<Update>) {
+    @Suppress("DEPRECATION", "UsagesOfObsoleteApi")
+    ProgressIndicatorUtils.scheduleWithWriteActionPriority(object : com.intellij.openapi.progress.util.ReadTask() {
+      private val events: Set<EventWithType> = eventQueue.getAndSet(ConcurrentCollectionFactory.createConcurrentSet())
+
+      override fun performInReadAction(indicator: ProgressIndicator): Continuation? {
+        val toDo = computeInReadAction(events) ?: return null
+        return Continuation({
+                              if (editor.isValid) {
+                                toDo.run()
+                              }
+                            }, ModalityState.nonModal())
       }
 
       override fun onCanceled(indicator: ProgressIndicator) {
@@ -205,8 +224,7 @@ private class MyMergingUpdateQueue(
         }
         queue(FORCE_UPDATE)
       }
-    }
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(task)
+    })
   }
 }
 

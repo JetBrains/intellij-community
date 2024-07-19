@@ -291,25 +291,60 @@ class SingleAlarm @Internal constructor(
     request(forceRun = false, delay = delay, cancelCurrent = true)
   }
 
-  internal fun request(forceRun: Boolean, delay: Int, cancelCurrent: Boolean = false, customModalityState: CoroutineContext? = null) {
+  private fun request(forceRun: Boolean, delay: Int, cancelCurrent: Boolean = false) {
     val effectiveDelay = if (forceRun) 0 else delay.toLong()
     synchronized(LOCK) {
       var prevCurrentJob = currentJob
-      if (!cancelCurrent && prevCurrentJob != null) {
+      if (cancelCurrent) {
+        prevCurrentJob?.cancel()
+      }
+      else if (prevCurrentJob != null) {
         return
       }
 
       currentJob = taskCoroutineScope.launch {
-        prevCurrentJob?.cancelAndJoin()
+        prevCurrentJob?.join()
         prevCurrentJob = null
 
         delay(effectiveDelay)
-        withContext(if (customModalityState == null) taskContext else (taskContext + customModalityState)) {
+        withContext(taskContext) {
           //todo fix clients and remove NonCancellable
           try {
             Cancellation.withNonCancelableSection().use {
               task.run()
             }
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
+        }
+      }.also { job ->
+        job.invokeOnCompletion {
+          synchronized(LOCK) {
+            if (currentJob === job) {
+              currentJob = null
+            }
+          }
+        }
+      }
+    }
+  }
+
+  internal fun scheduleTask(delay: Long, customModalityState: CoroutineContext?, task: suspend () -> Unit) {
+    synchronized(LOCK) {
+      var prevCurrentJob = currentJob
+      prevCurrentJob?.cancel()
+      currentJob = taskCoroutineScope.launch {
+        prevCurrentJob?.join()
+        prevCurrentJob = null
+
+        delay(delay)
+        withContext(if (customModalityState == null) taskContext else (taskContext + customModalityState)) {
+          try {
+            task()
           }
           catch (e: CancellationException) {
             throw e
