@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.mapped;
+package com.intellij.platform.util.io.storages.mmapped;
 
-import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.RegionAllocationAtomicityLock;
-import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -280,8 +278,8 @@ public class MMappedFileStorageTest {
       .pageSize(PAGE_SIZE)
       .ifFileIsNotPageAligned(EXPAND_FILE)
       .open(storagePath)) {
-      assertEquals(Files.size(storagePath),
-                   4 * PAGE_SIZE,
+      assertEquals(4 * PAGE_SIZE,
+                   Files.size(storagePath),
                    "Storage file should be expanded to page-aligned size");
     }
     finally {
@@ -298,8 +296,8 @@ public class MMappedFileStorageTest {
       .pageSize(PAGE_SIZE)
       .ifFileIsNotPageAligned(CLEAN)
       .open(storagePath)) {
-      assertEquals(Files.size(storagePath),
-                   0,
+      assertEquals(0,
+                   Files.size(storagePath),
                    "Storage file should be truncated");
     }
     finally {
