@@ -64,8 +64,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public final class HighlightMethodUtil {
   private static final Logger LOG = Logger.getInstance(HighlightMethodUtil.class);
 
@@ -1494,29 +1492,27 @@ public final class HighlightMethodUtil {
         JavaErrorBundle.message("only.one.constructor.call.allowed.in.constructor", expression.getText() + "()"));
     }
     PsiElement codeBlock = methodCall.getParent().getParent();
-    if (codeBlock instanceof PsiCodeBlock) {
-      PsiMethod ctor = tryCast(codeBlock.getParent(), PsiMethod.class);
-      if (ctor != null && ctor.isConstructor()) {
-        if (JavaPsiRecordUtil.isCompactConstructor(ctor) ||
-            JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) {
-          String message = JavaErrorBundle.message("record.constructor.call.in.canonical");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
-        }
-        PsiElement prevSibling = methodCall.getParent().getPrevSibling();
-        while (true) {
-          if (prevSibling == null) return null;
-          if (prevSibling instanceof PsiStatement) break;
-          prevSibling = prevSibling.getPrevSibling();
-        }
-      }
-    }
     if (!(codeBlock instanceof PsiCodeBlock) || !(codeBlock.getParent() instanceof PsiMethod)) {
       String message = JavaErrorBundle.message("constructor.call.must.be.top.level.statement", expression.getText() + "()");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
     }
-    String message = JavaErrorBundle.message("constructor.call.must.be.first.statement", expression.getText() + "()");
-    return HighlightUtil.checkFeature(methodCall, JavaFeature.STATEMENTS_BEFORE_SUPER, PsiUtil.getLanguageLevel(methodCall),
-                                      methodCall.getContainingFile(), message, HighlightInfoType.ERROR);
+    if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+      String message = JavaErrorBundle.message("record.constructor.call.in.canonical");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
+    }
+    PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(methodCall.getParent(), PsiStatement.class);
+    if (prevStatement != null) {
+      String message = JavaErrorBundle.message("constructor.call.must.be.first.statement", expression.getText() + "()");
+      HighlightInfo.Builder builder =
+        HighlightUtil.checkFeature(methodCall, JavaFeature.STATEMENTS_BEFORE_SUPER, PsiUtil.getLanguageLevel(methodCall),
+                                   methodCall.getContainingFile(), message, HighlightInfoType.ERROR);
+      if (builder != null) return builder;
+    }
+    if (JavaPsiConstructorUtil.isChainedConstructorCall(methodCall) && HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
+      String description = JavaErrorBundle.message("recursive.constructor.invocation");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(description);
+    }
+    return null;
   }
 
 
@@ -1805,15 +1801,6 @@ public final class HighlightMethodUtil {
       highlightInfo.registerFix(action, null, null, null, null);
     }
     return highlightInfo;
-  }
-
-  static HighlightInfo.Builder checkRecursiveConstructorInvocation(@NotNull PsiMethod method) {
-    if (HighlightControlFlowUtil.isRecursivelyCalledConstructor(method)) {
-      TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-      String description = JavaErrorBundle.message("recursive.constructor.invocation");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
-    }
-    return null;
   }
 
   @NotNull
