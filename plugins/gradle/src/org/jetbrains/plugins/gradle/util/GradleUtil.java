@@ -205,11 +205,11 @@ public final class GradleUtil {
   }
 
   public static @NotNull URI getWrapperDistributionUri(@NotNull GradleVersion gradleVersion) {
-    var distributionSource = gradleVersion.isSnapshot() ?
-                             "https://services.gradle.org/distributions-snapshots" :
-                             "https://services.gradle.org/distributions";
+    var gradleServicesUrl = GradleEnvironment.Urls.GRADLE_SERVICES_URL;
+    var distributionSource = gradleVersion.isSnapshot() ? "distributions-snapshots" : "distributions";
+    var gradleVersionString = gradleVersion.getVersion();
     try {
-      return new URI(String.format("%s/gradle-%s-bin.zip", distributionSource, gradleVersion.getVersion()));
+      return new URI(String.format("%s/%s/gradle-%s-bin.zip", gradleServicesUrl, distributionSource, gradleVersionString));
     }
     catch (URISyntaxException e) {
       throw new ExternalSystemException(e);
