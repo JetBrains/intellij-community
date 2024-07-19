@@ -56,15 +56,6 @@ interface NewProjectWizardPythonData : NewProjectWizardBaseData {
    * The Python module after it has been created during [NewProjectWizardStep.setupProject].
    */
   val module: Module?
-
-  companion object {
-
-    val KEY = Key.create<NewProjectWizardPythonData>(NewProjectWizardPythonData::class.java.name)
-
-    @JvmStatic
-    val NewProjectWizardStep.pythonData: NewProjectWizardPythonData?
-      get() = data.getUserData(KEY)
-  }
 }
 
 /**
@@ -124,10 +115,6 @@ class NewPythonProjectStep(parent: NewProjectWizardStep)
     else {
       SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk)
     }
-  }
-
-  init {
-    data.putUserData(NewProjectWizardPythonData.KEY, this)
   }
 }
 

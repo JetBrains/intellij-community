@@ -145,8 +145,9 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
       return PythonSdkUtil.getPythonExecutable(pipEnv) ?: FileUtil.join(pipEnv, "bin", "python")
     }
   }
-  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath)).apply {
-    associateWithModule(module, newProjectPath)
+  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {
+    // FIXME: multi module project support - associate with module path
+    setAssociationToPath(projectPath)
     isPipEnv = true
   }
 }

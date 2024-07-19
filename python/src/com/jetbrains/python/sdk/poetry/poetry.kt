@@ -190,18 +190,9 @@ fun setupPoetrySdkUnderProgress(project: Project?,
     }
   }
 
-  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath)).apply {
-    associateWithModule(module ?: project?.modules?.firstOrNull(), newProjectPath)
+  return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedSdkName(projectPath))?.apply {
+    module?.let { setAssociationToModule(it) }
     isPoetry = true
-    //        project?.let { project ->
-    //            existingSdks.find {
-    //                it.associatedModulePath == projectPath && isPoetry(project, it) && it.homePath == homePath
-    //            }?.run {
-    //                 re-use existing invalid sdk
-    //                return null
-    //            }
-    //            PoetryConfigService.getInstance(project).poetryVirtualenvPaths.add(homePath!!)
-    //        }
   }
 }
 

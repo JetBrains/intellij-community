@@ -125,12 +125,13 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     val basePath = module.basePath
 
     thisLogger().debug("Setting up associated virtual environment: $path, $basePath")
-    val sdk = PyDetectedSdk(path).setupAssociated(existingSdks, basePath).getOrElse { return Result.failure(it) }
+    val sdk = PyDetectedSdk(path).setupAssociated(existingSdks, basePath, true).getOrElse {
+      return Result.failure(it)
+    }
 
     ApplicationManager.getApplication().invokeAndWait {
       thisLogger().debug("Adding associated virtual environment: $path, $basePath")
       SdkConfigurationUtil.addSdk(sdk)
-      sdk.associateWithModule(module, null)
     }
 
     val requirementsTxtOrSetupPyFile = VfsUtil.findFile(Paths.get(requirementsTxtOrSetupPy), false)

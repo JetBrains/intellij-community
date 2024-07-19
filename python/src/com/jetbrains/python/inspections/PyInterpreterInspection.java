@@ -138,7 +138,7 @@ public final class PyInterpreterInspection extends PyInspection {
           }
         }
 
-        if (! PySdkExtKt.getSdkSeemsValid(sdk)) {
+        if (!PySdkExtKt.getSdkSeemsValid(sdk)) {
           final @InspectionMessage String message;
           if (pyCharm) {
             message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.project");
@@ -154,11 +154,11 @@ public final class PyInterpreterInspection extends PyInspection {
             final @InspectionMessage String message;
             if (pyCharm) {
               message = PyPsiBundle.message("INSP.interpreter.python.has.reached.its.end.of.life.and.is.no.longer.supported.in.pycharm",
-                                         languageLevel);
+                                            languageLevel);
             }
             else {
               message = PyPsiBundle.message("INSP.interpreter.python.has.reached.its.end.life.and.is.no.longer.supported.in.python.plugin",
-                                         languageLevel);
+                                            languageLevel);
             }
             registerProblemWithCommonFixes(node, message, module, sdk, fixes, pyCharm);
           }
@@ -166,7 +166,12 @@ public final class PyInterpreterInspection extends PyInspection {
       }
     }
 
-    private void registerProblemWithCommonFixes(PyFile node, @InspectionMessage String message, Module module, Sdk sdk, List<LocalQuickFix> fixes, boolean pyCharm) {
+    private void registerProblemWithCommonFixes(PyFile node,
+                                                @InspectionMessage String message,
+                                                Module module,
+                                                Sdk sdk,
+                                                List<LocalQuickFix> fixes,
+                                                boolean pyCharm) {
       if (pyCharm && sdk == null) {
         final String sdkName = ProjectRootManager.getInstance(node.getProject()).getProjectSdkName();
         ContainerUtil.addIfNotNull(fixes, getSuitableSdkFix(sdkName, module));
@@ -207,12 +212,17 @@ public final class PyInterpreterInspection extends PyInspection {
           break;
         }
       }
-      final var detectedAssociatedSdk = ContainerUtil.getFirstItem(detectedAssociatedEnvs);
-      if (detectedAssociatedSdk != null) return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
 
-      final Pair<@IntentionName String, PyProjectSdkConfigurationExtension> textAndExtension
-        = PyProjectSdkConfigurationExtension.findForModule(module);
-      if (textAndExtension != null) return new UseProvidedInterpreterFix(module, textAndExtension.getSecond(), textAndExtension.getFirst());
+      final var detectedAssociatedSdk = ContainerUtil.getFirstItem(detectedAssociatedEnvs);
+      if (detectedAssociatedSdk != null) {
+        return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
+      }
+
+      final Pair<@IntentionName String, PyProjectSdkConfigurationExtension> textAndExtension =
+        PyProjectSdkConfigurationExtension.findForModule(module);
+      if (textAndExtension != null) {
+        return new UseProvidedInterpreterFix(module, textAndExtension.getSecond(), textAndExtension.getFirst());
+      }
 
       if (name != null) {
         final Matcher matcher = NAME.matcher(name);
@@ -226,21 +236,29 @@ public final class PyInterpreterInspection extends PyInspection {
           }
           else {
             final PyDetectedSdk detectedSystemWideSdk = detectSystemWideSdk(matcher.group("version"), module, existingSdks, context);
-            if (detectedSystemWideSdk != null) return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);
+            if (detectedSystemWideSdk != null) {
+              return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);
+            }
           }
         }
       }
 
       if (PyCondaSdkCustomizer.Companion.getInstance().getSuggestSharedCondaEnvironments()) {
         final var sharedCondaEnv = PySdkExtKt.mostPreferred(PySdkExtKt.filterSharedCondaEnvs(module, existingSdks));
-        if (sharedCondaEnv != null) return new UseExistingInterpreterFix(sharedCondaEnv, module);
+        if (sharedCondaEnv != null) {
+          return new UseExistingInterpreterFix(sharedCondaEnv, module);
+        }
       }
 
       final var systemWideSdk = PySdkExtKt.mostPreferred(PySdkExtKt.filterSystemWideSdks(existingSdks));
-      if (systemWideSdk != null) return new UseExistingInterpreterFix(systemWideSdk, module);
+      if (systemWideSdk != null) {
+        return new UseExistingInterpreterFix(systemWideSdk, module);
+      }
 
       final var detectedSystemWideSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectSystemWideSdks(module, existingSdks));
-      if (detectedSystemWideSdk != null) return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);
+      if (detectedSystemWideSdk != null) {
+        return new UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module);
+      }
 
       return null;
     }
@@ -457,7 +475,8 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension, () -> myExtension.createAndAddSdkForInspection(myModule));
+      PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension,
+                                                                    () -> myExtension.createAndAddSdkForInspection(myModule));
     }
 
     @Override
@@ -511,7 +530,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     private final @NotNull List<Sdk> myExistingSdks;
 
-    private final boolean myAssociate;
+    private final boolean doAssociate;
 
     private final @NotNull Module myModule;
 
@@ -521,20 +540,19 @@ public final class PyInterpreterInspection extends PyInspection {
                                       @NotNull Module module) {
       super(detectedSdk);
       myExistingSdks = existingSdks;
-      myAssociate = associate;
+      doAssociate = associate;
       myModule = module;
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PyUiUtil.clearFileLevelInspectionResults(project);
-      final Sdk newSdk = myAssociate
-                         ? PySdkExtKt.setupAssociatedLogged(mySdk, myExistingSdks, BasePySdkExtKt.getBasePath(myModule))
-                         : PySdkExtKt.setup(mySdk, myExistingSdks);
-      if (newSdk == null) return;
+      final Sdk newSdk = PySdkExtKt.setupAssociatedLogged(mySdk, myExistingSdks, BasePySdkExtKt.getBasePath(myModule), doAssociate);
+      if (newSdk == null) {
+        return;
+      }
 
       SdkConfigurationUtil.addSdk(newSdk);
-      if (myAssociate) PySdkExtKt.associateWithModule(newSdk, myModule, null);
       PyProjectSdkConfiguration.INSTANCE.setReadyToUseSdk(project, myModule, newSdk);
     }
   }
