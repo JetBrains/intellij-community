@@ -498,6 +498,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                      narrowedType.getNarrowedType(),
                      conditionalInstruction.getResult() ^ narrowedType.getNegated(),
                      false,
+                     narrowedType.getTypeIs(),
                      context,
                      null);
                  }

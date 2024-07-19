@@ -64,6 +64,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static final String TYPED_DICT_EXT = "typing_extensions.TypedDict";
   public static final String TYPE_GUARD = "typing.TypeGuard";
   public static final String TYPE_GUARD_EXT = "typing_extensions.TypeGuard";
+  public static final String TYPE_IS = "typing.TypeIs";
+  public static final String TYPE_IS_EXT = "typing_extensions.TypeIs";
   public static final String GENERIC = "typing.Generic";
   public static final String PROTOCOL = "typing.Protocol";
   public static final String PROTOCOL_EXT = "typing_extensions.Protocol";
@@ -341,7 +343,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull Context context) {
     if (callable instanceof PyFunction function) {
 
-      if (isTypeGuard(function, context.myContext)) {
+      if (getTypeGuardKind(function, context.myContext) != TypeGuardKind.None) {
         return Ref.create(PyBuiltinCache.getInstance(callable).getBoolType());
       }      
       final PyExpression returnTypeAnnotation = getReturnTypeAnnotation(function, context.myContext);
@@ -395,18 +397,26 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         .orElse(null);
     }
 
-    if (callSite instanceof PyCallExpression callExpression && isTypeGuard(function, context.myContext)) {
-      var arguments = callSite.getArguments(function);
-      if (!arguments.isEmpty() && arguments.get(0) instanceof PyReferenceExpression refExpr) {
-        var qname = PyPsiUtilsCore.asQualifiedName(refExpr);
-        if (qname != null) {
-          var narrowedType = getTypeFromTypeGuardLikeType(function, context.myContext);
-          if (narrowedType != null) {
-            return Ref.create(PyNarrowedType.Companion.create(callSite, qname.toString(), narrowedType, callExpression, false));
+    if (callSite instanceof PyCallExpression callExpression) {
+      var typeGuardKind = getTypeGuardKind(function, context.myContext);
+      if (typeGuardKind != TypeGuardKind.None) {
+        var arguments = callSite.getArguments(function);
+        if (!arguments.isEmpty() && arguments.get(0) instanceof PyReferenceExpression refExpr) {
+          var qname = PyPsiUtilsCore.asQualifiedName(refExpr);
+          if (qname != null) {
+            var narrowedType = getTypeFromTypeGuardLikeType(function, context.myContext);
+            if (narrowedType != null) {
+              return Ref.create(PyNarrowedType.Companion.create(callSite,
+                                                                qname.toString(),
+                                                                narrowedType,
+                                                                callExpression,
+                                                                false,
+                                                                TypeGuardKind.TypeIs.equals(typeGuardKind)));
+            }
           }
         }
+        return Ref.create(PyBuiltinCache.getInstance(function).getBoolType());
       }
-      return Ref.create(PyBuiltinCache.getInstance(function).getBoolType());
     }
 
     if (callSite instanceof PyCallExpression) {
@@ -1178,30 +1188,37 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean typeHintedWithName(@NotNull T owner,
                                                                                                @NotNull TypeEvalContext context,
                                                                                                String... names) {
+    return ContainerUtil.exists(names, resolveTypeHintsToQualifiedNames(owner, context)::contains);
+  }
+
+  private static <T extends PyTypeCommentOwner & PyAnnotationOwner> Collection<String> resolveTypeHintsToQualifiedNames(
+    @NotNull T owner,
+    @NotNull TypeEvalContext context
+  ) {
     var annotation = getAnnotationValue(owner, context);
     if (annotation instanceof PyStringLiteralExpression stringLiteralExpression) {
       final var annotationText = stringLiteralExpression.getStringValue();
       annotation = toExpression(annotationText, owner);
-      if (annotation == null) return false;
+      if (annotation == null) return Collections.emptyList();
     }
 
-    if (annotation instanceof PySubscriptionExpression) {
-      return resolvesToQualifiedNames(((PySubscriptionExpression)annotation).getOperand(), context, names);
+    if (annotation instanceof PySubscriptionExpression pySubscriptionExpression) {
+      return resolveToQualifiedNames(pySubscriptionExpression.getOperand(), context);
     }
     else if (annotation instanceof PyReferenceExpression) {
-      return resolvesToQualifiedNames(annotation, context, names);
+      return resolveToQualifiedNames(annotation, context);
     }
 
     final String typeCommentValue = owner.getTypeCommentAnnotation();
     final PyExpression typeComment = typeCommentValue == null ? null : toExpression(typeCommentValue, owner);
-    if (typeComment instanceof PySubscriptionExpression) {
-      return resolvesToQualifiedNames(((PySubscriptionExpression)typeComment).getOperand(), context, names);
+    if (typeComment instanceof PySubscriptionExpression pySubscriptionExpression) {
+      return resolveToQualifiedNames(pySubscriptionExpression.getOperand(), context);
     }
     else if (typeComment instanceof PyReferenceExpression) {
-      return resolvesToQualifiedNames(typeComment, context, names);
+      return resolveToQualifiedNames(typeComment, context);
     }
 
-    return false;
+    return Collections.emptyList();
   }
 
   public static boolean isFinal(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
@@ -1224,10 +1241,15 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       typeHintedWithName(function, context, NO_RETURN, NO_RETURN_EXT, NEVER, NEVER_EXT));
   }
 
-  public static boolean isTypeGuard(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    return PyUtil.getParameterizedCachedValue(function, context, p ->
-      typeHintedWithName(function, context, TYPE_GUARD, TYPE_GUARD_EXT));
+  public static TypeGuardKind getTypeGuardKind(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(function, context, p -> {
+                                                var typeHints = resolveTypeHintsToQualifiedNames(function, context);
+                                                if (typeHints.contains(TYPE_GUARD) || typeHints.contains(TYPE_GUARD_EXT)) return TypeGuardKind.TypeGuard;
+                                                if (typeHints.contains(TYPE_IS) || typeHints.contains(TYPE_IS_EXT)) return TypeGuardKind.TypeIs;
+                                                return TypeGuardKind.None;
+                                              });
   }
+
 
   @Nullable
   public static PyType getTypeFromTypeGuardLikeType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
@@ -2122,5 +2144,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     public int hashCode() {
       return Objects.hash(myContext);
     }
+  }
+
+  public enum TypeGuardKind {
+    TypeGuard,
+    TypeIs,
+    None
   }
 }
