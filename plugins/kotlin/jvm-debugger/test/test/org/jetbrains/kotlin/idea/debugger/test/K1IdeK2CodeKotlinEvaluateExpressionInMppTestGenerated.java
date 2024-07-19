@@ -1677,6 +1677,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/anonymousObjects.kt");
             }
 
+            @TestMetadata("anyMethodViaSuper.kt")
+            public void testAnyMethodViaSuper() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/anyMethodViaSuper.kt");
+            }
+
             @TestMetadata("arrayMethods.kt")
             public void testArrayMethods() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/arrayMethods.kt");

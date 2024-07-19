@@ -52,4 +52,20 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
     fun testForwardDeclarations() {
         doTest()
     }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0.0+") // because of the new Kotlin arguments API
+    fun testLibraryPartsOrder() {
+        doTest {
+            publish("lib")
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0.0+")
+    fun testJvmMultifileClass() {
+        doTest {
+            publish("lib")
+        }
+    }
 }
