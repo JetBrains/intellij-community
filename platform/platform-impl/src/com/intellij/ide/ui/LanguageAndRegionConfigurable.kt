@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
 import com.intellij.ide.RegionSettings.RegionSettingsListener
+import com.intellij.ide.ui.localization.statistics.LanguageAndRegionSettingsStatistics
 import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
@@ -15,6 +16,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.whenItemSelectedFromUi
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -22,6 +24,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.GroupedComboBoxRenderer
+import com.intellij.ui.PopupMenuListenerAdapter
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindItem
@@ -33,6 +36,8 @@ import com.intellij.util.ui.RestartDialog
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.URL
 import java.util.*
+import javax.swing.event.HyperlinkEvent
+import javax.swing.event.PopupMenuEvent
 
 /**
  * @author Alexander Lobas
@@ -41,14 +46,16 @@ import java.util.*
 @Internal
 class LanguageAndRegionUi {
   companion object {
-    fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable, connection: MessageBusConnection?) {
+    fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable, connection: MessageBusConnection?, place: String) {
+      val statistics = LanguageAndRegionSettingsStatistics(place)
       val comboGroup = "language_and_region_combo"
 
       panel.row(IdeBundle.message("combobox.language")) {
         val locales = LocalizationUtil.getAllAvailableLocales()
+        val initSelectionLocale = LocalizationUtil.getLocale()
         val localizationService = LocalizationStateService.getInstance()!!
         val forcedLocale = LocalizationUtil.getForcedLocale()
-        val model = CollectionComboBoxModel(locales.first, LocalizationUtil.getLocale())
+        val model = CollectionComboBoxModel(locales.first, initSelectionLocale)
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
 
         if (forcedLocale == null) {
@@ -64,7 +71,8 @@ class LanguageAndRegionUi {
           val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale() }
 
           property.afterChange(parentDisposable) {
-            if (it.toLanguageTag() == LocalizationUtil.getLocale().toLanguageTag()) {
+            val prevLocale = LocalizationUtil.getLocale()
+            if (it.toLanguageTag() == prevLocale.toLanguageTag()) {
               return@afterChange
             }
 
@@ -93,6 +101,18 @@ class LanguageAndRegionUi {
         val languageComponent = languageBox.component
         languageComponent.isSwingPopup = false
         languageComponent.renderer = LanguageComboBoxRenderer(locales)
+
+        var lastSelectedItem = languageComponent.selectedItem as Locale
+        languageComponent.whenItemSelectedFromUi {
+          if (lastSelectedItem == it) return@whenItemSelectedFromUi
+          statistics.languageSelected(it, lastSelectedItem)
+          lastSelectedItem = it
+        }
+        languageComponent.addPopupMenuListener(object : PopupMenuListenerAdapter() {
+          override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+            statistics.languageExpanded()
+          }
+        })
 
         if (forcedLocale == null) {
           DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicBundle.LanguageBundleEP> {
@@ -147,11 +167,29 @@ class LanguageAndRegionUi {
           regionBox.bindItem({ RegionSettings.getRegion() }, { RegionSettings.setRegion(it ?: Region.NOT_SET) })
 
           regionBox.comment(IdeBundle.message("combobox.region.comment", helpUrl))
+
+          regionBox.comment?.addHyperlinkListener { e ->
+            if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+              statistics.hyperLinkActivated()
+            }
+          }
         }
 
         val regionComponent = regionBox.component
         regionComponent.isSwingPopup = false
         regionComponent.renderer = RegionComboBoxRenderer()
+
+        var lastSelectedItem = regionComponent.selectedItem as Region
+        regionComponent.whenItemSelectedFromUi {
+          if (lastSelectedItem == it) return@whenItemSelectedFromUi
+          statistics.regionSelected(it, lastSelectedItem)
+          lastSelectedItem = it
+        }
+        regionComponent.addPopupMenuListener(object : PopupMenuListenerAdapter() {
+          override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+            statistics.regionExpanded()
+          }
+        })
       }
     }
   }
@@ -162,20 +200,23 @@ internal class LanguageAndRegionConfigurable :
   BoundSearchableConfigurable(IdeBundle.message("title.language.and.region"), "language-region-settings", "preferences.language.and.region") {
   private lateinit var initSelectionLanguage: Locale
   private lateinit var initSelectionRegion: Region
-
+  private val placeName: String = "settings"
   override fun createPanel(): DialogPanel {
     initSelectionLanguage = LocalizationUtil.getLocale()
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
-      LanguageAndRegionUi.createContent(this, null, disposable!!, null)
+      LanguageAndRegionUi.createContent(this, null, disposable!!, null, placeName)
     }
   }
 
   override fun apply() {
     super.apply()
-    if (initSelectionLanguage.toLanguageTag() != LocalizationUtil.getLocale().toLanguageTag() ||
-        initSelectionRegion != RegionSettings.getRegion()) {
+    val selectedLocale = LocalizationUtil.getLocale()
+    val selectedRegion = RegionSettings.getRegion()
+    if (initSelectionLanguage.toLanguageTag() != selectedLocale.toLanguageTag() ||
+        initSelectionRegion != selectedRegion) {
+      LanguageAndRegionSettingsStatistics(placeName).settingsUpdated(selectedLocale, initSelectionLanguage, selectedRegion, initSelectionRegion)
       application.invokeLater {
         application.service<RestartDialog>().showRestartRequired()
       }

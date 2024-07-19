@@ -7,6 +7,7 @@ import com.intellij.ide.LanguageAndRegionBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
 import com.intellij.ide.gdpr.EndUserAgreement
+import com.intellij.ide.ui.localization.statistics.LanguageRegionBeforeEuaStatistics
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.ui.DialogWrapper
@@ -30,14 +31,18 @@ import java.awt.Graphics
 import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
+import javax.swing.event.HyperlinkEvent
 
 private val languageMapping = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans"), Locale.JAPANESE to listOf("ja"),
                                     Locale.KOREAN to listOf("ko"))
 private val regionMapping = mapOf(Region.CHINA to "CN")
 
-private class LanguageAndRegionDialog(private var selectedLanguage: Locale, private var selectedRegion: Region) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
+private class LanguageAndRegionDialog(private var selectedLanguage: Locale, private var selectedRegion: Region, osLocale: Locale) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
+  private val localizationStatistics = LanguageRegionBeforeEuaStatistics()
+
   init {
     isResizable = false
+    localizationStatistics.dialogInitializationStarted(osLocale, selectedLanguage, selectedRegion)
     init()
   }
 
@@ -61,7 +66,9 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
         cell(header).align(Align.CENTER)
       }
       row {
-        text(getMessageBundle().getString("description.language.and.region"))
+        text(getMessageBundle().getString("description.language.and.region")).apply {
+          component.addHyperlinkListener { e -> if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) localizationStatistics.hyperLinkActivated() }
+        }
       }
     }.withPreferredWidth(350), VerticalLayout.CENTER)
 
@@ -98,11 +105,13 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
       .setResizable(false)
       .setCancelOnClickOutside(true)
       .setItemChosenCallback {
+        localizationStatistics.regionSelected(it, selectedRegion)
         selectedRegion = it
         button.text = getRegionLabel(it)
       }
       .createPopup()
     popup.show(RelativePoint.getSouthWestOf(button))
+    localizationStatistics.regionExpanded()
   }
 
   private fun createLanguagePopup(button: JButton) {
@@ -118,6 +127,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
       .setResizable(false)
       .setCancelOnClickOutside(true)
       .setItemChosenCallback {
+        localizationStatistics.languageSelected(it, selectedLanguage)
         selectedLanguage = it
         contentPanel.removeAll()
         val panel = createCenterPanel()
@@ -128,6 +138,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
       }
       .createPopup()
     popup.show(RelativePoint.getSouthWestOf(button))
+    localizationStatistics.languageExpanded()
   }
 
   private fun createRendererComponent(@Nls value: String, list: JComponent, selected: Boolean): JComponent {
@@ -149,16 +160,23 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
   private fun getRegionName(region: Region): String {
     return getMessageBundle().getString(region.displayKey)
   }
-  
+
+  @Nls
   private fun getRegionLabel(region: Region): String {
     return getMessageBundle().getString(if (region == Region.NOT_SET) "title.region.not.set.label" else region.displayKey)
   }
 
 
   override fun doOKAction() {
+    localizationStatistics.nextButtonPressed(selectedLanguage, selectedRegion)
     LocalizationStateService.getInstance()?.setSelectedLocale(selectedLanguage.toLanguageTag())
     RegionSettings.setRegion(selectedRegion)
     super.doOKAction()
+  }
+
+  override fun doCancelAction() {
+    localizationStatistics.dialogClosedWithoutConfirmation(selectedLanguage, selectedRegion)
+    super.doCancelAction()
   }
 
   private fun getMessageBundle() = DynamicBundle.getResourceBundleLocalized(this::class.java.classLoader, LanguageAndRegionBundle.BUNDLE_FQN, selectedLanguage)
@@ -182,7 +200,7 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
   if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
   return suspend {
     withContext(RawSwingDispatcher) {
-      LanguageAndRegionDialog(matchingLocale, matchingRegion).showAndGet()
+      LanguageAndRegionDialog(matchingLocale, matchingRegion, locale).showAndGet()
     }
   }
 }

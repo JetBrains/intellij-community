@@ -260,7 +260,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
       }
 
       header(IdeBundle.message("title.language.and.region"))
-      LanguageAndRegionUi.createContent(this, propertyGraph, parentDisposable, lafConnection)
+      LanguageAndRegionUi.createContent(this, propertyGraph, parentDisposable, lafConnection, "welcome.customize.tab")
 
       header(IdeBundle.message("title.accessibility"))
 
