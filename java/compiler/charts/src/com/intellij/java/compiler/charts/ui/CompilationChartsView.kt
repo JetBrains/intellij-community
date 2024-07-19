@@ -4,6 +4,7 @@ package com.intellij.java.compiler.charts.ui
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.CPU
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.CpuMemoryStatisticsType.MEMORY
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -24,11 +25,16 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       border = JBUI.Borders.empty()
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
       name = "compilation-charts-scroll-pane"
+
+      val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(horizontalScrollBar)
+      addMouseWheelListener(rightAdhesionScrollBarListener)
+      horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     }
     val diagrams = CompilationChartsDiagramsComponent(vm, zoom, scroll.viewport).apply {
       name = "compilation-charts-diagrams-component"
       isFocusable = true
     }
+
     scroll.setViewportView(diagrams)
 
     val panel = ActionPanel(project, vm, diagrams)
@@ -77,6 +83,10 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       diagrams.cpuMemory = filter
       diagrams.updateView()
     }
+  }
+
+  companion object {
+    val LOG = Logger.getInstance(CompilationChartsView::class.java)
   }
 }
 
