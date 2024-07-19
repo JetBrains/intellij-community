@@ -28,10 +28,12 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.nanoseconds
 
 private val FileEditor.description: String
   get() = "${hashCode()} ${javaClass} ${toString()}"
@@ -110,7 +112,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       @Suppress("UsePropertyAccessSyntax")  // inhibit weak warning, for property access is a warning
       if (sessions.isEmpty()) {
         LOG.info("Highlighting done")
-        LOG.info("Total opening time is : ${Duration.ofNanos(System.nanoTime() - StartUpMeasurer.getStartTime()).toMillis()}")
+        LOG.info("Total opening time is : ${(System.nanoTime() - StartUpMeasurer.getStartTime()).nanoseconds.inWholeMilliseconds}")
         highlightingFinishedEverywhere.release()
         locked = false
       }
@@ -127,17 +129,16 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  fun waitAnalysisToFinish() {
-    LOG.info("Waiting for code analysis to finish")
+  fun waitAnalysisToFinish(timeout: Duration = 5.minutes) {
+    LOG.info("Waiting for code analysis to finish in $timeout")
     if (LightEdit.owns(project)) {
       return
     }
-    val timeout: Long = 5
-    if (highlightingFinishedEverywhere.tryAcquire(timeout, TimeUnit.MINUTES)) {
+    if (highlightingFinishedEverywhere.tryAcquire(timeout.inWholeSeconds, TimeUnit.SECONDS)) {
       highlightingFinishedEverywhere.release()
     }
     else {
-      LOG.error("Waiting for highlight to finish took more than $timeout minutes.")
+      LOG.error("Waiting for highlight to finish took more than $timeout.")
     }
     LOG.info("Code analysis finished")
   }
