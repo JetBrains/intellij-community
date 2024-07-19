@@ -1887,6 +1887,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     myIndexableFilesFilterHolder.ensureFileIdPresent(fileId, () -> containingProjects);
     Project projectForFile = ContainerUtil.getFirstItem(containingProjects);
+    if (LOG.isTraceEnabled() && containingProjects.size() > 1) {
+      LOG.trace("File " + fileId + " belongs to " + containingProjects.size() + " projects. " +
+                "Indexing in " + projectForFile.getLocationHash());
+    }
 
     var indexingRequest = projectForFile.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     var indexingStamp = indexingRequest.getFileIndexingStamp(file);
