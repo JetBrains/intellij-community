@@ -1,6 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "FunctionName", "ReplaceGetOrSet", "ReplacePutWithAssignment")
-
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ide
 
 import com.intellij.codeWithMe.ClientId
@@ -124,7 +123,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   private var inputMethodLock = 0
   private val postEventListeners = ContainerUtil.createLockFreeCopyOnWriteList<PostEventHook>()
   private val runnablesWaitingFocusChange = HashMap<AWTEvent, MutableList<Runnable>>()
-
   private val focusEventList = ConcurrentLinkedQueue<AWTEvent>()
 
   @Internal
@@ -134,8 +132,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   private var idleTracker: () -> Unit = {}
-
-
   private var testMode: Boolean? = null
 
   init {
@@ -148,7 +144,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     replaceDefaultKeyboardFocusManager()
     addDispatcher(WindowsAltSuppressor(), null)
     if (SystemInfoRt.isWindows && java.lang.Boolean.parseBoolean(System.getProperty("keymap.windows.up.to.maximize.dialogs", "true"))) {
-      // 'Windows+Up' shortcut would maximize active dialog under Win 7+
+      // 'Windows+Up' shortcut would maximize the active dialog under Win 7+
       addDispatcher(WindowsUpMaximizer(), null)
     }
     addDispatcher(EditingCanceller(), null)
@@ -165,7 +161,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     @JvmStatic
     fun getInstance(): IdeEventQueue = _instance
 
-    // used for GuiTests to stop IdeEventQueue when application is disposed already
+    @Internal
     @JvmStatic
     fun applicationClose() {
       appIsLoaded = false
@@ -205,9 +201,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     )
   }
 
-  private fun runnablesWaitingForFocusChangeState(): String {
-    return focusEventList.joinToString(separator = ", ") { event -> "[${event.id}; ${event.source.javaClass.name}]" }
-  }
+  private fun runnablesWaitingForFocusChangeState(): String =
+    focusEventList.joinToString(separator = ", ") { event -> "[${event.id}; ${event.source.javaClass.name}]" }
 
   private inline fun ifFocusEventsInTheQueue(yes: (AWTEvent) -> Unit, no: Runnable) {
     val lastFocusGainedEvent = focusEventList.lastOrNull { it.id == FocusEvent.FOCUS_GAINED }
@@ -251,7 +246,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   fun addDispatcher(dispatcher: EventDispatcher, parent: Disposable?) {
-    _addProcessor(dispatcher, parent, dispatchers)
+    addProcessor(dispatcher, parent, dispatchers)
   }
 
   fun addDispatcher(dispatcher: EventDispatcher, scope: CoroutineScope) {
@@ -265,12 +260,10 @@ class IdeEventQueue private constructor() : EventQueue() {
     dispatchers.remove(dispatcher)
   }
 
-  fun containsDispatcher(dispatcher: EventDispatcher): Boolean {
-    return dispatchers.contains(dispatcher)
-  }
+  fun containsDispatcher(dispatcher: EventDispatcher): Boolean = dispatchers.contains(dispatcher)
 
   fun addPostprocessor(dispatcher: EventDispatcher, parent: Disposable?) {
-    _addProcessor(dispatcher, parent, postProcessors)
+    addProcessor(dispatcher, parent, postProcessors)
   }
 
   fun addPostprocessor(dispatcher: EventDispatcher, coroutineScope: CoroutineScope) {
@@ -285,7 +278,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   fun addPreprocessor(dispatcher: EventDispatcher, parent: Disposable?) {
-    _addProcessor(dispatcher, parent, preProcessors)
+    addProcessor(dispatcher, parent, preProcessors)
   }
 
   public override fun dispatchEvent(e: AWTEvent) {
@@ -434,6 +427,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private fun onFocusEvent(event: AWTEvent) {
     Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState() }
     val events = mutableListOf<AWTEvent>()
+    @Suppress("UsePropertyAccessSyntax")
     while (!focusEventList.isEmpty()) {
       val f = focusEventList.poll()
       events.add(f)
@@ -465,6 +459,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     lastEventTime = now
   }
 
+  @Suppress("UsePropertyAccessSyntax")
   override fun getNextEvent(): AWTEvent {
     val event = if (isImplicitReadOnEDTDisabled) {
       super.getNextEvent()
@@ -499,13 +494,10 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   /**
-   * Here we try to use 'Windows' a key like modifier, so we patch events with modifier 'Meta'
-   * when 'Windows' key was pressed and still is not released.
+   * Here we try to use the 'Windows' key like a modifier, so we patch events with modifier 'Meta'
+   * when the 'Windows' key was pressed and is still not released.
    *
-   * @param e event to be patched
-   * @return new 'patched' event if you need, otherwise null
-   *
-   * Note: As a side effect, this method tracks a special flag for 'Windows' key state that is valuable in itself
+   * Note: As a side effect, this method tracks a special flag for the 'Windows' key state that is valuable in itself.
    */
   private fun mapMetaState(e: AWTEvent): AWTEvent? {
     if (winMetaPressed) {
@@ -526,18 +518,15 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
       if (winMetaPressed) {
         @Suppress("DEPRECATION")
-        return KeyEvent(e.component, e.id, e.getWhen(), UIUtil.getAllModifiers(e) or Event.META_MASK,
-                        e.keyCode,
-                        e.keyChar, e.keyLocation)
+        return KeyEvent(e.component, e.id, e.getWhen(), UIUtil.getAllModifiers(e) or Event.META_MASK, e.keyCode, e.keyChar, e.keyLocation)
       }
     }
 
     if (winMetaPressed && e is MouseEvent && e.button != 0) {
       @Suppress("DEPRECATION")
-      return MouseEvent(e.component, e.id, e.getWhen(), UIUtil.getAllModifiers(e) or Event.META_MASK,
-                        e.x, e.y,
-                        e.clickCount, e.isPopupTrigger, e.button)
+      return MouseEvent(e.component, e.id, e.getWhen(), UIUtil.getAllModifiers(e) or Event.META_MASK, e.x, e.y, e.clickCount, e.isPopupTrigger, e.button)
     }
+
     return null
   }
 
@@ -570,7 +559,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     if (e is WindowEvent) {
-      // Activation can call methods which needs WriteIntent, like saving project
+      // app activation can call methods that need write intent (like project saving)
       threadingSupport.runWriteIntentReadAction<Unit, Throwable> { processAppActivationEvent(e) }
     }
     if (dispatchByCustomDispatchers(e)) {
@@ -640,9 +629,9 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   /**
-   * [java.awt.LightweightDispatcher.processMouseEvent] uses a recent 'active' component
-   * from inner WeakReference (see [LightweightDispatcher.mouseEventTarget]) even if the component has been already removed from component hierarchy.
-   * So we have to reset this WeakReference with synthetic event just before processing of the actual event
+   * [java.awt.LightweightDispatcher.processMouseEvent] uses a recent 'active' component from inner `WeakReference`
+   * (see [LightweightDispatcher.mouseEventTarget]), even if the component has been already removed from component hierarchy.
+   * So we have to reset this WeakReference with a synthetic event just before processing the actual one.
    */
   private fun resetGlobalMouseEventTarget(me: MouseEvent) {
     super.dispatchEvent(MouseEvent(me.component, MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.x, me.y, 0, false, 0))
@@ -682,8 +671,8 @@ class IdeEventQueue private constructor() : EventQueue() {
   private fun defaultDispatchEvent(e: AWTEvent) {
     try {
       maybeReady()
-      val me = if (e is MouseEvent) e else null
-      val ke = if (e is KeyEvent) e else null
+      val me = e as? MouseEvent
+      val ke = e as? KeyEvent
       val consumed = ke == null || ke.isConsumed
       if (me != null && (me.isPopupTrigger || e.id == MouseEvent.MOUSE_PRESSED) ||
           ke != null /*&& ke.keyCode == KeyEvent.VK_CONTEXT_MENU*/) {
@@ -697,7 +686,7 @@ class IdeEventQueue private constructor() : EventQueue() {
         }
       }
       super.dispatchEvent(e)
-      // collect mnemonics statistics only if key event was processed above
+      // collect mnemonics statistics only if a key event was processed above
       if (!consumed && ke!!.isConsumed && KeyEvent.KEY_PRESSED == ke.id) {
         logMnemonicUsed(ke)
       }
@@ -857,10 +846,10 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (!ClientId.propagateAcrossThreads) {
       return null
     }
-    // We don't 'attach' current client id to PeerEvent instances for two reasons.
-    // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
-    // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
-    // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
+    // We don't 'attach' a current client ID to `PeerEvent` instances for two reasons.
+    // First, they are often posted to `EventQueue` indirectly (first to `sun.awt.PostEventQueue`, and then to the `EventQueue` by
+    // `SunToolkit#flushPendingEvents`), so a current client ID might be unrelated to the code that created those events.
+    // Second, just wrapping `PeerEvent` into a new `InvocationEvent` loses the information about priority kept in the former
     // and changes the overall events' processing order.
     if (event is InvocationEvent && event !is PeerEvent) {
       val runnable = InvocationUtil.extractRunnable(event)
@@ -944,7 +933,7 @@ private object Logs {
 
 /**
  * An absolute guru API, please avoid using it at all costs.
- * @return true, if event is handled by the listener and shouldn't be added to an event queue at all
+ * @return true, if the event is handled by the listener and shouldn't be added to an event queue at all
  */
 typealias PostEventHook = (event: AWTEvent) -> Boolean
 
@@ -974,9 +963,7 @@ private fun skipMoveResizeEvents(event: AWTEvent): Boolean {
   return false
 }
 
-private fun _addProcessor(dispatcher: IdeEventQueue.EventDispatcher,
-                          parent: Disposable?,
-                          set: MutableCollection<IdeEventQueue.EventDispatcher>) {
+private fun addProcessor(dispatcher: IdeEventQueue.EventDispatcher, parent: Disposable?, set: MutableCollection<IdeEventQueue.EventDispatcher>) {
   set.add(dispatcher)
   if (parent != null) {
     Disposer.register(parent) { set.remove(dispatcher) }
@@ -1048,20 +1035,16 @@ private fun mapEvent(e: AWTEvent): AWTEvent {
 
 private fun mapXWindowMouseEvent(src: MouseEvent): AWTEvent {
   if (src.button < 6) {
-    // Convert these events (buttons 4&5 in are produced by touchpad, they must be converted to horizontal scrolling events
-    @Suppress("DEPRECATION")
-    return MouseWheelEvent(src.component, MouseEvent.MOUSE_WHEEL, src.getWhen(),
-                           src.modifiers or InputEvent.SHIFT_DOWN_MASK, src.x, src.y,
-                           0, false, MouseWheelEvent.WHEEL_UNIT_SCROLL, src.clickCount,
-                           if (src.button == 4) -1 else 1)
+    // buttons 4-5 come from touchpad, they must be converted to horizontal scrolling events
+    @Suppress("DEPRECATION") val modifiers = src.modifiers or InputEvent.SHIFT_DOWN_MASK
+    return MouseWheelEvent(src.component, MouseEvent.MOUSE_WHEEL, src.getWhen(), modifiers, src.x, src.y, 0, false,
+                           MouseWheelEvent.WHEEL_UNIT_SCROLL, src.clickCount, if (src.button == 4) -1 else 1)
   }
   else {
     // Here we "shift" events with buttons `6` and `7` to similar events with buttons 4 and 5
-    // See java.awt.InputEvent#BUTTON_DOWN_MASK, 1<<14 is 4th physical button, 1<<15 is 5th.
-    @Suppress("DEPRECATION")
-    return MouseEvent(src.component, src.id, src.getWhen(),
-                      src.modifiers or (1 shl 8 + src.button),
-                      src.x, src.y, 1, src.isPopupTrigger, src.button - 2)
+    // See `java.awt.InputEvent#BUTTON_DOWN_MASK`, 1<<14 is the 4th physical button, 1<<15 is the 5th.
+    @Suppress("DEPRECATION") val modifiers = src.modifiers or (1 shl 8 + src.button)
+    return MouseEvent(src.component, src.id, src.getWhen(), modifiers, src.x, src.y, 1, src.isPopupTrigger, src.button - 2)
   }
 }
 
@@ -1168,10 +1151,12 @@ internal var skipWindowDeactivationEvents: Boolean = false
 
 // we have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
 private class EditingCanceller : IdeEventQueue.EventDispatcher {
-  override fun dispatch(e: AWTEvent): Boolean {
-    return e is KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && e.keyCode == KeyEvent.VK_ESCAPE &&
-           !IdeEventQueue.getInstance().popupManager.isPopupActive && cancelCellEditing()
-  }
+  override fun dispatch(e: AWTEvent): Boolean =
+    e is KeyEvent &&
+    e.getID() == KeyEvent.KEY_PRESSED &&
+    e.keyCode == KeyEvent.VK_ESCAPE &&
+    !IdeEventQueue.getInstance().popupManager.isPopupActive &&
+    cancelCellEditing()
 }
 
 private fun cancelCellEditing(): Boolean {
@@ -1251,15 +1236,16 @@ private class ComponentEventWithClientId(source: Component, id: Int, val clientI
 
 @Suppress("SpellCheckingInspection")
 private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
-  // We need to track if there are KeyBoardEvents in IdeEventQueue
-  // So we want to intercept all events posted to IdeEventQueue and increment counters,
+  // We need to track if there are KeyBoardEvents in `IdeEventQueue`,
+  // so we want to intercept all events posted to `IdeEventQueue` and increment counters.
   // However, the regular control flow goes like this:
-  //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
+  //   PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() ->
+  //     we missed the event because `postEventPrivate()` can't be overridden.
   // Instead, we do the following:
-  //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
-  //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
-  // After that the control flow goes like this:
-  //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
+  // - create a new `PostEventQueue` holding our `IdeEventQueue` instead of old `EventQueue`
+  // - replace `PostEventQueue` value in `AppContext` with this new `PostEventQueue`
+  // After that, the control flow goes like this:
+  //   PostEventQueue.flush() -> IdeEventQueue.postEvent() -> we intercepted the event and incremented counters.
   val aClass = Class.forName("sun.awt.PostEventQueue")
   val constructor = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
     .findConstructor(aClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))

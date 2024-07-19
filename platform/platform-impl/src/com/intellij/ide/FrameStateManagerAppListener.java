@@ -27,13 +27,13 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
         return;
       }
 
-      WindowEvent windowEvent = (WindowEvent)e;
-      IdeFrame frame = ProjectUtil.getRootFrameForWindow(windowEvent.getWindow());
+      var windowEvent = (WindowEvent)e;
+      var frame = ProjectUtil.getRootFrameForWindow(windowEvent.getWindow());
       if (frame == null) {
         return;
       }
 
-      IdeFrame otherFrame = ProjectUtil.getRootFrameForWindow(windowEvent.getOppositeWindow());
+      var otherFrame = ProjectUtil.getRootFrameForWindow(windowEvent.getOppositeWindow());
       if (frame == otherFrame) {
         return;
       }
@@ -52,6 +52,7 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void applicationActivated(@NotNull IdeFrame ideFrame) {
     if (isDisposed()) {
       return;
@@ -66,6 +67,7 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
     if (isDisposed()) {
       return;

@@ -3786,7 +3786,6 @@ f:com.intellij.ide.IdeEventQueue
 - f:addPostprocessor(com.intellij.ide.IdeEventQueue$EventDispatcher,com.intellij.openapi.Disposable):V
 - f:addPostprocessor(com.intellij.ide.IdeEventQueue$EventDispatcher,kotlinx.coroutines.CoroutineScope):V
 - f:addPreprocessor(com.intellij.ide.IdeEventQueue$EventDispatcher,com.intellij.openapi.Disposable):V
-- sf:applicationClose():V
 - f:blockNextEvents(java.awt.event.MouseEvent):V
 - f:blockNextEvents(java.awt.event.MouseEvent,com.intellij.ide.IdeEventQueue$BlockMode):V
 - bs:blockNextEvents$default(com.intellij.ide.IdeEventQueue,java.awt.event.MouseEvent,com.intellij.ide.IdeEventQueue$BlockMode,I,java.lang.Object):V
@@ -3826,7 +3825,6 @@ e:com.intellij.ide.IdeEventQueue$BlockMode
 - s:valueOf(java.lang.String):com.intellij.ide.IdeEventQueue$BlockMode
 - s:values():com.intellij.ide.IdeEventQueue$BlockMode[]
 f:com.intellij.ide.IdeEventQueue$Companion
-- f:applicationClose():V
 - f:getInstance():com.intellij.ide.IdeEventQueue
 com.intellij.ide.IdeEventQueue$EventDispatcher
 - a:dispatch(java.awt.AWTEvent):Z

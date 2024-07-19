@@ -1404,7 +1404,6 @@ com.intellij.openapi.application.ApplicationListener
 - writeActionFinished(java.lang.Object):V
 - writeActionStarted(java.lang.Object):V
 c:com.intellij.openapi.application.ApplicationManager
-- ps:ourApplication:com.intellij.openapi.application.Application
 - <init>():V
 - s:getApplication():com.intellij.openapi.application.Application
 - s:setApplication(com.intellij.openapi.application.Application,com.intellij.openapi.Disposable):V

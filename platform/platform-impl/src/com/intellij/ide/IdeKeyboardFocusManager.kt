@@ -35,8 +35,7 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
         e.changeFlags.toInt().and(DISPLAYABILITY_CHANGED or SHOWING_CHANGED) == DISPLAYABILITY_CHANGED &&
         isRecursivelyVisibleViaShowingContainer(e.component)) {
       // Hack to support SHOWING_CHANGED event generation for ShowingContainer
-      val patchedEvent = HierarchyEvent(e.component, e.id, e.changed, e.changedParent,
-                                        e.changeFlags.or(SHOWING_CHANGED.toLong()))
+      val patchedEvent = HierarchyEvent(e.component, e.id, e.changed, e.changedParent, e.changeFlags.or(SHOWING_CHANGED.toLong()))
       e.component.dispatchEvent(patchedEvent)
       return true
     }
