@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.impl.heavy.attributes;
 
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOverBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagedStorage;
@@ -29,14 +31,13 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageLockFreeTest
   }
 
   @Override
-  protected AttributesStorageOverBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
-    final PagedFileStorageWithRWLockedPageContent pagedStorage =
-      new PagedFileStorageWithRWLockedPageContent(
-        this.storagePath,
-        LOCK_CONTEXT,
-        PAGE_SIZE,
-        PageContentLockingStrategy.LOCK_PER_PAGE
-      );
+  protected AttributesStorageOverBlobStorage openAttributesStorage(Path storagePath) throws IOException {
+    PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
+      storagePath,
+      LOCK_CONTEXT,
+      PAGE_SIZE,
+      PageContentLockingStrategy.LOCK_PER_PAGE
+    );
     storage = new StreamlinedBlobStorageOverLockFreePagedStorage(
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(64, 256, StreamlinedBlobStorageHelper.MAX_CAPACITY, 30)

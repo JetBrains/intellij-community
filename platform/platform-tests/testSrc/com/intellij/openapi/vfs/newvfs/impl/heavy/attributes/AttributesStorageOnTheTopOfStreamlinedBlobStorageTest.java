@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.impl.heavy.attributes;
 
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase;
+import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOverBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
@@ -13,8 +15,8 @@ import java.nio.file.Path;
  */
 public class AttributesStorageOnTheTopOfStreamlinedBlobStorageTest extends AttributesStorageOnTheTopOfBlobStorageTestBase {
   @Override
-  protected AttributesStorageOverBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
-    final PagedFileStorage pagedStorage = new PagedFileStorage(
+  protected AttributesStorageOverBlobStorage openAttributesStorage(Path storagePath) throws IOException {
+    PagedFileStorage pagedStorage = new PagedFileStorage(
       storagePath,
       LOCK_CONTEXT,
       PAGE_SIZE,
