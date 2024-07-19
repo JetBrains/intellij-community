@@ -127,7 +127,12 @@ class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, D
     // todo +- here... shouldnt be
     SvnAuthenticationNotifier.getInstance(project).clear()
 
-    myZipperUpdater.queue(myRechecker)
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      myRechecker.run()
+    }
+    else {
+      myZipperUpdater.queue(myRechecker)
+    }
   }
 
   companion object {
