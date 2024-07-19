@@ -437,7 +437,6 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:JavaClass:javax.swing.Icon
 - sf:JavaOutsideSource:javax.swing.Icon
 - sf:JavaScript:javax.swing.Icon
-- sf:Jest:javax.swing.Icon
 - sf:Jfr:javax.swing.Icon
 - sf:Json:javax.swing.Icon
 - sf:JsonSchema:javax.swing.Icon
@@ -448,10 +447,7 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:MicrosoftWindows:javax.swing.Icon
 - sf:Perl:javax.swing.Icon
 - sf:Properties:javax.swing.Icon
-- sf:React:javax.swing.Icon
 - sf:Regexp:javax.swing.Icon
-- sf:Sbt:javax.swing.Icon
-- sf:Scala:javax.swing.Icon
 - sf:SourceMap:javax.swing.Icon
 - sf:Text:javax.swing.Icon
 - sf:UiForm:javax.swing.Icon

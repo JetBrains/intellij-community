@@ -5,10 +5,7 @@
     },
     "fileTypes": {
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
-      "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "less.svg": "icons/less.svg",
-      "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
-      "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
       "vueJs.svg": "icons/vue.svg",
       "yarn.svg": "icons/nodejs/yarn.svg"
     },

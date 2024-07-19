@@ -231,7 +231,6 @@
       ],
       "javaClass.svg": "fileTypes/javaClass.svg",
       "javaScript.svg": "fileTypes/javaScript.svg",
-      "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "jfr.svg": "fileTypes/jfr.svg",
       "json.svg": "fileTypes/json.svg",
       "jsonSchema.svg": "fileTypes/jsonSchema.svg",
@@ -243,9 +242,7 @@
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
       "properties.svg": "fileTypes/properties.svg",
-      "react.svg": "org/jetbrains/kotlin/idea/icons/wizard/react.svg",
       "regexp.svg": "fileTypes/regexp.svg",
-      "scala.svg": "org/jetbrains/plugins/scala/images/scala16.png",
       "scratch.svg": "actions/scratch.svg",
       "scratches.svg": "scope/scratches.svg",
       "shell.svg": [

@@ -475,7 +475,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon JavaClass = load("fileTypes/javaClass.svg", "expui/", -776048542, 0);
     /** 16x16 */ public static final @NotNull Icon JavaOutsideSource = load("fileTypes/javaOutsideSource.svg", "expui/fileTypes/java.svg", 192400757, 0);
     /** 16x16 */ public static final @NotNull Icon JavaScript = load("fileTypes/javaScript.svg", "expui/", -605773144, 0);
-    /** 16x16 */ public static final @NotNull Icon Jest = load("expui/fileTypes/jest.svg", -785448814, 0);
     /** 16x16 */ public static final @NotNull Icon Jfr = load("fileTypes/jfr.svg", "expui/", 243156876, 0);
     /** 16x16 */ public static final @NotNull Icon Json = load("fileTypes/json.svg", "expui/", -1463584567, 2);
     /** 16x16 */ public static final @NotNull Icon JsonSchema = load("fileTypes/jsonSchema.svg", "expui/", -2026062432, 2);
@@ -486,10 +485,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MicrosoftWindows = load("fileTypes/microsoftWindows.svg", "expui/", 10953923, 0);
     /** 16x16 */ public static final @NotNull Icon Perl = load("expui/fileTypes/perl.svg", -895068164, 2);
     /** 16x16 */ public static final @NotNull Icon Properties = load("fileTypes/properties.svg", "expui/", -1983560201, 0);
-    /** 16x16 */ public static final @NotNull Icon React = load("expui/fileTypes/react.svg", 1557250859, 2);
     /** 16x16 */ public static final @NotNull Icon Regexp = load("fileTypes/regexp.svg", "expui/", -1788323989, 0);
-    /** 16x16 */ public static final @NotNull Icon Sbt = load("expui/fileTypes/sbt.svg", 383110762, 2);
-    /** 16x16 */ public static final @NotNull Icon Scala = load("expui/fileTypes/scala.svg", 736680762, 2);
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -252663656, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("fileTypes/text.svg", "expui/", -444897274, 0);
     /** 16x16 */ public static final @NotNull Icon UiForm = load("fileTypes/uiForm.svg", "expui/", -734581860, 0);
