@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
 import com.intellij.ide.RegionSettings.RegionSettingsListener
+import com.intellij.ide.ui.localization.statistics.EventSource
 import com.intellij.ide.ui.localization.statistics.LanguageAndRegionSettingsStatistics
 import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
@@ -46,8 +47,8 @@ import javax.swing.event.PopupMenuEvent
 @Internal
 class LanguageAndRegionUi {
   companion object {
-    fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable, connection: MessageBusConnection?, place: String) {
-      val statistics = LanguageAndRegionSettingsStatistics(place)
+    fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable, connection: MessageBusConnection?, source: EventSource) {
+      val statistics = LanguageAndRegionSettingsStatistics(source)
       val comboGroup = "language_and_region_combo"
 
       panel.row(IdeBundle.message("combobox.language")) {
@@ -200,13 +201,13 @@ internal class LanguageAndRegionConfigurable :
   BoundSearchableConfigurable(IdeBundle.message("title.language.and.region"), "language-region-settings", "preferences.language.and.region") {
   private lateinit var initSelectionLanguage: Locale
   private lateinit var initSelectionRegion: Region
-  private val placeName: String = "settings"
+  private val eventSource: EventSource = EventSource.SETTINGS
   override fun createPanel(): DialogPanel {
     initSelectionLanguage = LocalizationUtil.getLocale()
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
-      LanguageAndRegionUi.createContent(this, null, disposable!!, null, placeName)
+      LanguageAndRegionUi.createContent(this, null, disposable!!, null, eventSource)
     }
   }
 
@@ -216,7 +217,7 @@ internal class LanguageAndRegionConfigurable :
     val selectedRegion = RegionSettings.getRegion()
     if (initSelectionLanguage.toLanguageTag() != selectedLocale.toLanguageTag() ||
         initSelectionRegion != selectedRegion) {
-      LanguageAndRegionSettingsStatistics(placeName).settingsUpdated(selectedLocale, initSelectionLanguage, selectedRegion, initSelectionRegion)
+      LanguageAndRegionSettingsStatistics(eventSource).settingsUpdated(selectedLocale, initSelectionLanguage, selectedRegion, initSelectionRegion)
       application.invokeLater {
         application.service<RestartDialog>().showRestartRequired()
       }

@@ -3,7 +3,6 @@ package com.intellij.ide.ui.localization.statistics
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.Region
-import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -21,23 +20,21 @@ internal class LanguageRegionBeforeEuaStatistics : LocalizationStatistics() {
   private val detectedLang: StringEventField = EventFields.String("detected.language", availableLanguages)
   private val detectedRegion: StringEventField = EventFields.String("detected.region", Region.entries.map { it.externalName() })
 
-  private val localizationBeforeEuaGroup = EventLogGroup("localization.before.eua.info", 1)
-
-
-  private val nextButtonPressed: VarargEventId = localizationBeforeEuaGroup.registerVarargEvent("next.button.pressed", selectedLang, selectedRegion, eventTimestamp, EventFields.DurationMs)
-  private val dialogClosedWithoutConfirmation: VarargEventId = localizationBeforeEuaGroup.registerVarargEvent("dialog.closed.without.confirmation", selectedLang, selectedRegion, eventTimestamp, EventFields.DurationMs)
-  private val languageAndRegionBeforeEuaShownEvent: VarargEventId = localizationBeforeEuaGroup.registerVarargEvent("language.and.region.dialog.shown", osLang, osCountry, detectedLang, detectedRegion, eventTimestamp)
+  private val nextButtonPressed: VarargEventId = localizationActionsGroup.registerVarargEvent("next.button.pressed", selectedLang, selectedRegion, eventTimestamp, EventFields.DurationMs, eventSource)
+  private val dialogClosedWithoutConfirmation: VarargEventId = localizationActionsGroup.registerVarargEvent("dialog.closed.without.confirmation", selectedLang, selectedRegion, eventTimestamp, EventFields.DurationMs, eventSource)
+  private val languageAndRegionBeforeEuaShownEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("language.and.region.dialog.shown", osLang, osCountry, detectedLang, detectedRegion, eventTimestamp, eventSource)
 
   private var initializationStartedTimestamp: Long? = null
-  override fun getGroup(): EventLogGroup = localizationBeforeEuaGroup
 
   override fun logEvent(event: VarargEventId, params: List<EventPair<*>>) {
     invokeOnBackgroundWhenApplicationLoaded { event.log(params) }
   }
 
-  override fun logEvent(event: EventId) {
-    invokeOnBackgroundWhenApplicationLoaded { event.log() }
+  override fun logEvent(event: EventId1<EventSource>, eventSource: EventSource) {
+    invokeOnBackgroundWhenApplicationLoaded { event.log(eventSource) }
   }
+
+  override fun getSource(): EventSource = EventSource.PRE_EUA_DIALOG
 
 
   private fun invokeOnBackgroundWhenApplicationLoaded(action: Runnable) {
@@ -58,6 +55,7 @@ internal class LanguageRegionBeforeEuaStatistics : LocalizationStatistics() {
                .with(detectedLang, predefinedLocale.toLanguageTag())
                .with(detectedRegion, predefinedRegion.externalName())
                .with(eventTimestamp, initializationStartedTimestamp)
+               .with(eventSource, getSource())
                .list())
   }
 
@@ -69,6 +67,7 @@ internal class LanguageRegionBeforeEuaStatistics : LocalizationStatistics() {
                .with(selectedRegion, region.externalName())
                .with(eventTimestamp, timestamp)
                .with(EventFields.DurationMs, timestamp - initializationStartedTimestamp!!)
+               .with(eventSource, getSource())
                .list())
   }
 
@@ -80,6 +79,7 @@ internal class LanguageRegionBeforeEuaStatistics : LocalizationStatistics() {
                .with(selectedRegion, region.externalName())
                .with(eventTimestamp, timestamp)
                .with(EventFields.DurationMs, timestamp - initializationStartedTimestamp!!)
+               .with(eventSource, getSource())
                .list())
   }
 }

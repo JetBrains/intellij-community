@@ -2,17 +2,15 @@
 package com.intellij.ide.ui.localization.statistics
 
 import com.intellij.ide.Region
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventId
+import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import java.util.*
 
 
-internal class LanguageAndRegionSettingsStatistics(place: String) : LocalizationStatistics() {
+internal class LanguageAndRegionSettingsStatistics(private val source: EventSource) : LocalizationStatistics() {
 
-  private val localizationGroup = EventLogGroup("localization.$place.info", 1)
-  private val settingsApplied: VarargEventId = localizationGroup.registerVarargEvent("settings.applied", selectedLang, selectedLangPrev, selectedRegion, selectedRegionPrev)
+  private val settingsApplied: VarargEventId = localizationActionsGroup.registerVarargEvent("settings.applied", selectedLang, selectedLangPrev, selectedRegion, selectedRegionPrev, eventSource)
 
 
   fun settingsUpdated(locale: Locale, localePrev: Locale, region: Region, regionPrev: Region) {
@@ -21,6 +19,7 @@ internal class LanguageAndRegionSettingsStatistics(place: String) : Localization
       .with(selectedLangPrev, localePrev.toLanguageTag())
       .with(selectedRegion, region.externalName())
       .with(selectedRegionPrev, regionPrev.externalName())
+      .with(eventSource, source)
       .list())
   }
 
@@ -28,9 +27,9 @@ internal class LanguageAndRegionSettingsStatistics(place: String) : Localization
     event.log(params)
   }
 
-  override fun logEvent(event: EventId) {
-    event.log()
+  override fun logEvent(event: EventId1<EventSource>, eventSource: EventSource) {
+    event.log(eventSource)
   }
 
-  override fun getGroup(): EventLogGroup = localizationGroup
+  override fun getSource(): EventSource = source
 }
