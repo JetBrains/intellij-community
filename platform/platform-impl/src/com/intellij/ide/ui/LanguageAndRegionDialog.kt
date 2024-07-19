@@ -10,6 +10,7 @@ import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.ui.localization.statistics.LanguageRegionBeforeEuaStatistics
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
@@ -194,7 +195,8 @@ internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Docum
       val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
       matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
     }
-    catch (_: Throwable) {
+    catch (e: Throwable) {
+      logger<LanguageAndRegionDialog>().warn("Unable to resolve region from registry", e)
     }
   }
   if (matchingRegion == Region.NOT_SET && matchingLocale == Locale.ENGLISH) return null
