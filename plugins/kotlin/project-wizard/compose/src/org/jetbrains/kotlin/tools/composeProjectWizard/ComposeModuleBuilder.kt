@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import javax.swing.Icon
 
 class ComposeModuleBuilder : StarterModuleBuilder() {
@@ -76,7 +77,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
         assets.addAll(standardAssetsProvider.getGradlewAssets())
 
         if (starterContext.isCreatingNewProject) {
-            assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+            assets.addAll(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
         }
 
         assets.add(
