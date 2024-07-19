@@ -127,6 +127,9 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   /**
    * Returns all UiText objects matching the specified text without waiting.
+   * NB: In certain cases (e.g., console output) `getAllTest()` will not much `JEditorUiComponent.text`
+   * and `getAllTest()` will return only currently visible text.
+   *
    */
   fun getAllTexts(text: String): List<UiText> {
     return searchService.findAllText(component).map { UiText(this, it) }.filter { it.text == text }
