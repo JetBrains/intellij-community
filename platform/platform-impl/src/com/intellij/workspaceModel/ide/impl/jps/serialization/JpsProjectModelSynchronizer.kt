@@ -14,6 +14,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -192,6 +193,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       val workspaceModelImpl = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
       val moduleManagerEx = ModuleManagerEx.getInstanceEx(project)
       // TODO If we don't have changes in [UNLOAD] part, it doesn't make sense to use this method
+      val moduleEntities = calculationResult.builderSnapshot.builder.entities(ModuleEntity::class.java).toList()
+      thisLogger().debug("Applying read ModuleEntities: ${moduleEntities.size} [${moduleEntities.joinToString { it.name }}] and entitySources: [${moduleEntities.joinToString { it.entitySource.toString() }}]")
       val isSuccessful = workspaceModelImpl.replaceProjectModel(calculationResult.builderSnapshot.getStorageReplacement(),
                                                                 calculationResult.unloadBuilderSnapshot.getStorageReplacement())
       if (!isSuccessful) return false

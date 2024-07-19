@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
@@ -122,7 +123,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       val assertConsistencyDuration = measureTime { storage.assertConsistency() }
 
       val moduleEntities = storage.entities(ModuleEntity::class.java).toList()
-      LOG.info("Saving WSM caches with ${moduleEntities.size} modules [${moduleEntities.joinToString { it.name }}]")
+      LOG.info("Saving WSM caches with ${moduleEntities.size} modules [${moduleEntities.joinToString { it.name }}] and entitySources: [${moduleEntities.joinToString { it.entitySource.toString() }}]")
       val (timeMs, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
       WorkspaceModelFusLogger.logCacheSave(timeMs + assertConsistencyDuration.inWholeMilliseconds, size ?: -1)
       if (!(unloadedStorage as EntityStorageInstrumentation).isEmpty()) {
