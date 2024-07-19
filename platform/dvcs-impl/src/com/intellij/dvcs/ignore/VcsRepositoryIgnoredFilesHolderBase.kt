@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
@@ -13,8 +12,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.EventDispatcher
-import com.intellij.util.TimeoutUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.Update
@@ -22,10 +19,8 @@ import com.intellij.vcsUtil.VcsFileUtilKt.isUnder
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
-import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -239,25 +234,6 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       awaitLatch.await()
       listeners.removeListener(this)
     }
-  }
-
-  @TestOnly
-  fun startRescanAndWait() {
-    assert(ApplicationManager.getApplication().isUnitTestMode)
-    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
-    updateQueue.flush()
-    while (updateQueue.isFlushing) {
-      TimeoutUtil.sleep(100)
-    }
-    val waiter = createWaiter()
-    AppExecutorUtil.getAppScheduledExecutorService().schedule({ startRescan() }, 1, TimeUnit.SECONDS)
-    waiter.waitFor()
-  }
-
-  @TestOnly
-  fun createWaiter(): Waiter {
-    assert(ApplicationManager.getApplication().isUnitTestMode)
-    return Waiter()
   }
 
   companion object {

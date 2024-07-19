@@ -359,15 +359,9 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
       if (isExpired(update)) {
         update.setRejected()
-        continue
-      }
-
-      if (update.executeInWriteAction) {
-        @Suppress("ForbiddenInSuspectContextMethod", "RedundantSuppression")
-        ApplicationManager.getApplication().runWriteAction { execute(update) }
       }
       else {
-        execute(update)
+        update.execute()
       }
     }
   }
@@ -624,4 +618,4 @@ open class MergingUpdateQueue @JvmOverloads constructor(
   }
 }
 
-private fun isExpired(each: Update): Boolean = each.isDisposed || each.isExpired
+private fun isExpired(update: Update): Boolean = update.isDisposed || update.isExpired

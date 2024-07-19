@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.Cancellation
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import kotlin.concurrent.Volatile
 
@@ -41,6 +44,21 @@ abstract class Update : ComparableObject.Impl, Runnable {
         override fun run() {
           runnable.run()
         }
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  open suspend fun execute() {
+    if (executeInWriteAction) {
+      @Suppress("ForbiddenInSuspectContextMethod", "RedundantSuppression")
+      ApplicationManager.getApplication().runWriteAction(this)
+    }
+    else {
+      // todo fix clients
+      Cancellation.withNonCancelableSection().use {
+        run()
       }
     }
   }
