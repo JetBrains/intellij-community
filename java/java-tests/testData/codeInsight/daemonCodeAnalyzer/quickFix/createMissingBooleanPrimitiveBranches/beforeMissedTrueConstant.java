@@ -13,5 +13,5 @@ class Test {
       case yes -> {
       }
     }
-  }e
+  }
 }

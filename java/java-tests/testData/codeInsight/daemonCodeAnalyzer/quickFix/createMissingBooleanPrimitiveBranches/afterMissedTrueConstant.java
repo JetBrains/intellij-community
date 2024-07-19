@@ -15,5 +15,5 @@ class Test {
         case false -> {
         }
     }
-  }e
+  }
 }
