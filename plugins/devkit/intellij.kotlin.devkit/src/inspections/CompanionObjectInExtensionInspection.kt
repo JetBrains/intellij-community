@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInsight.FileModificationService
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringEventListener
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
@@ -194,7 +194,7 @@ private class CreateObjectAndMoveProhibitedDeclarationsQuickFix(
       analyze(containingClass) {
         return KotlinNameSuggester.suggestNameByName(
           DEFAULT_OBJECT_NAME,
-          Fe10KotlinNewDeclarationNameValidator(containingClass, null, KotlinNameSuggestionProvider.ValidatorTarget.CLASS)
+          KotlinNameValidatorProvider.getInstance().createNameValidator(containingClass, KotlinNameSuggestionProvider.ValidatorTarget.CLASS)
         )
       }
     }

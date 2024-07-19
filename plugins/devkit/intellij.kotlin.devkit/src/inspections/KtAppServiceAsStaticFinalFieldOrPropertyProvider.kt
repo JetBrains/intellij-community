@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.IntentionWrapper
@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.intentions.ConvertPropertyToFunctionIntention
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyProcessor
 import org.jetbrains.kotlin.psi.*
@@ -169,11 +169,10 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
   private fun suggestSupplierPropertyName(property: KtProperty): String {
     return KotlinNameSuggester.suggestNameByName(
       defaultSupplierElementName(property),
-      Fe10KotlinNewDeclarationNameValidator(
+      KotlinNameValidatorProvider.getInstance().createNameValidator(
         property.containingClassOrObject ?: property.containingFile,
-        null,
         KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY
-      ),
+      )
     )
   }
 
