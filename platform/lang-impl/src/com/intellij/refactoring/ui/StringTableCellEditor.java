@@ -60,6 +60,7 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
     if (myUseEditorFont) {
       editorTextField.setFont(EditorUtil.getEditorFont());
     }
+    editorTextField.setBorder(BorderFactory.createLineBorder(table.getSelectionBackground()));
     return editorTextField;
   }
 
