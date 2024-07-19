@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.openapi.externalSystem.settings.workspaceModel
 
 import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClasspathPojo
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo
+import org.jetbrains.annotations.ApiStatus
 
 fun getExternalProjectsBuildClasspathEntity(
   projectBuildClasspath: Map<String, ExternalProjectBuildClasspathPojo>

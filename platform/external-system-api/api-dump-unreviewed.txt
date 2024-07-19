@@ -1311,9 +1311,6 @@ f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBu
 f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntitySource
 - com.intellij.platform.workspace.storage.EntitySource
 - sf:INSTANCE:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntitySource
-f:com.intellij.openapi.externalSystem.settings.workspaceModel.MappersKt
-- sf:getExternalProjectBuildClasspathPojo(com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity):java.util.Map
-- sf:getExternalProjectsBuildClasspathEntity(java.util.Map):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity$Builder
 com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager
 - a:cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
 - executeTasks(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.util.List,java.lang.String,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,java.lang.String,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
