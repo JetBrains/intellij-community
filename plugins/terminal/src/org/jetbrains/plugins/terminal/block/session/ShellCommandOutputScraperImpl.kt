@@ -8,7 +8,12 @@ import com.jediterm.terminal.model.LinesBuffer
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.block.ui.normalize
+import org.jetbrains.plugins.terminal.block.session.scraper.DropTrailingNewLinesStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.StringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.CommandEndMarkerListeningStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.TerminalLinesCollector
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -73,90 +78,23 @@ internal class ShellCommandOutputScraperImpl(
     }
 
     fun scrapeOutput(textBuffer: TerminalTextBuffer, commandEndMarker: String? = null): StyledCommandOutput {
-      val outputBuilder = OutputBuilder(commandEndMarker)
+      var commandEndMarkerFound = false
+      val stringCollector: StringCollector = CommandEndMarkerListeningStringCollector(
+        DropTrailingNewLinesStringCollector(SimpleStringCollector()),
+        commandEndMarker
+      ) {
+        commandEndMarkerFound = true
+      }
+
+      val styles: MutableList<StyleRange> = mutableListOf()
+      val styleCollectingOutputBuilder: TerminalLinesCollector = StylesCollectingTerminalLinesCollector(stringCollector, styles::add)
+      val terminalLinesCollector: TerminalLinesCollector = styleCollectingOutputBuilder
       if (!textBuffer.isUsingAlternateBuffer) {
-        outputBuilder.addLines(textBuffer.historyBuffer)
+        terminalLinesCollector.addLines(textBuffer.historyBuffer)
       }
-      outputBuilder.addLines(textBuffer.screenBuffer)
-      return outputBuilder.build()
+      terminalLinesCollector.addLines(textBuffer.screenBuffer)
+      return StyledCommandOutput(stringCollector.buildText(), commandEndMarkerFound, styles)
     }
-  }
-}
-
-private class OutputBuilder(private val commandEndMarker: String?) {
-  private val output: StringBuilder = StringBuilder()
-  private val styles: MutableList<StyleRange> = mutableListOf()
-  private var pendingNewLines: Int = 0
-
-  fun addLines(linesBuffer: LinesBuffer) {
-    for (i in 0 until linesBuffer.lineCount) {
-      addLine(linesBuffer.getLine(i))
-    }
-  }
-
-  private fun addLine(line: TerminalLine) {
-    line.forEachEntry { entry ->
-      if (entry.text.isNotEmpty() && !entry.isNul) {
-        addTextChunk(entry.text.normalize(), entry.style)
-      }
-    }
-    if (!line.isWrapped) {
-      pendingNewLines++
-    }
-  }
-
-  private fun addTextChunk(text: String, style: TextStyle) {
-    if (text.isNotEmpty()) {
-      repeat(pendingNewLines) {
-        output.append(NEW_LINE)
-      }
-      pendingNewLines = 0
-      val startOffset = output.length
-      output.append(text)
-      if (style != TextStyle.EMPTY) {
-        styles.add(StyleRange(startOffset, startOffset + text.length, style))
-      }
-    }
-  }
-
-  fun build(): StyledCommandOutput {
-    val text = output.toString()
-    if (commandEndMarker != null) {
-      val trimmedText = text.trimEnd()
-      val commandEndMarkerFound = trimmedText.endsWith(commandEndMarker)
-      if (commandEndMarkerFound) {
-        val outputText = trimmedText.dropLast(commandEndMarker.length)
-        return StyledCommandOutput(outputText, true, styles)
-      }
-      else {
-        // investigate why ConPTY inserts hard line breaks sometimes
-        val suffixStartInd = findSuffixStartIndIgnoringLF(trimmedText, commandEndMarker)
-        if (suffixStartInd >= 0) {
-          val commandText = trimmedText.substring(0, suffixStartInd)
-          return StyledCommandOutput(commandText, true, styles)
-        }
-      }
-    }
-    return StyledCommandOutput(text, false, styles)
-  }
-
-  /**
-   * @return the index in [text] where [suffix] starts, or -1 if there is no such suffix
-   */
-  private fun findSuffixStartIndIgnoringLF(text: String, suffix: String): Int {
-    check(suffix.isNotEmpty())
-    if (text.length < suffix.length) return -1
-    var textInd: Int = text.length
-    for (suffixInd in suffix.length - 1 downTo 0) {
-      textInd--
-      while (textInd >= 0 && text[textInd] == NEW_LINE) {
-        textInd--
-      }
-      if (textInd < 0 || text[textInd] != suffix[suffixInd]) {
-        return -1
-      }
-    }
-    return textInd
   }
 }
 
@@ -167,7 +105,8 @@ internal interface ShellCommandOutputListener {
   fun commandOutputChanged(output: StyledCommandOutput) {}
 }
 
-private const val NEW_LINE: Char = '\n'
+internal const val NEW_LINE: Char = '\n'
+internal const val NEW_LINE_STRING: String = NEW_LINE.toString()
 
 /**
  * Refines command output by dropping the trailing `\n` to avoid showing the last empty line in the command block.
