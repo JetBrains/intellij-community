@@ -630,12 +630,16 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         logErrorDuringExit("Failed to dispose the container", t);
       }
 
+      if (!success || isUnitTestMode()) {
+        return null;
+      }
+
+      IdeEventQueue.applicationClose();
+
       //noinspection SpellCheckingInspection
-      if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
-        //noinspection SpellCheckingInspection
-        if (Boolean.getBoolean("idea.test.guimode")) {
-          shutdown();
-        }
+      if (Boolean.getBoolean("idea.test.guimode")) {
+        //noinspection TestOnlyProblems
+        ShutDownTracker.getInstance().run();
         return null;
       }
 
@@ -714,14 +718,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     Disposer.register(this, progress);  // to dispose the progress even when `ProgressManager#runProcess` is not called
     progress.setTitle(progressTitle);
     return progress;
-  }
-
-  /**
-   * Used for GUI tests to stop `IdeEventQueue` dispatching when `Application` is already disposed of.
-   */
-  private static void shutdown() {
-    IdeEventQueue.applicationClose();
-    ShutDownTracker.getInstance().run();
   }
 
   private static boolean confirmExitIfNeeded(boolean exitConfirmed) {

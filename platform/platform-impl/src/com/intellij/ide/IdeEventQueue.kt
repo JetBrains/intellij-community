@@ -169,6 +169,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     @JvmStatic
     fun applicationClose() {
       appIsLoaded = false
+      transactionGuard = null
+      restoreDefaultKeyboardFocusManager()
     }
   }
 
@@ -981,17 +983,15 @@ private fun _addProcessor(dispatcher: IdeEventQueue.EventDispatcher,
   }
 }
 
-private var appIsLoaded = false
+private var appIsLoaded: Boolean? = null
 
-private fun appIsLoaded(): Boolean {
-  return when {
-    appIsLoaded -> true
-    LoadingState.COMPONENTS_LOADED.isOccurred -> {
-      appIsLoaded = true
-      true
-    }
-    else -> appIsLoaded
+private fun appIsLoaded(): Boolean = when {
+  appIsLoaded == true -> true
+  appIsLoaded == null && LoadingState.COMPONENTS_LOADED.isOccurred -> {
+    appIsLoaded = true
+    true
   }
+  else -> false
 }
 
 private fun dispatchTrayIconEvent(e: AWTEvent) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
@@ -25,7 +25,7 @@ import javax.swing.DefaultFocusManager
  * [javax.swing.FocusManager] for the reasons described in [javax.swing.DelegatingDefaultFocusManager]'s javadoc -
  * just in case some legacy code expects it.
  */
-internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc above */ {
+internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManager) : DefaultFocusManager() /* see javadoc above */ {
   // Don't inline this field, it's here to prevent policy override by parent's constructor. Don't make it final either.
   private val parentConstructorExecuted = true
 
@@ -98,7 +98,7 @@ internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc ab
 @Suppress("IdentifierGrammar", "UNCHECKED_CAST")
 internal fun replaceDefaultKeyboardFocusManager() {
   val manager = DefaultFocusManager.getCurrentKeyboardFocusManager()
-  val newManager = IdeKeyboardFocusManager()
+  val newManager = IdeKeyboardFocusManager(manager)
   for (l in manager.propertyChangeListeners) {
     newManager.addPropertyChangeListener(l)
   }
@@ -128,4 +128,10 @@ internal fun replaceDefaultKeyboardFocusManager() {
     logger<IdeKeyboardFocusManager>().error(e)
   }
   DefaultFocusManager.setCurrentKeyboardFocusManager(newManager)
+}
+
+internal fun restoreDefaultKeyboardFocusManager() {
+  (DefaultFocusManager.getCurrentKeyboardFocusManager() as? IdeKeyboardFocusManager)?.let {
+    DefaultFocusManager.setCurrentKeyboardFocusManager(it.original)
+  }
 }
