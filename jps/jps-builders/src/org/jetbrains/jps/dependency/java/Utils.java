@@ -158,7 +158,11 @@ public final class Utils {
     else {
       allNodes = fromDeltaOnly? Collections.emptyList() : flat(map(filter(myGraph.getSources(id), mySourcesFilter::test), src -> myGraph.getNodes(src, selector)));
     }
-    return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new BooleanFunction<>() {
+    return uniqueDiffCapable(filter(allNodes, n -> id.equals(n.getReferenceID())));
+  }
+
+  public static <T extends DiffCapable<T, ?>> @NotNull Iterable<T> uniqueDiffCapable(Iterable<? extends T> nodes) {
+    return uniqueBy(nodes, () -> new BooleanFunction<>() {
       Set<T> visited;
 
       @Override

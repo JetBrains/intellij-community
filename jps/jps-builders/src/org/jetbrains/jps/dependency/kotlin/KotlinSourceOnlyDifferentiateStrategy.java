@@ -28,10 +28,10 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     Set<NodeSource> baseSources = delta.getBaseSources();
     Utils present = new Utils(context.getGraph(), context.getParams().belongsToCurrentCompilationChunk());
     Set<Usage> affectedUsages = new HashSet<>();
+    Set<JvmNodeReferenceID> affectedSealedClasses = new HashSet<>();
     Set<JvmNodeReferenceID> baseNodes = new HashSet<>();
 
-    for (JvmClass cls : flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class)))) {
-
+    for (JvmClass cls : Utils.uniqueDiffCapable(flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class))))) {
       if (!cls.isPrivate()) {
         for (ReferenceID id : present.withAllSubclasses(cls.getReferenceID())) {
           if (id instanceof JvmNodeReferenceID) {
@@ -45,6 +45,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
       if (container != null) {
         if (container instanceof KmClass) {
           baseNodes.add(cls.getReferenceID());
+          appendSealedClasses(cls, present, affectedSealedClasses);
         }
         
         List<KmTypeAlias> typeAliases = container.getTypeAliases();
@@ -75,20 +76,14 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     }
 
     // sealed classes check should be done on both base and affected sources
-    Set<JvmNodeReferenceID> affectedSealedClasses = new HashSet<>();
-    for (JvmClass cls : flat(map(flat(baseSources, affectedSources), s -> graph.getNodes(s, JvmClass.class)))) {
-      KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(cls);
-      if (container instanceof KmClass) {
-        Iterable<ReferenceID> candidates = unique(flat(map(KJvmUtils.withAllSubclassesIfSealed(present, cls.getReferenceID()), present::allDirectSupertypes)));
-        for (JvmClass sealedCls : filter(flat(map(candidates, id -> present.getNodes(id, JvmClass.class))), KJvmUtils::isSealed)) {
-          affectedSealedClasses.add(sealedCls.getReferenceID());
-        }
-      }
+    for (JvmClass cls : Utils.uniqueDiffCapable(flat(map(affectedSources, s -> graph.getNodes(s, JvmClass.class))))) {
+      appendSealedClasses(cls, present, affectedSealedClasses);
     }
 
     for (NodeSource src : affectedSources) {
       context.affectNodeSource(src);
     }
+
     if (!affectedSealedClasses.isEmpty()) {
       for (NodeSource src : filter(unique(flat(map(flat(map(affectedSealedClasses, id -> KJvmUtils.withAllSubclassesIfSealed(present, id))), present::getNodeSources))), s -> !baseSources.contains(s))) {
         LOG.debug("Sealed class or subclass of a sealed class is about to be recompiled => sealed classes should be always compiled together with all its subclasses. Affecting  " + src);
@@ -97,6 +92,16 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     }
 
     return true;
+  }
+
+  private static void appendSealedClasses(JvmClass cls, Utils utils, Set<JvmNodeReferenceID> acc) {
+    KmDeclarationContainer container = KJvmUtils.getDeclarationContainer(cls);
+    if (container instanceof KmClass) {
+      Iterable<ReferenceID> candidates = unique(flat(map(KJvmUtils.withAllSubclassesIfSealed(utils, cls.getReferenceID()), utils::allDirectSupertypes)));
+      for (JvmClass sealedCls : filter(flat(map(candidates, id -> utils.getNodes(id, JvmClass.class))), KJvmUtils::isSealed)) {
+        acc.add(sealedCls.getReferenceID());
+      }
+    }
   }
 
 }

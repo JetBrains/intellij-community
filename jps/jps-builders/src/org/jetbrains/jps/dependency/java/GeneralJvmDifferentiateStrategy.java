@@ -71,7 +71,7 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
 
         void markSources() {
           Graph graph = context.getGraph();
-          for (JvmClass cls : flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class)))) {
+          for (JvmClass cls : Utils.uniqueDiffCapable(flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class))))) {
             traverse(cls, true);
           }
         }
