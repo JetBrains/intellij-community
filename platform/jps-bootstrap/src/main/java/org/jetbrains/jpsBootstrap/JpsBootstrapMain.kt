@@ -15,6 +15,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.io.file.PathUtils
 import org.jetbrains.annotations.Contract
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.fatal
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.setVerboseEnabled
@@ -128,10 +129,10 @@ class JpsBootstrapMain(args: Array<String>?) {
     debugOption = cmdline.hasOption(OPT_DEBUG)
   }
 
-  private fun downloadJdk(): Path {
+  private fun downloadJdk(jdkBuildNumber: String? = null): Path {
     val jdkHome: Path
     if (underTeamCity) {
-      jdkHome = getJdkHome(communityHome)
+      jdkHome = getJdkHome(communityHome, jdkBuildNumber = jdkBuildNumber)
       var setParameterServiceMessage = SetParameterServiceMessage(
         "jps.bootstrap.java.home", jdkHome.toString()
       )
@@ -177,6 +178,9 @@ class JpsBootstrapMain(args: Array<String>?) {
     if (!classpathFileTargetString.isNullOrBlank()) {
       writeClasspathFile(moduleRuntimeClasspath, Path.of(classpathFileTargetString))
     }
+    val dependenciesProperties = BuildDependenciesDownloader.getDependencyProperties(communityHome)
+    val runtimeBuild = dependenciesProperties.property("runtimeBuild")
+    downloadJdk(runtimeBuild)
   }
 
   private fun removeOpenedPackage(openedPackages: MutableList<String>, openedPackage: String, unknownPackages: MutableList<String>) {

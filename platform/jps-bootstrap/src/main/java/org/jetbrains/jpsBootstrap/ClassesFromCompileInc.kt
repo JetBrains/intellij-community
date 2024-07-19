@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.downloadFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbose
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -39,7 +40,9 @@ object ClassesFromCompileInc {
       downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl))
     }
     else {
-      downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl), manifestHttpUsername, manifestHttpPassword)
+      downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl)) {
+        BuildDependenciesDownloader.Credentials(manifestHttpUsername, manifestHttpPassword)
+      }
     }
     val productionModuleOutputs = downloadProductionPartsFromMetadataJson(manifest, communityRoot, modules)
     assignModuleOutputs(project, productionModuleOutputs)
