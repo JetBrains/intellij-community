@@ -83,7 +83,7 @@ class JBCefInputMethodAdapter implements InputMethodRequests, InputMethodListene
         new CefCompositionUnderline(new CefRange(0, composedText.length()), color, color, 0, CefCompositionUnderline.Style.SOLID);
 
       CefRange replacementRange = mySelectionRange;
-      if (replacementRange.from == replacementRange.to) {
+      if (replacementRange == null || replacementRange.from == replacementRange.to) {
         // It has been experimentally determined that replacementRange must have an actual value only if there is a text to be replaced.
         // Passing zero-length ranges pointing to the caret position breaks Korean Language input character order.
         replacementRange = DEFAULT_RANGE;
