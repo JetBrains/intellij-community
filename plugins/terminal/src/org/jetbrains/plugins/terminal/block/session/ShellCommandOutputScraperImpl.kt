@@ -189,29 +189,40 @@ private const val NEW_LINE: Char = '\n'
  * but it will remove '%' mark on unterminated lines which can be unexpected for users.
  */
 internal fun StyledCommandOutput.dropLastBlankLine(shellType: ShellType): StyledCommandOutput {
-  val lastNewLineInd = this.text.lastIndexOf(NEW_LINE)
-  val lastLine = this.text.substring(lastNewLineInd + 1)
-  if (lastNewLineInd >= 0 && lastLine.isEmpty() /* output ends with \n */ ||
-      shellType == ShellType.ZSH && lastLine.isBlank() /* output ends with whitespaces */) {
-    return this.takeFirst(max(0, lastNewLineInd))
+  val text = this.text
+  val lastNewLineInd = text.lastIndexOf(NEW_LINE)
+  val lastLine = text.substring(lastNewLineInd + 1)
+  val outputEndsWithNewline = lastNewLineInd >= 0 && lastLine.isEmpty()
+  val outputEndsWithWhitespacesForZsh = shellType == ShellType.ZSH && lastLine.isBlank()
+  if (outputEndsWithNewline || outputEndsWithWhitespacesForZsh) {
+    return trimToLength(this, max(0, lastNewLineInd))
   }
   return this
 }
 
-private fun StyledCommandOutput.takeFirst(newLength: Int): StyledCommandOutput {
-  if (newLength == this.text.length) return this
-  return StyledCommandOutput(this.text.substring(0, newLength),
-                             this.commandEndMarkerFound,
-                             intersect(this.styleRanges, newLength))
+private fun trimToLength(styledCommandOutput: StyledCommandOutput, newLength: Int): StyledCommandOutput {
+  if (newLength == styledCommandOutput.text.length) return styledCommandOutput
+  return StyledCommandOutput(
+    styledCommandOutput.text.substring(0, newLength),
+    styledCommandOutput.commandEndMarkerFound,
+    trimToLength(styledCommandOutput.styleRanges, newLength)
+  )
 }
 
-private fun intersect(styleRanges: List<StyleRange>, newLength: Int): List<StyleRange> {
-  return styleRanges.mapNotNull {
-    val newEndOffset = min(it.endOffset, newLength)
-    when {
-      newEndOffset == it.endOffset -> it
-      it.startOffset < newEndOffset -> StyleRange(it.startOffset, newEndOffset, it.style)
-      else -> null
-    }
+private fun trimToLength(styleRanges: List<StyleRange>, newLength: Int): List<StyleRange> {
+  return styleRanges.mapNotNull { trimToLength(it, newLength) }
+}
+
+private fun trimToLength(styleRange: StyleRange, newLength: Int): StyleRange? {
+  // Style range fits inside new text - no trim required
+  if (styleRange.endOffset <= newLength) {
+    return styleRange
   }
+
+  // Style range is out of result text
+  if (styleRange.startOffset >= newLength) {
+    return null
+  }
+
+  return StyleRange(styleRange.startOffset, newLength, styleRange.style)
 }
