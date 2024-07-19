@@ -3,4 +3,4 @@
 
 annotation class CollectionDefault(vararg val value: Int = [1, 2])
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddTypeAnnotationToValueParameterFix
-/* IGNORE_K2 */
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddTypeAnnotationToValueParameterFixFactory$AddTypeAnnotationToValueParameterFix

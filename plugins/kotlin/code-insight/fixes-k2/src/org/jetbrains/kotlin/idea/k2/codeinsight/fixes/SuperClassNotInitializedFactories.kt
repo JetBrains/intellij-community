@@ -19,11 +19,13 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeEntry
+import org.jetbrains.kotlin.psi.KtTypeReference
 
 internal object SuperClassNotInitializedFactories {
 
     val addParenthesis = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.SupertypeNotInitialized ->
-        val typeReference = diagnostic.psi
+        val typeReference = diagnostic.psi as? KtTypeReference
+            ?: return@ModCommandBased emptyList()
         val superTypeEntry = typeReference.parent as? KtSuperTypeEntry
             ?: return@ModCommandBased emptyList()
         val superClassSymbol = typeReference.type.expandedSymbol as? KaNamedClassSymbol

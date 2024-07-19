@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 
 object MakeSuperTypeOpenFixFactory {
@@ -23,7 +24,7 @@ object MakeSuperTypeOpenFixFactory {
 
     context(KaSession)
     private fun createQuickFixes(
-        diagnostic: KaFirDiagnostic<KtTypeReference>,
+        diagnostic: KaFirDiagnostic<KtElement>,
     ): List<AddModifierFix> {
         val typeRef = diagnostic.psi as? KtTypeReference
             ?: return emptyList()

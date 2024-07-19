@@ -58,19 +58,7 @@ object AddRemainingWhenBranchesUtils {
         val elseBranch = element.entries.find { it.isElse }
         (whenCloseBrace.prevSibling as? PsiWhiteSpace)?.replace(psiFactory.createNewLine())
         for (case in missingCases) {
-            val branchConditionText = when (case) {
-                WhenMissingCase.Unknown,
-                WhenMissingCase.NullIsMissing,
-                is WhenMissingCase.BooleanIsMissing,
-                is WhenMissingCase.ConditionTypeIsExpect -> case.branchConditionText
-                is WhenMissingCase.IsTypeCheckIsMissing ->
-                    if (case.isSingleton) {
-                        ""
-                    } else {
-                        "is "
-                    } + case.classId.asSingleFqName().render()
-                is WhenMissingCase.EnumCheckIsMissing -> case.callableId.asSingleFqName().render()
-            }
+            val branchConditionText = case.branchConditionText
             val entry = psiFactory.createWhenEntry("$branchConditionText -> TODO()")
             if (elseBranch != null) {
                 element.addBefore(entry, elseBranch)
