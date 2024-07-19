@@ -108,6 +108,7 @@ public final class FileStatusMap implements Disposable {
       setDirtyScope(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
       setDirtyScope(Pass.LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
       setDirtyScope(Pass.SLOW_LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.INJECTED_GENERAL, WHOLE_FILE_DIRTY_MARKER);
       TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
         setDirtyScope(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
