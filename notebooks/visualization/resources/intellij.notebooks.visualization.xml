@@ -71,7 +71,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle" key="inlay.output.table.notification.group.name"/>
-    <editorFactoryListener id="org.jetbrains.plugins.notebooks.visualization.r.inlays.InlaysManager" implementation="org.jetbrains.plugins.notebooks.visualization.r.inlays.InlaysManager"/>
 
     <getDataRule
       key="NOTEBOOK_CELL_LINES_INTERVAL"
