@@ -364,4 +364,27 @@ public class ContainerUtilTest extends TestCase {
     List<Integer> list = ContainerUtil.flatMap(List.of(0, 1), i->List.of(i,i));
     assertEquals(List.of(0,0,1,1), list);
   }
+  public void testCOWRemoveIf() {
+    {
+      List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("a", "b"));
+      assertTrue(list.removeIf(e -> e.length() == 1));
+      assertReallyEmpty(list);
+    }
+
+    {
+      List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("a", "bb"));
+      assertTrue(list.removeIf(e -> e.length() == 1));
+      assertEquals("bb", UsefulTestCase.assertOneElement(list));
+    }
+    {
+      List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("aa", "b"));
+      assertTrue(list.removeIf(e -> e.length() == 1));
+      assertEquals("aa", UsefulTestCase.assertOneElement(list));
+    }
+    {
+      List<String> list = ContainerUtil.createLockFreeCopyOnWriteList(Arrays.asList("aa", "bb"));
+      assertFalse(list.removeIf(e -> e.length() == 1));
+      assertEquals(2, list.size());
+    }
+  }
 }
