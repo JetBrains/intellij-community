@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.nio.ByteBuffer;
 
@@ -46,7 +48,8 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordL
  *            nextPartId = header[24..55]                        [32 bits]
  * </pre>
  */
-abstract class RecordLayout {
+@VisibleForTesting
+public abstract class RecordLayout {
   public static final byte RECORD_TYPE_MASK = (byte)0b1100_0000;
 
   public static final byte RECORD_TYPE_ACTUAL = (byte)0b0000_0000;
@@ -120,7 +123,9 @@ abstract class RecordLayout {
     return headerSize() + capacity;
   }
 
-  static final class ActualRecords {
+
+  @VisibleForTesting
+  public static final class ActualRecords {
     //ACTUAL: has .length and .capacity fields in header (redirectTo is absent)
     //        header bit[2]: recordSizeType =(SMALL | LARGE)
     //        length & capacity stored differently, depending on recordSizeType
@@ -152,7 +157,9 @@ abstract class RecordLayout {
       };
     }
 
-    static final class SmallRecord extends RecordLayout {
+    @ApiStatus.Internal
+    @VisibleForTesting
+    public static final class SmallRecord extends RecordLayout {
       //recordSizeType: SMALL => header: 2 bytes
       //    capacity = headerByte0[3..7]*8 + 6          =[6..254]
       //    length   = headerByte1                      =[0..256] (truncated to capacity)
@@ -241,7 +248,9 @@ abstract class RecordLayout {
       }
     }
 
-    static final class LargeRecord extends RecordLayout {
+    @ApiStatus.Internal
+    @VisibleForTesting
+    public static final class LargeRecord extends RecordLayout {
       //recordSizeType: LARGE => header: 5 bytes
       //    capacity = header bits[3..7]+[8..19] * 8 + 3   [3..1048_579]
       //    length   = header bits[20..40]                 [0..1048_576]
@@ -349,7 +358,8 @@ abstract class RecordLayout {
     }
   }
 
-  static final class MovedRecord extends RecordLayout {
+  @VisibleForTesting
+  public static final class MovedRecord extends RecordLayout {
     // MOVED: header: 7bytes (no .payload, no .length)
     //        capacity = header[2..7][8..23] * 8 + 1             [1.. 2^24+1]
     //        redirectToId = header[24..55]                      [32 bits]
@@ -443,7 +453,8 @@ abstract class RecordLayout {
     }
   }
 
-  static final class PaddingRecord extends RecordLayout {
+  @VisibleForTesting
+  public static final class PaddingRecord extends RecordLayout {
     // PADDING: header: 3 bytes (no .payload, no .length, no .redirectTo)
     //        capacity = header[2..7][8..15][16..23] * 8 + 5             [5..33_554_429]
 

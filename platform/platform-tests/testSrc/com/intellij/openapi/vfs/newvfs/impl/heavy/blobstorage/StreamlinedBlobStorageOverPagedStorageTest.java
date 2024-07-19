@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
+package com.intellij.openapi.vfs.newvfs.impl.heavy.blobstorage;
 
-import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -14,27 +16,29 @@ import java.nio.file.Path;
 import static org.junit.Assert.assertEquals;
 
 
+/**
+ *
+ */
 @RunWith(Theories.class)
-public class StreamlinedBlobStorageOverMMappedFileTest extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverMMappedFile> {
+public class StreamlinedBlobStorageOverPagedStorageTest extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverPagedStorage> {
 
-  public StreamlinedBlobStorageOverMMappedFileTest(@NotNull Integer pageSize,
-                                                   @NotNull SpaceAllocationStrategy strategy) {
+
+  public StreamlinedBlobStorageOverPagedStorageTest(final @NotNull Integer pageSize,
+                                                    final @NotNull SpaceAllocationStrategy strategy) {
     super(pageSize, strategy);
   }
 
   @Override
-  protected StreamlinedBlobStorageOverMMappedFile openStorage(@NotNull Path pathToStorage) throws IOException {
-    //RC: mapped storage is currently badly suited for small pageSize -- too many pages mapped, too big internal
-    //    pages array. So I just make all pageSize >= 1Mb. This hack could be removed as soon as MMappedFileStorage.pages
-    //    become re-sizeable
-    int pageSize = Math.max(this.pageSize, 1 << 20);
-    return MMappedFileStorageFactory.withDefaults()
-      .pageSize(pageSize)
-      .wrapStorageSafely(
-        pathToStorage,
-        storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
-      );
+  protected StreamlinedBlobStorageOverPagedStorage openStorage(final Path pathToStorage) throws IOException {
+    return IOUtil.wrapSafely(
+      new PagedFileStorage(pathToStorage, LOCK_CONTEXT, pageSize, true, true),
+      pagedStorage -> new StreamlinedBlobStorageOverPagedStorage(
+        pagedStorage,
+        allocationStrategy
+      )
+    );
   }
+
 
   @Override
   public void tearDown() throws Exception {
@@ -59,7 +63,7 @@ public class StreamlinedBlobStorageOverMMappedFileTest extends StreamlinedBlobSt
     assertEquals(
       "New storage version == STORAGE_VERSION_CURRENT",
       storage.getStorageVersion(),
-      StreamlinedBlobStorageOverMMappedFile.STORAGE_VERSION_CURRENT
+      StreamlinedBlobStorageOverPagedStorage.STORAGE_VERSION_CURRENT
     );
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.impl.heavy.blobstorage;
 
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagedStorage;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
