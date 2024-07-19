@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.ide.BrowserUtil;
@@ -26,11 +26,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.event.HyperlinkEvent;
 
-/**
- * @author Vladislav.Soroka
- */
-public class ConfigurationErrorEventProcessor extends AbstractTestEventProcessor {
-
+public final class ConfigurationErrorEventProcessor extends AbstractTestEventProcessor {
   public ConfigurationErrorEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
@@ -43,7 +39,7 @@ public class ConfigurationErrorEventProcessor extends AbstractTestEventProcessor
     final Project project = getProject();
     assert project != null;
     final String message = getConfigurationErrorMessage(configurationErrorMsg, openSettings);
-    GradleNotification.NOTIFICATION_GROUP
+    GradleNotification.getGradleNotificationGroup()
       .createNotification(errorTitle, message, NotificationType.WARNING)
       .setDisplayId(GradleNotificationIdsHolder.configurationError)
       .setListener(new NotificationListener() {

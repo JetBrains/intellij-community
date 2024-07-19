@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.properties.models.Property
-import org.jetbrains.plugins.gradle.service.project.GradleNotification.NOTIFICATION_GROUP
+import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
 import java.io.File
 import java.nio.file.Path
@@ -104,7 +104,7 @@ private fun notifyInvalidGradleJvmInfo(project: Project, @NlsContexts.HintText n
       EditorHelper.openInEditor(psiFile)
     }
   }
-  NOTIFICATION_GROUP.createNotification(notificationTitle, notificationContent, INFORMATION)
+  GradleNotification.gradleNotificationGroup.createNotification(notificationTitle, notificationContent, INFORMATION)
     .setDisplayId(GradleNotificationIdsHolder.jvmInvalid)
     .setListener(hyperLinkProcessor)
     .notify(project)
