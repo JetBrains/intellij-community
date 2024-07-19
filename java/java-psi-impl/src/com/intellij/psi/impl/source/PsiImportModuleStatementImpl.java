@@ -4,7 +4,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.java.stubs.PsiImportModuleStatementStub;
+import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
@@ -15,14 +15,14 @@ import java.lang.ref.SoftReference;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.reference.SoftReference.dereference;
 
-public class PsiImportModuleStatementImpl extends JavaStubPsiElement<PsiImportModuleStatementStub> implements PsiImportModuleStatement {
+public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl implements PsiImportModuleStatement {
   public static final PsiImportModuleStatementImpl[] EMPTY_ARRAY = new PsiImportModuleStatementImpl[0];
   public static final ArrayFactory<PsiImportModuleStatementImpl> ARRAY_FACTORY =
     count -> count == 0 ? EMPTY_ARRAY : new PsiImportModuleStatementImpl[count];
 
   private SoftReference<PsiJavaModuleReference> myReference;
 
-  public PsiImportModuleStatementImpl(PsiImportModuleStatementStub stub) {
+  public PsiImportModuleStatementImpl(PsiImportStatementStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_MODULE_STATEMENT);
   }
 
@@ -46,7 +46,7 @@ public class PsiImportModuleStatementImpl extends JavaStubPsiElement<PsiImportMo
 
   @Override
   public @Nullable PsiJavaModuleReference getModuleReference() {
-    PsiImportModuleStatementStub stub = getStub();
+    PsiImportStatementStub stub = getStub();
     if (stub != null) {
       String refText = nullize(stub.getImportReferenceText());
       if (refText == null) return null;

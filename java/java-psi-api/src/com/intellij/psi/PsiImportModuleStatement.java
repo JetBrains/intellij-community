@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a Java {@code import module} statement.
  */
 @ApiStatus.Experimental
-public interface PsiImportModuleStatement extends PsiImportDeclaration {
+public interface PsiImportModuleStatement extends PsiImportStatementBase {
   /**
    * The empty array of PSI module import statements which can be reused to avoid unnecessary allocations.
    */
@@ -36,4 +36,19 @@ public interface PsiImportModuleStatement extends PsiImportDeclaration {
    * @return the reference to the module imported, or null if the reference is not resolvable or missing.
    */
   @Nullable PsiJavaModuleReference getModuleReference();
+
+  @Override
+  default boolean isOnDemand() {
+    return true;
+  }
+
+  @Override
+  @Nullable default PsiJavaCodeReferenceElement getImportReference() {
+    return null;
+  }
+
+  @Override
+  default boolean isForeignFileImport() {
+    return false;
+  }
 }

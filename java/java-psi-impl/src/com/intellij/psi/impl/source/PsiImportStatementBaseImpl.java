@@ -7,6 +7,7 @@ import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiUtilCore;
 
@@ -28,7 +29,8 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
       return stub.isOnDemand();
     }
 
-    return calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_ON_DEMAND_DOT) != null;
+    return calcTreeElement().findChildByRoleAsPsiElement(ChildRole.IMPORT_ON_DEMAND_DOT) != null ||
+           calcTreeElement().findChildByType(JavaElementType.MODULE_REFERENCE) != null;
   }
 
   @Override
@@ -45,5 +47,10 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
   public PsiElement resolve() {
     PsiJavaCodeReferenceElement reference = getImportReference();
     return reference == null ? null : reference.resolve();
+  }
+
+  @Override
+  public boolean isForeignFileImport() {
+    return false;
   }
 }

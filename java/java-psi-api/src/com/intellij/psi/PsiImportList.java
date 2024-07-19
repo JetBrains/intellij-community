@@ -37,20 +37,11 @@ public interface PsiImportList extends PsiElement {
   PsiImportModuleStatement @NotNull [] getImportModuleStatements();
 
   /**
-   * Returns all import statements (without import module statements) contained in the list.
-   * @deprecated Use {@link #getAllImportDeclarations()}
+   * Returns all import statements contained in the list.
    *
    * @return the array of import statements.
    */
-  @Deprecated
   PsiImportStatementBase @NotNull [] getAllImportStatements();
-
-  /**
-   * Returns all import declarations contained in the list.
-   *
-   * @return the array of import declarations
-   */
-  PsiImportDeclaration @NotNull [] getAllImportDeclarations();
 
   /**
    * Searches the list for a single-class import statement importing the specified class.
@@ -82,24 +73,12 @@ public interface PsiImportList extends PsiElement {
   /**
    * Searches the list for a single import or import static statement importing the specified
    * identifier.
-   * @deprecated Use {@link #findSingleImportDeclaration(String)}
    *
    * @param name the name of the imported class or method.
    * @return the import statement, or null if one was not found.
    */
-  @Deprecated
   @Nullable
   PsiImportStatementBase findSingleImportStatement(String name);
-
-  /**
-   * Searches the list for a single import or import static or import module statement importing the specified
-   * identifier.
-   *
-   * @param name the name of the imported class or method or module.
-   * @return the import statement, or null if one was not found.
-   */
-  @Nullable
-  PsiImportDeclaration findSingleImportDeclaration(String name);
 
   /**
    * Checks if replacing this import list with the specified import list will cause no

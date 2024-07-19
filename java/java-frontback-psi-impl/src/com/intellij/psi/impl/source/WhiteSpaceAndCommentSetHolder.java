@@ -21,7 +21,7 @@ public class WhiteSpaceAndCommentSetHolder {
           BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET);
 
   private static final ParentAwareTokenSet TRAILING_COMMENT_SET =
-    orSet(create(BasicJavaElementType.BASIC_PACKAGE_STATEMENT), BasicElementTypes.BASIC_IMPORT_STATEMENT_DECLARATION_BIT_SET,
+    orSet(create(BasicJavaElementType.BASIC_PACKAGE_STATEMENT), BasicElementTypes.BASIC_IMPORT_STATEMENT_BASE_BIT_SET,
           BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET, BasicElementTypes.BASIC_JAVA_STATEMENT_BIT_SET);
 
   private WhiteSpaceAndCommentSetHolder() {
