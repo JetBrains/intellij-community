@@ -9,13 +9,14 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 public final class ImplicitToExplicitClassBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -100,7 +101,8 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       if (!(containingFile instanceof PsiJavaFile psiJavaFile)) {
         return;
       }
-      @NotNull ImplicitlyImportedStaticMember[] imports = PsiImplUtil.getImplicitStaticImports(psiJavaFile);
+      List<ImplicitlyImportedStaticMember> imports =
+        ContainerUtil.filterIsInstance(psiJavaFile.getImplicitlyImportedElements(), ImplicitlyImportedStaticMember.class);
       PsiElement replaced = implicitClass.replace(newClass);
       PsiJavaFile newPsiJavaFile = PsiTreeUtil.getParentOfType(replaced, PsiJavaFile.class);
       if (newPsiJavaFile == null) {

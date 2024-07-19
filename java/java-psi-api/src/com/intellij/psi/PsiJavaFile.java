@@ -94,18 +94,11 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner, AbstractBas
   PsiJavaModule getModuleDeclaration();
 
   /**
-   * @return the array of implicitly imported static members.
+   * @return the array of implicitly imported elements.
+   * This array doesn't include elements from {@link #getImplicitlyImportedPackages()}
    */
   @ApiStatus.Experimental
-  default @NotNull ImplicitlyImportedStaticMember @NotNull [] getImplicitlyImportedStaticMembers() {
-    return ImplicitlyImportedStaticMember.EMPTY_ARRAY;
-  }
-
-  /**
-   * @return the array of implicitly imported modules.
-   */
-  @ApiStatus.Experimental
-  default @NotNull ImplicitlyImportedModule @NotNull [] getImplicitlyImportedModules(){
-    return ImplicitlyImportedModule.EMPTY_ARRAY;
+  default @NotNull ImplicitlyImportedElement @NotNull [] getImplicitlyImportedElements() {
+    return ImplicitlyImportedElement.EMPTY_ARRAY;
   }
 }

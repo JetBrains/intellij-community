@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.*;
 
@@ -471,7 +472,8 @@ public final class ImportUtils {
     private final Set<String> packages = new HashSet<>();
 
     private ImplicitImportChecker(@NotNull PsiJavaFile file) {
-      for (ImplicitlyImportedStaticMember imp : file.getImplicitlyImportedStaticMembers()) {
+      for (ImplicitlyImportedStaticMember imp : ContainerUtil.filterIsInstance(file.getImplicitlyImportedElements(),
+                                                                               ImplicitlyImportedStaticMember.class)) {
         myStaticImportStatements.put(imp.getContainingClass(), imp);
       }
       packages.addAll(Arrays.asList(file.getImplicitlyImportedPackages()));
