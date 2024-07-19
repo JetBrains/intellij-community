@@ -220,12 +220,11 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
   private static boolean processSuspendAll(@NotNull SuspendContextImpl suspendContext,
                                            @NotNull SuspendContextImpl originalContext,
                                            @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
-    // Need to 'replace' the myThreadSuspendContext (single-thread suspend context passed filtering) with this one.
+    // Need to 'replace' the originalContext (single-thread suspend context which passed filtering) with this one.
     suspendContext.resetThread(Objects.requireNonNull(originalContext.getEventThread()));
 
-    // Note, myThreadSuspendContext is resuming without SuspendManager#voteSuspend.
-    // Look at the end of DebugProcessEvents#processLocatableEvent for more details.
-    suspendContext.getDebugProcess().getSuspendManager().voteResume(originalContext);
+    // Resume originalContext as the new one is holding all threads now
+    ((SuspendManagerImpl)originalContext.getDebugProcess().getSuspendManager()).scheduleResume(originalContext);
 
     suspendContext.mySuspendAllSwitchedContext = true;
     DebugProcessImpl process = suspendContext.getDebugProcess();

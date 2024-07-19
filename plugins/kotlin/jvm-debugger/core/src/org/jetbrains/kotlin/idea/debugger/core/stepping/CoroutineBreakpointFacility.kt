@@ -5,17 +5,13 @@ package org.jetbrains.kotlin.idea.debugger.core.stepping
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
-import com.intellij.debugger.engine.requests.CustomProcessingLocatableEventRequestor
-import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.Location
 import com.sun.jdi.event.LocatableEvent
-import com.sun.jdi.request.EventRequest
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.getLocationOfNextInstructionAfterResume
-import java.util.function.Function
 
 object CoroutineBreakpointFacility {
     fun installResumeBreakpointInCurrentMethod(suspendContext: SuspendContextImpl): Boolean {
@@ -45,7 +41,6 @@ object CoroutineBreakpointFacility {
         val debugProcess = context.debugProcess
         debugProcess.cancelRunToCursorBreakpoint()
         val project = debugProcess.project
-        val suspendAll = context.suspendPolicy == EventRequest.SUSPEND_ALL
 
         val useCoroutineIdFiltering = Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")
         val method = resumedLocation.safeMethod() ?: return false
@@ -55,8 +50,7 @@ object CoroutineBreakpointFacility {
                 "In other case, this breakpoint may be hit while intermediate evaluations on other threads before the filter will be set.")
         }
 
-        val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project),
-                                  CustomProcessingLocatableEventRequestor {
+        val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project) {
             override fun stopOnlyInBaseClass() = true
 
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
@@ -66,27 +60,11 @@ object CoroutineBreakpointFacility {
                     debugProcess.requestsManager.deleteRequest(this) // breakpoint is hit - disable the request already
                 }
 
-                if (useCoroutineIdFiltering && suspendAll) {
-                    // schedule stepping over switcher after suspend-all replacement happened
-                    return result
-                }
-
                 // support same thread old-way stepping
                 if (!result) return false
 
                 val suspendContextImpl = action.suspendContext ?: return true
                 return scheduleStepOverCommandForSuspendSwitch(suspendContextImpl, nextLocationAfterResume)
-            }
-
-            override fun customVoteSuspend(suspendContext: SuspendContextImpl): Boolean {
-                if (!suspendAll) return false
-                return SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext) {
-                    scheduleStepOverCommandForSuspendSwitch(it, nextLocationAfterResume)
-                }
-            }
-
-            override fun applyAfterContextSwitch() = Function<SuspendContextImpl, Boolean> { c ->
-                scheduleStepOverCommandForSuspendSwitch(c, nextLocationAfterResume)
             }
 
             private fun scheduleStepOverCommandForSuspendSwitch(it: SuspendContextImpl, nextLocationAfterResume: Location?): Boolean {
@@ -97,14 +75,7 @@ object CoroutineBreakpointFacility {
             }
         }
 
-        breakpoint.suspendPolicy = when (context.suspendPolicy) {
-            EventRequest.SUSPEND_ALL ->
-                if (useCoroutineIdFiltering && !DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) DebuggerSettings.SUSPEND_THREAD
-                else DebuggerSettings.SUSPEND_ALL
-            EventRequest.SUSPEND_EVENT_THREAD -> DebuggerSettings.SUSPEND_THREAD
-            EventRequest.SUSPEND_NONE -> DebuggerSettings.SUSPEND_NONE
-            else -> DebuggerSettings.SUSPEND_ALL
-        }
+        breakpoint.suspendPolicy = context.suspendPolicyFromRequestors
         if (!useCoroutineIdFiltering) {
             applyEmptyThreadFilter(debugProcess)
         }

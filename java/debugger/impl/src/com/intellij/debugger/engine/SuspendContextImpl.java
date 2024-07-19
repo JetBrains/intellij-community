@@ -6,12 +6,14 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -284,6 +286,27 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public int getSuspendPolicy() {
     return mySuspendPolicy;
   }
+
+  public String getSuspendPolicyFromRequestors() {
+    if (mySuspendPolicy == EventRequest.SUSPEND_ALL) {
+      return DebuggerSettings.SUSPEND_ALL;
+    }
+    if (myEventSet != null) {
+      return RequestManagerImpl.hasSuspendAllRequestor(myEventSet) ? DebuggerSettings.SUSPEND_ALL : asStrPolicy();
+    }
+
+    return asStrPolicy();
+  }
+
+  private String asStrPolicy() {
+    return switch (mySuspendPolicy) {
+      case EventRequest.SUSPEND_ALL -> DebuggerSettings.SUSPEND_ALL;
+      case EventRequest.SUSPEND_EVENT_THREAD -> DebuggerSettings.SUSPEND_THREAD;
+      case EventRequest.SUSPEND_NONE -> DebuggerSettings.SUSPEND_NONE;
+      default -> throw new IllegalStateException("Cannot convert number " + mySuspendPolicy);
+    };
+  }
+
 
   @SuppressWarnings("unused")
   public void doNotResumeHack() {

@@ -2,6 +2,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -312,9 +313,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
     if (suspendContext.myVotesToVote == 0) {
       if (suspendContext.myIsVotedForResume) {
-        // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
-        suspendContext.myIsGoingToResume = true;
-        myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
+        scheduleResume(suspendContext);
       }
       else {
         LOG.debug("vote paused");
@@ -323,9 +322,32 @@ public class SuspendManagerImpl implements SuspendManager {
           ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
           myDebugProcess.deleteStepRequests(thread != null ? thread.getThreadReference() : null);
         }
-        notifyPaused(suspendContext, true);
+
+        boolean needSwitchToSuspendAll = false;
+        if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch() && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD) {
+          EventSet eventSet = suspendContext.getEventSet();
+          if (eventSet != null) {
+            needSwitchToSuspendAll = RequestManagerImpl.hasSuspendAllRequestor(eventSet);
+          }
+        }
+
+        boolean isSimplePause = !needSwitchToSuspendAll || !DebugProcessEvents.specialSuspendProcessingForAlwaysSwitch(
+          suspendContext, this, Objects.requireNonNull(suspendContext.getEventThread()).getThreadReference()
+        );
+        if (isSimplePause) {
+          notifyPaused(suspendContext, true);
+        }
       }
     }
+  }
+
+  void scheduleResume(@NotNull SuspendContextImpl suspendContext) {
+    if (suspendContext.myVotesToVote != 0) {
+      logError("Explicit resuming with remain votes: " + suspendContext.myVotesToVote);
+    }
+    // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
+    suspendContext.myIsGoingToResume = true;
+    myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
   }
 
   private void notifyPaused(@NotNull SuspendContextImpl suspendContext, boolean pushPaused) {

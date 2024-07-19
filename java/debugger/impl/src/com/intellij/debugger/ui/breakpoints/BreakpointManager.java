@@ -184,8 +184,8 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public RunToCursorBreakpoint addRunToCursorBreakpoint(@NotNull XSourcePosition position, boolean ignoreBreakpoints, boolean needReplaceWithAllThreadSuspendContext) {
-    return RunToCursorBreakpoint.create(myProject, position, ignoreBreakpoints, needReplaceWithAllThreadSuspendContext);
+  public RunToCursorBreakpoint addRunToCursorBreakpoint(@NotNull XSourcePosition position, boolean ignoreBreakpoints) {
+    return RunToCursorBreakpoint.create(myProject, position, ignoreBreakpoints);
   }
 
   @Nullable

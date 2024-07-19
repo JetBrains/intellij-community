@@ -6,7 +6,6 @@ import com.intellij.debugger.engine.evaluation.DebuggerImplicitEvaluationContext
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
-import com.intellij.debugger.engine.requests.CustomProcessingLocatableEventRequestor;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -64,7 +63,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
@@ -782,67 +780,26 @@ public class DebugProcessEvents extends DebugProcessImpl {
           //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           //}
 
-          boolean noStandardSuspendNeeded = specialSuspendProcessing(suspendContext, requestor, suspendManager, thread);
-          if (!noStandardSuspendNeeded) {
-            suspendManager.voteSuspend(suspendContext);
-            showStatusText(DebugProcessEvents.this, event);
-          }
+          suspendManager.voteSuspend(suspendContext);
+          showStatusText(DebugProcessEvents.this, event);
         }
       }
     });
   }
 
-  private static boolean specialSuspendProcessing(@NotNull SuspendContextImpl suspendContext,
-                                                  @NotNull LocatableEventRequestor requestor,
-                                                  @NotNull SuspendManager suspendManager,
-                                                  @NotNull ThreadReference thread) {
 
-    if (suspendContext.myIsCustomSuspendLogic) {
-      suspendManager.voteResume(suspendContext);
-      return true;
-    }
-    boolean noStandardSuspendNeeded;
-    if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
-      noStandardSuspendNeeded = specialSuspendProcessingForAlwaysSwitch(suspendContext, requestor, (SuspendManagerImpl)suspendManager, thread);
-    }
-    else {
-      noStandardSuspendNeeded = requestor instanceof CustomProcessingLocatableEventRequestor customRequestor &&
-                                customRequestor.customVoteSuspend(suspendContext);
-    }
-    if (noStandardSuspendNeeded) {
-      suspendContext.myIsCustomSuspendLogic = true;
-    }
-    return noStandardSuspendNeeded;
-  }
-
-  private static boolean specialSuspendProcessingForAlwaysSwitch(@NotNull SuspendContextImpl suspendContext,
-                                                                 @NotNull LocatableEventRequestor requestor,
-                                                                 @NotNull SuspendManagerImpl suspendManager,
-                                                                 @NotNull ThreadReference thread) {
+  static boolean specialSuspendProcessingForAlwaysSwitch(@NotNull SuspendContextImpl suspendContext,
+                                                         @NotNull SuspendManagerImpl suspendManager,
+                                                         @NotNull ThreadReference thread) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-      if (!(requestor instanceof SuspendOtherThreadsRequestor)) {
-        LOG.warn("Requestor " + requestor + " performed unsafe suspend-all suspend");
-      }
+      debugProcess.logError("Special processing called for " + suspendContext);
       return false;
     }
     if (suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) {
       debugProcess.logError("Suspend context " + suspendContext + " has non-thread suspend policy");
     }
 
-    if (!DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
-      logSuspendContext(suspendContext, "usual suspend-thread breakpoint/stepping");
-      return false;
-    }
-
-    Function<SuspendContextImpl, Boolean> afterSwitch = null;
-    if (requestor instanceof CustomProcessingLocatableEventRequestor customRequestor) {
-      logSuspendContext(suspendContext, "switcher stepping will be applied");
-      afterSwitch = customRequestor.applyAfterContextSwitch();
-    }
-    if (afterSwitch == null) {
-      afterSwitch = c -> true;
-    }
     boolean noStandardSuspendNeeded;
     List<SuspendContextImpl> suspendAllContexts =
       ContainerUtil.filter(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
@@ -861,7 +818,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
         }
         suspendManager.myExplicitlyResumedThreads.remove(threadProxy);
-        suspendManager.voteResume(suspendContext);
+        suspendManager.scheduleResume(suspendContext);
         SuspendManagerUtil.switchToThreadInSuspendAllContext(suspendAllContexts.get(0), threadProxy);
       }
       else {
@@ -876,13 +833,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
           debugProcess.logError("This means resuming thead " + thread + " to the running state for " + suspendContext);
         }
         LOG.warn("Yet another thread has been stopped: " + suspendContext);
-        suspendManager.voteResume(suspendContext);
+        suspendManager.scheduleResume(suspendContext);
         debugProcess.notifyStoppedOtherThreads();
       }
     }
     else {
       logSuspendContext(suspendContext, "initiate transfer to suspend-all");
-      noStandardSuspendNeeded = SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, afterSwitch);
+      noStandardSuspendNeeded = SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, c -> true);
     }
 
     return noStandardSuspendNeeded;
