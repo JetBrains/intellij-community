@@ -3204,7 +3204,6 @@ c:com.intellij.util.ui.update.MergingUpdateQueue
 - f:cancelAllUpdates():V
 - f:deactivate():V
 - dispose():V
-- p:execute(com.intellij.util.ui.update.Update[]):V
 - f:flush():V
 - f:getModalityState():com.intellij.openapi.application.ModalityState
 - hideNotify():V
@@ -3264,15 +3263,16 @@ f:com.intellij.util.ui.update.UiNotifyConnector$Once$Companion
 a:com.intellij.util.ui.update.Update
 - com.intellij.util.ui.update.ComparableObject$Impl
 - java.lang.Runnable
+- sf:Companion:com.intellij.util.ui.update.Update$Companion
 - sf:HIGH_PRIORITY:I
 - sf:LOW_PRIORITY:I
 - <init>(java.lang.Object):V
 - <init>(java.lang.Object,I):V
 - <init>(java.lang.Object,Z):V
 - <init>(java.lang.Object,Z,I):V
+- b:<init>(java.lang.Object,Z,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - canEat(com.intellij.util.ui.update.Update):Z
-- s:create(java.lang.Object,java.lang.Runnable):com.intellij.util.ui.update.Update
-- executeInWriteAction():Z
+- sf:create(java.lang.Object,java.lang.Runnable):com.intellij.util.ui.update.Update
 - f:getPriority():I
 - isDisposed():Z
 - isExpired():Z
@@ -3280,3 +3280,5 @@ a:com.intellij.util.ui.update.Update
 - setProcessed():V
 - setRejected():V
 - wasProcessed():Z
+f:com.intellij.util.ui.update.Update$Companion
+- f:create(java.lang.Object,java.lang.Runnable):com.intellij.util.ui.update.Update

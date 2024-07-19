@@ -1,111 +1,87 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.ui.update;
+package com.intellij.util.ui.update
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
+import org.jetbrains.annotations.NonNls
+import kotlin.concurrent.Volatile
 
 /**
- * Describes a task for {@link MergingUpdateQueue}. Equal tasks (instances with the equal {@code identity} objects) are merged, i.e.,
- * only the first of them is executed. If some tasks are more generic than others override {@link #canEat(Update)} method.
+ * Describes a task for [MergingUpdateQueue]. Equal tasks (instances with the equal `identity` objects) are merged, i.e.,
+ * only the first of them is executed. If some tasks are more generic than others override [.canEat] method.
  *
  * @see MergingUpdateQueue
  */
-public abstract class Update extends ComparableObject.Impl implements Runnable {
-  public static final int LOW_PRIORITY = 999;
-  public static final int HIGH_PRIORITY = 10;
+abstract class Update : ComparableObject.Impl, Runnable {
+  private val _executeInWriteAction: Boolean
 
-  private volatile boolean myProcessed;
-  private volatile boolean myRejected;
+  internal open val executeInWriteAction: Boolean
+    get() = _executeInWriteAction
 
-  private final boolean myExecuteInWriteAction;
+  val priority: Int
 
-  private final int myPriority;
+  constructor(identity: @NonNls Any?, priority: Int) : this(identity = identity, executeInWriteAction = false, priority = priority)
 
-  public Update(@NonNls Object identity) {
-    this(identity, false);
+  @JvmOverloads
+  constructor(identity: @NonNls Any?, executeInWriteAction: Boolean = false, priority: Int = LOW_PRIORITY) : super(identity) {
+    _executeInWriteAction = executeInWriteAction
+    this.priority = priority
   }
 
-  public Update(@NonNls Object identity, int priority) {
-    this(identity, false, priority);
+  internal constructor(delegate: Update) : super() {
+    _executeInWriteAction = delegate.executeInWriteAction
+    priority = delegate.priority
   }
 
-  public Update(@NonNls Object identity, boolean executeInWriteAction) {
-    this(identity, executeInWriteAction, LOW_PRIORITY);
+  companion object {
+    const val LOW_PRIORITY: Int = 999
+    const val HIGH_PRIORITY: Int = 10
+
+    @JvmStatic
+    fun create(identity: @NonNls Any?, runnable: Runnable): Update {
+      return object : Update(identity) {
+        override fun run() {
+          runnable.run()
+        }
+      }
+    }
   }
 
-  public Update(@NonNls Object identity, boolean executeInWriteAction, int priority) {
-    super(identity);
-    myExecuteInWriteAction = executeInWriteAction;
-    myPriority = priority;
-  }
+  open val isDisposed: Boolean
+    get() = false
 
-  @SuppressWarnings("CopyConstructorMissesField")
-  Update(Update delegate) {
-    super();
-    myExecuteInWriteAction = delegate.myExecuteInWriteAction;
-    myPriority = delegate.myPriority;
-  }
+  open val isExpired: Boolean
+    get() = false
 
-  public boolean isDisposed() {
-    return false;
-  }
+  @Volatile
+  private var isProcessed = false
 
-  public boolean isExpired() {
-    return false;
-  }
+  open fun wasProcessed(): Boolean = isProcessed
 
-  public boolean wasProcessed() {
-    return myProcessed;
-  }
-
-  public void setProcessed() {
-    myProcessed = true;
-  }
-
-  public boolean executeInWriteAction() {
-    return myExecuteInWriteAction;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String toString() {
-    return super.toString() + " Objects: " + Arrays.asList(getEqualityObjects());
-  }
-
-  public final int getPriority() {
-    return myPriority;
+  open fun setProcessed() {
+    isProcessed = true
   }
 
   /**
-   * Override this method and return {@code true} if this task is more generic than the passed {@code update}.
+   * Override this method and return `true` if this task is more generic than the passed `update`.
    * For example, if this task repaints the whole frame and the passed task repaints some component on the frame,
    * the less generic tasks will be removed from the queue before execution.
    */
-  public boolean canEat(@NotNull Update update) {
-    return false;
-  }
+  open fun canEat(update: Update): Boolean = false
+
+  @Volatile
+  private var rejected = false
+
+  open val isRejected: Boolean
+    get() = rejected
 
   /**
-   * Is called if the update was submitted to the queue but is not going to be executed because of various reasons; for example:
+   * Is called if the update was submitted to the queue but is not going to be executed because of various reasons; for example,
    * - it was eaten by another Update
    * - this update has gotten expired
    * - someone has canceled all updates
    */
-  public void setRejected() {
-    myRejected = true;
+  open fun setRejected() {
+    rejected = true
   }
 
-  public boolean isRejected() {
-    return myRejected;
-  }
-
-  public static @NotNull Update create(@NonNls Object identity, @NotNull Runnable runnable) {
-    return new Update(identity) {
-      @Override
-      public void run() {
-        runnable.run();
-      }
-    };
-  }
+  override fun toString(): String = "${super.toString()} Objects: ${equalityObjects.joinToString()}"
 }

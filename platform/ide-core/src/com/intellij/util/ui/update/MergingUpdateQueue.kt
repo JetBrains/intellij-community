@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
 import com.intellij.util.Alarm.ThreadToUse
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
@@ -42,7 +42,7 @@ private val priorityComparator = Comparator.comparingInt<Update> { it.priority }
  * background activity: it doesn't make sense and would be inefficient to update UI 1000 times per second, so it's better to postpone 'update UI'
  * task execution for e.g., 500ms and if new updates are added during this period, they can be simply ignored.
  *
- * Create instance of this class and use [.queue] method to add new tasks.
+ * Create an instance of this class and use [.queue] method to add new tasks.
  *
  * Sometimes [MergingUpdateQueue] can be used for control flow operations. **This kind of usage is discouraged**, in favor of
  * [kotlinx.coroutines.flow.Flow] and [kotlinx.coroutines.flow.FlowKt.debounce].
@@ -115,7 +115,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     modalityStateComponent: JComponent?,
     parent: Disposable? = null,
     activationComponent: JComponent? = null,
-    executeInDispatchThread: Boolean = true
+    executeInDispatchThread: Boolean = true,
   ) : this(
     name = name,
     mergingTimeSpan = mergingTimeSpan,
@@ -242,7 +242,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         try {
           each.setRejected()
         }
-        catch (ignored: ProcessCanceledException) {
+        catch (ignored: CancellationException) {
         }
       }
       scheduledUpdates.clear()
@@ -352,6 +352,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     }
   }
 
+  @Internal
   protected open suspend fun executeUpdates(updates: List<Update>) {
     for (update in updates) {
       coroutineContext.ensureActive()
@@ -361,7 +362,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         continue
       }
 
-      if (update.executeInWriteAction()) {
+      if (update.executeInWriteAction) {
         @Suppress("ForbiddenInSuspectContextMethod", "RedundantSuppression")
         ApplicationManager.getApplication().runWriteAction { execute(update) }
       }
@@ -441,6 +442,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     return !current.dominates(modalityState)
   }
 
+  @Internal
   protected open fun execute(updates: List<Update>) {
     for (update in updates) {
       if (isExpired(update)) {
@@ -448,7 +450,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         continue
       }
 
-      if (update.executeInWriteAction()) {
+      if (update.executeInWriteAction) {
         @Suppress("ForbiddenInSuspectContextMethod", "RedundantSuppression")
         ApplicationManager.getApplication().runWriteAction { execute(update) }
       }

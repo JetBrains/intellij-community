@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * This behavior is necessary when [MergingUpdateQueue] is used for the control-flow reason,
  * and the platform may be interested in undelivered updates.
  * An example is project configuration process, where configuration starts via a [MergingUpdateQueue],
- * hence the platform needs to know about all undelivered updates in order to proper track the configuration of a project.
+ * hence the platform needs to know about all undelivered updates to proper track the configuration of a project.
  */
 fun MergingUpdateQueue.queueTracked(update: Update) {
   ApplicationManager.getApplication().service<MergingUpdateQueueTracker>().registerEnter()
@@ -33,12 +33,19 @@ private class TrackedUpdate(
   // we have to delegate ALL overrideable methods because we don't know which ones are overridden in the original Update
   // also Update is an abstract class, so we cannot use Kotlin Delegation
 
-  override fun isDisposed(): Boolean = original.isDisposed
-  override fun isExpired(): Boolean = original.isExpired
+  override val isDisposed: Boolean
+    get() = original.isDisposed
+  override val isExpired: Boolean
+    get() = original.isExpired
   override fun wasProcessed(): Boolean = original.wasProcessed()
   override fun setProcessed() = original.setProcessed()
-  override fun executeInWriteAction(): Boolean = original.executeInWriteAction()
-  override fun isRejected(): Boolean = original.isRejected
+
+  override val executeInWriteAction: Boolean
+    get() = original.executeInWriteAction
+
+  override val isRejected: Boolean
+    get() = original.isRejected
+
   override fun getEqualityObjects(): Array<Any> = original.equalityObjects
 
   override fun canEat(update: Update): Boolean {

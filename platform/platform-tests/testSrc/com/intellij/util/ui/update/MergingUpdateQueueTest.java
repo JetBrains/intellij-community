@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
 public class MergingUpdateQueueTest extends LightPlatformTestCase {
   public void testOnShowNotify() {
     final MyUpdate first = new MyUpdate("first");
@@ -458,8 +460,8 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
       }
     };
     queue.queue(update);
-    assertFalse(update.isRejected());
+    assertThat(update.isRejected()).isFalse();
     Disposer.dispose(queue);
-    assertTrue(update.isRejected());
+    assertThat(update.isRejected()).isTrue();
   }
 }
