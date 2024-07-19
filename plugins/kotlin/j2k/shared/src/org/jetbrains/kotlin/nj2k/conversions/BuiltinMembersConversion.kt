@@ -168,22 +168,19 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
 
     private inner class ExtensionMethodBuilder(private val fqName: String) : ResultBuilder {
         context(KaSession)
-        override fun build(from: JKExpression): JKExpression =
-            when (from) {
-                is JKCallExpression -> {
-                    val arguments = from.arguments::arguments.detached()
-                    JKQualifiedExpression(
-                        arguments.first()::value.detached().parenthesizeIfCompoundExpression(),
-                        JKCallExpressionImpl(
-                            symbolProvider.provideMethodSymbol(fqName),
-                            JKArgumentList(arguments.drop(1)),
-                            from::typeArgumentList.detached()
-                        )
-                    ).withFormattingFrom(from)
-                }
+        override fun build(from: JKExpression): JKExpression {
+            if (from !is JKCallExpression) error("Bad conversion")
 
-                else -> error("Bad conversion")
-            }
+            val arguments = from.arguments::arguments.detached()
+            return JKQualifiedExpression(
+                arguments.first()::value.detached().parenthesizeIfCompoundExpression(),
+                JKCallExpressionImpl(
+                    symbolProvider.provideMethodSymbol(fqName),
+                    JKArgumentList(arguments.drop(1)),
+                    from::typeArgumentList.detached()
+                )
+            ).withFormattingFrom(from)
+        }
     }
 
     private inner class CustomExpressionBuilder(val builder: (JKExpression) -> JKExpression) : ResultBuilder {
