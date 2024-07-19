@@ -63,7 +63,9 @@ internal class ShellCommandOutputScraperImpl(
     }
   }
 
-  override fun scrapeOutput(): StyledCommandOutput = session.model.withContentLock { scrapeOutput(session) }
+  override fun scrapeOutput(): StyledCommandOutput = session.model.withContentLock {
+    scrapeOutput(session.model.textBuffer, session.commandBlockIntegration.commandEndMarker)
+  }
 
   companion object {
     fun scrapeOutput(session: BlockTerminalSession): StyledCommandOutput {
