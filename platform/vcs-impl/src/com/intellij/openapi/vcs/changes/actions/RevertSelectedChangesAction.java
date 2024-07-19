@@ -63,12 +63,15 @@ public abstract class RevertSelectedChangesAction extends RevertCommittedStuffAb
 
   @Override
   protected Change @Nullable [] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
+    CommittedChangesTreeBrowser treeBrowser = e.getData(CommittedChangesTreeBrowser.COMMITTED_CHANGES_TREE_DATA_KEY);
+    if (treeBrowser == null) {
+      return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+    }
+
     if (isFromUpdate) {
       return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
     }
     else {
-      CommittedChangesTreeBrowser treeBrowser = e.getData(CommittedChangesTreeBrowser.COMMITTED_CHANGES_TREE_DATA_KEY);
-      if (treeBrowser == null) return null;
       return treeBrowser.collectSelectedChangesWithMovedChildren();
     }
   }

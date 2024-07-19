@@ -15,12 +15,15 @@ public final class RevertChangeListAction extends RevertCommittedStuffAbstractAc
 
   @Override
   protected Change @Nullable [] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
+    CommittedChangesTreeBrowser treeBrowser = e.getData(CommittedChangesTreeBrowser.COMMITTED_CHANGES_TREE_DATA_KEY);
+    if (treeBrowser == null) {
+      return null;
+    }
+
     if (isFromUpdate) {
       return e.getData(VcsDataKeys.CHANGES);
     }
     else {
-      CommittedChangesTreeBrowser treeBrowser = e.getData(CommittedChangesTreeBrowser.COMMITTED_CHANGES_TREE_DATA_KEY);
-      if (treeBrowser == null) return null;
       return treeBrowser.collectChangesWithMovedChildren();
     }
   }
