@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.execution.Location;
-import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
