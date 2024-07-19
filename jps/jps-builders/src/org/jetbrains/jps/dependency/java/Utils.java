@@ -6,10 +6,11 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.impl.Containers;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -158,17 +159,17 @@ public final class Utils {
     else {
       allNodes = fromDeltaOnly? Collections.emptyList() : flat(map(filter(myGraph.getSources(id), mySourcesFilter::test), src -> myGraph.getNodes(src, selector)));
     }
-    return uniqueDiffCapable(filter(allNodes, n -> id.equals(n.getReferenceID())));
+    return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), T::isSame, T::diffHashCode);
   }
 
-  public static <T extends DiffCapable<T, ?>> @NotNull Iterable<T> uniqueDiffCapable(Iterable<? extends T> nodes) {
-    return uniqueBy(nodes, () -> new BooleanFunction<>() {
+  public static <T> @NotNull Iterable<T> uniqueBy(Iterable<? extends T> it, final BiFunction<? super T, ? super T, Boolean> equalsImpl, final Function<? super T, Integer> hashCodeImpl) {
+    return Iterators.uniqueBy(it, () -> new BooleanFunction<>() {
       Set<T> visited;
 
       @Override
       public boolean fun(T t) {
         if (visited == null) {
-          visited = Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode);
+          visited = Containers.createCustomPolicySet(equalsImpl, hashCodeImpl);
         }
         return visited.add(t);
       }
