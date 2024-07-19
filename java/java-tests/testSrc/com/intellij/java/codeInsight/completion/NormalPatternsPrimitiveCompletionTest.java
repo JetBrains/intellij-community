@@ -215,4 +215,26 @@ public class NormalPatternsPrimitiveCompletionTest extends NormalCompletionTestC
     assertContainsElements(lookupStrings, "false");
     assertDoesntContain(lookupStrings, "true");
   }
+
+  public void testSwitchPatternAnotherBooleanWithExpression() {
+    myFixture.configureByText("a.java", """
+      class X {
+        private final boolean yes = true;
+        void test(boolean o) {
+          switch(o){
+            case yes -> System.out.println();
+            case <caret>
+          }
+        }
+      }""");
+    myFixture.completeBasic();
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(getEditor());
+    Set<String> lookupStrings = new HashSet<>();
+    for (LookupElement element : lookup == null ? new ArrayList<LookupElement>() : lookup.getItems()) {
+      lookupStrings.add(element.getLookupString());
+    }
+
+    assertContainsElements(lookupStrings, "false");
+    assertDoesntContain(lookupStrings, "true");
+  }
 }

@@ -1193,8 +1193,9 @@ public class JavaKeywordCompletion {
         PsiType type = switchBlock.getExpression().getType();
         if (PsiTypes.booleanType().equals(PsiPrimitiveType.getOptionallyUnboxedType(type))) {
           Set<String> branches = SwitchUtils.getSwitchBranches(switchBlock).stream()
-            .filter(branch -> branch instanceof PsiLiteralExpression literalExpression && literalExpression.getValue() instanceof Boolean)
-            .map(branch -> branch.getText())
+            .map(branch -> branch instanceof PsiExpression expression ? ExpressionUtils.computeConstantExpression(expression) : null)
+            .filter(constant -> constant instanceof Boolean)
+            .map(branch -> branch.toString())
             .collect(Collectors.toSet());
           TailType tailType = JavaTailTypes.forSwitchLabel(switchBlock);
           for (String keyword : List.of(PsiKeyword.TRUE, PsiKeyword.FALSE)) {
