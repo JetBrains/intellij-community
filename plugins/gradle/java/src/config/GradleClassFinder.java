@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageDirectoryCache;
 import com.intellij.openapi.roots.ProjectFileIndex;
