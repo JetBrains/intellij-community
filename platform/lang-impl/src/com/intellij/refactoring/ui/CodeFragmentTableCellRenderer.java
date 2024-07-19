@@ -80,6 +80,8 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
       editorTextField.setBackground(bg);
       editorTextField.setForeground(fg);
       editorTextField.setAsRendererWithSelection(bg, fg);
+    } else {
+      editorTextField.setBackground(table.getBackground());
     }
     return editorTextField;
   }
