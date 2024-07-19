@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeoutException;
 
 import static com.intellij.openapi.application.PluginPathManager.getPluginHomePath;
 import static com.intellij.openapi.util.io.FileUtil.*;
@@ -159,10 +159,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     return svnExecutable.getParentFile();
   }
 
-  protected void refreshSvnMappingsSynchronously() {
-    CountDownLatch done = new CountDownLatch(1);
-    vcs.getSvnFileUrlMappingImpl().scheduleRefresh(() -> done.countDown());
-    RunAll.runAll(() -> done.await());
+  protected void refreshSvnMappingsSynchronously() throws TimeoutException {
+    vcs.getSvnFileUrlMappingImpl().scheduleRefresh();
+    vcs.getSvnFileUrlMappingImpl().waitForRefresh();
   }
 
   protected void refreshChanges() {

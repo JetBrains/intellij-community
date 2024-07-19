@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -16,10 +15,12 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.projectlevelman.MappingsToRoots;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
@@ -28,10 +29,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static com.intellij.util.Alarm.ThreadToUse.POOLED_THREAD;
 import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
@@ -39,35 +41,32 @@ import static org.jetbrains.idea.svn.SvnUtil.*;
 import static org.jetbrains.idea.svn.SvnUtilKtKt.putWcDbFilesToVfs;
 
 @State(name = "SvnFileUrlMappingImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart>, Disposable {
+public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart> {
   private static final Logger LOG = Logger.getInstance(SvnFileUrlMappingImpl.class);
 
-  @NotNull private final Object myMonitor = new Object();
+  private final @NotNull Object myMonitor = new Object();
   // strictly: what real roots are under what vcs mappings
-  @NotNull private final SvnMapping myMapping = new SvnMapping();
+  private final @NotNull SvnMapping myMapping = new SvnMapping();
   // grouped; if there are several mappings one under another, will return the upmost
-  @NotNull private final SvnMapping myMoreRealMapping = new SvnMapping();
-  @NotNull private final List<RootUrlInfo> myErrorRoots = new ArrayList<>();
-  @NotNull private final Project myProject;
-  @NotNull private final NestedCopiesHolder myNestedCopiesHolder = new NestedCopiesHolder();
+  private final @NotNull SvnMapping myMoreRealMapping = new SvnMapping();
+  private final @NotNull List<RootUrlInfo> myErrorRoots = new ArrayList<>();
+  private final @NotNull Project myProject;
+  private final @NotNull NestedCopiesHolder myNestedCopiesHolder = new NestedCopiesHolder();
   private boolean myInitialized;
   private boolean myInitedReloaded;
 
-  private final @NotNull MergingUpdateQueue myRefreshQueue =
-    new MergingUpdateQueue("Refresh Working Copies", 100, true, null, this, null, POOLED_THREAD);
+  private final @NotNull MergingUpdateQueue refreshQueue;
+  @NotNull private final CoroutineScope coroutineScope;
 
   @SuppressWarnings("UnusedDeclaration")
-  private SvnFileUrlMappingImpl(@NotNull Project project) {
+  private SvnFileUrlMappingImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
+    refreshQueue = MergingUpdateQueue.Companion.mergingUpdateQueue("Refresh Working Copies", 100, coroutineScope);
+    this.coroutineScope = coroutineScope;
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @Override
-  @Nullable
-  public Url getUrlForFile(@NotNull File file) {
+  public @Nullable Url getUrlForFile(@NotNull File file) {
     Url result = null;
     RootUrlInfo rootUrlInfo = getWcRootForFilePath(getFilePath(file));
 
@@ -84,15 +83,13 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   }
 
   @Override
-  @Nullable
-  public File getLocalPath(@NotNull Url url) {
+  public @Nullable File getLocalPath(@NotNull Url url) {
     RootUrlInfo parentInfo = getWcRootForUrl(url);
     return parentInfo != null ? new File(parentInfo.getIoFile(), getRelativeUrl(parentInfo.getUrl(), url)) : null;
   }
 
   @Override
-  @Nullable
-  public RootUrlInfo getWcRootForFilePath(@NotNull FilePath path) {
+  public @Nullable RootUrlInfo getWcRootForFilePath(@NotNull FilePath path) {
     synchronized (myMonitor) {
       String root = myMoreRealMapping.getRootForPath(toSystemDependentName(path.toString()));
 
@@ -101,8 +98,7 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   }
 
   @Override
-  @Nullable
-  public RootUrlInfo getWcRootForUrl(@NotNull Url url) {
+  public @Nullable RootUrlInfo getWcRootForUrl(@NotNull Url url) {
     synchronized (myMonitor) {
       RootUrlInfo result = null;
       Url rootUrl = find(myMoreRealMapping.getUrls(), parentRootUrl -> isAncestor(parentRootUrl, url));
@@ -122,25 +118,22 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
    * Returns real working copies roots - if there is <Project Root> -> Subversion setting,
    * and there is one working copy, will return one root
    */
-  @NotNull
   @Override
-  public List<RootUrlInfo> getAllWcInfos() {
+  public @NotNull List<RootUrlInfo> getAllWcInfos() {
     synchronized (myMonitor) {
       return myMoreRealMapping.getAllCopies();
     }
   }
 
-  @NotNull
   @Override
-  public List<RootUrlInfo> getErrorRoots() {
+  public @NotNull List<RootUrlInfo> getErrorRoots() {
     synchronized (myMonitor) {
       return new ArrayList<>(myErrorRoots);
     }
   }
 
   @Override
-  @NotNull
-  public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
+  public @NotNull List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
     List<VirtualFile> cachedRoots;
     List<VirtualFile> lonelyRoots;
     synchronized (myMonitor) {
@@ -165,11 +158,11 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   }
 
   public void scheduleRefresh() {
-    myRefreshQueue.queue(DisposableUpdate.createDisposable(this, "refresh", () -> refresh()));
+    refreshQueue.queue(Update.create("refresh", () -> refresh()));
   }
 
   void scheduleRefresh(@NotNull Runnable callback) {
-    myRefreshQueue.queue(DisposableUpdate.createDisposable(this, callback, () -> {
+    refreshQueue.queue(Update.create(callback, () -> {
       try {
         refresh();
       }
@@ -179,10 +172,15 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
     }));
   }
 
+  @TestOnly
+  void waitForRefresh() throws TimeoutException {
+    refreshQueue.waitForAllExecuted(5, TimeUnit.MINUTES);
+  }
+
   private void refresh() {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     VirtualFile[] roots = getNotFilteredRoots();
-    SvnRootsDetector rootsDetector = new SvnRootsDetector(this, vcs, myNestedCopiesHolder);
+    SvnRootsDetector rootsDetector = new SvnRootsDetector(coroutineScope, vcs, myNestedCopiesHolder);
     SvnRootsDetector.Result result = rootsDetector.detectCopyRoots(roots, init());
 
     if (result != null) {
@@ -193,9 +191,9 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
 
   private final class NewRootsApplier {
 
-    @NotNull private final SvnRootsDetector.Result myResult;
-    @NotNull private final SvnMapping myNewMapping = new SvnMapping();
-    @NotNull private final SvnMapping myNewFilteredMapping = new SvnMapping();
+    private final @NotNull SvnRootsDetector.Result myResult;
+    private final @NotNull SvnMapping myNewMapping = new SvnMapping();
+    private final @NotNull SvnMapping myNewFilteredMapping = new SvnMapping();
 
     private NewRootsApplier(@NotNull SvnRootsDetector.Result result) {
       myResult = result;
@@ -281,7 +279,7 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   }
 
   @Override
-  public void loadState(@NotNull final SvnMappingSavedPart state) {
+  public void loadState(final @NotNull SvnMappingSavedPart state) {
     ProjectLevelVcsManager.getInstance(myProject).runAfterInitialization(
       () -> getApplication().executeOnPooledThread(() -> {
         SvnMapping mapping = new SvnMapping();
