@@ -1447,14 +1447,16 @@ public final class GenericsHighlightUtil {
   static HighlightInfo.Builder checkRawOnParameterizedType(@NotNull PsiJavaCodeReferenceElement parent, @Nullable PsiElement resolved) {
     PsiReferenceParameterList list = parent.getParameterList();
     if (list == null || list.getTypeArguments().length > 0) return null;
-    PsiElement qualifier = parent.getQualifier();
-    if (qualifier instanceof PsiJavaCodeReferenceElement &&
-        ((PsiJavaCodeReferenceElement)qualifier).getTypeParameters().length > 0 &&
-        resolved instanceof PsiTypeParameterListOwner &&
-        ((PsiTypeParameterListOwner)resolved).hasTypeParameters() &&
-        !((PsiTypeParameterListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-      String message = JavaErrorBundle.message("text.improper.formed.type");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(message);
+    if (parent.getQualifier() instanceof PsiJavaCodeReferenceElement ref &&
+        ref.getTypeParameters().length > 0 &&
+        resolved instanceof PsiTypeParameterListOwner typeParameterListOwner &&
+        typeParameterListOwner.hasTypeParameters() &&
+        !typeParameterListOwner.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiElement referenceNameElement = parent.getReferenceNameElement();
+      if (referenceNameElement != null) {
+        String message = JavaErrorBundle.message("text.improper.formed.type", referenceNameElement.getText());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(message);
+      }
     }
     return null;
   }
