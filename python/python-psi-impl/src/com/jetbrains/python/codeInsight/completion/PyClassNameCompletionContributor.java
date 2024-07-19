@@ -24,6 +24,7 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -53,6 +55,8 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
   private static final boolean TRACING_WITH_SPUTNIK_ENABLED = false;
   private static final Logger LOG = Logger.getInstance(PyClassNameCompletionContributor.class);
   private static final int NAME_TOO_SHORT_FOR_BASIC_COMPLETION_THRESHOLD = 5;
+  // See PY-73964, IJPL-265
+  private static final boolean RECURSIVE_INDEX_ACCESS_ALLOWED = false;
 
   public PyClassNameCompletionContributor() {
     if (TRACING_WITH_SPUTNIK_ENABLED) {
@@ -101,7 +105,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     TimeoutUtil.run(() -> {
       GlobalSearchScope scope = createScope(originalFile);
       Set<QualifiedName> alreadySuggested = new HashSet<>();
-      StubIndex.getInstance().processAllKeys(PyExportedModuleAttributeIndex.KEY, elementName -> {
+      forEachPublicNameFromIndex(scope, elementName -> {
         ProgressManager.checkCanceled();
         counters.scannedNames++;
         if (elementName.length() < NAME_TOO_SHORT_FOR_BASIC_COMPLETION_THRESHOLD && !isExtendedCompletion) {
@@ -143,7 +147,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
           }
           return true;
         });
-      }, scope);
+      });
     }, duration -> {
       LOG.debug(counters + " computed for prefix '" + result.getPrefixMatcher().getPrefix() + "' in " + duration + " ms");
       if (TRACING_WITH_SPUTNIK_ENABLED) {
@@ -151,6 +155,20 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
         System.out.println("\1h('Importable names completion','%d')".formatted((duration / 10) * 10));
       }
     });
+  }
+
+  private static void forEachPublicNameFromIndex(@NotNull GlobalSearchScope scope, @NotNull Processor<String> processor) {
+    StubIndex stubIndex = StubIndex.getInstance();
+    if (!RECURSIVE_INDEX_ACCESS_ALLOWED) {
+      for (String allKey : stubIndex.getAllKeys(PyExportedModuleAttributeIndex.KEY, Objects.requireNonNull(scope.getProject()))) {
+        if (!processor.process(allKey)) {
+          return;
+        }
+      }
+    }
+    else {
+      stubIndex.processAllKeys(PyExportedModuleAttributeIndex.KEY, processor, scope);
+    }
   }
 
   private static boolean isApplicableInInsertionContext(@NotNull PyElement definition,
