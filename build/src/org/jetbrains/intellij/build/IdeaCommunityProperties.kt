@@ -32,6 +32,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       "intellij.platform.externalSystem.testFramework",
       "intellij.maven.testFramework",
       "intellij.tools.reproducibleBuilds.diff",
+      "intellij.space.java.jps",
     )
   }
 
