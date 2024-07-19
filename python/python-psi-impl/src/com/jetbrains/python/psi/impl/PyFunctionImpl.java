@@ -49,6 +49,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
+import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
 public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements PyFunction {
 
@@ -352,7 +353,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (stub != null) {
       return stub.getDeprecationMessage();
     }
-    return PyFunction.super.getDeprecationMessage();
+    return extractDeprecationMessage();
+  }
+
+  @Nullable
+  public String extractDeprecationMessage() {
+    String deprecationMessageFromDecorator = extractDeprecationMessageFromDecorator(this);
+    if (deprecationMessageFromDecorator != null) {
+      return deprecationMessageFromDecorator;
+    }
+    PyStatementList statementList = getStatementList();
+    return PyFunction.extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
   }
 
   @Override
