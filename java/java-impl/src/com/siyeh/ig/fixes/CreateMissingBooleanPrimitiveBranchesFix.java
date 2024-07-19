@@ -4,6 +4,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +41,8 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
         PsiType type = patternVariable.getType();
         if (type.isAssignableFrom(boxedBooleanType)) return null;
       }
-      if (branch instanceof PsiLiteralExpression literal && literal.getValue() instanceof Boolean) {
-        existed.add(literal.getText());
+      if (branch instanceof PsiExpression expression && ExpressionUtils.computeConstantExpression(expression) instanceof Boolean booleanValue) {
+        existed.add(booleanValue.toString());
       }
     }
     List<String> missed = new ArrayList<>();
