@@ -244,6 +244,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
       throw (RuntimeException)e;
     }
+    if (e instanceof InterruptedException) {
+      throw new RuntimeException(e);
+    }
     action.accept(wrapIntoThrowable ? new Throwable(e) : e);
   }
 
