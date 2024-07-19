@@ -17,9 +17,10 @@ import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerI
  */
 @ApiStatus.Experimental
 class ShellCompletionTestFixture private constructor(
-  private val project: Project,
+  private val project: Project?,
   private val curDirectory: String,
   private val shellName: ShellName,
+  private val commandSpecs: List<ShellCommandSpec>?,
   private val generatorCommandsRunner: ShellCommandExecutor,
   private val generatorsExecutor: ShellDataGeneratorsExecutor,
 ) {
@@ -37,8 +38,13 @@ class ShellCompletionTestFixture private constructor(
     val tokens = commandText.split(Regex(" +"))
     assert(tokens.size > 1) { "Command text must contain a command name and at least a space after it: '$commandText'" }
 
+    val commandSpecsManager = if (commandSpecs != null) {
+      TestCommandSpecsManager(commandSpecs)
+    }
+    else ShellCommandSpecsManagerImpl.getInstance()
+
     val completion = ShellCommandSpecCompletion(
-      ShellCommandSpecsManagerImpl.getInstance(),
+      commandSpecsManager,
       generatorsExecutor,
       TestRuntimeContextProvider(project, curDirectory, shellName, generatorCommandsRunner)
     )
@@ -48,15 +54,16 @@ class ShellCompletionTestFixture private constructor(
     return completion.computeCompletionItems(command, arguments) ?: error("Not found command spec for command: $command")
   }
 
-  class Builder internal constructor(private val project: Project) {
-    private var curDirectory: String = project.guessProjectDir()?.path ?: ""
+  class Builder internal constructor(private val project: Project?) {
+    private var curDirectory: String = project?.guessProjectDir()?.path ?: ""
     private var shellName: ShellName = ShellName("dummy")
+    private var commandSpecs: List<ShellCommandSpec>? = null
     private var generatorCommandsRunner: ShellCommandExecutor = TestGeneratorCommandsRunner.DUMMY
     private var generatorsExecutor: ShellDataGeneratorsExecutor = TestGeneratorsExecutor()
 
     /**
      * This current directory will be used in the [ShellRuntimeContext] provided to [ShellRuntimeDataGenerator]'s.
-     * By default, it is a path of the [project] dir.
+     * By default, it is a path of the [project] dir if it is provided, or an empty string if it is not.
      */
     fun setCurrentDirectory(directory: String): Builder {
       curDirectory = directory
@@ -69,6 +76,16 @@ class ShellCompletionTestFixture private constructor(
      */
     fun setShellName(name: ShellName): Builder {
       shellName = name
+      return this
+    }
+
+    /**
+     * Allows mocking the available command specs for which completion can be provided.
+     * By default, we use all command specs available in production, but it requires starting the IDE application.
+     * If your test is not starting the IDE, available command specs must be provided using this method.
+     */
+    fun mockCommandSpecs(vararg specs: ShellCommandSpec): Builder {
+      commandSpecs = specs.toList()
       return this
     }
 
@@ -102,11 +119,11 @@ class ShellCompletionTestFixture private constructor(
     }
 
     fun build(): ShellCompletionTestFixture {
-      return ShellCompletionTestFixture(project, curDirectory, shellName, generatorCommandsRunner, generatorsExecutor)
+      return ShellCompletionTestFixture(project, curDirectory, shellName, commandSpecs, generatorCommandsRunner, generatorsExecutor)
     }
   }
 
   companion object {
-    fun builder(project: Project): Builder = Builder(project)
+    fun builder(project: Project?): Builder = Builder(project)
   }
 }
