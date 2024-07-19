@@ -14,8 +14,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 @ApiStatus.Internal
-public class VcsBranchEditorListener extends LinkMouseListenerBase {
-
+public final class VcsBranchEditorListener extends LinkMouseListenerBase {
   private static final Logger LOG = Logger.getInstance(VcsBranchEditorListener.class);
   private final CheckboxTree.CheckboxTreeCellRenderer myRenderer;
   private VcsLinkedTextComponent myUnderlined;
@@ -48,14 +47,13 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
     }
   }
 
-  @Nullable
   @Override
-  protected Object getTagAt(@NotNull final MouseEvent e) {
+  protected @Nullable Object getTagAt(final @NotNull MouseEvent e) {
     return PushLogTreeUtil.getTagAtForRenderer(myRenderer, e);
   }
 
   @Override
-  protected void handleTagClick(@Nullable final Object tag, @NotNull MouseEvent event) {
+  protected void handleTagClick(final @Nullable Object tag, @NotNull MouseEvent event) {
     if (tag instanceof VcsLinkedTextComponent textWithLink) {
       final TreePath path = myRenderer.getTextRenderer().getTree().getPathForLocation(event.getX(), event.getY());
       if (path == null) return; //path could not be null if tag not null; see com.intellij.dvcs.push.ui.PushLogTreeUtil.getTagAtForRenderer
