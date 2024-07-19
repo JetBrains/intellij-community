@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.projectRoots;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -89,21 +90,16 @@ public enum IntelliJPlatformProduct {
     return IDEA;
   }
 
-  public static @Nullable IntelliJPlatformProduct fromProductCode(String productCode) {
-    for (IntelliJPlatformProduct product : values()) {
-      if (Objects.equals(product.myProductCode, productCode)) {
-        return product;
-      }
-    }
-    return null;
+  public static @Nullable IntelliJPlatformProduct fromProductCode(@Nullable String productCode) {
+    return ContainerUtil.find(values(), product -> product.myProductCode.equals(productCode));
   }
 
-  public static @Nullable IntelliJPlatformProduct fromMavenCoordinates(String groupId, String artifactId) {
+  public static @Nullable IntelliJPlatformProduct fromMavenCoordinates(@NotNull String groupId, @NotNull String artifactId) {
     String coordinates = groupId + ":" + artifactId;
     return ContainerUtil.find(values(), product -> Objects.equals(product.getMavenCoordinates(), coordinates));
   }
 
-  public static @Nullable IntelliJPlatformProduct fromCdnCoordinates(String groupId, String artifactId) {
+  public static @Nullable IntelliJPlatformProduct fromCdnCoordinates(@NotNull String groupId, @NotNull String artifactId) {
     return ContainerUtil.find(values(), product -> Objects.equals(product.getCdnCoordinates(), groupId + ":" + artifactId));
   }
 }

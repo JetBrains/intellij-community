@@ -48,6 +48,7 @@ fun resolveIdeHomeVariable(path: String, ideHome: String) =
  */
 @Serializable
 data class ProductInfo(
+  val name: String = "",
   val version: String = "",
   val buildNumber: String = "",
   val productCode: String = "",
@@ -67,20 +68,28 @@ data class ProductInfo(
         isEmpty() -> null // older SDKs or Maven releases don't provide architecture information, null is used in such a case
         contains(architecture) -> architecture
         contains("amd64") && architecture == "x86_64" -> "amd64"
-        else -> throw Exception("Unsupported JVM architecture: '$architecture'. Available architectures : ${joinToString()}")
+        else -> null
       }
     }
 
     val os = when {
-      SystemInfo.isLinux -> Linux
-      SystemInfo.isWindows -> Windows
-      SystemInfo.isMac -> macOS
-      else -> throw Exception("Unsupported OS: ${SystemInfo.OS_NAME}")
+      SystemInfo.isLinux -> Launch.OS.Linux
+      SystemInfo.isWindows -> Launch.OS.Windows
+      SystemInfo.isMac -> Launch.OS.macOS
+      else -> null
     }
 
     return launch
       .find { os == it.os && arch == it.arch }
-      .let { requireNotNull(it) { "Could not find launch information for the current OS: $os ($arch)" } }
+      .let {
+        requireNotNull(it) {
+          val options = launch.associate { option -> option.os to option.arch }
+          """
+          Could not find launch information for $name $version ($buildNumber) using {os=$os, arch=$arch}.<br/>
+          Available options: $options
+          """.trimIndent()
+        }
+      }
       .run { copy(additionalJvmArguments = additionalJvmArguments.map { it.trim('"') }) }
   }
 
