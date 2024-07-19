@@ -190,6 +190,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myArranger = arranger;
   }
 
+  @ApiStatus.Internal
   @NotNull
   public ClientProjectSession getSession() {
     return mySession;
