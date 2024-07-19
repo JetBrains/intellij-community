@@ -14,6 +14,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.openapi.application.migrations.AIAssistant241;
+import com.intellij.openapi.application.migrations.PythonJupyterRemoval;
 import com.intellij.openapi.application.migrations.PythonProMigration242;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1064,6 +1065,7 @@ public final class ConfigImportHelper {
 
     new AIAssistant241().migratePlugins(options);
     new PythonProMigration242().migratePlugins(options);
+    new PythonJupyterRemoval().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(Path newConfigDir,
