@@ -80,9 +80,9 @@ public final class PyDefUseUtil {
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     ControlFlowUtil.iteratePrev(startNum, instructions,
                                 instruction -> {
-                                  if (instruction instanceof CallInstruction callInstruction) {
+                                  if (acceptTypeAssertions && instruction instanceof CallInstruction callInstruction) {
                                     var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
-                                    if (acceptTypeAssertions && typeGuardInstruction != null) {
+                                    if (typeGuardInstruction != null) {
                                       result.add(typeGuardInstruction);
                                       return ControlFlowUtil.Operation.CONTINUE;
                                     }
