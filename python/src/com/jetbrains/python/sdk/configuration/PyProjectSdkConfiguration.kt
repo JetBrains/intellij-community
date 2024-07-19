@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -26,7 +25,7 @@ import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
-import com.jetbrains.python.sdk.excludeInnerVirtualEnv
+import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.ui.PyUiUtil
 
 object PyProjectSdkConfiguration {
@@ -56,9 +55,11 @@ object PyProjectSdkConfiguration {
 
   fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
     runInEdt {
-      if (module.isDisposed) return@runInEdt
-      SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk)
-      module.excludeInnerVirtualEnv(sdk)
+      if (module.isDisposed) {
+        return@runInEdt
+      }
+
+      configurePythonSdk(project, module, sdk)
       notifyAboutConfiguredSdk(project, module, sdk)
     }
   }

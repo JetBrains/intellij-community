@@ -58,6 +58,7 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.ui.PyUiUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -70,7 +71,6 @@ private data class TargetAndPath(
   val target: TargetEnvironmentConfiguration?,
   val path: FullPathOnTarget?,
 )
-
 
 val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
 
@@ -96,6 +96,17 @@ fun mostPreferred(sdks: List<Sdk>): Sdk? = sdks.minWithOrNull(PreferredSdkCompar
 
 fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
+}
+
+@ApiStatus.Internal
+fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
+  // in case module contains root of the project we consider it as a project wide interpreter
+  if (project.basePath == module.basePath) {
+    project.pythonSdk = sdk
+  }
+
+  module.pythonSdk = sdk
+  module.excludeInnerVirtualEnv(sdk)
 }
 
 /**
