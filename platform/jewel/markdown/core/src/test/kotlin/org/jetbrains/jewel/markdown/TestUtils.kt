@@ -1,14 +1,5 @@
 package org.jetbrains.jewel.markdown
 
-import org.commonmark.internal.InlineParserContextImpl
-import org.commonmark.internal.InlineParserImpl
-import org.commonmark.internal.LinkReferenceDefinitions
-import org.commonmark.node.Node
-import org.commonmark.parser.Parser
-import org.commonmark.parser.SourceLine
-import org.commonmark.parser.SourceLines
-import org.commonmark.renderer.html.HtmlRenderer
-import org.intellij.lang.annotations.Language
 import org.jetbrains.jewel.markdown.MarkdownBlock.BlockQuote
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
@@ -21,11 +12,11 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
 import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
-import org.junit.Assert
+import org.junit.Assert.assertTrue
 
 fun List<MarkdownBlock>.assertEquals(vararg expected: MarkdownBlock) {
     val differences = findDifferences(expected.toList(), indentSize = 0)
-    Assert.assertTrue(
+    assertTrue(
         "The following differences were found:\n\n" +
             "${differences.joinToString("\n").replace('\t', '→')}\n\n",
         differences.isEmpty(),
@@ -85,28 +76,16 @@ private fun MarkdownBlock.findDifferenceWith(
     }
 }
 
-private var htmlRenderer = HtmlRenderer.builder().build()
-
-fun BlockWithInlineMarkdown.toHtml() =
-    buildString {
-        for (node in this@toHtml.inlineContent) {
-            // new lines are rendered as spaces in tests
-            append(htmlRenderer.render(node.nativeNode).replace("\n", " "))
-        }
-    }
-
 private fun diffParagraph(
     actual: Paragraph,
     expected: MarkdownBlock,
     indent: String,
 ) = buildList {
-    val actualInlineHtml = actual.toHtml()
-    val expectedInlineHtml = (expected as Paragraph).toHtml()
-    if (actualInlineHtml != expectedInlineHtml) {
+    if (actual != expected) {
         add(
             "$indent * Paragraph raw content mismatch.\n\n" +
-                "$indent     Actual:   $actualInlineHtml\n" +
-                "$indent     Expected: $expectedInlineHtml\n",
+                "$indent     Actual:   $actual\n" +
+                "$indent     Expected: $expected\n",
         )
     }
 }
@@ -166,13 +145,11 @@ private fun diffHeading(
     expected: MarkdownBlock,
     indent: String,
 ) = buildList {
-    val actualInlineHtml = actual.toHtml()
-    val expectedInlineHtml = (expected as Heading).toHtml()
-    if (actualInlineHtml != expectedInlineHtml) {
+    if (actual != expected) {
         add(
             "$indent * Heading raw content mismatch.\n\n" +
-                "$indent     Actual:   $actualInlineHtml\n" +
-                "$indent     Expected: $expectedInlineHtml",
+                "$indent     Actual:   $actual\n" +
+                "$indent     Expected: $expected",
         )
     }
 }
@@ -224,49 +201,12 @@ private fun diffList(
     }
 }
 
-private val parser = Parser.builder().build()
-
-private fun Node.children() =
-    buildList {
-        var child = firstChild
-        while (child != null) {
-            add(child)
-            child = child.next
-        }
-    }
-
-/** skip root Document and Paragraph nodes */
-private fun inlineMarkdowns(content: String): List<InlineMarkdown> {
-    val document = parser.parse(content).firstChild ?: return emptyList()
-    return if (document.firstChild is org.commonmark.node.Paragraph) {
-        document.firstChild
-    } else {
-        document
-    }.children().map { x -> x.toInlineNode() }
-}
-
-private val inlineParser = InlineParserImpl(InlineParserContextImpl(emptyList(), LinkReferenceDefinitions()))
-
-fun paragraph(
-    @Language("Markdown") content: String,
-): Paragraph =
-    Paragraph(
-        org.commonmark.node.Paragraph().let { block ->
-            inlineParser.parse(SourceLines.of(content.lines().map { SourceLine.of(it, null) }), block)
-            block
-        },
-    )
+fun paragraph(content: String) = Paragraph(InlineMarkdown.Text(content))
 
 fun heading(
     level: Int,
-    @Language("Markdown") content: String,
-) = Heading(
-    org.commonmark.node.Heading().let { block ->
-        inlineParser.parse(SourceLines.of(SourceLine.of(content, null)), block)
-        block.level = level
-        block
-    },
-)
+    vararg inlineContent: InlineMarkdown,
+) = Heading(inlineContent = inlineContent, level = level)
 
 fun indentedCodeBlock(content: String) = IndentedCodeBlock(content)
 
@@ -290,7 +230,7 @@ fun orderedList(
     delimiter: String = ".",
 ) = OrderedList(items.toList(), isTight, startFrom, delimiter)
 
-fun listItem(vararg items: MarkdownBlock) = ListItem(items.toList())
+fun listItem(vararg items: MarkdownBlock) = ListItem(*items)
 
 fun htmlBlock(content: String) = HtmlBlock(content)
 

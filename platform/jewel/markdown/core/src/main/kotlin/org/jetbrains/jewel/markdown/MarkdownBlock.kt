@@ -1,90 +1,83 @@
 package org.jetbrains.jewel.markdown
 
-import org.commonmark.node.Block
-import org.commonmark.node.Heading as CMHeading
-import org.commonmark.node.Paragraph as CMParagraph
+import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
 public sealed interface MarkdownBlock {
-    public data class BlockQuote(val children: List<MarkdownBlock>) : MarkdownBlock
+    @GenerateDataFunctions
+    public class BlockQuote(public val children: List<MarkdownBlock>) : MarkdownBlock {
+        public constructor(vararg children: MarkdownBlock) : this(children.toList())
+    }
 
     public sealed interface CodeBlock : MarkdownBlock {
         public val content: String
 
-        public data class IndentedCodeBlock(
-            override val content: String,
-        ) : CodeBlock
+        @GenerateDataFunctions
+        public class IndentedCodeBlock(override val content: String) : CodeBlock
 
-        public data class FencedCodeBlock(
+        @GenerateDataFunctions
+        public class FencedCodeBlock(
             override val content: String,
-            val mimeType: MimeType?,
+            public val mimeType: MimeType?,
         ) : CodeBlock
     }
 
     public interface CustomBlock : MarkdownBlock
 
-    @JvmInline
-    public value class Heading(
-        private val nativeBlock: CMHeading,
-    ) : MarkdownBlock, BlockWithInlineMarkdown {
-        override val inlineContent: Iterable<InlineMarkdown>
-            get() = nativeBlock.inlineContent()
-
-        public val level: Int
-            get() = nativeBlock.level
+    @GenerateDataFunctions
+    public class Heading(
+        override val inlineContent: List<InlineMarkdown>,
+        public val level: Int,
+    ) : MarkdownBlock, WithInlineMarkdown {
+        public constructor(level: Int, vararg inlineContent: InlineMarkdown) : this(inlineContent.toList(), level)
     }
 
-    public data class HtmlBlock(val content: String) : MarkdownBlock
+    @GenerateDataFunctions
+    public class HtmlBlock(public val content: String) : MarkdownBlock
 
     public sealed interface ListBlock : MarkdownBlock {
         public val children: List<ListItem>
         public val isTight: Boolean
 
-        public data class OrderedList(
+        @GenerateDataFunctions
+        public class OrderedList(
             override val children: List<ListItem>,
             override val isTight: Boolean,
-            val startFrom: Int,
-            val delimiter: String,
-        ) : ListBlock
+            public val startFrom: Int,
+            public val delimiter: String,
+        ) : ListBlock {
+            public constructor(
+                isTight: Boolean,
+                startFrom: Int,
+                delimiter: String,
+                vararg children: ListItem,
+            ) : this(children.toList(), isTight, startFrom, delimiter)
+        }
 
-        public data class UnorderedList(
+        @GenerateDataFunctions
+        public class UnorderedList(
             override val children: List<ListItem>,
             override val isTight: Boolean,
-            val marker: String,
-        ) : ListBlock
+            public val marker: String,
+        ) : ListBlock {
+            public constructor(
+                isTight: Boolean,
+                marker: String,
+                vararg children: ListItem,
+            ) : this(children.toList(), isTight, marker)
+        }
     }
 
-    public data class ListItem(
-        val children: List<MarkdownBlock>,
-    ) : MarkdownBlock
+    @GenerateDataFunctions
+    public class ListItem(public val children: List<MarkdownBlock>) : MarkdownBlock {
+        public constructor(vararg children: MarkdownBlock) : this(children.toList())
+    }
 
-    public object ThematicBreak : MarkdownBlock
+    public data object ThematicBreak : MarkdownBlock
 
-    @JvmInline
-    public value class Paragraph(private val nativeBlock: CMParagraph) : MarkdownBlock, BlockWithInlineMarkdown {
-        override val inlineContent: Iterable<InlineMarkdown>
-            get() = nativeBlock.inlineContent()
+    @GenerateDataFunctions
+    public class Paragraph(
+        override val inlineContent: List<InlineMarkdown>,
+    ) : MarkdownBlock, WithInlineMarkdown {
+        public constructor(vararg inlineContent: InlineMarkdown) : this(inlineContent.toList())
     }
 }
-
-public interface BlockWithInlineMarkdown {
-    public val inlineContent: Iterable<InlineMarkdown>
-}
-
-private fun Block.inlineContent(): Iterable<InlineMarkdown> =
-    object : Iterable<InlineMarkdown> {
-        override fun iterator(): Iterator<InlineMarkdown> =
-            object : Iterator<InlineMarkdown> {
-                var current = this@inlineContent.firstChild
-
-                override fun hasNext(): Boolean = current != null
-
-                override fun next(): InlineMarkdown =
-                    if (hasNext()) {
-                        current.toInlineNode().also {
-                            current = current.next
-                        }
-                    } else {
-                        throw NoSuchElementException()
-                    }
-            }
-    }

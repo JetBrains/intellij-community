@@ -30,9 +30,9 @@ class GitHubAlertBlockExtensionTest {
     fun `should parse note alert`() {
         val rawMarkdown =
             """
-        |> [!NOTE]  
-        |> Highlights information that users should take into account, even when skimming.
-        """
+            |> [!NOTE]  
+            |> Highlights information that users should take into account, even when skimming.
+            """
                 .trimMargin()
         val parsed = parser.parse(rawMarkdown)
 
@@ -65,13 +65,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse tip alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!TIP]  
+            |> Optional information to help a user be more successful.
             """
-        |> [!TIP]  
-        |> Optional information to help a user be more successful.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -101,13 +102,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse important alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!IMPORTANT]  
+            |> Crucial information necessary for users to succeed.
             """
-        |> [!IMPORTANT]  
-        |> Crucial information necessary for users to succeed.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -137,13 +139,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse warning alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!WARNING]  
+            |> Critical content demanding immediate user attention due to potential risks.
             """
-        |> [!WARNING]  
-        |> Critical content demanding immediate user attention due to potential risks.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -173,13 +176,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse caution alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!CAUTION]  
+            |> Negative potential consequences of an action.
             """
-        |> [!CAUTION]  
-        |> Negative potential consequences of an action.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -209,13 +213,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse lowercase note alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!note]  
+            |> Highlights information that users should take into account, even when skimming.
             """
-        |> [!note]  
-        |> Highlights information that users should take into account, even when skimming.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -245,13 +250,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse lowercase tip alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!tip]  
+            |> Optional information to help a user be more successful.
             """
-        |> [!tip]  
-        |> Optional information to help a user be more successful.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -281,13 +287,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse lowercase important alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!important]  
+            |> Crucial information necessary for users to succeed.
             """
-        |> [!important]  
-        |> Crucial information necessary for users to succeed.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -317,13 +324,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse lowercase warning alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!warning]  
+            |> Critical content demanding immediate user attention due to potential risks.
             """
-        |> [!warning]  
-        |> Critical content demanding immediate user attention due to potential risks.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -353,13 +361,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse lowercase caution alert`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!caution]  
+            |> Negative potential consequences of an action.
             """
-        |> [!caution]  
-        |> Negative potential consequences of an action.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -389,15 +398,16 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should trim trailing and leading empty lines`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!CAUTION] 
+            |>
+            |> Negative potential consequences of an action.
+            |>
             """
-        |> [!CAUTION] 
-        |>
-        |> Negative potential consequences of an action.
-        |>
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -427,13 +437,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse malformed entry as blockquote - space after exclamation mark`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [! CAUTION]  
+            |> Negative potential consequences of an action.
             """
-        |> [! CAUTION]  
-        |> Negative potential consequences of an action.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -449,14 +460,15 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse malformed entry as blockquote - type not on first line`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |>
+            |> [! CAUTION]  
+            |> Negative potential consequences of an action.
             """
-        |>
-        |> [! CAUTION]  
-        |> Negative potential consequences of an action.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -472,13 +484,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse malformed entry as blockquote - space before exclamation mark`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [ !CAUTION]  
+            |> Negative potential consequences of an action.
             """
-        |> [ !CAUTION]  
-        |> Negative potential consequences of an action.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -494,13 +507,14 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse malformed entry as blockquote - space after type`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!CAUTION ]  
+            |> Negative potential consequences of an action.
             """
-        |> [!CAUTION ]  
-        |> Negative potential consequences of an action.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 
@@ -516,12 +530,13 @@ class GitHubAlertBlockExtensionTest {
 
     @Test
     fun `should parse malformed entry as blockquote - missing newline`() {
-        val rawMarkdown =
+        val parsed =
+            parser.parse(
+                """
+            |> [!CAUTION] Negative potential consequences of an action.
             """
-        |> [!CAUTION] Negative potential consequences of an action.
-        """
-                .trimMargin()
-        val parsed = parser.parse(rawMarkdown)
+                    .trimMargin(),
+            )
 
         assertTrue("Parse result is not a document", parsed is Document)
 

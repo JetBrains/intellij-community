@@ -1,5 +1,10 @@
 package org.jetbrains.jewel.markdown
 
+import org.jetbrains.jewel.markdown.InlineMarkdown.Emphasis
+import org.jetbrains.jewel.markdown.InlineMarkdown.Link
+import org.jetbrains.jewel.markdown.InlineMarkdown.StrongEmphasis
+import org.jetbrains.jewel.markdown.InlineMarkdown.Text
+import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.junit.Test
 
@@ -14,7 +19,7 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * Expected HTML:
          * <p><a href="/bar*" title="ti*tle">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[](/bar* \"ti*tle\")"))
+        parsed.assertEquals(Paragraph(Link("/bar*", "ti*tle", emptyList())))
     }
 
     @Test
@@ -25,7 +30,18 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * Expected HTML:
          * <p><em><em>foo <em>bar</em></em></em></p>
          */
-        parsed.assertEquals(paragraph("*_foo *bar*_*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Emphasis(
+                        "_",
+                        Text("foo "),
+                        Emphasis("*", Text("bar")),
+                    ),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -36,7 +52,15 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em></strong></p>
          */
-        parsed.assertEquals(paragraph("**foo *bar***"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo "),
+                    Emphasis("*", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -47,7 +71,19 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * Expected HTML:
          * <p><em><em>foo <em>bar</em> a</em></em></p>
          */
-        parsed.assertEquals(paragraph("*_foo *bar* a_*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Emphasis(
+                        "_",
+                        Text("foo "),
+                        Emphasis("*", Text("bar")),
+                        Text(" a"),
+                    ),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -58,7 +94,16 @@ class MarkdownProcessorDocumentParsingExtraTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em> a</strong></p>
          */
-        parsed.assertEquals(paragraph("**foo *bar* a**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo "),
+                    Emphasis("*", Text("bar")),
+                    Text(" a"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -67,8 +112,23 @@ class MarkdownProcessorDocumentParsingExtraTest {
 
         /*
          * Expected HTML:
-         * <p><strong>foo <em>bar</em> a</strong></p>
+         * <p><em><em><em>foo <em>bar</em> a</em></em></em></p>
          */
-        parsed.assertEquals(paragraph("*_*foo *bar* a*_*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Emphasis(
+                        "_",
+                        Emphasis(
+                            "*",
+                            Text("foo "),
+                            Emphasis("*", Text("bar")),
+                            Text(" a"),
+                        ),
+                    ),
+                ),
+            ),
+        )
     }
 }

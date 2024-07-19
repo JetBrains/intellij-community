@@ -387,7 +387,7 @@ public fun InlinesStyling.Companion.create(
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    renderInlineHtml: Boolean = false,
+    renderInlineHtml: Boolean = true,
 ): InlinesStyling =
     InlinesStyling(
         textStyle = textStyle,

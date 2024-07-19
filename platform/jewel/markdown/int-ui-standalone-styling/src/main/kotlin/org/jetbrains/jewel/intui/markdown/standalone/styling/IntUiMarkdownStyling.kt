@@ -662,7 +662,7 @@ public fun InlinesStyling.Companion.light(
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    renderInlineHtml: Boolean = false,
+    renderInlineHtml: Boolean = true,
 ): InlinesStyling =
     InlinesStyling(
         textStyle = textStyle,
@@ -698,7 +698,7 @@ public fun InlinesStyling.Companion.dark(
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    renderInlineHtml: Boolean = false,
+    renderInlineHtml: Boolean = true,
 ): InlinesStyling =
     InlinesStyling(
         textStyle = textStyle,

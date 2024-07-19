@@ -3,7 +3,6 @@ package org.jetbrains.jewel.markdown.rendering
 import androidx.compose.ui.text.AnnotatedString
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
-import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 
 @ExperimentalJewelApi
 public interface InlineMarkdownRenderer {
@@ -17,10 +16,4 @@ public interface InlineMarkdownRenderer {
         enabled: Boolean,
         onUrlClicked: ((String) -> Unit)? = null,
     ): AnnotatedString
-
-    public companion object {
-        /** Create a default inline renderer, with the [extensions] provided. */
-        public fun default(extensions: List<MarkdownProcessorExtension> = emptyList()): InlineMarkdownRenderer =
-            DefaultInlineMarkdownRenderer(extensions)
-    }
 }

@@ -1,14 +1,24 @@
 package org.jetbrains.jewel.markdown
 
+import org.jetbrains.jewel.markdown.InlineMarkdown.Code
+import org.jetbrains.jewel.markdown.InlineMarkdown.Emphasis
+import org.jetbrains.jewel.markdown.InlineMarkdown.HardLineBreak
+import org.jetbrains.jewel.markdown.InlineMarkdown.HtmlInline
+import org.jetbrains.jewel.markdown.InlineMarkdown.Image
+import org.jetbrains.jewel.markdown.InlineMarkdown.Link
+import org.jetbrains.jewel.markdown.InlineMarkdown.SoftLineBreak
+import org.jetbrains.jewel.markdown.InlineMarkdown.StrongEmphasis
+import org.jetbrains.jewel.markdown.InlineMarkdown.Text
+import org.jetbrains.jewel.markdown.MarkdownBlock.Heading
+import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
-import org.junit.Ignore
 import org.junit.Test
 
 /**
- * This class tests that all the snippets in the CommonMark 0.31.2 specs are
- * rendered correctly into MarkdownBlocks, matching what the CommonMark
- * 0.20 HTML renderer tests also validate.
- * <https://spec.commonmark.org/0.31.2/spec.json>
+ * This class tests that all the snippets in the CommonMark 0.31.2 specs
+ * are rendered correctly into MarkdownBlocks, matching what the CommonMark
+ * 0.20 HTML renderer tests also validate. Test cases are extracted from
+ * [here]( https://spec.commonmark.org/0.31.2/spec.json).
  *
  * Note that the reference HTML output is only there as information; our
  * parsing logic performs various transformations that CommonMark wouldn't.
@@ -23,6 +33,7 @@ import org.junit.Test
     "MarkdownUnresolvedFileReference",
     "MarkdownUnresolvedLinkLabel",
     "MarkdownUnresolvedHeaderReference",
+    "MarkdownIncorrectlyNumberedListItem",
     "LargeClass", // Detekt hates huge test suites I guess
 ) // All used in purposefully odd Markdown
 class MarkdownProcessorDocumentParsingTest {
@@ -198,7 +209,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h1>Foo</h1>
          */
-        parsed.assertEquals(heading(level = 1, "Foo"))
+        parsed.assertEquals(heading(level = 1, Text("Foo")))
     }
 
     @Test
@@ -223,7 +234,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~</p>
          */
-        parsed.assertEquals(paragraph("\\!\"#\$%&'\\(\\)\\*+,-./:;\\<=\\>?@\\[\\\\\\]^\\_\\`{|}\\~"))
+        parsed.assertEquals(paragraph("!\"#\$%&'()*+,-./:;<=>?@[\\]^_`{|}~"))
     }
 
     @Test
@@ -242,16 +253,16 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |\*not emphasized*
-            |\<br/> not a tag
-            |\[not a link](/foo)
-            |\`not code`
-            |1\. not a list
-            |\* not a list
-            |\# not a heading
-            |\[foo]: /url "not a reference"
-            |\&ouml; not a character entity
-            """
+                |\*not emphasized*
+                |\<br/> not a tag
+                |\[not a link](/foo)
+                |\`not code`
+                |1\. not a list
+                |\* not a list
+                |\# not a heading
+                |\[foo]: /url "not a reference"
+                |\&ouml; not a character entity
+                """
                     .trimMargin(),
             )
 
@@ -268,16 +279,24 @@ class MarkdownProcessorDocumentParsingTest {
          * &amp;ouml; not a character entity</p>
          */
         parsed.assertEquals(
-            paragraph(
-                "\\*not emphasized\\* " +
-                    "\\<br/\\> not a tag " +
-                    "\\[not a link\\]\\(/foo\\) " +
-                    "\\`not code\\` " +
-                    "1. not a list " +
-                    "\\* not a list " +
-                    "# not a heading " +
-                    "\\[foo\\]: /url \"not a reference\" " +
-                    "\\&ouml; not a character entity",
+            Paragraph(
+                Text("*not emphasized*"),
+                SoftLineBreak,
+                Text("<br/> not a tag"),
+                SoftLineBreak,
+                Text("[not a link](/foo)"),
+                SoftLineBreak,
+                Text("`not code`"),
+                SoftLineBreak,
+                Text("1. not a list"),
+                SoftLineBreak,
+                Text("* not a list"),
+                SoftLineBreak,
+                Text("# not a heading"),
+                SoftLineBreak,
+                Text("[foo]: /url \"not a reference\""),
+                SoftLineBreak,
+                Text("&ouml; not a character entity"),
             ),
         )
     }
@@ -290,7 +309,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>\<em>emphasis</em></p>
          */
-        parsed.assertEquals(paragraph("\\\\*emphasis*"))
+        parsed.assertEquals(Paragraph(Text("\\"), Emphasis("*", Text("emphasis"))))
     }
 
     @Test
@@ -298,9 +317,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo\
-            |bar
-            """
+                |foo\
+                |bar
+                """
                     .trimMargin(),
             )
 
@@ -309,7 +328,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo<br />
          * bar</p>
          */
-        parsed.assertEquals(paragraph("foo  \nbar"))
+        parsed.assertEquals(Paragraph(Text("foo"), HardLineBreak, Text("bar")))
     }
 
     @Test
@@ -320,7 +339,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>\[\`</code></p>
          */
-        parsed.assertEquals(paragraph("`` \\[\\` ``"))
+        parsed.assertEquals(Paragraph(Code("\\[\\`")))
     }
 
     @Test
@@ -340,10 +359,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |~~~
-            |\[\]
-            |~~~
-            """
+                |~~~
+                |\[\]
+                |~~~
+                """
                     .trimMargin(),
             )
 
@@ -363,7 +382,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="https://example.com?find=%5C*">https://example.com?find=\*</a></p>
          */
-        parsed.assertEquals(paragraph("[https://example.com?find=\\\\*](https://example.com?find=\\\\*)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    "https://example.com?find=\\*",
+                    title = null,
+                    Text("https://example.com?find=\\*"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -385,7 +412,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/bar*" title="ti*tle">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/bar* \"ti*tle\")"))
+        parsed.assertEquals(Paragraph(Link("/bar*", "ti*tle", Text("foo"))))
     }
 
     @Test
@@ -393,10 +420,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]
-            |
-            |[foo]: /bar\* "ti\*tle"
-            """
+                |[foo]
+                |
+                |[foo]: /bar\* "ti\*tle"
+                """
                     .trimMargin(),
             )
 
@@ -404,7 +431,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/bar*" title="ti*tle">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/bar* \"ti*tle\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/bar*", title = "ti*tle", Text("foo"))))
     }
 
     @Test
@@ -412,10 +439,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |``` foo\+bar
-            |foo
-            |```
-            """
+                |``` foo\+bar
+                |foo
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -433,10 +460,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-        |&nbsp; &amp; &copy; &AElig; &Dcaron;
-        |&frac34; &HilbertSpace; &DifferentialD;
-        |&ClockwiseContourIntegral; &ngE;
-        """
+                |&nbsp; &amp; &copy; &AElig; &Dcaron;
+                |&frac34; &HilbertSpace; &DifferentialD;
+                |&ClockwiseContourIntegral; &ngE;
+                """
                     .trimMargin(),
             )
 
@@ -446,7 +473,15 @@ class MarkdownProcessorDocumentParsingTest {
          * ¾ ℋ ⅆ
          * ∲ ≧̸</p>
          */
-        parsed.assertEquals(paragraph("  & © Æ Ď ¾ ℋ ⅆ ∲ ≧̸"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("  & © Æ Ď"),
+                SoftLineBreak,
+                Text("¾ ℋ ⅆ"),
+                SoftLineBreak,
+                Text("∲ ≧̸"),
+            ),
+        )
     }
 
     @Test
@@ -477,11 +512,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |&nbsp &x; &#; &#x;
-            |&#87654321;
-            |&#abcdef0;
-            |&ThisIsNotDefined; &hi?;
-            """
+                |&nbsp &x; &#; &#x;
+                |&#87654321;
+                |&#abcdef0;
+                |&ThisIsNotDefined; &hi?;
+                """
                     .trimMargin(),
             )
 
@@ -493,7 +528,15 @@ class MarkdownProcessorDocumentParsingTest {
          * &amp;ThisIsNotDefined; &amp;hi?;</p>
          */
         parsed.assertEquals(
-            paragraph("&nbsp &x; &#; &#x; &#87654321; &#abcdef0; &ThisIsNotDefined; &hi?;"),
+            Paragraph(
+                Text("&nbsp &x; &#; &#x;"),
+                SoftLineBreak,
+                Text("&#87654321;"),
+                SoftLineBreak,
+                Text("&#abcdef0;"),
+                SoftLineBreak,
+                Text("&ThisIsNotDefined; &hi?;"),
+            ),
         )
     }
 
@@ -539,7 +582,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/f%C3%B6%C3%B6" title="föö">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/föö \"föö\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/föö", title = "föö", Text("foo"))))
     }
 
     @Test
@@ -547,10 +590,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-        |[foo]
-        |
-        |[foo]: /f&ouml;&ouml; "f&ouml;&ouml;"
-        """
+                |[foo]
+                |
+                |[foo]: /f&ouml;&ouml; "f&ouml;&ouml;"
+                """
                     .trimMargin(),
             )
 
@@ -559,7 +602,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="/f%C3%B6%C3%B6" title="föö">foo</a></p>
          */
 
-        parsed.assertEquals(paragraph("[foo](/föö \"föö\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/föö", title = "föö", Text("foo"))))
     }
 
     @Test
@@ -567,10 +610,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |``` f&ouml;&ouml;
-            |foo
-            |```
-            """
+                |``` f&ouml;&ouml;
+                |foo
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -590,7 +633,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>f&amp;ouml;&amp;ouml;</code></p>
          */
-        parsed.assertEquals(paragraph("`f&ouml;&ouml;`"))
+        parsed.assertEquals(Paragraph(Code("f&ouml;&ouml;")))
     }
 
     @Test
@@ -614,7 +657,13 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>*foo*
          * <em>foo</em></p>
          */
-        parsed.assertEquals(paragraph("\\*foo\\* *foo*"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*foo*"),
+                SoftLineBreak,
+                Emphasis("*", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -622,10 +671,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |&#42; foo
-            |
-            |* foo
-            """
+                |&#42; foo
+                |
+                |* foo
+                """
                     .trimMargin(),
             )
 
@@ -637,7 +686,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            paragraph("\\* foo"),
+            paragraph("* foo"),
             unorderedList(listItem(paragraph("foo")), marker = "*"),
         )
     }
@@ -674,7 +723,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[a](url &quot;tit&quot;)</p>
          */
-        parsed.assertEquals(paragraph("\\[a\\]\\(url \"tit\"\\)"))
+        parsed.assertEquals(paragraph("[a](url \"tit\")"))
     }
 
     @Test
@@ -682,9 +731,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- `one
-            |- two`
-            """
+                |- `one
+                |- two`
+                """
                     .trimMargin(),
             )
 
@@ -697,8 +746,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("\\`one")),
-                listItem(paragraph("two\\`")),
+                listItem(paragraph("`one")),
+                listItem(paragraph("two`")),
             ),
         )
     }
@@ -708,10 +757,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |***
-            |---
-            |___
-            """
+                |***
+                |---
+                |___
+                """
                     .trimMargin(),
             )
 
@@ -755,10 +804,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |--
-            |**
-            |__
-            """
+                |--
+                |**
+                |__
+                """
                     .trimMargin(),
             )
 
@@ -768,7 +817,15 @@ class MarkdownProcessorDocumentParsingTest {
          * **
          * __</p>
          */
-        parsed.assertEquals(paragraph("-- \\*\\* \\_\\_"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("--"),
+                SoftLineBreak,
+                Text("**"),
+                SoftLineBreak,
+                Text("__"),
+            ),
+        )
     }
 
     @Test
@@ -776,10 +833,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            | ***
-            |  ***
-            |   ***
-            """
+                | ***
+                |  ***
+                |   ***
+                """
                     .trimMargin(),
             )
 
@@ -813,9 +870,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |    ***
-            """
+                |Foo
+                |    ***
+                """
                     .trimMargin(),
             )
 
@@ -824,7 +881,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>Foo
          * ***</p>
          */
-        parsed.assertEquals(paragraph("Foo \\*\\*\\*"))
+        parsed.assertEquals(Paragraph(Text("Foo"), SoftLineBreak, Text("***")))
     }
 
     @Test
@@ -887,12 +944,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |_ _ _ _ a
-            |
-            |a------
-            |
-            |---a---
-            """
+                |_ _ _ _ a
+                |
+                |a------
+                |
+                |---a---
+                """
                     .trimMargin(),
             )
 
@@ -903,7 +960,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>---a---</p>
          */
         parsed.assertEquals(
-            paragraph("\\_ \\_ \\_ \\_ a"),
+            paragraph("_ _ _ _ a"),
             paragraph("a------"),
             paragraph("---a---"),
         )
@@ -917,7 +974,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>-</em></p>
          */
-        parsed.assertEquals(paragraph("*-*"))
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("-"))))
     }
 
     @Test
@@ -925,10 +982,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |***
-            |- bar
-            """
+                |- foo
+                |***
+                |- bar
+                """
                     .trimMargin(),
             )
 
@@ -954,10 +1011,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |***
-            |bar
-            """
+                |Foo
+                |***
+                |bar
+                """
                     .trimMargin(),
             )
 
@@ -979,10 +1036,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |---
-            |bar
-            """
+                |Foo
+                |---
+                |bar
+                """
                     .trimMargin(),
             )
 
@@ -992,7 +1049,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>bar</p>
          */
         parsed.assertEquals(
-            heading(2, "Foo"),
+            heading(2, Text("Foo")),
             paragraph("bar"),
         )
     }
@@ -1002,10 +1059,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |* Foo
-            |* * *
-            |* Bar
-            """
+                |* Foo
+                |* * *
+                |* Bar
+                """
                     .trimMargin(),
             )
 
@@ -1031,9 +1088,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- Foo
-            |- * * *
-            """
+                |- Foo
+                |- * * *
+                """
                     .trimMargin(),
             )
 
@@ -1059,13 +1116,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |# foo
-            |## foo
-            |### foo
-            |#### foo
-            |##### foo
-            |###### foo
-            """
+                |# foo
+                |## foo
+                |### foo
+                |#### foo
+                |##### foo
+                |###### foo
+                """
                     .trimMargin(),
             )
 
@@ -1079,12 +1136,12 @@ class MarkdownProcessorDocumentParsingTest {
          * <h6>foo</h6>
          */
         parsed.assertEquals(
-            heading(1, "foo"),
-            heading(2, "foo"),
-            heading(3, "foo"),
-            heading(4, "foo"),
-            heading(5, "foo"),
-            heading(6, "foo"),
+            heading(1, Text("foo")),
+            heading(2, Text("foo")),
+            heading(3, Text("foo")),
+            heading(4, Text("foo")),
+            heading(5, Text("foo")),
+            heading(6, Text("foo")),
         )
     }
 
@@ -1104,10 +1161,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |#5 bolt
-            |
-            |#hashtag
-            """
+                |#5 bolt
+                |
+                |#hashtag
+                """
                     .trimMargin(),
             )
 
@@ -1142,7 +1199,12 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>foo <em>bar</em> *baz*</h1>
          */
         parsed.assertEquals(
-            heading(level = 1, "foo *bar* \\*baz\\*"),
+            heading(
+                level = 1,
+                Text("foo "),
+                Emphasis("*", Text("bar")),
+                Text(" *baz*"),
+            ),
         )
     }
 
@@ -1154,7 +1216,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h1>foo</h1>
          */
-        parsed.assertEquals(heading(level = 1, "foo"))
+        parsed.assertEquals(heading(level = 1, Text("foo")))
     }
 
     @Test
@@ -1162,10 +1224,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            | ### foo
-            |  ## foo
-            |   # foo
-            """
+                | ### foo
+                |  ## foo
+                |   # foo
+                """
                     .trimMargin(),
             )
 
@@ -1176,9 +1238,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>foo</h1>
          */
         parsed.assertEquals(
-            heading(level = 3, "foo"),
-            heading(level = 2, "foo"),
-            heading(level = 1, "foo"),
+            heading(level = 3, Text("foo")),
+            heading(level = 2, Text("foo")),
+            heading(level = 1, Text("foo")),
         )
     }
 
@@ -1199,9 +1261,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo
-            |    # bar
-            """
+                |foo
+                |    # bar
+                """
                     .trimMargin(),
             )
 
@@ -1210,7 +1272,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo
          * # bar</p>
          */
-        parsed.assertEquals(paragraph("foo # bar"))
+        parsed.assertEquals(Paragraph(Text("foo"), SoftLineBreak, Text("# bar")))
     }
 
     @Test
@@ -1218,9 +1280,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |## foo ##
-            |  ###   bar    ###
-            """
+                |## foo ##
+                |  ###   bar    ###
+                """
                     .trimMargin(),
             )
 
@@ -1230,8 +1292,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <h3>bar</h3>
          */
         parsed.assertEquals(
-            heading(level = 2, "foo"),
-            heading(level = 3, "bar"),
+            heading(level = 2, Text("foo")),
+            heading(level = 3, Text("bar")),
         )
     }
 
@@ -1240,9 +1302,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |# foo ##################################
-            |##### foo ##
-            """
+                |# foo ##################################
+                |##### foo ##
+                """
                     .trimMargin(),
             )
 
@@ -1252,8 +1314,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <h5>foo</h5>
          */
         parsed.assertEquals(
-            heading(level = 1, "foo"),
-            heading(level = 5, "foo"),
+            heading(level = 1, Text("foo")),
+            heading(level = 5, Text("foo")),
         )
     }
 
@@ -1265,7 +1327,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h3>foo</h3>
          */
-        parsed.assertEquals(heading(level = 3, "foo"))
+        parsed.assertEquals(heading(level = 3, Text("foo")))
     }
 
     @Test
@@ -1276,7 +1338,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h3>foo ### b</h3>
          */
-        parsed.assertEquals(heading(level = 3, "foo ### b"))
+        parsed.assertEquals(heading(level = 3, Text("foo ### b")))
     }
 
     @Test
@@ -1287,7 +1349,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h1>foo#</h1>
          */
-        parsed.assertEquals(heading(level = 1, "foo#"))
+        parsed.assertEquals(heading(level = 1, Text("foo#")))
     }
 
     @Test
@@ -1295,10 +1357,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |### foo \###
-            |## foo #\##
-            |# foo \#
-            """
+                |### foo \###
+                |## foo #\##
+                |# foo \#
+                """
                     .trimMargin(),
             )
 
@@ -1309,9 +1371,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>foo #</h1>
          */
         parsed.assertEquals(
-            heading(level = 3, "foo ###"),
-            heading(level = 2, "foo ###"),
-            heading(level = 1, "foo #"),
+            heading(level = 3, Text("foo ###")),
+            heading(level = 2, Text("foo ###")),
+            heading(level = 1, Text("foo #")),
         )
     }
 
@@ -1320,10 +1382,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |****
-            |## foo
-            |****
-            """
+                |****
+                |## foo
+                |****
+                """
                     .trimMargin(),
             )
 
@@ -1335,7 +1397,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             thematicBreak(),
-            heading(level = 2, "foo"),
+            heading(level = 2, Text("foo")),
             thematicBreak(),
         )
     }
@@ -1345,10 +1407,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo bar
-            |# baz
-            |Bar foo
-            """
+                |Foo bar
+                |# baz
+                |Bar foo
+                """
                     .trimMargin(),
             )
 
@@ -1360,7 +1422,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             paragraph("Foo bar"),
-            heading(level = 1, "baz"),
+            heading(level = 1, Text("baz")),
             paragraph("Bar foo"),
         )
     }
@@ -1370,10 +1432,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |## 
-            |#
-            |### ###
-            """
+                |## 
+                |#
+                |### ###
+                """
                     .trimMargin(),
             )
 
@@ -1384,9 +1446,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <h3></h3>
          */
         parsed.assertEquals(
-            heading(level = 2, ""),
-            heading(level = 1, ""),
-            heading(level = 3, ""),
+            Heading(emptyList(), level = 2),
+            Heading(emptyList(), level = 1),
+            Heading(emptyList(), level = 3),
         )
     }
 
@@ -1395,12 +1457,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo *bar*
-            |=========
-            |
-            |Foo *bar*
-            |---------
-            """
+                |Foo *bar*
+                |=========
+                |
+                |Foo *bar*
+                |---------
+                """
                     .trimMargin(),
             )
 
@@ -1411,8 +1473,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
 
         parsed.assertEquals(
-            heading(level = 1, "Foo *bar*"),
-            heading(level = 2, "Foo *bar*"),
+            heading(level = 1, Text("Foo "), Emphasis("*", Text("bar"))),
+            heading(level = 2, Text("Foo "), Emphasis("*", Text("bar"))),
         )
     }
 
@@ -1421,10 +1483,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo *bar
-            |baz*
-            |====
-            """
+                |Foo *bar
+                |baz*
+                |====
+                """
                     .trimMargin(),
             )
 
@@ -1433,7 +1495,13 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>Foo <em>bar
          * baz</em></h1>
          */
-        parsed.assertEquals(heading(level = 1, "Foo *bar baz*"))
+        parsed.assertEquals(
+            heading(
+                level = 1,
+                Text("Foo "),
+                Emphasis("*", Text("bar"), SoftLineBreak, Text("baz")),
+            ),
+        )
     }
 
     @Test
@@ -1445,7 +1513,14 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>Foo <em>bar
          * baz</em></h1>
          */
-        parsed.assertEquals(heading(level = 1, "Foo *bar baz*"))
+        parsed.assertEquals(
+            heading(
+                level = 1,
+                Text("Foo "),
+                Emphasis("*", Text("bar"), SoftLineBreak, Text("baz")),
+                Text(""),
+            ),
+        )
     }
 
     @Test
@@ -1453,12 +1528,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |-------------------------
-            |
-            |Foo
-            |=
-            """
+                |Foo
+                |-------------------------
+                |
+                |Foo
+                |=
+                """
                     .trimMargin(),
             )
 
@@ -1468,8 +1543,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>Foo</h1>
          */
         parsed.assertEquals(
-            heading(level = 2, "Foo"),
-            heading(level = 1, "Foo"),
+            heading(level = 2, Text("Foo")),
+            heading(level = 1, Text("Foo")),
         )
     }
 
@@ -1478,15 +1553,15 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   Foo
-            |---
-            |
-            |  Foo
-            |-----
-            |
-            |  Foo
-            |  ===
-            """
+                |   Foo
+                |---
+                |
+                |  Foo
+                |-----
+                |
+                |  Foo
+                |  ===
+                """
                     .trimMargin(),
             )
 
@@ -1497,9 +1572,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>Foo</h1>
          */
         parsed.assertEquals(
-            heading(level = 2, "Foo"),
-            heading(level = 2, "Foo"),
-            heading(level = 1, "Foo"),
+            heading(level = 2, Text("Foo")),
+            heading(level = 2, Text("Foo")),
+            heading(level = 1, Text("Foo")),
         )
     }
 
@@ -1508,12 +1583,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    Foo
-            |    ---
-            |
-            |    Foo
-            |---
-            """
+                |    Foo
+                |    ---
+                |
+                |    Foo
+                |---
+                """
                     .trimMargin(),
             )
 
@@ -1537,9 +1612,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |   ----      
-            """
+                |Foo
+                |   ----      
+                """
                     .trimMargin(),
             )
 
@@ -1547,7 +1622,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h2>Foo</h2>
          */
-        parsed.assertEquals(heading(level = 2, "Foo"))
+        parsed.assertEquals(heading(level = 2, Text("Foo")))
     }
 
     @Test
@@ -1555,9 +1630,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |    ---
-            """
+                |Foo
+                |    ---
+                """
                     .trimMargin(),
             )
 
@@ -1566,7 +1641,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>Foo
          * ---</p>
          */
-        parsed.assertEquals(paragraph("Foo ---"))
+        parsed.assertEquals(Paragraph(Text("Foo"), SoftLineBreak, Text("---")))
     }
 
     @Test
@@ -1574,12 +1649,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |= =
-            |
-            |Foo
-            |--- -
-            """
+                |Foo
+                |= =
+                |
+                |Foo
+                |--- -
+                """
                     .trimMargin(),
             )
 
@@ -1591,7 +1666,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <hr />
          */
         parsed.assertEquals(
-            paragraph("Foo = ="),
+            Paragraph(Text("Foo"), SoftLineBreak, Text("= =")),
             paragraph("Foo"),
             thematicBreak(),
         )
@@ -1602,9 +1677,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo  
-            |-----
-            """
+                |Foo  
+                |-----
+                """
                     .trimMargin(),
             )
 
@@ -1612,7 +1687,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h2>Foo</h2>
          */
-        parsed.assertEquals(heading(level = 2, "Foo"))
+        parsed.assertEquals(heading(level = 2, Text("Foo")))
     }
 
     @Test
@@ -1620,9 +1695,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo\
-            |----
-            """
+                |Foo\
+                |----
+                """
                     .trimMargin(),
             )
 
@@ -1630,7 +1705,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h2>Foo\</h2>
          */
-        parsed.assertEquals(heading(level = 2, "Foo\\"))
+        parsed.assertEquals(heading(level = 2, Text("Foo\\")))
     }
 
     @Test
@@ -1638,14 +1713,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |`Foo
-            |----
-            |`
-            |
-            |<a title="a lot
-            |---
-            |of dashes"/>
-            """
+                |`Foo
+                |----
+                |`
+                |
+                |<a title="a lot
+                |---
+                |of dashes"/>
+                """
                     .trimMargin(),
             )
 
@@ -1657,10 +1732,10 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>of dashes&quot;/&gt;</p>
          */
         parsed.assertEquals(
-            heading(level = 2, "\\`Foo"),
-            paragraph("\\`"),
-            heading(level = 2, "\\<a title=\"a lot"),
-            paragraph("of dashes\"/\\>"),
+            heading(level = 2, Text("`Foo")),
+            paragraph("`"),
+            heading(level = 2, Text("<a title=\"a lot")),
+            paragraph("of dashes\"/>"),
         )
     }
 
@@ -1669,9 +1744,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> Foo
-            |---
-            """
+                |> Foo
+                |---
+                """
                     .trimMargin(),
             )
 
@@ -1693,10 +1768,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> foo
-            |bar
-            |===
-            """
+                |> foo
+                |bar
+                |===
+                """
                     .trimMargin(),
             )
 
@@ -1708,7 +1783,17 @@ class MarkdownProcessorDocumentParsingTest {
          * ===</p>
          * </blockquote>
          */
-        parsed.assertEquals(blockQuote(paragraph("foo bar ===")))
+        parsed.assertEquals(
+            blockQuote(
+                Paragraph(
+                    Text("foo"),
+                    SoftLineBreak,
+                    Text("bar"),
+                    SoftLineBreak,
+                    Text("==="),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -1716,9 +1801,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- Foo
-            |---
-            """
+                |- Foo
+                |---
+                """
                     .trimMargin(),
             )
 
@@ -1740,10 +1825,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |Bar
-            |---
-            """
+                |Foo
+                |Bar
+                |---
+                """
                     .trimMargin(),
             )
 
@@ -1752,7 +1837,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <h2>Foo
          * Bar</h2>
          */
-        parsed.assertEquals(heading(level = 2, "Foo Bar"))
+        parsed.assertEquals(heading(level = 2, Text("Foo"), SoftLineBreak, Text("Bar")))
     }
 
     @Test
@@ -1760,13 +1845,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |---
-            |Foo
-            |---
-            |Bar
-            |---
-            |Baz
-            """
+                |---
+                |Foo
+                |---
+                |Bar
+                |---
+                |Baz
+                """
                     .trimMargin(),
             )
 
@@ -1779,8 +1864,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             thematicBreak(),
-            heading(level = 2, "Foo"),
-            heading(level = 2, "Bar"),
+            heading(level = 2, Text("Foo")),
+            heading(level = 2, Text("Bar")),
             paragraph("Baz"),
         )
     }
@@ -1790,9 +1875,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |
-            |====
-            """
+                |
+                |====
+                """
                     .trimMargin(),
             )
 
@@ -1808,9 +1893,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |---
-            |---
-            """
+                |---
+                |---
+                """
                     .trimMargin(),
             )
 
@@ -1830,9 +1915,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |-----
-            """
+                |- foo
+                |-----
+                """
                     .trimMargin(),
             )
 
@@ -1854,9 +1939,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    foo
-            |---
-            """
+                |    foo
+                |---
+                """
                     .trimMargin(),
             )
 
@@ -1877,9 +1962,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> foo
-            |-----
-            """
+                |> foo
+                |-----
+                """
                     .trimMargin(),
             )
 
@@ -1901,9 +1986,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |\> foo
-            |------
-            """
+                |\> foo
+                |------
+                """
                     .trimMargin(),
             )
 
@@ -1911,7 +1996,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h2>&gt; foo</h2>
          */
-        parsed.assertEquals(heading(level = 2, "\\> foo"))
+        parsed.assertEquals(heading(level = 2, Text("> foo")))
     }
 
     @Test
@@ -1919,12 +2004,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |
-            |bar
-            |---
-            |baz
-            """
+                |Foo
+                |
+                |bar
+                |---
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -1936,7 +2021,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             paragraph("Foo"),
-            heading(level = 2, "bar"),
+            heading(level = 2, Text("bar")),
             paragraph("baz"),
         )
     }
@@ -1946,13 +2031,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |bar
-            |
-            |---
-            |
-            |baz
-            """
+                |Foo
+                |bar
+                |
+                |---
+                |
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -1964,7 +2049,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>baz</p>
          */
         parsed.assertEquals(
-            paragraph("Foo bar"),
+            Paragraph(Text("Foo"), SoftLineBreak, Text("bar")),
             thematicBreak(),
             paragraph("baz"),
         )
@@ -1975,11 +2060,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |bar
-            |* * *
-            |baz
-            """
+                |Foo
+                |bar
+                |* * *
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -1991,7 +2076,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>baz</p>
          */
         parsed.assertEquals(
-            paragraph("Foo bar"),
+            Paragraph(Text("Foo"), SoftLineBreak, Text("bar")),
             thematicBreak(),
             paragraph("baz"),
         )
@@ -2002,11 +2087,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |bar
-            |\---
-            |baz
-            """
+                |Foo
+                |bar
+                |\---
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -2017,7 +2102,17 @@ class MarkdownProcessorDocumentParsingTest {
          * ---
          * baz</p>
          */
-        parsed.assertEquals(paragraph("Foo bar --- baz"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("Foo"),
+                SoftLineBreak,
+                Text("bar"),
+                SoftLineBreak,
+                Text("---"),
+                SoftLineBreak,
+                Text("baz"),
+            ),
+        )
     }
 
     @Test
@@ -2025,9 +2120,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    a simple
-            |      indented code block
-            """
+                |    a simple
+                |      indented code block
+                """
                     .trimMargin(),
             )
 
@@ -2045,10 +2140,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  - foo
-            |
-            |    bar
-            """
+                |  - foo
+                |
+                |    bar
+                """
                     .trimMargin(),
             )
 
@@ -2074,10 +2169,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1.  foo
-            |
-            |    - bar
-            """
+                |1.  foo
+                |
+                |    - bar
+                """
                     .trimMargin(),
             )
 
@@ -2108,11 +2203,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    <a/>
-            |    *hi*
-            |
-            |    - one
-            """
+                |    <a/>
+                |    *hi*
+                |
+                |    - one
+                """
                     .trimMargin(),
             )
 
@@ -2132,14 +2227,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    chunk1
-            |
-            |    chunk2
-            |  
-            | 
-            | 
-            |    chunk3
-            """
+                |    chunk1
+                |
+                |    chunk2
+                |  
+                | 
+                | 
+                |    chunk3
+                """
                     .trimMargin(),
             )
 
@@ -2176,9 +2271,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |    bar
-            """
+                |Foo
+                |    bar
+                """
                     .trimMargin(),
             )
 
@@ -2187,7 +2282,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>Foo
          * bar</p>
          */
-        parsed.assertEquals(paragraph("Foo bar"))
+        parsed.assertEquals(Paragraph(Text("Foo"), SoftLineBreak, Text("bar")))
     }
 
     @Test
@@ -2195,9 +2290,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    foo
-            |bar
-            """
+                |    foo
+                |bar
+                """
                     .trimMargin(),
             )
 
@@ -2218,13 +2313,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |# Heading
-            |    foo
-            |Heading
-            |------
-            |    foo
-            |----
-            """
+                |# Heading
+                |    foo
+                |Heading
+                |------
+                |    foo
+                |----
+                """
                     .trimMargin(),
             )
 
@@ -2239,9 +2334,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <hr />
          */
         parsed.assertEquals(
-            heading(level = 1, "Heading"),
+            heading(level = 1, Text("Heading")),
             indentedCodeBlock("foo"),
-            heading(level = 2, "Heading"),
+            heading(level = 2, Text("Heading")),
             indentedCodeBlock("foo"),
             thematicBreak(),
         )
@@ -2252,9 +2347,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |        foo
-            |    bar
-            """
+                |        foo
+                |    bar
+                """
                     .trimMargin(),
             )
 
@@ -2272,11 +2367,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |
-            |    
-            |    foo
-            |    
-            """
+                |
+                |    
+                |    foo
+                |    
+                """
                     .trimMargin(),
             )
 
@@ -2305,11 +2400,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```
-            |<
-            | >
-            |```
-            """
+                |```
+                |<
+                | >
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -2327,11 +2422,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |~~~
-            |<
-            | >
-            |~~~
-            """
+                |~~~
+                |<
+                | >
+                |~~~
+                """
                     .trimMargin(),
             )
 
@@ -2349,10 +2444,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |``
-            |foo
-            |``
-            """
+                |``
+                |foo
+                |``
+                """
                     .trimMargin(),
             )
 
@@ -2360,7 +2455,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo</code></p>
          */
-        parsed.assertEquals(paragraph("`foo`"))
+        parsed.assertEquals(Paragraph(Code("foo")))
     }
 
     @Test
@@ -2368,11 +2463,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```
-            |aaa
-            |~~~
-            |```
-            """
+                |```
+                |aaa
+                |~~~
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -2390,11 +2485,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |~~~
-            |aaa
-            |```
-            |~~~
-            """
+                |~~~
+                |aaa
+                |```
+                |~~~
+                """
                     .trimMargin(),
             )
 
@@ -2412,11 +2507,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |````
-            |aaa
-            |```
-            |``````
-            """
+                |````
+                |aaa
+                |```
+                |``````
+                """
                     .trimMargin(),
             )
 
@@ -2434,11 +2529,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |~~~~
-            |aaa
-            |~~~
-            |~~~~
-            """
+                |~~~~
+                |aaa
+                |~~~
+                |~~~~
+                """
                     .trimMargin(),
             )
 
@@ -2467,11 +2562,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |`````
-            |
-            |```
-            |aaa
-            """
+                |`````
+                |
+                |```
+                |aaa
+                """
                     .trimMargin(),
             )
 
@@ -2490,11 +2585,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> ```
-            |> aaa
-            |
-            |bbb
-            """
+                |> ```
+                |> aaa
+                |
+                |bbb
+                """
                     .trimMargin(),
             )
 
@@ -2517,11 +2612,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```
-            |
-            |  
-            |```
-            """
+                |```
+                |
+                |  
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -2539,9 +2634,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```
-            |```
-            """
+                |```
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -2557,11 +2652,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            | ```
-            | aaa
-            |aaa
-            |```
-            """
+                | ```
+                | aaa
+                |aaa
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -2579,12 +2674,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  ```
-            |aaa
-            |  aaa
-            |aaa
-            |  ```
-            """
+                |  ```
+                |aaa
+                |  aaa
+                |aaa
+                |  ```
+                """
                     .trimMargin(),
             )
 
@@ -2603,12 +2698,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   ```
-            |   aaa
-            |    aaa
-            |  aaa
-            |   ```
-            """
+                |   ```
+                |   aaa
+                |    aaa
+                |  aaa
+                |   ```
+                """
                     .trimMargin(),
             )
 
@@ -2627,10 +2722,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    ```
-            |    aaa
-            |    ```
-            """
+                |    ```
+                |    aaa
+                |    ```
+                """
                     .trimMargin(),
             )
 
@@ -2649,10 +2744,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```
-            |aaa
-            |  ```
-            """
+                |```
+                |aaa
+                |  ```
+                """
                     .trimMargin(),
             )
 
@@ -2669,10 +2764,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   ```
-            |aaa
-            |  ```
-            """
+                |   ```
+                |aaa
+                |  ```
+                """
                     .trimMargin(),
             )
 
@@ -2689,10 +2784,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```
-            |aaa
-            |    ```
-            """
+                |```
+                |aaa
+                |    ```
+                """
                     .trimMargin(),
             )
 
@@ -2710,9 +2805,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |``` ```
-            |aaa
-            """
+                |``` ```
+                |aaa
+                """
                     .trimMargin(),
             )
 
@@ -2721,7 +2816,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><code> </code>
          * aaa</p>
          */
-        parsed.assertEquals(paragraph("` ` aaa"))
+        parsed.assertEquals(Paragraph(Code(" "), SoftLineBreak, Text("aaa")))
     }
 
     @Test
@@ -2729,10 +2824,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |~~~~~~
-            |aaa
-            |~~~ ~~
-            """
+                |~~~~~~
+                |aaa
+                |~~~ ~~
+                """
                     .trimMargin(),
             )
 
@@ -2750,12 +2845,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo
-            |```
-            |bar
-            |```
-            |baz
-            """
+                |foo
+                |```
+                |bar
+                |```
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -2778,13 +2873,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo
-            |---
-            |~~~
-            |bar
-            |~~~
-            |# baz
-            """
+                |foo
+                |---
+                |~~~
+                |bar
+                |~~~
+                |# baz
+                """
                     .trimMargin(),
             )
 
@@ -2796,9 +2891,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <h1>baz</h1>
          */
         parsed.assertEquals(
-            heading(level = 2, "foo"),
+            heading(level = 2, Text("foo")),
             fencedCodeBlock("bar"),
-            heading(level = 1, "baz"),
+            heading(level = 1, Text("baz")),
         )
     }
 
@@ -2807,12 +2902,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```ruby
-            |def foo(x)
-            |  return 3
-            |end
-            |```
-            """
+                |```ruby
+                |def foo(x)
+                |  return 3
+                |end
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -2836,12 +2931,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |~~~~    ruby startline=3 $%@#$
-            |def foo(x)
-            |  return 3
-            |end
-            |~~~~~~~
-            """
+                |~~~~    ruby startline=3 $%@#$
+                |def foo(x)
+                |  return 3
+                |end
+                |~~~~~~~
+                """
                     .trimMargin(),
             )
 
@@ -2865,9 +2960,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |````;
-            |````
-            """
+                |````;
+                |````
+                """
                     .trimMargin(),
             )
 
@@ -2888,9 +2983,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |``` aa ```
-            |foo
-            """
+                |``` aa ```
+                |foo
+                """
                     .trimMargin(),
             )
 
@@ -2899,7 +2994,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><code>aa</code>
          * foo</p>
          */
-        parsed.assertEquals(paragraph("`aa` foo"))
+        parsed.assertEquals(Paragraph(Code("aa"), SoftLineBreak, Text("foo")))
     }
 
     @Test
@@ -2907,10 +3002,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |~~~ aa ``` ~~~
-            |foo
-            |~~~
-            """
+                |~~~ aa ``` ~~~
+                |foo
+                |~~~
+                """
                     .trimMargin(),
             )
 
@@ -2932,10 +3027,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```
-            |``` aaa
-            |```
-            """
+                |```
+                |``` aaa
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -2952,14 +3047,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<table><tr><td>
-            |<pre>
-            |**Hello**,
-            |
-            |_world_.
-            |</pre>
-            |</td></tr></table>
-            """
+                |<table><tr><td>
+                |<pre>
+                |**Hello**,
+                |
+                |_world_.
+                |</pre>
+                |</td></tr></table>
+                """
                     .trimMargin(),
             )
 
@@ -2974,7 +3069,12 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             htmlBlock("<table><tr><td>\n<pre>\n**Hello**,"),
-            paragraph("_world_. </pre>"),
+            Paragraph(
+                Emphasis("_", Text("world")),
+                Text("."),
+                SoftLineBreak,
+                HtmlInline("</pre>"),
+            ),
             htmlBlock("</td></tr></table>"),
         )
     }
@@ -2984,16 +3084,16 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<table>
-            |  <tr>
-            |    <td>
-            |           hi
-            |    </td>
-            |  </tr>
-            |</table>
-            |
-            |okay.
-            """
+                |<table>
+                |  <tr>
+                |    <td>
+                |           hi
+                |    </td>
+                |  </tr>
+                |</table>
+                |
+                |okay.
+                """
                     .trimMargin(),
             )
 
@@ -3011,14 +3111,14 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<table>
-            |  <tr>
-            |    <td>
-            |           hi
-            |    </td>
-            |  </tr>
-            |</table>
-            """
+                |<table>
+                |  <tr>
+                |    <td>
+                |           hi
+                |    </td>
+                |  </tr>
+                |</table>
+                """
                     .trimMargin(),
             ),
             paragraph("okay."),
@@ -3030,10 +3130,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            | <div>
-            |  *hello*
-            |         <foo><a>
-            """
+                | <div>
+                |  *hello*
+                |         <foo><a>
+                """
                     .trimMargin(),
             )
 
@@ -3051,9 +3151,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |</div>
-            |*foo*
-            """
+                |</div>
+                |*foo*
+                """
                     .trimMargin(),
             )
 
@@ -3070,12 +3170,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<DIV CLASS="foo">
-            |
-            |*Markdown*
-            |
-            |</DIV>
-            """
+                |<DIV CLASS="foo">
+                |
+                |*Markdown*
+                |
+                |</DIV>
+                """
                     .trimMargin(),
             )
 
@@ -3087,7 +3187,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             htmlBlock("<DIV CLASS=\"foo\">"),
-            paragraph("*Markdown*"),
+            Paragraph(Emphasis("*", Text("Markdown"))),
             htmlBlock("</DIV>"),
         )
     }
@@ -3097,10 +3197,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div id="foo"
-            |  class="bar">
-            |</div>
-            """
+                |<div id="foo"
+                |  class="bar">
+                |</div>
+                """
                     .trimMargin(),
             )
 
@@ -3113,10 +3213,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<div id="foo"
-            |  class="bar">
-            |</div>
-            """
+                |<div id="foo"
+                |  class="bar">
+                |</div>
+                """
                     .trimMargin(),
             ),
         )
@@ -3127,10 +3227,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div id="foo" class="bar
-            |  baz">
-            |</div>
-            """
+                |<div id="foo" class="bar
+                |  baz">
+                |</div>
+                """
                     .trimMargin(),
             )
 
@@ -3143,10 +3243,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<div id="foo" class="bar
-            |  baz">
-            |</div>
-            """
+                |<div id="foo" class="bar
+                |  baz">
+                |</div>
+                """
                     .trimMargin(),
             ),
         )
@@ -3157,11 +3257,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div>
-            |*foo*
-            |
-            |*bar*
-            """
+                |<div>
+                |*foo*
+                |
+                |*bar*
+                """
                     .trimMargin(),
             )
 
@@ -3173,7 +3273,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             htmlBlock("<div>\n*foo*"),
-            paragraph("*bar*"),
+            Paragraph(Emphasis("*", Text("bar"))),
         )
     }
 
@@ -3182,9 +3282,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div id="foo"
-            |*hi*
-            """
+                |<div id="foo"
+                |*hi*
+                """
                     .trimMargin(),
             )
 
@@ -3201,9 +3301,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div class
-            |foo
-            """
+                |<div class
+                |foo
+                """
                     .trimMargin(),
             )
 
@@ -3220,9 +3320,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div *???-&&&-<---
-            |*foo*
-            """
+                |<div *???-&&&-<---
+                |*foo*
+                """
                     .trimMargin(),
             )
 
@@ -3250,10 +3350,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<table><tr><td>
-            |foo
-            |</td></tr></table>
-            """
+                |<table><tr><td>
+                |foo
+                |</td></tr></table>
+                """
                     .trimMargin(),
             )
 
@@ -3266,10 +3366,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<table><tr><td>
-            |foo
-            |</td></tr></table>
-            """
+                |<table><tr><td>
+                |foo
+                |</td></tr></table>
+                """
                     .trimMargin(),
             ),
         )
@@ -3280,11 +3380,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div></div>
-            |``` c
-            |int x = 33;
-            |```
-            """
+                |<div></div>
+                |``` c
+                |int x = 33;
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -3298,11 +3398,11 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<div></div>
-            |``` c
-            |int x = 33;
-            |```
-            """
+                |<div></div>
+                |``` c
+                |int x = 33;
+                |```
+                """
                     .trimMargin(),
             ),
         )
@@ -3313,10 +3413,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<a href="foo">
-            |*bar*
-            |</a>
-            """
+                |<a href="foo">
+                |*bar*
+                |</a>
+                """
                     .trimMargin(),
             )
 
@@ -3329,10 +3429,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<a href="foo">
-            |*bar*
-            |</a>
-            """
+                |<a href="foo">
+                |*bar*
+                |</a>
+                """
                     .trimMargin(),
             ),
         )
@@ -3343,10 +3443,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<Warning>
-            |*bar*
-            |</Warning>
-            """
+                |<Warning>
+                |*bar*
+                |</Warning>
+                """
                     .trimMargin(),
             )
 
@@ -3359,10 +3459,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<Warning>
-            |*bar*
-            |</Warning>
-            """
+                |<Warning>
+                |*bar*
+                |</Warning>
+                """
                     .trimMargin(),
             ),
         )
@@ -3373,10 +3473,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<i class="foo">
-            |*bar*
-            |</i>
-            """
+                |<i class="foo">
+                |*bar*
+                |</i>
+                """
                     .trimMargin(),
             )
 
@@ -3389,10 +3489,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<i class="foo">
-            |*bar*
-            |</i>
-            """
+                |<i class="foo">
+                |*bar*
+                |</i>
+                """
                     .trimMargin(),
             ),
         )
@@ -3403,9 +3503,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |</ins>
-            |*bar*
-            """
+                |</ins>
+                |*bar*
+                """
                     .trimMargin(),
             )
 
@@ -3417,9 +3517,9 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |</ins>
-            |*bar*
-            """
+                |</ins>
+                |*bar*
+                """
                     .trimMargin(),
             ),
         )
@@ -3430,10 +3530,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<del>
-            |*foo*
-            |</del>
-            """
+                |<del>
+                |*foo*
+                |</del>
+                """
                     .trimMargin(),
             )
 
@@ -3446,10 +3546,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<del>
-            |*foo*
-            |</del>
-            """
+                |<del>
+                |*foo*
+                |</del>
+                """
                     .trimMargin(),
             ),
         )
@@ -3460,12 +3560,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<del>
-            |
-            |*foo*
-            |
-            |</del>
-            """
+                |<del>
+                |
+                |*foo*
+                |
+                |</del>
+                """
                     .trimMargin(),
             )
 
@@ -3477,7 +3577,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             htmlBlock("<del>"),
-            paragraph("*foo*"),
+            Paragraph(Emphasis("*", Text("foo"))),
             htmlBlock("</del>"),
         )
     }
@@ -3490,7 +3590,13 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><del><em>foo</em></del></p>
          */
-        parsed.assertEquals(paragraph("<del>*foo*</del>"))
+        parsed.assertEquals(
+            Paragraph(
+                HtmlInline("<del>"),
+                Emphasis("*", Text("foo")),
+                HtmlInline("</del>"),
+            ),
+        )
     }
 
     @Test
@@ -3498,14 +3604,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<pre language="haskell"><code>
-            |import Text.HTML.TagSoup
-            |
-            |main :: IO ()
-            |main = print $ parseTags tags
-            |</code></pre>
-            |okay
-            """
+                |<pre language="haskell"><code>
+                |import Text.HTML.TagSoup
+                |
+                |main :: IO ()
+                |main = print $ parseTags tags
+                |</code></pre>
+                |okay
+                """
                     .trimMargin(),
             )
 
@@ -3522,13 +3628,13 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<pre language="haskell"><code>
-            |import Text.HTML.TagSoup
-            |
-            |main :: IO ()
-            |main = print $ parseTags tags
-            |</code></pre>
-            """
+                |<pre language="haskell"><code>
+                |import Text.HTML.TagSoup
+                |
+                |main :: IO ()
+                |main = print $ parseTags tags
+                |</code></pre>
+                """
                     .trimMargin(),
             ),
             paragraph("okay"),
@@ -3540,13 +3646,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<script type="text/javascript">
-            |// JavaScript example
-            |
-            |document.getElementById("demo").innerHTML = "Hello JavaScript!";
-            |</script>
-            |okay
-            """
+                |<script type="text/javascript">
+                |// JavaScript example
+                |
+                |document.getElementById("demo").innerHTML = "Hello JavaScript!";
+                |</script>
+                |okay
+                """
                     .trimMargin(),
             )
 
@@ -3562,12 +3668,12 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<script type="text/javascript">
-            |// JavaScript example
-            |
-            |document.getElementById("demo").innerHTML = "Hello JavaScript!";
-            |</script>
-            """
+                |<script type="text/javascript">
+                |// JavaScript example
+                |
+                |document.getElementById("demo").innerHTML = "Hello JavaScript!";
+                |</script>
+                """
                     .trimMargin(),
             ),
             paragraph("okay"),
@@ -3579,14 +3685,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<textarea>
-            |
-            |*foo*
-            |
-            |_bar_
-            |
-            |</textarea>
-            """
+                |<textarea>
+                |
+                |*foo*
+                |
+                |_bar_
+                |
+                |</textarea>
+                """
                     .trimMargin(),
             )
 
@@ -3603,14 +3709,14 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<textarea>
-            |
-            |*foo*
-            |
-            |_bar_
-            |
-            |</textarea>
-            """
+                |<textarea>
+                |
+                |*foo*
+                |
+                |_bar_
+                |
+                |</textarea>
+                """
                     .trimMargin(),
             ),
         )
@@ -3621,14 +3727,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<style
-            |  type="text/css">
-            |h1 {color:red;}
-            |
-            |p {color:blue;}
-            |</style>
-            |okay
-            """
+                |<style
+                |  type="text/css">
+                |h1 {color:red;}
+                |
+                |p {color:blue;}
+                |</style>
+                |okay
+                """
                     .trimMargin(),
             )
 
@@ -3645,13 +3751,13 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<style
-            |  type="text/css">
-            |h1 {color:red;}
-            |
-            |p {color:blue;}
-            |</style>
-            """
+                |<style
+                |  type="text/css">
+                |h1 {color:red;}
+                |
+                |p {color:blue;}
+                |</style>
+                """
                     .trimMargin(),
             ),
             paragraph("okay"),
@@ -3663,11 +3769,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<style
-            |  type="text/css">
-            |
-            |foo
-            """
+                |<style
+                |  type="text/css">
+                |
+                |foo
+                """
                     .trimMargin(),
             )
 
@@ -3681,11 +3787,11 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<style
-            |  type="text/css">
-            |
-            |foo
-            """
+                |<style
+                |  type="text/css">
+                |
+                |foo
+                """
                     .trimMargin(),
             ),
         )
@@ -3696,11 +3802,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> <div>
-            |> foo
-            |
-            |bar
-            """
+                |> <div>
+                |> foo
+                |
+                |bar
+                """
                     .trimMargin(),
             )
 
@@ -3723,9 +3829,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- <div>
-            |- foo
-            """
+                |- <div>
+                |- foo
+                """
                     .trimMargin(),
             )
 
@@ -3751,9 +3857,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<style>p{color:red;}</style>
-            |*foo*
-            """
+                |<style>p{color:red;}</style>
+                |*foo*
+                """
                     .trimMargin(),
             )
 
@@ -3764,7 +3870,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             htmlBlock("<style>p{color:red;}</style>"),
-            paragraph("*foo*"),
+            Paragraph(Emphasis("*", Text("foo"))),
         )
     }
 
@@ -3773,9 +3879,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<!-- foo -->*bar*
-            |*baz*
-            """
+                |<!-- foo -->*bar*
+                |*baz*
+                """
                     .trimMargin(),
             )
 
@@ -3786,7 +3892,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             htmlBlock("<!-- foo -->*bar*"),
-            paragraph("*baz*"),
+            Paragraph(Emphasis("*", Text("baz"))),
         )
     }
 
@@ -3795,10 +3901,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<script>
-            |foo
-            |</script>1. *bar*
-            """
+                |<script>
+                |foo
+                |</script>1. *bar*
+                """
                     .trimMargin(),
             )
 
@@ -3811,10 +3917,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<script>
-            |foo
-            |</script>1. *bar*
-            """
+                |<script>
+                |foo
+                |</script>1. *bar*
+                """
                     .trimMargin(),
             ),
         )
@@ -3825,12 +3931,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<!-- Foo
-            |
-            |bar
-            |   baz -->
-            |okay
-            """
+                |<!-- Foo
+                |
+                |bar
+                |   baz -->
+                |okay
+                """
                     .trimMargin(),
             )
 
@@ -3845,11 +3951,11 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<!-- Foo
-            |
-            |bar
-            |   baz -->
-            """
+                |<!-- Foo
+                |
+                |bar
+                |   baz -->
+                """
                     .trimMargin(),
             ),
             paragraph("okay"),
@@ -3861,13 +3967,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<?php
-            |
-            |  echo '>';
-            |
-            |?>
-            |okay
-            """
+                |<?php
+                |
+                |  echo '>';
+                |
+                |?>
+                |okay
+                """
                     .trimMargin(),
             )
 
@@ -3883,12 +3989,12 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<?php
-            |
-            |  echo '>';
-            |
-            |?>
-            """
+                |<?php
+                |
+                |  echo '>';
+                |
+                |?>
+                """
                     .trimMargin(),
             ),
             paragraph("okay"),
@@ -3911,20 +4017,20 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<![CDATA[
-            |function matchwo(a,b)
-            |{
-            |  if (a < b && a < 0) then {
-            |    return 1;
-            |
-            |  } else {
-            |
-            |    return 0;
-            |  }
-            |}
-            |]]>
-            |okay
-            """
+                |<![CDATA[
+                |function matchwo(a,b)
+                |{
+                |  if (a < b && a < 0) then {
+                |    return 1;
+                |
+                |  } else {
+                |
+                |    return 0;
+                |  }
+                |}
+                |]]>
+                |okay
+                """
                     .trimMargin(),
             )
 
@@ -3947,19 +4053,19 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<![CDATA[
-            |function matchwo(a,b)
-            |{
-            |  if (a < b && a < 0) then {
-            |    return 1;
-            |
-            |  } else {
-            |
-            |    return 0;
-            |  }
-            |}
-            |]]>
-            """
+                |<![CDATA[
+                |function matchwo(a,b)
+                |{
+                |  if (a < b && a < 0) then {
+                |    return 1;
+                |
+                |  } else {
+                |
+                |    return 0;
+                |  }
+                |}
+                |]]>
+                """
                     .trimMargin(),
             ),
             paragraph("okay"),
@@ -3971,10 +4077,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  <!-- foo -->
-            |
-            |    <!-- foo -->
-            """
+                |  <!-- foo -->
+                |
+                |    <!-- foo -->
+                """
                     .trimMargin(),
             )
 
@@ -3995,10 +4101,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  <div>
-            |
-            |    <div>
-            """
+                |  <div>
+                |
+                |    <div>
+                """
                     .trimMargin(),
             )
 
@@ -4019,11 +4125,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |<div>
-            |bar
-            |</div>
-            """
+                |Foo
+                |<div>
+                |bar
+                |</div>
+                """
                     .trimMargin(),
             )
 
@@ -4038,10 +4144,10 @@ class MarkdownProcessorDocumentParsingTest {
             paragraph("Foo"),
             htmlBlock(
                 """
-            |<div>
-            |bar
-            |</div>
-            """
+                |<div>
+                |bar
+                |</div>
+                """
                     .trimMargin(),
             ),
         )
@@ -4052,11 +4158,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div>
-            |bar
-            |</div>
-            |*foo*
-            """
+                |<div>
+                |bar
+                |</div>
+                |*foo*
+                """
                     .trimMargin(),
             )
 
@@ -4070,11 +4176,11 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<div>
-            |bar
-            |</div>
-            |*foo*
-            """
+                |<div>
+                |bar
+                |</div>
+                |*foo*
+                """
                     .trimMargin(),
             ),
         )
@@ -4085,10 +4191,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |<a href="bar">
-            |baz
-            """
+                |Foo
+                |<a href="bar">
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -4098,7 +4204,15 @@ class MarkdownProcessorDocumentParsingTest {
          * <a href="bar">
          * baz</p>
          */
-        parsed.assertEquals(paragraph("Foo <a href=\"bar\"> baz"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("Foo"),
+                SoftLineBreak,
+                HtmlInline("<a href=\"bar\">"),
+                SoftLineBreak,
+                Text("baz"),
+            ),
+        )
     }
 
     @Test
@@ -4106,12 +4220,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div>
-            |
-            |*Emphasized* text.
-            |
-            |</div>
-            """
+                |<div>
+                |
+                |*Emphasized* text.
+                |
+                |</div>
+                """
                     .trimMargin(),
             )
 
@@ -4123,7 +4237,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             htmlBlock("<div>"),
-            paragraph("*Emphasized* text."),
+            Paragraph(Emphasis("*", Text("Emphasized")), Text(" text.")),
             htmlBlock("</div>"),
         )
     }
@@ -4133,10 +4247,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<div>
-            |*Emphasized* text.
-            |</div>
-            """
+                |<div>
+                |*Emphasized* text.
+                |</div>
+                """
                     .trimMargin(),
             )
 
@@ -4149,10 +4263,10 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             htmlBlock(
                 """
-            |<div>
-            |*Emphasized* text.
-            |</div>
-            """
+                |<div>
+                |*Emphasized* text.
+                |</div>
+                """
                     .trimMargin(),
             ),
         )
@@ -4163,18 +4277,18 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<table>
-            |
-            |<tr>
-            |
-            |<td>
-            |Hi
-            |</td>
-            |
-            |</tr>
-            |
-            |</table>
-            """
+                |<table>
+                |
+                |<tr>
+                |
+                |<td>
+                |Hi
+                |</td>
+                |
+                |</tr>
+                |
+                |</table>
+                """
                     .trimMargin(),
             )
 
@@ -4202,18 +4316,18 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<table>
-            |
-            |  <tr>
-            |
-            |    <td>
-            |      Hi
-            |    </td>
-            |
-            |  </tr>
-            |
-            |</table>
-            """
+                |<table>
+                |
+                |  <tr>
+                |
+                |    <td>
+                |      Hi
+                |    </td>
+                |
+                |  </tr>
+                |
+                |</table>
+                """
                     .trimMargin(),
             )
 
@@ -4242,10 +4356,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /url "title"
-            |
-            |[foo]
-            """
+                |[foo]: /url "title"
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4253,7 +4367,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title", Text("foo"))))
     }
 
     @Test
@@ -4261,12 +4375,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   [foo]: 
-            |      /url  
-            |           'the title'  
-            |
-            |[foo]
-            """
+                |   [foo]: 
+                |      /url  
+                |           'the title'  
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4274,7 +4388,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="the title">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url \"the title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "the title", Text("foo"))))
     }
 
     @Test
@@ -4282,10 +4396,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[Foo*bar\]]:my_(url) 'title (with parens)'
-            |
-            |[Foo*bar\]]
-            """
+                |[Foo*bar\]]:my_(url) 'title (with parens)'
+                |
+                |[Foo*bar\]]
+                """
                     .trimMargin(),
             )
 
@@ -4293,7 +4407,9 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="my_(url)" title="title (with parens)">Foo*bar]</a></p>
          */
-        parsed.assertEquals(paragraph("[Foo\\*bar\\]](my_\\(url\\) \"title (with parens)\")"))
+        parsed.assertEquals(
+            Paragraph(Link(destination = "my_(url)", title = "title (with parens)", Text("Foo*bar]"))),
+        )
     }
 
     @Test
@@ -4301,12 +4417,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[Foo bar]:
-            |<my url>
-            |'title'
-            |
-            |[Foo bar]
-            """
+                |[Foo bar]:
+                |<my url>
+                |'title'
+                |
+                |[Foo bar]
+                """
                     .trimMargin(),
             )
 
@@ -4314,7 +4430,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="my%20url" title="title">Foo bar</a></p>
          */
-        parsed.assertEquals(paragraph("[Foo bar](<my url> \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "my url", title = "title", Text("Foo bar"))))
     }
 
     @Test
@@ -4322,14 +4438,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /url '
-            |title
-            |line1
-            |line2
-            |'
-            |
-            |[foo]
-            """
+                |[foo]: /url '
+                |title
+                |line1
+                |line2
+                |'
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4341,7 +4457,7 @@ class MarkdownProcessorDocumentParsingTest {
          * line2
          * ">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url \" title\nline1\nline2 \")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "\ntitle\nline1\nline2\n", Text("foo"))))
     }
 
     @Test
@@ -4349,12 +4465,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /url 'title
-            |
-            |with blank line'
-            |
-            |[foo]
-            """
+                |[foo]: /url 'title
+                |
+                |with blank line'
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4365,9 +4481,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo]</p>
          */
         parsed.assertEquals(
-            paragraph("\\[foo\\]: /url 'title"),
+            paragraph("[foo]: /url 'title"),
             paragraph("with blank line'"),
-            paragraph("\\[foo\\]"),
+            paragraph("[foo]"),
         )
     }
 
@@ -4376,11 +4492,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]:
-            |/url
-            |
-            |[foo]
-            """
+                |[foo]:
+                |/url
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4388,7 +4504,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = null, Text("foo"))))
     }
 
     @Test
@@ -4396,10 +4512,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]:
-            |
-            |[foo]
-            """
+                |[foo]:
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4409,8 +4525,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo]</p>
          */
         parsed.assertEquals(
-            paragraph("\\[foo\\]:"),
-            paragraph("\\[foo\\]"),
+            paragraph("[foo]:"),
+            paragraph("[foo]"),
         )
     }
 
@@ -4419,10 +4535,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: <>
-            |
-            |[foo]
-            """
+                |[foo]: <>
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4430,7 +4546,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo]()"))
+        parsed.assertEquals(Paragraph(Link(destination = "", title = null, Text("foo"))))
     }
 
     @Test
@@ -4438,10 +4554,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: <bar>(baz)
-            |
-            |[foo]
-            """
+                |[foo]: <bar>(baz)
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4451,8 +4567,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo]</p>
          */
         parsed.assertEquals(
-            paragraph("\\[foo\\]: <bar>\\(baz\\)"),
-            paragraph("\\[foo\\]"),
+            Paragraph(Text("[foo]: "), HtmlInline("<bar>"), Text("(baz)")),
+            paragraph("[foo]"),
         )
     }
 
@@ -4461,10 +4577,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /url\bar\*baz "foo\"bar\baz"
-            |
-            |[foo]
-            """
+                |[foo]: /url\bar\*baz "foo\"bar\baz"
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4472,7 +4588,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url%5Cbar*baz" title="foo&quot;bar\baz">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url\\bar*baz \"foo\\\"bar\\baz\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url\\bar*baz", title = "foo\"bar\\baz", Text("foo"))))
     }
 
     @Test
@@ -4480,10 +4596,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]
-            |
-            |[foo]: url
-            """
+                |[foo]
+                |
+                |[foo]: url
+                """
                     .trimMargin(),
             )
 
@@ -4491,7 +4607,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="url">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](url)"))
+        parsed.assertEquals(Paragraph(Link(destination = "url", title = null, Text("foo"))))
     }
 
     @Test
@@ -4499,11 +4615,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]
-            |
-            |[foo]: first
-            |[foo]: second
-            """
+                |[foo]
+                |
+                |[foo]: first
+                |[foo]: second
+                """
                     .trimMargin(),
             )
 
@@ -4511,7 +4627,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="first">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](first)"))
+        parsed.assertEquals(Paragraph(Link(destination = "first", title = null, Text("foo"))))
     }
 
     @Test
@@ -4519,10 +4635,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[FOO]: /url
-            |
-            |[Foo]
-            """
+                |[FOO]: /url
+                |
+                |[Foo]
+                """
                     .trimMargin(),
             )
 
@@ -4530,7 +4646,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url">Foo</a></p>
          */
-        parsed.assertEquals(paragraph("[Foo](/url)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = null, Text("Foo"))))
     }
 
     @Test
@@ -4538,10 +4654,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[ΑΓΩ]: /φου
-            |
-            |[αγω]
-            """
+                |[ΑΓΩ]: /φου
+                |
+                |[αγω]
+                """
                     .trimMargin(),
             )
 
@@ -4549,7 +4665,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/%CF%86%CE%BF%CF%85">αγω</a></p>
          */
-        parsed.assertEquals(paragraph("[αγω](/φου)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/φου", title = null, Text("αγω"))))
     }
 
     @Test
@@ -4568,11 +4684,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[
-            |foo
-            |]: /url
-            |bar
-            """
+                |[
+                |foo
+                |]: /url
+                |bar
+                """
                     .trimMargin(),
             )
 
@@ -4591,7 +4707,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo]: /url &quot;title&quot; ok</p>
          */
-        parsed.assertEquals(paragraph("\\[foo\\]: /url \"title\" ok"))
+        parsed.assertEquals(paragraph("[foo]: /url \"title\" ok"))
     }
 
     @Test
@@ -4599,9 +4715,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /url
-            |"title" ok
-            """
+                |[foo]: /url
+                |"title" ok
+                """
                     .trimMargin(),
             )
 
@@ -4617,10 +4733,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    [foo]: /url "title"
-            |
-            |[foo]
-            """
+                |    [foo]: /url "title"
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4632,7 +4748,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             indentedCodeBlock("[foo]: /url \"title\""),
-            paragraph("\\[foo\\]"),
+            paragraph("[foo]"),
         )
     }
 
@@ -4641,12 +4757,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |```
-            |[foo]: /url
-            |```
-            |
-            |[foo]
-            """
+                |```
+                |[foo]: /url
+                |```
+                |
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4658,7 +4774,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             fencedCodeBlock("[foo]: /url"),
-            paragraph("\\[foo\\]"),
+            paragraph("[foo]"),
         )
     }
 
@@ -4667,11 +4783,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |[bar]: /baz
-            |
-            |[bar]
-            """
+                |Foo
+                |[bar]: /baz
+                |
+                |[bar]
+                """
                     .trimMargin(),
             )
 
@@ -4682,8 +4798,12 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[bar]</p>
          */
         parsed.assertEquals(
-            paragraph("Foo \\[bar\\]: /baz"),
-            paragraph("\\[bar\\]"),
+            Paragraph(
+                Text("Foo"),
+                SoftLineBreak,
+                Text("[bar]: /baz"),
+            ),
+            paragraph("[bar]"),
         )
     }
 
@@ -4692,10 +4812,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |# [Foo]
-            |[foo]: /url
-            |> bar
-            """
+                |# [Foo]
+                |[foo]: /url
+                |> bar
+                """
                     .trimMargin(),
             )
 
@@ -4707,7 +4827,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            heading(level = 1, "[Foo](/url)"),
+            heading(level = 1, Link(destination = "/url", title = null, Text("Foo"))),
             blockQuote(paragraph("bar")),
         )
     }
@@ -4717,11 +4837,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /url
-            |bar
-            |===
-            |[foo]
-            """
+                |[foo]: /url
+                |bar
+                |===
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4731,8 +4851,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="/url">foo</a></p>
          */
         parsed.assertEquals(
-            heading(level = 1, "bar"),
-            paragraph("[foo](/url)"),
+            heading(level = 1, Text("bar")),
+            Paragraph(Link(destination = "/url", title = null, Text("foo"))),
         )
     }
 
@@ -4741,10 +4861,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /url
-            |===
-            |[foo]
-            """
+                |[foo]: /url
+                |===
+                |[foo]
+                """
                     .trimMargin(),
             )
 
@@ -4753,7 +4873,13 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>===
          * <a href="/url">foo</a></p>
          */
-        parsed.assertEquals(paragraph("=== [foo](/url)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("==="),
+                SoftLineBreak,
+                Link(destination = "/url", title = null, Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -4761,15 +4887,15 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /foo-url "foo"
-            |[bar]: /bar-url
-            |  "bar"
-            |[baz]: /baz-url
-            |
-            |[foo],
-            |[bar],
-            |[baz]
-            """
+                |[foo]: /foo-url "foo"
+                |[bar]: /bar-url
+                |  "bar"
+                |[baz]: /baz-url
+                |
+                |[foo],
+                |[bar],
+                |[baz]
+                """
                     .trimMargin(),
             )
 
@@ -4780,7 +4906,15 @@ class MarkdownProcessorDocumentParsingTest {
          * <a href="/baz-url">baz</a></p>
          */
         parsed.assertEquals(
-            paragraph("[foo](/foo-url \"foo\"), [bar](/bar-url \"bar\"), [baz](/baz-url)"),
+            Paragraph(
+                Link(destination = "/foo-url", title = "foo", Text("foo")),
+                Text(","),
+                SoftLineBreak,
+                Link(destination = "/bar-url", title = "bar", Text("bar")),
+                Text(","),
+                SoftLineBreak,
+                Link(destination = "/baz-url", title = null, Text("baz")),
+            ),
         )
     }
 
@@ -4789,10 +4923,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]
-            |
-            |> [foo]: /url
-            """
+                |[foo]
+                |
+                |> [foo]: /url
+                """
                     .trimMargin(),
             )
 
@@ -4803,7 +4937,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            paragraph("[foo](/url)"),
+            Paragraph(Link(destination = "/url", title = null, Text("foo"))),
             blockQuote(),
         )
     }
@@ -4813,10 +4947,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |aaa
-            |
-            |bbb
-            """
+                |aaa
+                |
+                |bbb
+                """
                     .trimMargin(),
             )
 
@@ -4836,12 +4970,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |aaa
-            |bbb
-            |
-            |ccc
-            |ddd
-            """
+                |aaa
+                |bbb
+                |
+                |ccc
+                |ddd
+                """
                     .trimMargin(),
             )
 
@@ -4853,8 +4987,8 @@ class MarkdownProcessorDocumentParsingTest {
          * ddd</p>
          */
         parsed.assertEquals(
-            paragraph("aaa bbb"),
-            paragraph("ccc ddd"),
+            Paragraph(Text("aaa"), SoftLineBreak, Text("bbb")),
+            Paragraph(Text("ccc"), SoftLineBreak, Text("ddd")),
         )
     }
 
@@ -4863,11 +4997,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |aaa
-            |
-            |
-            |bbb
-            """
+                |aaa
+                |
+                |
+                |bbb
+                """
                     .trimMargin(),
             )
 
@@ -4887,9 +5021,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  aaa
-            | bbb
-            """
+                |  aaa
+                | bbb
+                """
                     .trimMargin(),
             )
 
@@ -4898,7 +5032,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>aaa
          * bbb</p>
          */
-        parsed.assertEquals(paragraph("aaa bbb"))
+        parsed.assertEquals(Paragraph(Text("aaa"), SoftLineBreak, Text("bbb")))
     }
 
     @Test
@@ -4906,10 +5040,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |aaa
-            |             bbb
-            |                                       ccc
-            """
+                |aaa
+                |             bbb
+                |                                       ccc
+                """
                     .trimMargin(),
             )
 
@@ -4919,7 +5053,15 @@ class MarkdownProcessorDocumentParsingTest {
          * bbb
          * ccc</p>
          */
-        parsed.assertEquals(paragraph("aaa bbb ccc"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("aaa"),
+                SoftLineBreak,
+                Text("bbb"),
+                SoftLineBreak,
+                Text("ccc"),
+            ),
+        )
     }
 
     @Test
@@ -4927,9 +5069,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   aaa
-            |bbb
-            """
+                |   aaa
+                |bbb
+                """
                     .trimMargin(),
             )
 
@@ -4938,7 +5080,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>aaa
          * bbb</p>
          */
-        parsed.assertEquals(paragraph("aaa bbb"))
+        parsed.assertEquals(Paragraph(Text("aaa"), SoftLineBreak, Text("bbb")))
     }
 
     @Test
@@ -4946,9 +5088,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    aaa
-            |bbb
-            """
+                |    aaa
+                |bbb
+                """
                     .trimMargin(),
             )
 
@@ -4969,9 +5111,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |aaa     
-            |bbb     
-            """
+                |aaa     
+                |bbb     
+                """
                     .trimMargin(),
             )
 
@@ -4980,7 +5122,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>aaa<br />
          * bbb</p>
          */
-        parsed.assertEquals(paragraph("aaa  \nbbb"))
+        parsed.assertEquals(Paragraph(Text("aaa"), HardLineBreak, Text("bbb")))
     }
 
     @Test
@@ -4988,15 +5130,15 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  
-            |
-            |aaa
-            |  
-            |
-            |# aaa
-            |
-            |  
-            """
+                |  
+                |
+                |aaa
+                |  
+                |
+                |# aaa
+                |
+                |  
+                """
                     .trimMargin(),
             )
 
@@ -5007,7 +5149,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             paragraph("aaa"),
-            heading(level = 1, "aaa"),
+            heading(level = 1, Text("aaa")),
         )
     }
 
@@ -5016,10 +5158,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> # Foo
-            |> bar
-            |> baz
-            """
+                |> # Foo
+                |> bar
+                |> baz
+                """
                     .trimMargin(),
             )
 
@@ -5033,8 +5175,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                heading(level = 1, "Foo"),
-                paragraph("bar baz"),
+                heading(level = 1, Text("Foo")),
+                Paragraph(Text("bar"), SoftLineBreak, Text("baz")),
             ),
         )
     }
@@ -5044,10 +5186,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |># Foo
-            |>bar
-            |> baz
-            """
+                |># Foo
+                |>bar
+                |> baz
+                """
                     .trimMargin(),
             )
 
@@ -5061,8 +5203,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                heading(level = 1, "Foo"),
-                paragraph("bar baz"),
+                heading(level = 1, Text("Foo")),
+                Paragraph(Text("bar"), SoftLineBreak, Text("baz")),
             ),
         )
     }
@@ -5072,10 +5214,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   > # Foo
-            |   > bar
-            | > baz
-            """
+                |   > # Foo
+                |   > bar
+                | > baz
+                """
                     .trimMargin(),
             )
 
@@ -5089,8 +5231,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                heading(level = 1, "Foo"),
-                paragraph("bar baz"),
+                heading(level = 1, Text("Foo")),
+                Paragraph(Text("bar"), SoftLineBreak, Text("baz")),
             ),
         )
     }
@@ -5100,10 +5242,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    > # Foo
-            |    > bar
-            |    > baz
-            """
+                |    > # Foo
+                |    > bar
+                |    > baz
+                """
                     .trimMargin(),
             )
 
@@ -5122,10 +5264,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> # Foo
-            |> bar
-            |baz
-            """
+                |> # Foo
+                |> bar
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -5139,8 +5281,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                heading(level = 1, "Foo"),
-                paragraph("bar baz"),
+                heading(level = 1, Text("Foo")),
+                Paragraph(Text("bar"), SoftLineBreak, Text("baz")),
             ),
         )
     }
@@ -5150,10 +5292,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> bar
-            |baz
-            |> foo
-            """
+                |> bar
+                |baz
+                |> foo
+                """
                     .trimMargin(),
             )
 
@@ -5165,7 +5307,17 @@ class MarkdownProcessorDocumentParsingTest {
          * foo</p>
          * </blockquote>
          */
-        parsed.assertEquals(blockQuote(paragraph("bar baz foo")))
+        parsed.assertEquals(
+            blockQuote(
+                Paragraph(
+                    Text("bar"),
+                    SoftLineBreak,
+                    Text("baz"),
+                    SoftLineBreak,
+                    Text("foo"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -5173,9 +5325,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> foo
-            |---
-            """
+                |> foo
+                |---
+                """
                     .trimMargin(),
             )
 
@@ -5197,9 +5349,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> - foo
-            |- bar
-            """
+                |> - foo
+                |- bar
+                """
                     .trimMargin(),
             )
 
@@ -5225,9 +5377,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |>     foo
-            |    bar
-            """
+                |>     foo
+                |    bar
+                """
                     .trimMargin(),
             )
 
@@ -5251,10 +5403,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> ```
-            |foo
-            |```
-            """
+                |> ```
+                |foo
+                |```
+                """
                     .trimMargin(),
             )
 
@@ -5278,9 +5430,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> foo
-            |    - bar
-            """
+                |> foo
+                |    - bar
+                """
                     .trimMargin(),
             )
 
@@ -5291,7 +5443,7 @@ class MarkdownProcessorDocumentParsingTest {
          * - bar</p>
          * </blockquote>
          */
-        parsed.assertEquals(blockQuote(paragraph("foo - bar")))
+        parsed.assertEquals(blockQuote(Paragraph(Text("foo"), SoftLineBreak, Text("- bar"))))
     }
 
     @Test
@@ -5311,10 +5463,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |>
-            |>  
-            |> 
-            """
+                |>
+                |>  
+                |> 
+                """
                     .trimMargin(),
             )
 
@@ -5331,10 +5483,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |>
-            |> foo
-            |>  
-            """
+                |>
+                |> foo
+                |>  
+                """
                     .trimMargin(),
             )
 
@@ -5352,10 +5504,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> foo
-            |
-            |> bar
-            """
+                |> foo
+                |
+                |> bar
+                """
                     .trimMargin(),
             )
 
@@ -5379,8 +5531,8 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> foo
-            |> bar
+                |> foo
+                |> bar
             """
                     .trimMargin(),
             )
@@ -5392,7 +5544,7 @@ class MarkdownProcessorDocumentParsingTest {
          * bar</p>
          * </blockquote>
          */
-        parsed.assertEquals(blockQuote(paragraph("foo bar")))
+        parsed.assertEquals(blockQuote(Paragraph(Text("foo"), SoftLineBreak, Text("bar"))))
     }
 
     @Test
@@ -5400,10 +5552,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> foo
-            |>
-            |> bar
-            """
+                |> foo
+                |>
+                |> bar
+                """
                     .trimMargin(),
             )
 
@@ -5427,9 +5579,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo
-            |> bar
-            """
+                |foo
+                |> bar
+                """
                     .trimMargin(),
             )
 
@@ -5451,10 +5603,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> aaa
-            |***
-            |> bbb
-            """
+                |> aaa
+                |***
+                |> bbb
+                """
                     .trimMargin(),
             )
 
@@ -5480,9 +5632,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> bar
-            |baz
-            """
+                |> bar
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -5493,7 +5645,7 @@ class MarkdownProcessorDocumentParsingTest {
          * baz</p>
          * </blockquote>
          */
-        parsed.assertEquals(blockQuote(paragraph("bar baz")))
+        parsed.assertEquals(blockQuote(Paragraph(Text("bar"), SoftLineBreak, Text("baz"))))
     }
 
     @Test
@@ -5501,10 +5653,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> bar
-            |
-            |baz
-            """
+                |> bar
+                |
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -5526,10 +5678,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> bar
-            |>
-            |baz
-            """
+                |> bar
+                |>
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -5551,9 +5703,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> > > foo
-            |bar
-            """
+                |> > > foo
+                |bar
+                """
                     .trimMargin(),
             )
 
@@ -5571,7 +5723,7 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             blockQuote(
                 blockQuote(
-                    blockQuote(paragraph("foo bar")),
+                    blockQuote(Paragraph(Text("foo"), SoftLineBreak, Text("bar"))),
                 ),
             ),
         )
@@ -5582,10 +5734,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |>>> foo
-            |> bar
-            |>>baz
-            """
+                |>>> foo
+                |> bar
+                |>>baz
+                """
                     .trimMargin(),
             )
 
@@ -5604,7 +5756,15 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             blockQuote(
                 blockQuote(
-                    blockQuote(paragraph("foo bar baz")),
+                    blockQuote(
+                        Paragraph(
+                            Text("foo"),
+                            SoftLineBreak,
+                            Text("bar"),
+                            SoftLineBreak,
+                            Text("baz"),
+                        ),
+                    ),
                 ),
             ),
         )
@@ -5615,10 +5775,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |>     code
-            |
-            |>    not code
-            """
+                |>     code
+                |
+                |>    not code
+                """
                     .trimMargin(),
             )
 
@@ -5643,13 +5803,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |A paragraph
-            |with two lines.
-            |
-            |    indented code
-            |
-            |> A block quote.
-            """
+                |A paragraph
+                |with two lines.
+                |
+                |    indented code
+                |
+                |> A block quote.
+                """
                     .trimMargin(),
             )
 
@@ -5664,7 +5824,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            paragraph("A paragraph with two lines."),
+            Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
             indentedCodeBlock("indented code"),
             blockQuote(paragraph("A block quote.")),
         )
@@ -5702,7 +5862,7 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             orderedList(
                 listItem(
-                    paragraph("A paragraph with two lines."),
+                    Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
                 ),
@@ -5716,10 +5876,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- one
-            |
-            | two
-            """
+                |- one
+                |
+                | two
+                """
                     .trimMargin(),
             )
 
@@ -5741,10 +5901,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- one
-            |
-            |  two
-            """
+                |- one
+                |
+                |  two
+                """
                     .trimMargin(),
             )
 
@@ -5770,10 +5930,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            | -    one
-            |
-            |     two
-            """
+                | -    one
+                |
+                |     two
+                """
                     .trimMargin(),
             )
 
@@ -5796,10 +5956,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            | -    one
-            |
-            |      two
-            """
+                | -    one
+                |
+                |      two
+                """
                     .trimMargin(),
             )
 
@@ -5825,10 +5985,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   > > 1.  one
-            |>>
-            |>>     two
-            """
+                |   > > 1.  one
+                |>>
+                |>>     two
+                """
                     .trimMargin(),
             )
 
@@ -5862,10 +6022,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |>>- one
-            |>>
-            |  >  > two
-            """
+                |>>- one
+                |>>
+                |  >  > two
+                """
                     .trimMargin(),
             )
 
@@ -5895,10 +6055,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |-one
-            |
-            |2.two
-            """
+                |-one
+                |
+                |2.two
+                """
                     .trimMargin(),
             )
 
@@ -5918,11 +6078,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |
-            |
-            |  bar
-            """
+                |- foo
+                |
+                |
+                |  bar
+                """
                     .trimMargin(),
             )
 
@@ -5951,16 +6111,16 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1.  foo
-            |
-            |    ```
-            |    bar
-            |    ```
-            |
-            |    baz
-            |
-            |    > bam
-            """
+                |1.  foo
+                |
+                |    ```
+                |    bar
+                |    ```
+                |
+                |    baz
+                |
+                |    > bam
+                """
                     .trimMargin(),
             )
 
@@ -5996,13 +6156,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- Foo
-            |
-            |      bar
-            |
-            |
-            |      baz
-            """
+                |- Foo
+                |
+                |      bar
+                |
+                |
+                |      baz
+                """
                     .trimMargin(),
             )
 
@@ -6093,10 +6253,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |
-            |      bar
-            """
+                |- foo
+                |
+                |      bar
+                """
                     .trimMargin(),
             )
 
@@ -6123,10 +6283,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  10.  foo
-            |
-            |           bar
-            """
+                |  10.  foo
+                |
+                |           bar
+                """
                     .trimMargin(),
             )
 
@@ -6154,12 +6314,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    indented code
-            |
-            |paragraph
-            |
-            |    more code
-            """
+                |    indented code
+                |
+                |paragraph
+                |
+                |    more code
+                """
                     .trimMargin(),
             )
 
@@ -6183,12 +6343,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1.     indented code
-            |
-            |   paragraph
-            |
-            |       more code
-            """
+                |1.     indented code
+                |
+                |   paragraph
+                |
+                |       more code
+                """
                     .trimMargin(),
             )
 
@@ -6221,12 +6381,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1.      indented code
-            |
-            |   paragraph
-            |
-            |       more code
-            """
+                |1.      indented code
+                |
+                |   paragraph
+                |
+                |       more code
+                """
                     .trimMargin(),
             )
 
@@ -6259,10 +6419,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   foo
-            |
-            |bar
-            """
+                |   foo
+                |
+                |bar
+                """
                     .trimMargin(),
             )
 
@@ -6282,10 +6442,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |-    foo
-            |
-            |  bar
-            """
+                |-    foo
+                |
+                |  bar
+                """
                     .trimMargin(),
             )
 
@@ -6307,10 +6467,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |-  foo
-            |
-            |   bar
-            """
+                |-  foo
+                |
+                |   bar
+                """
                     .trimMargin(),
             )
 
@@ -6336,15 +6496,15 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |-
-            |  foo
-            |-
-            |  ```
-            |  bar
-            |  ```
-            |-
-            |      baz
-            """
+                |-
+                |  foo
+                |-
+                |  ```
+                |  bar
+                |  ```
+                |-
+                |      baz
+                """
                     .trimMargin(),
             )
 
@@ -6376,9 +6536,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |-   
-            |  foo
-            """
+                |-   
+                |  foo
+                """
                     .trimMargin(),
             )
 
@@ -6396,10 +6556,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |-
-            |
-            |  foo
-            """
+                |-
+                |
+                |  foo
+                """
                     .trimMargin(),
             )
 
@@ -6421,10 +6581,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |-
-            |- bar
-            """
+                |- foo
+                |-
+                |- bar
+                """
                     .trimMargin(),
             )
 
@@ -6450,10 +6610,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |-   
-            |- bar
-            """
+                |- foo
+                |-   
+                |- bar
+                """
                     .trimMargin(),
             )
 
@@ -6479,10 +6639,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1. foo
-            |2.
-            |3. bar
-            """
+                |1. foo
+                |2.
+                |3. bar
+                """
                     .trimMargin(),
             )
 
@@ -6521,12 +6681,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo
-            |*
-            |
-            |foo
-            |1.
-            """
+                |foo
+                |*
+                |
+                |foo
+                |1.
+                """
                     .trimMargin(),
             )
 
@@ -6538,8 +6698,8 @@ class MarkdownProcessorDocumentParsingTest {
          * 1.</p>
          */
         parsed.assertEquals(
-            paragraph("foo \\*"),
-            paragraph("foo 1."),
+            Paragraph(Text("foo"), SoftLineBreak, Text("*")),
+            Paragraph(Text("foo"), SoftLineBreak, Text("1.")),
         )
     }
 
@@ -6548,13 +6708,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            | 1.  A paragraph
-            |     with two lines.
-            |
-            |         indented code
-            |
-            |     > A block quote.
-            """
+                | 1.  A paragraph
+                |     with two lines.
+                |
+                |         indented code
+                |
+                |     > A block quote.
+                """
                     .trimMargin(),
             )
 
@@ -6575,7 +6735,7 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             orderedList(
                 listItem(
-                    paragraph("A paragraph with two lines."),
+                    Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
                 ),
@@ -6589,13 +6749,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  1.  A paragraph
-            |      with two lines.
-            |
-            |          indented code
-            |
-            |      > A block quote.
-            """
+                |  1.  A paragraph
+                |      with two lines.
+                |
+                |          indented code
+                |
+                |      > A block quote.
+                """
                     .trimMargin(),
             )
 
@@ -6616,7 +6776,7 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             orderedList(
                 listItem(
-                    paragraph("A paragraph with two lines."),
+                    Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
                 ),
@@ -6630,13 +6790,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |   1.  A paragraph
-            |       with two lines.
-            |
-            |           indented code
-            |
-            |       > A block quote.
-            """
+                |   1.  A paragraph
+                |       with two lines.
+                |
+                |           indented code
+                |
+                |       > A block quote.
+                """
                     .trimMargin(),
             )
 
@@ -6657,7 +6817,7 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             orderedList(
                 listItem(
-                    paragraph("A paragraph with two lines."),
+                    Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
                 ),
@@ -6671,13 +6831,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |    1.  A paragraph
-            |        with two lines.
-            |
-            |            indented code
-            |
-            |        > A block quote.
-            """
+                |    1.  A paragraph
+                |        with two lines.
+                |
+                |            indented code
+                |
+                |        > A block quote.
+                """
                     .trimMargin(),
             )
 
@@ -6694,13 +6854,13 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             indentedCodeBlock(
                 """
-            |1.  A paragraph
-            |    with two lines.
-            |
-            |        indented code
-            |
-            |    > A block quote.
-            """
+                |1.  A paragraph
+                |    with two lines.
+                |
+                |        indented code
+                |
+                |    > A block quote.
+                """
                     .trimMargin(),
             ),
         )
@@ -6711,13 +6871,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  1.  A paragraph
-            |with two lines.
-            |
-            |          indented code
-            |
-            |      > A block quote.
-            """
+                |  1.  A paragraph
+                |with two lines.
+                |
+                |          indented code
+                |
+                |      > A block quote.
+                """
                     .trimMargin(),
             )
 
@@ -6738,7 +6898,7 @@ class MarkdownProcessorDocumentParsingTest {
         parsed.assertEquals(
             orderedList(
                 listItem(
-                    paragraph("A paragraph with two lines."),
+                    Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
                 ),
@@ -6752,9 +6912,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |  1.  A paragraph
-            |    with two lines.
-            """
+                |  1.  A paragraph
+                |    with two lines.
+                """
                     .trimMargin(),
             )
 
@@ -6767,7 +6927,7 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(paragraph("A paragraph with two lines.")),
+                listItem(Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines."))),
             ),
         )
     }
@@ -6777,9 +6937,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> 1. > Blockquote
-            |continued here.
-            """
+                |> 1. > Blockquote
+                |continued here.
+                """
                     .trimMargin(),
             )
 
@@ -6798,7 +6958,11 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                orderedList(listItem(blockQuote(paragraph("Blockquote continued here.")))),
+                orderedList(
+                    listItem(
+                        blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here."))),
+                    ),
+                ),
             ),
         )
     }
@@ -6808,9 +6972,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |> 1. > Blockquote
-            |> continued here.
-            """
+                |> 1. > Blockquote
+                |> continued here.
+                """
                     .trimMargin(),
             )
 
@@ -6829,7 +6993,11 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                orderedList(listItem(blockQuote(paragraph("Blockquote continued here.")))),
+                orderedList(
+                    listItem(
+                        blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here."))),
+                    ),
+                ),
             ),
         )
     }
@@ -6839,11 +7007,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |  - bar
-            |    - baz
-            |      - boo
-            """
+                |- foo
+                |  - bar
+                |    - baz
+                |      - boo
+                """
                     .trimMargin(),
             )
 
@@ -6890,11 +7058,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            | - bar
-            |  - baz
-            |   - boo
-            """
+                |- foo
+                | - bar
+                |  - baz
+                |   - boo
+                """
                     .trimMargin(),
             )
 
@@ -6922,9 +7090,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |10) foo
-            |    - bar
-            """
+                |10) foo
+                |    - bar
+                """
                     .trimMargin(),
             )
 
@@ -6955,9 +7123,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |10) foo
-            |   - bar
-            """
+                |10) foo
+                |   - bar
+                """
                     .trimMargin(),
             )
 
@@ -7042,11 +7210,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- # Foo
-            |- Bar
-            |  ---
-            |  baz
-            """
+                |- # Foo
+                |- Bar
+                |  ---
+                |  baz
+                """
                     .trimMargin(),
             )
 
@@ -7063,8 +7231,8 @@ class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(heading(level = 1, "Foo")),
-                listItem(heading(level = 2, "Bar"), paragraph("baz")),
+                listItem(heading(level = 1, Text("Foo"))),
+                listItem(heading(level = 2, Text("Bar")), paragraph("baz")),
             ),
         )
     }
@@ -7074,10 +7242,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |- bar
-            |+ baz
-            """
+                |- foo
+                |- bar
+                |+ baz
+                """
                     .trimMargin(),
             )
 
@@ -7108,10 +7276,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1. foo
-            |2. bar
-            |3) baz
-            """
+                |1. foo
+                |2. bar
+                |3) baz
+                """
                     .trimMargin(),
             )
 
@@ -7143,10 +7311,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |Foo
-            |- bar
-            |- baz
-            """
+                |Foo
+                |- bar
+                |- baz
+                """
                     .trimMargin(),
             )
 
@@ -7172,9 +7340,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |The number of windows in my house is
-            |14.  The number of doors is 6.
-            """
+                |The number of windows in my house is
+                |14.  The number of doors is 6.
+                """
                     .trimMargin(),
             )
 
@@ -7184,7 +7352,11 @@ class MarkdownProcessorDocumentParsingTest {
          * 14.  The number of doors is 6.</p>
          */
         parsed.assertEquals(
-            paragraph("The number of windows in my house is 14.  The number of doors is 6."),
+            Paragraph(
+                Text("The number of windows in my house is"),
+                SoftLineBreak,
+                Text("14.  The number of doors is 6."),
+            ),
         )
     }
 
@@ -7193,9 +7365,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |The number of windows in my house is
-            |1.  The number of doors is 6.
-            """
+                |The number of windows in my house is
+                |1.  The number of doors is 6.
+                """
                     .trimMargin(),
             )
 
@@ -7217,13 +7389,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |
-            |- bar
-            |
-            |
-            |- baz
-            """
+                |- foo
+                |
+                |- bar
+                |
+                |
+                |- baz
+                """
                     .trimMargin(),
             )
 
@@ -7256,13 +7428,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |  - bar
-            |    - baz
-            |
-            |
-            |      bim
-            """
+                |- foo
+                |  - bar
+                |    - baz
+                |
+                |
+                |      bim
+                """
                     .trimMargin(),
             )
 
@@ -7309,14 +7481,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- foo
-            |- bar
-            |
-            |<!-- -->
-            |
-            |- baz
-            |- bim
-            """
+                |- foo
+                |- bar
+                |
+                |<!-- -->
+                |
+                |- baz
+                |- bim
+                """
                     .trimMargin(),
             )
 
@@ -7350,16 +7522,16 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |-   foo
-            |
-            |    notcode
-            |
-            |-   foo
-            |
-            |<!-- -->
-            |
-            |    code
-            """
+                |-   foo
+                |
+                |    notcode
+                |
+                |-   foo
+                |
+                |<!-- -->
+                |
+                |    code
+                """
                     .trimMargin(),
             )
 
@@ -7394,14 +7566,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            | - b
-            |  - c
-            |   - d
-            |  - e
-            | - f
-            |- g
-            """
+                |- a
+                | - b
+                |  - c
+                |   - d
+                |  - e
+                | - f
+                |- g
+                """
                     .trimMargin(),
             )
 
@@ -7435,12 +7607,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1. a
-            |
-            |  2. b
-            |
-            |   3. c
-            """
+                |1. a
+                |
+                |  2. b
+                |
+                |   3. c
+                """
                     .trimMargin(),
             )
 
@@ -7473,12 +7645,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            | - b
-            |  - c
-            |   - d
-            |    - e
-            """
+                |- a
+                | - b
+                |  - c
+                |   - d
+                |    - e
+                """
                     .trimMargin(),
             )
 
@@ -7497,7 +7669,7 @@ class MarkdownProcessorDocumentParsingTest {
                 listItem(paragraph("a")),
                 listItem(paragraph("b")),
                 listItem(paragraph("c")),
-                listItem(paragraph("d - e")),
+                listItem(Paragraph(Text("d"), SoftLineBreak, Text("- e"))),
             ),
         )
     }
@@ -7507,12 +7679,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1. a
-            |
-            |  2. b
-            |
-            |    3. c
-            """
+                |1. a
+                |
+                |  2. b
+                |
+                |    3. c
+                """
                     .trimMargin(),
             )
 
@@ -7544,11 +7716,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            |- b
-            |
-            |- c
-            """
+                |- a
+                |- b
+                |
+                |- c
+                """
                     .trimMargin(),
             )
 
@@ -7581,11 +7753,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |* a
-            |*
-            |
-            |* c
-            """
+                |* a
+                |*
+                |
+                |* c
+                """
                     .trimMargin(),
             )
 
@@ -7617,12 +7789,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            |- b
-            |
-            |  c
-            |- d
-            """
+                |- a
+                |- b
+                |
+                |  c
+                |- d
+                """
                     .trimMargin(),
             )
 
@@ -7656,12 +7828,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            |- b
-            |
-            |  [ref]: /url
-            |- d
-            """
+                |- a
+                |- b
+                |
+                |  [ref]: /url
+                |- d
+                """
                     .trimMargin(),
             )
 
@@ -7694,14 +7866,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            |- ```
-            |  b
-            |
-            |
-            |  ```
-            |- c
-            """
+                |- a
+                |- ```
+                |  b
+                |
+                |
+                |  ```
+                |- c
+                """
                     .trimMargin(),
             )
 
@@ -7732,12 +7904,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            |  - b
-            |
-            |    c
-            |- d
-            """
+                |- a
+                |  - b
+                |
+                |    c
+                |- d
+                """
                     .trimMargin(),
             )
 
@@ -7777,11 +7949,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |* a
-            |  > b
-            |  >
-            |* c
-            """
+                |* a
+                |  > b
+                |  >
+                |* c
+                """
                     .trimMargin(),
             )
 
@@ -7810,13 +7982,13 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            |  > b
-            |  ```
-            |  c
-            |  ```
-            |- d
-            """
+                |- a
+                |  > b
+                |  ```
+                |  c
+                |  ```
+                |- d
+                """
                     .trimMargin(),
             )
 
@@ -7863,9 +8035,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            |  - b
-            """
+                |- a
+                |  - b
+                """
                     .trimMargin(),
             )
 
@@ -7894,12 +8066,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |1. ```
-            |   foo
-            |   ```
-            |
-            |   bar
-            """
+                |1. ```
+                |   foo
+                |   ```
+                |
+                |   bar
+                """
                     .trimMargin(),
             )
 
@@ -7929,11 +8101,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |* foo
-            |  * bar
-            |
-            |  baz
-            """
+                |* foo
+                |  * bar
+                |
+                |  baz
+                """
                     .trimMargin(),
             )
 
@@ -7970,14 +8142,14 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |- a
-            |  - b
-            |  - c
-            |
-            |- d
-            |  - e
-            |  - f
-            """
+                |- a
+                |  - b
+                |  - c
+                |
+                |- d
+                |  - e
+                |  - f
+                """
                     .trimMargin(),
             )
 
@@ -8029,7 +8201,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>hi</code>lo`</p>
          */
-        parsed.assertEquals(paragraph("`hi`lo\\`"))
+        parsed.assertEquals(Paragraph(Code("hi"), Text("lo`")))
     }
 
     @Test
@@ -8040,7 +8212,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo</code></p>
          */
-        parsed.assertEquals(paragraph("`foo`"))
+        parsed.assertEquals(Paragraph(Code("foo")))
     }
 
     @Test
@@ -8051,7 +8223,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo ` bar</code></p>
          */
-        parsed.assertEquals(paragraph("``foo ` bar``"))
+        parsed.assertEquals(Paragraph(Code("foo ` bar")))
     }
 
     @Test
@@ -8062,7 +8234,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>``</code></p>
          */
-        parsed.assertEquals(paragraph("<code>``</code>"))
+        parsed.assertEquals(Paragraph(Code("``")))
     }
 
     @Test
@@ -8073,7 +8245,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code> `` </code></p>
          */
-        parsed.assertEquals(paragraph("<code> `` </code>"))
+        parsed.assertEquals(Paragraph(Code(" `` ")))
     }
 
     @Test
@@ -8084,7 +8256,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code> a</code></p>
          */
-        parsed.assertEquals(paragraph("` a`"))
+        parsed.assertEquals(Paragraph(Code(" a")))
     }
 
     @Test
@@ -8095,7 +8267,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code> b </code></p>
          */
-        parsed.assertEquals(paragraph("` b `"))
+        parsed.assertEquals(Paragraph(Code(" b ")))
     }
 
     @Test
@@ -8103,9 +8275,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |` `
-            |`  `
-            """
+                |` `
+                |`  `
+                """
                     .trimMargin(),
             )
 
@@ -8114,7 +8286,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><code> </code>
          * <code>  </code></p>
          */
-        parsed.assertEquals(paragraph("` ` `  `"))
+        parsed.assertEquals(Paragraph(Code(" "), SoftLineBreak, Code("  ")))
     }
 
     @Test
@@ -8122,12 +8294,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |``
-            |foo
-            |bar  
-            |baz
-            |``
-            """
+                |``
+                |foo
+                |bar  
+                |baz
+                |``
+                """
                     .trimMargin(),
             )
 
@@ -8135,7 +8307,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo bar   baz</code></p>
          */
-        parsed.assertEquals(paragraph("`foo bar   baz`"))
+        parsed.assertEquals(Paragraph(Code("foo bar   baz")))
     }
 
     @Test
@@ -8143,10 +8315,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |``
-            |foo 
-            |``
-            """
+                |``
+                |foo 
+                |``
+                """
                     .trimMargin(),
             )
 
@@ -8154,7 +8326,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo </code></p>
          */
-        parsed.assertEquals(paragraph("`foo `"))
+        parsed.assertEquals(Paragraph(Code("foo ")))
     }
 
     @Test
@@ -8162,9 +8334,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |`foo   bar 
-            |baz`
-            """
+                |`foo   bar 
+                |baz`
+                """
                     .trimMargin(),
             )
 
@@ -8172,7 +8344,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo   bar  baz</code></p>
          */
-        parsed.assertEquals(paragraph("`foo   bar  baz`"))
+        parsed.assertEquals(Paragraph(Code("foo   bar  baz")))
     }
 
     @Test
@@ -8183,7 +8355,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo\</code>bar`</p>
          */
-        parsed.assertEquals(paragraph("`foo\\`bar\\`"))
+        parsed.assertEquals(Paragraph(Code("foo\\"), Text("bar`")))
     }
 
     @Test
@@ -8194,7 +8366,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo`bar</code></p>
          */
-        parsed.assertEquals(paragraph("``foo`bar``"))
+        parsed.assertEquals(Paragraph(Code("foo`bar")))
     }
 
     @Test
@@ -8205,7 +8377,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>foo `` bar</code></p>
          */
-        parsed.assertEquals(paragraph("```foo `` bar```"))
+        parsed.assertEquals(Paragraph(Code("foo `` bar")))
     }
 
     @Test
@@ -8216,7 +8388,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*foo<code>*</code></p>
          */
-        parsed.assertEquals(paragraph("\\*foo`*`"))
+        parsed.assertEquals(Paragraph(Text("*foo"), Code("*")))
     }
 
     @Test
@@ -8227,7 +8399,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[not a <code>link](/foo</code>)</p>
          */
-        parsed.assertEquals(paragraph("\\[not a `link](/foo`\\)"))
+        parsed.assertEquals(Paragraph(Text("[not a "), Code("link](/foo"), Text(")")))
     }
 
     @Test
@@ -8238,7 +8410,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>&lt;a href=&quot;</code>&quot;&gt;`</p>
          */
-        parsed.assertEquals(paragraph("`<a href=\"`\"\\>\\`"))
+        parsed.assertEquals(Paragraph(Code("<a href=\""), Text("\">`")))
     }
 
     @Test
@@ -8249,7 +8421,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="`">`</p>
          */
-        parsed.assertEquals(paragraph("<a href=\"`\">\\`"))
+        parsed.assertEquals(Paragraph(HtmlInline("<a href=\"`\">"), Text("`")))
     }
 
     @Test
@@ -8260,7 +8432,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>&lt;https://foo.bar.</code>baz&gt;`</p>
          */
-        parsed.assertEquals(paragraph("`<https://foo.bar.`baz\\>\\`"))
+        parsed.assertEquals(Paragraph(Code("<https://foo.bar."), Text("baz>`")))
     }
 
     @Test
@@ -8271,7 +8443,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="https://foo.bar.%60baz">https://foo.bar.`baz</a>`</p>
          */
-        parsed.assertEquals(paragraph("[https://foo.bar.\\`baz](https://foo.bar.`baz)\\`"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(destination = "https://foo.bar.`baz", title = null, Text("https://foo.bar.`baz")),
+                Text("`"),
+            ),
+        )
     }
 
     @Test
@@ -8282,7 +8459,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>```foo``</p>
          */
-        parsed.assertEquals(paragraph("\\`\\`\\`foo\\`\\`"))
+        parsed.assertEquals(paragraph("```foo``"))
     }
 
     @Test
@@ -8293,7 +8470,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>`foo</p>
          */
-        parsed.assertEquals(paragraph("\\`foo"))
+        parsed.assertEquals(paragraph("`foo"))
     }
 
     @Test
@@ -8304,7 +8481,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>`foo<code>bar</code></p>
          */
-        parsed.assertEquals(paragraph("\\`foo`bar`"))
+        parsed.assertEquals(Paragraph(Text("`foo"), Code("bar")))
     }
 
     @Test
@@ -8315,7 +8492,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo bar</em></p>
          */
-        parsed.assertEquals(paragraph("*foo bar*"))
+        parsed.assertEquals(Paragraph(Emphasis("*", Text(("foo bar")))))
     }
 
     @Test
@@ -8326,7 +8503,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>a * foo bar*</p>
          */
-        parsed.assertEquals(paragraph("a \\* foo bar\\*"))
+        parsed.assertEquals(paragraph("a * foo bar*"))
     }
 
     @Test
@@ -8337,7 +8514,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>a*&quot;foo&quot;*</p>
          */
-        parsed.assertEquals(paragraph("a\\*\"foo\"\\*"))
+        parsed.assertEquals(paragraph("a*\"foo\"*"))
     }
 
     @Test
@@ -8348,7 +8525,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>* a *</p>
          */
-        parsed.assertEquals(paragraph("\\* a \\*"))
+        parsed.assertEquals(paragraph("* a *"))
     }
 
     @Test
@@ -8356,11 +8533,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |*$*alpha.
-            |
-            |*£*bravo.
-            |
-            |*€*charlie.
+                |*$*alpha.
+                |
+                |*£*bravo.
+                |
+                |*€*charlie.
                 """.trimMargin(),
             )
 
@@ -8370,7 +8547,11 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>*£*bravo.</p>
          * <p>*€*charlie.</p>
          */
-        parsed.assertEquals(paragraph("*$*alpha."), paragraph("*£*bravo."), paragraph("*€*charlie."))
+        parsed.assertEquals(
+            paragraph("*$*alpha."),
+            paragraph("*£*bravo."),
+            paragraph("*€*charlie."),
+        )
     }
 
     @Test
@@ -8381,7 +8562,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo<em>bar</em></p>
          */
-        parsed.assertEquals(paragraph("foo*bar*"))
+        parsed.assertEquals(Paragraph(Text("foo"), Emphasis("*", Text("bar"))))
     }
 
     @Test
@@ -8392,7 +8573,13 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>5<em>6</em>78</p>
          */
-        parsed.assertEquals(paragraph("5*6*78"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("5"),
+                Emphasis("*", Text("6")),
+                Text("78"),
+            ),
+        )
     }
 
     @Test
@@ -8403,7 +8590,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo bar</em></p>
          */
-        parsed.assertEquals(paragraph("_foo bar_"))
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("foo bar"))))
     }
 
     @Test
@@ -8414,7 +8601,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_ foo bar_</p>
          */
-        parsed.assertEquals(paragraph("\\_ foo bar\\_"))
+        parsed.assertEquals(paragraph("_ foo bar_"))
     }
 
     @Test
@@ -8425,7 +8612,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>a_&quot;foo&quot;_</p>
          */
-        parsed.assertEquals(paragraph("a\\_\"foo\"\\_"))
+        parsed.assertEquals(paragraph("a_\"foo\"_"))
     }
 
     @Test
@@ -8436,7 +8623,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo_bar_</p>
          */
-        parsed.assertEquals(paragraph("foo\\_bar\\_"))
+        parsed.assertEquals(paragraph("foo_bar_"))
     }
 
     @Test
@@ -8447,7 +8634,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>5_6_78</p>
          */
-        parsed.assertEquals(paragraph("5\\_6\\_78"))
+        parsed.assertEquals(paragraph("5_6_78"))
     }
 
     @Test
@@ -8458,7 +8645,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>пристаням_стремятся_</p>
          */
-        parsed.assertEquals(paragraph("пристаням\\_стремятся\\_"))
+        parsed.assertEquals(paragraph("пристаням_стремятся_"))
     }
 
     @Test
@@ -8469,7 +8656,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>aa_&quot;bb&quot;_cc</p>
          */
-        parsed.assertEquals(paragraph("aa\\_\"bb\"\\_cc"))
+        parsed.assertEquals(paragraph("aa_\"bb\"_cc"))
     }
 
     @Test
@@ -8480,7 +8667,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo-<em>(bar)</em></p>
          */
-        parsed.assertEquals(paragraph("foo-_\\(bar\\)_"))
+        parsed.assertEquals(Paragraph(Text("foo-"), Emphasis("_", Text("(bar)"))))
     }
 
     @Test
@@ -8491,7 +8678,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_foo*</p>
          */
-        parsed.assertEquals(paragraph("\\_foo\\*"))
+        parsed.assertEquals(paragraph("_foo*"))
     }
 
     @Test
@@ -8502,7 +8689,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*foo bar *</p>
          */
-        parsed.assertEquals(paragraph("\\*foo bar \\*"))
+        parsed.assertEquals(paragraph("*foo bar *"))
     }
 
     @Test
@@ -8510,9 +8697,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |*foo bar
-            |*
-            """
+                |*foo bar
+                |*
+                """
                     .trimMargin(),
             )
 
@@ -8521,7 +8708,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>*foo bar
          * *</p>
          */
-        parsed.assertEquals(paragraph("\\*foo bar \\*"))
+        parsed.assertEquals(Paragraph(Text("*foo bar"), SoftLineBreak, Text("*")))
     }
 
     @Test
@@ -8532,7 +8719,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*(*foo)</p>
          */
-        parsed.assertEquals(paragraph("\\*\\(\\*foo\\)"))
+        parsed.assertEquals(paragraph("*(*foo)"))
     }
 
     @Test
@@ -8543,7 +8730,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(<em>foo</em>)</em></p>
          */
-        parsed.assertEquals(paragraph("*\\(*foo*\\)*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("("),
+                    Emphasis("*", Text("foo")),
+                    Text(")"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8554,7 +8750,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>bar</p>
          */
-        parsed.assertEquals(paragraph("*foo*bar"))
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo")), Text("bar")))
     }
 
     @Test
@@ -8565,7 +8761,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_foo bar _</p>
          */
-        parsed.assertEquals(paragraph("\\_foo bar \\_"))
+        parsed.assertEquals(paragraph("_foo bar _"))
     }
 
     @Test
@@ -8576,7 +8772,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_(_foo)</p>
          */
-        parsed.assertEquals(paragraph("\\_\\(\\_foo\\)"))
+        parsed.assertEquals(paragraph("_(_foo)"))
     }
 
     @Test
@@ -8587,7 +8783,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(<em>foo</em>)</em></p>
          */
-        parsed.assertEquals(paragraph("_\\(_foo_\\)_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Text("("),
+                    Emphasis("_", Text("foo")),
+                    Text(")"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8598,7 +8803,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_foo_bar</p>
          */
-        parsed.assertEquals(paragraph("\\_foo\\_bar"))
+        parsed.assertEquals(paragraph("_foo_bar"))
     }
 
     @Test
@@ -8609,7 +8814,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_пристаням_стремятся</p>
          */
-        parsed.assertEquals(paragraph("\\_пристаням\\_стремятся"))
+        parsed.assertEquals(paragraph("_пристаням_стремятся"))
     }
 
     @Test
@@ -8620,7 +8825,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo_bar_baz</em></p>
          */
-        parsed.assertEquals(paragraph("_foo\\_bar\\_baz_"))
+        parsed.assertEquals(Paragraph(Emphasis("_", Text("foo_bar_baz"))))
     }
 
     @Test
@@ -8631,7 +8836,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(bar)</em>.</p>
          */
-        parsed.assertEquals(paragraph("_\\(bar\\)_."))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis("_", Text("(bar)")),
+                Text("."),
+            ),
+        )
     }
 
     @Test
@@ -8642,7 +8852,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo bar</strong></p>
          */
-        parsed.assertEquals(paragraph("**foo bar**"))
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo bar"))))
     }
 
     @Test
@@ -8653,7 +8863,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>** foo bar**</p>
          */
-        parsed.assertEquals(paragraph("\\*\\* foo bar\\*\\*"))
+        parsed.assertEquals(paragraph("** foo bar**"))
     }
 
     @Test
@@ -8664,7 +8874,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>a**&quot;foo&quot;**</p>
          */
-        parsed.assertEquals(paragraph("a\\*\\*\"foo\"\\*\\*"))
+        parsed.assertEquals(paragraph("a**\"foo\"**"))
     }
 
     @Test
@@ -8675,7 +8885,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo<strong>bar</strong></p>
          */
-        parsed.assertEquals(paragraph("foo**bar**"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo"),
+                StrongEmphasis("**", Text("bar")),
+            ),
+        )
     }
 
     @Test
@@ -8686,7 +8901,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo bar</strong></p>
          */
-        parsed.assertEquals(paragraph("__foo bar__"))
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", Text("foo bar"))))
     }
 
     @Test
@@ -8697,7 +8912,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__ foo bar__</p>
          */
-        parsed.assertEquals(paragraph("\\_\\_ foo bar\\_\\_"))
+        parsed.assertEquals(paragraph("__ foo bar__"))
     }
 
     @Test
@@ -8705,9 +8920,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-        |__
-        |foo bar__
-        """
+                |__
+                |foo bar__
+                """
                     .trimMargin(),
             )
 
@@ -8716,7 +8931,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>__
          * foo bar__</p>
          */
-        parsed.assertEquals(paragraph("\\_\\_ foo bar\\_\\_"))
+        parsed.assertEquals(Paragraph(Text("__"), SoftLineBreak, Text("foo bar__")))
     }
 
     @Test
@@ -8727,7 +8942,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>a__&quot;foo&quot;__</p>
          */
-        parsed.assertEquals(paragraph("a\\_\\_\"foo\"\\_\\_"))
+        parsed.assertEquals(paragraph("a__\"foo\"__"))
     }
 
     @Test
@@ -8738,7 +8953,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo__bar__</p>
          */
-        parsed.assertEquals(paragraph("foo\\_\\_bar\\_\\_"))
+        parsed.assertEquals(paragraph("foo__bar__"))
     }
 
     @Test
@@ -8749,7 +8964,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>5__6__78</p>
          */
-        parsed.assertEquals(paragraph("5\\_\\_6\\_\\_78"))
+        parsed.assertEquals(paragraph("5__6__78"))
     }
 
     @Test
@@ -8760,7 +8975,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>пристаням__стремятся__</p>
          */
-        parsed.assertEquals(paragraph("пристаням\\_\\_стремятся\\_\\_"))
+        parsed.assertEquals(paragraph("пристаням__стремятся__"))
     }
 
     @Test
@@ -8771,7 +8986,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo, <strong>bar</strong>, baz</strong></p>
          */
-        parsed.assertEquals(paragraph("__foo, __bar__, baz__"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "__",
+                    Text("foo, "),
+                    StrongEmphasis("__", Text("bar")),
+                    Text(", baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8782,7 +9006,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo-<strong>(bar)</strong></p>
          */
-        parsed.assertEquals(paragraph("foo-__\\(bar\\)__"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo-"),
+                StrongEmphasis("__", Text("(bar)")),
+            ),
+        )
     }
 
     @Test
@@ -8793,7 +9022,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>**foo bar **</p>
          */
-        parsed.assertEquals(paragraph("\\*\\*foo bar \\*\\*"))
+        parsed.assertEquals(paragraph("**foo bar **"))
     }
 
     @Test
@@ -8804,7 +9033,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>**(**foo)</p>
          */
-        parsed.assertEquals(paragraph("\\*\\*\\(\\*\\*foo\\)"))
+        parsed.assertEquals(paragraph("**(**foo)"))
     }
 
     @Test
@@ -8815,7 +9044,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(<strong>foo</strong>)</em></p>
          */
-        parsed.assertEquals(paragraph("*\\(**foo**\\)*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("("),
+                    StrongEmphasis("**", Text("foo")),
+                    Text(")"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8823,9 +9061,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |**Gomphocarpus (*Gomphocarpus physocarpus*, syn.
-            |*Asclepias physocarpa*)**
-            """
+                |**Gomphocarpus (*Gomphocarpus physocarpus*, syn.
+                |*Asclepias physocarpa*)**
+                """
                     .trimMargin(),
             )
 
@@ -8835,8 +9073,16 @@ class MarkdownProcessorDocumentParsingTest {
          * <em>Asclepias physocarpa</em>)</strong></p>
          */
         parsed.assertEquals(
-            paragraph(
-                "**Gomphocarpus \\(*Gomphocarpus physocarpus*, syn. *Asclepias physocarpa*\\)**",
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("Gomphocarpus ("),
+                    Emphasis("*", Text("Gomphocarpus physocarpus")),
+                    Text(", syn."),
+                    SoftLineBreak,
+                    Emphasis("*", Text("Asclepias physocarpa")),
+                    Text(")"),
+                ),
             ),
         )
     }
@@ -8849,7 +9095,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo &quot;<em>bar</em>&quot; foo</strong></p>
          */
-        parsed.assertEquals(paragraph("**foo \"*bar*\" foo**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo \""),
+                    Emphasis("*", Text("bar")),
+                    Text("\" foo"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8860,7 +9115,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo</strong>bar</p>
          */
-        parsed.assertEquals(paragraph("**foo**bar"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis("**", Text("foo")),
+                Text("bar"),
+            ),
+        )
     }
 
     @Test
@@ -8871,7 +9131,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__foo bar __</p>
          */
-        parsed.assertEquals(paragraph("\\_\\_foo bar \\_\\_"))
+        parsed.assertEquals(paragraph("__foo bar __"))
     }
 
     @Test
@@ -8882,7 +9142,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__(__foo)</p>
          */
-        parsed.assertEquals(paragraph("\\_\\_\\(\\_\\_foo\\)"))
+        parsed.assertEquals(paragraph("__(__foo)"))
     }
 
     @Test
@@ -8893,7 +9153,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>(<strong>foo</strong>)</em></p>
          */
-        parsed.assertEquals(paragraph("_\\(__foo__\\)_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Text("("),
+                    StrongEmphasis("__", Text("foo")),
+                    Text(")"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8904,7 +9173,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__foo__bar</p>
          */
-        parsed.assertEquals(paragraph("\\_\\_foo\\_\\_bar"))
+        parsed.assertEquals(paragraph("__foo__bar"))
     }
 
     @Test
@@ -8915,7 +9184,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__пристаням__стремятся</p>
          */
-        parsed.assertEquals(paragraph("\\_\\_пристаням\\_\\_стремятся"))
+        parsed.assertEquals(paragraph("__пристаням__стремятся"))
     }
 
     @Test
@@ -8926,7 +9195,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo__bar__baz</strong></p>
          */
-        parsed.assertEquals(paragraph("__foo\\_\\_bar\\_\\_baz__"))
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", Text("foo__bar__baz"))))
     }
 
     @Test
@@ -8937,7 +9206,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>(bar)</strong>.</p>
          */
-        parsed.assertEquals(paragraph("__\\(bar\\)__."))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis("__", Text("(bar)")),
+                Text("."),
+            ),
+        )
     }
 
     @Test
@@ -8948,7 +9222,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <a href="/url">bar</a></em></p>
          */
-        parsed.assertEquals(paragraph("*foo [bar](/url)*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo "),
+                    Link(destination = "/url", title = null, Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8956,9 +9238,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |*foo
-            |bar*
-            """
+                |*foo
+                |bar*
+                """
                     .trimMargin(),
             )
 
@@ -8967,7 +9249,16 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo
          * bar</em></p>
          */
-        parsed.assertEquals(paragraph("*foo bar*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo"),
+                    SoftLineBreak,
+                    Text("bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8978,7 +9269,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <strong>bar</strong> baz</em></p>
          */
-        parsed.assertEquals(paragraph("_foo __bar__ baz_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Text("foo "),
+                    StrongEmphasis("__", Text("bar")),
+                    Text(" baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -8989,7 +9289,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <em>bar</em> baz</em></p>
          */
-        parsed.assertEquals(paragraph("_foo _bar_ baz_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Text("foo "),
+                    Emphasis("_", Text("bar")),
+                    Text(" baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9000,7 +9309,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo</em> bar</em></p>
          */
-        parsed.assertEquals(paragraph("__foo_ bar_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Emphasis("_", Text("foo")),
+                    Text(" bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9011,7 +9328,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <em>bar</em></em></p>
          */
-        parsed.assertEquals(paragraph("*foo *bar**"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo "),
+                    Emphasis("*", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9022,7 +9347,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <strong>bar</strong> baz</em></p>
          */
-        parsed.assertEquals(paragraph("*foo **bar** baz*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo "),
+                    StrongEmphasis("**", Text("bar")),
+                    Text(" baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9033,7 +9367,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo<strong>bar</strong>baz</em></p>
          */
-        parsed.assertEquals(paragraph("*foo**bar**baz*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo"),
+                    StrongEmphasis("**", Text("bar")),
+                    Text("baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9044,7 +9387,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo**bar</em></p>
          */
-        parsed.assertEquals(paragraph("*foo\\*\\*bar*"))
+        parsed.assertEquals(Paragraph(Emphasis("*", Text("foo**bar"))))
     }
 
     @Test
@@ -9055,7 +9398,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><strong>foo</strong> bar</em></p>
          */
-        parsed.assertEquals(paragraph("***foo** bar*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    StrongEmphasis("**", Text("foo")),
+                    Text(" bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9066,7 +9417,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <strong>bar</strong></em></p>
          */
-        parsed.assertEquals(paragraph("*foo **bar***"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo "),
+                    StrongEmphasis("**", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9077,7 +9436,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo<strong>bar</strong></em></p>
          */
-        parsed.assertEquals(paragraph("*foo**bar***"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo"),
+                    StrongEmphasis("**", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9088,7 +9455,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo<em><strong>bar</strong></em>baz</p>
          */
-        parsed.assertEquals(paragraph("foo***bar***baz"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo"),
+                Emphasis(
+                    "*",
+                    StrongEmphasis("**", Text("bar")),
+                ),
+                Text("baz"),
+            ),
+        )
     }
 
     @Test
@@ -9099,7 +9475,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo<strong><strong><strong>bar</strong></strong></strong>***baz</p>
          */
-        parsed.assertEquals(paragraph("foo******bar******\\*\\*\\*baz"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo"),
+                StrongEmphasis(
+                    "**",
+                    StrongEmphasis("**", StrongEmphasis("**", Text("bar"))),
+                ),
+                Text("***baz"),
+            ),
+        )
     }
 
     @Test
@@ -9110,7 +9495,21 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <strong>bar <em>baz</em> bim</strong> bop</em></p>
          */
-        parsed.assertEquals(paragraph("*foo **bar *baz* bim** bop*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo "),
+                    StrongEmphasis(
+                        "**",
+                        Text("bar "),
+                        Emphasis("*", Text("baz")),
+                        Text(" bim"),
+                    ),
+                    Text(" bop"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9121,7 +9520,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <a href="/url"><em>bar</em></a></em></p>
          */
-        parsed.assertEquals(paragraph("*foo [*bar*](/url)*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo "),
+                    Link(destination = "/url", title = null, Emphasis("*", Text("bar"))),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9132,7 +9539,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>** is not an empty emphasis</p>
          */
-        parsed.assertEquals(paragraph("\\*\\* is not an empty emphasis"))
+        parsed.assertEquals(paragraph("** is not an empty emphasis"))
     }
 
     @Test
@@ -9143,7 +9550,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>**** is not an empty strong emphasis</p>
          */
-        parsed.assertEquals(paragraph("\\*\\*\\*\\* is not an empty strong emphasis"))
+        parsed.assertEquals(paragraph("**** is not an empty strong emphasis"))
     }
 
     @Test
@@ -9154,7 +9561,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <a href="/url">bar</a></strong></p>
          */
-        parsed.assertEquals(paragraph("**foo [bar](/url)**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo "),
+                    Link(destination = "/url", title = null, Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9162,9 +9577,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |**foo
-            |bar**
-            """
+                |**foo
+                |bar**
+                """
                     .trimMargin(),
             )
 
@@ -9173,7 +9588,16 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><strong>foo
          * bar</strong></p>
          */
-        parsed.assertEquals(paragraph("**foo bar**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo"),
+                    SoftLineBreak,
+                    Text("bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9184,7 +9608,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em> baz</strong></p>
          */
-        parsed.assertEquals(paragraph("__foo _bar_ baz__"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "__",
+                    Text("foo "),
+                    Emphasis("_", Text("bar")),
+                    Text(" baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9195,7 +9628,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <strong>bar</strong> baz</strong></p>
          */
-        parsed.assertEquals(paragraph("__foo __bar__ baz__"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "__",
+                    Text("foo "),
+                    StrongEmphasis("__", Text("bar")),
+                    Text(" baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9206,7 +9648,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><strong>foo</strong> bar</strong></p>
          */
-        parsed.assertEquals(paragraph("____foo__ bar__"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "__",
+                    StrongEmphasis("__", Text("foo")),
+                    Text(" bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9217,7 +9667,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <strong>bar</strong></strong></p>
          */
-        parsed.assertEquals(paragraph("**foo **bar****"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo "),
+                    StrongEmphasis("**", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9228,7 +9686,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em> baz</strong></p>
          */
-        parsed.assertEquals(paragraph("**foo *bar* baz**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo "),
+                    Emphasis("*", Text("bar")),
+                    Text(" baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9239,7 +9706,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo<em>bar</em>baz</strong></p>
          */
-        parsed.assertEquals(paragraph("**foo*bar*baz**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo"),
+                    Emphasis("*", Text("bar")),
+                    Text("baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9250,7 +9726,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><em>foo</em> bar</strong></p>
          */
-        parsed.assertEquals(paragraph("***foo* bar**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Emphasis("*", Text("foo")),
+                    Text(" bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9261,7 +9745,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em></strong></p>
          */
-        parsed.assertEquals(paragraph("**foo *bar***"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo "),
+                    Emphasis("*", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9269,9 +9761,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |**foo *bar **baz**
-            |bim* bop**
-            """
+                |**foo *bar **baz**
+                |bim* bop**
+                """
                     .trimMargin(),
             )
 
@@ -9280,7 +9772,22 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><strong>foo <em>bar <strong>baz</strong>
          * bim</em> bop</strong></p>
          */
-        parsed.assertEquals(paragraph("**foo *bar **baz** bim* bop**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo "),
+                    Emphasis(
+                        "*",
+                        Text("bar "),
+                        StrongEmphasis("**", Text("baz")),
+                        SoftLineBreak,
+                        Text("bim"),
+                    ),
+                    Text(" bop"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9291,7 +9798,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <a href="/url"><em>bar</em></a></strong></p>
          */
-        parsed.assertEquals(paragraph("**foo [*bar*](/url)**"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    Text("foo "),
+                    Link(destination = "/url", title = null, Emphasis("*", Text("bar"))),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9302,7 +9817,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__ is not an empty emphasis</p>
          */
-        parsed.assertEquals(paragraph("\\_\\_ is not an empty emphasis"))
+        parsed.assertEquals(paragraph("__ is not an empty emphasis"))
     }
 
     @Test
@@ -9313,7 +9828,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>____ is not an empty strong emphasis</p>
          */
-        parsed.assertEquals(paragraph("\\_\\_\\_\\_ is not an empty strong emphasis"))
+        parsed.assertEquals(paragraph("____ is not an empty strong emphasis"))
     }
 
     @Test
@@ -9324,7 +9839,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo ***</p>
          */
-        parsed.assertEquals(paragraph("foo \\*\\*\\*"))
+        parsed.assertEquals(paragraph("foo ***"))
     }
 
     @Test
@@ -9335,7 +9850,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <em>*</em></p>
          */
-        parsed.assertEquals(paragraph("foo *\\**"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                Emphasis("*", Text("*")),
+            ),
+        )
     }
 
     @Test
@@ -9346,7 +9866,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <em>_</em></p>
          */
-        parsed.assertEquals(paragraph("foo *\\_*"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                Emphasis("*", Text("_")),
+            ),
+        )
     }
 
     @Test
@@ -9357,7 +9882,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo *****</p>
          */
-        parsed.assertEquals(paragraph("foo \\*\\*\\*\\*\\*"))
+        parsed.assertEquals(paragraph("foo *****"))
     }
 
     @Test
@@ -9368,7 +9893,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <strong>*</strong></p>
          */
-        parsed.assertEquals(paragraph("foo **\\***"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                StrongEmphasis("**", Text("*")),
+            ),
+        )
     }
 
     @Test
@@ -9379,7 +9909,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <strong>_</strong></p>
          */
-        parsed.assertEquals(paragraph("foo **\\_**"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                StrongEmphasis("**", Text("_")),
+            ),
+        )
     }
 
     @Test
@@ -9390,7 +9925,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<em>foo</em></p>
          */
-        parsed.assertEquals(paragraph("\\**foo*"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*"),
+                Emphasis("*", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -9401,7 +9941,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>*</p>
          */
-        parsed.assertEquals(paragraph("*foo*\\*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis("*", Text("foo")),
+                Text("*"),
+            ),
+        )
     }
 
     @Test
@@ -9412,7 +9957,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<strong>foo</strong></p>
          */
-        parsed.assertEquals(paragraph("\\***foo**"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*"),
+                StrongEmphasis("**", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -9423,7 +9973,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>***<em>foo</em></p>
          */
-        parsed.assertEquals(paragraph("\\*\\*\\**foo*"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("***"),
+                Emphasis("*", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -9434,7 +9989,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo</strong>*</p>
          */
-        parsed.assertEquals(paragraph("**foo**\\*"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis("**", Text("foo")),
+                Text("*"),
+            ),
+        )
     }
 
     @Test
@@ -9445,7 +10005,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>***</p>
          */
-        parsed.assertEquals(paragraph("*foo*\\*\\*\\*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis("*", Text("foo")),
+                Text("***"),
+            ),
+        )
     }
 
     @Test
@@ -9456,7 +10021,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo ___</p>
          */
-        parsed.assertEquals(paragraph("foo \\_\\_\\_"))
+        parsed.assertEquals(paragraph("foo ___"))
     }
 
     @Test
@@ -9467,7 +10032,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <em>_</em></p>
          */
-        parsed.assertEquals(paragraph("foo _\\__"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                Emphasis("_", Text("_")),
+            ),
+        )
     }
 
     @Test
@@ -9478,7 +10048,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <em>*</em></p>
          */
-        parsed.assertEquals(paragraph("foo _\\*_"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                Emphasis("_", Text("*")),
+            ),
+        )
     }
 
     @Test
@@ -9489,7 +10064,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo _____</p>
          */
-        parsed.assertEquals(paragraph("foo \\_\\_\\_\\_\\_"))
+        parsed.assertEquals(paragraph("foo _____"))
     }
 
     @Test
@@ -9500,7 +10075,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <strong>_</strong></p>
          */
-        parsed.assertEquals(paragraph("foo __\\___"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                StrongEmphasis("__", Text("_")),
+            ),
+        )
     }
 
     @Test
@@ -9511,7 +10091,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <strong>*</strong></p>
          */
-        parsed.assertEquals(paragraph("foo __\\*__"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                StrongEmphasis("__", Text("*")),
+            ),
+        )
     }
 
     @Test
@@ -9522,7 +10107,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_<em>foo</em></p>
          */
-        parsed.assertEquals(paragraph("\\__foo_"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("_"),
+                Emphasis("_", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -9533,7 +10123,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>_</p>
          */
-        parsed.assertEquals(paragraph("_foo_\\_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis("_", Text("foo")),
+                Text("_"),
+            ),
+        )
     }
 
     @Test
@@ -9544,7 +10139,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_<strong>foo</strong></p>
          */
-        parsed.assertEquals(paragraph("\\___foo__"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("_"),
+                StrongEmphasis("__", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -9555,7 +10155,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>___<em>foo</em></p>
          */
-        parsed.assertEquals(paragraph("\\_\\_\\__foo_"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("___"),
+                Emphasis("_", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -9566,7 +10171,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo</strong>_</p>
          */
-        parsed.assertEquals(paragraph("__foo__\\_"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis("__", Text("foo")),
+                Text("_"),
+            ),
+        )
     }
 
     @Test
@@ -9577,7 +10187,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo</em>___</p>
          */
-        parsed.assertEquals(paragraph("_foo_\\_\\_\\_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis("_", Text("foo")),
+                Text("___"),
+            ),
+        )
     }
 
     @Test
@@ -9588,7 +10203,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo</strong></p>
          */
-        parsed.assertEquals(paragraph("**foo**"))
+        parsed.assertEquals(Paragraph(StrongEmphasis("**", Text("foo"))))
     }
 
     @Test
@@ -9599,7 +10214,14 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo</em></em></p>
          */
-        parsed.assertEquals(paragraph("*_foo_*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Emphasis("_", Text("foo")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9610,18 +10232,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo</strong></p>
          */
-        parsed.assertEquals(paragraph("__foo__"))
-    }
-
-    @Test
-    fun `should parse spec sample 463 correctly {Emphasis and strong emphasis}`() {
-        val parsed = processor.processMarkdownDocument("_*foo*_")
-
-        /*
-         * Expected HTML:
-         * <p><em><em>foo</em></em></p>
-         */
-        parsed.assertEquals(paragraph("_*foo*_"))
+        parsed.assertEquals(Paragraph(StrongEmphasis("__", Text("foo"))))
     }
 
     @Test
@@ -9632,7 +10243,18 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo <em>bar</em></em></em></p>
          */
-        parsed.assertEquals(paragraph("_*foo _bar_*_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Emphasis(
+                        "*",
+                        Text("foo "),
+                        Emphasis("_", Text("bar")),
+                    ),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9643,7 +10265,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em></strong></p>
          */
-        parsed.assertEquals(paragraph("__foo _bar___"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "__",
+                    Text("foo "),
+                    Emphasis("_", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9654,7 +10284,19 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo <em>bar</em> a</em></em></p>
          */
-        parsed.assertEquals(paragraph("_*foo _bar_ a*_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Emphasis(
+                        "*",
+                        Text("foo "),
+                        Emphasis("_", Text("bar")),
+                        Text(" a"),
+                    ),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9665,7 +10307,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong>foo <em>bar</em> a</strong></p>
          */
-        parsed.assertEquals(paragraph("__foo _bar_ a__"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "__",
+                    Text("foo "),
+                    Emphasis("_", Text("bar")),
+                    Text(" a"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9676,7 +10327,37 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><em>foo <em>bar</em> a</em></em></p>
          */
-        parsed.assertEquals(paragraph("_*foo *bar* a*_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Emphasis(
+                        "*",
+                        Text("foo "),
+                        Emphasis("*", Text("bar")),
+                        Text(" a"),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `should parse spec sample 463 correctly {Emphasis and strong emphasis}`() {
+        val parsed = processor.processMarkdownDocument("_*foo*_")
+
+        /*
+         * Expected HTML:
+         * <p><em><em>foo</em></em></p>
+         */
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Emphasis("*", Text("foo")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9687,7 +10368,14 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><strong>foo</strong></strong></p>
          */
-        parsed.assertEquals(paragraph("****foo****"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    StrongEmphasis("**", Text("foo")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9698,7 +10386,14 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><strong>foo</strong></strong></p>
          */
-        parsed.assertEquals(paragraph("____foo____"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "__",
+                    StrongEmphasis("__", Text("foo")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9709,7 +10404,14 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><strong><strong><strong>foo</strong></strong></strong></p>
          */
-        parsed.assertEquals(paragraph("******foo******"))
+        parsed.assertEquals(
+            Paragraph(
+                StrongEmphasis(
+                    "**",
+                    StrongEmphasis("**", StrongEmphasis("**", Text("foo"))),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9720,7 +10422,14 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><strong>foo</strong></em></p>
          */
-        parsed.assertEquals(paragraph("***foo***"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    StrongEmphasis("**", Text("foo")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9731,7 +10440,14 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em><strong><strong>foo</strong></strong></em></p>
          */
-        parsed.assertEquals(paragraph("_____foo_____"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    StrongEmphasis("__", StrongEmphasis("__", Text("foo"))),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9742,7 +10458,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo _bar</em> baz_</p>
          */
-        parsed.assertEquals(paragraph("*foo \\_bar* baz\\_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis("*", Text("foo _bar")),
+                Text(" baz_"),
+            ),
+        )
     }
 
     @Test
@@ -9753,7 +10474,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo <strong>bar *baz bim</strong> bam</em></p>
          */
-        parsed.assertEquals(paragraph("*foo __bar \\*baz bim__ bam*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo "),
+                    StrongEmphasis("__", Text("bar *baz bim")),
+                    Text(" bam"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9764,7 +10494,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>**foo <strong>bar baz</strong></p>
          */
-        parsed.assertEquals(paragraph("\\*\\*foo **bar baz**"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("**foo "),
+                StrongEmphasis("**", Text("bar baz")),
+            ),
+        )
     }
 
     @Test
@@ -9775,7 +10510,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*foo <em>bar baz</em></p>
          */
-        parsed.assertEquals(paragraph("\\*foo *bar baz*"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*foo "),
+                Emphasis("*", Text("bar baz")),
+            ),
+        )
     }
 
     @Test
@@ -9786,7 +10526,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<a href="/url">bar*</a></p>
          */
-        parsed.assertEquals(paragraph("\\*[bar\\*](/url)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*"),
+                Link(destination = "/url", title = null, Text("bar*")),
+            ),
+        )
     }
 
     @Test
@@ -9797,7 +10542,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>_foo <a href="/url">bar_</a></p>
          */
-        parsed.assertEquals(paragraph("\\_foo [bar\\_](/url)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("_foo "),
+                Link(destination = "/url", title = null, Text("bar_")),
+            ),
+        )
     }
 
     @Test
@@ -9808,7 +10558,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<img src="foo" title="*"/></p>
          */
-        parsed.assertEquals(paragraph("\\*<img src=\"foo\" title=\"*\"/>"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*"),
+                HtmlInline("<img src=\"foo\" title=\"*\"/>"),
+            ),
+        )
     }
 
     @Test
@@ -9819,7 +10574,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>**<a href="**"></p>
          */
-        parsed.assertEquals(paragraph("\\*\\*<a href=\"**\">"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("**"),
+                HtmlInline("<a href=\"**\">"),
+            ),
+        )
     }
 
     @Test
@@ -9830,7 +10590,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__<a href="__"></p>
          */
-        parsed.assertEquals(paragraph("\\_\\_<a href=\"__\">"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("__"),
+                HtmlInline("<a href=\"__\">"),
+            ),
+        )
     }
 
     @Test
@@ -9841,7 +10606,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>a <code>*</code></em></p>
          */
-        parsed.assertEquals(paragraph("*a `*`*"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("a "),
+                    Code("*"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9852,7 +10625,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>a <code>_</code></em></p>
          */
-        parsed.assertEquals(paragraph("_a `_`_"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "_",
+                    Text("a "),
+                    Code("_"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -9863,7 +10644,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>**a<a href="https://foo.bar/?q=**">https://foo.bar/?q=**</a></p>
          */
-        parsed.assertEquals(paragraph("\\*\\*a[https://foo.bar/?q=\\*\\*](https://foo.bar/?q=**)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("**a"),
+                Link(destination = "https://foo.bar/?q=**", title = null, Text("https://foo.bar/?q=**")),
+            ),
+        )
     }
 
     @Test
@@ -9874,7 +10660,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>__a<a href="https://foo.bar/?q=__">https://foo.bar/?q=__</a></p>
          */
-        parsed.assertEquals(paragraph("\\_\\_a[https://foo.bar/?q=\\_\\_](https://foo.bar/?q=__)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("__a"),
+                Link(destination = "https://foo.bar/?q=__", title = null, Text("https://foo.bar/?q=__")),
+            ),
+        )
     }
 
     @Test
@@ -9885,7 +10676,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri" title="title">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](/uri \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = "title", Text("link"))))
     }
 
     @Test
@@ -9896,7 +10687,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](/uri)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = null, Text("link"))))
     }
 
     @Test
@@ -9907,7 +10698,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="./target.md"></a></p>
          */
-        parsed.assertEquals(paragraph("[](./target.md)"))
+        parsed.assertEquals(Paragraph(Link(destination = "./target.md", title = null)))
     }
 
     @Test
@@ -9918,7 +10709,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link]()"))
+        parsed.assertEquals(Paragraph(Link(destination = "", title = null, Text("link"))))
     }
 
     @Test
@@ -9929,7 +10720,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link]()"))
+        parsed.assertEquals(Paragraph(Link(destination = "", title = null, Text("link"))))
     }
 
     @Test
@@ -9940,7 +10731,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href=""></a></p>
          */
-        parsed.assertEquals(paragraph("[]()"))
+        parsed.assertEquals(Paragraph(Link(destination = "", title = null)))
     }
 
     @Test
@@ -9951,7 +10742,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[link](/my uri)</p>
          */
-        parsed.assertEquals(paragraph("\\[link\\]\\(/my uri\\)"))
+        parsed.assertEquals(Paragraph(Text("[link](/my uri)")))
     }
 
     @Test
@@ -9962,7 +10753,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/my%20uri">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](</my uri>)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/my uri", title = null, Text("link"))))
     }
 
     @Test
@@ -9970,9 +10761,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[link](foo
-            |bar)
-            """
+                |[link](foo
+                |bar)
+                """
                     .trimMargin(),
             )
 
@@ -9981,7 +10772,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[link](foo
          * bar)</p>
          */
-        parsed.assertEquals(paragraph("\\[link\\]\\(foo bar\\)"))
+        parsed.assertEquals(Paragraph(Text("[link](foo"), SoftLineBreak, Text("bar)")))
     }
 
     @Test
@@ -9989,9 +10780,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[link](<foo
-            |bar>)
-            """
+                |[link](<foo
+                |bar>)
+                """
                     .trimMargin(),
             )
 
@@ -10000,7 +10791,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[link](<foo
          * bar>)</p>
          */
-        parsed.assertEquals(paragraph("\\[link\\]\\(<foo\nbar>\\)"))
+        parsed.assertEquals(Paragraph(Text("[link]("), HtmlInline("<foo\nbar>"), Text(")")))
     }
 
     @Test
@@ -10011,7 +10802,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="b)c">a</a></p>
          */
-        parsed.assertEquals(paragraph("[a](b\\)c)"))
+        parsed.assertEquals(Paragraph(Link(destination = "b)c", title = null, Text("a"))))
     }
 
     @Test
@@ -10022,7 +10813,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[link](&lt;foo&gt;)</p>
          */
-        parsed.assertEquals(paragraph("\\[link\\]\\(\\<foo\\>\\)"))
+        parsed.assertEquals(paragraph("[link](<foo>)"))
     }
 
     @Test
@@ -10030,10 +10821,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[a](<b)c
-            |[a](<b)c>
-            |[a](<b>c)
-            """
+                |[a](<b)c
+                |[a](<b)c>
+                |[a](<b>c)
+                """
                     .trimMargin(),
             )
 
@@ -10044,8 +10835,14 @@ class MarkdownProcessorDocumentParsingTest {
          * [a](<b>c)</p>
          */
         parsed.assertEquals(
-            paragraph(
-                "\\[a\\]\\(\\<b\\)c \\[a\\]\\(\\<b\\)c\\> \\[a\\]\\(<b>c\\)",
+            Paragraph(
+                Text(content = "[a](<b)c"),
+                SoftLineBreak,
+                Text(content = "[a](<b)c>"),
+                SoftLineBreak,
+                Text(content = "[a]("),
+                HtmlInline(content = "<b>"),
+                Text(content = "c)"),
             ),
         )
     }
@@ -10058,7 +10855,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="(foo)">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](\\(foo\\))"))
+        parsed.assertEquals(Paragraph(Link(destination = "(foo)", title = null, Text("link"))))
     }
 
     @Test
@@ -10069,7 +10866,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="foo(and(bar))">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](foo\\(and\\(bar\\)\\))"))
+        parsed.assertEquals(Paragraph(Link(destination = "foo(and(bar))", title = null, Text("link"))))
     }
 
     @Test
@@ -10080,7 +10877,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[link](foo(and(bar))</p>
          */
-        parsed.assertEquals(paragraph("\\[link\\]\\(foo\\(and\\(bar\\)\\)"))
+        parsed.assertEquals(paragraph("[link](foo(and(bar))"))
     }
 
     @Test
@@ -10091,7 +10888,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="foo(and(bar)">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](foo\\(and\\(bar\\))"))
+        parsed.assertEquals(Paragraph(Link(destination = "foo(and(bar)", title = null, Text("link"))))
     }
 
     @Test
@@ -10102,7 +10899,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="foo(and(bar)">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](foo\\(and\\(bar\\))"))
+        parsed.assertEquals(Paragraph(Link(destination = "foo(and(bar)", title = null, Text("link"))))
     }
 
     @Test
@@ -10113,7 +10910,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="foo):">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](foo\\):)"))
+        parsed.assertEquals(Paragraph(Link(destination = "foo):", title = null, Text("link"))))
     }
 
     @Test
@@ -10121,12 +10918,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[link](#fragment)
-            |
-            |[link](https://example.com#fragment)
-            |
-            |[link](https://example.com?foo=3#frag)
-            """
+                |[link](#fragment)
+                |
+                |[link](https://example.com#fragment)
+                |
+                |[link](https://example.com?foo=3#frag)
+                """
                     .trimMargin(),
             )
 
@@ -10137,9 +10934,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="https://example.com?foo=3#frag">link</a></p>
          */
         parsed.assertEquals(
-            paragraph("[link](#fragment)"),
-            paragraph("[link](https://example.com#fragment)"),
-            paragraph("[link](https://example.com?foo=3#frag)"),
+            Paragraph(Link(destination = "#fragment", title = null, Text("link"))),
+            Paragraph(Link(destination = "https://example.com#fragment", title = null, Text("link"))),
+            Paragraph(Link(destination = "https://example.com?foo=3#frag", title = null, Text("link"))),
         )
     }
 
@@ -10151,7 +10948,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="foo%5Cbar">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](foo\\bar)"))
+        parsed.assertEquals(Paragraph(Link(destination = "foo\\bar", title = null, Text("link"))))
     }
 
     @Test
@@ -10162,7 +10959,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="foo%20b%C3%A4">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](foo%20bä)"))
+        parsed.assertEquals(Paragraph(Link(destination = "foo%20bä", title = null, Text("link"))))
     }
 
     @Test
@@ -10173,7 +10970,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="%22title%22">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](\"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "\"title\"", title = null, Text("link"))))
     }
 
     @Test
@@ -10181,10 +10978,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[link](/url "title")
-            |[link](/url 'title')
-            |[link](/url (title))
-            """
+                |[link](/url "title")
+                |[link](/url 'title')
+                |[link](/url (title))
+                """
                     .trimMargin(),
             )
 
@@ -10195,7 +10992,13 @@ class MarkdownProcessorDocumentParsingTest {
          * <a href="/url" title="title">link</a></p>
          */
         parsed.assertEquals(
-            paragraph("[link](/url \"title\") [link](/url \"title\") [link](/url \"title\")"),
+            Paragraph(
+                Link(destination = "/url", title = "title", Text("link")),
+                SoftLineBreak,
+                Link(destination = "/url", title = "title", Text("link")),
+                SoftLineBreak,
+                Link(destination = "/url", title = "title", Text("link")),
+            ),
         )
     }
 
@@ -10207,7 +11010,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title &quot;&quot;">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](/url \"title \\\"\\\"\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title \"\"", Text("link"))))
     }
 
     @Test
@@ -10218,7 +11021,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url%C2%A0%22title%22">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](</url \"title\">)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url \"title\"", title = null, Text("link"))))
     }
 
     @Test
@@ -10229,7 +11032,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[link](/url &quot;title &quot;and&quot; title&quot;)</p>
          */
-        parsed.assertEquals(paragraph("\\[link\\]\\(/url \"title \"and\" title\"\\)"))
+        parsed.assertEquals(paragraph("[link](/url \"title \"and\" title\")"))
     }
 
     @Test
@@ -10240,7 +11043,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title &quot;and&quot; title">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](/url \"title \\\"and\\\" title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title \"and\" title", Text("link"))))
     }
 
     @Test
@@ -10248,9 +11051,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[link](   /uri
-            |  "title"  )
-            """
+                |[link](   /uri
+                |  "title"  )
+                """
                     .trimMargin(),
             )
 
@@ -10258,7 +11061,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri" title="title">link</a></p>
          */
-        parsed.assertEquals(paragraph("[link](/uri \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = "title", Text("link"))))
     }
 
     @Test
@@ -10269,7 +11072,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[link] (/uri)</p>
          */
-        parsed.assertEquals(paragraph("\\[link\\] \\(/uri\\)"))
+        parsed.assertEquals(paragraph("[link] (/uri)"))
     }
 
     @Test
@@ -10280,7 +11083,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">link [foo [bar]]</a></p>
          */
-        parsed.assertEquals(paragraph("[link \\[foo \\[bar\\]\\]](/uri)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = null, Text("link [foo [bar]]"))))
     }
 
     @Test
@@ -10291,7 +11094,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[link] bar](/uri)</p>
          */
-        parsed.assertEquals(paragraph("\\[link\\] bar\\]\\(/uri\\)"))
+        parsed.assertEquals(paragraph("[link] bar](/uri)"))
     }
 
     @Test
@@ -10302,7 +11105,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[link <a href="/uri">bar</a></p>
          */
-        parsed.assertEquals(paragraph("\\[link [bar](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[link "),
+                Link(destination = "/uri", title = null, Text("bar")),
+            ),
+        )
     }
 
     @Test
@@ -10313,7 +11121,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">link [bar</a></p>
          */
-        parsed.assertEquals(paragraph("[link \\[bar](/uri)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = null, Text("link [bar"))))
     }
 
     @Test
@@ -10324,7 +11132,22 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>
          */
-        parsed.assertEquals(paragraph("[link *foo **bar** `#`*](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "/uri",
+                    title = null,
+                    Text("link "),
+                    Emphasis(
+                        "*",
+                        Text("foo "),
+                        StrongEmphasis("**", Text("bar")),
+                        Text(" "),
+                        Code("#"),
+                    ),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -10335,7 +11158,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri"><img src="moon.jpg" alt="moon" /></a></p>
          */
-        parsed.assertEquals(paragraph("[![moon](moon.jpg)](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "/uri",
+                    title = null,
+                    Image(source = "moon.jpg", alt = "moon", title = null, Text("moon")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -10346,7 +11177,13 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo <a href="/uri">bar</a>](/uri)</p>
          */
-        parsed.assertEquals(paragraph("\\[foo [bar](/uri)\\]\\(/uri\\)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo "),
+                Link(destination = "/uri", title = null, Text("bar")),
+                Text("](/uri)"),
+            ),
+        )
     }
 
     @Test
@@ -10357,10 +11194,20 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo <em>[bar <a href="/uri">baz</a>](/uri)</em>](/uri)</p>
          */
-        parsed.assertEquals(paragraph("\\[foo *\\[bar [baz](/uri)\\]\\(/uri\\)*\\]\\(/uri\\)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo "),
+                Emphasis(
+                    "*",
+                    Text("[bar "),
+                    Link(destination = "/uri", title = null, Text("baz")),
+                    Text("](/uri)"),
+                ),
+                Text("](/uri)"),
+            ),
+        )
     }
 
-    @Ignore
     @Test
     fun `should parse spec sample 520 correctly {Links}`() {
         val parsed = processor.processMarkdownDocument("![[[foo](uri1)](uri2)](uri3)")
@@ -10369,7 +11216,18 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="uri3" alt="[foo](uri2)" /></p>
          */
-        parsed.assertEquals(paragraph("![\\[\"foo\" (uri1)\\]\\(uri2\\)](uri3)"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(
+                    source = "uri3",
+                    alt = "[foo](uri2)",
+                    title = null,
+                    Text("["),
+                    Link(destination = "uri1", title = null, Text("foo")),
+                    Text("](uri2)"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -10380,7 +11238,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<a href="/uri">foo*</a></p>
          */
-        parsed.assertEquals(paragraph("\\*[foo\\*](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*"),
+                Link(destination = "/uri", title = null, Text("foo*")),
+            ),
+        )
     }
 
     @Test
@@ -10391,7 +11254,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="baz*">foo *bar</a></p>
          */
-        parsed.assertEquals(paragraph("[foo \\*bar](baz*)"))
+        parsed.assertEquals(Paragraph(Link(destination = "baz*", title = null, Text("foo *bar"))))
     }
 
     @Test
@@ -10402,7 +11265,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><em>foo [bar</em> baz]</p>
          */
-        parsed.assertEquals(paragraph("*foo \\[bar* baz\\]"))
+        parsed.assertEquals(
+            Paragraph(
+                Emphasis(
+                    "*",
+                    Text("foo [bar"),
+                ),
+                Text(" baz]"),
+            ),
+        )
     }
 
     @Test
@@ -10413,7 +11284,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo <bar attr="](baz)"></p>
          */
-        parsed.assertEquals(paragraph("\\[foo <bar attr=\"](baz)\">"))
+        parsed.assertEquals(Paragraph(Text("[foo "), HtmlInline("<bar attr=\"](baz)\">")))
     }
 
     @Test
@@ -10424,7 +11295,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo<code>](/uri)</code></p>
          */
-        parsed.assertEquals(paragraph("\\[foo`](/uri)`"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo"),
+                Code("](/uri)"),
+            ),
+        )
     }
 
     @Test
@@ -10436,8 +11312,13 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo<a href="https://example.com/?search=%5D(uri)">https://example.com/?search=](uri)</a></p>
          */
         parsed.assertEquals(
-            paragraph(
-                "\\[foo[https://example.com/?search=\\]\\(uri\\)](https://example.com/?search=]\\(uri\\))",
+            Paragraph(
+                Text("[foo"),
+                Link(
+                    destination = "https://example.com/?search=](uri)",
+                    title = null,
+                    Text("https://example.com/?search=](uri)"),
+                ),
             ),
         )
     }
@@ -10447,10 +11328,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][bar]
-            |
-            |[bar]: /url "title"
-            """
+                |[foo][bar]
+                |
+                |[bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -10458,7 +11339,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title", Text("foo"))))
     }
 
     @Test
@@ -10466,10 +11347,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[link [foo [bar]]][ref]
-            |
-            |[ref]: /uri
-            """
+                |[link [foo [bar]]][ref]
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10477,7 +11358,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">link [foo [bar]]</a></p>
          */
-        parsed.assertEquals(paragraph("[link \\[foo \\[bar\\]\\]](/uri)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = null, Text("link [foo [bar]]"))))
     }
 
     @Test
@@ -10485,10 +11366,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[link \[bar][ref]
-            |
-            |[ref]: /uri
-            """
+                |[link \[bar][ref]
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10496,7 +11377,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">link [bar</a></p>
          */
-        parsed.assertEquals(paragraph("[link \\[bar](/uri)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = null, Text("link [bar"))))
     }
 
     @Test
@@ -10504,10 +11385,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[link *foo **bar** `#`*][ref]
-            |
-            |[ref]: /uri
-            """
+                |[link *foo **bar** `#`*][ref]
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10515,7 +11396,22 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>
          */
-        parsed.assertEquals(paragraph("[link *foo **bar** `#`*](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "/uri",
+                    title = null,
+                    Text("link "),
+                    Emphasis(
+                        "*",
+                        Text("foo "),
+                        StrongEmphasis("**", Text("bar")),
+                        Text(" "),
+                        Code("#"),
+                    ),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -10523,10 +11419,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[![moon](moon.jpg)][ref]
-            |
-            |[ref]: /uri
-            """
+                |[![moon](moon.jpg)][ref]
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10534,7 +11430,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri"><img src="moon.jpg" alt="moon" /></a></p>
          */
-        parsed.assertEquals(paragraph("[![moon](moon.jpg)](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "/uri",
+                    title = null,
+                    Image(source = "moon.jpg", alt = "moon", title = null, Text("moon")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -10542,10 +11446,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo [bar](/uri)][ref]
-            |
-            |[ref]: /uri
-            """
+                |[foo [bar](/uri)][ref]
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10553,7 +11457,14 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo <a href="/uri">bar</a>]<a href="/uri">ref</a></p>
          */
-        parsed.assertEquals(paragraph("\\[foo [bar](/uri)\\][ref](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo "),
+                Link(destination = "/uri", title = null, Text("bar")),
+                Text("]"),
+                Link(destination = "/uri", title = null, Text("ref")),
+            ),
+        )
     }
 
     @Test
@@ -10561,10 +11472,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo *bar [baz][ref]*][ref]
-            |
-            |[ref]: /uri
-            """
+                |[foo *bar [baz][ref]*][ref]
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10572,7 +11483,18 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo <em>bar <a href="/uri">baz</a></em>]<a href="/uri">ref</a></p>
          */
-        parsed.assertEquals(paragraph("\\[foo *bar [baz](/uri)*\\][ref](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo "),
+                Emphasis(
+                    "*",
+                    Text("bar "),
+                    Link("/uri", null, Text("baz")),
+                ),
+                Text("]"),
+                Link(destination = "/uri", title = null, Text("ref")),
+            ),
+        )
     }
 
     @Test
@@ -10580,10 +11502,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |*[foo*][ref]
-            |
-            |[ref]: /uri
-            """
+                |*[foo*][ref]
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10591,7 +11513,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<a href="/uri">foo*</a></p>
          */
-        parsed.assertEquals(paragraph("\\*[foo\\*](/uri)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*"),
+                Link(destination = "/uri", title = null, Text("foo*")),
+            ),
+        )
     }
 
     @Test
@@ -10599,10 +11526,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo *bar][ref]*
-            |
-            |[ref]: /uri
-            """
+                |[foo *bar][ref]*
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10610,7 +11537,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">foo *bar</a>*</p>
          */
-        parsed.assertEquals(paragraph("[foo \\*bar](/uri)\\*"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(destination = "/uri", title = null, Text("foo *bar")),
+                Text("*"),
+            ),
+        )
     }
 
     @Test
@@ -10618,10 +11550,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo <bar attr="][ref]">
-            |
-            |[ref]: /uri
-            """
+                |[foo <bar attr="][ref]">
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10629,7 +11561,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo <bar attr="][ref]"></p>
          */
-        parsed.assertEquals(paragraph("\\[foo <bar attr=\"][ref]\">"))
+        parsed.assertEquals(Paragraph(Text(content = "[foo "), HtmlInline("<bar attr=\"][ref]\">")))
     }
 
     @Test
@@ -10637,10 +11569,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo`][ref]`
-            |
-            |[ref]: /uri
-            """
+                |[foo`][ref]`
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10648,7 +11580,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo<code>][ref]</code></p>
          */
-        parsed.assertEquals(paragraph("\\[foo`][ref]`"))
+        parsed.assertEquals(Paragraph(Text(content = "[foo"), Code("][ref]")))
     }
 
     @Test
@@ -10656,10 +11588,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo<https://example.com/?search=][ref]>
-            |
-            |[ref]: /uri
-            """
+                |[foo<https://example.com/?search=][ref]>
+                |
+                |[ref]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10668,8 +11600,13 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo<a href="https://example.com/?search=%5D%5Bref%5D">https://example.com/?search=][ref]</a></p>
          */
         parsed.assertEquals(
-            paragraph(
-                "\\[foo[https://example.com/?search=\\]\\[ref\\]](https://example.com/?search=][ref])",
+            Paragraph(
+                Text(content = "[foo"),
+                Link(
+                    destination = "https://example.com/?search=][ref]",
+                    title = null,
+                    Text("https://example.com/?search=][ref]"),
+                ),
             ),
         )
     }
@@ -10679,10 +11616,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][BaR]
-            |
-            |[bar]: /url "title"
-            """
+                |[foo][BaR]
+                |
+                |[bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -10690,7 +11627,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title", Text("foo"))))
     }
 
     @Test
@@ -10698,10 +11635,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[ẞ]
-            |
-            |[SS]: /url
-            """
+                |[ẞ]
+                |
+                |[SS]: /url
+                """
                     .trimMargin(),
             )
 
@@ -10709,7 +11646,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url">ẞ</a></p>
          */
-        parsed.assertEquals(paragraph("[ẞ](/url)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = null, Text("ẞ"))))
     }
 
     @Test
@@ -10717,11 +11654,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[Foo
-            |  bar]: /url
-            |
-            |[Baz][Foo bar]
-            """
+                |[Foo
+                |  bar]: /url
+                |
+                |[Baz][Foo bar]
+                """
                     .trimMargin(),
             )
 
@@ -10729,7 +11666,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url">Baz</a></p>
          */
-        parsed.assertEquals(paragraph("[Baz](/url)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = null, Text("Baz"))))
     }
 
     @Test
@@ -10737,10 +11674,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo] [bar]
-            |
-            |[bar]: /url "title"
-            """
+                |[foo] [bar]
+                |
+                |[bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -10748,7 +11685,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo] <a href="/url" title="title">bar</a></p>
          */
-        parsed.assertEquals(paragraph("\\[foo\\] [bar](/url \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo] "),
+                Link(destination = "/url", title = "title", Text("bar")),
+            ),
+        )
     }
 
     @Test
@@ -10756,11 +11698,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]
-            |[bar]
-            |
-            |[bar]: /url "title"
-            """
+                |[foo]
+                |[bar]
+                |
+                |[bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -10769,7 +11711,13 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[foo]
          * <a href="/url" title="title">bar</a></p>
          */
-        parsed.assertEquals(paragraph("\\[foo\\] [bar](/url \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo]"),
+                SoftLineBreak,
+                Link(destination = "/url", title = "title", Text("bar")),
+            ),
+        )
     }
 
     @Test
@@ -10777,12 +11725,12 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]: /url1
-            |
-            |[foo]: /url2
-            |
-            |[bar][foo]
-            """
+                |[foo]: /url1
+                |
+                |[foo]: /url2
+                |
+                |[bar][foo]
+                """
                     .trimMargin(),
             )
 
@@ -10790,7 +11738,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url1">bar</a></p>
          */
-        parsed.assertEquals(paragraph("[bar](/url1)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url1", title = null, Text("bar"))))
     }
 
     @Test
@@ -10798,10 +11746,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[bar][foo\!]
-            |
-            |[foo!]: /url
-            """
+                |[bar][foo\!]
+                |
+                |[foo!]: /url
+                """
                     .trimMargin(),
             )
 
@@ -10809,7 +11757,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[bar][foo!]</p>
          */
-        parsed.assertEquals(paragraph("\\[bar\\]\\[foo\\!\\]"))
+        parsed.assertEquals(paragraph("[bar][foo!]"))
     }
 
     @Test
@@ -10817,10 +11765,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][ref[]
-            |
-            |[ref[]: /uri
-            """
+                |[foo][ref[]
+                |
+                |[ref[]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10830,8 +11778,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[ref[]: /uri</p>
          */
         parsed.assertEquals(
-            paragraph("\\[foo\\]\\[ref\\[\\]"),
-            paragraph("\\[ref\\[\\]: /uri"),
+            paragraph("[foo][ref[]"),
+            paragraph("[ref[]: /uri"),
         )
     }
 
@@ -10840,10 +11788,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][ref[bar]]
-            |
-            |[ref[bar]]: /uri
-            """
+                |[foo][ref[bar]]
+                |
+                |[ref[bar]]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10853,8 +11801,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[ref[bar]]: /uri</p>
          */
         parsed.assertEquals(
-            paragraph("\\[foo\\]\\[ref\\[bar\\]\\]"),
-            paragraph("\\[ref\\[bar\\]\\]: /uri"),
+            paragraph("[foo][ref[bar]]"),
+            paragraph("[ref[bar]]: /uri"),
         )
     }
 
@@ -10863,10 +11811,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[[[foo]]]
-            |
-            |[[[foo]]]: /url
-            """
+                |[[[foo]]]
+                |
+                |[[[foo]]]: /url
+                """
                     .trimMargin(),
             )
 
@@ -10876,8 +11824,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[[[foo]]]: /url</p>
          */
         parsed.assertEquals(
-            paragraph("\\[\\[\\[foo\\]\\]\\]"),
-            paragraph("\\[\\[\\[foo\\]\\]\\]: /url"),
+            paragraph("[[[foo]]]"),
+            paragraph("[[[foo]]]: /url"),
         )
     }
 
@@ -10886,10 +11834,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][ref\[]
-            |
-            |[ref\[]: /uri
-            """
+                |[foo][ref\[]
+                |
+                |[ref\[]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10897,7 +11845,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/uri)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = null, Text("foo"))))
     }
 
     @Test
@@ -10905,10 +11853,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[bar\\]: /uri
-            |
-            |[bar\\]
-            """
+                |[bar\\]: /uri
+                |
+                |[bar\\]
+                """
                     .trimMargin(),
             )
 
@@ -10916,7 +11864,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/uri">bar\</a></p>
          */
-        parsed.assertEquals(paragraph("[bar\\\\](/uri)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/uri", title = null, Text("bar\\"))))
     }
 
     @Test
@@ -10924,10 +11872,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[]
-            |
-            |[]: /uri
-            """
+                |[]
+                |
+                |[]: /uri
+                """
                     .trimMargin(),
             )
 
@@ -10937,8 +11885,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[]: /uri</p>
          */
         parsed.assertEquals(
-            paragraph("\\[\\]"),
-            paragraph("\\[\\]: /uri"),
+            paragraph("[]"),
+            paragraph("[]: /uri"),
         )
     }
 
@@ -10964,8 +11912,8 @@ class MarkdownProcessorDocumentParsingTest {
          * ]: /uri</p>
          */
         parsed.assertEquals(
-            paragraph("\\[ \\]"),
-            paragraph("\\[ \\]: /uri"),
+            Paragraph(Text("["), SoftLineBreak, Text("]")),
+            Paragraph(Text("["), SoftLineBreak, Text("]: /uri")),
         )
     }
 
@@ -10974,10 +11922,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][]
-            |
-            |[foo]: /url "title"
-            """
+                |[foo][]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -10985,7 +11933,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title", Text("foo"))))
     }
 
     @Test
@@ -10993,10 +11941,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[*foo* bar][]
-            |
-            |[*foo* bar]: /url "title"
-            """
+                |[*foo* bar][]
+                |
+                |[*foo* bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11004,7 +11952,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title"><em>foo</em> bar</a></p>
          */
-        parsed.assertEquals(paragraph("[*foo* bar](/url \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "/url",
+                    title = "title",
+                    Emphasis("*", Text("foo")),
+                    Text(" bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11012,10 +11969,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[Foo][]
-            |
-            |[foo]: /url "title"
-            """
+                |[Foo][]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11023,7 +11980,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title">Foo</a></p>
          */
-        parsed.assertEquals(paragraph("[Foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title", Text("Foo"))))
     }
 
     @Test
@@ -11031,11 +11988,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo] 
-            |[]
-            |
-            |[foo]: /url "title"
-            """
+                |[foo] 
+                |[]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11044,7 +12001,14 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="/url" title="title">foo</a>
          * []</p>
          */
-        parsed.assertEquals(paragraph("[foo](/url \"title\") \\[\\]"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(destination = "/url", title = "title", Text("foo")),
+                Text(""), // This looks wrong but apparently is correct
+                SoftLineBreak,
+                Text("[]"),
+            ),
+        )
     }
 
     @Test
@@ -11052,10 +12016,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]
-            |
-            |[foo]: /url "title"
-            """
+                |[foo]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11063,7 +12027,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title", Text("foo"))))
     }
 
     @Test
@@ -11071,10 +12035,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[*foo* bar]
-            |
-            |[*foo* bar]: /url "title"
-            """
+                |[*foo* bar]
+                |
+                |[*foo* bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11082,7 +12046,16 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title"><em>foo</em> bar</a></p>
          */
-        parsed.assertEquals(paragraph("[*foo* bar](/url \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "/url",
+                    title = "title",
+                    Emphasis("*", Text("foo")),
+                    Text(" bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11090,10 +12063,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[[*foo* bar]]
-            |
-            |[*foo* bar]: /url "title"
-            """
+                |[[*foo* bar]]
+                |
+                |[*foo* bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11101,7 +12074,18 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[<a href="/url" title="title"><em>foo</em> bar</a>]</p>
          */
-        parsed.assertEquals(paragraph("\\[[*foo* bar](/url \"title\")\\]"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("["),
+                Link(
+                    destination = "/url",
+                    title = "title",
+                    Emphasis("*", Text("foo")),
+                    Text(" bar"),
+                ),
+                Text("]"),
+            ),
+        )
     }
 
     @Test
@@ -11109,10 +12093,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[[bar [foo]
-            |
-            |[foo]: /url
-            """
+                |[[bar [foo]
+                |
+                |[foo]: /url
+                """
                     .trimMargin(),
             )
 
@@ -11120,7 +12104,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[[bar <a href="/url">foo</a></p>
          */
-        parsed.assertEquals(paragraph("\\[\\[bar [foo](/url)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[[bar "),
+                Link(destination = "/url", title = null, Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -11128,10 +12117,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[Foo]
-            |
-            |[foo]: /url "title"
-            """
+                |[Foo]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11139,7 +12128,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url" title="title">Foo</a></p>
          */
-        parsed.assertEquals(paragraph("[Foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url", title = "title", Text("Foo"))))
     }
 
     @Test
@@ -11147,10 +12136,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo] bar
-            |
-            |[foo]: /url
-            """
+                |[foo] bar
+                |
+                |[foo]: /url
+                """
                     .trimMargin(),
             )
 
@@ -11158,7 +12147,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url">foo</a> bar</p>
          */
-        parsed.assertEquals(paragraph("[foo](/url) bar"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(destination = "/url", title = null, Text("foo")),
+                Text(" bar"),
+            ),
+        )
     }
 
     @Test
@@ -11166,10 +12160,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |\[foo]
-            |
-            |[foo]: /url "title"
-            """
+                |\[foo]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11177,7 +12171,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo]</p>
          */
-        parsed.assertEquals(paragraph("\\[foo\\]"))
+        parsed.assertEquals(paragraph("[foo]"))
     }
 
     @Test
@@ -11185,10 +12179,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo*]: /url
-            |
-            |*[foo*]
-            """
+                |[foo*]: /url
+                |
+                |*[foo*]
+                """
                     .trimMargin(),
             )
 
@@ -11196,7 +12190,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>*<a href="/url">foo*</a></p>
          */
-        parsed.assertEquals(paragraph("\\*[foo\\*](/url)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("*"),
+                Link(destination = "/url", title = null, Text("foo*")),
+            ),
+        )
     }
 
     @Test
@@ -11204,11 +12203,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][bar]
-            |
-            |[foo]: /url1
-            |[bar]: /url2
-            """
+                |[foo][bar]
+                |
+                |[foo]: /url1
+                |[bar]: /url2
+                """
                     .trimMargin(),
             )
 
@@ -11216,7 +12215,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url2">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url2)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url2", title = null, Text("foo"))))
     }
 
     @Test
@@ -11224,10 +12223,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][]
-            |
-            |[foo]: /url1
-            """
+                |[foo][]
+                |
+                |[foo]: /url1
+                """
                     .trimMargin(),
             )
 
@@ -11235,7 +12234,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url1">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url1)"))
+        parsed.assertEquals(Paragraph(Link(destination = "/url1", title = null, Text("foo"))))
     }
 
     @Test
@@ -11243,10 +12242,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo]()
-            |
-            |[foo]: /url1
-            """
+                |[foo]()
+                |
+                |[foo]: /url1
+                """
                     .trimMargin(),
             )
 
@@ -11254,7 +12253,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="">foo</a></p>
          */
-        parsed.assertEquals(paragraph("[foo]()"))
+        parsed.assertEquals(Paragraph(Link(destination = "", title = null, Text("foo"))))
     }
 
     @Test
@@ -11262,10 +12261,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo](not a link)
-            |
-            |[foo]: /url1
-            """
+                |[foo](not a link)
+                |
+                |[foo]: /url1
+                """
                     .trimMargin(),
             )
 
@@ -11273,7 +12272,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url1">foo</a>(not a link)</p>
          */
-        parsed.assertEquals(paragraph("[foo](/url1)\\(not a link\\)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(destination = "/url1", title = null, Text("foo")),
+                Text("(not a link)"),
+            ),
+        )
     }
 
     @Test
@@ -11281,10 +12285,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][bar][baz]
-            |
-            |[baz]: /url
-            """
+                |[foo][bar][baz]
+                |
+                |[baz]: /url
+                """
                     .trimMargin(),
             )
 
@@ -11292,7 +12296,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo]<a href="/url">bar</a></p>
          */
-        parsed.assertEquals(paragraph("\\[foo\\][bar](/url)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo]"),
+                Link(destination = "/url", title = null, Text("bar")),
+            ),
+        )
     }
 
     @Test
@@ -11300,11 +12309,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][bar][baz]
-            |
-            |[baz]: /url1
-            |[bar]: /url2
-            """
+                |[foo][bar][baz]
+                |
+                |[baz]: /url1
+                |[bar]: /url2
+                """
                     .trimMargin(),
             )
 
@@ -11312,7 +12321,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="/url2">foo</a><a href="/url1">baz</a></p>
          */
-        parsed.assertEquals(paragraph("[foo](/url2)[baz](/url1)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(destination = "/url2", title = null, Text("foo")),
+                Link(destination = "/url1", title = null, Text("baz")),
+            ),
+        )
     }
 
     @Test
@@ -11320,11 +12334,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |[foo][bar][baz]
-            |
-            |[baz]: /url1
-            |[foo]: /url2
-            """
+                |[foo][bar][baz]
+                |
+                |[baz]: /url1
+                |[foo]: /url2
+                """
                     .trimMargin(),
             )
 
@@ -11332,7 +12346,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>[foo]<a href="/url1">bar</a></p>
          */
-        parsed.assertEquals(paragraph("\\[foo\\][bar](/url1)"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("[foo]"),
+                Link(destination = "/url1", title = null, Text("bar")),
+            ),
+        )
     }
 
     @Test
@@ -11343,7 +12362,11 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="foo" title="title" /></p>
          */
-        parsed.assertEquals(paragraph("![foo](/url \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(source = "/url", alt = "foo", title = "title", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -11351,10 +12374,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![foo *bar*]
-            |
-            |[foo *bar*]: train.jpg "train & tracks"
-            """
+                |![foo *bar*]
+                |
+                |[foo *bar*]: train.jpg "train & tracks"
+                """
                     .trimMargin(),
             )
 
@@ -11362,7 +12385,17 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="train.jpg" alt="foo bar" title="train &amp; tracks" /></p>
          */
-        parsed.assertEquals(paragraph("![foo *bar*](train.jpg \"train & tracks\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(
+                    source = "train.jpg",
+                    alt = "foo bar",
+                    title = "train & tracks",
+                    Text("foo "),
+                    Emphasis("*", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11373,7 +12406,17 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url2" alt="foo bar" /></p>
          */
-        parsed.assertEquals(paragraph("![foo ![bar](/url)](/url2)"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(
+                    source = "/url2",
+                    alt = "foo bar",
+                    title = null,
+                    Text("foo "),
+                    Image(source = "/url", alt = "bar", title = null, Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11384,7 +12427,17 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url2" alt="foo bar" /></p>
          */
-        parsed.assertEquals(paragraph("![foo bar](/url2)"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(
+                    source = "/url2",
+                    alt = "foo bar",
+                    title = null,
+                    Text("foo "),
+                    Link(destination = "/url", title = null, Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11392,10 +12445,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![foo *bar*][]
-            |
-            |[foo *bar*]: train.jpg "train & tracks"
-            """
+                |![foo *bar*][]
+                |
+                |[foo *bar*]: train.jpg "train & tracks"
+                """
                     .trimMargin(),
             )
 
@@ -11403,7 +12456,17 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="train.jpg" alt="foo bar" title="train &amp; tracks" /></p>
          */
-        parsed.assertEquals(paragraph("![foo *bar*](train.jpg \"train & tracks\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(
+                    source = "train.jpg",
+                    alt = "foo bar",
+                    title = "train & tracks",
+                    Text("foo "),
+                    Emphasis("*", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11411,10 +12474,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![foo *bar*][foobar]
-            |
-            |[FOOBAR]: train.jpg "train & tracks"
-            """
+                |![foo *bar*][foobar]
+                |
+                |[FOOBAR]: train.jpg "train & tracks"
+                """
                     .trimMargin(),
             )
 
@@ -11422,7 +12485,17 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="train.jpg" alt="foo bar" title="train &amp; tracks" /></p>
          */
-        parsed.assertEquals(paragraph("![foo *bar*](train.jpg \"train & tracks\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(
+                    source = "train.jpg",
+                    alt = "foo bar",
+                    title = "train & tracks",
+                    Text("foo "),
+                    Emphasis("*", Text("bar")),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11433,7 +12506,11 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="train.jpg" alt="foo" /></p>
          */
-        parsed.assertEquals(paragraph("![foo](train.jpg)"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(source = "train.jpg", alt = "foo", title = null, Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -11444,7 +12521,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>My <img src="/path/to/train.jpg" alt="foo bar" title="title" /></p>
          */
-        parsed.assertEquals(paragraph("My ![foo bar](/path/to/train.jpg \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("My "),
+                Image(source = "/path/to/train.jpg", alt = "foo bar", title = "title", Text("foo bar")),
+            ),
+        )
     }
 
     @Test
@@ -11455,7 +12537,11 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="url" alt="foo" /></p>
          */
-        parsed.assertEquals(paragraph("![foo](url)"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(source = "url", alt = "foo", title = null, Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -11466,7 +12552,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="" /></p>
          */
-        parsed.assertEquals(paragraph("![](/url)"))
+        parsed.assertEquals(Paragraph(Image(source = "/url", alt = "", title = null)))
     }
 
     @Test
@@ -11474,10 +12560,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![foo][bar]
-            |
-            |[bar]: /url
-            """
+                |![foo][bar]
+                |
+                |[bar]: /url
+                """
                     .trimMargin(),
             )
 
@@ -11485,7 +12571,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="foo" /></p>
          */
-        parsed.assertEquals(paragraph("![foo](/url)"))
+        parsed.assertEquals(Paragraph(Image(source = "/url", alt = "foo", title = null, Text("foo"))))
     }
 
     @Test
@@ -11493,10 +12579,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![foo][bar]
-            |
-            |[BAR]: /url
-            """
+                |![foo][bar]
+                |
+                |[BAR]: /url
+                """
                     .trimMargin(),
             )
 
@@ -11504,7 +12590,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="foo" /></p>
          */
-        parsed.assertEquals(paragraph("![foo](/url)"))
+        parsed.assertEquals(Paragraph(Image(source = "/url", alt = "foo", title = null, Text("foo"))))
     }
 
     @Test
@@ -11512,10 +12598,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![foo][]
-            |
-            |[foo]: /url "title"
-            """
+                |![foo][]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11523,7 +12609,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="foo" title="title" /></p>
          */
-        parsed.assertEquals(paragraph("![foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Image(source = "/url", alt = "foo", title = "title", Text("foo"))))
     }
 
     @Test
@@ -11531,10 +12617,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![*foo* bar][]
-            |
-            |[*foo* bar]: /url "title"
-            """
+                |![*foo* bar][]
+                |
+                |[*foo* bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11542,7 +12628,17 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="foo bar" title="title" /></p>
          */
-        parsed.assertEquals(paragraph("![*foo* bar](/url \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(
+                    source = "/url",
+                    alt = "foo bar",
+                    title = "title",
+                    Emphasis("*", Text("foo")),
+                    Text(" bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11550,10 +12646,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![Foo][]
-            |
-            |[foo]: /url "title"
-            """
+                |![Foo][]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11561,7 +12657,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="Foo" title="title" /></p>
          */
-        parsed.assertEquals(paragraph("![Foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Image(source = "/url", alt = "Foo", title = "title", Text("Foo"))))
     }
 
     @Test
@@ -11569,11 +12665,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![foo] 
-            |[]
-            |
-            |[foo]: /url "title"
-            """
+                |![foo] 
+                |[]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11582,7 +12678,14 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><img src="/url" alt="foo" title="title" />
          * []</p>
          */
-        parsed.assertEquals(paragraph("![foo](/url \"title\") \\[\\]"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(source = "/url", alt = "foo", title = "title", Text("foo")),
+                Text(""), // This looks wrong but it's correct
+                SoftLineBreak,
+                Text("[]"),
+            ),
+        )
     }
 
     @Test
@@ -11590,10 +12693,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![foo]
-            |
-            |[foo]: /url "title"
-            """
+                |![foo]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11601,7 +12704,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="foo" title="title" /></p>
          */
-        parsed.assertEquals(paragraph("![foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Image(source = "/url", alt = "foo", title = "title", Text("foo"))))
     }
 
     @Test
@@ -11609,10 +12712,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![*foo* bar]
-            |
-            |[*foo* bar]: /url "title"
-            """
+                |![*foo* bar]
+                |
+                |[*foo* bar]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11620,7 +12723,17 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="foo bar" title="title" /></p>
          */
-        parsed.assertEquals(paragraph("![*foo* bar](/url \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Image(
+                    source = "/url",
+                    alt = "foo bar",
+                    title = "title",
+                    Emphasis("*", Text("foo")),
+                    Text(" bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11628,10 +12741,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![[foo]]
-            |
-            |[[foo]]: /url "title"
-            """
+                |![[foo]]
+                |
+                |[[foo]]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11641,8 +12754,8 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>[[foo]]: /url &quot;title&quot;</p>
          */
         parsed.assertEquals(
-            paragraph("\\!\\[\\[foo\\]\\]"),
-            paragraph("\\[\\[foo\\]\\]: /url \"title\""),
+            paragraph("![[foo]]"),
+            paragraph("[[foo]]: /url \"title\""),
         )
     }
 
@@ -11651,10 +12764,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |![Foo]
-            |
-            |[foo]: /url "title"
-            """
+                |![Foo]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11662,7 +12775,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><img src="/url" alt="Foo" title="title" /></p>
          */
-        parsed.assertEquals(paragraph("![Foo](/url \"title\")"))
+        parsed.assertEquals(Paragraph(Image(source = "/url", alt = "Foo", title = "title", Text("Foo"))))
     }
 
     @Test
@@ -11670,10 +12783,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |!\[foo]
-            |
-            |[foo]: /url "title"
-            """
+                |!\[foo]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11681,7 +12794,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>![foo]</p>
          */
-        parsed.assertEquals(paragraph("\\!\\[foo\\]"))
+        parsed.assertEquals(paragraph("![foo]"))
     }
 
     @Test
@@ -11689,10 +12802,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |\![foo]
-            |
-            |[foo]: /url "title"
-            """
+                |\![foo]
+                |
+                |[foo]: /url "title"
+                """
                     .trimMargin(),
             )
 
@@ -11700,7 +12813,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>!<a href="/url" title="title">foo</a></p>
          */
-        parsed.assertEquals(paragraph("\\![foo](/url \"title\")"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("!"),
+                Link(destination = "/url", title = "title", Text("foo")),
+            ),
+        )
     }
 
     @Test
@@ -11711,7 +12829,11 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="http://foo.bar.baz">http://foo.bar.baz</a></p>
          */
-        parsed.assertEquals(paragraph("[http://foo.bar.baz](http://foo.bar.baz)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(destination = "http://foo.bar.baz", title = null, Text("http://foo.bar.baz")),
+            ),
+        )
     }
 
     @Test
@@ -11723,8 +12845,12 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="https://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean">https://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean</a></p>
          */
         parsed.assertEquals(
-            paragraph(
-                "[https://foo.bar.baz/test?q=hello&id=22&boolean](https://foo.bar.baz/test?q=hello&id=22&boolean)",
+            Paragraph(
+                Link(
+                    destination = "https://foo.bar.baz/test?q=hello&id=22&boolean",
+                    title = null,
+                    Text("https://foo.bar.baz/test?q=hello&id=22&boolean"),
+                ),
             ),
         )
     }
@@ -11737,7 +12863,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="irc://foo.bar:2233/baz">irc://foo.bar:2233/baz</a></p>
          */
-        parsed.assertEquals(paragraph("[irc://foo.bar:2233/baz](irc://foo.bar:2233/baz)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "irc://foo.bar:2233/baz",
+                    title = null,
+                    Text("irc://foo.bar:2233/baz"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11748,7 +12882,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="MAILTO:FOO@BAR.BAZ">MAILTO:FOO@BAR.BAZ</a></p>
          */
-        parsed.assertEquals(paragraph("[MAILTO:FOO@BAR.BAZ](MAILTO:FOO@BAR.BAZ)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "MAILTO:FOO@BAR.BAZ",
+                    title = null,
+                    Text("MAILTO:FOO@BAR.BAZ"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11759,7 +12901,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="a+b+c:d">a+b+c:d</a></p>
          */
-        parsed.assertEquals(paragraph("[a+b+c:d](a+b+c:d)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "a+b+c:d",
+                    title = null,
+                    Text("a+b+c:d"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11770,7 +12920,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="made-up-scheme://foo,bar">made-up-scheme://foo,bar</a></p>
          */
-        parsed.assertEquals(paragraph("[made-up-scheme://foo,bar](made-up-scheme://foo,bar)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "made-up-scheme://foo,bar",
+                    title = null,
+                    Text("made-up-scheme://foo,bar"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11781,7 +12939,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="https://../">https://../</a></p>
          */
-        parsed.assertEquals(paragraph("[https://../](https://../)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "https://../",
+                    title = null,
+                    Text("https://../"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11792,7 +12958,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="localhost:5001/foo">localhost:5001/foo</a></p>
          */
-        parsed.assertEquals(paragraph("[localhost:5001/foo](localhost:5001/foo)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "localhost:5001/foo",
+                    title = null,
+                    Text("localhost:5001/foo"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11803,10 +12977,9 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;https://foo.bar/baz bim&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<https://foo.bar/baz bim\\>"))
+        parsed.assertEquals(paragraph("<https://foo.bar/baz bim>"))
     }
 
-    @Ignore
     @Test
     fun `should parse spec sample 603 correctly {Autolinks}`() {
         val parsed = processor.processMarkdownDocument("<https://example.com/\\[\\>")
@@ -11815,7 +12988,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="https://example.com/%5C%5B%5C">https://example.com/\[\</a></p>
          */
-        parsed.assertEquals(paragraph("[https://example.com/\\[\\\\](https://example.com/\\[\\)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "https://example.com/\\[\\",
+                    title = null,
+                    Text("https://example.com/\\[\\"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11826,7 +13007,15 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a href="mailto:foo@bar.example.com">foo@bar.example.com</a></p>
          */
-        parsed.assertEquals(paragraph("[foo@bar.example.com](mailto:foo@bar.example.com)"))
+        parsed.assertEquals(
+            Paragraph(
+                Link(
+                    destination = "mailto:foo@bar.example.com",
+                    title = null,
+                    Text("foo@bar.example.com"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -11838,8 +13027,12 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="mailto:foo+special@Bar.baz-bar0.com">foo+special@Bar.baz-bar0.com</a></p>
          */
         parsed.assertEquals(
-            paragraph(
-                "[foo+special@Bar.baz-bar0.com](mailto:foo+special@Bar.baz-bar0.com)",
+            Paragraph(
+                Link(
+                    destination = "mailto:foo+special@Bar.baz-bar0.com",
+                    title = null,
+                    Text("foo+special@Bar.baz-bar0.com"),
+                ),
             ),
         )
     }
@@ -11852,7 +13045,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;foo+@bar.example.com&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<foo+@bar.example.com\\>"))
+        parsed.assertEquals(paragraph("<foo+@bar.example.com>"))
     }
 
     @Test
@@ -11863,7 +13056,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<\\>"))
+        parsed.assertEquals(paragraph("<>"))
     }
 
     @Test
@@ -11874,7 +13067,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt; https://foo.bar &gt;</p>
          */
-        parsed.assertEquals(paragraph("\\< https://foo.bar \\>"))
+        parsed.assertEquals(paragraph("< https://foo.bar >"))
     }
 
     @Test
@@ -11885,7 +13078,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;m:abc&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<m:abc\\>"))
+        parsed.assertEquals(paragraph("<m:abc>"))
     }
 
     @Test
@@ -11896,7 +13089,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;foo.bar.baz&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<foo.bar.baz\\>"))
+        parsed.assertEquals(paragraph("<foo.bar.baz>"))
     }
 
     @Test
@@ -11929,7 +13122,13 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a><bab><c2c></p>
          */
-        parsed.assertEquals(paragraph("<a><bab><c2c>"))
+        parsed.assertEquals(
+            Paragraph(
+                HtmlInline("<a>"),
+                HtmlInline("<bab>"),
+                HtmlInline("<c2c>"),
+            ),
+        )
     }
 
     @Test
@@ -11940,7 +13139,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><a/><b2/></p>
          */
-        parsed.assertEquals(paragraph("<a/><b2/>"))
+        parsed.assertEquals(
+            Paragraph(
+                HtmlInline("<a/>"),
+                HtmlInline("<b2/>"),
+            ),
+        )
     }
 
     @Test
@@ -11948,9 +13152,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<a  /><b2
-            |data="foo" >
-            """
+                |<a  /><b2
+                |data="foo" >
+                """
                     .trimMargin(),
             )
 
@@ -11959,7 +13163,12 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a  /><b2
          * data="foo" ></p>
          */
-        parsed.assertEquals(paragraph("<a  /><b2\ndata=\"foo\" >"))
+        parsed.assertEquals(
+            Paragraph(
+                HtmlInline("<a  />"),
+                HtmlInline("<b2\ndata=\"foo\" >"),
+            ),
+        )
     }
 
     @Test
@@ -11967,9 +13176,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<a foo="bar" bam = 'baz <em>"</em>'
-            |_boolean zoop:33=zoop:33 />
-            """
+                |<a foo="bar" bam = 'baz <em>"</em>'
+                |_boolean zoop:33=zoop:33 />
+                """
                     .trimMargin(),
             )
 
@@ -11979,8 +13188,8 @@ class MarkdownProcessorDocumentParsingTest {
          * _boolean zoop:33=zoop:33 /></p>
          */
         parsed.assertEquals(
-            paragraph(
-                "<a foo=\"bar\" bam = 'baz <em>\"</em>'\n_boolean zoop:33=zoop:33 />",
+            Paragraph(
+                HtmlInline("<a foo=\"bar\" bam = 'baz <em>\"</em>'\n_boolean zoop:33=zoop:33 />"),
             ),
         )
     }
@@ -11993,7 +13202,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>Foo <responsive-image src="foo.jpg" /></p>
          */
-        parsed.assertEquals(paragraph("Foo <responsive-image src=\"foo.jpg\" />"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("Foo "),
+                HtmlInline("<responsive-image src=\"foo.jpg\" />"),
+            ),
+        )
     }
 
     @Test
@@ -12004,7 +13218,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;33&gt; &lt;__&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<33\\> \\<\\_\\_\\>"))
+        parsed.assertEquals(paragraph("<33> <__>"))
     }
 
     @Test
@@ -12015,7 +13229,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;a h*#ref=&quot;hi&quot;&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<a h\\*#ref=\"hi\"\\>"))
+        parsed.assertEquals(paragraph("<a h*#ref=\"hi\">"))
     }
 
     @Test
@@ -12026,7 +13240,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;a href=&quot;hi'&gt; &lt;a href=hi'&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<a href=\"hi'\\> \\<a href=hi'\\>"))
+        parsed.assertEquals(paragraph("<a href=\"hi'> <a href=hi'>"))
     }
 
     @Test
@@ -12034,11 +13248,11 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |< a><
-            |foo><bar/ >
-            |<foo bar=baz
-            |bim!bop />
-            """
+                |< a><
+                |foo><bar/ >
+                |<foo bar=baz
+                |bim!bop />
+                """
                     .trimMargin(),
             )
 
@@ -12050,8 +13264,14 @@ class MarkdownProcessorDocumentParsingTest {
          * bim!bop /&gt;</p>
          */
         parsed.assertEquals(
-            paragraph(
-                "\\< a\\>\\< foo\\>\\<bar/ \\> \\<foo bar=baz bim\\!bop /\\>",
+            Paragraph(
+                Text("< a><"),
+                SoftLineBreak,
+                Text("foo><bar/ >"),
+                SoftLineBreak,
+                Text("<foo bar=baz"),
+                SoftLineBreak,
+                Text("bim!bop />"),
             ),
         )
     }
@@ -12064,7 +13284,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;a href='bar'title=title&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<a href='bar'title=title\\>"))
+        parsed.assertEquals(paragraph("<a href='bar'title=title>"))
     }
 
     @Test
@@ -12075,7 +13295,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p></a></foo ></p>
          */
-        parsed.assertEquals(paragraph("</a></foo >"))
+        parsed.assertEquals(
+            Paragraph(
+                HtmlInline("</a>"),
+                HtmlInline("</foo >"),
+            ),
+        )
     }
 
     @Test
@@ -12086,7 +13311,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;/a href=&quot;foo&quot;&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\</a href=\"foo\"\\>"))
+        parsed.assertEquals(paragraph("</a href=\"foo\">"))
     }
 
     @Test
@@ -12094,9 +13319,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo <!-- this is a --
-            |comment - with hyphens -->
-            """
+                |foo <!-- this is a --
+                |comment - with hyphens -->
+                """
                     .trimMargin(),
             )
 
@@ -12105,7 +13330,12 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo <!-- this is a --
          * comment - with hyphens --></p>
          */
-        parsed.assertEquals(paragraph("foo <!-- this is a --\ncomment - with hyphens -->"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                HtmlInline("<!-- this is a --\ncomment - with hyphens -->"),
+            ),
+        )
     }
 
     @Test
@@ -12113,10 +13343,10 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo <!--> foo -->
-            |
-            |foo <!---> foo -->
-            """
+                |foo <!--> foo -->
+                |
+                |foo <!---> foo -->
+                """
                     .trimMargin(),
             )
 
@@ -12126,8 +13356,16 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo <!---> foo --&gt;</p>
          */
         parsed.assertEquals(
-            paragraph("foo <!--> foo --\\>"),
-            paragraph("foo <!---> foo --\\>"),
+            Paragraph(
+                Text("foo "),
+                HtmlInline("<!-->"),
+                Text(" foo -->"),
+            ),
+            Paragraph(
+                Text("foo "),
+                HtmlInline("<!--->"),
+                Text(" foo -->"),
+            ),
         )
     }
 
@@ -12139,7 +13377,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <?php echo $a; ?></p>
          */
-        parsed.assertEquals(paragraph("foo <?php echo \$a; ?>"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                HtmlInline("<?php echo \$a; ?>"),
+            ),
+        )
     }
 
     @Test
@@ -12150,7 +13393,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <!ELEMENT br EMPTY></p>
          */
-        parsed.assertEquals(paragraph("foo <!ELEMENT br EMPTY>"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                HtmlInline("<!ELEMENT br EMPTY>"),
+            ),
+        )
     }
 
     @Test
@@ -12161,7 +13409,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <![CDATA[>&<]]></p>
          */
-        parsed.assertEquals(paragraph("foo <![CDATA[>&<]]>"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                HtmlInline("<![CDATA[>&<]]>"),
+            ),
+        )
     }
 
     @Test
@@ -12172,7 +13425,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <a href="&ouml;"></p>
          */
-        parsed.assertEquals(paragraph("foo <a href=\"&ouml;\">"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                HtmlInline("<a href=\"&ouml;\">"),
+            ),
+        )
     }
 
     @Test
@@ -12183,7 +13441,12 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>foo <a href="\*"></p>
          */
-        parsed.assertEquals(paragraph("foo <a href=\"\\*\">"))
+        parsed.assertEquals(
+            Paragraph(
+                Text("foo "),
+                HtmlInline("<a href=\"\\*\">"),
+            ),
+        )
     }
 
     @Test
@@ -12194,7 +13457,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p>&lt;a href=&quot;&quot;&quot;&gt;</p>
          */
-        parsed.assertEquals(paragraph("\\<a href=\"\"\"\\>"))
+        parsed.assertEquals(paragraph("<a href=\"\"\">"))
     }
 
     @Test
@@ -12202,9 +13465,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo  
-            |baz
-            """
+                |foo  
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -12213,7 +13476,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo<br />
          * baz</p>
          */
-        parsed.assertEquals(paragraph("foo  \nbaz"))
+        parsed.assertEquals(Paragraph(Text("foo"), HardLineBreak, Text("baz")))
     }
 
     @Test
@@ -12221,9 +13484,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo\
-            |baz
-            """
+                |foo\
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -12232,7 +13495,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo<br />
          * baz</p>
          */
-        parsed.assertEquals(paragraph("foo  \nbaz"))
+        parsed.assertEquals(Paragraph(Text("foo"), HardLineBreak, Text("baz")))
     }
 
     @Test
@@ -12240,9 +13503,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo       
-            |baz
-            """
+                |foo       
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -12251,7 +13514,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo<br />
          * baz</p>
          */
-        parsed.assertEquals(paragraph("foo  \nbaz"))
+        parsed.assertEquals(Paragraph(Text("foo"), HardLineBreak, Text("baz")))
     }
 
     @Test
@@ -12259,9 +13522,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo  
-            |     bar
-            """
+                |foo  
+                |     bar
+                """
                     .trimMargin(),
             )
 
@@ -12270,7 +13533,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo<br />
          * bar</p>
          */
-        parsed.assertEquals(paragraph("foo  \nbar"))
+        parsed.assertEquals(Paragraph(Text("foo"), HardLineBreak, Text("bar")))
     }
 
     @Test
@@ -12278,9 +13541,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo\
-            |     bar
-            """
+                |foo\
+                |     bar
+                """
                     .trimMargin(),
             )
 
@@ -12289,7 +13552,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo<br />
          * bar</p>
          */
-        parsed.assertEquals(paragraph("foo  \nbar"))
+        parsed.assertEquals(Paragraph(Text("foo"), HardLineBreak, Text("bar")))
     }
 
     @Test
@@ -12297,9 +13560,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |*foo  
-            |bar*
-            """
+                |*foo  
+                |bar*
+                """
                     .trimMargin(),
             )
 
@@ -12308,7 +13571,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo<br />
          * bar</em></p>
          */
-        parsed.assertEquals(paragraph("*foo  \nbar*"))
+        parsed.assertEquals(
+            Paragraph(Emphasis("*", Text("foo"), HardLineBreak, Text("bar"))),
+        )
     }
 
     @Test
@@ -12316,9 +13581,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |*foo\
-            |bar*
-            """
+                |*foo\
+                |bar*
+                """
                     .trimMargin(),
             )
 
@@ -12327,7 +13592,9 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><em>foo<br />
          * bar</em></p>
          */
-        parsed.assertEquals(paragraph("*foo  \nbar*"))
+        parsed.assertEquals(
+            Paragraph(Emphasis("*", Text("foo"), HardLineBreak, Text("bar"))),
+        )
     }
 
     @Test
@@ -12335,9 +13602,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |`code  
-            |span`
-            """
+                |`code  
+                |span`
+                """
                     .trimMargin(),
             )
 
@@ -12345,7 +13612,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>code   span</code></p>
          */
-        parsed.assertEquals(paragraph("`code   span`"))
+        parsed.assertEquals(Paragraph(Code("code   span")))
     }
 
     @Test
@@ -12353,9 +13620,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |`code\
-            |span`
-            """
+                |`code\
+                |span`
+                """
                     .trimMargin(),
             )
 
@@ -12363,7 +13630,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <p><code>code\ span</code></p>
          */
-        parsed.assertEquals(paragraph("`code\\ span`"))
+        parsed.assertEquals(Paragraph(Code("code\\ span")))
     }
 
     @Test
@@ -12371,9 +13638,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<a href="foo  
-            |bar">
-            """
+                |<a href="foo  
+                |bar">
+                """
                     .trimMargin(),
             )
 
@@ -12382,7 +13649,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="foo
          * bar"></p>
          */
-        parsed.assertEquals(paragraph("<a href=\"foo  \nbar\">"))
+        parsed.assertEquals(Paragraph(HtmlInline("<a href=\"foo  \nbar\">")))
     }
 
     @Test
@@ -12390,9 +13657,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |<a href="foo\
-            |bar">
-            """
+                |<a href="foo\
+                |bar">
+                """
                     .trimMargin(),
             )
 
@@ -12401,7 +13668,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p><a href="foo\
          * bar"></p>
          */
-        parsed.assertEquals(paragraph("<a href=\"foo\\\nbar\">"))
+        parsed.assertEquals(Paragraph(HtmlInline("<a href=\"foo\\\nbar\">")))
     }
 
     @Test
@@ -12434,7 +13701,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h3>foo\</h3>
          */
-        parsed.assertEquals(heading(level = 3, "foo\\"))
+        parsed.assertEquals(heading(level = 3, Text("foo\\")))
     }
 
     @Test
@@ -12445,7 +13712,7 @@ class MarkdownProcessorDocumentParsingTest {
          * Expected HTML:
          * <h3>foo</h3>
          */
-        parsed.assertEquals(heading(level = 3, "foo"))
+        parsed.assertEquals(heading(level = 3, Text("foo")))
     }
 
     @Test
@@ -12453,9 +13720,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo
-            |baz
-            """
+                |foo
+                |baz
+                """
                     .trimMargin(),
             )
 
@@ -12464,7 +13731,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo
          * baz</p>
          */
-        parsed.assertEquals(paragraph("foo baz"))
+        parsed.assertEquals(Paragraph(Text("foo"), SoftLineBreak, Text("baz")))
     }
 
     @Test
@@ -12472,9 +13739,9 @@ class MarkdownProcessorDocumentParsingTest {
         val parsed =
             processor.processMarkdownDocument(
                 """
-            |foo 
-            | baz
-            """
+                |foo 
+                | baz
+                """
                     .trimMargin(),
             )
 
@@ -12483,7 +13750,7 @@ class MarkdownProcessorDocumentParsingTest {
          * <p>foo
          * baz</p>
          */
-        parsed.assertEquals(paragraph("foo baz"))
+        parsed.assertEquals(Paragraph(Text("foo"), SoftLineBreak, Text("baz")))
     }
 
     @Test

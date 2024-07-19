@@ -122,8 +122,9 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubA
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubAlertProcessorExtension : org/jetbrains/jewel/markdown/extensions/MarkdownProcessorExtension {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/extensions/github/alerts/GitHubAlertProcessorExtension;
+	public fun getBlockProcessorExtension ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockProcessorExtension;
+	public fun getInlineProcessorExtension ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownInlineProcessorExtension;
 	public fun getParserExtension ()Lorg/commonmark/parser/Parser$ParserExtension;
-	public fun getProcessorExtension ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockProcessorExtension;
 	public fun getTextRendererExtension ()Lorg/commonmark/renderer/text/TextContentRenderer$TextContentRendererExtension;
 }
 
@@ -131,6 +132,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubA
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/markdown/extensions/github/alerts/AlertStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;)V
 	public fun getBlockRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension;
+	public fun getInlineRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownInlineRendererExtension;
 }
 
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/ImportantAlertStyling : org/jetbrains/jewel/markdown/extensions/github/alerts/BaseAlertStyling {
