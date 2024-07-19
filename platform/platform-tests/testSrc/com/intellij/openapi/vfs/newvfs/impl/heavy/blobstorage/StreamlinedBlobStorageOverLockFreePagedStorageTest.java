@@ -24,8 +24,8 @@ public class StreamlinedBlobStorageOverLockFreePagedStorageTest
   public void newStorage_HasVersion_OfCurrentStorageFormat() throws Exception {
     assertEquals(
       "New storage version == STORAGE_VERSION_CURRENT",
-      storage.getStorageVersion(),
-      StreamlinedBlobStorageOverLockFreePagedStorage.STORAGE_VERSION_CURRENT
+      StreamlinedBlobStorageOverLockFreePagedStorage.STORAGE_VERSION_CURRENT,
+      storage.getStorageVersion()
     );
   }
 

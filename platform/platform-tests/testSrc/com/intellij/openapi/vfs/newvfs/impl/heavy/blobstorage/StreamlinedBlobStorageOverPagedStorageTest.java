@@ -62,8 +62,8 @@ public class StreamlinedBlobStorageOverPagedStorageTest extends StreamlinedBlobS
   public void newStorage_HasVersion_OfCurrentStorageFormat() throws Exception {
     assertEquals(
       "New storage version == STORAGE_VERSION_CURRENT",
-      storage.getStorageVersion(),
-      StreamlinedBlobStorageOverPagedStorage.STORAGE_VERSION_CURRENT
+      StreamlinedBlobStorageOverPagedStorage.STORAGE_VERSION_CURRENT,
+      storage.getStorageVersion()
     );
   }
 }

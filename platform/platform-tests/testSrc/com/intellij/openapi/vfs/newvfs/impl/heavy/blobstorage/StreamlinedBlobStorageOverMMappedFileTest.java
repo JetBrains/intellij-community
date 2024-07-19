@@ -59,8 +59,8 @@ public class StreamlinedBlobStorageOverMMappedFileTest extends StreamlinedBlobSt
   public void newStorage_HasVersion_OfCurrentStorageFormat() throws Exception {
     assertEquals(
       "New storage version == STORAGE_VERSION_CURRENT",
-      storage.getStorageVersion(),
-      StreamlinedBlobStorageOverMMappedFile.STORAGE_VERSION_CURRENT
+      StreamlinedBlobStorageOverMMappedFile.STORAGE_VERSION_CURRENT,
+      storage.getStorageVersion()
     );
   }
 }

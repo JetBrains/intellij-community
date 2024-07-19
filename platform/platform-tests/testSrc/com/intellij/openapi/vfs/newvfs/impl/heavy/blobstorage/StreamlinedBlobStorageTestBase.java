@@ -119,8 +119,8 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
     storage.setDataFormatVersion(dataFormatVersion);
     assertEquals(
       "Data format version must be same as was just written",
-      storage.getDataFormatVersion(),
-      dataFormatVersion
+      dataFormatVersion,
+      storage.getDataFormatVersion()
     );
 
     closeStorage(storage);
@@ -128,8 +128,8 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
 
     assertEquals(
       "Data format version must be same as was written before close/reopen",
-      storage.getDataFormatVersion(),
-      dataFormatVersion
+      dataFormatVersion,
+      storage.getDataFormatVersion()
     );
   }
 

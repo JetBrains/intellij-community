@@ -165,8 +165,8 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = readAllRecordsWithForEach(attributesStorage);
     assertEquals(
       "1 record must be read",
-      recordsReadWithForEach.size(),
-      1
+      1,
+      recordsReadWithForEach.size()
     );
 
     final AttributeRecord recordRead = recordsReadWithForEach.get(insertedRecord.uniqueId());
@@ -223,8 +223,8 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
     assertEquals(
       "Expect to read same version as was written",
-      attributesStorage.getVersion(),
-      version
+      version,
+      attributesStorage.getVersion()
     );
 
     for (AttributeRecord insertedRecord : insertedRecords) {
