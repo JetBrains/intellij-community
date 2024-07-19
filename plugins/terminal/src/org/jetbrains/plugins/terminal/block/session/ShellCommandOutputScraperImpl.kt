@@ -4,8 +4,6 @@ package org.jetbrains.plugins.terminal.block.session
 import com.intellij.openapi.Disposable
 import com.intellij.util.Alarm
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.model.LinesBuffer
-import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.scraper.DropTrailingNewLinesStringCollector
@@ -18,7 +16,6 @@ import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
-import kotlin.math.min
 
 internal class ShellCommandOutputScraperImpl(
   private val session: BlockTerminalSession,
