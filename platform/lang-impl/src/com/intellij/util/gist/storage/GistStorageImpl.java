@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -308,11 +305,15 @@ public final class GistStorageImpl extends GistStorage {
         newGistRecord.payloadWasChanged = true;//new payload size is yet to be decided
         allProjectsGistsRecords.add(newGistRecord);
 
-        try (AttributeOutputStream attributeStream = fileAttribute.writeFileAttribute(file)) {
-          for (GistRecord<Data> record : allProjectsGistsRecords) {
-            storeGistRecord(record, file, attributeStream);
-          }
+        AttributeOutputStream attributeStream = fileAttribute.writeFileAttribute(file);
+        for (GistRecord<Data> record : allProjectsGistsRecords) {
+          storeGistRecord(record, file, attributeStream);
         }
+        //intentionally NOT using try() construct: we DON'T want to close attributeStream in case of error, because
+        // attributeStream is a byte[]-backed stream, which commits its content to the actual file-attributes storage
+        // on .close() -- hence without .close() all the partial writes possibly made before the error occurred will
+        // be abandoned, which is exactly the desirable behaviour.
+        attributeStream.close();
       }
       catch (ProcessCanceledException pce) {
         throw pce;
@@ -373,8 +374,14 @@ public final class GistStorageImpl extends GistStorage {
           );
         }
 
-        default -> throw new IOException("Unrecognized gist.valueKind(=" + persistedGistValueKind + "): incorrect (outdated?) gist format");
+        case -1 -> {
+          if (stream.available() == 0) {
+            throw new EOFException("Gist header incomplete: valueKind field is absent");
+          }
+        }
       }
+
+      throw new IOException("Unrecognized gist.valueKind(=" + persistedGistValueKind + "): incorrect (outdated?) gist format");
     }
 
     private void storeGistRecord(@NotNull GistRecord<Data> record,
