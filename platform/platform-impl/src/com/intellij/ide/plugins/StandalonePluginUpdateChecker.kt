@@ -105,7 +105,7 @@ open class StandalonePluginUpdateChecker(
   open fun verifyUpdate(status: PluginUpdateStatus.Update): PluginUpdateStatus = status
 
   fun pluginUsed() {
-    if (!UpdateSettings.getInstance().isCheckNeeded) return
+    if (!UpdateSettings.getInstance().isPluginsCheckNeeded) return
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
     val lastUpdateTime = PropertiesComponent.getInstance().getLong(updateTimestampProperty, 0L)
