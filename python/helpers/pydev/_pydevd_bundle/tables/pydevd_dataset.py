@@ -20,13 +20,13 @@ def get_shape(table):
 # noinspection PyUnresolvedReferences
 def get_head(table):
      # type: (datasets.arrow_dataset.Dataset) -> str
-    return repr(__convert_to_df(table).head().to_html(notebook=True, max_cols=None))
+    return repr(__convert_to_df(table.select([0])).head().to_html(notebook=True, max_cols=None))
 
 
 # noinspection PyUnresolvedReferences
 def get_column_types(table):
      # type: (datasets.arrow_dataset.Dataset) -> str
-    table = __convert_to_df(table)
+    table = __convert_to_df(table.select([0]))
     return str(table.index.dtype) + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
             TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
