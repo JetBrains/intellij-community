@@ -149,6 +149,8 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       if (TRACING_WITH_SPUTNIK_ENABLED) {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.printf("\1h('Importable names completion','%d')%n", (duration / 10) * 10);
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.printf("\1Hi(%d)%n", duration);
       }
     });
   }
