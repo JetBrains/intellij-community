@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlo
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOverBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.*;
+import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -43,6 +45,12 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
   private static final int PAGE_SIZE = 1 << 14;
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
 
+  private static final SpaceAllocationStrategy SPACE_ALLOCATION_STRATEGY = new DataLengthPlusFixedPercentStrategy(
+    64, 256,
+    StreamlinedBlobStorageHelper.MAX_CAPACITY,
+    30
+  );
+
   private static final int ITERATION_COUNT = 100;
 
   @BeforeClass
@@ -55,36 +63,54 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
 
 
   @Parameterized.Parameters
-  public static List<Object[]> storagesToTest() {
-    final ArrayList<Object[]> storages = new ArrayList<>();
-    storages.add(new Object[]{false});
+  public static List<Object[]> storageFactoriesToTest() {
+    List<Object[]> storages = new ArrayList<>();
+
+    storages.add(new Object[]{
+      new StorageFactory<StreamlinedBlobStorageOverPagedStorage>() {
+        @Override
+        public @NotNull StreamlinedBlobStorageOverPagedStorage open(@NotNull Path storagePath) throws IOException {
+          return new StreamlinedBlobStorageOverPagedStorage(
+            new PagedFileStorage(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, true),
+            SPACE_ALLOCATION_STRATEGY
+          );
+        }
+      }
+    });
+    storages.add(new Object[]{
+      MMappedFileStorageFactory.withDefaults()
+        .pageSize(PAGE_SIZE)
+        .compose(storage -> new StreamlinedBlobStorageOverMMappedFile(storage, SPACE_ALLOCATION_STRATEGY))
+    });
+
     if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
-      storages.add(new Object[]{true});
+      storages.add(new Object[]{
+        new StorageFactory<StreamlinedBlobStorageOverLockFreePagedStorage>() {
+          @Override
+          public @NotNull StreamlinedBlobStorageOverLockFreePagedStorage open(@NotNull Path storagePath) throws IOException {
+            return new StreamlinedBlobStorageOverLockFreePagedStorage(
+              new PagedFileStorageWithRWLockedPageContent(
+                storagePath, LOCK_CONTEXT, PAGE_SIZE, PageContentLockingStrategy.LOCK_PER_PAGE
+              ),
+              SPACE_ALLOCATION_STRATEGY
+            );
+          }
+        }
+      });
     }
+
+
     return storages;
   }
 
-  private final boolean useLockFreeStorage;
+  private final StorageFactory<? extends StreamlinedBlobStorage> storageFactory;
 
-  public AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest(final boolean storage) { useLockFreeStorage = storage; }
+  public AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest(@NotNull StorageFactory<? extends StreamlinedBlobStorage> storageFactory) {
+    this.storageFactory = storageFactory;
+  }
 
-  protected AttributesStorageOverBlobStorage createStorage(final Path storagePath) throws Exception {
-    final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(64, 256,
-                                                                                                   StreamlinedBlobStorageHelper.MAX_CAPACITY,
-                                                                                                   30
-    );
-    final StreamlinedBlobStorage storage = useLockFreeStorage ?
-                                           new StreamlinedBlobStorageOverLockFreePagedStorage(
-                                             new PagedFileStorageWithRWLockedPageContent(
-                                               storagePath, LOCK_CONTEXT, PAGE_SIZE, PageContentLockingStrategy.LOCK_PER_PAGE
-                                             ),
-                                             spaceAllocationStrategy
-                                           ) :
-                                           new StreamlinedBlobStorageOverPagedStorage(
-                                             new PagedFileStorage(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, true),
-                                             spaceAllocationStrategy
-                                           );
-
+  protected AttributesStorageOverBlobStorage createStorage(Path storagePath) throws Exception {
+    StreamlinedBlobStorage storage = storageFactory.open(storagePath);
     return new AttributesStorageOverBlobStorage(storage);
   }
 
