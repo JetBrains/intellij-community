@@ -321,6 +321,9 @@ public final class ChangeListWorker {
         if (tracker != null && tracker.getAffectedChangeListsIds().contains(data.id)) {
           changes.add(change);
         }
+        else if (LOG.isDebugEnabled()) {
+          LOG.debug("Neither change list nor tracker found for the change: " + change);
+        }
       }
     }
 
