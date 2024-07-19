@@ -6,7 +6,7 @@ class Outer {
 
   class Inner extends Outer {
     Inner() {
-      super(<error descr="Cannot reference 'Outer.hello()' before supertype constructor has been called">hello</error>());
+      super(<error descr="Cannot call 'Outer.hello()' before superclass constructor is called">hello</error>());
     }
   }
 }

@@ -13,7 +13,7 @@ class Inh extends Foo {
     public Inh() {
         super(new Bar() {
             public void DoBar() {
-                <error descr="Cannot reference 'Inh.this' before supertype constructor has been called">Inh.this</error>.myField.toString();
+                <error descr="Cannot reference 'Inh.this' before superclass constructor is called">Inh.this</error>.myField.toString();
             }
         });
 
@@ -49,7 +49,7 @@ class Base {
 
 class Inhertior extends Base {
   public Inhertior() {
-    super("", <error descr="Cannot reference 'Base.field' before supertype constructor has been called">field</error>.length());
+    super("", <error descr="Cannot reference 'Base.field' before superclass constructor is called">field</error>.length());
   }
 }
 //end of IDEADEV-14306

@@ -2788,11 +2788,18 @@ public final class HighlightUtil {
           referencedClass = PsiUtil.resolveClassInType(((PsiThisExpression)qualifier).getType());
         }
       }
-      if (resolved instanceof PsiField referencedField) {
-        if (referencedField.hasModifierProperty(PsiModifier.STATIC)) return null;
-        resolvedName = PsiFormatUtil
-          .formatVariable(referencedField, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
-        referencedClass = referencedField.getContainingClass();
+      if (resolved instanceof PsiField field) {
+        if (field.hasModifierProperty(PsiModifier.STATIC)) return null;
+        LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
+        if (JavaFeature.STATEMENTS_BEFORE_SUPER.isSufficient(languageLevel) &&
+            languageLevel != LanguageLevel.JDK_22_PREVIEW &&
+            isOnSimpleAssignmentLeftHand(expression) &&
+            field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, true)) {
+          return null;
+        }
+        resolvedName = 
+          PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+        referencedClass = field.getContainingClass();
       }
       else if (resolved instanceof PsiMethod method) {
         if (method.hasModifierProperty(PsiModifier.STATIC)) return null;
@@ -2913,7 +2920,19 @@ public final class HighlightUtil {
       }
     }
 
-    HighlightInfo.Builder builder = createMemberReferencedError(resolvedName, expression.getTextRange());
+    if (expression instanceof PsiThisExpression) {
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
+      if (JavaFeature.STATEMENTS_BEFORE_SUPER.isSufficient(languageLevel) && languageLevel != LanguageLevel.JDK_22_PREVIEW) {
+        parent = PsiUtil.skipParenthesizedExprUp(parent);
+        if (isOnSimpleAssignmentLeftHand(parent) &&
+            parent instanceof PsiReferenceExpression ref &&
+            ref.resolve() instanceof PsiField field &&
+            field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, true)) {
+          return null;
+        }
+      }
+    }
+    HighlightInfo.Builder builder = createMemberReferencedError(resolvedName, expression.getTextRange(), resolved instanceof PsiMethod);
     if (expression instanceof PsiReferenceExpression ref && PsiUtil.isInnerClass(parentClass)) {
       String referenceName = ref.getReferenceName();
       PsiClass containingClass = parentClass.getContainingClass();
@@ -2927,9 +2946,18 @@ public final class HighlightUtil {
     return builder;
   }
 
+  private static boolean isOnSimpleAssignmentLeftHand(@NotNull PsiElement expr) {
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
+    return parent instanceof PsiAssignmentExpression assignment &&
+           JavaTokenType.EQ == assignment.getOperationTokenType() &&
+           PsiTreeUtil.isAncestor(assignment.getLExpression(), expr, false);
+  }
+
   @NotNull
-  private static HighlightInfo.Builder createMemberReferencedError(@NotNull String resolvedName, @NotNull TextRange textRange) {
-    String description = JavaErrorBundle.message("member.referenced.before.constructor.called", resolvedName);
+  private static HighlightInfo.Builder createMemberReferencedError(@NotNull String resolvedName, @NotNull TextRange textRange, boolean methodCall) {
+    String description = methodCall
+                         ? JavaErrorBundle.message("method.called.before.constructor.called", resolvedName)
+                         : JavaErrorBundle.message("member.referenced.before.constructor.called", resolvedName);
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
   }
 
@@ -2946,12 +2974,12 @@ public final class HighlightUtil {
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
       TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      return createMemberReferencedError(aClass.getName() + ".this", range);
+      return createMemberReferencedError(aClass.getName() + ".this", range, false);
     }
     for (PsiMethod constructor : constructors) {
       PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
       if (!JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
-        return createMemberReferencedError(aClass.getName() + ".this", HighlightNamesUtil.getMethodDeclarationTextRange(constructor));
+        return createMemberReferencedError(aClass.getName() + ".this", HighlightNamesUtil.getMethodDeclarationTextRange(constructor), false);
       }
     }
     return null;

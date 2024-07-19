@@ -9,7 +9,7 @@ class FirstLevel {
       ThirdLevel(int i) {
         super(new ThirdLevel(1) {
           public void a() {
-            <error descr="Cannot reference 'ThirdLevel.this' before supertype constructor has been called">ThirdLevel.this</error>.hashCode();
+            <error descr="Cannot reference 'ThirdLevel.this' before superclass constructor is called">ThirdLevel.this</error>.hashCode();
           }
         });
       }
