@@ -30,11 +30,13 @@ import com.jetbrains.python.icons.PythonIcons
 import java.awt.BorderLayout
 import javax.swing.Icon
 
-open class PyAddExistingVirtualEnvPanel(private val project: Project?,
-                                   private val module: Module?,
-                                   private val existingSdks: List<Sdk>,
-                                   override var newProjectPath: String?,
-                                   context:UserDataHolder ) : PyAddSdkPanel() {
+open class PyAddExistingVirtualEnvPanel(
+  private val project: Project?,
+  private val module: Module?,
+  private val existingSdks: List<Sdk>,
+  override var newProjectPath: String?,
+  context: UserDataHolder,
+) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Virtualenv
   protected val sdkComboBox = PySdkPathChoosingComboBox()
@@ -62,11 +64,8 @@ open class PyAddExistingVirtualEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     return when (val sdk = sdkComboBox.selectedSdk) {
-      is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath).getOrLogException(LOGGER)?.apply {
-        if (!makeSharedField.isSelected) {
-          associateWithModule(module, newProjectPath)
-        }
-      }
+      is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath, !makeSharedField.isSelected)
+        .getOrLogException(LOGGER)
       else -> sdk
     }
   }

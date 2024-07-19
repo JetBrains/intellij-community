@@ -165,10 +165,14 @@ fun createSdkByGenerateTask(
     showSdkExecutionException(baseSdk, e, PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
     throw e
   }
+
   val suggestedName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
-  return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
-                                       PythonSdkType.getInstance(),
-                                       null, suggestedName)
+  return SdkConfigurationUtil.setupSdk(
+    existingSdks.toTypedArray(),
+    homeFile,
+    PythonSdkType.getInstance(),
+    null,
+    suggestedName)
 }
 
 fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
@@ -189,8 +193,15 @@ fun Sdk.associateWithModule(module: Module?, newProjectPath: String?) {
 }
 
 fun Sdk.setAssociationToModule(module: Module) {
-  val data = getOrCreateAdditionalData().apply {
-    associateWithModule(module)
+  setAssociationToPath(module.basePath)
+}
+
+fun Sdk.setAssociationToPath(path: String?) {
+  val data = getOrCreateAdditionalData().also {
+    when {
+      path != null -> it.associateWithModulePath(path)
+      else -> it.associatedModulePath = null
+    }
   }
 
   val modificator = sdkModificator
@@ -234,28 +245,49 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), null, null)
 }
 
-
 // For Java only
-internal fun PyDetectedSdk.setupAssociatedLogged(existingSdks: List<Sdk>, associatedModulePath: String?): Sdk? = setupAssociated(existingSdks, associatedModulePath).getOrLogException(LOGGER)
-fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?): Result<Sdk> {
-  if (!sdkSeemsValid) return Result.failure(Throwable("sdk not valid"))
-  val homePath = this.homePath ?: return Result.failure(Throwable("homePath os null"))
-  val suggestedName = suggestAssociatedSdkName(homePath, associatedModulePath) ?: homePath
-  val sdk = SdkConfigurationUtil.createSdk(existingSdks, homePath, PythonSdkType.getInstance(), null, suggestedName)
+internal fun PyDetectedSdk.setupAssociatedLogged(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): Sdk? {
+  return setupAssociated(existingSdks, associatedModulePath, doAssociate).getOrLogException(LOGGER)
+}
 
-  targetEnvConfiguration?.let { targetConfig ->
-    // Target-based sdk, not local one
-    sdk.sdkModificator.let { modificator ->
-      modificator.sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
-        .also {
-          it.targetEnvironmentConfiguration = targetConfig
-        }
-      ApplicationManager.getApplication().runWriteAction {
-        modificator.commitChanges()
-      }
-    }
+fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): Result<Sdk> {
+  if (!sdkSeemsValid) {
+    return Result.failure(Throwable("sdk is not valid"))
   }
-  PythonSdkType.getInstance().setupSdkPaths(sdk)
+
+  val homePath = this.homePath
+  if (homePath == null) {
+    // e.g. directory is not there anymore
+    return Result.failure(Throwable("homePath is null"))
+  }
+
+  val homeDir = this.homeDirectory
+  if (homeDir == null) {
+    return Result.failure(Throwable("homeDir is null"))
+  }
+
+  val suggestedName = if (doAssociate) {
+    suggestAssociatedSdkName(homePath, associatedModulePath)
+  }
+  else null
+
+  val data = targetEnvConfiguration?.let { targetConfig ->
+    PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA).also {
+      it.targetEnvironmentConfiguration = targetConfig
+    }
+  } ?: PythonSdkAdditionalData()
+
+  if (doAssociate && associatedModulePath != null) {
+    data.associateWithModulePath(associatedModulePath)
+  }
+
+  val sdk = SdkConfigurationUtil.setupSdk(
+    existingSdks.toTypedArray(),
+    homeDir,
+    PythonSdkType.getInstance(),
+    data,
+    suggestedName)
+
   return Result.success(sdk)
 }
 
@@ -341,9 +373,6 @@ private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): 
   }
   return "$baseSdkName ($associatedName)"
 }
-
-val File.isNotEmptyDirectory: Boolean
-  get() = exists() && isDirectory && list()?.isEmpty()?.not() ?: false
 
 private val Sdk.isSystemWide: Boolean
   get() = !PythonSdkUtil.isRemote(this) && !PythonSdkUtil.isVirtualEnv(

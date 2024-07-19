@@ -85,12 +85,14 @@ fun createVirtualEnvSynchronously(
       createSdkForTarget(project, it, homePath, existingSdks, targetPanelExtension)
     }
   }
+
   if (!makeShared) {
-    venvSdk.associateWithModule(module, projectPath)
-    ApplicationManager.getApplication().runWriteAction {
-      venvSdk.sdkModificator.commitChanges()
+    when {
+      projectPath != null -> venvSdk.setAssociationToPath(projectPath)
+      module != null -> venvSdk.setAssociationToModule(module)
     }
   }
+
   project.excludeInnerVirtualEnv(venvSdk)
   if (targetEnvironmentConfiguration.isLocal()) {
     // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
@@ -135,12 +137,12 @@ internal fun createSdkForTarget(
   else {
     name = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, data, sdkVersion)
   }
-
   val sdk = SdkConfigurationUtil.createSdk(existingSdks, interpreterPath, PythonSdkType.getInstance(), data, name)
-
-  if (project != null && project.modules.isNotEmpty() &&
-      PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() == true) {
-    sdk.associateWithModule(project.modules[0], null)
+  if (PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() == true) {
+    // FIXME: multi module project support
+    project?.modules?.firstOrNull()?.let {
+        sdk.setAssociationToModule(it)
+    }
   }
 
   sdk.sdkModificator.let { modifiableSdk ->
@@ -150,6 +152,7 @@ internal fun createSdkForTarget(
     }
   }
 
+  // FIXME: should we persist it?
   data.isValid = true
 
   return sdk

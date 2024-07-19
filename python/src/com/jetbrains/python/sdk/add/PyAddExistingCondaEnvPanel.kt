@@ -30,7 +30,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
-import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.setupAssociated
 import com.jetbrains.python.icons.PythonIcons
@@ -38,11 +37,13 @@ import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.Icon
 
-open class PyAddExistingCondaEnvPanel(private val project: Project?,
-                                      private val module: Module?,
-                                      private val existingSdks: List<Sdk>,
-                                      override var newProjectPath: String?,
-                                      context: UserDataHolder) : PyAddSdkPanel() {
+open class PyAddExistingCondaEnvPanel(
+  private val project: Project?,
+  private val module: Module?,
+  private val existingSdks: List<Sdk>,
+  override var newProjectPath: String?,
+  context: UserDataHolder,
+) : PyAddSdkPanel() {
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
   protected val sdkComboBox = PySdkPathChoosingComboBox()
@@ -93,11 +94,8 @@ open class PyAddExistingCondaEnvPanel(private val project: Project?,
     val sdk = sdkComboBox.selectedSdk
     PyCondaPackageService.onCondaEnvCreated(condaPathField.text)
     return when (sdk) {
-      is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath).getOrLogException(thisLogger())?.apply {
-        if (!makeSharedField.isSelected) {
-          associateWithModule(module, newProjectPath)
-        }
-      }
+      is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath, !makeSharedField.isSelected)
+        .getOrLogException(thisLogger())
       else -> sdk
     }
   }

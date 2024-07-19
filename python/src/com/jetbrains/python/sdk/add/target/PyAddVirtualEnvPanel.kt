@@ -41,14 +41,15 @@ import java.util.function.Supplier
 /**
  * Panel with a control that allows to add either new or selecting existing virtualenv.
  */
-class PyAddVirtualEnvPanel(project: Project?,
-                           module: Module?,
-                           private val existingSdks: List<Sdk> = emptyList(),
-                           allowAddNewVirtualenv: Boolean = false,
-                           private val context: UserDataHolder,
-                           targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
-                           config: PythonLanguageRuntimeConfiguration)
-  : PyAddSdkPanelBase(project, module, targetSupplier) {
+class PyAddVirtualEnvPanel(
+  project: Project?,
+  module: Module?,
+  private val existingSdks: List<Sdk> = emptyList(),
+  allowAddNewVirtualenv: Boolean = false,
+  private val context: UserDataHolder,
+  targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
+  config: PythonLanguageRuntimeConfiguration,
+) : PyAddSdkPanelBase(project, module, targetSupplier) {
 
   override val panelName = PyBundle.message("python.add.sdk.panel.name.virtualenv.environment")
 
@@ -216,10 +217,8 @@ class PyAddVirtualEnvPanel(project: Project?,
   private fun configureExistingVirtualenvSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?, selectedSdk: Sdk): Sdk {
     if (targetEnvironmentConfiguration == null) {
       return when (selectedSdk) {
-        is PyDetectedSdk -> selectedSdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath).getOrThrow().apply {
-          // TODO [targets] Restore `makeSharedField` flag
-          associateWithModule(module, newProjectPath)
-        }
+        is PyDetectedSdk -> selectedSdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath, true)
+          .getOrThrow()
         else -> selectedSdk
       }
     }

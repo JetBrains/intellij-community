@@ -119,8 +119,12 @@ open class PyAddNewCondaEnvPanel(
     val associatedPath = if (!shared) projectBasePath else null
     val sdk = createSdkByGenerateTask(task, existingSdks, null, associatedPath, null)
     if (!shared) {
-      sdk.associateWithModule(module, newProjectPath)
+      when {
+        newProjectPath != null -> sdk.setAssociationToPath(newProjectPath)
+        module != null -> sdk.setAssociationToModule(module)
+      }
     }
+
     PyCondaPackageService.onCondaEnvCreated(condaPath)
     project.excludeInnerVirtualEnv(sdk)
     // Old conda created, convert to new
