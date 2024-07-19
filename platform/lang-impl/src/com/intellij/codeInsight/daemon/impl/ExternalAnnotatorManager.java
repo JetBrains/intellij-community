@@ -4,6 +4,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +49,18 @@ final class ExternalAnnotatorManager implements Disposable {
       }
     });
     myExternalActivitiesQueue.flush();
-    future.get(timeout, unit);
+    // while we wait, the highlighting may be interrupted, we should interrupt too then
+    long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
+    while (!future.isDone()) {
+      ProgressManager.checkCanceled();
+      if (System.currentTimeMillis() > deadline) {
+        throw new TimeoutException();
+      }
+      try {
+        future.get(1, TimeUnit.MILLISECONDS);
+      }
+      catch (TimeoutException ignored) {
+      }
+    }
   }
 }
