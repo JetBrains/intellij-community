@@ -171,6 +171,10 @@ open class FileEditorManagerImpl(
         splitters.updateFileIcon(file)
         splitters.updateFileColor(file = file)
         splitters.updateFileBackgroundColor(file)
+        // https://youtrack.jetbrains.com/issue/IJPL-157805/Diff-the-window-title-doesnt-update-the-filename-on-selecting-navigating-to-another-file
+        if (splitters !== mainSplitters) {
+          splitters.updateFrameTitle()
+        }
       }
     }
   }
