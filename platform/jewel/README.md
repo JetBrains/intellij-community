@@ -131,16 +131,10 @@ to work for some: https://github.com/romainguy/kotlin-explorer/blob/main/compose
 
 ## Dependencies matrix
 
-For each version of Jewel, these are the minimum supported Kotlin and Compose Multiplatform versions:
+Jewel is in continuous development and we focus on supporting only the Compose version we use internally.
+You can see the latest supported version in [libs.versions.toml](https://github.com/JetBrains/jewel/blob/main/gradle/libs.versions.toml).
 
-| Jewel version    | Kotlin version | Compose version |
-|------------------|----------------|-----------------|
-| 0.15.2 -> *      | 1.8.21         | 1.6.10-dev1490  |
-| 0.15.1           | 1.8.21         | 1.6.10-dev1457  |
-| 0.15.0           | 1.8.21         | 1.6.0-dev1440   |
-| 0.13.1 -> 0.14.1 | 1.8.21         | 1.6.0-dev1369   |
-
-For older versions please refer to the Jewel tags and release notes.
+Different versions of Compose are not guaranteed to work with different versions of Jewel.
 
 The Compose Compiler version used is the latest compatible with the given Kotlin version. See
 [here](https://developer.android.com/jetpack/androidx/releases/compose-compiler) for the Compose
@@ -286,43 +280,69 @@ will bring in the necessary transitive dependencies. These are the currently sup
 and the branch on which the corresponding bridge code lives:
 
 | IntelliJ Platform version(s) | Branch to use           |
- |------------------------------|-------------------------|
-| 2024.1 (EAP 3+)              | `main`                  |
+|------------------------------|-------------------------|
+| 2024.2 (beta 1+)             | `main`                  |
+| 2024.1 (EAP 3+)              | `releases/241`          |
 | 2023.3                       | `releases/233`          |
 | 2023.2 (**deprecated**)      | `archived-releases/232` |
 | 2023.1 or older              | **Not supported**       |
-
 For an example on how to set up an IntelliJ Plugin, you can refer to
 the [`ide-plugin` sample](samples/ide-plugin/build.gradle.kts).
 
-#### Accessing icons
+## Icons
 
-When you want to draw an icon from the resources, you can either use the `Icon` composable and pass it the resource path
-and the corresponding class to look up the classpath from, or go one lever deeper and use the lower level,
-`Painter`-based API.
+When building for IntelliJ Platform or a standalone app, you can use the key-based icon loading API that allows you to load icons in a cross-target way.
 
-The `Icon` approach looks like this:
-
-```kotlin
-// Load the "close" icon from the IDE's AllIcons class
-Icon(
-    "actions/close.svg",
-    iconClass = AllIcons::class.java,
-    contentDescription = "Close",
-)
-```
-
-To obtain a `Painter`, instead, you'd use:
+### Icons from your resources
+To load an icon, you can use the `Icon` composable and provide a `PathIconKey` with a resource path:
 
 ```kotlin
-val painterProvider = rememberResourcePainterProvider(
-    path = "actions/close.svg",
-    iconClass = AllIcons::class.java
-)
-val painter by painterProvider.getPainter()
+// Equivalent to the old path-based API
+Icon(PathIconKey("icons/myIcon.svg"), contentDescription = "...")
 ```
 
-#### Icon runtime patching
+#### Build your own IconsKeys file
+
+If you want to benefit from a better experience, not having to deal with strings and keys everywhere, you can build your own `*IconsKeys` file. Look at our `AllIconsKeys` file as a reference. You can  maintain it manually, or you can automatically generate it, depending on your needs.
+
+### Icons from IntelliJ Platform
+If you need to use standard IntelliJ Platform icons in your standalone app, such as those found in `AllIcons`, you will need a bit of setup to make sure that the icons are present on the classpath and can be loaded as resources.
+
+Add this to your build script:
+
+```kotlin
+dependencies {
+   implementation("com.jetbrains.intellij.platform:icons:[ijpVersion]")
+   // ...
+}
+
+repositories {
+   // Choose either of these two, depending on whether you're using a stable IJP or not
+   maven("https://www.jetbrains.com/intellij-repository/releases")
+   maven("https://www.jetbrains.com/intellij-repository/snapshots")
+}
+```
+
+> [!NOTE]
+> If you are targeting an IntelliJ plugin, you don't need this additional setup since the icons are provided by the platform itself.
+
+Once the icons are on the classhpath can use the `PlatformIcon` composable:
+
+```kotlin
+// For platform icons found in AllIconsse
+PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup")
+```
+
+### Old UI and new UI icons
+
+The right `IconKey` to use depends on whether an icon has Old UI and New UI variants, or not:
+
+* `PathIconKey` represents an icon from the resources that has no Old and New UI variants
+* `IntelliJIconKey` is similar, but provides paths for both the Old and New UI variants
+
+If you are targeting only the New UI, you can use either `PathIconKey` or `IntelliJIconKey` to load the icon. If you are targeting the Old UI, you need to use `IntelliJIconKey`.
+
+### Icon runtime patching
 
 Jewel emulates the under-the-hood machinations that happen in the IntelliJ Platform when loading icons. Specifically,
 the resource will be subject to some transformations before being loaded.
