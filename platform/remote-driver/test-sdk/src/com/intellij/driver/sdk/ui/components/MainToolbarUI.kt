@@ -25,6 +25,7 @@ class MainToolbarUI(data: ComponentData) : UiComponent(data) {
   val debugButton: UiComponent get() = x("//div[@myicon='debug.svg']")
   val moreButton: UiComponent get() = x("//div[@myicon='moreVertical.svg']")
   val searchButton: UiComponent get() = x("//div[@myicon='search.svg']")
+  val stopButton: UiComponent get() = x("//div[@myicon='stop.svg']")
   val settingsButton: UiComponent get() = x("//div[contains(@myaction, 'Settings')]")
   val runWidget get() = x(ActionButtonUi::class.java) { contains(byJavaClass("RedesignedRunConfigurationSelector")) }
   val cwmButton get() = x { byTooltip("Code With Me") }
