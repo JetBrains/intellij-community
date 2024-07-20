@@ -668,9 +668,10 @@ public final class JavaBuilderUtil {
   }
 
   private static final class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
+    private static final Key<Map<BuildTarget<?>, Set<BuildTarget<?>>>> TARGETS_CACHE_KEY = Key.create("__recursive_target-deps_cache__");
     private final CompileContext myContext;
     private final Set<? extends BuildTarget<?>> myChunkTargets;
-    private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache = new HashMap<>();
+    private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache;
     private final BuildRootIndex myBuildRootIndex;
     private final BuildTargetIndex myBuildTargetIndex;
 
@@ -679,6 +680,11 @@ public final class JavaBuilderUtil {
       myChunkTargets = chunk.getTargets();
       myBuildRootIndex = context.getProjectDescriptor().getBuildRootIndex();
       myBuildTargetIndex = context.getProjectDescriptor().getBuildTargetIndex();
+      Map<BuildTarget<?>, Set<BuildTarget<?>>> cache = TARGETS_CACHE_KEY.get(context);
+      if (cache == null) {
+        TARGETS_CACHE_KEY.set(context, cache = new HashMap<>());
+      }
+      myCache = cache;
     }
 
     @Override
@@ -691,16 +697,15 @@ public final class JavaBuilderUtil {
       if (myChunkTargets.contains(targetOfFile)) {
         return true;
       }
-      Set<BuildTarget<?>> targetOfFileWithDependencies = myCache.get(targetOfFile);
-      if (targetOfFileWithDependencies == null) {
-        targetOfFileWithDependencies = Iterators.collect(Iterators.recurseDepth(targetOfFile, new Iterators.Function<BuildTarget<?>, Iterable<? extends BuildTarget<?>>>() {
+      Set<BuildTarget<?>> targetOfFileWithDependencies = myCache.computeIfAbsent(
+        targetOfFile,
+        trg -> Iterators.collect(Iterators.recurseDepth(trg, new Iterators.Function<BuildTarget<?>, Iterable<? extends BuildTarget<?>>>() {
           @Override
           public Iterable<? extends BuildTarget<?>> fun(BuildTarget<?> t) {
             return myBuildTargetIndex.getDependencies(t, myContext);
           }
-        }, false), new LinkedHashSet<>());
-        myCache.put(targetOfFile, targetOfFileWithDependencies);
-      }
+        }, false), new HashSet<>())
+      );
       return ContainerUtil.intersects(targetOfFileWithDependencies, myChunkTargets);
     }
 
