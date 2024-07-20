@@ -701,6 +701,35 @@ interface UastApiFixtureTestBase {
         TestCase.assertEquals("java.lang.String", uCallExpression.receiverType?.canonicalText)
     }
 
+    fun checkJavaStaticMethodReceiverType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                public class Controller {
+                }
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+                public class MyService {
+                    public static Controller getController() {
+                        return new Controller();
+                    }
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "test.kt", """
+                fun test() {
+                  val controller = MyService.get<caret>Controller()
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("getController", uCallExpression.methodName)
+        TestCase.assertNull(uCallExpression.receiverType)
+    }
+
     fun checkUnderscoreOperatorForTypeArguments(myFixture: JavaCodeInsightTestFixture) {
         // example from https://kotlinlang.org/docs/generics.html#underscore-operator-for-type-arguments
         // modified to avoid using reflection (::class.java)
