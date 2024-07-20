@@ -7,10 +7,7 @@ import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.name
 import com.intellij.collaboration.ui.util.popup.*
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.ui.popup.PopupChooserBuilder
+import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.childScope
@@ -31,31 +28,44 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JList
+import javax.swing.JScrollPane
 import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
 
 object ChooserPopupUtil {
 
   @JvmOverloads
-  suspend fun <T> showChooserPopup(point: RelativePoint,
-                                   items: List<T>,
-                                   presenter: (T) -> PopupItemPresentation,
-                                   popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
-    showChooserPopup(point, items, { presenter(it).shortText }, SimplePopupItemRenderer.create(presenter), popupConfig)
+  suspend fun <T> showChooserPopup(
+    point: RelativePoint,
+    items: List<T>,
+    presenter: (T) -> PopupItemPresentation,
+    popupConfig: PopupConfig = PopupConfig.DEFAULT,
+  ): T? =
+    showChooserPopup(
+      point = point,
+      items = items,
+      filteringMapper = { presenter(it).shortText },
+      renderer = SimplePopupItemRenderer.create(presenter),
+      popupConfig = popupConfig,
+    )
 
   @JvmOverloads
-  suspend fun <T> showChooserPopup(point: RelativePoint,
-                                   items: List<T>,
-                                   filteringMapper: (T) -> String,
-                                   renderer: ListCellRenderer<T>,
-                                   popupConfig: PopupConfig = PopupConfig.DEFAULT): T? {
+  suspend fun <T> showChooserPopup(
+    point: RelativePoint,
+    items: List<T>,
+    filteringMapper: (T) -> String,
+    renderer: ListCellRenderer<T>,
+    popupConfig: PopupConfig = PopupConfig.DEFAULT,
+  ): T? {
     val listModel = CollectionListModel(items)
     val list = createList(listModel, renderer)
 
     @Suppress("UNCHECKED_CAST")
-    val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-      .setFilteringEnabled { filteringMapper(it as T) }
-      .configure(popupConfig)
+    val popup = PopupChooserBuilder(list)
+      .apply {
+        setFilteringEnabled { filteringMapper(it as T) }
+        configure(popupConfig)
+      }
       .createPopup()
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
@@ -64,25 +74,37 @@ object ChooserPopupUtil {
     return popup.showAndAwaitSubmission(list, point, popupConfig.showDirection)
   }
 
-  @JvmOverloads
-  suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
-                                              itemsLoader: Flow<Result<List<T>>>,
-                                              presenter: (T) -> PopupItemPresentation,
-                                              popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
-    showAsyncChooserPopup(point, itemsLoader, { presenter(it).shortText }, SimplePopupItemRenderer.create(presenter), popupConfig)
+  // Async choosers:
 
   @JvmOverloads
-  suspend fun <T : Any> showAsyncChooserPopup(point: RelativePoint,
-                                              itemsLoader: Flow<Result<List<T>>>,
-                                              filteringMapper: (T) -> String,
-                                              renderer: ListCellRenderer<T>,
-                                              popupConfig: PopupConfig = PopupConfig.DEFAULT): T? = coroutineScope {
+  suspend fun <T : Any> showAsyncChooserPopup(
+    point: RelativePoint,
+    itemsLoader: Flow<Result<List<T>>>,
+    presenter: (T) -> PopupItemPresentation,
+    popupConfig: PopupConfig = PopupConfig.DEFAULT,
+  ): T? =
+    showAsyncChooserPopup(
+      point = point,
+      itemsLoader = itemsLoader,
+      filteringMapper = { presenter(it).shortText },
+      renderer = SimplePopupItemRenderer.create(presenter),
+      popupConfig = popupConfig,
+    )
+
+  @JvmOverloads
+  suspend fun <T : Any> showAsyncChooserPopup(
+    point: RelativePoint,
+    itemsLoader: Flow<Result<List<T>>>,
+    filteringMapper: (T) -> String,
+    renderer: ListCellRenderer<T>,
+    popupConfig: PopupConfig = PopupConfig.DEFAULT,
+  ): T? = coroutineScope {
     val listModel = CollectionListModel<T>()
     val list = createList(listModel, renderer)
     val loadingListener = ListLoadingListener(this, itemsLoader, list, listModel, popupConfig.errorPresenter)
 
     @Suppress("UNCHECKED_CAST")
-    val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+    val popup = PopupChooserBuilder(list)
       .setFilteringEnabled { filteringMapper(it as T) }
       .addListener(loadingListener)
       .configure(popupConfig)
@@ -94,6 +116,34 @@ object ChooserPopupUtil {
     popup.showAndAwaitSubmission(list, point, popupConfig.showDirection)
   }
 
+  @JvmOverloads
+  suspend fun <T : Any> showAsyncChooserPopup(
+    point: RelativePoint,
+    presenter: (T) -> PopupItemPresentation,
+    popupConfig: PopupConfig = PopupConfig.DEFAULT,
+    configure: CoroutineScope.(JBPopup, JBList<T>, CollectionListModel<T>, JScrollPane) -> Unit,
+  ): T? = coroutineScope {
+    val listModel = CollectionListModel<T>()
+    val renderer = SimplePopupItemRenderer.create(presenter)
+    val list = createList(listModel, renderer)
+    fun filteringMapper(item: T) = presenter(item).shortText
+
+    @Suppress("UNCHECKED_CAST")
+    val popupBuilder = PopupChooserBuilder(list)
+      .setFilteringEnabled { filteringMapper(it as T) }
+      .configure(popupConfig)
+    val popup = popupBuilder.createPopup()
+
+    configure(popup, list, listModel, popupBuilder.scrollPane)
+
+    CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
+
+    PopupUtil.setPopupToggleComponent(popup, point.component)
+    popup.showAndAwaitSubmission(list, point, popupConfig.showDirection)
+  }
+
+  // Multiple options:
+
   @ApiStatus.Internal
   @JvmOverloads
   suspend fun <T : Any> showAsyncMultipleChooserPopup(
@@ -101,7 +151,7 @@ object ChooserPopupUtil {
     loadedBatchesFlow: Flow<Result<List<T>>>,
     presenter: (T) -> PopupItemPresentation,
     isOriginallySelected: (T) -> Boolean,
-    popupConfig: PopupConfig = PopupConfig.DEFAULT
+    popupConfig: PopupConfig = PopupConfig.DEFAULT,
   ): List<T> = coroutineScope {
     val listModel = CollectionListModel<SelectableWrapper<T>>()
     val list = createSelectableList(listModel, SimpleSelectablePopupItemRenderer.create { item ->
@@ -144,7 +194,7 @@ object ChooserPopupUtil {
 
   private fun <T> createSelectableList(
     listModel: CollectionListModel<SelectableWrapper<T>>,
-    renderer: ListCellRenderer<SelectableWrapper<T>>
+    renderer: ListCellRenderer<SelectableWrapper<T>>,
   ): JBList<SelectableWrapper<T>> = JBList(listModel).apply {
     visibleRowCount = 7
     selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -193,7 +243,7 @@ data class PopupConfig(
   val isMovable: Boolean = true,
   val isResizable: Boolean = true,
   val showDirection: ShowDirection = ShowDirection.BELOW,
-  val errorPresenter: ErrorStatusPresenter.Text<Throwable>? = null
+  val errorPresenter: ErrorStatusPresenter.Text<Throwable>? = null,
 ) {
   companion object {
     val DEFAULT = PopupConfig()
@@ -210,7 +260,7 @@ private class ListLoadingListener<T>(
   private val itemsFlow: Flow<Result<List<T>>>,
   private val list: JBList<T>,
   private val listModel: CollectionListModel<T>,
-  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?
+  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?,
 ) : JBPopupListener {
   private var cs: CoroutineScope? = null
 
