@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,6 +50,6 @@ public final class GradleTestEventsProcessor {
     String className = descriptor.getClassName();
     String suiteName = descriptor.getSuiteName();
     String methodName = descriptor.getMethodName();
-    return GradleVersionUtil.isCurrentGradleAtLeast("8.8") && className != null && suiteName != null && suiteName.equals(methodName);
+    return className != null && suiteName != null && suiteName.equals(methodName);
   }
 }
