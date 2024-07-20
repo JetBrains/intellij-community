@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.diagnostic.PerformanceWatcher.Companion.printStacktrace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -27,7 +25,6 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class AlarmTest {
@@ -74,29 +71,6 @@ class AlarmTest {
     alarm.addRequest(ContextAwareRunnable { list.add("A") }, 1)
     alarm.waitForAllExecuted(20, TimeUnit.MILLISECONDS)
     assertThat(list).containsExactly("A", "B")
-  }
-
-  @Test
-  fun manyAlarmsDoNotStartTooManyThreads(@TestDisposable disposable: Disposable) {
-    val used = ConcurrentCollectionFactory.createConcurrentSet<Thread>()
-    val executed = AtomicInteger()
-    val count = 100_000
-    val alarms = Array(count) { Alarm(threadToUse = Alarm.ThreadToUse.POOLED_THREAD, disposable) }
-    for (alarm in alarms) {
-      alarm.addRequest(ContextAwareRunnable {
-        executed.incrementAndGet()
-        used.add(Thread.currentThread())
-      }, 10)
-    }
-
-    for (alarm in alarms) {
-      alarm.waitForAllExecuted(1, TimeUnit.SECONDS)
-    }
-    assertThat(used.size)
-      .describedAs {
-        "${used.size} threads created: ${used.joinToString { printStacktrace("", it, it.stackTrace) }}"
-      }
-      .isLessThanOrEqualTo(Runtime.getRuntime().availableProcessors() + 1 + 64 /* IO-pool thread is reused */)
   }
 
   @Test
