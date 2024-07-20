@@ -171,6 +171,12 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
         override fun build(from: JKExpression): JKExpression {
             if (from !is JKCallExpression) error("Bad conversion")
 
+            // Before transforming the call to an extension function call,
+            // we need to handle the implicit cast on the first argument.
+            // Otherwise, it won't be handled later in the conversion pipeline,
+            // since it won't be an argument anymore, but a call receiver.
+            ImplicitCastsConversion(context).applyToElement(from)
+
             val arguments = from.arguments::arguments.detached()
             return JKQualifiedExpression(
                 arguments.first()::value.detached().parenthesizeIfCompoundExpression(),
