@@ -219,8 +219,8 @@ private fun restoreCaretPosition(editor: EditorEx, delayedScrollState: DelayedSc
   val viewport = editor.scrollPane.viewport
 
   fun isReady(): Boolean {
-    val extentSize = viewport.extentSize?.takeIf { it.width != 0 && it.height != 0 } ?: viewport.preferredSize
-    return extentSize.width != 0 && extentSize.height != 0
+    val extentSize = viewport.extentSize
+    return extentSize != null && extentSize.width != 0 && extentSize.height != 0
   }
 
   if (viewport.isShowing && isReady()) {
