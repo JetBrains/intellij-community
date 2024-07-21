@@ -11,9 +11,7 @@ import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_SELECTOR
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_WITH_QUALIFIER
-import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
-import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedField
-import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
+import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.INT
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.STRING
@@ -117,13 +115,17 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
             } else {
                 symbolProvider.provideMethodSymbolWithExactSignature(fqName, parameterTypesFqNames)
             }
+
+            val type = determineNewExpressionType(methodSymbol, from)
+
             return when (from) {
                 is JKCallExpression -> {
                     JKCallExpressionImpl(
                         methodSymbol,
                         argumentsProvider(from::arguments.detached()),
                         from::typeArgumentList.detached(),
-                        canMoveLambdaOutsideParentheses = canMoveLambdaOutsideParentheses
+                        type,
+                        canMoveLambdaOutsideParentheses
                     )
                 }
 
@@ -131,16 +133,18 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
                     JKCallExpressionImpl(
                         methodSymbol,
                         JKArgumentList(),
-                        JKTypeArgumentList()
+                        JKTypeArgumentList(),
+                        type
                     )
 
-                is JKMethodAccessExpression -> JKMethodAccessExpression(methodSymbol)
+                is JKMethodAccessExpression -> JKMethodAccessExpression(methodSymbol, type)
                 is JKNewExpression ->
                     JKCallExpressionImpl(
                         methodSymbol,
                         argumentsProvider(from::arguments.detached()),
                         JKTypeArgumentList(),
-                        canMoveLambdaOutsideParentheses = canMoveLambdaOutsideParentheses
+                        type,
+                        canMoveLambdaOutsideParentheses
                     )
 
                 else -> error("Bad conversion")
@@ -150,20 +154,12 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
 
     private inner class FieldBuilder(private val fqName: String) : ResultBuilder {
         context(KaSession)
-        override fun build(from: JKExpression): JKExpression =
-            when (from) {
-                is JKCallExpression ->
-                    JKFieldAccessExpression(
-                        symbolProvider.provideFieldSymbol(fqName)
-                    ).withFormattingFrom(from)
-
-                is JKFieldAccessExpression ->
-                    JKFieldAccessExpression(
-                        symbolProvider.provideFieldSymbol(fqName)
-                    ).withFormattingFrom(from)
-
-                else -> error("Bad conversion")
-            }
+        override fun build(from: JKExpression): JKExpression {
+            if (from !is JKCallExpression && from !is JKFieldAccessExpression) error("Bad conversion")
+            val symbol = symbolProvider.provideFieldSymbol(fqName)
+            val type = determineNewExpressionType(symbol, from)
+            return JKFieldAccessExpression(symbol, type).withFormattingFrom(from)
+        }
     }
 
     private inner class ExtensionMethodBuilder(private val fqName: String) : ResultBuilder {
@@ -177,14 +173,19 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
             // since it won't be an argument anymore, but a call receiver.
             ImplicitCastsConversion(context).applyToElement(from)
 
+            val methodSymbol = symbolProvider.provideMethodSymbol(fqName)
             val arguments = from.arguments::arguments.detached()
+            val type = determineNewExpressionType(methodSymbol, from)
+
             return JKQualifiedExpression(
                 arguments.first()::value.detached().parenthesizeIfCompoundExpression(),
                 JKCallExpressionImpl(
-                    symbolProvider.provideMethodSymbol(fqName),
+                    methodSymbol,
                     JKArgumentList(arguments.drop(1)),
-                    from::typeArgumentList.detached()
-                )
+                    from::typeArgumentList.detached(),
+                    type
+                ),
+                type
             ).withFormattingFrom(from)
         }
     }
@@ -200,6 +201,18 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
         is ExtensionMethod -> ExtensionMethodBuilder(to.fqName)
         is CustomExpression -> CustomExpressionBuilder(to.expressionBuilder)
         else -> error("Bad conversion")
+    }
+
+    // Usually, the types of original and replacement expressions should be semantically the same,
+    // but this is not always the case with number types (ex. with java.lang.Math vs. kotlin.math methods)
+    context(KaSession)
+    private fun determineNewExpressionType(newSymbol: JKSymbol, originalExpression: JKExpression): JKType? {
+        val symbolType = when (newSymbol) {
+            is JKMethodSymbol -> newSymbol.returnType
+            is JKFieldSymbol -> newSymbol.fieldType
+            else -> null
+        }
+        return symbolType ?: originalExpression.calculateType(typeFactory)
     }
 }
 

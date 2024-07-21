@@ -3368,6 +3368,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/implicitCasts/extensionFunctionForBuiltins.java");
         }
 
+        @TestMetadata("extensionFunctionForBuiltinsWithCompoundAssignment.java")
+        public void testExtensionFunctionForBuiltinsWithCompoundAssignment() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/implicitCasts/extensionFunctionForBuiltinsWithCompoundAssignment.java");
+        }
+
         @TestMetadata("inConstructorCall.java")
         public void testInConstructorCall() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/implicitCasts/inConstructorCall.java");
