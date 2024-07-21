@@ -530,7 +530,6 @@ f:com.intellij.dvcs.repo.VcsRepositoryManager
 - com.intellij.openapi.Disposable
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:VCS_REPOSITORY_MAPPING_UPDATED:com.intellij.util.messages.Topic
-- <init>(com.intellij.openapi.project.Project):V
 - addExternalRepository(com.intellij.openapi.vfs.VirtualFile,com.intellij.dvcs.repo.Repository):V
 - dispose():V
 - getExternalRepositoryForFile(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository

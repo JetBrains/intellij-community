@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.Topic;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -62,7 +63,7 @@ public final class VcsRepositoryManager implements Disposable {
   private final @NotNull Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
   private final @NotNull Map<String, VirtualFile> myPathToRootMap = CollectionFactory.createFilePathMap();
 
-  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final Alarm updateAlarm;
   private volatile boolean myDisposed;
 
   private final AtomicBoolean myStarted = new AtomicBoolean(false);
@@ -72,16 +73,18 @@ public final class VcsRepositoryManager implements Disposable {
     return Objects.requireNonNull(project.getService(VcsRepositoryManager.class));
   }
 
-  public VcsRepositoryManager(@NotNull Project project) {
+  @ApiStatus.Internal
+  public VcsRepositoryManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    project.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::scheduleUpdate);
+    project.getMessageBus().connect(coroutineScope).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::scheduleUpdate);
 
     EP_NAME.addChangeListener(() -> {
       disposeAllRepositories(false);
       scheduleUpdate();
       BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
     }, this);
+    updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null, null, coroutineScope);
   }
 
   static final class MyStartupActivity implements VcsStartupActivity {
@@ -129,7 +132,7 @@ public final class VcsRepositoryManager implements Disposable {
   private void scheduleUpdate() {
     if (!myStarted.get() || myDisposed) return;
     if (myUpdateScheduled.compareAndSet(false, true)) {
-      myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 100);
+      updateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 100);
     }
   }
 
@@ -137,11 +140,11 @@ public final class VcsRepositoryManager implements Disposable {
   public void ensureUpToDate() {
     if (myStarted.compareAndSet(false, true)) {
       myUpdateScheduled.set(true);
-      myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 0);
+      updateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 0);
     }
 
     CountDownLatch waiter = new CountDownLatch(1);
-    myUpdateAlarm.addRequest(() -> waiter.countDown(), 10);
+    updateAlarm.addRequest(() -> waiter.countDown(), 10);
     awaitWithCheckCanceled(waiter);
   }
 
@@ -430,7 +433,7 @@ public final class VcsRepositoryManager implements Disposable {
   @TestOnly
   public void waitForAsyncTaskCompletion() {
     try {
-      myUpdateAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+      updateAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
     }
     catch (Exception e) {
       LOG.error(e);
