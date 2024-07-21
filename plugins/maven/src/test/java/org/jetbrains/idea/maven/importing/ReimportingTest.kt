@@ -366,13 +366,13 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
 
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
 
-    importProjectAsync()
+    updateAllProjects()
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
 
     updateModulePom("m1", String.format(m1pomTemplate, "1.7"))
 
-    importProjectAsync()
+    updateAllProjects()
     assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule(mn("project", "m1"))))
     assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
   }
