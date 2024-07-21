@@ -28,9 +28,9 @@ import kotlin.test.assertTrue
 @UseK2PluginMode
 @GradleProjectTestApplication
 @AssertKotlinPluginMode
-@TestRoot("gradle/gradle-java/tests.k2")
-@TestDataPath("/")
-@TestMetadata("../../../idea/tests/testData/gradle/findUsages")
+@TestRoot("idea/tests/testData/")
+@TestDataPath("\$CONTENT_ROOT")
+@TestMetadata("../../../idea/tests/testData/gradle/findUsages/")
 class KotlinGradleFindUsagesTest : AbstractGradleCodeInsightTest() {
 
     @ParameterizedTest
