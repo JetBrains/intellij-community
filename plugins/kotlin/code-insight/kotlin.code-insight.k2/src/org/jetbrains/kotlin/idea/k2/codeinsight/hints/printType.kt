@@ -106,17 +106,14 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                 text(".")
             }
             val iterator = type.parameterTypes.iterator()
-            if (iterator.hasNext()) {
-                text("(")
-                while (iterator.hasNext()) {
-                    printKtType(iterator.next())
-                    if (iterator.hasNext()) {
-                        text(", ")
-                    }
+            text("(")
+            while (iterator.hasNext()) {
+                printKtType(iterator.next())
+                if (iterator.hasNext()) {
+                    text(", ")
                 }
-                text(")")
             }
-            text(" -> ")
+            text(") -> ")
             printKtType(type.returnType)
         }
         is KaDynamicType -> {

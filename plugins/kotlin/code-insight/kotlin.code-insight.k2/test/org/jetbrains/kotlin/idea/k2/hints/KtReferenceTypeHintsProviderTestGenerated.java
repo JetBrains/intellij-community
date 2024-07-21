@@ -80,6 +80,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/Destructuring.kt");
     }
 
+    @TestMetadata("EmptyFunctionalType.kt")
+    public void testEmptyFunctionalType() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/EmptyFunctionalType.kt");
+    }
+
     @TestMetadata("EnumEntry.kt")
     public void testEnumEntry() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/EnumEntry.kt");
