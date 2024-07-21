@@ -316,7 +316,7 @@ class MavenProjectResolver(private val myProject: Project) {
     val artifactId = mavenId.artifactId
     val mavenProjects = artifactIdToMavenProjects[artifactId]
     if (mavenProjects == null) {
-      MavenLog.LOG.warn("Maven projects not found for $artifactId")
+      MavenLog.LOG.warn("Maven projects not found for '$artifactId'")
       return
     }
     var mavenProjectCandidate: MavenProject? = null

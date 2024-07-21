@@ -27,19 +27,29 @@ object MavenJDOMUtil {
     if (app == null || app.isDisposed) {
       return null
     }
+
     val text = readAction {
-      if (!file.isValid) return@readAction null
+      if (!file.isValid) {
+        MavenLog.LOG.warn("MavenJDOMUtil.read: file ${file.name} is invalid")
+        return@readAction null
+      }
       try {
         VfsUtilCore.loadText(file)
       }
       catch (e: IOException) {
+        MavenLog.LOG.warn("MavenJDOMUtil.read: file ${file.name} text is not loaded", e)
         e.printStackTrace()
         handler?.onReadError(e)
         null
       }
     }
 
-    return if (text == null) null else doRead(text, handler)
+    if (text == null) {
+      MavenLog.LOG.warn("MavenJDOMUtil.read: file ${file.name} text is null")
+      return null
+    }
+
+    return doRead(text, handler)
   }
 
   @JvmStatic
