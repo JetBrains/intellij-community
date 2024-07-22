@@ -131,8 +131,6 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       // Make sure we don't save the cache that is broken
       val assertConsistencyDuration = measureTime { storage.assertConsistency() }
 
-      val moduleEntities = storage.entities(ModuleEntity::class.java).toList()
-      LOG.info("Saving WSM caches with ${moduleEntities.size} modules [${moduleEntities.joinToString { it.name }}] and entitySources: [${moduleEntities.joinToString { it.entitySource.toString() }}]")
       val (timeMs, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
       WorkspaceModelFusLogger.logCacheSave(timeMs + assertConsistencyDuration.inWholeMilliseconds, size ?: -1)
       if (!(unloadedStorage as EntityStorageInstrumentation).isEmpty()) {
