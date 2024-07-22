@@ -120,7 +120,7 @@ public final class VfsEventsMerger {
             }
           }
           catch (ProcessCanceledException pce) { // todo remove
-            ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
+            ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(new RuntimeException(pce));
             assert false;
           }
         }
