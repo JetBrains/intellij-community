@@ -78,10 +78,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   private fun findExtension(module: Module): PyProjectSdkConfigurationExtension? {
-    return if (!module.project.isTrusted() || ApplicationManager.getApplication().let { it.isHeadlessEnvironment || it.isUnitTestMode }) {
+    return if (!module.project.isTrusted() || ApplicationManager.getApplication().isUnitTestMode) {
       null
     }
-    else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.getIntention(module) != null }
+    else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe {
+      it.getIntention(module) != null && (!ApplicationManager.getApplication().isHeadlessEnvironment || it.supportsHeadlessModel())
+    }
   }
 
   fun configureSdk(
