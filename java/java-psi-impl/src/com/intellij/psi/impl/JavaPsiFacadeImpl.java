@@ -229,8 +229,14 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     //it can be called in dumb mode
     //see com.intellij.psi.impl.JavaPlatformModuleSystem.accessibleFromLoadedModules
     //but in this case it must not be cached!
-    if (DumbService.isDumb(myProject) && DumbUtil.getInstance(myProject).mayUseIndices()) {
-      return javaFileManager.findModules(moduleName, scope);
+    if (DumbService.isDumb(myProject)) {
+      if (DumbUtil.getInstance(myProject).mayUseIndices()) {
+        return javaFileManager.findModules(moduleName, scope);
+      }
+      else {
+        //no options
+        return Collections.emptyList();
+      }
     }
     return CachedValuesManager.getManager(myProject)
       .getCachedValue(myProject, () -> {

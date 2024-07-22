@@ -2,15 +2,25 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiImportStatementStub;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.reference.SoftReference.dereference;
@@ -65,6 +75,31 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
       myRefElement = null;
       return PsiTreeUtil.getChildOfType(this, PsiJavaModuleReferenceElement.class);
     }
+  }
+
+  @Override
+  public @Nullable PsiPackageAccessibilityStatement findImportedPackage(@NotNull String packageName) {
+    PsiImportModuleStatementImpl moduleStatement = this;
+    if (DumbService.isDumb(moduleStatement.getProject())) return null;
+    return CachedValuesManager.getCachedValue(moduleStatement, () -> {
+      Project project = moduleStatement.getProject();
+      Map<String, PsiPackageAccessibilityStatement> packagesByName = new HashMap<>();
+      PsiJavaModule module = resolveTargetModule();
+      if (module == null) {
+        return CachedValueProvider.Result.create(packagesByName,
+                                                 PsiJavaModuleModificationTracker.getInstance(project),
+                                                 ProjectRootModificationTracker.getInstance(project));
+      }
+      List<PsiPackageAccessibilityStatement> packages = JavaResolveUtil.getExportedPackages(module, module);
+      for (PsiPackageAccessibilityStatement aPackage : packages) {
+        String currentPackageName = aPackage.getPackageName();
+        if (currentPackageName == null) continue;
+        packagesByName.put(currentPackageName, aPackage);
+      }
+      return CachedValueProvider.Result.create(packagesByName,
+                                               PsiJavaModuleModificationTracker.getInstance(project),
+                                               ProjectRootModificationTracker.getInstance(project));
+    }).get(packageName);
   }
 
   @Override

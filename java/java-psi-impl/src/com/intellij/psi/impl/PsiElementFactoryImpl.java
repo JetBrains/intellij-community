@@ -457,7 +457,9 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     if (importList == null) throw new IncorrectOperationException("Can't create module with name: " + moduleName);
     PsiImportModuleStatement[] statements = importList.getImportModuleStatements();
     if (statements.length != 1) throw new IncorrectOperationException("Created more than one module with name: " + moduleName);
-    return (PsiImportModuleStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statements[0]);
+    PsiImportModuleStatement statement = statements[0];
+    GeneratedMarkerVisitor.markGenerated(statement);
+    return statement;
   }
 
   @Override
@@ -552,7 +554,8 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
     PsiJavaFile aFile = createDummyJavaFile("import " + aClass.getQualifiedName() + ";");
     PsiImportStatementBase statement = extractImport(aFile, false);
-    return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
+    GeneratedMarkerVisitor.markGenerated(statement);
+    return (PsiImportStatement)statement;
   }
 
   @Override
@@ -566,7 +569,8 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
     PsiJavaFile aFile = createDummyJavaFile("import " + packageName + ".*;");
     PsiImportStatementBase statement = extractImport(aFile, false);
-    return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
+    GeneratedMarkerVisitor.markGenerated(statement);
+    return (PsiImportStatement)statement;
   }
 
   @Override

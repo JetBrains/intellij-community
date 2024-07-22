@@ -336,6 +336,28 @@ public final class JavaResolveUtil {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     if (classHint != null && !classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) return true;
 
+    List<PsiPackageAccessibilityStatement> exports = getExportedPackages(place, module);
+    for (PsiPackageAccessibilityStatement export : exports) {
+      PsiJavaCodeReferenceElement aPackage = export.getPackageReference();
+      if (aPackage == null) continue;
+      PsiElement resolvedPackage = aPackage.resolve();
+      if (!(resolvedPackage instanceof PsiPackage)) continue;
+      if (!resolvedPackage.processDeclarations(processor, state, lastParent, place)) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Retrieves a list of package accessibility statements for a given Java module that
+   * are accessible to the specified place.
+   *
+   * @param place the place from which accessibility is being checked.
+   * @param module the module whose exported packages are to be retrieved.
+   * @return a list of `PsiPackageAccessibilityStatement` elements that represent the exported packages accessible
+   *         to the specified place.
+   */
+  public static List<PsiPackageAccessibilityStatement> getExportedPackages(@NotNull PsiElement place, @NotNull PsiJavaModule module) {
+    List<PsiPackageAccessibilityStatement> results = new ArrayList<>();
     PsiJavaModule currentModule = JavaModuleGraphHelper.getInstance().findDescriptorByElement(place);
     List<PsiPackageAccessibilityStatement> exports = getAllDeclaredExports(module);
     for (PsiPackageAccessibilityStatement export : exports) {
@@ -345,11 +367,9 @@ public final class JavaResolveUtil {
       if (!accessibleModules.isEmpty()) {
         if (currentModule == null || !accessibleModules.contains(currentModule.getName())) continue;
       }
-      PsiElement resolvedPackage = aPackage.resolve();
-      if (!(resolvedPackage instanceof PsiPackage)) continue;
-      if (!resolvedPackage.processDeclarations(processor, state, lastParent, place)) return false;
+      results.add(export);
     }
-    return true;
+    return results;
   }
 
   private static List<PsiPackageAccessibilityStatement> getAllDeclaredExports(@NotNull PsiJavaModule module) {
