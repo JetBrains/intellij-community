@@ -136,20 +136,22 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
   }
 
-  private suspend fun resetEditor(project: Project, infos: List<UsageInfo>) {
+  private suspend fun resetEditor(infos: List<UsageInfo>) {
     val pair: Pair<PsiFile, Document> = readAction {
       val psiElement = infos[0].element ?: return@readAction null
       var psiFile = psiElement.containingFile ?: return@readAction null
+      val project = psiFile.project
       val host = InjectedLanguageManager.getInstance(project).getInjectionHost(psiFile)
       if (host != null) {
         psiFile = host.containingFile ?: return@readAction null
       }
-      val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile) ?: return@readAction null
+      val document = PsiDocumentManager.getInstance(project).getDocument(psiFile) ?: return@readAction null
       psiFile to document
     } ?: return
 
     withContext(Dispatchers.EDT) {
       val (psiFile, document) = pair
+      val project = psiFile.project
 
       if (myEditor == null || document !== myEditor!!.document) {
         releaseEditor()
@@ -281,7 +283,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   }
 
   @RequiresEdt
-  public override fun updateLayoutLater(project: Project, infos: List<UsageInfo>, usageView: UsageView) {
+  public override fun updateLayoutLater(infos: List<UsageInfo>, usageView: UsageView) {
     disposeAndRemoveSimilarUsagesToolbar()
     val usageViewImpl = usageView as? UsageViewImpl
     if (ClusteringSearchSession.isSimilarUsagesClusteringEnabled() && usageViewImpl != null) {
@@ -291,13 +293,13 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         showMostCommonUsagePatterns(usageViewImpl, selectedGroupNodes, sessionInUsageView)
       }
       else {
-        updateLayoutLater(project, infos)
+        updateLayoutLater(infos)
         updateSimilarUsagesToolBar(infos, usageView)
       }
       myPreviousSelectedGroupNodes = selectedGroupNodes
     }
     else {
-      updateLayoutLater(project, infos)
+      updateLayoutLater(infos)
     }
   }
 
@@ -331,16 +333,16 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
   }
 
-  override fun updateLayoutLater(project: Project, infos: List<UsageInfo>?) {
+  override fun updateLayoutLater(infos: List<UsageInfo>?) {
     cs.launch(ModalityState.current().asContextElement()) {
-      previewUsages(project, infos)
+      previewUsages(infos)
     }
   }
 
-  private suspend fun previewUsages(project: Project, infos: List<UsageInfo>?) {
+  private suspend fun previewUsages(infos: List<UsageInfo>?) {
     val cannotPreviewMessage = readAction { cannotPreviewMessage(infos) }
     if (cannotPreviewMessage == null) {
-      resetEditor(project, infos!!)
+      resetEditor(infos!!)
     }
     else {
       withContext(Dispatchers.EDT) {

@@ -71,7 +71,7 @@ public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase 
   }
 
   @Override
-  public void updateLayoutLater(@NotNull Project project, @Nullable final List<? extends UsageInfo> infos) {
+  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
     PsiElement element = ContainerUtil.isEmpty(infos) ? null : getElementToSliceOn(infos);
     if (myBrowser instanceof Disposable) {
       Disposer.dispose((Disposable)myBrowser);
