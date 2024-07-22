@@ -6,9 +6,6 @@ import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.*
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.openapi.editor.event.EditorMouseEventArea
-import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorComponentImpl
@@ -66,16 +63,19 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     original.editor.addEditorMouseListener(object : EditorMouseListener {
       override fun mousePressed(event: EditorMouseEvent) {
         if (!event.isConsumed && event.mouseEvent.button == MouseEvent.BUTTON1) {
-          getEditorPoint(event.mouseEvent)?.let { (_, point) ->
-            val selectedCell = getCellViewByPoint(point)?.cell ?: return
-            if (event.area == EditorMouseEventArea.EDITING_AREA && event.inlay == null) {
-              editor.setMode(NotebookEditorMode.EDIT)
-            }
-            else {
-              editor.setMode(NotebookEditorMode.COMMAND)
-            }
-            mousePressed(selectedCell.interval, event.isCtrlPressed(), event.isShiftPressed())
+          val point = getEditorPoint(event.mouseEvent)?.second ?: return
+
+          val selectedCell = getCellViewByPoint(point)?.cell ?: return
+
+          if (event.area == EditorMouseEventArea.EDITING_AREA && event.inlay == null) {
+            editor.setMode(NotebookEditorMode.EDIT)
           }
+          else {
+            editor.setMode(NotebookEditorMode.COMMAND)
+          }
+          if (event.area != EditorMouseEventArea.EDITING_AREA)
+            mousePressed(selectedCell.interval, event.isCtrlPressed(), event.isShiftPressed())
+
         }
       }
     }, this)
@@ -104,7 +104,8 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
       SwingUtilities.invokeLater {
         try {
           updateSelectionByCarets()
-        } finally {
+        }
+        finally {
           selectionUpdateScheduled.set(false)
         }
       }
