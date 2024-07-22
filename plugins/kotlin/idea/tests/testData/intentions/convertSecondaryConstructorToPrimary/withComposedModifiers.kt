@@ -4,7 +4,7 @@ annotation class AnnProperty
 
 abstract class WithComposedModifiers {
     @AnnProperty
-    open val x: Array<out String>
+    open var x: Array<out String> = emptyArray()
 
     constructor<caret>(@AnnParam vararg x: String) {
         this.x = x

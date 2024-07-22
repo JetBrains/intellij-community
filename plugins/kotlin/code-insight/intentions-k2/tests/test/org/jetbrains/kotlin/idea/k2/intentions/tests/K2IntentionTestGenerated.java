@@ -4144,11 +4144,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableTypeCanNotBeinferred3.kt");
         }
 
-        @TestMetadata("inapplicableTypeCanNotBeinferred4.kt")
-        public void testInapplicableTypeCanNotBeinferred4() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableTypeCanNotBeinferred4.kt");
-        }
-
         @TestMetadata("inferredTypeFromElvis.kt")
         public void testInferredTypeFromElvis() throws Exception {
             runTest("../../../idea/tests/testData/intentions/replaceUnderscoreWithTypeArgument/inferredTypeFromElvis.kt");

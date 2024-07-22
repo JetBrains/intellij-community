@@ -18217,11 +18217,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableTypeCanNotBeinferred3.kt");
         }
 
-        @TestMetadata("inapplicableTypeCanNotBeinferred4.kt")
-        public void testInapplicableTypeCanNotBeinferred4() throws Exception {
-            runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inapplicableTypeCanNotBeinferred4.kt");
-        }
-
         @TestMetadata("inferredTypeFromElvis.kt")
         public void testInferredTypeFromElvis() throws Exception {
             runTest("testData/intentions/replaceUnderscoreWithTypeArgument/inferredTypeFromElvis.kt");
