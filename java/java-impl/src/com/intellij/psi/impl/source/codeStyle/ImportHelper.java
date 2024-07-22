@@ -1008,10 +1008,8 @@ public final class ImportHelper{
 
   static boolean isImplicitlyImported(@Nullable String className, @NotNull PsiJavaFile file) {
     if (className == null) return false;
-    for (String packageName : file.getImplicitlyImportedPackages()) {
-      if (hasPackage(className, packageName)) return true;
-    }
-    return false;
+    ImplicitImportChecker checker = createImplicitImportChecker(file);
+    return checker.isImplicitlyImported(new Import(className, false));
   }
 
   static boolean hasPackage(@NotNull String className, @NotNull String packageName){

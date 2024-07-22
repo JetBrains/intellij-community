@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -51,4 +52,13 @@ public interface PsiImportModuleStatement extends PsiImportStatementBase {
   default boolean isForeignFileImport() {
     return false;
   }
+
+  /**
+   * Finds a package accessibility statement for the specified package name within the current import module statement.
+   *
+   * @param packageName the name of the package to find within the module import statement.
+   * @return the package accessibility statement for the specified package, or null if the package is not found.
+   */
+  @Nullable
+  PsiPackageAccessibilityStatement findImportedPackage(@NonNls String packageName);
 }

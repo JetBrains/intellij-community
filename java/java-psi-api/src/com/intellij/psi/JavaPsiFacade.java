@@ -53,6 +53,8 @@ public abstract class JavaPsiFacade {
 
   /**
    * Searches the scope for Java modules with the given name.
+   * In dumb mode this method returns an empty list.
+   * Supports DumbModeAccessType, in this case the values are not cached
    */
   @NotNull
   public abstract Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
