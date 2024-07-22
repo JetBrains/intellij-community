@@ -6,29 +6,43 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.fileTypes.INativeFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.registry.Registry.Companion.intValue
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.AutoScrollToSourceTaskManager.Companion.getInstance
-import com.intellij.util.Alarm
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
+import java.lang.ref.WeakReference
 import javax.swing.JList
 import javax.swing.JTable
 import javax.swing.JTree
 import javax.swing.SwingUtilities
 
 abstract class AutoScrollToSourceHandler {
-  private val myAutoScrollAlarm = Alarm()
+  private var scheduledNavigationData: WeakReference<Component>? = null
+
+  // access only from EDT
+  private val autoScrollAlarm = lazy(LazyThreadSafetyMode.NONE) {
+    SingleAlarm(
+      task = {
+        val component = scheduledNavigationData?.get() ?: return@SingleAlarm
+        scheduledNavigationData = null
+        // for tests
+        if (component.isShowing && (!needToCheckFocus() || UIUtil.hasFocus(component))) {
+          scrollToSource(component)
+        }
+      },
+      delay = Registry.intValue("ide.autoscroll.to.source.delay", 100),
+    )
+  }
 
   fun install(tree: JTree) {
     object : ClickListener() {
@@ -95,29 +109,22 @@ abstract class AutoScrollToSourceHandler {
   }
 
   fun cancelAllRequests() {
-    myAutoScrollAlarm.cancelAllRequests()
+    if (autoScrollAlarm.isInitialized()) {
+      autoScrollAlarm.value.cancel()
+    }
   }
 
   fun onMouseClicked(component: Component) {
     cancelAllRequests()
     if (isAutoScrollMode()) {
-      ApplicationManager.getApplication().invokeLater { scrollToSource(component) }
+      scrollToSource(component)
     }
   }
 
   private fun onSelectionChanged(component: Component?) {
     if (component != null && component.isShowing && isAutoScrollMode()) {
-      myAutoScrollAlarm.cancelAllRequests()
-      myAutoScrollAlarm.addRequest(
-        {
-          if (component.isShowing) { //for tests
-            if (!needToCheckFocus() || UIUtil.hasFocus(component)) {
-              scrollToSource(component)
-            }
-          }
-        },
-        intValue("ide.autoscroll.to.source.delay", 100)
-      )
+      scheduledNavigationData = WeakReference(component)
+      autoScrollAlarm.value.cancelAndRequest()
     }
   }
 
@@ -139,8 +146,9 @@ abstract class AutoScrollToSourceHandler {
    */
   @ApiStatus.Internal
   open fun isAutoScrollEnabledFor(file: VirtualFile): Boolean {
-    // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
-    // asking to register some file type for this file. This behaviour is undesirable when auto scrolling.
+    // Attempt to navigate to the virtual file with an unknown file type will show a modal dialog
+    // asking to register some file type for this file.
+    // This behavior is undesirable when auto scrolling.
     val type = file.fileType
     if (type === FileTypes.UNKNOWN || type is INativeFileType) {
       return false
@@ -152,7 +160,8 @@ abstract class AutoScrollToSourceHandler {
 
   @RequiresEdt
   protected open fun scrollToSource(tree: Component) {
-    getInstance().scheduleScrollToSource(handler = this, dataContext = DataManager.getInstance().getDataContext(tree))
+    AutoScrollToSourceTaskManager.getInstance()
+      .scheduleScrollToSource(handler = this, dataContext = DataManager.getInstance().getDataContext(tree))
   }
 
   fun createToggleAction(): ToggleAction = AutoscrollToSourceAction(actionName, actionDescription)

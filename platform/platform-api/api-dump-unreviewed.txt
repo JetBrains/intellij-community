@@ -6048,17 +6048,16 @@ a:com.intellij.ui.AutoScrollFromSourceHandler
 - pa:setAutoScrollEnabled(Z):V
 a:com.intellij.ui.AutoScrollToSourceHandler
 - <init>():V
-- cancelAllRequests():V
-- createToggleAction():com.intellij.openapi.actionSystem.ToggleAction
+- f:cancelAllRequests():V
+- f:createToggleAction():com.intellij.openapi.actionSystem.ToggleAction
 - p:getActionDescription():java.lang.String
 - p:getActionName():java.lang.String
-- install(javax.swing.JList):V
-- install(javax.swing.JTable):V
-- install(javax.swing.JTree):V
-- p:isAutoScrollEnabledFor(com.intellij.openapi.vfs.VirtualFile):Z
+- f:install(javax.swing.JList):V
+- f:install(javax.swing.JTable):V
+- f:install(javax.swing.JTree):V
 - pa:isAutoScrollMode():Z
 - p:needToCheckFocus():Z
-- onMouseClicked(java.awt.Component):V
+- f:onMouseClicked(java.awt.Component):V
 - p:scrollToSource(java.awt.Component):V
 - pa:setAutoScrollMode(Z):V
 *:com.intellij.ui.AutoScrollToSourceTaskManager
