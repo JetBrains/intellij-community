@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
@@ -18,6 +18,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -32,9 +33,9 @@ public class VcsDirtyScopeVfsListener implements AsyncVfsEventsListener, Disposa
 
   private boolean myForbid; // for tests only
 
-  public VcsDirtyScopeVfsListener(@NotNull Project project) {
+  public VcsDirtyScopeVfsListener(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
-    AsyncVfsEventsPostProcessor.getInstance().addListener(this, this);
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope);
   }
 
   public static VcsDirtyScopeVfsListener getInstance(@NotNull Project project) {
@@ -90,7 +91,7 @@ public class VcsDirtyScopeVfsListener implements AsyncVfsEventsListener, Disposa
         add(vcsManager, dirtyFilesAndDirs, VcsUtil.getFilePath(((VFileMoveEvent)event).getNewPath(), isDirectory));
       }
       else if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).isRename()) {
-        // if a file was renamed, then the file is dirty and its parent directory is dirty too;
+        // if a file was renamed, then the file is dirty, and its parent directory is dirty too;
         // if a directory was renamed, all its children are recursively dirty, the parent dir is also dirty but not recursively.
         FilePath oldPath = VcsUtil.getFilePath(((VFilePropertyChangeEvent)event).getOldPath(), isDirectory);
         FilePath newPath = VcsUtil.getFilePath(((VFilePropertyChangeEvent)event).getNewPath(), isDirectory);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ignore
 
 import com.intellij.openapi.Disposable
@@ -22,6 +22,7 @@ import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
 
@@ -30,7 +31,7 @@ private val LOG = logger<IgnoreFilesProcessorImpl>()
 /**
  * Automatically generate or update .ignore files basing on [IgnoredFileProvider] extension point.
  */
-class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: Disposable, private val vcs: AbstractVcs)
+internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable, private val vcs: AbstractVcs)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
@@ -39,11 +40,11 @@ class IgnoreFilesProcessorImpl(project: Project, private val parentDisposable: D
 
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
-  fun install() {
+  fun install(coroutineScope: CoroutineScope) {
     runReadAction {
       if (!project.isDisposed) {
-        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
-        AsyncVfsEventsPostProcessor.getInstance().addListener(this, parentDisposable)
+        project.messageBus.connect(coroutineScope).subscribe(ChangeListListener.TOPIC, this)
+        AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
       }
     }
   }

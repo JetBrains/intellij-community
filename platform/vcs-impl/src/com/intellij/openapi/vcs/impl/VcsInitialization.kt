@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.diagnostic.CoroutineTracerShim
@@ -31,13 +31,22 @@ private val EP_NAME = ExtensionPointName<VcsStartupActivity>("com.intellij.vcsSt
  * @see ProjectLevelVcsManager.runAfterInitialization
  * @see ProjectActivity
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
 interface VcsStartupActivity {
   /**
    * @see VcsInitObject.getOrder
    */
   val order: Int
 
-  fun runActivity(project: Project)
+  @Deprecated("Implement execute")
+  fun runActivity(project: Project) {
+    throw AbstractMethodError()
+  }
+
+  suspend fun execute(project: Project) {
+    @Suppress("DEPRECATION")
+    runActivity(project)
+  }
 }
 
 @Service(Service.Level.PROJECT)
@@ -167,9 +176,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
         try {
           CoroutineTracerShim.coroutineTracer.span(activity.javaClass.name) {
             LOG.debug { "running activity: $activity" }
-            blockingContext {
-              activity.runActivity(project)
-            }
+            activity.execute(project)
           }
         }
         catch (e: CancellationException) {
@@ -248,7 +255,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
   private class ProxyVcsStartupActivity(vcsInitObject: VcsInitObject, private val runnable: Runnable) : VcsStartupActivity {
     override val order = vcsInitObject.order
 
-    override fun runActivity(project: Project) {
+    override suspend fun execute(project: Project) {
       runnable.run()
     }
 

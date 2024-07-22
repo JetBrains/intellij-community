@@ -7,11 +7,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -27,11 +27,12 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -42,7 +43,10 @@ import kotlin.concurrent.Volatile
  * extension point in a thread safe way.
  */
 @Service(Service.Level.PROJECT)
-class VcsRepositoryManager @ApiStatus.Internal constructor(private val project: Project, coroutineScope: CoroutineScope) : Disposable {
+class VcsRepositoryManager @ApiStatus.Internal constructor(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : Disposable {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
   private val REPO_LOCK = ReentrantReadWriteLock()
@@ -110,10 +114,10 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(private val project: 
   }
 
   internal class MyStartupActivity : VcsStartupActivity {
-    override fun runActivity(project: Project) {
+    override suspend fun execute(project: Project) {
       // run initial refresh and wait its completion
       // to make sure VcsInitObject.AFTER_COMMON are being run with initialized repositories
-      getInstance(project).ensureUpToDate()
+      project.serviceAsync<VcsRepositoryManager>().ensureUpToDate()
     }
 
     override val order: Int
@@ -155,15 +159,15 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(private val project: 
   }
 
   @ApiStatus.Internal
-  fun ensureUpToDate() {
+  suspend fun ensureUpToDate() {
     if (isStarted.compareAndSet(false, true)) {
       updateScheduled.set(true)
       updateAlarm.addRequest({ checkAndUpdateRepositoryCollection(null) }, 0)
     }
 
-    val waiter = CountDownLatch(1)
-    updateAlarm.addRequest({ waiter.countDown() }, 10)
-    ProgressIndicatorUtils.awaitWithCheckCanceled(waiter)
+    val waiter = CompletableDeferred<Unit>(parent = coroutineScope.coroutineContext.job)
+    updateAlarm.addRequest(request = { waiter.complete(Unit) }, delayMillis = 10)
+    waiter.join()
   }
 
   @RequiresBackgroundThread

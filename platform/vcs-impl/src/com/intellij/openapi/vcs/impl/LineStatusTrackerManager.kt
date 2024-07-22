@@ -19,6 +19,7 @@ import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -66,6 +67,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -76,7 +79,10 @@ import java.nio.charset.Charset
 import java.util.*
 import java.util.function.Supplier
 
-class LineStatusTrackerManager(private val project: Project) : LineStatusTrackerManagerI, Disposable {
+class LineStatusTrackerManager(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : LineStatusTrackerManagerI, Disposable {
   private val LOCK = Any()
   private var isDisposed = false
 
@@ -110,13 +116,13 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     override val order: Int
       get() = VcsInitObject.OTHER_INITIALIZATION.order
 
-    override fun runActivity(project: Project) {
-      getInstanceImpl(project).startListenForEditors()
+    override suspend fun execute(project: Project) {
+      (project.serviceAsync<LineStatusTrackerManagerI>() as LineStatusTrackerManager).startListenForEditors()
     }
   }
 
   private fun startListenForEditors() {
-    val connection = project.messageBus.connect(this)
+    val connection = project.messageBus.connect(coroutineScope)
     connection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
     connection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     connection.subscribe(CommandListener.TOPIC, MyCommandListener())
@@ -125,7 +131,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
     connection.subscribe(VcsBaseContentProviderListener.TOPIC, BaseContentProviderListener())
 
-    ApplicationManager.getApplication().messageBus.connect(this)
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
     LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(Runnable { updateTrackingSettings() }, this)
@@ -133,16 +139,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
     updatePartialChangeListsAvailability()
 
-    AppUIExecutor.onUiThread().expireWith(project).execute {
-      if (project.isDisposed) {
-        return@execute
-      }
+    coroutineScope.launch(Dispatchers.EDT) {
+      ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this@LineStatusTrackerManager)
 
-      ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
+      EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this@LineStatusTrackerManager)
 
-      EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this)
-
-      MyEditorFactoryListener().install(this)
+      MyEditorFactoryListener().install(this@LineStatusTrackerManager)
       onEverythingChanged()
 
       PartialLineStatusTrackerManagerState.restoreState(project)

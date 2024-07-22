@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
@@ -9,6 +9,7 @@ import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -57,8 +58,8 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
     if (state is GitWidgetState.GitVcs) {
       val repo = runWithModalProgressBlocking(project, GitBundle.message("action.Git.Loading.Branches.progress")) {
+        project.serviceAsync<VcsRepositoryManager>().ensureUpToDate()
         coroutineToIndicator {
-          VcsRepositoryManager.getInstance(project).ensureUpToDate()
           GitBranchUtil.guessWidgetRepository(project, event.dataContext)
         }
       }

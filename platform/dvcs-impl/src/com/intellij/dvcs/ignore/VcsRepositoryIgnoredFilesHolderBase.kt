@@ -3,7 +3,7 @@ package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
@@ -19,6 +19,7 @@ import com.intellij.vcsUtil.VcsFileUtilKt.isUnder
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -93,10 +94,13 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  fun setupListeners() {
-    runReadAction {
-      if (repository.project.isDisposed) return@runReadAction
-      AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
+  fun setupListeners(coroutineScope: CoroutineScope) {
+    ApplicationManager.getApplication().runReadAction {
+      if (repository.project.isDisposed) {
+        return@runReadAction
+      }
+
+      AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
       repository.project.messageBus.connect(this).subscribe(ChangeListListener.TOPIC, this)
     }
   }

@@ -22,6 +22,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
@@ -33,10 +34,12 @@ private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 /**
  * Extend [VcsVFSListener] to automatically add/propose to add into VCS files that were created not by IDE (externally created).
  */
-internal class ExternallyAddedFilesProcessorImpl(project: Project,
-                                                 private val parentDisposable: Disposable,
-                                                 private val vcs: AbstractVcs,
-                                                 private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
+internal class ExternallyAddedFilesProcessorImpl(
+  project: Project,
+  parentDisposable: Disposable,
+  private val vcs: AbstractVcs,
+  private val addChosenFiles: (Collection<VirtualFile>) -> Unit,
+)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
@@ -49,11 +52,11 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
 
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
-  fun install() {
+  fun install(coroutineScope: CoroutineScope) {
     runReadAction {
       if (!project.isDisposed) {
-        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
-        AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
+        project.messageBus.connect(coroutineScope).subscribe(ChangeListListener.TOPIC, this)
+        AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
       }
     }
   }

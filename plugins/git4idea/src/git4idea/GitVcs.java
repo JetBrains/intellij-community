@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
@@ -49,6 +49,7 @@ import git4idea.stash.ui.GitStashContentProviderKt;
 import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
 import java.util.Collections;
@@ -72,6 +73,7 @@ public final class GitVcs extends AbstractVcs {
   private static final VcsKey ourKey = createKey(NAME);
 
   private final AtomicReference<Disposable> myDisposable = new AtomicReference<>();
+  @NotNull private final CoroutineScope coroutineScope;
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
@@ -81,8 +83,9 @@ public final class GitVcs extends AbstractVcs {
     return Objects.requireNonNull(gitVcs);
   }
 
-  public GitVcs(@NotNull Project project) {
+  public GitVcs(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     super(project, NAME);
+    this.coroutineScope = coroutineScope;
   }
 
   public ReadWriteLock getCommandLock() {
@@ -203,7 +206,7 @@ public final class GitVcs extends AbstractVcs {
     BackgroundTaskUtil.executeOnPooledThread(disposable, ()
       -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
 
-    myVFSListener = GitVFSListener.createInstance(this, disposable);
+    myVFSListener = GitVFSListener.createInstance(this, disposable, coroutineScope);
     // make sure to read the registry before opening commit dialog
     myProject.getService(VcsUserRegistry.class);
 

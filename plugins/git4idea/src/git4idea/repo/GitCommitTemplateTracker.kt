@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.openapi.Disposable
@@ -24,6 +24,7 @@ import git4idea.commands.Git
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
 import git4idea.config.GitExecutableManager
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -36,7 +37,10 @@ import kotlin.concurrent.write
 private val LOG = logger<GitCommitTemplateTracker>()
 
 @Service(Service.Level.PROJECT)
-internal class GitCommitTemplateTracker(private val project: Project) : GitConfigListener, AsyncVfsEventsListener, Disposable {
+internal class GitCommitTemplateTracker(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+) : GitConfigListener, AsyncVfsEventsListener, Disposable {
   private val commitTemplates = mutableMapOf<GitRepository, GitCommitTemplate>()
   private val TEMPLATES_LOCK = ReentrantReadWriteLock()
 
@@ -44,8 +48,8 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   val initPromise: Promise<Unit> get() = _initPromise
 
   init {
-    project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, this)
-    AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
+    project.messageBus.connect(coroutineScope).subscribe(GitConfigListener.TOPIC, this)
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
   }
 
   fun templatesCount(): Int {

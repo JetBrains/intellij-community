@@ -96,7 +96,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
     if (needRegister) {
       LOG.debug(
         "Project config directory doesn't exist. Register VFS listener and try generate $GITIGNORE after config directory become available.")
-      AsyncVfsEventsPostProcessor.getInstance().addListener(VfsEventsListener(project), this)
+      AsyncVfsEventsPostProcessor.getInstance().addListener(VfsEventsListener(project), coroutineScope)
     }
     return needRegister
   }

@@ -25,6 +25,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.index.GitStageManagerKt;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -36,13 +37,13 @@ import static com.intellij.util.containers.ContainerUtil.map2Map;
 import static git4idea.i18n.GitBundle.message;
 
 public final class GitVFSListener extends VcsVFSListener {
-
-  private GitVFSListener(@NotNull GitVcs vcs) {
-    super(vcs);
+  private GitVFSListener(@NotNull GitVcs vcs, @NotNull CoroutineScope coroutineScope) {
+    super(vcs, coroutineScope);
   }
 
-  public static @NotNull GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull Disposable disposable) {
-    GitVFSListener listener = new GitVFSListener(vcs);
+  public static @NotNull GitVFSListener createInstance(@NotNull GitVcs vcs, @NotNull Disposable disposable,
+                                                       @NotNull CoroutineScope coroutineScope) {
+    GitVFSListener listener = new GitVFSListener(vcs, coroutineScope);
     Disposer.register(disposable, listener);
     listener.installListeners();
     return listener;

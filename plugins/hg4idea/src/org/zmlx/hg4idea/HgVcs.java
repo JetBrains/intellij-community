@@ -39,10 +39,8 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
@@ -64,8 +62,7 @@ import java.util.function.Supplier;
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
-public class HgVcs extends AbstractVcs {
-
+public final class HgVcs extends AbstractVcs {
   @Topic.ProjectLevel
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
 
@@ -90,6 +87,7 @@ public class HgVcs extends AbstractVcs {
   private final HgRollbackEnvironment rollbackEnvironment;
   private final HgDiffProvider diffProvider;
   private final HgHistoryProvider historyProvider;
+  @NotNull private final CoroutineScope coroutineScope;
   private final HgCheckinEnvironment checkinEnvironment;
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
@@ -107,13 +105,14 @@ public class HgVcs extends AbstractVcs {
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
   private @NotNull HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
-  public HgVcs(@NotNull Project project) {
+  public HgVcs(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     super(project, VCS_NAME);
 
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
     historyProvider = new HgHistoryProvider(project);
+    this.coroutineScope = coroutineScope;
     checkinEnvironment = new HgCheckinEnvironment(this);
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
@@ -121,6 +120,11 @@ public class HgVcs extends AbstractVcs {
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor();
     myMqNewExecutor = new HgMQNewExecutor();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return coroutineScope;
   }
 
   @Override
