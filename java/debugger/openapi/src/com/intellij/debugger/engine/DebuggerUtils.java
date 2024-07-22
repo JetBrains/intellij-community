@@ -48,8 +48,17 @@ public abstract class DebuggerUtils {
     "byte", "short", "int", "long", "float", "double", "boolean", "char"
   );
 
+  public enum HowToSwitchToSuspendAll {
+    IMMEDIATE_PAUSE, PAUSE_WAITING_EVALUATION, METHOD_BREAKPOINT, DISABLE
+  }
+
+  public static HowToSwitchToSuspendAll howToSwitchToSuspendAll() {
+    String howToSwitchStr = Registry.get("debugger.how.to.switch.to.suspend.all").getSelectedOption();
+    return HowToSwitchToSuspendAll.valueOf(howToSwitchStr);
+  }
+
   public static boolean isAlwaysSuspendThreadBeforeSwitch() {
-    return Registry.is("debugger.always.suspend.thread.before.switch");
+    return howToSwitchToSuspendAll() != HowToSwitchToSuspendAll.DISABLE;
   }
 
   public static boolean isNewThreadSuspendStateTracking() {
