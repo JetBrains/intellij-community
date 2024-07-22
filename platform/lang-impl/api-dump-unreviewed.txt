@@ -6663,14 +6663,6 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayData
 - f:getTooltip():java.lang.String
 - f:getTree():com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 - hashCode():I
-f:com.intellij.codeInsight.hints.declarative.impl.InlayData$Externalizer
-- com.intellij.util.io.DataExternalizer
-- sf:Companion:com.intellij.codeInsight.hints.declarative.impl.InlayData$Externalizer$Companion
-- <init>():V
-- read(java.io.DataInput):com.intellij.codeInsight.hints.declarative.impl.InlayData
-- save(java.io.DataOutput,com.intellij.codeInsight.hints.declarative.impl.InlayData):V
-- serdeVersion():I
-f:com.intellij.codeInsight.hints.declarative.impl.InlayData$Externalizer$Companion
 f:com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 - <init>(com.intellij.codeInsight.hints.declarative.InlayActionData):V
 - f:getActionData():com.intellij.codeInsight.hints.declarative.InlayActionData
