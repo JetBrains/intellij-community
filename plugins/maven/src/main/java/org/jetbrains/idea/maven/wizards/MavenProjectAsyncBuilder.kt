@@ -55,10 +55,12 @@ class MavenProjectAsyncBuilder {
     commit(project, projectFile, null, true)
   }
 
-  suspend fun commit(project: Project,
-                     projectFile: VirtualFile,
-                     modelsProvider: IdeModifiableModelsProvider?,
-                     syncProject: Boolean): List<Module> = project.trackActivity(MavenActivityKey) {
+  suspend fun commit(
+    project: Project,
+    projectFile: VirtualFile,
+    modelsProvider: IdeModifiableModelsProvider?,
+    syncProject: Boolean,
+  ): List<Module> = project.trackActivity(MavenActivityKey) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
@@ -107,14 +109,16 @@ class MavenProjectAsyncBuilder {
                                   syncProject)
   }
 
-  private suspend fun doCommit(project: Project,
-                               importProjectFile: VirtualFile?,
-                               rootDirectory: Path,
-                               modelsProvider: IdeModifiableModelsProvider?,
-                               previewModule: Module?,
-                               importingSettings: MavenImportingSettings,
-                               generalSettings: MavenGeneralSettings,
-                               syncProject: Boolean): List<Module> {
+  private suspend fun doCommit(
+    project: Project,
+    importProjectFile: VirtualFile?,
+    rootDirectory: Path,
+    modelsProvider: IdeModifiableModelsProvider?,
+    previewModule: Module?,
+    importingSettings: MavenImportingSettings,
+    generalSettings: MavenGeneralSettings,
+    syncProject: Boolean,
+  ): List<Module> {
     MavenAsyncUtil.setupProjectSdk(project)
     val projectsNavigator = MavenProjectsNavigator.getInstance(project)
     if (projectsNavigator != null) projectsNavigator.groupModules = true
@@ -151,6 +155,14 @@ class MavenProjectAsyncBuilder {
       return emptyList()
     }
 
+    val selectedProfiles = getProfilesFromSystemProperties()
+    val manager = MavenProjectsManager.getInstance(project)
+    manager.setIgnoredState(projects, false)
+
+    return manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule, syncProject)
+  }
+
+  private fun getProfilesFromSystemProperties(): MavenExplicitProfiles {
     val selectedProfiles = MavenExplicitProfiles.NONE.clone()
     val enabledProfilesList = System.getProperty("idea.maven.import.enabled.profiles")
     val disabledProfilesList = System.getProperty("idea.maven.import.disabled.profiles")
@@ -158,10 +170,7 @@ class MavenProjectAsyncBuilder {
       appendProfilesFromString(selectedProfiles.enabledProfiles, enabledProfilesList)
       appendProfilesFromString(selectedProfiles.disabledProfiles, disabledProfilesList)
     }
-    val manager = MavenProjectsManager.getInstance(project)
-    manager.setIgnoredState(projects, false)
-
-    return manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule, syncProject)
+    return selectedProfiles
   }
 
   private fun updateMavenSettingsFromEnvironment(
