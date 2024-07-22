@@ -582,7 +582,7 @@ internal class MutableEntityStorageImpl(
           // TODO Why we don't remove old children like in [EntityStorage.updateOneToManyChildrenOfParent]? IDEA-327863
           //    This is probably a bug.
           val parentId = parent.asBase().id.asParent()
-          val childrenIds = newChildren.asSequence().map { it.asBase().id.asChild() }
+          val childrenIds = newChildren.map { it.asBase().id.asChild() }
           childrenIds.forEach { checkCircularDependency(it.id, parentId.id, this) }
           val modifications = refs.replaceOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
           this.createReplaceEventsForUpdates(modifications, connectionId)

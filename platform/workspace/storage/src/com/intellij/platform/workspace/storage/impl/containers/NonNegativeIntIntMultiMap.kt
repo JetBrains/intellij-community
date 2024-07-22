@@ -73,6 +73,12 @@ internal sealed class ImmutableNonNegativeIntIntMultiMap(
         }
       }
     }
+
+    override fun count(): Int {
+      var counter = idx
+      while (values[counter] >= 0) counter++
+      return counter - idx
+    }
   }
 
   override fun equals(other: Any?): Boolean {
@@ -322,6 +328,7 @@ internal sealed class MutableNonNegativeIntIntMultiMap(
 
   private class RwIntSequence(private val values: IntArray) : IntSequence() {
     override fun getIterator(): IntIterator = values.iterator()
+    override fun count(): Int = values.size
   }
 }
 
@@ -341,6 +348,7 @@ internal sealed class NonNegativeIntIntMultiMap {
   abstract class IntSequence {
 
     abstract fun getIterator(): IntIterator
+    abstract fun count(): Int
 
     fun forEach(action: IntConsumer) {
       val iterator = getIterator()
@@ -393,10 +401,13 @@ internal sealed class NonNegativeIntIntMultiMap {
         return value
       }
     }
+
+    override fun count(): Int = 1
   }
 
   protected object EmptyIntSequence : IntSequence() {
     override fun getIterator(): IntIterator = IntArray(0).iterator()
+    override fun count(): Int = 0
 
     override fun <T> map(transformation: IntFunction<T>): Sequence<T> = emptySequence()
   }
