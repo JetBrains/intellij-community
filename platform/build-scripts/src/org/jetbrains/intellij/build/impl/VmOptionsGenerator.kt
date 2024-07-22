@@ -23,6 +23,7 @@ private fun addCommonVmOptions(is21: Boolean): List<String> {
     "-Dkotlinx.coroutines.debug=off",
     "-XX:CICompilerCount=2",
     "-XX:ReservedCodeCacheSize=512m",
+    "-Djava.util.zip.use.nio.for.zip.file.access=true", // IJPL-149160
   )
   if (is21) {
     return common + listOf(

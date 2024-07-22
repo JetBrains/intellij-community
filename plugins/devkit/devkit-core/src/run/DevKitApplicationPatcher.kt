@@ -90,6 +90,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
       vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
+    if (vmParametersAsList.none { it.startsWith("-Djava.util.zip.use.nio.for.zip.file.access") }) {
+      vmParameters.add("-Djava.util.zip.use.nio.for.zip.file.access=true") // IJPL-149160
+    }
 
     enableIjentDefaultFsProvider(project, configuration, vmParameters)
 
