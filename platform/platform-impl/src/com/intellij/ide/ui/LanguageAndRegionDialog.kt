@@ -7,7 +7,8 @@ import com.intellij.ide.LanguageAndRegionBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
 import com.intellij.ide.gdpr.EndUserAgreement
-import com.intellij.ide.ui.localization.statistics.LanguageRegionBeforeEuaStatistics
+import com.intellij.ide.ui.localization.statistics.EventSource
+import com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
@@ -40,7 +41,7 @@ private val languageMapping = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans"), 
 private val regionMapping = mapOf(Region.CHINA to "CN")
 
 private class LanguageAndRegionDialog(private var selectedLanguage: Locale, private var selectedRegion: Region, osLocale: Locale) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
-  private val localizationStatistics = LanguageRegionBeforeEuaStatistics()
+  private val localizationStatistics = LocalizationActionsStatistics().apply { setSource(EventSource.PRE_EUA_DIALOG) }
 
   init {
     isResizable = false
