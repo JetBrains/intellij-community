@@ -156,6 +156,7 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
   val path = when (intent) {
     is DownloadJdk -> intent.task.plannedHomeDir
     is ExistingJdk -> intent.jdk.homePath
+    is DetectedJdk -> intent.home
     else -> null
   }
 
