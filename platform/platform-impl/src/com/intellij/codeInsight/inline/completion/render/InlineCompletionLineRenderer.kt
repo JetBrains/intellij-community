@@ -52,14 +52,14 @@ open class InlineCompletionLineRenderer(
     return maxOf(1, result)
   }
 
-  protected open fun paintBackground(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle) {}
+  protected open fun beforePaint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle) {}
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     if (blocks.isEmpty()) {
       return
     }
 
-    paintBackground(inlay, g, targetRegion)
+    beforePaint(inlay, g, targetRegion)
 
     val previousRenderingHint = (g as Graphics2D).getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
@@ -79,7 +79,7 @@ open class InlineCompletionLineRenderer(
       val topY = targetRegion.y
       val bottomY = topY + editor.ascent
 
-      paintBackground(g, block.attributes.backgroundColor, x, topY.toDouble(), textWidth, textHeight)
+      beforePaint(g, block.attributes.backgroundColor, x, topY.toDouble(), textWidth, textHeight)
       paintEffect(g, block.attributes.effectColor, block.attributes.effectType, x, bottomY.toDouble(), textWidth)
 
       g.color = block.attributes.foregroundColor
@@ -90,7 +90,7 @@ open class InlineCompletionLineRenderer(
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, previousRenderingHint)
   }
 
-  private fun paintBackground(
+  private fun beforePaint(
     g: Graphics2D,
     color: Color?,
     x: Double,
