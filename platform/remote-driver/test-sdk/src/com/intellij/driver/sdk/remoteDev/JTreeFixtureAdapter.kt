@@ -5,13 +5,12 @@ import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.ui.components.JTreeFixtureRef
 import com.intellij.driver.sdk.ui.components.JTreeUiComponent
 import com.intellij.driver.sdk.ui.remote.Robot
-import com.intellij.driver.sdk.ui.xQuery
 import javax.swing.JTree
 
 class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
   BeControlComponentBase(component.driver, component.frontendComponent, component.backendComponent),
   JTreeFixtureRef {
-  val fixture = onFrontend(xQuery { byType(JTree::class.java.name) }, JTreeUiComponent::class).fixture
+  val fixture = onFrontend(JTreeUiComponent::class) { byType(JTree::class.java.name) }.fixture
 
   override fun clickRow(row: Int): JTreeFixtureRef {
     fixture.clickRow(row)
