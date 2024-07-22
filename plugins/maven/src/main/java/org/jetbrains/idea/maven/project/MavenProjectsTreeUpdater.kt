@@ -18,13 +18,15 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
-internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
-                                        private val explicitProfiles: MavenExplicitProfiles,
-                                        private val updateContext: MavenProjectsTreeUpdateContext,
-                                        private val reader: MavenProjectReader,
-                                        private val generalSettings: MavenGeneralSettings,
-                                        private val process: RawProgressReporter?,
-                                        private val updateModules: Boolean) {
+internal class MavenProjectsTreeUpdater(
+  private val tree: MavenProjectsTree,
+  private val explicitProfiles: MavenExplicitProfiles,
+  private val updateContext: MavenProjectsTreeUpdateContext,
+  private val reader: MavenProjectReader,
+  private val generalSettings: MavenGeneralSettings,
+  private val process: RawProgressReporter?,
+  private val updateModules: Boolean,
+) {
   private val updated = ConcurrentHashMap<VirtualFile, Boolean>()
   private val createdMavenProjects = ConcurrentHashMap<VirtualFile, MavenProject>()
   private val userSettingsFile = generalSettings.effectiveUserSettingsIoFile
