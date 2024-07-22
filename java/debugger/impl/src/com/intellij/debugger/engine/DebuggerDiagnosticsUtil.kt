@@ -148,7 +148,7 @@ object DebuggerDiagnosticsUtil {
     }
 
     if (problems.isNotEmpty()) {
-      process.logError("Found ${problems.size} problems", Attachment("Problems", problems.joinToString(separator = "\n")))
+      process.logError("Found ${problems.size} problems", Attachment("Problems.txt", problems.joinToString(separator = "\n")))
     }
   }
 
@@ -185,7 +185,7 @@ object DebuggerDiagnosticsUtil {
   @JvmStatic
   private fun createStateAttachments(process: DebugProcessImpl) : List<Attachment> {
     if (recursionTracker.get() == true) {
-      return listOf(Attachment("Recursion problem detected, just thread dump", noErr { ThreadDumper.dumpThreadsToString() }))
+      return listOf(Attachment("Recursion_problem_detected_Just_dump.txt", noErr { ThreadDumper.dumpThreadsToString() }))
     }
     else {
       try {
@@ -196,7 +196,7 @@ object DebuggerDiagnosticsUtil {
           if (process.isAttached) {
             add(createThreadsAttachment(process))
           }
-          add(Attachment("IDE thread dump", noErr { ThreadDumper.dumpThreadsToString() }))
+          add(Attachment("IDE_thread_dump.txt", noErr { ThreadDumper.dumpThreadsToString() }))
           addAll(process.suspendManager.eventContexts.map { it.toAttachment() })
         }
       }
@@ -223,7 +223,7 @@ object DebuggerDiagnosticsUtil {
         "old invocation watcher is using"
       }
     } else "no suspend-all invocation watcher is activated"
-    return Attachment("Application threads state", "$vmModelCount\n$blockedThreadsInfo\n$threads")
+    return Attachment("Application_threads_state.txt", "$vmModelCount\n$blockedThreadsInfo\n$threads")
   }
 
   @JvmStatic
@@ -241,7 +241,7 @@ object DebuggerDiagnosticsUtil {
                   currentSuspendContextText +
                   noErr { process.stateForDiagnostics } +
                   noErr { (suspendManager as SuspendManagerImpl).stateForDiagnostics }
-    return Attachment("Debugger state overview", content)
+    return Attachment("Debugger_state_overview.txt", content)
   }
 
   @JvmStatic
