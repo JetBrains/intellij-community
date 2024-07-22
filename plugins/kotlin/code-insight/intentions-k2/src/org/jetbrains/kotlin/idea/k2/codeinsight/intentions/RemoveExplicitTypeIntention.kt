@@ -133,6 +133,16 @@ internal class RemoveExplicitTypeIntention :
         is KtLambdaExpression -> isLambdaExpressionTypeContextIndependent(initializer, typeReference)
         is KtNamedFunction -> isAnonymousFunctionTypeContextIndependent(initializer, typeReference)
         is KtSimpleNameExpression, is KtBinaryExpression -> true
+        is KtIfExpression -> {
+            val type = typeReference.type
+            val thenType = initializer.then?.expressionType
+            val elseType = initializer.`else`?.expressionType
+            type == thenType && type == elseType
+        }
+        is KtWhenExpression -> {
+            val type = typeReference.type
+            initializer.entries.all { it.expression?.expressionType == type }
+        }
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
         else -> initializer.evaluate() != null
