@@ -1271,6 +1271,8 @@ open class FileEditorManagerImpl(
       window.owner.afterFileOpen(file)
     }
 
+    selectionHistory.addRecord(file to window)
+
     // update frame and tab title
     scheduleUpdateFileName(file)
     return composite
@@ -2211,6 +2213,7 @@ open class FileEditorManagerImpl(
     for (tab in tabs) {
       val composite = tab.composite
       splitters.afterFileOpen(file = composite.file)
+      selectionHistory.addRecord(composite.file to window)
 
       composite.coroutineScope.launch {
         val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(composite.project, composite.file) }
@@ -2220,6 +2223,10 @@ open class FileEditorManagerImpl(
       }
 
       window.watchForTabActions(composite = composite, tab = tab)
+    }
+
+    items.firstOrNull { it.fileEntry.currentInTab }?.let {
+      selectionHistory.addRecord(it.file to window)
     }
   }
 
