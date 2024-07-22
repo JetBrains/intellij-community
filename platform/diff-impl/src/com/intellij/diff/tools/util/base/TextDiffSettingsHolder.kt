@@ -30,7 +30,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var CONTEXT_RANGE: Int = 4,
 
     var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false,
-    var MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS: Boolean = true,
+    var MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS: Boolean = false,
     var MERGE_LST_GUTTER_MARKERS: Boolean = true,
     var ENABLE_ALIGNING_CHANGES_MODE: Boolean = false
   ) {
