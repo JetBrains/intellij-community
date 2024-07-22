@@ -10,11 +10,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.history.VcsDiffUtil
 
 internal class ShowCombinedDiffAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
@@ -39,9 +37,7 @@ internal class ShowCombinedDiffAction : DumbAwareAction() {
   companion object {
     fun showDiff(project: Project, changes: List<Change>) {
       val producers: List<CombinedBlockProducer> = changes.mapNotNull {
-        val changeContext = mutableMapOf<Key<out Any>, Any?>()
-        VcsDiffUtil.putFilePathsIntoChangeContext(it, changeContext)
-        val producer = ChangeDiffRequestProducer.create(project, it, changeContext) ?: return@mapNotNull null
+        val producer = ChangeDiffRequestProducer.create(project, it) ?: return@mapNotNull null
         val id = CombinedPathBlockId(producer.filePath, it.fileStatus)
         CombinedBlockProducer(id, producer)
       }

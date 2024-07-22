@@ -632,6 +632,11 @@ a:com.intellij.diff.impl.DiffWindowBase
 - a:getTools():java.util.List
 - a:onSelected(com.intellij.openapi.project.Project,com.intellij.diff.DiffTool):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.diff.impl.ui.FilePathDiffTitleCustomizer
+- com.intellij.diff.DiffEditorTitleCustomizer
+- <init>(java.lang.String,java.lang.String,javax.swing.JComponent):V
+- b:<init>(java.lang.String,java.lang.String,javax.swing.JComponent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getLabel():javax.swing.JComponent
 com.intellij.diff.lang.DiffIgnoredRangeProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:accepts(com.intellij.openapi.project.Project,com.intellij.diff.contents.DiffContent):Z
@@ -2734,6 +2739,7 @@ f:com.intellij.diff.util.DiffUtil
 - s:addActionBlock(com.intellij.openapi.actionSystem.DefaultActionGroup,java.util.List,Z):V
 - s:addActionBlock(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.AnAction[]):V
 - s:addNotification(com.intellij.diff.util.DiffNotificationProvider,com.intellij.openapi.util.UserDataHolder):V
+- s:addTitleCustomizers(com.intellij.diff.requests.DiffRequest,java.util.List):com.intellij.diff.requests.DiffRequest
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,com.intellij.openapi.editor.Document,I,I):V
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,java.util.List):V
 - s:applyModification(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,java.util.List):java.lang.String

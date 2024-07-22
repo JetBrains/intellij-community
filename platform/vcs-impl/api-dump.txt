@@ -2157,6 +2157,7 @@ f:com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 - getProject():com.intellij.openapi.project.Project
 - s:getRequestTitle(com.intellij.openapi.vcs.changes.Change):java.lang.String
 - s:getRevisionTitle(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):java.lang.String
+- s:getRevisionTitleOrEmpty(com.intellij.openapi.vcs.changes.ContentRevision):java.lang.String
 - s:getServerVersion():java.lang.String
 - getTag():com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
 - s:getYourVersion():java.lang.String
@@ -5986,6 +5987,24 @@ pa:com.intellij.openapi.vcs.history.BaseDiffFromHistoryHandler$CollectChangesTas
 - a:getDialogTitle():java.lang.String
 - onSuccess():V
 - run(com.intellij.openapi.progress.ProgressIndicator):V
+f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
+- sf:INSTANCE:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
+- sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle):java.util.List
+- sf:getTitleCustomizers(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle):java.util.List
+f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
+- sf:Companion:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle$Companion
+- <init>(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):V
+- f:component1():com.intellij.openapi.vcs.changes.ContentRevision
+- f:component2():java.lang.String
+- f:copy(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
+- bs:copy$default(com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle,com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String,I,java.lang.Object):com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
+- sf:create(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
+- equals(java.lang.Object):Z
+- f:getRevision():com.intellij.openapi.vcs.changes.ContentRevision
+- f:getTitle():java.lang.String
+- hashCode():I
+f:com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle$Companion
+- f:create(com.intellij.openapi.vcs.changes.ContentRevision,java.lang.String):com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer$RevisionWithTitle
 f:com.intellij.openapi.vcs.history.FileHistoryPanelImpl
 - javax.swing.JPanel
 - com.intellij.ide.CopyProvider
