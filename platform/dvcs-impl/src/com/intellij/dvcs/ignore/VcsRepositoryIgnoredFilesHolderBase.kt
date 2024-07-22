@@ -20,12 +20,14 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<VcsRepositoryIgnoredFilesHolderBase<*>>()
 
@@ -80,14 +82,18 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
     }
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    if (scanTurnedOff()) return
+  override suspend fun filesChanged(events: List<VFileEvent>) {
+    if (scanTurnedOff()) {
+      return
+    }
 
     val affectedFiles = events
       .flatMap(::getAffectedFilePaths)
       .asSequence()
       .filter { repository.root == VcsUtil.getVcsRootFor(repository.project, it) }
       .toList()
+
+    coroutineContext.ensureActive()
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.addAll(affectedFiles)
@@ -241,8 +247,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   }
 
   companion object {
-    @JvmStatic
-    fun getAffectedFilePaths(event: VFileEvent): Set<FilePath> {
+    internal fun getAffectedFilePaths(event: VFileEvent): Set<FilePath> {
       if (event is VFileContentChangeEvent) return emptySet()
 
       val affectedFilePaths = HashSet<FilePath>(2)

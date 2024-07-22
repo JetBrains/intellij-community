@@ -39,7 +39,7 @@ import java.util.*;
 public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsDirtyScopeManagerImpl.class);
 
-  private final Project myProject;
+  private final Project project;
 
   @NotNull private DirtBuilder myDirtBuilder = new DirtBuilder();
   @Nullable private DirtBuilder myDirtInProgress;
@@ -54,9 +54,9 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   }
 
   public VcsDirtyScopeManagerImpl(@NotNull Project project) {
-    myProject = project;
+    this.project = project;
 
-    MessageBusConnection busConnection = myProject.getMessageBus().connect();
+    MessageBusConnection busConnection = this.project.getMessageBus().connect();
     busConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
@@ -67,7 +67,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         // Event does not allow to listen for 'getIgnoredFilesList' changes directly, listen for all generic events instead.
         boolean isGenericEvent = event.getAddedFileType() == null && event.getRemovedFileType() == null;
         if (isGenericEvent) {
-          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.nonModal(), myProject.getDisposed());
+          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.nonModal(), VcsDirtyScopeManagerImpl.this.project.getDisposed());
         }
       }
     });
@@ -77,7 +77,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         @Override
         public void rootsChanged(@NotNull ModuleRootEvent event) {
           // 'ProjectLevelVcsManager.getVcsFor' depends on excluded roots via 'ProjectLevelVcsManager.isIgnored'
-          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.nonModal(), myProject.getDisposed());
+          ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.nonModal(), VcsDirtyScopeManagerImpl.this.project.getDisposed());
         }
       });
       //busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
@@ -92,12 +92,12 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
   private void startListenForChanges() {
     ReadAction.run(() -> {
-      boolean ready = !myProject.isDisposed() && myProject.isOpen();
+      boolean ready = !project.isDisposed() && project.isOpen();
       synchronized (LOCK) {
         myReady = ready;
       }
       if (ready) {
-        VcsDirtyScopeVfsListener.install(myProject);
+        project.getService(VcsDirtyScopeVfsListener.class);
         markEverythingDirty();
       }
     });
@@ -105,7 +105,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
   @Override
   public void markEverythingDirty() {
-    if ((!myProject.isOpen()) || myProject.isDisposed() || getVcsManager(myProject).getAllActiveVcss().length == 0) {
+    if ((!project.isOpen()) || project.isDisposed() || getVcsManager(project).getAllActiveVcss().length == 0) {
       return;
     }
 
@@ -124,7 +124,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     if (wasReady) {
-      ChangeListManagerImpl.getInstanceImpl(myProject).scheduleUpdateImpl();
+      ChangeListManagerImpl.getInstanceImpl(project).scheduleUpdateImpl();
       if (ongoingRefresh != null) ongoingRefresh.setRejected();
     }
   }
@@ -144,7 +144,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       return Collections.emptyMap();
     }
 
-    ProjectLevelVcsManager vcsManager = getVcsManager(myProject);
+    ProjectLevelVcsManager vcsManager = getVcsManager(project);
     Map<VcsRoot, Set<FilePath>> map = new HashMap<>();
     for (FilePath path : from) {
       VcsRoot vcsRoot = vcsManager.getVcsRootObjectFor(path);
@@ -187,7 +187,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     }
 
     if (hasSomethingDirty) {
-      ChangeListManagerImpl.getInstanceImpl(myProject).scheduleUpdateImpl();
+      ChangeListManagerImpl.getInstanceImpl(project).scheduleUpdateImpl();
     }
   }
 
@@ -270,7 +270,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   @NotNull
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt, @NotNull ActionCallback callback) {
     boolean isEverythingDirty = dirt.isEverythingDirty();
-    List<VcsModifiableDirtyScope> scopes = dirt.buildScopes(myProject);
+    List<VcsModifiableDirtyScope> scopes = dirt.buildScopes(project);
     return new VcsInvalidated(scopes, isEverythingDirty, callback);
   }
 

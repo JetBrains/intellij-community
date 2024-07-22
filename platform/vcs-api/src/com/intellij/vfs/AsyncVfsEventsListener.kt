@@ -18,10 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface AsyncVfsEventsListener {
   /**
-   * Invoked after the given events were applied to the VFS. <br></br><br></br>
-   *
-   * The call happens on a pooled thread, under a special [ProgressIndicator] which is canceled on project disposal,
-   * thus one can call `ProgressManager.checkCancelled()` to cancel the background task when the project is disposed.
+   * Invoked after the given events were applied to the VFS.
    */
-  fun filesChanged(events: List<VFileEvent>)
+  suspend fun filesChanged(events: List<VFileEvent>)
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -53,10 +54,8 @@ private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
     }
 
     val completableDeferred = CompletableDeferred<Unit>()
-    blockingContext {
-      ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-        completableDeferred.complete(Unit)
-      }
+    project.serviceAsync<ProjectLevelVcsManager>().runAfterInitialization {
+      completableDeferred.complete(Unit)
     }
     completableDeferred.join()
     project.service<GitIgnoreInStoreDirGenerator>().run()
@@ -102,7 +101,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
   }
 
   private inner class VfsEventsListener(private val project: Project) : AsyncVfsEventsListener {
-    override fun filesChanged(events: List<VFileEvent>) {
+    override suspend fun filesChanged(events: List<VFileEvent>) {
       if (!needGenerate.get() || project.isDisposed) {
         return
       }
@@ -162,9 +161,11 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
     }
   }
 
-  private fun skipGeneration(project: Project,
-                             projectConfigDirVFile: VirtualFile,
-                             projectConfigDirPath: Path): Boolean {
+  private fun skipGeneration(
+    project: Project,
+    projectConfigDirVFile: VirtualFile,
+    projectConfigDirPath: Path,
+  ): Boolean {
     return when {
       !needGenerateInternalIgnoreFile(project, projectConfigDirVFile) -> {
         needGenerate.set(false)

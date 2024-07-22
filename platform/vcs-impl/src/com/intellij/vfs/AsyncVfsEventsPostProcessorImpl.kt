@@ -3,7 +3,6 @@ package com.intellij.vfs
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -13,6 +12,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<AsyncVfsEventsPostProcessorImpl>()
 
@@ -58,12 +58,10 @@ class AsyncVfsEventsPostProcessorImpl(coroutineScope: CoroutineScope) : AsyncVfs
   @RequiresBackgroundThread
   private suspend fun processEvents(events: List<VFileEvent>) {
     for ((listener, listenerScope) in listeners) {
+      coroutineContext.ensureActive()
       listenerScope.launch(Dispatchers.IO) {
         try {
           listener.filesChanged(events)
-        }
-        catch (_: ProcessCanceledException) {
-          // move to the next task
         }
         catch (e: CancellationException) {
           throw e

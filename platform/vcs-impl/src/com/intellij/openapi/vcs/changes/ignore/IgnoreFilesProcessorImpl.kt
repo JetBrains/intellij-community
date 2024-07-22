@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ignore
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -23,8 +24,11 @@ import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
+import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
@@ -79,11 +83,12 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
     return files - filesInConfigDir
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
+  override suspend fun filesChanged(events: List<VFileEvent>) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
 
-    val potentiallyIgnoredFiles =
-      events.asSequence()
+    val potentiallyIgnoredFiles = events.asSequence()
         .filter {
           val filePath = getAffectedFilePath(it)
           filePath != null && vcsIgnoreManager.isPotentiallyIgnoredFile(filePath)
@@ -91,8 +96,13 @@ internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disp
         .mapNotNull { it.file }
         .toList()
 
-    if (potentiallyIgnoredFiles.isEmpty()) return
-    LOG.debug("Got potentially ignored files from VFS events", potentiallyIgnoredFiles)
+    if (potentiallyIgnoredFiles.isEmpty()) {
+      return
+    }
+
+    LOG.debug { "Got potentially ignored files from VFS events $potentiallyIgnoredFiles" }
+
+    coroutineContext.job.ensureActive()
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.addAll(potentiallyIgnoredFiles)

@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
@@ -25,6 +24,7 @@ import git4idea.config.GitConfigUtil
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
 import git4idea.config.GitExecutableManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -33,6 +33,7 @@ import java.io.IOException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<GitCommitTemplateTracker>()
 
@@ -84,10 +85,12 @@ internal class GitCommitTemplateTracker(
     trackCommitTemplate(repository)
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    if (TEMPLATES_LOCK.read { commitTemplates.isEmpty() }) return
+  override suspend fun filesChanged(events: List<VFileEvent>) {
+    if (TEMPLATES_LOCK.read { commitTemplates.isEmpty() }) {
+      return
+    }
 
-    BackgroundTaskUtil.runUnderDisposeAwareIndicator(this) { processEvents(events) }
+    processEvents(events)
   }
 
   @VisibleForTesting
@@ -103,15 +106,15 @@ internal class GitCommitTemplateTracker(
     }
   }
 
-  private fun processEvents(events: List<VFileEvent>) {
+  private suspend fun processEvents(events: List<VFileEvent>) {
     val allTemplates = TEMPLATES_LOCK.read { commitTemplates.toMap() }
     if (allTemplates.isEmpty()) return
 
     for (event in events) {
-      ProgressManager.checkCanceled()
+      coroutineContext.ensureActive()
 
       for ((repository, template) in allTemplates) {
-        ProgressManager.checkCanceled()
+        coroutineContext.ensureActive()
         val watchedTemplatePath = template.watchedRoot.rootPath
 
         var templateChanged = false

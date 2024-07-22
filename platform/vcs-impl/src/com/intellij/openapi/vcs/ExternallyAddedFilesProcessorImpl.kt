@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -39,9 +40,7 @@ internal class ExternallyAddedFilesProcessorImpl(
   parentDisposable: Disposable,
   private val vcs: AbstractVcs,
   private val addChosenFiles: (Collection<VirtualFile>) -> Unit,
-)
-  : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
-
+) : FilesProcessorWithNotificationImpl(project, parentDisposable), FilesProcessor, AsyncVfsEventsListener, ChangeListListener {
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
 
   private val queue = QueueProcessor<Collection<VirtualFile>> { files -> processFiles(files) }
@@ -82,23 +81,28 @@ internal class ExternallyAddedFilesProcessorImpl(
     }
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    if (!needProcessExternalFiles()) return
+  override suspend fun filesChanged(events: List<VFileEvent>) {
+    if (!needProcessExternalFiles()) {
+      return
+    }
 
-    LOG.debug("Got events", events)
+    LOG.debug { "Got events $events" }
+
+    if (events.isEmpty()) {
+      return
+    }
+
     val configDir = project.getProjectConfigDir()
-    val externallyAddedFiles =
-      events.asSequence()
-        .filter {
-          it.isFromRefresh &&
-          it is VFileCreateEvent &&
-          !isProjectConfigDirOrUnderIt(configDir, it.parent)
-        }
-        .mapNotNull(VFileEvent::getFile)
-        .toList()
+    val externallyAddedFiles = events.asSequence()
+      .filter { it.isFromRefresh && it is VFileCreateEvent && !isProjectConfigDirOrUnderIt(configDir, it.parent) }
+      .mapNotNull(VFileEvent::getFile)
+      .toList()
 
-    if (externallyAddedFiles.isEmpty()) return
-    LOG.debug("Got external files from VFS events", externallyAddedFiles)
+    if (externallyAddedFiles.isEmpty()) {
+      return
+    }
+
+    LOG.debug { "Got external files from VFS events $externallyAddedFiles" }
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.addAll(externallyAddedFiles)
@@ -145,9 +149,10 @@ internal class ExternallyAddedFilesProcessorImpl(
     VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY = isEnabled
   }
 
-  override fun needDoForCurrentProject() =
-    vcsManager.getStandardConfirmation(ADD, vcs).value == DO_ACTION_SILENTLY
-    && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY
+  override fun needDoForCurrentProject(): Boolean {
+    return (vcsManager.getStandardConfirmation(ADD, vcs).value == DO_ACTION_SILENTLY
+            && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY)
+  }
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
     val parents = files.toHashSet()
@@ -160,8 +165,9 @@ internal class ExternallyAddedFilesProcessorImpl(
 
   private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 
-  private fun isProjectConfigDirOrUnderIt(configDir: VirtualFile?, file: VirtualFile) =
-    configDir != null && VfsUtilCore.isAncestor(configDir, file, false)
+  private fun isProjectConfigDirOrUnderIt(configDir: VirtualFile?, file: VirtualFile): Boolean {
+    return configDir != null && VfsUtilCore.isAncestor(configDir, file, false)
+  }
 
   private fun Project.getProjectConfigDir(): VirtualFile? {
     if (!isDirectoryBased || isDefault) return null
