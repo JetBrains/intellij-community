@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
@@ -19,7 +18,9 @@ import org.jetbrains.idea.devkit.run.loadProductInfo
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
 import java.io.File
+import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 internal enum class ApiSourceArchive(
@@ -176,7 +177,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         val sourceArtifactNotation = "$productCoordinates:$version:sources"
 
         GradleDependencySourceDownloader
-          .downloadSources(project, name, sourceArtifactNotation, Path.of(externalProjectPath)
+          .downloadSources(project, name, sourceArtifactNotation, Path(externalProjectPath)
           ).whenComplete { path, error ->
             if (error != null) {
               executionResult.reject(error.message)
