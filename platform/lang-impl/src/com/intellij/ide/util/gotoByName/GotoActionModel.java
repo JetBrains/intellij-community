@@ -381,7 +381,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   public @Nls @NotNull String getGroupName(@NotNull OptionDescription description) {
     if (description instanceof RegistryTextOptionDescriptor) return LangBundle.message("group.registry");
     String groupName = description.getGroupName();
-    String settings = SystemInfo.isMac ? LangBundle.message("group.preferences") : LangBundle.message("group.settings");
+    String settings = LangBundle.message("group.settings");
     if (groupName == null || groupName.equals(description.getHit())) return settings;
     return settings + " > " + groupName;
   }
