@@ -638,7 +638,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addInstruction(PushValueInstruction(DfTypes.typedObject(PsiTypes.charType(), Nullability.UNKNOWN), anchor))
                     }
 
-                    kotlinType.isSubTypeOf(StandardClassIds.List) -> {
+                    kotlinType?.isSubtypeOf(StandardClassIds.List) == true -> {
                         if (indexType.canBeNull()) {
                             addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                         }
@@ -672,11 +672,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         // process a[b] = c like a call with arguments a, b, c.
         addCall(parent as KtExpression, 3)
     }
-
-    context(KaSession)
-    private fun KaType?.isSubTypeOf(wantedType: ClassId) =
-        this is KaClassType && classId == wantedType ||
-        this != null && allSupertypes.any { type -> type is KaClassType && type.classId == wantedType }
 
     context(KaSession)
     private fun processMathExpression(expr: KtBinaryExpression, mathOp: LongRangeBinOp) {
@@ -1142,7 +1137,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                             val dfVar = KtVariableDescriptor.createFromSimpleName(factory, receiver)
                             if (dfVar != null) {
                                 val sf = when {
-                                    kotlinType.isSubTypeOf(StandardClassIds.Collection) -> SpecialField.COLLECTION_SIZE
+                                    kotlinType.isSubtypeOf(StandardClassIds.Collection) -> SpecialField.COLLECTION_SIZE
                                     kotlinType.isArrayOrPrimitiveArray -> SpecialField.ARRAY_LENGTH
                                     else -> null
                                 }
@@ -1220,8 +1215,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return when {
             type.isEnum() -> SpecialField.ENUM_ORDINAL
             type.isArrayOrPrimitiveArray -> SpecialField.ARRAY_LENGTH
-            type.isSubTypeOf(StandardClassIds.Collection) ||
-                    type.isSubTypeOf(StandardClassIds.Map) -> SpecialField.COLLECTION_SIZE
+            type.isSubtypeOf(StandardClassIds.Collection) ||
+                    type.isSubtypeOf(StandardClassIds.Map) -> SpecialField.COLLECTION_SIZE
 
             type.isStringType -> SpecialField.STRING_LENGTH
             else -> null
@@ -1413,7 +1408,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun pushJavaClassField(receiver: KtExpression, selector: KtExpression?, expr: KtQualifiedExpression): Boolean {
         if (selector == null || !selector.textMatches("java")) return false
-        if (!receiver.getKotlinType().isSubTypeOf(StandardClassIds.KClass)) return false
+        if (receiver.getKotlinType()?.isSubtypeOf(StandardClassIds.KClass) != true) return false
         val kotlinType = expr.getKotlinType() ?: return false
         val classType = TypeConstraint.fromDfType(kotlinType.toDfType())
         if (!classType.isExact(CommonClassNames.JAVA_LANG_CLASS)) return false
