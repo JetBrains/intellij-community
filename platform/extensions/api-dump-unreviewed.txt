@@ -123,6 +123,7 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - sf:Companion:com.intellij.openapi.extensions.ExtensionPointName$Companion
 - <init>(java.lang.String):V
 - f:addChangeListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
+- f:addChangeListener(kotlinx.coroutines.CoroutineScope,java.lang.Runnable):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.AreaInstance,com.intellij.openapi.extensions.ExtensionPointListener):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener,com.intellij.openapi.Disposable):V
