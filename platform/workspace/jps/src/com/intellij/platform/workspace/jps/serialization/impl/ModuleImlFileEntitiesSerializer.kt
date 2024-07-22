@@ -3,7 +3,6 @@ package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.*
@@ -126,9 +125,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       else newModuleEntity = null
     }
 
-    if (newModuleEntity != null) {
-      thisLogger().debug("Loading ModuleEntity: ${newModuleEntity.name} with entitySource: ${newModuleEntity.entitySource} from file: ${fileUrl.url} ")
-    }
     return@addMeasuredTime LoadingResult(
       mapOf(
         ModuleEntity::class.java to listOfNotNull(newModuleEntity),
