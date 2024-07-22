@@ -120,10 +120,8 @@ class ChangeModuleStorePathTest {
 
     val oldName = module.name
     val newName = "foo.dot"
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(oldFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
-      }
+    writeAction {
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(oldFile)!!.rename(null, "${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
     }
     assertModuleFileRenamed(newName, oldFile)
     assertThat(oldModuleNames).containsOnly(oldName)
@@ -164,10 +162,8 @@ class ChangeModuleStorePathTest {
       val storage = module.storage
       val oldFile = storage.file
       val parentVirtualDir = storage.getVirtualFile()!!.parent
-      withContext(Dispatchers.EDT) {
-        writeAction {
-          updateDirectoryAction(parentVirtualDir)
-        }
+      writeAction {
+        updateDirectoryAction(parentVirtualDir)
       }
 
       val newFile = parentVirtualDir.toNioPath().resolve("${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
