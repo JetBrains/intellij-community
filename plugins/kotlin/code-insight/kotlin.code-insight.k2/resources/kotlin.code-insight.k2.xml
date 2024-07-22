@@ -239,10 +239,19 @@
     <methodHierarchyProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.overrides.KotlinOverrideHierarchyProvider"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinEqualsHashCodeTemplatesManager"/>
   </extensions>
+  <actions>
+    <group id="KotlinGenerateGroup">
+      <action id="KotlinGenerateEqualsAndHashCode"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction"/>
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
+  </actions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
 
     <supportAvailability implementation="org.jetbrains.kotlin.idea.k2.codeinsight.MultiplatformSupportAvailability"/>
   </extensions>
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>

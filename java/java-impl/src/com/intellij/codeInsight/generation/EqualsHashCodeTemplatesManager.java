@@ -5,23 +5,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.exception.TemplateResourceException;
 import org.jetbrains.java.generate.template.TemplateResource;
-import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.io.IOException;
 import java.util.*;
 
 @State(name = "EqualsHashCodeTemplates", storages = @Storage("equalsHashCodeTemplates.xml"), category = SettingsCategory.CODE)
-public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
-  private static final String DEFAULT_EQUALS = "/com/intellij/codeInsight/generation/defaultEquals.vm";
-  private static final String DEFAULT_HASH_CODE = "/com/intellij/codeInsight/generation/defaultHashCode.vm";
+public final class EqualsHashCodeTemplatesManager extends EqualsHashCodeTemplatesManagerBase {
 
   private static final String APACHE3_EQUALS = "/com/intellij/codeInsight/generation/apacheEqualsBuilder3.vm";
   private static final String APACHE3_HASH_CODE = "/com/intellij/codeInsight/generation/apacheHashCodeBuilder3.vm";
@@ -40,10 +33,6 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String OBJECTS_HASH_CODE = "/com/intellij/codeInsight/generation/objectsHashCode.vm";
   private static final String OBJECTS_BUILDER = "java.util.Objects";
 
-  private static final String EQUALS_SUFFIX = "equals";
-  private static final String HASH_CODE_SUFFIX = "hashCode";
-
-  public static final @NonNls String INTELLI_J_DEFAULT = "IntelliJ Default";
   public static final @NonNls String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG = "Apache Commons Lang EqualsBuilder and HashCodeBuilder";
   public static final @NonNls String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3 = "Apache Commons Lang 3 EqualsBuilder and HashCodeBuilder";
   public static final @NonNls String OBJECTS_EQUAL_AND_HASH_CODE_GUAVA = "Guava Objects.equal() and hashCode()";
@@ -78,87 +67,8 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
     }
   }
 
-  private static String readFile(String resourceName) throws IOException {
-    return readFile(resourceName, EqualsHashCodeTemplatesManager.class);
-  }
-
-  public TemplateResource getDefaultEqualsTemplate() {
-    return getEqualsTemplate(getDefaultTemplate());
-  }
-
-  public TemplateResource getDefaultHashcodeTemplate() {
-    return getHashcodeTemplate(getDefaultTemplate());
-  }
-
-  public TemplateResource getEqualsTemplate(TemplateResource template) {
-    return getDefaultTemplate(EQUALS_SUFFIX, HASH_CODE_SUFFIX, template);
-  }
-
-  public TemplateResource getHashcodeTemplate(TemplateResource template) {
-    return getDefaultTemplate(HASH_CODE_SUFFIX, EQUALS_SUFFIX, template);
-  }
-
-  public static @NotNull @NlsSafe String getTemplateBaseName(TemplateResource resource) {
-    return StringUtil.trimEnd(StringUtil.trimEnd(resource.getFileName(), EQUALS_SUFFIX), HASH_CODE_SUFFIX).trim();
-  }
-
-  private TemplateResource getDefaultTemplate(String selfSuffix, String oppositeSuffix, TemplateResource defaultTemplate) {
-    final String fileName = defaultTemplate.getFileName();
-    if (fileName.endsWith(selfSuffix)) {
-      return defaultTemplate;
-    }
-    final String equalsTemplateName = StringUtil.trimEnd(fileName, oppositeSuffix) + selfSuffix;
-    for (TemplateResource resource : getAllTemplates()) {
-      if (equalsTemplateName.equals(resource.getFileName())) {
-        return resource;
-      }
-    }
-    assert false : selfSuffix + " template for " + fileName + " not found";
-    return null;
-  }
-
-  public void setDefaultTemplate(String name) {
-    Set<String> fullNames = ContainerUtil.newHashSet(toEqualsName(name), toHashCodeName(name));
-    for (TemplateResource resource : getAllTemplates()) {
-      if (fullNames.contains(resource.getFileName())) {
-        setDefaultTemplate(resource);
-        break;
-      }
-    }
-  }
-
   @Override
   protected String getInitialTemplateName() {
     return toEqualsName(JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
-  }
-
-  public @NlsSafe String getDefaultTemplateBaseName() {
-    return getTemplateBaseName(getDefaultTemplate());
-  }
-
-  public static String toEqualsName(String name) {
-    return name + " " + EQUALS_SUFFIX;
-  }
-
-  public static String toHashCodeName(String name) {
-    return name + " " + HASH_CODE_SUFFIX;
-  }
-
-  public Collection<Couple<TemplateResource>> getTemplateCouples() {
-    final LinkedHashMap<String, Couple<TemplateResource>> resources = new LinkedHashMap<>();
-    for (TemplateResource resource : getAllTemplates()) {
-      final String baseName = getTemplateBaseName(resource);
-      TemplateResource eq = toEqualsName(baseName).equals(resource.getFileName()) ? resource : null;
-      TemplateResource hc = toHashCodeName(baseName).equals(resource.getFileName()) ? resource : null;
-      final Couple<TemplateResource> couple = resources.get(baseName);
-      if (couple != null) {
-        resources.put(baseName, Couple.of(couple.first != null ? couple.first : eq,
-                                          couple.second != null ? couple.second : hc));
-      }
-      else {
-        resources.put(baseName, Couple.of(eq, hc));
-      }
-    }
-    return resources.values();
   }
 }

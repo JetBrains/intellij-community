@@ -45,6 +45,7 @@ public abstract class AbstractElement implements Element {
     protected boolean isChar;
     protected boolean isByte;
     protected boolean isShort;
+    protected boolean isInt;
     protected String typeName;
     protected String type;
     protected String typeQualifiedName;
@@ -237,7 +238,15 @@ public abstract class AbstractElement implements Element {
         this.isShort = isShort;
     }
 
-    public void setBoolean(boolean aBoolean) {
+  public boolean isInt() {
+    return isInt;
+  }
+
+  public void setInt(boolean anInt) {
+    isInt = anInt;
+  }
+
+  public void setBoolean(boolean aBoolean) {
         isBoolean = aBoolean;
     }
 
@@ -249,7 +258,7 @@ public abstract class AbstractElement implements Element {
         isNumeric = numeric;
     }
 
-    void setObject(boolean object) {
+    public void setObject(boolean object) {
         isObject = object;
     }
 
@@ -257,7 +266,7 @@ public abstract class AbstractElement implements Element {
         isDate = date;
     }
 
-    void setArray(boolean array) {
+    public void setArray(boolean array) {
         isArray = array;
     }
 
@@ -269,15 +278,15 @@ public abstract class AbstractElement implements Element {
         isMap = map;
     }
 
-    void setPrimitive(boolean primitive) {
+     public void setPrimitive(boolean primitive) {
         isPrimitive = primitive;
     }
 
-    void setString(boolean string) {
+    public void setString(boolean string) {
         isString = string;
     }
 
-    void setPrimitiveArray(boolean primitiveArray) {
+    public void setPrimitiveArray(boolean primitiveArray) {
         isPrimitiveArray = primitiveArray;
     }
 
@@ -301,11 +310,11 @@ public abstract class AbstractElement implements Element {
         isCalendar = calendar;
     }
 
-    void setTypeName(String typeName) {
+    public void setTypeName(String typeName) {
         this.typeName = typeName;
     }
 
-    void setTypeQualifiedName(String typeQualifiedName) {
+    public void setTypeQualifiedName(String typeQualifiedName) {
         this.typeQualifiedName = typeQualifiedName;
     }
 

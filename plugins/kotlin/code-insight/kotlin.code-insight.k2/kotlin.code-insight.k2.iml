@@ -62,5 +62,9 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
+    <orderEntry type="module" module-name="kotlin.ide" />
+    <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>
