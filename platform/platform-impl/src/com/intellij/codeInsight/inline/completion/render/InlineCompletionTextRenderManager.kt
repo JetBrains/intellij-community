@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.render
 
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionRendererCustomization.Companion.EP_NAME
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionRendererCustomization.Companion.getInlineCompletionLineRenderer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
@@ -103,8 +105,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       suffixInlay = null
 
       editor.inlayModel.execute(true) {
-        val element = editor.inlayModel.addInlineElement(offset, true,
-                                                         InlineCompletionRendererCustomization.getInlineCompletionLineRenderer(editor, suffixBlocks, true))
+        val element = editor.inlayModel.addInlineElement(offset, true, getInlineCompletionLineRenderer(editor, suffixBlocks))
         element?.addActionAvailabilityHint(
           EditorActionAvailabilityHint(
             IdeActions.ACTION_INSERT_INLINE_COMPLETION,
@@ -145,7 +146,22 @@ internal class InlineCompletionTextRenderManager private constructor(
       offset: Int,
       blocks: List<InlineCompletionRenderTextBlock>,
     ): Inlay<InlineCompletionLineRenderer>? {
-      return InlineCompletionRendererCustomization.renderBlockInlay(editor, offset, blocks)
+      val inlayFromProvider = EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
+        provider.renderBlockInlay(editor, offset, blocks)
+      }
+      if (inlayFromProvider != null) {
+        return inlayFromProvider
+      }
+
+      val inlay = editor.inlayModel.addBlockElement(
+        offset,
+        true,
+        false,
+        1,
+        getInlineCompletionLineRenderer(editor, blocks)
+      )
+
+      return inlay
     }
 
     private fun Editor.forceLeanLeft() {

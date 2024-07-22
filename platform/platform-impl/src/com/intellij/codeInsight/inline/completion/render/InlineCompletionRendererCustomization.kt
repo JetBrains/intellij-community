@@ -5,47 +5,28 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface InlineCompletionRendererCustomization {
+  fun renderBlockInlay(editor: Editor, offset: Int, blocks: List<InlineCompletionRenderTextBlock>): Inlay<InlineCompletionLineRenderer>?
+
+  fun getInlineCompletionLineRenderer(
+    editor: Editor,
+    initialBlocks: List<InlineCompletionRenderTextBlock>
+  ): InlineCompletionLineRenderer
+
   companion object {
     val EP_NAME: ExtensionPointName<InlineCompletionRendererCustomization> = create("com.intellij.inlineCompletionLineRendererCustomization")
 
     fun getInlineCompletionLineRenderer(
       editor: Editor,
-      initialBlocks: List<InlineCompletionRenderTextBlock>,
-      isSuffix: Boolean = false
+      initialBlocks: List<InlineCompletionRenderTextBlock>
     ): InlineCompletionLineRenderer {
-      return EP_NAME.extensionList.firstOrNull()?.getInlineCompletionLineRenderer(editor, initialBlocks, isSuffix)
-             ?: InlineCompletionLineRenderer(editor, initialBlocks, isSuffix)
-    }
-
-    fun renderBlockInlay(editor: Editor,
-                         offset: Int,
-                         blocks: List<InlineCompletionRenderTextBlock>): Inlay<InlineCompletionLineRenderer>? {
-      val inlayFromProvider = EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
-        provider.renderBlockInlay(editor, offset, blocks)
-      }
-      if (inlayFromProvider != null) {
-        return inlayFromProvider
-      }
-
-      val inlay = editor.inlayModel.addBlockElement(
-        offset,
-        true,
-        false,
-        1,
-        getInlineCompletionLineRenderer(editor, blocks, false)
-      )
-
-      return inlay
+      val extensionList = EP_NAME.extensionList
+      assert(extensionList.size < 2)
+      return extensionList.firstOrNull()?.getInlineCompletionLineRenderer(editor, initialBlocks)
+             ?: InlineCompletionLineRenderer(editor, initialBlocks)
     }
   }
-
-  fun renderBlockInlay(editor: Editor, offset: Int, blocks: List<InlineCompletionRenderTextBlock>): Inlay<InlineCompletionLineRenderer>?
-
-  fun getInlineCompletionLineRenderer(
-    editor: Editor,
-    initialBlocks: List<InlineCompletionRenderTextBlock>,
-    isSuffix: Boolean = false
-  ): InlineCompletionLineRenderer
 }

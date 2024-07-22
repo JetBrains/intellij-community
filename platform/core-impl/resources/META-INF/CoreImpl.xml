@@ -1,7 +1,6 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="virtualFileSystem" beanClass="com.intellij.openapi.vfs.impl.VirtualFileManagerImpl$VirtualFileSystemBean"
-                    dynamic="true">
+    <extensionPoint name="virtualFileSystem" beanClass="com.intellij.openapi.vfs.impl.VirtualFileManagerImpl$VirtualFileSystemBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.vfs.VirtualFileSystem"/>
     </extensionPoint>
     <extensionPoint name="psi.treeChangeListener"
@@ -12,10 +11,8 @@
                     interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
-    <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider"
-                    dynamic="true"/>
-    <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP"
-                    dynamic="true">
+    <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider" dynamic="true"/>
+    <extensionPoint name="psi.referenceContributor" beanClass="com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP" dynamic="true">
       <with attribute="implementation" implements="com.intellij.psi.PsiReferenceContributor"/>
     </extensionPoint>
     <extensionPoint name="psi.symbolReferenceProvider"

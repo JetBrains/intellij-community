@@ -22,10 +22,10 @@ import java.awt.font.TextLayout
  * * [TextAttributes.getForegroundColor]
  * * [TextAttributes.getFontType]
  */
+@ApiStatus.Internal
 open class InlineCompletionLineRenderer(
   private val editor: Editor,
-  initialBlocks: List<InlineCompletionRenderTextBlock>,
-  isSuffix: Boolean = false
+  initialBlocks: List<InlineCompletionRenderTextBlock>
 ) : EditorCustomElementRenderer {
 
   constructor(editor: Editor, text: String, attributes: TextAttributes = InlineCompletionFontUtils.attributes(editor)) : this(
