@@ -8,7 +8,6 @@ import com.intellij.ide.actions.ShowLogAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.NO_PROGRESS_ASYNC
@@ -17,6 +16,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationCate
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource.PROJECT_SYNC
 import com.intellij.openapi.externalSystem.task.TaskCallback
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.runTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
@@ -74,7 +74,7 @@ class GradleVersionQuickFix(private val projectPath: String,
         when {
           requestImport -> {
             TimeoutUtil.sleep(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
-            return@thenComposeAsync requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
+            return@thenComposeAsync ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
           }
           else -> return@thenComposeAsync completedFuture(null)
         }

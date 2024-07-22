@@ -65,6 +65,7 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -103,6 +104,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager.createNotification;
@@ -1120,6 +1123,39 @@ public final class ExternalSystemUtil {
   public static boolean isNoBackgroundMode() {
     return (ApplicationManager.getApplication().isUnitTestMode()
             || ApplicationManager.getApplication().isHeadlessEnvironment() && !PlatformUtils.isFleetBackend());
+  }
+
+  @ApiStatus.Internal
+  public static CompletableFuture<Void> requestImport(@NotNull Project project,
+                                                      @NotNull String projectPath,
+                                                      @NotNull ProjectSystemId systemId
+  ) {
+    var future = new CompletableFuture<Void>();
+    ImportSpecBuilder specBuilder = new ImportSpecBuilder(project, systemId)
+      .callback(new ExternalProjectRefreshCallback() {
+        @Override
+        public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
+          if (externalProject != null) {
+            try {
+              ProjectDataManager.getInstance().importData(externalProject, project);
+            }
+            catch (ProcessCanceledException pce) {
+              future.completeExceptionally(new CancellationException());
+            }
+            catch (Exception e) {
+              future.completeExceptionally(e);
+            }
+          }
+          future.complete(null);
+        }
+
+        @Override
+        public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+          future.completeExceptionally(new RuntimeException(errorMessage));
+        }
+      });
+    refreshProject(projectPath, specBuilder);
+    return future;
   }
 
   @RequiresBackgroundThread

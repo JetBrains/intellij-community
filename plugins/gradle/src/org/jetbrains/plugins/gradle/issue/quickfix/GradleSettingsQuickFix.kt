@@ -5,7 +5,7 @@ import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.project.Project
@@ -40,7 +40,7 @@ class GradleSettingsQuickFix(private val myProjectPath: String, private val myRe
     }
     return future.thenCompose { isSettingsChanged ->
       if (isSettingsChanged!! && myRequestImport)
-        requestImport(project, myProjectPath, GradleConstants.SYSTEM_ID)
+        ExternalSystemUtil.requestImport(project, myProjectPath, GradleConstants.SYSTEM_ID)
       else
         CompletableFuture.completedFuture(null)
     }
