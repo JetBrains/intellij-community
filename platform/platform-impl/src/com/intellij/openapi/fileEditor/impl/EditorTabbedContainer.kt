@@ -64,6 +64,7 @@ import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -591,6 +592,9 @@ private class EditorTabs(
   }
 
   override fun getEditorWindow(): EditorWindow = window
+
+  @Internal
+  override fun minHeaderHeight(): Int = JBUI.CurrentTheme.ToolWindow.headerHeight()
 
   override fun createRowLayout(): TabLayout {
     if (!isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))) {

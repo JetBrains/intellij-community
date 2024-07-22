@@ -2167,12 +2167,23 @@ open class JBTabsImpl internal constructor(
   private fun computeHeaderFitSize(): Dimension {
     val max = computeMaxSize()
     if (tabsPosition == JBTabsPosition.top || tabsPosition == JBTabsPosition.bottom) {
-      return Dimension(size.width, if (horizontalSide) max(max.label.height, max.toolbar.height) else max.label.height)
+      return Dimension(
+        size.width,
+        if (horizontalSide) {
+          max(max.label.height, max.toolbar.height).coerceAtLeast(minHeaderHeight())
+        }
+        else {
+          max.label.height
+        }
+      )
     }
     else {
       return Dimension(max.label.width + if (horizontalSide) 0 else max.toolbar.width, size.height)
     }
   }
+
+  @Internal
+  protected open fun minHeaderHeight(): Int = 0
 
   fun layoutComp(componentX: Int, componentY: Int, component: JComponent, deltaWidth: Int, deltaHeight: Int): Rectangle {
     return layoutComp(
