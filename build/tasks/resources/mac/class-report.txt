@@ -1991,7 +1991,6 @@ com/intellij/ide/ui/IconDbMaintainer.class:lib/app-client.jar
 com/fasterxml/jackson/core/SerializableString.class:lib/lib-client.jar
 com/intellij/remoteDev/tracing/CustomExportersListener.class:lib/app-client.jar
 com/fasterxml/jackson/core/TSFBuilder.class:lib/lib-client.jar
-com/intellij/ide/LanguageBundleListener.class:lib/app-client.jar
 com/fasterxml/jackson/core/JsonFactoryBuilder.class:lib/lib-client.jar
 io/opentelemetry/sdk/metrics/export/AggregationTemporalitySelector.class:lib/opentelemetry.jar
 io/opentelemetry/sdk/metrics/export/DefaultAggregationSelector.class:lib/opentelemetry.jar
