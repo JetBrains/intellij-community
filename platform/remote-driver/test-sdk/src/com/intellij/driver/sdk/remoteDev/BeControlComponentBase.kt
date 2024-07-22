@@ -4,11 +4,11 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.model.transport.Ref
+import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiRobot
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.*
-import org.intellij.lang.annotations.Language
 import org.w3c.dom.Element
 import java.awt.Point
 import kotlin.reflect.KClass
@@ -48,12 +48,12 @@ open class BeControlComponentBase(
   private fun getFrontendRef(): Ref = (frontendComponent as RefWrapper).getRef()
   private fun getBackendRef(): Ref = (backendComponent as RefWrapper).getRef()
 
-  protected fun <T : UiComponent> onFrontend(@Language("xpath") xpath: String, type: KClass<T>): T {
-    return frontendUi.x(xpath, type.java)
+  protected fun <T : UiComponent> onFrontend(type: KClass<T>, locator: QueryBuilder.() -> String): T {
+    return frontendUi.x(type.java, locator)
   }
 
-  protected fun onFrontend(@Language("xpath") xpath: String): UiComponent {
-    return frontendUi.x(xpath)
+  protected fun onFrontend(locator: QueryBuilder.() -> String): UiComponent {
+    return frontendUi.x(locator)
   }
 
   override val x: Int

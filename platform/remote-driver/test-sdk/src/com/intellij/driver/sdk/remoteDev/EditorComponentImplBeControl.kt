@@ -15,10 +15,10 @@ class EditorComponentImplBeControlBuilder : BeControlBuilder {
 class EditorComponentImplBeControl(
   driver: Driver,
   frontendComponent: Component,
-  backendComponent: Component
+  backendComponent: Component,
 ) : BeControlComponentBase(driver, frontendComponent, backendComponent), EditorComponentImpl {
   private val frontendEditorComponentImpl: EditorComponentImpl by lazy {
-    driver.cast(onFrontend("//div[@class='EditorComponentImpl']").component, EditorComponentImpl::class)
+    driver.cast(onFrontend { byClass("EditorComponentImpl") }.component, EditorComponentImpl::class)
   }
 
   override fun getEditor(): Editor {
