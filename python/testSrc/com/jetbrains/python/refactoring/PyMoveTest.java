@@ -427,6 +427,12 @@ public class PyMoveTest extends PyTestCase {
     });
   }
 
+  public void testMoveSymbolFromTopLevelModuleToNewPackageCreatesInitPy() {
+    doComparingDirectories(testDir -> {
+      moveSymbols(testDir, "pkg/subpkg/b.py", "MyClass");
+    });
+  }
+
   //PY-44858
   public void testMoveNotCreateInitPyForNamespacePackagesToAnotherDirectory() {
     doMoveSymbolsTest("pkg/subpkg/B/module_b.py", "myfunc");

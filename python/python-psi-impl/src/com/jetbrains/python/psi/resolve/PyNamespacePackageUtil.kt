@@ -41,6 +41,7 @@ fun isNamespacePackage(element: PsiElement): Boolean {
 fun isInNamespacePackage(element: PsiElement): Boolean {
   val myFile = element.containingFile ?: return false
   val parentDirectory = myFile.containingDirectory
+  if (parentDirectory.virtualFile in PyUtil.getSourceRoots(element)) return false
   return parentDirectory != null && isNamespacePackage(parentDirectory)
 }
 
