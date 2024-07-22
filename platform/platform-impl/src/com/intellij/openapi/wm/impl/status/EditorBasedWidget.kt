@@ -79,6 +79,7 @@ abstract class EditorBasedWidget protected constructor(
     registerCustomListeners(myConnection)
   }
 
+  @Deprecated("Custom listeners should be registered after class initialization to prevent using not fully constructed class in the listeners.")
   protected open fun registerCustomListeners(connection: MessageBusConnection) {
   }
 
