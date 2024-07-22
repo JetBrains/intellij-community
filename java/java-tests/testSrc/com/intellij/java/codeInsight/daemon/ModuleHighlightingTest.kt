@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
@@ -27,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -47,6 +49,27 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       test()
     } finally {
       JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, emptyList())
+    }
+  }
+
+  fun testModuleImportDeclarationLevelCheck() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23) {
+      highlight("Test.java", """
+        <error descr="Module Import Declarations are not supported at language level '23'">import module java.sql;</error>
+        class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationUnresolvedModule() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("Test.java", """
+        import module M2;
+        import module <error descr="Module is not in dependencies: M3">M3</error>;
+        import module <error descr="Module not found: M4">M4</error>;
+        
+        class Test {}
+      """.trimIndent())
     }
   }
 
