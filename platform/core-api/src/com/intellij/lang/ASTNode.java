@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang;
 
@@ -177,7 +177,7 @@ public interface ASTNode extends UserDataHolder {
    * @param firstNodeToRemove the first child node to remove from the tree.
    * @param firstNodeToKeep   the first child node to keep in the tree.
    */
-  void removeRange(@NotNull ASTNode firstNodeToRemove, ASTNode firstNodeToKeep);
+  void removeRange(@NotNull ASTNode firstNodeToRemove, @Nullable ASTNode firstNodeToKeep);
 
   /**
    * Replaces the specified child node with another node.
@@ -202,7 +202,7 @@ public interface ASTNode extends UserDataHolder {
    * @param firstChildToNotAdd the first child node following firstChild which will not be added to the tree.
    * @param anchorBefore       the node before which the child nodes are inserted.
    */
-  void addChildren(@NotNull ASTNode firstChild, ASTNode firstChildToNotAdd, ASTNode anchorBefore);
+  void addChildren(@NotNull ASTNode firstChild, @Nullable ASTNode firstChildToNotAdd, @Nullable ASTNode anchorBefore);
 
   /**
    * Creates and returns a deep copy of the AST tree part starting at this node.
