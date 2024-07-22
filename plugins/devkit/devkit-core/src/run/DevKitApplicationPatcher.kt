@@ -75,6 +75,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     vmParameters.addAll(
       "-XX:MaxJavaStackTraceDepth=10000",
       "-ea",
+      "-Djava.util.zip.use.nio.for.zip.file.access=true", // IJPL-149160
     )
 
     if (runnerSettings is DebuggingRunnerData) {
