@@ -3,6 +3,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,11 +65,15 @@ public final class ImportsUtil {
   }
 
   public static boolean hasStaticImportOn(final PsiElement expr, final PsiMember member, boolean acceptOnDemand) {
-    if (expr.getContainingFile() instanceof PsiJavaFile) {
-      final PsiImportList importList = ((PsiJavaFile)expr.getContainingFile()).getImportList();
+    if (expr.getContainingFile() instanceof PsiJavaFile ) {
+      PsiJavaFile file = (PsiJavaFile)expr.getContainingFile();
+      final PsiImportList importList = file.getImportList();
       if (importList != null) {
+        List<PsiImportStaticStatement> additionalOnDemandImports = ContainerUtil.filterIsInstance(
+          ContainerUtil.map(file.getImplicitlyImportedElements(), impl -> impl.createImportStatement()),
+          PsiImportStaticStatement.class);
         final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
-        for (PsiImportStaticStatement stmt : importStaticStatements) {
+        for (PsiImportStaticStatement stmt : ContainerUtil.append(additionalOnDemandImports, importStaticStatements)) {
           final PsiClass containingClass = member.getContainingClass();
           final String referenceName = stmt.getReferenceName();
           if (containingClass != null && stmt.resolveTargetClass() == containingClass) {
