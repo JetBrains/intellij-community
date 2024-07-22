@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -264,6 +264,19 @@ public class BasicPrattExpressionParser {
           refExpr.done(myJavaElementTypeContainer.REFERENCE_EXPRESSION);
           expr = refExpr;
         }
+        else if (dotTokenType == JavaTokenType.STRING_TEMPLATE_BEGIN || dotTokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
+          dotPos.drop();
+          expr = parseStringTemplate(builder, expr, dotTokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN);
+        }
+        else if (dotTokenType == JavaTokenType.STRING_LITERAL || dotTokenType == JavaTokenType.TEXT_BLOCK_LITERAL) {
+          dotPos.drop();
+          final PsiBuilder.Marker templateExpression = expr.precede();
+          final PsiBuilder.Marker literal = builder.mark();
+          builder.advanceLexer();
+          literal.done(myJavaElementTypeContainer.LITERAL_EXPRESSION);
+          templateExpression.done(myJavaElementTypeContainer.TEMPLATE_EXPRESSION);
+          expr = templateExpression;
+        }
         else if (THIS_OR_SUPER.contains(dotTokenType) && exprType(expr) == myJavaElementTypeContainer.REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P2 && builder.getCurrentOffset() == breakOffset) {
             dotPos.rollbackTo();
@@ -384,6 +397,10 @@ public class BasicPrattExpressionParser {
   @Nullable
   private PsiBuilder.Marker parsePrimaryExpressionStart(final PsiBuilder builder, final int mode) {
     IElementType tokenType = builder.getTokenType();
+
+    if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN || tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN) {
+      return parseStringTemplate(builder, null, tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN);
+    }
 
     if (BASIC_ALL_LITERALS.contains(tokenType)) {
       final PsiBuilder.Marker literal = builder.mark();
@@ -551,6 +568,35 @@ public class BasicPrattExpressionParser {
 
     start.done(myJavaElementTypeContainer.METHOD_REF_EXPRESSION);
     return start;
+  }
+
+  private PsiBuilder.Marker parseStringTemplate(PsiBuilder builder, PsiBuilder.Marker start, boolean textBlock) {
+    final PsiBuilder.Marker templateExpression = start == null ? builder.mark() : start.precede();
+    final PsiBuilder.Marker template = builder.mark();
+    IElementType tokenType;
+    do {
+      builder.advanceLexer();
+      tokenType = builder.getTokenType();
+      if (textBlock
+          ? tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID || tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END
+          : tokenType == JavaTokenType.STRING_TEMPLATE_MID || tokenType == JavaTokenType.STRING_TEMPLATE_END) {
+        emptyExpression(builder);
+      }
+      else {
+        parse(builder);
+        tokenType = builder.getTokenType();
+      }
+    }
+    while (textBlock ? tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID : tokenType == JavaTokenType.STRING_TEMPLATE_MID);
+    if (textBlock ? tokenType != JavaTokenType.TEXT_BLOCK_TEMPLATE_END : tokenType != JavaTokenType.STRING_TEMPLATE_END) {
+      builder.error(JavaPsiBundle.message("expected.template.fragment"));
+    }
+    else {
+      builder.advanceLexer();
+    }
+    template.done(myJavaElementTypeContainer.TEMPLATE);
+    templateExpression.done(myJavaElementTypeContainer.TEMPLATE_EXPRESSION);
+    return templateExpression;
   }
 
   @NotNull
@@ -802,6 +848,7 @@ public class BasicPrattExpressionParser {
     return isLambda ? parseLambdaExpression(builder, isTyped) : null;
   }
 
+  @Nullable
   private PsiBuilder.Marker parseLambdaExpression(final PsiBuilder builder, final boolean typed) {
     final PsiBuilder.Marker start = builder.mark();
 
@@ -896,7 +943,7 @@ public class BasicPrattExpressionParser {
   }
 
   private void emptyExpression(final PsiBuilder builder) {
-    emptyElement(builder, myJavaElementTypeContainer.EMPTY_STATEMENT);
+    emptyElement(builder, myJavaElementTypeContainer.EMPTY_EXPRESSION);
   }
 
   private enum BreakPoint {P1, P2, P4}
@@ -949,7 +996,6 @@ public class BasicPrattExpressionParser {
                       IElementType binOpType,
                       int currentPrecedence,
                       int mode) {
-
       int operandCount = 1;
       while (true) {
         advanceBinOpToken(builder, binOpType);
