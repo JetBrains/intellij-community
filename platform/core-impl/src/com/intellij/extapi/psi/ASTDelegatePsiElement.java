@@ -196,6 +196,10 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return notNullChild(findChildByType(type));
   }
 
+  /**
+   * @deprecated Use {@link #findChildByType(TokenSet)} instead
+   */
+  @Deprecated
   protected @Nullable PsiElement findChildByFilter(TokenSet tokenSet) {
     ASTNode[] nodes = getNode().getChildren(tokenSet);
     return nodes.length == 0 ? null : nodes[0].getPsi();
