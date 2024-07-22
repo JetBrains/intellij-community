@@ -129,7 +129,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  fun waitAnalysisToFinish(timeout: Duration = 5.minutes) {
+  fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false) {
     LOG.info("Waiting for code analysis to finish in $timeout")
     if (LightEdit.owns(project)) {
       return
@@ -138,7 +138,12 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       highlightingFinishedEverywhere.release()
     }
     else {
-      LOG.error("Waiting for highlight to finish took more than $timeout.")
+      val errorText = "Waiting for highlight to finish took more than $timeout."
+      if (throws) {
+        error(errorText)
+      } else {
+        LOG.error(errorText)
+      }
     }
     LOG.info("Code analysis finished")
   }
