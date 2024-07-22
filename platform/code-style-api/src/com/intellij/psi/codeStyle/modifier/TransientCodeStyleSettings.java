@@ -69,7 +69,7 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
   @Nullable
   public PsiFile getPsiFile() {
     VirtualFile file = myFileRef.get();
-    return file != null ? PsiManager.getInstance(myProject).findFile(file) : null;
+    return file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
   }
 
   @NotNull
