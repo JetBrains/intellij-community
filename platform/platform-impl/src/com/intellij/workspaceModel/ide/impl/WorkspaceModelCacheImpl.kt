@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
@@ -30,6 +29,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
@@ -44,7 +44,8 @@ import kotlin.time.measureTimedValue
 class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: CoroutineScope) : WorkspaceModelCache {
   override val enabled: Boolean
     get() = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
-  
+
+  private val isCacheSaved = AtomicBoolean(true)
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
@@ -74,6 +75,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
         override fun changed(event: VersionedStorageChange) {
           LOG.debug("Schedule cache update")
           check(saveRequests.tryEmit(Unit))
+          isCacheSaved.set(false)
         }
       })
 
@@ -107,8 +109,15 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     doCacheSaving()
   }
 
+  @Internal
+  fun doCacheSavingOnProjectClose() {
+    if (isCacheSaved.get()) return
+    doCacheSaving()
+  }
+
   @OptIn(EntityStorageInstrumentationApi::class)
   private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTime {
+    isCacheSaved.set(true)
     val workspaceModel = WorkspaceModel.getInstance(project)
     val storage = workspaceModel.currentSnapshot
     val unloadedStorage = (workspaceModel as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
