@@ -25,7 +25,7 @@ data class InlayData(
   val sourceId: String,
 ) {
 
-  class Externalizer : VersionedExternalizer<InlayData> {
+  internal class Externalizer : VersionedExternalizer<InlayData> {
     private val treeExternalizer: PresentationTreeExternalizer = PresentationTreeExternalizer()
 
     companion object {
