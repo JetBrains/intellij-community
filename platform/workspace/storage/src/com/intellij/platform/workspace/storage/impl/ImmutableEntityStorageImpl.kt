@@ -773,7 +773,11 @@ internal class MutableEntityStorageImpl(
     accumulateEntitiesToRemove(idx, accumulator, entityFilter)
 
     accumulator.forEach { id ->
-      removeSingleEntity(id)
+      removeSingleEntity(
+        id,
+        updateChangelogForChildren = false, // We should not register "change in references" for the chilren because they'll be removed anyway
+        updateChangelogForParents = id == idx, // Same for parents of removed children, except the root entity.
+      )
     }
 
     return true
@@ -786,20 +790,28 @@ internal class MutableEntityStorageImpl(
    *   to avoid leaving storage in an inconsistent state.
    */
   @Suppress("UNCHECKED_CAST")
-  internal fun removeSingleEntity(id: EntityId) {
+  internal fun removeSingleEntity(
+    id: EntityId,
+    updateChangelogForChildren: Boolean,
+    updateChangelogForParents: Boolean,
+  ) {
     // Unlink children
     val originalEntityData = this.getOriginalEntityData(id) as WorkspaceEntityData<WorkspaceEntity>
     val children = refs.getChildrenRefsOfParentBy(id.asParent())
     children.keys.forEach { connectionId ->
       val modifications = refs.removeRefsByParent(connectionId, id.asParent())
-      this.createReplaceEventsForUpdates(modifications, connectionId)
+      if (updateChangelogForChildren) {
+        this.createReplaceEventsForUpdates(modifications, connectionId)
+      }
     }
 
     // Unlink parents
     val parents = refs.getParentRefsOfChild(id.asChild())
     parents.forEach { (connectionId, parentId) ->
       val modifications = refs.removeParentToChildRef(connectionId, parentId, id.asChild())
-      this.createReplaceEventsForUpdates(modifications, connectionId)
+      if (updateChangelogForParents) {
+        this.createReplaceEventsForUpdates(modifications, connectionId)
+      }
     }
 
     // Update indexes and generate changelog entry
