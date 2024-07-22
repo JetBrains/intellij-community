@@ -14,10 +14,12 @@ public final class ImplicitlyImportedStaticMember implements ImplicitlyImportedE
 
   private final @NotNull String myContainingClass;
   private final @NotNull String myMemberName;
+  private final @NotNull PsiImportStaticStatement myImportStaticStatement;
 
-  private ImplicitlyImportedStaticMember(@NotNull String containingClass, @NotNull String memberName) {
+  private ImplicitlyImportedStaticMember(@NotNull Project project, @NotNull String containingClass, @NotNull String memberName) {
     myContainingClass = containingClass;
     myMemberName = memberName;
+    myImportStaticStatement = PsiElementFactory.getInstance(project).createImportStaticStatementFromText(getContainingClass(), getMemberName());
   }
 
   @NotNull
@@ -35,12 +37,14 @@ public final class ImplicitlyImportedStaticMember implements ImplicitlyImportedE
   }
 
   @Override
-  public @NotNull PsiImportStatementBase createImportStatement(Project project) {
-    return PsiElementFactory.getInstance(project).createImportStaticStatementFromText(getContainingClass(), getMemberName());
+  public @NotNull PsiImportStatementBase createImportStatement() {
+    return myImportStaticStatement;
   }
 
   @NotNull
-  public static ImplicitlyImportedStaticMember create(@NotNull String containingClass, @NotNull String memberName) {
-    return new ImplicitlyImportedStaticMember(containingClass, memberName);
+  public static ImplicitlyImportedStaticMember create(@NotNull Project project,
+                                                      @NotNull String containingClass,
+                                                      @NotNull String memberName) {
+    return new ImplicitlyImportedStaticMember(project, containingClass, memberName);
   }
 }
