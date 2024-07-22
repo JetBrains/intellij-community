@@ -336,7 +336,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun isInheritable(ktClass: KtClass): Boolean {
         if (ApplicationManager.getApplication().isDispatchThread) {
-            return ActionUtil.underModalProgress(ktClass.project, KotlinBundle.message(KotlinBundle.message("dialog.title.resolving.inheritable.status"))) {
+            return ActionUtil.underModalProgress(ktClass.project, KotlinBundle.message("dialog.title.resolving.inheritable.status")) {
                 runReadAction { isOverridableBySymbol(ktClass) }
             }
         }

@@ -10,62 +10,55 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.refactoring.classMembers.AbstractMemberInfoModel
 import com.intellij.ui.NonFocusableCheckBox
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
-import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.keysToMap
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class KotlinGenerateEqualsWizard(
+fun createMemberInfo(declaration: KtNamedDeclaration): KotlinMemberInfo {
+    return KotlinMemberInfo(declaration).apply {
+        isChecked = (declaration as? KtProperty)?.getter == null
+    }
+}
+
+open class KotlinGenerateEqualsWizard(
     project: Project,
     klass: KtClass,
     properties: List<KtNamedDeclaration>,
     needEquals: Boolean,
-    needHashCode: Boolean
+    needHashCode: Boolean,
+    memberInfos: List<KotlinMemberInfo> = properties.map { createMemberInfo(it) },
+    membersToHashCode: HashMap<KtNamedDeclaration, KotlinMemberInfo> = HashMap(properties.keysToMap { createMemberInfo(it) })
 ) : AbstractGenerateEqualsWizard<KtClass, KtNamedDeclaration, KotlinMemberInfo>(
-    project, BuilderImpl(klass, properties, needEquals, needHashCode)
+    project, BuilderImpl(klass, needEquals, needHashCode, memberInfos, membersToHashCode),
 ) {
     private object MemberInfoModelImpl : AbstractMemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>()
 
     private class BuilderImpl(
         private val klass: KtClass,
-        properties: List<KtNamedDeclaration>,
         needEquals: Boolean,
-        needHashCode: Boolean
-    ) : AbstractGenerateEqualsWizard.Builder<KtClass, KtNamedDeclaration, KotlinMemberInfo>() {
-        private val equalsPanel: KotlinMemberSelectionPanel?
-        private val hashCodePanel: KotlinMemberSelectionPanel?
+        needHashCode: Boolean,
+        private val memberInfos: List<KotlinMemberInfo>,
+        private val membersToHashCode: HashMap<KtNamedDeclaration, KotlinMemberInfo>
+    ) : Builder<KtClass, KtNamedDeclaration, KotlinMemberInfo>() {
 
-        private val memberInfos = properties.map { createMemberInfo(it) }
-
-        private val membersToHashCode = HashMap(properties.keysToMap { createMemberInfo(it) })
-
-        init {
-            equalsPanel = if (needEquals) {
-                KotlinMemberSelectionPanel(KotlinBundle.message("action.generate.equals.choose.equals"), memberInfos).apply {
-                    table.memberInfoModel = MemberInfoModelImpl
-                }
-            } else null
-
-            hashCodePanel = if (needHashCode) {
-                KotlinMemberSelectionPanel(KotlinBundle.message("action.generate.equals.choose.hashcode"), memberInfos).apply {
-                    table.memberInfoModel = MemberInfoModelImpl
-                }
-            } else null
-        }
-
-        private fun createMemberInfo(it: KtNamedDeclaration): KotlinMemberInfo {
-            return KotlinMemberInfo(it).apply {
-                val descriptor = it.unsafeResolveToDescriptor()
-                isChecked = (descriptor as? PropertyDescriptor)?.getter?.isDefault ?: true
+        private val equalsPanel: KotlinMemberSelectionPanel? = if (needEquals) {
+            KotlinMemberSelectionPanel(KotlinBundle.message("action.generate.equals.choose.equals"), memberInfos).apply {
+                table.memberInfoModel = MemberInfoModelImpl
             }
-        }
+        } else null
+
+        private val hashCodePanel: KotlinMemberSelectionPanel? = if (needHashCode) {
+            KotlinMemberSelectionPanel(KotlinBundle.message("action.generate.equals.choose.hashcode"), memberInfos).apply {
+                table.memberInfoModel = MemberInfoModelImpl
+            }
+        } else null
 
         override fun getPsiClass() = klass
 
@@ -109,6 +102,10 @@ class KotlinGenerateEqualsWizard(
         if (myEqualsPanel != null && myClass.isInheritable()) {
             addStep(OptionsStep)
         }
+        chooserSteps()
+    }
+
+    protected fun chooserSteps() {
         super.addSteps()
     }
 
@@ -117,7 +114,7 @@ class KotlinGenerateEqualsWizard(
         super.doOKAction()
     }
 
-    fun getPropertiesForEquals() = myEqualsPanel?.table?.selectedMemberInfos?.map { it.member } ?: emptyList()
+    fun getPropertiesForEquals(): List<KtNamedDeclaration> = myEqualsPanel?.table?.selectedMemberInfos?.mapNotNull { it.member } ?: emptyList()
 
-    fun getPropertiesForHashCode() = myHashCodePanel?.table?.selectedMemberInfos?.map { it.member } ?: emptyList()
+    fun getPropertiesForHashCode(): List<KtNamedDeclaration> = myHashCodePanel?.table?.selectedMemberInfos?.mapNotNull { it.member } ?: emptyList()
 }

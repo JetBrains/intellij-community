@@ -76,15 +76,15 @@ public class FieldElement extends AbstractElement implements Element {
     isRecordComponent = recordComponent;
   }
 
-  void setConstant(boolean constant) {
+  public void setConstant(boolean constant) {
     isConstant = constant;
   }
 
-  void setModifierTransient(boolean modifierTransient) {
+  public void setModifierTransient(boolean modifierTransient) {
     isModifierTransient = modifierTransient;
   }
 
-  void setModifierVolatile(boolean modifierVolatile) {
+  public void setModifierVolatile(boolean modifierVolatile) {
     this.isModifierVolatile = modifierVolatile;
   }
 

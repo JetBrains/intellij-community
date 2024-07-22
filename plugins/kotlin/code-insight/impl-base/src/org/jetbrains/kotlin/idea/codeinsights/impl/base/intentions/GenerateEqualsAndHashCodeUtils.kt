@@ -230,11 +230,11 @@ object GenerateEqualsAndHashCodeUtils {
     }
 
     context(KaSession)
-    private fun findEqualsMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
+    fun findEqualsMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
         findNonGeneratedMethodInSelfOrSuperclass(classSymbol, EQUALS) { matchesEqualsMethodSignature(it) }
 
     context(KaSession)
-    private fun findHashCodeMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
+    fun findHashCodeMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
         findNonGeneratedMethodInSelfOrSuperclass(classSymbol, HASH_CODE) { matchesHashCodeMethodSignature(it) }
 
     /**
@@ -309,7 +309,7 @@ object GenerateEqualsAndHashCodeUtils {
     }
 
     context(KaSession)
-    private fun getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject): List<KtNamedDeclaration> =
+    fun getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject): List<KtNamedDeclaration> =
         buildList<KtNamedDeclaration> {
             classOrObject.primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
             classOrObject.declarations.asSequence().filterIsInstance<KtProperty>().filterTo(this) {

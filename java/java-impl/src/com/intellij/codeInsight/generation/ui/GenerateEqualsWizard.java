@@ -1,52 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.ide.wizard.CommitStepException;
-import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.classMembers.AbstractMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoTooltipManager;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.psi.PsiAdapter;
-import org.jetbrains.java.generate.template.TemplateResource;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -263,7 +244,17 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   @Override
   protected void addSteps() {
     if (myEqualsPanel != null) {
-      addStep(new TemplateChooserStep(myClass));
+      addStep(new TemplateChooserStep(myClass, EqualsHashCodeTemplatesManager.getInstance()) {
+        @Override
+        protected void setErrorText(@NlsContexts.DialogMessage @Nullable String errorText, JComponent component) {
+          GenerateEqualsWizard.this.setErrorText(errorText, component);
+        }
+
+        @Override
+        protected boolean isDisposed() {
+          return GenerateEqualsWizard.this.isDisposed();
+        }
+      });
     }
     super.addSteps();
   }
@@ -339,142 +330,6 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     @Override
     public String getTooltipText(MemberInfo member) {
       return myTooltipManager.getTooltip(member);
-    }
-  }
-
-  private final class TemplateChooserStep extends StepAdapter {
-    private final JComponent myPanel;
-    private final ComboBox<String> myComboBox;
-    private @Nullable Set<String> myInvalidTemplates = null;
-
-    private TemplateChooserStep(PsiClass psiClass) {
-      myPanel = new JPanel(new VerticalFlowLayout());
-      final JPanel templateChooserPanel = new JPanel(new BorderLayout());
-      final JLabel templateChooserLabel = new JLabel(JavaBundle.message("generate.equals.hashcode.template"));
-      templateChooserPanel.add(templateChooserLabel, BorderLayout.WEST);
-
-      EqualsHashCodeTemplatesManager templatesManager = EqualsHashCodeTemplatesManager.getInstance();
-      Collection<TemplateResource> templates = templatesManager.getAllTemplates();
-      myComboBox = new ComboBox<>(templates.stream()
-        .map(EqualsHashCodeTemplatesManager::getTemplateBaseName)
-        .distinct()
-        .toArray(String[]::new));
-      myComboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
-      myComboBox.setSwingPopup(false);
-      final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
-        new ComponentWithBrowseButton<>(myComboBox, e -> {
-          EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(psiClass.getProject(), templatesManager);
-          ui.selectNodeInTree(templatesManager.getDefaultTemplateBaseName());
-          ShowSettingsUtil.getInstance().editConfigurable(myPanel, ui);
-          String[] names = templatesManager.getAllTemplates().stream()
-            .map(EqualsHashCodeTemplatesManager::getTemplateBaseName)
-            .distinct()
-            .toArray(String[]::new);
-          myComboBox.setModel(new DefaultComboBoxModel<>(names));
-          myComboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
-        });
-      templateChooserLabel.setLabelFor(myComboBox);
-      ReadAction.nonBlocking(() -> {
-          GlobalSearchScope resolveScope = psiClass.getResolveScope();
-          JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiClass.getProject());
-          Set<String> names = new LinkedHashSet<>();
-          Set<String> invalid = new HashSet<>();
-
-          DumbService dumbService = DumbService.getInstance(psiClass.getProject());
-          for (TemplateResource resource : templatesManager.getAllTemplates()) {
-            String templateBaseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(resource);
-            if (names.add(templateBaseName)) {
-              String className = resource.getClassName();
-              if (className != null &&
-                  dumbService.computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(className, resolveScope) == null)) {
-                invalid.add(templateBaseName);
-              }
-            }
-          }
-          return invalid;
-        })
-        .expireWhen(() -> isDisposed())
-        .finishOnUiThread(ModalityState.any(), invalid -> {
-          myInvalidTemplates = invalid;
-          updateErrorMessage();
-          myComboBox.repaint();
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
-      myComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-        label.setText(value); //NON-NLS
-        if (myInvalidTemplates != null && myInvalidTemplates.contains(value)) {
-          label.setForeground(JBColor.RED);
-        }
-      }));
-      myComboBox.addActionListener(e -> updateErrorMessage());
-
-      templateChooserPanel.add(comboBoxWithBrowseButton, BorderLayout.CENTER);
-      myPanel.add(templateChooserPanel);
-
-      boolean useInstanceof = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
-      JPanel panel = new JPanel();
-      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
-      JLabel label = new JLabel(JavaBundle.message("generate.equals.hashcode.type.comparison.label"));
-      label.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
-      panel.add(label);
-      ContextHelpLabel contextHelp = ContextHelpLabel.create(JavaBundle.message("generate.equals.hashcode.comparison.table"));
-      contextHelp.setBorder(JBUI.Borders.empty(UIUtil.LARGE_VGAP, 2, 0, 0));
-      panel.add(contextHelp);
-      JRadioButton instanceofButton =
-        new JRadioButton(JavaBundle.message("generate.equals.hashcode.instanceof.type.comparison"), useInstanceof);
-      instanceofButton.setBorder(JBUI.Borders.emptyLeft(16));
-      JRadioButton getClassButton =
-        new JRadioButton(JavaBundle.message("generate.equals.hashcode.getclass.type.comparison"), !useInstanceof);
-      getClassButton.setBorder(JBUI.Borders.emptyLeft(16));
-      ButtonGroup group = new ButtonGroup();
-      group.add(instanceofButton);
-      group.add(getClassButton);
-      instanceofButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = true);
-      getClassButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = false);
-      myPanel.add(panel);
-      myPanel.add(instanceofButton);
-      myPanel.add(getClassButton);
-
-      final JCheckBox gettersCheckbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.use.getters"));
-      gettersCheckbox.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
-      gettersCheckbox.setSelected(CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE);
-      gettersCheckbox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE = gettersCheckbox.isSelected();
-        }
-      });
-      myPanel.add(gettersCheckbox);
-    }
-
-    @Override
-    public void _commit(boolean finishChosen) throws CommitStepException {
-      EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate((String)myComboBox.getSelectedItem());
-      super._commit(finishChosen);
-    }
-
-    private void updateErrorMessage() {
-      String item = (String)myComboBox.getSelectedItem();
-      if (myInvalidTemplates != null && myInvalidTemplates.contains(item)) {
-        TemplateResource template =
-          EqualsHashCodeTemplatesManager.getInstance().findTemplateByName(EqualsHashCodeTemplatesManager.toEqualsName(item));
-        if (template != null) {
-          String className = template.getClassName();
-          setErrorText(className != null ? JavaBundle.message("dialog.message.class.not.found", className)
-                                         : JavaBundle.message("dialog.message.template.not.applicable"), myComboBox);
-        }
-        else {
-          setErrorText(JavaBundle.message("dialog.message.template.not.found"), myComboBox);
-        }
-      }
-      else {
-        setErrorText(null, myComboBox);
-      }
-    }
-
-    @Override
-    public JComponent getComponent() {
-      return myPanel;
     }
   }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
-import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
+import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManagerBase;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.options.ConfigurationException;
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.template.TemplateResource;
+import org.jetbrains.java.generate.template.TemplatesManager;
 import org.jetbrains.java.generate.view.GenerateTemplateConfigurable;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
 
     @Override
     public String getName(Couple<TemplateResource> couple) {
-      return EqualsHashCodeTemplatesManager.getTemplateBaseName(couple.first);
+      return EqualsHashCodeTemplatesManagerBase.getTemplateBaseName(couple.first);
     }
 
     @Override
@@ -42,8 +43,8 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
 
     @Override
     public void setName(Couple<TemplateResource> couple, String name) {
-      couple.first.setFileName(EqualsHashCodeTemplatesManager.toEqualsName(name));
-      couple.second.setFileName(EqualsHashCodeTemplatesManager.toHashCodeName(name));
+      couple.first.setFileName(EqualsHashCodeTemplatesManagerBase.toEqualsName(name));
+      couple.second.setFileName(EqualsHashCodeTemplatesManagerBase.toHashCodeName(name));
     }
   };
 
@@ -81,9 +82,9 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
       }
     };
   private final Project myProject;
-  private final EqualsHashCodeTemplatesManager myManager;
+  private final TemplatesManager myManager;
 
-  public EqualsHashCodeTemplatesPanel(Project project, EqualsHashCodeTemplatesManager manager) {
+  public EqualsHashCodeTemplatesPanel(Project project, EqualsHashCodeTemplatesManagerBase manager) {
     super(NAMER, FACTORY, CLONER, COMPARER, new ArrayList<>(manager.getTemplateCouples()));
     myProject = project;
     myManager = manager;
