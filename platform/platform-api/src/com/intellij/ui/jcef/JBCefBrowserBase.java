@@ -312,7 +312,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myCefClient.addKeyboardHandler(myKeyboardHandler = new CefKeyboardHandlerAdapter() {
       @Override
       public boolean onKeyEvent(CefBrowser browser, CefKeyEvent cefKeyEvent) {
-        //if (isOffScreenRendering()) return false;
+        if (isOffScreenRendering()) return false;
 
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         boolean consume = focusOwner != browser.getUIComponent();
@@ -322,8 +322,13 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         if (focusedWindow == null) {
           return true; // consume
         }
-        KeyEvent javaKeyEvent = convertCefKeyEvent(cefKeyEvent, focusedWindow);
-        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
+        try {
+          KeyEvent javaKeyEvent = convertCefKeyEvent(cefKeyEvent, focusedWindow);
+          Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
+        } catch (IllegalArgumentException e) {
+          LOG.error("Failed to convert CEF key event: " + cefKeyEvent + "\nReason: " + e);
+        }
+
         return consume;
       }
     }, myCefBrowser);
