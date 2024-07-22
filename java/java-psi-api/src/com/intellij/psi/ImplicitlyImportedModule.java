@@ -10,15 +10,16 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a module that is implicitly imported.
- *
  */
 @ApiStatus.Experimental
 public final class ImplicitlyImportedModule implements ImplicitlyImportedElement {
 
   private final @NotNull String myModuleName;
+  private final @NotNull PsiImportModuleStatement myModuleStatement;
 
-  private ImplicitlyImportedModule(@NotNull String moduleName) {
+  private ImplicitlyImportedModule(@NotNull Project project, @NotNull String moduleName) {
     myModuleName = moduleName;
+    myModuleStatement = createImportStatementInner(project, moduleName);
   }
 
   public @NotNull String getModuleName() {
@@ -26,12 +27,15 @@ public final class ImplicitlyImportedModule implements ImplicitlyImportedElement
   }
 
   @Override
-  public @NotNull PsiImportStatementBase createImportStatement(Project project) {
+  public @NotNull PsiImportStatementBase createImportStatement() {
+    return myModuleStatement;
+  }
+
+  private static @NotNull PsiImportModuleStatement createImportStatementInner(@NotNull Project project, @NotNull String moduleName) {
     PsiElementFactory factory = PsiElementFactory.getInstance(project);
-    String moduleName = getModuleName();
     if (PsiJavaModule.JAVA_BASE.equals(moduleName)) {
       return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-        return CachedValueProvider.Result.create(factory.createImportModuleStatementFromText(moduleName),
+        return CachedValueProvider.Result.create(factory.createImportModuleStatementFromText(PsiJavaModule.JAVA_BASE),
                                                  ProjectRootModificationTracker.getInstance(project));
       });
     }
@@ -39,7 +43,7 @@ public final class ImplicitlyImportedModule implements ImplicitlyImportedElement
   }
 
   @NotNull
-  public static ImplicitlyImportedModule create(@NotNull String moduleName) {
-    return new ImplicitlyImportedModule(moduleName);
+  public static ImplicitlyImportedModule create(@NotNull Project project, @NotNull String moduleName) {
+    return new ImplicitlyImportedModule(project, moduleName);
   }
 }

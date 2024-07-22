@@ -857,16 +857,17 @@ public final class PsiImplUtil {
   @ApiStatus.Experimental
   public static @NotNull ImplicitlyImportedElement @NotNull[] getImplicitImports(@NotNull PsiFile file) {
     List<ImplicitlyImportedElement> implicitImports = new ArrayList<>();
+    Project project = file.getProject();
     // java.lang.StringTemplate.STR
     if (PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, file)) {
-      implicitImports.add(ImplicitlyImportedStaticMember.create(CommonClassNames.JAVA_LANG_STRING_TEMPLATE, "STR"));
+      implicitImports.add(ImplicitlyImportedStaticMember.create(project, CommonClassNames.JAVA_LANG_STRING_TEMPLATE, "STR"));
     }
 
     // java.io.IO.* for implicit classes
     if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) && file instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)file).getClasses();
       if (classes.length == 1 && classes[0] instanceof PsiImplicitClass) {
-        implicitImports.add(ImplicitlyImportedStaticMember.create(JAVA_IO_IO, "*"));
+        implicitImports.add(ImplicitlyImportedStaticMember.create(project, JAVA_IO_IO, "*"));
       }
     }
 
@@ -876,7 +877,7 @@ public final class PsiImplUtil {
         file instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)file).getClasses();
       if (classes.length == 1 && classes[0] instanceof PsiImplicitClass) {
-        implicitImports.add(ImplicitlyImportedModule.create(JAVA_BASE));
+        implicitImports.add(ImplicitlyImportedModule.create(project, JAVA_BASE));
       }
     }
 
