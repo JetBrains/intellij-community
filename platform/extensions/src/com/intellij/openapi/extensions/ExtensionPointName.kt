@@ -34,7 +34,7 @@ import kotlin.streams.asStream
  *
  * Instances of this class can be safely stored in static final fields.
  *
- * For project-level and module-level extension points use [ProjectExtensionPointName] instead to make it evident that corresponding
+ * For project-level and module-level extension points use [ProjectExtensionPointName] instead to make it clear that corresponding
  * [AreaInstance] must be passed.
  */
 class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName<T>(name) {
@@ -123,7 +123,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    *
    * Use only for interface extension points, not for bean.
    *
-   * Due to internal reasons, there is no easy way to implement hasNext in a reliable manner,
+   * Due to internal reasons, there is no easy way to implement hasNext reliably,
    * so, `next` may return `null` (in this case stop iteration).
    *
    * Possible use cases:
@@ -163,12 +163,17 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     getPointImpl(areaInstance).addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
 
+  @Deprecated("Pass CoroutineScope to addChangeListener")
   fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
     getPointImpl(null).removeExtensionPointListener(listener)
   }
 
   fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
     getPointImpl(null).addChangeListener(listener = listener, parentDisposable = parentDisposable)
+  }
+
+  fun addChangeListener(coroutineScope: CoroutineScope, listener: Runnable) {
+    getPointImpl(null).addChangeListener(listener = listener, coroutineScope = coroutineScope)
   }
 
   /**

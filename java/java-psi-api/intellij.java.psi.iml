@@ -25,5 +25,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.core" exported="" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi" exported="" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>
