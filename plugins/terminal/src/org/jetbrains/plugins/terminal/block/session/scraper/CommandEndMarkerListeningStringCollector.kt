@@ -24,9 +24,9 @@ internal class CommandEndMarkerListeningStringCollector(
     }
 
     // investigate why ConPTY inserts hard line breaks sometimes
-    val suffixStartInd = findSuffixStartIndIgnoringLF(trimmedText, commandEndMarker)
-    if (suffixStartInd >= 0) {
-      val commandText = trimmedText.substring(0, suffixStartInd)
+    val indexOfSuffix = indexOfSuffix(trimmedText, commandEndMarker, ignoredCharacters = { it == NEW_LINE })
+    if (indexOfSuffix >= 0) {
+      val commandText = trimmedText.substring(0, indexOfSuffix)
       onFound()
       return commandText
     }
@@ -34,23 +34,36 @@ internal class CommandEndMarkerListeningStringCollector(
     return text
   }
 
-  /**
-   * @return the index in [text] where [suffix] starts, or -1 if there is no such suffix
-   */
-  private fun findSuffixStartIndIgnoringLF(text: String, suffix: String): Int {
-    check(suffix.isNotEmpty())
-    if (text.length < suffix.length) return -1
-    var textInd: Int = text.length
-    for (suffixInd in suffix.length - 1 downTo 0) {
-      textInd--
-      while (textInd >= 0 && text[textInd] == NEW_LINE) {
+  companion object {
+    /**
+     * Works like
+     * ```kotlin
+     * if text.endsWith(suffix)) {
+     *   return text.lastIndexOf(suffix)
+     * } else {
+     *   return -1
+     * }
+     * ```
+     * but ignores accidental appearance of [ignoredCharacters] in text
+     *
+     * @param ignoredCharacters characters that could appear in text and should be ignored
+     * @return the index in [text] where [suffix] starts, or -1 if there is no such suffix
+     */
+    fun indexOfSuffix(text: String, suffix: String, ignoredCharacters: (Char) -> Boolean): Int {
+      check(suffix.isNotEmpty())
+      if (text.length < suffix.length) return -1
+      var textInd: Int = text.length
+      for (suffixInd in suffix.length - 1 downTo 0) {
         textInd--
+        while (textInd >= 0 && ignoredCharacters(text[textInd])) {
+          textInd--
+        }
+        if (textInd < 0 || text[textInd] != suffix[suffixInd]) {
+          return -1
+        }
       }
-      if (textInd < 0 || text[textInd] != suffix[suffixInd]) {
-        return -1
-      }
+      return textInd
     }
-    return textInd
   }
 
 }
