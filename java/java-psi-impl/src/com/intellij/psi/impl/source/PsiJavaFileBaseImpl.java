@@ -7,7 +7,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -50,7 +49,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private final CachedValue<MostlySingularMultiMap<String, ResultWithContext>> myResolveCache;
   private final CachedValue<Map<String, Iterable<ResultWithContext>>> myCachedDeclarations;
-  private final CachedValue<List<PsiImportStatementBase>> myCachedImplicitImports;
+  private final CachedValue<ImplicitlyImportedElement[]> myCachedImplicitImportedElements;
   private volatile String myPackageName;
 
   protected PsiJavaFileBaseImpl(@NotNull IElementType elementType, @NotNull IElementType contentElementType, @NotNull FileViewProvider viewProvider) {
@@ -65,12 +64,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
       return Result.create(declarations, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
-    myCachedImplicitImports = cachedValuesManager.createCachedValue(() -> {
-      List<PsiImportStatementBase> statements = ContainerUtil.map(getImplicitlyImportedElements(), implicitlyImportedElement -> {
-        Project project = getProject();
-        return implicitlyImportedElement.createImportStatement(project);
-      });
-      return Result.create(statements, this.getContainingFile());
+    myCachedImplicitImportedElements = cachedValuesManager.createCachedValue(() -> {
+      return Result.create(PsiImplUtil.getImplicitImports(this), this.getContainingFile());
     }, false);
   }
 
@@ -576,7 +571,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @Override
   public @NotNull ImplicitlyImportedElement @NotNull [] getImplicitlyImportedElements() {
-    return PsiImplUtil.getImplicitImports(this);
+    return myCachedImplicitImportedElements.getValue();
   }
 
   @Override
@@ -593,7 +588,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @NotNull
   private List<PsiImportStatementBase> getImplicitImports() {
-    return myCachedImplicitImports.getValue();
+    return ContainerUtil.map(getImplicitlyImportedElements(), element -> element.createImportStatement());
   }
 
   private static final Key<String> SHEBANG_SOURCE_LEVEL = Key.create("SHEBANG_SOURCE_LEVEL");
