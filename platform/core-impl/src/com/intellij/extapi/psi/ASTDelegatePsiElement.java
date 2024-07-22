@@ -166,12 +166,12 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return getNode().getElementType().getLanguage();
   }
 
-  protected @Nullable <T extends PsiElement> T findChildByType(IElementType type) {
+  protected @Nullable <T extends PsiElement> T findChildByType(@NotNull IElementType type) {
     ASTNode node = getNode().findChildByType(type);
     return node == null ? null : (T)node.getPsi();
   }
 
-  protected @Nullable <T extends PsiElement> T findLastChildByType(IElementType type) {
+  protected @Nullable <T extends PsiElement> T findLastChildByType(@NotNull IElementType type) {
     PsiElement child = getLastChild();
     while (child != null) {
       final ASTNode node = child.getNode();
@@ -181,18 +181,16 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return null;
   }
 
-
-
-  protected @NotNull <T extends PsiElement> T findNotNullChildByType(IElementType type) {
+  protected @NotNull <T extends PsiElement> T findNotNullChildByType(@NotNull IElementType type) {
     return notNullChild(findChildByType(type));
   }
 
-  protected @Nullable <T extends PsiElement> T findChildByType(TokenSet type) {
+  protected @Nullable <T extends PsiElement> T findChildByType(@NotNull TokenSet type) {
     ASTNode node = getNode().findChildByType(type);
     return node == null ? null : (T)node.getPsi();
   }
 
-  protected @NotNull <T extends PsiElement> T findNotNullChildByType(TokenSet type) {
+  protected @NotNull <T extends PsiElement> T findNotNullChildByType(@NotNull TokenSet type) {
     return notNullChild(findChildByType(type));
   }
 
@@ -200,16 +198,16 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
    * @deprecated Use {@link #findChildByType(TokenSet)} instead
    */
   @Deprecated
-  protected @Nullable PsiElement findChildByFilter(TokenSet tokenSet) {
+  protected @Nullable PsiElement findChildByFilter(@NotNull TokenSet tokenSet) {
     ASTNode[] nodes = getNode().getChildren(tokenSet);
     return nodes.length == 0 ? null : nodes[0].getPsi();
   }
 
-  protected <T extends PsiElement> T @NotNull [] findChildrenByType(IElementType elementType, Class<T> arrayClass) {
+  protected <T extends PsiElement> T @NotNull [] findChildrenByType(@NotNull IElementType elementType, @NotNull Class<T> arrayClass) {
     return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, s -> (T)s.getPsi());
   }
 
-  protected @Unmodifiable <T extends PsiElement> List<T> findChildrenByType(@NotNull TokenSet elementType) {
+  protected @Unmodifiable <T extends PsiElement> @NotNull List<T> findChildrenByType(@NotNull TokenSet elementType) {
     List<T> result = Collections.emptyList();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
@@ -225,7 +223,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
-  protected @Unmodifiable <T extends PsiElement> List<T> findChildrenByType(@NotNull IElementType elementType) {
+  protected @Unmodifiable <T extends PsiElement> @NotNull List<T> findChildrenByType(@NotNull IElementType elementType) {
     List<T> result = Collections.emptyList();
     ASTNode child = getNode().getFirstChildNode();
     while (child != null) {
@@ -259,7 +257,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return addInnerBefore(element, anchor);
   }
 
-  private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+  private PsiElement addInnerBefore(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
     ASTNode treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
@@ -288,7 +286,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     CheckUtil.checkWritable(this);
   }
 
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
     return CodeEditUtil.addChildren(getNode(), first, last, getAnchorNode(anchor, before));
   }
 
@@ -371,20 +369,18 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     CodeEditUtil.replaceChild(getNode(), child.getNode(), newElement);
   }
 
-  private ASTNode getAnchorNode(final ASTNode anchor, final Boolean before) {
-    ASTNode anchorBefore;
+  private @Nullable ASTNode getAnchorNode(@Nullable ASTNode anchor, @Nullable Boolean before) {
+    assert (anchor == null) || (anchor != null && before != null);
+
     if (anchor != null) {
-      anchorBefore = before.booleanValue() ? anchor : anchor.getTreeNext();
+      return before.booleanValue() ? anchor : anchor.getTreeNext();
+    }
+    else if (before != null && !before.booleanValue()) {
+      return getNode().getFirstChildNode();
     }
     else {
-      if (before != null && !before.booleanValue()) {
-        anchorBefore = getNode().getFirstChildNode();
-      }
-      else {
-        anchorBefore = null;
-      }
+      return null;
     }
-    return anchorBefore;
   }
 
   @Override

@@ -139,7 +139,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     boolean addingNewName = first == last &&
                             first.getElementType() == PyElementTypes.IMPORT_ELEMENT &&
                             (anchor == null || anchor.getElementType() == PyElementTypes.IMPORT_ELEMENT);
