@@ -227,17 +227,21 @@ def get_value_repr(value, do_trim=True, format=DEFAULT_FORMAT):
     """
     value_representation = None
     try:
-        if do_trim:
-            try:
+        try:
+            if format != DEFAULT_FORMAT:
+                value_representation = format % value
+            else:
                 value_representation = pydevd_repr_function(value)
-            except:
-                pass
+        except:
+            pass
+
         if value_representation is None:
             value_representation = format % value
+
+        if do_trim:
+            return _trim_string_repr_if_needed(value_representation, do_trim)
         else:
-            if format != DEFAULT_FORMAT:
-                value_representation = format % value_representation
-        return _trim_string_repr_if_needed(value_representation, do_trim)
+            return value_representation
     except:
         try:
             return _trim_string_repr_if_needed(repr(value), do_trim)
