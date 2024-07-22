@@ -546,7 +546,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     if (null == baseDir) return
     withContext(tracer.span("checkOrInstallForSync") + Dispatchers.IO) {
-      MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
+      MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString(), true)
     }
   }
 
