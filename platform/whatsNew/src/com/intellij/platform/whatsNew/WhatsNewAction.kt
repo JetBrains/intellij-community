@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,8 +44,10 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     }
   }
 
-  private val contentAsync = appScope.async {
-    WhatsNewContent.getWhatsNewContent()
+  private val contentAsync by lazy {
+    appScope.async {
+      WhatsNewContent.getWhatsNewContent()
+    }
   }
 
   suspend fun openWhatsNew(project: Project) {
@@ -99,8 +100,9 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     return ActionUpdateThread.BGT
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = runBlockingCancellable { contentAsync.await() != null }
+      e.presentation.isEnabledAndVisible = if (contentAsync.isCompleted) contentAsync.getCompleted() != null else false
       e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
       e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
   }
