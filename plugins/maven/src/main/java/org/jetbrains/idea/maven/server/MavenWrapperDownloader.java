@@ -22,24 +22,28 @@ import java.util.Locale;
 public final class MavenWrapperDownloader {
 
   public static void checkOrInstall(@NotNull Project project, @Nullable String workingDir) {
-    checkOrInstall(project, workingDir, null);
+    checkOrInstall(project, workingDir, null, true);
   }
 
   public static void checkOrInstallForSync(@NotNull Project project,
-                                           @Nullable String workingDir) {
-    checkOrInstall(project, workingDir, MavenProjectsManager.getInstance(project).getSyncConsole());
+                                           @Nullable String workingDir,
+                                           boolean showNotificationIfUrlMissing) {
+    checkOrInstall(project, workingDir, MavenProjectsManager.getInstance(project).getSyncConsole(), showNotificationIfUrlMissing);
   }
 
   private static synchronized void checkOrInstall(@NotNull Project project,
                                                   @Nullable String workingDir,
-                                                  @Nullable MavenSyncConsole syncConsole) {
+                                                  @Nullable MavenSyncConsole syncConsole,
+                                                  boolean showNotificationIfUrlMissing) {
     if (workingDir == null) return;
     MavenDistributionsCache distributionsCache = MavenDistributionsCache.getInstance(project);
 
     String multiModuleDir = distributionsCache.getMultimoduleDirectory(workingDir);
     String distributionUrl = distributionsCache.getWrapperDistributionUrl(multiModuleDir);
     if (distributionUrl == null) {
-      MavenWrapperEventLogNotification.noDistributionUrlEvent(project, multiModuleDir);
+      if (showNotificationIfUrlMissing) {
+        MavenWrapperEventLogNotification.noDistributionUrlEvent(project, multiModuleDir);
+      }
       return;
     }
 

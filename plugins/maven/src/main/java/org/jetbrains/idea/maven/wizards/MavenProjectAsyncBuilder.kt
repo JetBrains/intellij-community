@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
@@ -33,7 +34,9 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction
+import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.MavenWrapperSupport.Companion.getWrapperDistributionUrl
+import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.*
 import java.nio.file.Path
 
@@ -144,6 +147,17 @@ class MavenProjectAsyncBuilder {
     generalSettings.updateFromMavenConfig(files)
     updateMavenSettingsFromEnvironment(project, generalSettings, importingSettings)
 
+    val manager = MavenProjectsManager.getInstance(project)
+
+    if (project.isTrusted()) {
+      withBackgroundProgress(project, MavenProjectBundle.message("maven.installing.wrapper"), false) {
+        withContext(tracer.span("installingMavenWrapperBeforeSync") + Dispatchers.IO) {
+          MavenWrapperDownloader.checkOrInstallForSync(project, rootDirectory.toString(), false);
+        }
+      }
+    }
+
+
     withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), false) {
       reportRawProgress { reporter ->
         tree.updateAll(false, generalSettings, reporter)
@@ -156,7 +170,7 @@ class MavenProjectAsyncBuilder {
     }
 
     val selectedProfiles = getProfilesFromSystemProperties()
-    val manager = MavenProjectsManager.getInstance(project)
+
     manager.setIgnoredState(projects, false)
 
     return manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule, syncProject)
