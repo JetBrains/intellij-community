@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SingleAlarm;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
@@ -17,10 +16,6 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public class SuspendOtherThreadsRequestor implements FilteredRequestor {
-  private enum HowToSwitchToSuspendAll {
-    PAUSE_WAITING_EVALUATION, IMMEDIATE_PAUSE, METHOD_BREAKPOINT
-  }
-
   private final @NotNull DebugProcessImpl myProcess;
   private final @NotNull ParametersForSuspendAllReplacing myParameters;
 
@@ -57,8 +52,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
 
     process.myPreparingToSuspendAll = true;
 
-    String howToSwitchStr = Registry.get("debugger.how.to.switch.to.suspend.all").getSelectedOption();
-    HowToSwitchToSuspendAll how = HowToSwitchToSuspendAll.valueOf(howToSwitchStr);
+    DebuggerUtils.HowToSwitchToSuspendAll how = DebuggerUtils.howToSwitchToSuspendAll();
     switch (how) {
       case METHOD_BREAKPOINT -> {
         process.myParametersForSuspendAllReplacing = new ParametersForSuspendAllReplacing(suspendContext, performOnSuspendAll);
