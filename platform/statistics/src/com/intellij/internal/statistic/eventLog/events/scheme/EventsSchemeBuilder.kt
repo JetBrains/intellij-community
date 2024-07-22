@@ -97,6 +97,7 @@ object EventsSchemeBuilder {
   @JvmOverloads
   fun buildEventsScheme(recorder: String?, pluginId: String? = null, brokenPluginIds: Set<String> = emptySet()): List<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
+    val recorders = mutableSetOf<String>()
     val counterCollectors = ArrayList<FeatureUsageCollectorInfo>()
     UsageCollectors.COUNTER_EP_NAME.processWithPluginDescriptor { counterUsageCollectorEP, descriptor: PluginDescriptor ->
       if (counterUsageCollectorEP.implementationClass != null) {
@@ -104,12 +105,11 @@ object EventsSchemeBuilder {
         if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
           val collector = ApplicationManager.getApplication().instantiateClass<FeatureUsagesCollector>(
             counterUsageCollectorEP.implementationClass, descriptor)
+          recorders.add(collector.group.recorder)
           counterCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
         }
       }
     }
-
-    if (recorder != null) counterCollectors.add(calculateEventLogSystemCollector(recorder))
 
     result.addAll(collectGroupsFromExtensions("counter", counterCollectors, recorder))
 
@@ -117,16 +117,27 @@ object EventsSchemeBuilder {
     UsageCollectors.APPLICATION_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
+        recorders.add(bean.collector.group.recorder)
         stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
+        recorders.add(bean.collector.group.recorder)
         stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
+
+    //add event log system collectors for all recorders
+    val systemCollectors = ArrayList<FeatureUsageCollectorInfo>()
+    if (recorder != null) systemCollectors.add(calculateEventLogSystemCollector(recorder))
+    else {
+      recorders.forEach { systemCollectors.add(calculateEventLogSystemCollector(it)) }
+    }
+    result.addAll(collectGroupsFromExtensions("counter", systemCollectors, recorder))
+
     result.sortBy(GroupDescriptor::id)
     return result
   }
