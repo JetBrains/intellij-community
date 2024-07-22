@@ -72,7 +72,9 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myProjectCloseListener.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        endUpdatesBatch();
+        // currently called from EDT
+        // given that the project is closing, it is acceptable not to process updates precisely
+        endUpdatesBatchOnProjectClose();
       }
     });
   }
@@ -127,16 +129,20 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     });
   }
 
+  private synchronized void endUpdatesBatchOnProjectClose() {
+    myModificationsInCurrentBatch.clear();
+    zeroCheck();
+  }
+
+  // consumes myPendingUpdates, all unprocessed updates are placed in myProbablyExpensiveUpdates
   private void fastCheck() {
     var index = myStubUpdatingIndexStorage.getValue();
     if (index == null) { // if indexes are not ready, then just increment global mod count and exit
-      myPendingUpdates.clear();
-      registerModificationForAllElementTypes();
+      zeroCheck();
       return;
     }
     while (!myPendingUpdates.isEmpty()) {
-      VirtualFile file = myPendingUpdates.poll();
-
+      VirtualFile file = myPendingUpdates.remove();
       //noinspection deprecation
       if (file.getUserData(BackFileViewProvider.FRONT_FILE_KEY) != null) {
         //noinspection deprecation
@@ -175,14 +181,22 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
   }
 
+  // consumes myPendingUpdates
+  private void zeroCheck() {
+    myPendingUpdates.clear();
+    registerModificationForAllElementTypes();
+  }
+
+  // consumes myProbablyExpensiveUpdates
   private void coarseCheck() {
     while (!myProbablyExpensiveUpdates.isEmpty()) {
-      FileInfo info = myProbablyExpensiveUpdates.poll();
+      FileInfo info = myProbablyExpensiveUpdates.remove();
       if (wereModificationsInCurrentBatch(info.type)) continue;
       registerModificationFor(info.type);
     }
   }
 
+  // consumes myProbablyExpensiveUpdates
   private void preciseCheck() {
     var index = myStubUpdatingIndexStorage.getValue();
     if (index == null) {
@@ -192,7 +206,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
     DataIndexer<Integer, SerializedStubTree, FileContent> stubIndexer = index.getIndexer();
     while (!myProbablyExpensiveUpdates.isEmpty()) {
-      FileInfo info = myProbablyExpensiveUpdates.poll();
+      FileInfo info = myProbablyExpensiveUpdates.remove();
       if (wereModificationsInCurrentBatch(info.type) || info.project.isDisposed()) continue;
       FileBasedIndexImpl.markFileIndexed(info.file, null);
       try {
