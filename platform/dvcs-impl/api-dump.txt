@@ -264,19 +264,17 @@ a:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase
 - changeListUpdateDone():V
 - containsFile(com.intellij.openapi.vcs.FilePath):Z
 - dispose():V
-- filesChanged(java.util.List):V
-- sf:getAffectedFilePaths(com.intellij.openapi.vfs.newvfs.events.VFileEvent):java.util.Set
+- filesChanged(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 - getIgnoredFilePaths():java.util.Set
 - isInUpdateMode():Z
 - removeIgnoredFiles(java.util.Collection):java.util.Collection
 - pa:requestIgnored(java.util.Collection):java.util.Set
 - bs:requestIgnored$default(com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase,java.util.Collection,I,java.lang.Object):java.util.Set
 - pa:scanTurnedOff():Z
-- f:setupListeners():V
+- f:setupListeners(kotlinx.coroutines.CoroutineScope):V
 - startRescan():V
 - startRescan(java.lang.Runnable):V
 f:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase$Companion
-- f:getAffectedFilePaths(com.intellij.openapi.vfs.newvfs.events.VFileEvent):java.util.Set
 f:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase$Waiter
 - com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener
 - <init>(com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase):V

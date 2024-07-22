@@ -538,6 +538,7 @@ c:com.intellij.openapi.vcs.VcsShowConfirmationOptionImpl
 a:com.intellij.openapi.vcs.VcsVFSListener
 - com.intellij.openapi.Disposable
 - psf:LOG:com.intellij.openapi.diagnostic.Logger
+- pf:coroutineScope:kotlinx.coroutines.CoroutineScope
 - pf:myAddOption:com.intellij.openapi.vcs.VcsShowConfirmationOption
 - pf:myChangeListManager:com.intellij.openapi.vcs.changes.ChangeListManager
 - pf:myProcessor:com.intellij.openapi.vcs.VcsVFSListener$StateProcessor
@@ -545,7 +546,7 @@ a:com.intellij.openapi.vcs.VcsVFSListener
 - pf:myRemoveOption:com.intellij.openapi.vcs.VcsShowConfirmationOption
 - pf:myVcs:com.intellij.openapi.vcs.AbstractVcs
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs):V
-- p:<init>(com.intellij.openapi.vcs.AbstractVcs):V
+- p:<init>(com.intellij.openapi.vcs.AbstractVcs,kotlinx.coroutines.CoroutineScope):V
 - p:beforeContentsChange(java.util.List):V
 - dispose():V
 - p:executeAdd():V
@@ -1794,16 +1795,12 @@ f:com.intellij.openapi.vcs.changes.VcsDirtyScopeMap
 - asMap():java.util.Map
 - clear():V
 - isEmpty():Z
-c:com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener
-- com.intellij.openapi.Disposable
+f:com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener
 - com.intellij.vfs.AsyncVfsEventsListener
-- <init>(com.intellij.openapi.project.Project):V
-- dispose():V
-- filesChanged(java.util.List):V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener
-- s:install(com.intellij.openapi.project.Project):V
-- setForbid(Z):V
-- waitForAsyncTaskCompletion():V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- filesChanged(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- f:setForbid(Z):V
+- f:waitForAsyncTaskCompletion():V
 com.intellij.openapi.vcs.changes.VcsEditorTabFilesListener
 - sf:Companion:com.intellij.openapi.vcs.changes.VcsEditorTabFilesListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -2875,26 +2872,6 @@ c:com.intellij.openapi.vcs.changes.conflicts.MoveChangesDialog
 - getIncludedChanges():java.util.Collection
 - getPreferredFocusedComponent():javax.swing.JComponent
 - isOKActionEnabled():Z
-f:com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl
-- com.intellij.openapi.vcs.FilesProcessorWithNotificationImpl
-- com.intellij.openapi.vcs.changes.ChangeListListener
-- com.intellij.vfs.AsyncVfsEventsListener
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.vcs.AbstractVcs):V
-- dispose():V
-- doActionOnChosenFiles(java.util.Collection):V
-- doFilterFiles(java.util.Collection):java.util.List
-- filesChanged(java.util.List):V
-- getAskedBeforeProperty():java.lang.String
-- getDoForCurrentProjectProperty():java.lang.String
-- getForAllProjectsActionText():java.lang.String
-- getForCurrentProjectActionText():java.lang.String
-- getMuteActionText():java.lang.String
-- getNotificationDisplayId():java.lang.String
-- getShowActionText():java.lang.String
-- f:install():V
-- notificationMessage():java.lang.String
-- notificationTitle():java.lang.String
-- unchangedFileStatusChanged(Z):V
 c:com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl
 - com.intellij.openapi.vcs.changes.IgnoredFileGenerator
 - p:<init>(com.intellij.openapi.project.Project):V
@@ -6381,7 +6358,7 @@ f:com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI
 - sf:Companion:com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Companion
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:addTrackerListener(com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener,com.intellij.openapi.Disposable):V
 - arePartialChangelistsEnabled():Z
 - arePartialChangelistsEnabled(com.intellij.openapi.vfs.VirtualFile):Z
@@ -6641,8 +6618,10 @@ c:com.intellij.openapi.vcs.impl.VcsRootIterator
 - s:iterateVcsRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor,com.intellij.openapi.vcs.VirtualFileFilter):V
 - s:iterateVfUnderVcsRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
 com.intellij.openapi.vcs.impl.VcsStartupActivity
+- execute(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- bs:execute$suspendImpl(com.intellij.openapi.vcs.impl.VcsStartupActivity,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - a:getOrder():I
-- a:runActivity(com.intellij.openapi.project.Project):V
+- runActivity(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.vcs.impl.VcsVirtualFileContentRevision
 - com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 - com.intellij.openapi.vcs.changes.ContentRevision
@@ -7838,7 +7817,7 @@ f:com.intellij.vcs.commit.CommitModeManager
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.vcs.commit.CommitModeManager$Companion
 - sf:SETTINGS:com.intellij.util.messages.Topic
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - dispose():V
 - f:getCurrentCommitMode():com.intellij.vcs.commit.CommitMode
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.commit.CommitModeManager

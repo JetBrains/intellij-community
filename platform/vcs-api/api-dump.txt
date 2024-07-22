@@ -2415,7 +2415,7 @@ f:com.intellij.vcsUtil.VcsUtil
 - s:sortPathsFromOutermost(com.intellij.openapi.vcs.FilePath[]):com.intellij.openapi.vcs.FilePath[]
 - s:trimCommitMessageToSaneSize(java.lang.String):java.lang.String
 *:com.intellij.vfs.AsyncVfsEventsListener
-- a:filesChanged(java.util.List):V
+- a:filesChanged(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.vfs.AsyncVfsEventsPostProcessor
-- a:addListener(com.intellij.vfs.AsyncVfsEventsListener,com.intellij.openapi.Disposable):V
+- a:addListener(com.intellij.vfs.AsyncVfsEventsListener,kotlinx.coroutines.CoroutineScope):V
 - s:getInstance():com.intellij.vfs.AsyncVfsEventsPostProcessor
