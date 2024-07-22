@@ -34,8 +34,6 @@ suspend fun bar(x: Int, y: Int) {
 // SMART_STEP_INTO_BY_INDEX: 1
 // STEP_OVER: 6
 
-// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
-// REGISTRY: debugger.always.suspend.thread.before.switch=true
 // REGISTRY: debugger.async.stacks.coroutines=false
 
 // Cannot get file name for `withContext` resolved call

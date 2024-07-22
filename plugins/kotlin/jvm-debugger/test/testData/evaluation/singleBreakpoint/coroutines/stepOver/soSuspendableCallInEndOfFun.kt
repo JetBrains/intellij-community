@@ -21,4 +21,3 @@ suspend fun inFun() {
 }
 
 // STEP_OVER: 3
-// REGISTRY: debugger.always.suspend.thread.before.switch=true

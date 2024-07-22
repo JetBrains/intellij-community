@@ -1,6 +1,6 @@
 // Attack library to test it will not break simple run-to-cursor action (IDEA-351849 regression)
 // ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3)-javaagent
-// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+
 
 package runToCursorSimple
 
