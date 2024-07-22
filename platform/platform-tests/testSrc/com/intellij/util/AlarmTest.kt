@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class AlarmTest {
@@ -35,6 +36,27 @@ class AlarmTest {
       val alarm = SingleAlarm.pooledThreadSingleAlarm(delay = 100, parentDisposable = disposable) { }
       Disposer.dispose(disposable)
       assertThat(alarm.isDisposed).isTrue()
+    }
+  }
+
+  @Test
+  fun `SingleAlarm with parent disposable must ignore request after disposal`() {
+    val disposable = Disposer.newDisposable()
+    disposable.use {
+      val counter = AtomicInteger()
+      @Suppress("DEPRECATION")
+      val alarm = SingleAlarm.pooledThreadSingleAlarm(delay = 1, parentDisposable = disposable) {
+        counter.incrementAndGet()
+      }
+
+      alarm.request()
+      alarm.waitForAllExecuted(1, TimeUnit.SECONDS)
+      assertThat(counter.get()).isEqualTo(1)
+      Disposer.dispose(disposable)
+
+      alarm.request()
+      alarm.waitForAllExecuted(1, TimeUnit.SECONDS)
+      assertThat(counter.get()).isEqualTo(1)
     }
   }
 

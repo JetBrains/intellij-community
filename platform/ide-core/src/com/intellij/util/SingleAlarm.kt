@@ -292,6 +292,10 @@ class SingleAlarm @Internal constructor(
   }
 
   private fun request(forceRun: Boolean, delay: Int, cancelCurrent: Boolean = false) {
+    if (isDisposed) {
+      return
+    }
+
     val effectiveDelay = if (forceRun) 0 else delay.toLong()
     synchronized(LOCK) {
       var prevCurrentJob = currentJob
@@ -307,11 +311,14 @@ class SingleAlarm @Internal constructor(
         prevCurrentJob = null
 
         delay(effectiveDelay)
+
         withContext(taskContext) {
           //todo fix clients and remove NonCancellable
           try {
-            Cancellation.withNonCancelableSection().use {
-              task.run()
+            if (!isDisposed) {
+              Cancellation.withNonCancelableSection().use {
+                task.run()
+              }
             }
           }
           catch (e: CancellationException) {
