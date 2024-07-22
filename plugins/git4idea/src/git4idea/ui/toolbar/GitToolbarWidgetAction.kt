@@ -157,9 +157,10 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     if (showOutgoing && syncStatus?.outgoing == true) {
       rightIcons.add(DvcsImplIcons.Outgoing)
     }
-    if (rightIcons.isNotEmpty()) {
-      e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, RowIcon(*rightIcons.toTypedArray()))
-    }
+    e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, when {
+      rightIcons.isNotEmpty() -> RowIcon(*rightIcons.toTypedArray())
+      else -> null
+    })
   }
 
   companion object {
