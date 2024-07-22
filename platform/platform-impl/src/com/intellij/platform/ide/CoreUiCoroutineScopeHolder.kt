@@ -6,5 +6,5 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-@Service
+@Service(value = [Service.Level.APP, Service.Level.PROJECT])
 internal class CoreUiCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
