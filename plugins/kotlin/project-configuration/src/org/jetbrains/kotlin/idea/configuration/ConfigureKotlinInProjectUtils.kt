@@ -154,6 +154,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
+        LOG.debug("Did not find any Kotlin files in project")
         return emptyList()
     }
 
@@ -180,6 +181,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
                 }
             }
         }
+    LOG.debug("Found ${modules.size} modules with Kotlin files")
     return modules
 }
 

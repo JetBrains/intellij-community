@@ -7,6 +7,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -72,6 +73,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
                 }
 
             if (modulesWithKotlinFacets.isEmpty()) {
+                LOG.debug("Found no Kotlin modules with facets")
                 propertiesComponent.setValue(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME, true)
                 return
             }
@@ -83,6 +85,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
 
         if (ktModules.isEmpty()) {
             propertiesComponent.setValue(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME, true)
+            LOG.debug("Found no Kotlin modules")
             return
         }
         if (!kotlinLanguageVersionConfigured) {
@@ -108,6 +111,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
             }
         }
         propertiesComponent.setValue(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME, true)
+        LOG.debug("Kotlin language version configured successfully")
     }
 
     @IntellijInternalApi
@@ -159,6 +163,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
     companion object {
         const val CONFIGURE_NOTIFICATION_GROUP_ID = "Configure Kotlin in Project"
         const val KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME = "kotlin-language-version-configured"
+        private val LOG = logger<KotlinConfigurationCheckerService>()
 
         fun getInstance(project: Project): KotlinConfigurationCheckerService = project.service()
     }

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
@@ -17,6 +18,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTest() {
+    companion object {
+        private val logger = logger<AbstractConfigureKotlinInTempDirTest>()
+    }
     private lateinit var vfsDisposable: Ref<Disposable>
 
     override fun createProjectRoot(): File = KotlinTestUtils.tmpDirForReusableFolder("configure_$projectName")
@@ -32,8 +36,11 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
     )
 
     override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path {
+        logger.debug("Copying files to temp directory")
         val originalDir = IDEA_TEST_DATA_DIR.resolve("configuration").resolve(projectName)
-        originalDir.copyRecursively(projectRoot)
+        if (!originalDir.copyRecursively(projectRoot)) {
+            logger.warn("Failed to copy files to temp directory")
+        }
         val projectFile = projectRoot.resolve("projectFile.ipr")
         val projectRoot = (if (projectFile.exists()) projectFile else projectRoot).toPath()
 
@@ -51,8 +58,9 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
             originalStdlibFile.copyTo(kotlinStdlib.toFile(), overwrite = true)
         }
         // Needed, so the index knows that there are Kotlin files in the project
-        FileBasedIndex.getInstance().invalidateCaches()
         VfsUtil.markDirtyAndRefresh(false, true, true, this.projectRoot.toPath().refreshAndFindVirtualDirectory())
+        FileBasedIndex.getInstance().invalidateCaches()
+        logger.debug("Files copied successfully and file cache invalidated")
 
         return projectRoot
     }
