@@ -21,6 +21,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.ui.*
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
@@ -172,9 +173,15 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale, priv
     localizationStatistics.nextButtonPressed(selectedLanguage, selectedRegion)
     LocalizationStateService.getInstance()?.setSelectedLocale(selectedLanguage.toLanguageTag())
     RegionSettings.setRegion(selectedRegion)
+    clearCache()
     super.doOKAction()
   }
 
+  private fun clearCache() {
+    DynamicBundle.clearCache()
+    DateTimeFormatManager.getInstance().resetFormats()
+  }
+  
   override fun doCancelAction() {
     localizationStatistics.dialogClosedWithoutConfirmation(selectedLanguage, selectedRegion)
     super.doCancelAction()
