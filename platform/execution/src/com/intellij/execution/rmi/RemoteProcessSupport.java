@@ -487,7 +487,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }
     if (info instanceof PendingInfo pendingInfo) {
-      LOG.warn("Dropping process info for pending process: stder = pendingInfo.stderr", error);
+      LOG.warn("Dropping process info for pending process: stder = " + pendingInfo.stderr, error);
 
       if (error != null || !pendingInfo.stderr.isEmpty() || pendingInfo.ref.isNull()) {
         pendingInfo.ref.set(new FailedInfo(error, pendingInfo.stderr.toString()));
