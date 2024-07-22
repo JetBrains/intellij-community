@@ -138,31 +138,19 @@ class MavenProjectAsyncBuilder {
     tree.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE)
 
     generalSettings.updateFromMavenConfig(files)
+    updateMavenSettingsFromEnvironment(project, generalSettings, importingSettings)
 
     withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), false) {
       reportRawProgress { reporter ->
         tree.updateAll(false, generalSettings, reporter)
       }
     }
-
     val projects = tree.rootProjects
-
     if (projects.isEmpty()) {
       LOG.warn(String.format("Cannot import project for %s", project.toString()))
       return emptyList()
     }
 
-    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
-    settings.generalSettings = generalSettings
-    settings.importingSettings = importingSettings
-    val settingsFile = System.getProperty("idea.maven.import.settings.file")
-    if (!settingsFile.isNullOrBlank()) {
-      settings.generalSettings.setUserSettingsFile(settingsFile.trim { it <= ' ' })
-    }
-    val distributionUrl = getWrapperDistributionUrl(project.guessProjectDir())
-    if (distributionUrl != null) {
-      settings.generalSettings.mavenHomeType = MavenWrapper
-    }
     val selectedProfiles = MavenExplicitProfiles.NONE.clone()
     val enabledProfilesList = System.getProperty("idea.maven.import.enabled.profiles")
     val disabledProfilesList = System.getProperty("idea.maven.import.disabled.profiles")
@@ -174,6 +162,24 @@ class MavenProjectAsyncBuilder {
     manager.setIgnoredState(projects, false)
 
     return manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule, syncProject)
+  }
+
+  private fun updateMavenSettingsFromEnvironment(
+    project: Project,
+    generalSettings: MavenGeneralSettings,
+    importingSettings: MavenImportingSettings,
+  ) {
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
+    settings.generalSettings = generalSettings
+    settings.importingSettings = importingSettings
+    val settingsFile = System.getProperty("idea.maven.import.settings.file")
+    if (!settingsFile.isNullOrBlank()) {
+      settings.generalSettings.setUserSettingsFile(settingsFile.trim { it <= ' ' })
+    }
+    val distributionUrl = getWrapperDistributionUrl(project.guessProjectDir())
+    if (distributionUrl != null) {
+      settings.generalSettings.mavenHomeType = MavenWrapper
+    }
   }
 
   private suspend fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {
