@@ -97,6 +97,7 @@ abstract class ActionManagerEx : ActionManager() {
               ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
               DeprecationLevel.ERROR)
   fun fireAfterActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
+    @Suppress("DEPRECATION")
     fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)
   }
 
