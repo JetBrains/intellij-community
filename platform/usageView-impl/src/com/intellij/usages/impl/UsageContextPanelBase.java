@@ -59,19 +59,19 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
 
   @Override
   public final void updateLayout(@NotNull Project project, @Nullable final List<? extends UsageInfo> infos) {
-    AppUIExecutor.onUiThread().withDocumentsCommitted(project).expireWith(this).execute(() -> updateLayoutLater(project, infos));
+    AppUIExecutor.onUiThread().withDocumentsCommitted(project).expireWith(this).execute(() -> updateLayoutLater(infos));
   }
 
   @Override
   public final void updateLayout(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     AppUIExecutor.onUiThread().withDocumentsCommitted(project).expireWith(this)
-      .execute(() -> updateLayoutLater(project, infos, usageView));
+      .execute(() -> updateLayoutLater(infos, usageView));
   }
 
   @RequiresEdt
-  protected void updateLayoutLater(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
-    updateLayoutLater(project, infos);
+  protected void updateLayoutLater(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    updateLayoutLater(infos);
   }
 
-  protected abstract void updateLayoutLater(@NotNull Project project, @Nullable List<? extends UsageInfo> infos);
+  protected abstract void updateLayoutLater(@Nullable List<? extends UsageInfo> infos);
 }
