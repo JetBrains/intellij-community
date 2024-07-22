@@ -12,7 +12,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsUtil
@@ -45,6 +44,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import java.awt.*
 import java.awt.event.MouseEvent
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import kotlin.concurrent.Volatile
 import kotlin.math.max
@@ -65,17 +65,21 @@ private class SwingTooltipManagerCustomizer : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
     asyncScope.launch {
       withContext(Dispatchers.EDT) {
-        val ideTooltipManager by lazy {
-          serviceIfCreated<IdeTooltipManager>()
-        }
+        val isAlive = AtomicBoolean(true)
+        val ideTooltipManager by lazy { IdeTooltipManager.getInstance() }
         Toolkit.getDefaultToolkit().addAWTEventListener(
           {
-            if (isEnabled) {
-              ideTooltipManager?.eventDispatched(it as MouseEvent)
+            if (isEnabled && isAlive.get()) {
+              ideTooltipManager.eventDispatched(it as MouseEvent)
             }
           },
           AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK
         )
+        ApplicationManager.getApplication().messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+          override fun appClosing() {
+            isAlive.set(false)
+          }
+        })
       }
     }
   }
