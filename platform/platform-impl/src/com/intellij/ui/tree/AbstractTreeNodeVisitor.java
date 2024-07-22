@@ -2,6 +2,7 @@
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.CachedTreePresentationNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,10 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
       else {
         LOG.warn(object == null ? "no object" : "unexpected object " + object.getClass());
       }
+    }
+    else if (component instanceof CachedTreePresentationNode) {
+      // Cached presentation nodes don't contain the actual object because it's not loaded yet.
+      return Action.SKIP_CHILDREN;
     }
     else if (component instanceof String) {
       LOG.debug("ignore children: ", component);
