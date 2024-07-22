@@ -28,10 +28,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
-import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
+import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.fileEditor.impl.getOpenMode
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.blockingContext
@@ -130,13 +127,12 @@ object Switcher : BaseSwitcherAction(null) {
       sink[PlatformDataKeys.SPEED_SEARCH_TEXT] = if (speedSearch?.isPopupActive == true) speedSearch.enteredPrefix else null
       sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = run {
         if (files.isSelectionEmpty) return@run null
-        val array = files.selectedValuesList.map(SwitcherVirtualFile::file).toTypedArray()
-        if (array.isNotEmpty()) array else null
+        files.selectedValuesList.map(SwitcherVirtualFile::file).takeIf { it.isNotEmpty() }?.toTypedArray()
       }
     }
 
     init {
-      onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else event) { e: InputEvent ->
+      onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else event) { e ->
         ActionUtil.performInputEventHandlerWithCallbacks(e) {
           navigate(e)
         }
@@ -144,8 +140,13 @@ object Switcher : BaseSwitcherAction(null) {
       pinned = !onKeyRelease.isEnabled
       val onlyEdited = true == onlyEditedFiles
       speedSearch = if (recent && Registry.`is`("ide.recent.files.speed.search")) installOn(this) else null
-      cbShowOnlyEditedFiles = if (!recent || !Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together")) null
-      else JCheckBox(IdeBundle.message("recent.files.checkbox.label"))
+      cbShowOnlyEditedFiles = if (!recent || !Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together")) {
+        null
+      }
+      else {
+        JCheckBox(IdeBundle.message("recent.files.checkbox.label"))
+      }
+
       val renderer = SwitcherListRenderer(this)
       val windows = renderer.toolWindows
       val showMnemonics = speedSearch == null || Registry.`is`("ide.recent.files.tool.window.mnemonics")
@@ -172,8 +173,9 @@ object Switcher : BaseSwitcherAction(null) {
         registerSwingAction(ListActions.PageDown.ID, "PAGE_DOWN")
       }
       if (speedSearch == null || Registry.`is`("ide.recent.files.tool.window.mnemonics")) {
-        windows.forEach(
-          java.util.function.Consumer { window: SwitcherToolWindow -> registerToolWindowAction(window) })
+        for (window in windows) {
+          registerToolWindowAction(window)
+        }
       }
       border = JBUI.Borders.empty()
       pathLabel.putClientProperty(SwingTextTrimmer.KEY, SwingTextTrimmer.THREE_DOTS_AT_LEFT)
@@ -206,18 +208,26 @@ object Switcher : BaseSwitcherAction(null) {
           header.add(HorizontalLayout.RIGHT, label)
         }
       }
-      val twModel = CollectionListModel<SwitcherListItem>()
-      windows.sortedWith { o1: SwitcherToolWindow, o2: SwitcherToolWindow ->
+
+      val switcherListItems = mutableListOf<SwitcherListItem>()
+      for (element in windows.sortedWith { o1, o2 ->
         val m1 = o1.mnemonic
         val m2 = o2.mnemonic
         if (m1 == null) (if (m2 == null) 0 else 1) else if (m2 == null) -1 else m1.compareTo(m2)
-      }.forEach { element: SwitcherToolWindow -> twModel.add(element) }
+      }) {
+        switcherListItems.add(element)
+      }
       if (pinned && !windows.isEmpty()) {
-        twModel.add(SwitcherRecentLocations(this))
+        switcherListItems.add(SwitcherRecentLocations(this))
       }
+
       if (!showMnemonics) {
-        windows.forEach(java.util.function.Consumer { window: SwitcherToolWindow -> window.mnemonic = null })
+        for (window in windows) {
+          window.mnemonic = null
+        }
       }
+
+      val twModel = CollectionListModel(switcherListItems, true)
       toolWindows = JBList(speedSearch?.wrap(twModel) ?: twModel)
       toolWindows.visibleRowCount = toolWindows.itemsCount
       toolWindows.border = JBUI.Borders.empty(5, 0)
@@ -251,22 +261,27 @@ object Switcher : BaseSwitcherAction(null) {
       clickListener.installOn(toolWindows)
 
       val filesModel = CollectionListModel<SwitcherVirtualFile>()
-      val filesToShow = getFilesToShow(project, onlyEdited, toolWindows.itemsCount, recent)
+      val filesToShow = getFilesToShow(
+        project = project,
+        onlyEdited = onlyEdited,
+        toolWindowsCount = toolWindows.itemsCount,
+        pinned = recent,
+      )
       resetListModelAndUpdateNames(filesModel, filesToShow)
-      val filesSelectionListener: ListSelectionListener = object : ListSelectionListener {
+      val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
-          if (e.valueIsAdjusting) return
-          updatePathLabel()
-          val popupUpdater = if (hint == null || !hint!!.isVisible) null
-          else hint!!.getUserData(
-            PopupUpdateProcessorBase::class.java)
-          popupUpdater?.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(
-            DataManager.getInstance().getDataContext(this@SwitcherPanel)))
-        }
+          if (e.valueIsAdjusting) {
+            return
+          }
 
+          updatePathLabel()
+          val hint = hint
+          val popupUpdater = if (hint == null || !hint.isVisible) null else hint.getUserData(PopupUpdateProcessorBase::class.java)
+          popupUpdater?.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this@SwitcherPanel)))
+        }
       }
-      files = JBListWithOpenInRightSplit
-        .createListWithOpenInRightSplitter(speedSearch?.wrap(filesModel) ?: filesModel, null)
+
+      files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter(speedSearch?.wrap(filesModel) ?: filesModel, null)
       files.visibleRowCount = files.itemsCount
       files.selectionMode = if (pinned) ListSelectionModel.MULTIPLE_INTERVAL_SELECTION else ListSelectionModel.SINGLE_SELECTION
       files.accessibleContext.accessibleName = IdeBundle.message("recent.files.accessible.file.list")
@@ -332,7 +347,7 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     private fun getNotOpenedRecentFiles(): List<VirtualFile> {
-      val recentFiles = getInstance(project).fileList
+      val recentFiles = EditorHistoryManager.getInstance(project).fileList
       val openFiles = FileEditorManager.getInstance(project).openFiles
       return recentFiles.subtract(openFiles.toSet()).toList()
     }
@@ -443,7 +458,7 @@ object Switcher : BaseSwitcherAction(null) {
           }
           ListUtil.removeItem(files.model, selectedIndex)
           if (item.window == null) {
-            getInstance(project).removeFile(virtualFile)
+            EditorHistoryManager.getInstance(project).removeFile(virtualFile)
           }
         }
         else item?.close(this)
@@ -639,8 +654,15 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     private fun tryToOpenFileSearch(e: InputEvent?, fileName: String?) {
+      if (fileName.isNullOrEmpty()) {
+        return
+      }
+
       val gotoAction = ActionManager.getInstance().getAction("GotoFile")
-      if (gotoAction == null || StringUtil.isEmpty(fileName)) return
+      if (gotoAction == null) {
+        return
+      }
+
       cancel()
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
         val focusDC = DataManager.getInstance().dataContextFromFocusAsync.await()
@@ -737,9 +759,6 @@ object Switcher : BaseSwitcherAction(null) {
 }
 
 private const val SWITCHER_ELEMENTS_LIMIT: Int = 30
-private fun collectFiles(project: Project, onlyEdited: Boolean): List<VirtualFile> {
-  return if (onlyEdited) IdeDocumentHistory.getInstance(project).changedFiles else getRecentFiles(project)
-}
 
 private fun getFilesToShow(project: Project, onlyEdited: Boolean, toolWindowsCount: Int, pinned: Boolean): List<SwitcherVirtualFile> {
   val filesData = ArrayList<SwitcherVirtualFile>()
@@ -763,13 +782,13 @@ private fun getFilesToShow(project: Project, onlyEdited: Boolean, toolWindowsCou
     return filesData
   }
 
-  val filesForInit = collectFiles(project, onlyEdited)
+  val filesForInit = if (onlyEdited) IdeDocumentHistory.getInstance(project).changedFiles else getRecentFiles(project)
   if (!filesForInit.isEmpty()) {
-    val editorsFilesCount = editors.asSequence().map { it.file }.distinct().count()
-    val maxFiles = max(editorsFilesCount, filesForInit.size)
+    val editorFileCount = editors.asSequence().map { it.file }.distinct().count()
+    val maxFiles = max(editorFileCount, filesForInit.size)
     val minIndex = if (pinned) 0 else filesForInit.size - toolWindowsCount.coerceAtMost(maxFiles)
     for (i in filesForInit.size - 1 downTo minIndex) {
-      val info = SwitcherVirtualFile(project, filesForInit[i], null)
+      val info = SwitcherVirtualFile(project = project, file = filesForInit[i], window = null)
       var add = true
       if (pinned) {
         for (fileInfo in filesData) {
@@ -801,12 +820,12 @@ private fun isTheSameTab(currentWindow: EditorWindow?, currentFile: VirtualFile?
 }
 
 private fun getRecentFiles(project: Project): List<VirtualFile> {
-  val recentFiles = getInstance(project).fileList
+  val recentFiles = EditorHistoryManager.getInstance(project).fileList
   val openFiles = FileEditorManager.getInstance(project).openFiles
-  val recentFilesSet: Set<VirtualFile> = HashSet(recentFiles)
+  val recentFilesSet = HashSet(recentFiles)
   val openFilesSet = openFiles.toHashSet()
 
-  // Add missing FileEditor tabs right after the last one, that is available via "Recent Files"
+  // add missing FileEditor tabs right after the last one, that is available via "Recent Files"
   var index = 0
   for (i in recentFiles.indices) {
     if (openFilesSet.contains(recentFiles[i])) {
@@ -814,8 +833,8 @@ private fun getRecentFiles(project: Project): List<VirtualFile> {
       break
     }
   }
-  val result: MutableList<VirtualFile> = ArrayList(recentFiles)
-  result.addAll(index, openFiles.filter { it: VirtualFile -> !recentFilesSet.contains(it) })
+  val result = ArrayList(recentFiles)
+  result.addAll(index, openFiles.filter { !recentFilesSet.contains(it) })
   return result
 }
 
