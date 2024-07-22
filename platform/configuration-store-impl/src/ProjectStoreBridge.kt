@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
@@ -31,6 +32,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
@@ -59,6 +61,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
 
     val writer = JpsStorageContentWriter(session = projectSessionManager, store = this, project = project)
     project.serviceAsync<JpsProjectModelSynchronizer>().saveChangedProjectEntities(writer)
+    (project.serviceAsync<WorkspaceModelCache>() as WorkspaceModelCacheImpl).doCacheSavingOnProjectClose()
 
     for (module in project.serviceAsync<ModuleManager>().modules) {
       val moduleStore = module.serviceAsync<IComponentStore>() as? ComponentStoreImpl ?: continue
