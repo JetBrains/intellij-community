@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.FullEditorWidthRenderer
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
@@ -286,7 +285,7 @@ internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {
 
 class EditorComponentWrapper(
   private val editor: Editor,
-  private val editorComponent: EditorComponentImpl,
+  editorComponent: EditorComponentImpl,
   private val manager: NotebookCellInlayManager,
 ) : JComponent() {
   init {
@@ -297,13 +296,6 @@ class EditorComponentWrapper(
 
   override fun doLayout() {
     super.doLayout()
-    // EditorEmbeddedComponentManager breaks the Swing layout model as it expect that subcomponents will define their own bounds themselves.
-    // Here we invoke FullEditorWidthRenderer#validate to place inlay components correctly after doLayout.
-    editorComponent.components.asSequence()
-      .filterIsInstance<FullEditorWidthRenderer>()
-      .forEach {
-        it.validate()
-      }
     manager.validateCells()
   }
 
