@@ -145,7 +145,7 @@ internal class ResolveConflictsInImportsToggleAction : ToggleAction() {
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return getMergeViewer(e)?.textSettings?.isAutoResolveImportConflicts ?: true
+    return getMergeViewer(e)?.textSettings?.isAutoResolveImportConflicts ?: false
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
