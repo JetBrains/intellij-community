@@ -33,9 +33,9 @@ public interface PsiImportModuleStatement extends PsiImportStatementBase {
   /**
    * Returns the reference which specifies the imported module.
    *
-   * @return the reference to the module imported, or null if the reference is not resolvable or missing.
+   * @return the reference element to the module imported, or null if the reference element is not resolvable or missing.
    */
-  @Nullable PsiJavaModuleReference getModuleReference();
+  @Nullable PsiJavaModuleReferenceElement getModuleReference();
 
   @Override
   default boolean isOnDemand() {

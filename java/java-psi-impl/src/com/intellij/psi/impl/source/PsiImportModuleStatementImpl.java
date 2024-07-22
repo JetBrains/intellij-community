@@ -20,7 +20,7 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
   public static final ArrayFactory<PsiImportModuleStatementImpl> ARRAY_FACTORY =
     count -> count == 0 ? EMPTY_ARRAY : new PsiImportModuleStatementImpl[count];
 
-  private SoftReference<PsiJavaModuleReference> myReference;
+  private SoftReference<PsiJavaModuleReferenceElement> myRefElement;
 
   public PsiImportModuleStatementImpl(PsiImportStatementStub stub) {
     super(stub, JavaStubElementTypes.IMPORT_MODULE_STATEMENT);
@@ -32,35 +32,38 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
 
   @Override
   public @Nullable PsiJavaModule resolveTargetModule() {
-    PsiJavaModuleReference moduleReference = getModuleReference();
-    if (moduleReference == null) return null;
-    return moduleReference.resolve();
+    PsiJavaModuleReferenceElement refElement = getModuleReference();
+    if (refElement == null) return null;
+    PsiJavaModuleReference ref = refElement.getReference();
+    if (ref == null) return null;
+    return ref.resolve();
   }
 
   @Override
   public String getReferenceName() {
-    PsiJavaModuleReference moduleReference = getModuleReference();
-    if (moduleReference == null) return null;
-    return moduleReference.getCanonicalText();
+    PsiJavaModuleReferenceElement refElement = getModuleReference();
+    if (refElement == null) return null;
+    PsiJavaModuleReference ref = refElement.getReference();
+    if (ref == null) return null;
+    return ref.getCanonicalText();
   }
 
   @Override
-  public @Nullable PsiJavaModuleReference getModuleReference() {
+  public @Nullable PsiJavaModuleReferenceElement getModuleReference() {
     PsiImportStatementStub stub = getStub();
     if (stub != null) {
       String refText = nullize(stub.getImportReferenceText());
       if (refText == null) return null;
-      PsiJavaModuleReference ref = dereference(myReference);
-      if (ref == null) {
-        ref = JavaPsiFacade.getInstance(getProject()).getParserFacade().createModuleReferenceFromText(refText, this).getReference();
-        myReference = new SoftReference<>(ref);
+      PsiJavaModuleReferenceElement refElement = dereference(myRefElement);
+      if (refElement == null) {
+        refElement = JavaPsiFacade.getInstance(getProject()).getParserFacade().createModuleReferenceFromText(refText, this);
+        myRefElement = new SoftReference<>(refElement);
       }
-      return ref;
+      return refElement;
     }
     else {
-      myReference = null;
-      PsiJavaModuleReferenceElement refElement = PsiTreeUtil.getChildOfType(this, PsiJavaModuleReferenceElement.class);
-      return refElement != null ? refElement.getReference() : null;
+      myRefElement = null;
+      return PsiTreeUtil.getChildOfType(this, PsiJavaModuleReferenceElement.class);
     }
   }
 
@@ -76,7 +79,9 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
 
   @Override
   public PsiElement resolve() {
-    PsiJavaModuleReference ref = getModuleReference();
+    PsiJavaModuleReferenceElement refElement = getModuleReference();
+    if (refElement == null) return null;
+    PsiJavaModuleReference ref = refElement.getReference();
     return ref != null ? ref.resolve() : null;
   }
 

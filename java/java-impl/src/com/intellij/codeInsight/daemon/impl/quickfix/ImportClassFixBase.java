@@ -272,8 +272,11 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     Set<String> unresolvedImports = new HashSet<>(importStatements.length);
     for (PsiImportStatementBase statement : importStatements) {
       if (statement instanceof PsiImportModuleStatement importModuleStatement) {
-        PsiJavaModuleReference ref = importModuleStatement.getModuleReference();
-        if (ref != null && ref.resolve() == null) unresolvedImports.add(importModuleStatement.getReferenceName());
+        PsiJavaModuleReferenceElement refElement = importModuleStatement.getModuleReference();
+        if (refElement != null) {
+          PsiJavaModuleReference ref = refElement.getReference();
+          if (ref != null && ref.resolve() == null) unresolvedImports.add(importModuleStatement.getReferenceName());
+        }
       } else {
         PsiJavaCodeReferenceElement ref = statement.getImportReference();
         String name = ref == null ? null : ref.getReferenceName();

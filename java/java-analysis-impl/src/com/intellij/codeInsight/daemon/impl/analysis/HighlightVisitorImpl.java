@@ -844,6 +844,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
+    super.visitImportModuleStatement(statement);
+    if (!hasErrorResults()) add(checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS));
+    if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
+  }
+
+  @Override
   public void visitKeyword(@NotNull PsiKeyword keyword) {
     super.visitKeyword(keyword);
     PsiElement parent = keyword.getParent();
