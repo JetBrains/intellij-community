@@ -7,6 +7,5 @@
         "KotlinRead.kt",
         "KotlinWrite.kt",
         "Main.java"
-    ],
-    "ignoreK2Compiler": "KTIJ-24830"
+    ]
 }
