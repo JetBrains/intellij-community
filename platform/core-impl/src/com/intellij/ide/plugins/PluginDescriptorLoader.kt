@@ -346,18 +346,12 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
   return list
 }
 
-val customDisabledPlugins = setOf(
-  // This is the workaround for PY-73983
-  PluginId.getId("intellij.jupyter.py")
-)
-
 suspend fun loadDescriptors(
   zipFilePoolDeferred: Deferred<ZipFilePool>,
   mainClassLoaderDeferred: Deferred<ClassLoader>?,
 ): Pair<DescriptorListLoadingContext, PluginLoadingResult> {
   val isUnitTestMode = PluginManagerCore.isUnitTestMode
   val isRunningFromSources = PluginManagerCore.isRunningFromSources()
-  DisabledPluginsState.setEnabledState(customDisabledPlugins, false)
   val result = DescriptorListLoadingContext(
     isMissingSubDescriptorIgnored = true,
     isMissingIncludeIgnored = isUnitTestMode,
