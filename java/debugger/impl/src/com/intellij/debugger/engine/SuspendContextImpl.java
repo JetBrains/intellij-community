@@ -410,7 +410,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     sb.append("myVotesToVote = ").append(myVotesToVote).append("\n");
     sb.append("myIsResumed = ").append(myIsResumed).append("\n");
     sb.append("myIsGoingToResume = ").append(myIsGoingToResume).append("\n");
-    return new Attachment("context " + this, sb.toString());
+    return new Attachment("context_ID_" + myDebugId + ".txt", sb.toString());
   }
 
   private String getSuspendPolicyString() {
