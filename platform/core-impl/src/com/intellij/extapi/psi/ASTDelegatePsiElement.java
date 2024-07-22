@@ -69,7 +69,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   @Override
   public PsiElement @NotNull [] getChildren() {
     PsiElement psiChild = getFirstChild();
-    if (psiChild == null) return PsiElement.EMPTY_ARRAY;
+    if (psiChild == null) return EMPTY_ARRAY;
 
     List<PsiElement> result = null;
     while (psiChild != null) {
@@ -81,7 +81,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
       }
       psiChild = psiChild.getNextSibling();
     }
-    return result == null ? PsiElement.EMPTY_ARRAY : PsiUtilCore.toPsiElementArray(result);
+    return result == null ? EMPTY_ARRAY : PsiUtilCore.toPsiElementArray(result);
   }
 
   @Override
