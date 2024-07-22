@@ -203,8 +203,11 @@ open class ManagedPersistentCache<K, V>(
       val count = errorCounter.incrementAndGet()
       if (count > IO_ERRORS_THRESHOLD) {
         LOG.warn("error count exceeds the threshold, closing persistent map $name")
-        this.persistentMap.compareAndSet(persistentMap, null)
-        close(persistentMap)
+        if (this.persistentMap.compareAndSet(persistentMap, null)) {
+          // IJPL-158564 unregister tracked cache if too many io errors occurred
+          TRACKED_CACHES.remove(this@ManagedPersistentCache)
+          close(persistentMap)
+        }
       }
       return null
     }
