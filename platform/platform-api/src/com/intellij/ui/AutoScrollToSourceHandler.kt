@@ -1,209 +1,172 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui
 
-package com.intellij.ui;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.fileTypes.INativeFileType
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.Registry.Companion.intValue
+import com.intellij.openapi.vfs.PersistentFSConstants
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.AutoScrollToSourceTaskManager.Companion.getInstance
+import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
+import javax.swing.JList
+import javax.swing.JTable
+import javax.swing.JTree
+import javax.swing.SwingUtilities
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.INativeFileType;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.PersistentFSConstants;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+abstract class AutoScrollToSourceHandler {
+  private val myAutoScrollAlarm = Alarm()
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+  fun install(tree: JTree) {
+    object : ClickListener() {
+      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+        if (clickCount > 1) {
+          return false
+        }
 
-public abstract class AutoScrollToSourceHandler {
-  private final Alarm myAutoScrollAlarm = new Alarm();
-
-  public void install(final JTree tree) {
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        if (clickCount > 1) return false;
-
-        TreePath location = tree.getPathForLocation(e.getPoint().x, e.getPoint().y);
+        val location = tree.getPathForLocation(e.point.x, e.point.y)
         if (location != null) {
-          onMouseClicked(tree);
+          onMouseClicked(tree)
           // return isAutoScrollMode(); // do not consume event to allow processing by a tree
         }
 
-        return false;
+        return false
       }
-    }.installOn(tree);
+    }.installOn(tree)
 
-    tree.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseDragged(final MouseEvent e) {
-        onSelectionChanged(tree);
+    tree.addMouseMotionListener(object : MouseMotionAdapter() {
+      override fun mouseDragged(e: MouseEvent) {
+        onSelectionChanged(tree)
       }
-    });
-    tree.addTreeSelectionListener(
-      new TreeSelectionListener() {
-        @Override
-        public void valueChanged(TreeSelectionEvent e) {
-          onSelectionChanged(tree);
-        }
-      }
-    );
+    })
+    tree.addTreeSelectionListener { onSelectionChanged(tree) }
   }
 
-  public void install(final JTable table) {
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        if (clickCount >= 2) return false;
+  fun install(table: JTable) {
+    object : ClickListener() {
+      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+        if (clickCount >= 2) return false
 
-        Component location = table.getComponentAt(e.getPoint());
+        val location = table.getComponentAt(e.point)
         if (location != null) {
-          onMouseClicked(table);
-          return isAutoScrollMode();
+          onMouseClicked(table)
+          return isAutoScrollMode()
         }
-        return false;
+        return false
       }
-    }.installOn(table);
+    }.installOn(table)
 
-    table.addMouseMotionListener(new MouseMotionAdapter() {
-      @Override
-      public void mouseDragged(final MouseEvent e) {
-        onSelectionChanged(table);
+    table.addMouseMotionListener(object : MouseMotionAdapter() {
+      override fun mouseDragged(e: MouseEvent) {
+        onSelectionChanged(table)
       }
-    });
-    table.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          onSelectionChanged(table);
-        }
-      }
-    );
+    })
+    table.selectionModel.addListSelectionListener { onSelectionChanged(table) }
   }
 
-  public void install(final JList jList) {
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        if (clickCount >= 2) return false;
-        final Object source = e.getSource();
-        final int index = jList.locationToIndex(SwingUtilities.convertPoint(source instanceof Component ? (Component)source : null, e.getPoint(), jList));
-        if (index >= 0 && index < jList.getModel().getSize()) {
-          onMouseClicked(jList);
-          return true;
+  fun install(jList: JList<*>) {
+    object : ClickListener() {
+      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
+        if (clickCount >= 2) return false
+        val source = e.source
+        val index = jList.locationToIndex(SwingUtilities.convertPoint(if (source is Component) source else null, e.point, jList))
+        if (index >= 0 && index < jList.model.size) {
+          onMouseClicked(jList)
+          return true
         }
-        return false;
+        return false
       }
-    }.installOn(jList);
+    }.installOn(jList)
 
-    jList.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        onSelectionChanged(jList);
-      }
-    });
+    jList.addListSelectionListener { onSelectionChanged(jList) }
   }
 
-  public void cancelAllRequests(){
-    myAutoScrollAlarm.cancelAllRequests();
+  fun cancelAllRequests() {
+    myAutoScrollAlarm.cancelAllRequests()
   }
 
-  public void onMouseClicked(final Component component) {
-    cancelAllRequests();
-    if (isAutoScrollMode()){
-      ApplicationManager.getApplication().invokeLater(() -> scrollToSource(component));
+  fun onMouseClicked(component: Component) {
+    cancelAllRequests()
+    if (isAutoScrollMode()) {
+      ApplicationManager.getApplication().invokeLater { scrollToSource(component) }
     }
   }
 
-  private void onSelectionChanged(final Component component) {
-    if (component != null && component.isShowing() && isAutoScrollMode()) {
-      myAutoScrollAlarm.cancelAllRequests();
+  private fun onSelectionChanged(component: Component?) {
+    if (component != null && component.isShowing && isAutoScrollMode()) {
+      myAutoScrollAlarm.cancelAllRequests()
       myAutoScrollAlarm.addRequest(
-        () -> {
-          if (component.isShowing()) { //for tests
+        {
+          if (component.isShowing) { //for tests
             if (!needToCheckFocus() || UIUtil.hasFocus(component)) {
-              scrollToSource(component);
+              scrollToSource(component)
             }
           }
         },
-        Registry.intValue("ide.autoscroll.to.source.delay", 100)
-      );
+        intValue("ide.autoscroll.to.source.delay", 100)
+      )
     }
   }
 
-  protected @NlsActions.ActionText String getActionName() {
-    return UIBundle.message("autoscroll.to.source.action.name");
-  }
+  protected open val actionName: @NlsActions.ActionText String?
+    get() = UIBundle.message("autoscroll.to.source.action.name")
 
-  protected @NlsActions.ActionDescription String getActionDescription() {
-    return UIBundle.message("autoscroll.to.source.action.description");
-  }
+  protected open val actionDescription: @NlsActions.ActionDescription String?
+    get() = UIBundle.message("autoscroll.to.source.action.description")
 
-  protected boolean needToCheckFocus(){
-    return true;
-  }
+  protected open fun needToCheckFocus(): Boolean = true
 
-  protected abstract boolean isAutoScrollMode();
-  protected abstract void setAutoScrollMode(boolean state);
+  protected abstract fun isAutoScrollMode(): Boolean
+
+  protected abstract fun setAutoScrollMode(state: Boolean)
 
   /**
    * @param file a file selected in a tree
-   * @return {@code false} if navigation to the file is prohibited
+   * @return `false` if navigation to the file is prohibited
    */
-  protected boolean isAutoScrollEnabledFor(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  open fun isAutoScrollEnabledFor(file: VirtualFile): Boolean {
     // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
     // asking to register some file type for this file. This behaviour is undesirable when auto scrolling.
-    FileType type = file.getFileType();
-    if (type == FileTypes.UNKNOWN || type instanceof INativeFileType) return false;
+    val type = file.fileType
+    if (type === FileTypes.UNKNOWN || type is INativeFileType) {
+      return false
+    }
+
     //IDEA-84881 Don't autoscroll to very large files
-    return file.getLength() <= PersistentFSConstants.getMaxIntellisenseFileSize();
+    return file.length <= PersistentFSConstants.getMaxIntellisenseFileSize()
   }
 
   @RequiresEdt
-  protected void scrollToSource(@NotNull Component tree) {
-    AutoScrollToSourceTaskManager.getInstance()
-      .scheduleScrollToSource(this,
-                              DataManager.getInstance().getDataContext(tree));
+  protected open fun scrollToSource(tree: Component) {
+    getInstance().scheduleScrollToSource(handler = this, dataContext = DataManager.getInstance().getDataContext(tree))
   }
 
-  public @NotNull ToggleAction createToggleAction() {
-    return new AutoscrollToSourceAction(getActionName(), getActionDescription());
-  }
+  fun createToggleAction(): ToggleAction = AutoscrollToSourceAction(actionName, actionDescription)
 
-  private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
-    AutoscrollToSourceAction(@NlsActions.ActionText String actionName, @NlsActions.ActionDescription String actionDescription) {
-      super(actionName, actionDescription, AllIcons.General.AutoscrollToSource);
-    }
+  private inner class AutoscrollToSourceAction(
+    actionName: @NlsActions.ActionText String?,
+    actionDescription: @NlsActions.ActionDescription String?
+  ) : ToggleAction(actionName, actionDescription, AllIcons.General.AutoscrollToSource), DumbAware {
+    override fun isSelected(event: AnActionEvent): Boolean = isAutoScrollMode()
 
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent event) {
-      return isAutoScrollMode();
-    }
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
-      setAutoScrollMode(flag);
+    override fun setSelected(event: AnActionEvent, flag: Boolean) {
+      setAutoScrollMode(flag)
     }
   }
 }

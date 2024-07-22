@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.application.options.OptionsApplicabilityFilter;
@@ -573,7 +573,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
 
       @Override
-      protected boolean isAutoScrollEnabledFor(@NotNull VirtualFile file) {
+      public boolean isAutoScrollEnabledFor(@NotNull VirtualFile file) {
         if (!super.isAutoScrollEnabledFor(file)) return false;
         AbstractProjectViewPane pane = getCurrentProjectViewPane();
         return pane == null || pane.isAutoScrollEnabledFor(file);

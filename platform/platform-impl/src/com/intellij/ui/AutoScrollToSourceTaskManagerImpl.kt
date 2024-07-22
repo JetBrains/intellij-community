@@ -22,10 +22,8 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
+private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager {
   @RequiresEdt
   override fun scheduleScrollToSource(handler: AutoScrollToSourceHandler, dataContext: DataContext) {
     val asyncDataContext = createAsyncDataContext(dataContext)
