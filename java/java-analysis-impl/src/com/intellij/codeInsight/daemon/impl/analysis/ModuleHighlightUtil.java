@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -214,33 +214,23 @@ final class ModuleHighlightUtil {
     return null;
   }
 
+  static HighlightInfo.Builder checkModuleReference(@NotNull PsiImportModuleStatement statement) {
+    PsiJavaModuleReferenceElement refElement = statement.getModuleReference();
+    if (refElement == null) return null;
+    PsiJavaModuleReference ref = refElement.getReference();
+    assert ref != null : refElement.getParent();
+    PsiJavaModule target = ref.resolve();
+    if (target != null) return null;
+    return getUnresolvedJavaModuleReason(statement, refElement);
+  }
+
   static HighlightInfo.Builder checkModuleReference(@NotNull PsiRequiresStatement statement) {
     PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
     if (refElement != null) {
       PsiJavaModuleReference ref = refElement.getReference();
       assert ref != null : refElement.getParent();
       PsiJavaModule target = ref.resolve();
-      if (target == null) {
-        if (ref.multiResolve(true).length == 0) {
-          if (IncompleteModelUtil.isIncompleteModel(statement)) {
-            return HighlightUtil.getPendingReferenceHighlightInfo(refElement);
-          }
-          String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message);
-        }
-        else if (ref.multiResolve(false).length > 1) {
-          String message = JavaErrorBundle.message("module.ambiguous", refElement.getReferenceText());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message);
-        }
-        else {
-          String message = JavaErrorBundle.message("module.not.on.path", refElement.getReferenceText());
-          HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message);
-          List<IntentionAction> registrar = new ArrayList<>();
-          QuickFixFactory.getInstance().registerOrderEntryFixes(ref, registrar);
-          QuickFixAction.registerQuickFixActions(info, null, registrar);
-          return info;
-        }
-      }
+      if (target == null) return getUnresolvedJavaModuleReason(statement, refElement);
       PsiJavaModule container = (PsiJavaModule)statement.getParent();
       if (target == container) {
         String message = JavaErrorBundle.message("module.cyclic.dependence", container.getName());
@@ -258,6 +248,37 @@ final class ModuleHighlightUtil {
     }
 
     return null;
+  }
+
+  @NotNull
+  private static HighlightInfo.Builder getUnresolvedJavaModuleReason(@NotNull PsiElement parent, @NotNull PsiJavaModuleReferenceElement refElement) {
+    PsiJavaModuleReference ref = refElement.getReference();
+    assert ref != null : refElement.getParent();
+
+    ResolveResult[] results = ref.multiResolve(true);
+    switch (results.length) {
+      case 0:
+        if (IncompleteModelUtil.isIncompleteModel(parent)) {
+          return HighlightUtil.getPendingReferenceHighlightInfo(refElement);
+        } else {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
+            .range(refElement)
+            .descriptionAndTooltip(JavaErrorBundle.message("module.not.found", refElement.getReferenceText()));
+        }
+      case 1:
+        String message = JavaErrorBundle.message("module.not.on.path", refElement.getReferenceText());
+        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
+          .range(refElement)
+          .descriptionAndTooltip(message);
+        List<IntentionAction> registrar = new ArrayList<>();
+        QuickFixFactory.getInstance().registerOrderEntryFixes(ref, registrar);
+        QuickFixAction.registerQuickFixActions(info, null, registrar);
+        return info;
+      default:
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
+          .range(refElement)
+          .descriptionAndTooltip(JavaErrorBundle.message("module.ambiguous", refElement.getReferenceText()));
+    }
   }
 
   static HighlightInfo.Builder checkHostModuleStrength(@NotNull PsiPackageAccessibilityStatement statement) {
