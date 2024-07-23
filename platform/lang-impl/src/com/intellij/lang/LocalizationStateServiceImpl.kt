@@ -21,8 +21,8 @@ private const val DEFAULT_LOCALE = "en"
 @Internal
 @State(name = "LocalizationStateService", reloadable = false, category = SettingsCategory.SYSTEM, storages = [Storage(GeneralSettings.IDE_GENERAL_XML)])
 internal class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState>, Disposable {
-
   private var localizationState = LocalizationState()
+  private var restartRequired: Boolean = false
 
   override fun initializeComponent() {
     val localizationProperty = EarlyAccessRegistryManager.getString(LocalizationUtil.LOCALIZATION_KEY)
@@ -49,9 +49,14 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
     return localizationState.lastSelectedLocale
   }
 
+  override fun isRestartRequired(): Boolean = restartRequired
+
   override fun setSelectedLocale(locale: String) {
-    localizationState.lastSelectedLocale = localizationState.selectedLocale
+    if (!restartRequired) {
+      localizationState.lastSelectedLocale = localizationState.selectedLocale
+    }
     localizationState.selectedLocale = locale
+    restartRequired = true
     ApplicationManager.getApplication().messageBus.syncPublisher(LocalizationListener.Companion.UPDATE_TOPIC).localeChanged()
   }
 
@@ -61,8 +66,6 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
       setSelectedLocale(DEFAULT_LOCALE)
     }
   }
-
-
 }
 
 @Internal

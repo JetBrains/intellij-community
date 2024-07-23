@@ -52,7 +52,7 @@ class LanguageAndRegionUi {
 
       panel.row(IdeBundle.message("combobox.language")) {
         val locales = LocalizationUtil.getAllAvailableLocales()
-        val initSelectionLocale = LocalizationUtil.getLocale()
+        val initSelectionLocale = LocalizationUtil.getLocale(true)
         val localizationService = LocalizationStateService.getInstance()!!
         val model = CollectionComboBoxModel(locales.first, initSelectionLocale)
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
@@ -60,10 +60,10 @@ class LanguageAndRegionUi {
         comment(IdeBundle.message("ide.restart.required.comment"))
 
         if (propertyGraph != null && connection != null) {
-          val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale() }
+          val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale(true) }
 
           property.afterChange(parentDisposable) {
-            val prevLocale = LocalizationUtil.getLocale()
+            val prevLocale = LocalizationUtil.getLocale(true)
             if (it.toLanguageTag() == prevLocale.toLanguageTag()) {
               return@afterChange
             }
@@ -78,12 +78,12 @@ class LanguageAndRegionUi {
 
           connection.subscribe(LocalizationListener.UPDATE_TOPIC, object : LocalizationListener {
             override fun localeChanged() {
-              model.selectedItem = LocalizationUtil.getLocale()
+              model.selectedItem = LocalizationUtil.getLocale(true)
             }
           })
         }
         else {
-          languageBox.bindItem({ LocalizationUtil.getLocale() }, {
+          languageBox.bindItem({ LocalizationUtil.getLocale(true) }, {
             localizationService.setSelectedLocale((it ?: Locale.ENGLISH).toLanguageTag())
           })
         }
@@ -190,7 +190,7 @@ internal class LanguageAndRegionConfigurable :
   private lateinit var initSelectionRegion: Region
   private val eventSource: EventSource = EventSource.SETTINGS
   override fun createPanel(): DialogPanel {
-    initSelectionLanguage = LocalizationUtil.getLocale()
+    initSelectionLanguage = LocalizationUtil.getLocale(true)
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
@@ -200,7 +200,7 @@ internal class LanguageAndRegionConfigurable :
 
   override fun apply() {
     super.apply()
-    val selectedLocale = LocalizationUtil.getLocale()
+    val selectedLocale = LocalizationUtil.getLocale(true)
     val selectedRegion = RegionSettings.getRegion()
     if (initSelectionLanguage.toLanguageTag() != selectedLocale.toLanguageTag() ||
         initSelectionRegion != selectedRegion) {
