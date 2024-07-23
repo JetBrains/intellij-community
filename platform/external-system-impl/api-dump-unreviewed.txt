@@ -159,16 +159,6 @@ f:com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 - getProjectSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - setLastImportTimestamp(J):V
 - setLastSuccessfulImportTimestamp(J):V
-e:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
-- java.lang.Enum
-- sf:DEDUCED:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
-- sf:EXPLICIT_CORRECT:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
-- sf:EXPLICIT_INCORRECT:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
-- sf:UNKNOWN:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
-- getColor():java.awt.Color
-- getDescription(com.intellij.openapi.externalSystem.model.ProjectSystemId):java.lang.String
-- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.model.settings.LocationSettingType
-- s:values():com.intellij.openapi.externalSystem.model.settings.LocationSettingType[]
 f:com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
 - <init>():V
 - doInvoke(com.intellij.openapi.externalSystem.util.IntegrationKey,com.intellij.openapi.project.Project,java.lang.reflect.Method,java.lang.Object[],I):java.lang.Object
