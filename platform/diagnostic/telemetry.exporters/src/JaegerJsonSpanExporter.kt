@@ -27,16 +27,21 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Internal
 class JaegerJsonSpanExporter(
   file: Path,
-  serviceName: String,
-  serviceVersion: String? = null,
-  serviceNamespace: String? = null,
+  val serviceName: String,
+  val serviceVersion: String? = null,
+  val serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
   override val exporterVersion: Int = 2
 
   private val fileChannel: FileChannel
-  private val writer: JsonGenerator
+  private var writer: JsonGenerator
 
   private val lock = Mutex()
+
+  private fun initWriter() = JsonFactory().createGenerator(Channels.newOutputStream(fileChannel))
+    .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
+    // Channels.newOutputStream doesn't implement flush, but just to be sure
+    .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
 
   init {
     val parent = file.parent
@@ -46,10 +51,7 @@ class JaegerJsonSpanExporter(
                                                     StandardOpenOption.WRITE,
                                                     StandardOpenOption.TRUNCATE_EXISTING))
 
-    writer = JsonFactory().createGenerator(Channels.newOutputStream(fileChannel))
-      .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
-      // Channels.newOutputStream doesn't implement flush, but just to be sure
-      .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
+    writer = initWriter()
 
     beginWriter(w = writer,
                 serviceName = serviceName,
@@ -190,7 +192,7 @@ class JaegerJsonSpanExporter(
 
   override suspend fun flush() {
     lock.withReentrantLock {
-      // if shutdown was already invoked OR nothing has been written to the temp file
+      // if shutdown was already invoked OR nothing has been written to the output file
       if (writer.isClosed) {
         return@withReentrantLock
       }
@@ -199,6 +201,24 @@ class JaegerJsonSpanExporter(
       fileChannel.write(ByteBuffer.wrap(jsonEnd))
       fileChannel.force(false)
       fileChannel.position(fileChannel.position() - jsonEnd.size)
+    }
+  }
+
+  override suspend fun reset() {
+    lock.withReentrantLock {
+      // if shutdown was already invoked OR nothing has been written to the output file
+      if (writer.isClosed) {
+        return@withReentrantLock
+      }
+
+      writer = initWriter()
+      fileChannel.truncate(0)
+
+      beginWriter(w = writer,
+                  serviceName = serviceName,
+                  serviceVersion = serviceVersion,
+                  serviceNamespace = serviceNamespace,
+                  exporterVersion = exporterVersion)
     }
   }
 }

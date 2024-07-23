@@ -56,7 +56,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   @NotNull
   private final IJTracer tracer;
-  private ArrayList<TelemetryMetricsCollector> metricsCollectors = new ArrayList<>();
+  private final ArrayList<TelemetryMetricsCollector> metricsCollectors = new ArrayList<>();
 
   private boolean useDefaultSpanMetricExporter = true;
 
@@ -109,11 +109,10 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
     }
   }
 
-  private static void cleanupOutdatedMeters() {
+  private static void cleanupOutdatedMetrics() {
     try {
-      // force spans and meters to be written to disk before any test starts
-      // it's at least what we can do to minimize interference of the same meter on different tests
-      TelemetryManager.getInstance().forceFlushMetricsBlocking();
+      // force spans and meters to be exported and discarded to minimize interference of the same metric on different tests
+      TelemetryManager.getInstance().reset();
 
       // remove content of the previous tests from the idea.log
       IJPerfMetricsPublisher.Companion.truncateTestLog();
@@ -139,7 +138,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
 
   public PerformanceTestInfoImpl() {
     initOpenTelemetry();
-    cleanupOutdatedMeters();
+    cleanupOutdatedMetrics();
     this.tracer = TelemetryManager.getInstance().getTracer(new Scope("performanceUnitTests", null));
   }
 

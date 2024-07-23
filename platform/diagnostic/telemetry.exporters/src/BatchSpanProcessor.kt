@@ -16,6 +16,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -26,13 +27,14 @@ class BatchSpanProcessor(
   private val coroutineScope: CoroutineScope,
   private val spanExporters: List<AsyncSpanExporter>,
   private val scheduleDelay: Duration = 1.minutes,
-  private val maxExportBatchSize: Int = 512
+  private val maxExportBatchSize: Int = 512,
 ) : SpanProcessor {
   private val queue = Channel<ReadableSpan>(capacity = Channel.UNLIMITED)
   private val flushRequested = Channel<FlushRequest>(capacity = Channel.UNLIMITED)
 
   private data class FlushRequest(@JvmField val exportOnly: Boolean) {
-    @JvmField val job: CompletableDeferred<Unit> = CompletableDeferred()
+    @JvmField
+    val job: CompletableDeferred<Unit> = CompletableDeferred()
   }
 
   init {
@@ -174,6 +176,23 @@ class BatchSpanProcessor(
       if (spanExporter is JaegerJsonSpanExporter) {
         spanExporter.flushOtlp(scopeSpans)
         break
+      }
+    }
+  }
+
+  @TestOnly
+  suspend fun reset() {
+    for (spanExporter in spanExporters) {
+      try {
+        withTimeout(30.seconds) {
+          spanExporter.reset()
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        logger<BatchSpanProcessor>().error("Failed to reset", e)
       }
     }
   }
