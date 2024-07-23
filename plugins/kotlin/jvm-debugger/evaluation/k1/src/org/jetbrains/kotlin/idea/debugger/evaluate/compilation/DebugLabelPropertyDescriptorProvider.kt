@@ -1,12 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.*
 import org.jetbrains.kotlin.backend.common.SimpleMemberScope
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
@@ -20,7 +16,6 @@ import org.jetbrains.kotlin.descriptors.impl.PropertyDescriptorImpl
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors
 import org.jetbrains.kotlin.idea.debugger.evaluate.getClassDescriptor
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -33,20 +28,6 @@ import com.sun.jdi.Type as JdiType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val debugProcess: DebugProcessImpl) {
-    companion object {
-        fun getMarkupMap(debugProcess: DebugProcessImpl) = doGetMarkupMap(debugProcess) ?: emptyMap()
-
-        private fun doGetMarkupMap(debugProcess: DebugProcessImpl): Map<out Value?, ValueMarkup>? {
-            if (isUnitTestMode()) {
-                return DebuggerUtilsImpl.getValueMarkers(debugProcess)?.allMarkers as Map<ObjectReference, ValueMarkup>?
-            }
-
-            val debugSession = debugProcess.session.xDebugSession as? XDebugSessionImpl
-
-            @Suppress("UNCHECKED_CAST")
-            return debugSession?.valueMarkers?.allMarkers?.filterKeys { it is Value? } as Map<out Value?, ValueMarkup>?
-        }
-    }
 
     private val moduleDescriptor = DebugLabelModuleDescriptor
 
@@ -60,7 +41,7 @@ class DebugLabelPropertyDescriptorProvider(val codeFragment: KtCodeFragment, val
     }
 
     private fun createDebugLabelDescriptors(containingDeclaration: PackageFragmentDescriptor): List<PropertyDescriptor> {
-        val markupMap = getMarkupMap(debugProcess)
+        val markupMap = MarkupUtils.getMarkupMap(debugProcess)
 
         val result = ArrayList<PropertyDescriptor>(markupMap.size)
 

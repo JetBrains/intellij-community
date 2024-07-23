@@ -11,6 +11,10 @@
 
     <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
     <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK1CodeFragmentFactory"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentCompiler"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.evaluate.K1KotlinCodeFragmentCompiler"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

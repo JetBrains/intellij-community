@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
-import org.jetbrains.kotlin.backend.common.descriptors.synthesizedString
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.getCapturedFieldName
 import org.jetbrains.kotlin.codegen.AsmUtil.getLabeledThisName
@@ -20,7 +19,7 @@ import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyI
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.MarkupUtils
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 import org.jetbrains.kotlin.name.SpecialNames
@@ -150,7 +149,9 @@ class VariableFinder(val context: ExecutionContext) {
         findLocalVariable(variables, kind, kind.name)?.let { return it }
 
         // Local variables - synthetic captured local variable (IR Backend)
-        findLocalVariable(variables, kind, kind.name.synthesizedString)?.let { return it }
+        // Local variable name with $ prefix,
+        // see org.jetbrains.kotlin.backend.common.descriptors.DescriptorUtilsKt.getSynthesizedString
+        findLocalVariable(variables, kind, "$${kind.name}")?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
@@ -278,7 +279,7 @@ class VariableFinder(val context: ExecutionContext) {
     }
 
     private fun findDebugLabel(name: String): Result? {
-        val markupMap = DebugLabelPropertyDescriptorProvider.getMarkupMap(context.debugProcess)
+        val markupMap = MarkupUtils.getMarkupMap(context.debugProcess)
 
         for ((value, markup) in markupMap) {
             if (markup.text == name) {

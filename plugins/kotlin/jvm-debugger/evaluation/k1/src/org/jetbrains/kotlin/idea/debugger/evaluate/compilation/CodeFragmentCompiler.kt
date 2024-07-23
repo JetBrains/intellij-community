@@ -1,13 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
-import org.jetbrains.kotlin.backend.common.output.OutputFile
+import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -21,16 +18,13 @@ import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
-import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
-import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledCodeFragmentData.MethodSignature
-import org.jetbrains.kotlin.idea.debugger.evaluate.getResolutionFacadeForCodeFragment
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
@@ -46,7 +40,6 @@ import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
-import java.util.concurrent.Callable
 
 class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
@@ -54,14 +47,6 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         fun useIRFragmentCompiler(): Boolean =
             Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend").asBoolean()
     }
-
-    data class CompilationResult(
-        val classes: List<ClassToLoad>,
-        val parameterInfo: CodeFragmentParameterInfo,
-        val localFunctionSuffixes: Map<CodeFragmentParameter.Dumb, String>,
-        val mainMethodSignature: MethodSignature,
-        val compilerType: CompilerType
-    )
 
     fun compile(
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
@@ -334,53 +319,8 @@ private class EvaluatorModuleDescriptor(
         }
 }
 
-internal val OutputFile.internalClassName: String
-    get() = computeInternalClassName(relativePath)
-
-@KaExperimentalApi
-internal val KaCompiledFile.internalClassName: String
-    get() = computeInternalClassName(path)
-
-private fun computeInternalClassName(path: String): String {
-    require(path.endsWith(".class", ignoreCase = true))
-    return path.dropLast(".class".length).internalNameToFqn()
-}
-
-internal class CodeFragmentCompilationStats {
-    val startTimeMs: Long = System.currentTimeMillis()
-
-    var wrapTimeMs: Long = -1L
-        private set
-    var analysisTimeMs: Long = -1L
-        private set
-    var compilationTimeMs: Long = -1L
-        private set
-    var interruptions: Int = 0
-        private set
-
-    fun <R> startAndMeasureWrapAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { wrapTimeMs = it }
-    fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }
-    fun <R> startAndMeasureCompilationUnderReadAction(block: () -> R): Result<R> = startAndMeasureUnderReadAction(block) { compilationTimeMs = it }
-
-    private fun <R> startAndMeasureUnderReadAction(block: () -> R, timeUpdater: (Long) -> Unit): Result<R> {
-        return try {
-            val startMs = System.currentTimeMillis()
-            val result = ReadAction.nonBlocking(Callable {
-                try {
-                    block()
-                } catch (e: ProcessCanceledException) {
-                    interruptions++
-                    throw e
-                }
-            }).executeSynchronously()
-            timeUpdater(System.currentTimeMillis() - startMs)
-            Result.success(result)
-        }
-        catch (e: ProcessCanceledException) {
-            throw e
-        }
-        catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+internal fun getResolutionFacadeForCodeFragment(codeFragment: KtCodeFragment): ResolutionFacade {
+    val filesToAnalyze = listOf(codeFragment)
+    val kotlinCacheService = KotlinCacheService.getInstance(codeFragment.project)
+    return kotlinCacheService.getResolutionFacadeWithForcedPlatform(filesToAnalyze, JvmPlatforms.unspecifiedJvmPlatform)
 }
