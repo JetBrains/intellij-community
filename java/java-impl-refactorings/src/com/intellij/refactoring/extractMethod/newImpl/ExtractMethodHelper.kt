@@ -4,11 +4,11 @@ package com.intellij.refactoring.extractMethod.newImpl
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
-import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -217,7 +217,7 @@ object ExtractMethodHelper {
 
   fun guessMethodName(options: ExtractOptions): List<String> {
     val project = options.project
-    val initialMethodNames: MutableSet<String> = LinkedHashSet()
+    val variableNames: MutableSet<String> = LinkedHashSet()
     val codeStyleManager = JavaCodeStyleManager.getInstance(project) as JavaCodeStyleManagerImpl
     val returnType = options.dataOutput.type
 
@@ -225,7 +225,7 @@ object ExtractMethodHelper {
     if (expression != null || returnType !is PsiPrimitiveType) {
       codeStyleManager.suggestVariableName(VariableKind.FIELD, null, expression, returnType).names
         .forEach { name ->
-          initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
+          variableNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
         }
     }
 
@@ -235,19 +235,13 @@ object ExtractMethodHelper {
       val propertyName = codeStyleManager.variableNameToPropertyName(outVariable.name!!, outKind)
       val names = codeStyleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, outVariable.type).names
       names.forEach { name ->
-        initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
+        variableNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
       }
     }
 
-    val normalizedType = (returnType as? PsiEllipsisType)?.toArrayType() ?: returnType
-    val field = JavaPsiFacade.getElementFactory(project).createField("fieldNameToReplace", normalizedType)
-    fun suggestGetterName(name: String): String {
-      field.name = name
-      return GenerateMembersUtil.suggestGetterName(field)
-    }
-
-    return initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
-      .map { propertyName -> suggestGetterName(propertyName) }
+    val prefix = if (returnType == PsiTypes.booleanType()) "is" else "get"
+    return variableNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
+      .map { variableName -> "$prefix${StringUtil.capitalize(variableName)}" }
   }
 
   fun replacePsiRange(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {

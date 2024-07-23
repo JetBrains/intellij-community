@@ -1,7 +1,7 @@
 public class Test {
 
     void test() {
-        if (isaBoolean()) {
+        if (isABoolean()) {
             System.out.println();
         }
         if (getSize2() < getLimit2() && getCondition1()) {
@@ -9,7 +9,7 @@ public class Test {
         }
     }
 
-    private boolean isaBoolean() {
+    private boolean isABoolean() {
         return getSize1() < getLimit1() && getCondition1();
     }
 
