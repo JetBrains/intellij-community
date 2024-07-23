@@ -8,8 +8,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectFunctionFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectPropertyFqNameIndex
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -53,8 +53,8 @@ object ExpectActualUtils {
         val searchScope = GlobalSearchScope.union(modules.map { module -> module.contentScope })
 
         val indexes = listOf(
-            KotlinTopLevelFunctionFqnNameIndex,
-            KotlinTopLevelPropertyFqnNameIndex
+            KotlinTopLevelExpectFunctionFqNameIndex,
+            KotlinTopLevelExpectPropertyFqNameIndex,
         )
 
         return indexes.flatMap { index ->
@@ -62,7 +62,7 @@ object ExpectActualUtils {
                 project,
                 searchScope,
                 keyFilter = { true },
-                valueFilter = { declaration -> declaration.isExpectDeclaration() }
+                valueFilter = { true }
             )
         }
     }

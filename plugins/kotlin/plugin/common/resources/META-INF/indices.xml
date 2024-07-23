@@ -13,6 +13,8 @@
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex"/>
+    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectFunctionFqNameIndex"/>
+    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectPropertyFqNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex"/>

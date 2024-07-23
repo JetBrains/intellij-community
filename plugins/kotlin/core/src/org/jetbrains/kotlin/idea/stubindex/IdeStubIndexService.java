@@ -10,15 +10,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.fileClasses.JvmFileClassInfo;
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil;
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils;
 import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
 import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
-import org.jetbrains.kotlin.psi.KtClassOrObject;
-import org.jetbrains.kotlin.psi.KtFile;
-import org.jetbrains.kotlin.psi.KtTypeReference;
+import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.stubs.*;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
 import org.jetbrains.kotlin.psi.stubs.elements.StubIndexService;
@@ -188,6 +187,11 @@ public class IdeStubIndexService extends StubIndexService {
             // can have special fq name in case of syntactically incorrect function with no name
             FqName fqName = stub.getFqName();
             if (fqName != null) {
+                KtNamedFunction ktNamedFunction = stub.getPsi();
+                if (KotlinPsiUtils.isExpectDeclaration(ktNamedFunction)) {
+                    sink.occurrence(KotlinTopLevelExpectFunctionFqNameIndex.Helper.getIndexKey(), fqName.asString());
+                }
+
                 sink.occurrence(KotlinTopLevelFunctionFqnNameIndex.Helper.getIndexKey(), fqName.asString());
                 sink.occurrence(KotlinTopLevelFunctionByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
@@ -242,6 +246,11 @@ public class IdeStubIndexService extends StubIndexService {
             FqName fqName = stub.getFqName();
             // can have special fq name in case of syntactically incorrect property with no name
             if (fqName != null) {
+                KtProperty ktProperty = stub.getPsi();
+                if (KotlinPsiUtils.isExpectDeclaration(ktProperty)) {
+                    sink.occurrence(KotlinTopLevelExpectPropertyFqNameIndex.Helper.getIndexKey(), fqName.asString());
+                }
+
                 sink.occurrence(KotlinTopLevelPropertyFqnNameIndex.Helper.getIndexKey(), fqName.asString());
                 sink.occurrence(KotlinTopLevelPropertyByPackageIndex.Helper.getIndexKey(), fqName.parent().asString());
                 IndexUtilsKt.indexTopLevelExtension(stub, sink);
