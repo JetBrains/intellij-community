@@ -121,8 +121,8 @@ f:com.intellij.util.concurrency.NonUrgentExecutor
 f:com.intellij.util.concurrency.QueueProcessor
 - <init>(com.intellij.util.Consumer):V
 - <init>(com.intellij.util.Consumer,com.intellij.openapi.util.Condition):V
-- <init>(com.intellij.util.Consumer,com.intellij.openapi.util.Condition,Z):V
 - <init>(java.util.function.BiConsumer,Z,com.intellij.util.concurrency.QueueProcessor$ThreadToUse,com.intellij.openapi.util.Condition):V
+- <init>(java.util.function.Consumer,com.intellij.openapi.util.Condition,Z):V
 - add(java.lang.Object):V
 - add(java.lang.Object,com.intellij.openapi.application.ModalityState):V
 - addFirst(java.lang.Object):V
