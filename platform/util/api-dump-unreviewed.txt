@@ -5040,6 +5040,7 @@ f:com.intellij.util.io.DataInputOutputUtil
 - s:readINT(java.io.DataInput):I
 - s:readINT(java.nio.ByteBuffer):I
 - s:readLONG(java.io.DataInput):J
+- s:readLONG(java.nio.ByteBuffer):J
 - s:readNullable(java.io.DataInput,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:readSINT(java.io.DataInput):I
 - s:readSeq(java.io.DataInput,com.intellij.openapi.util.ThrowableComputable):java.util.List
