@@ -99,6 +99,16 @@ public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundS
   @Override
   PyExpression @NotNull [] getSuperClassExpressions();
 
+
+  /**
+   * Collects methods defined in the class, and its parents.
+   * <p/>
+   * This method does not access AST if the underlying PSI is stub-based.
+   *
+   * @return class methods
+   */
+  PyFunction @NotNull [] getMethodsInherited(@Nullable TypeEvalContext context);
+
   /**
    * Collects methods defined in the class.
    * <p/>
