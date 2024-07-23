@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.merge
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
@@ -332,7 +331,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 fun isInsideDefaultInterfaceMethod(): Boolean {
                     val method = frameProxy.safeLocation()?.safeMethod() ?: return false
                     val desc = method.signature()
-                    return method.name().endsWith("\$default") && DEFAULT_METHOD_MARKERS.any { desc.contains("I${it.descriptor})") }
+                    return method.name().endsWith("\$default") && DEFAULT_METHOD_MARKERS.any { desc.contains("IL$it;)") }
                 }
 
                 if (parameter.kind == CodeFragmentParameter.Kind.COROUTINE_CONTEXT) {
@@ -381,7 +380,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     ErrorsJvm.JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE
                 )
 
-        private val DEFAULT_METHOD_MARKERS = listOf(AsmTypes.OBJECT_TYPE, AsmTypes.DEFAULT_CONSTRUCTOR_MARKER)
+        private val DEFAULT_METHOD_MARKERS = listOf("java/lang/Object", "kotlin/jvm/internal/DefaultConstructorMarker")
 
         private fun InterpreterResult.toJdiValue(context: ExecutionContext): Value? {
             val jdiValue = when (this) {

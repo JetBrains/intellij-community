@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.core.getByteCodeMethodName
 import org.jetbrains.kotlin.idea.debugger.core.getContainingClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
@@ -34,7 +35,7 @@ internal fun CallableMemberInfo(
 ): CallableMemberInfo {
     val isInvoke = symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke
     val isSuspend = symbol.isSuspend()
-    val effectiveName = if (isInvoke && isSuspend) "invokeSuspend" else name
+    val effectiveName = if (isInvoke && isSuspend) KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME else name
     return CallableMemberInfo(
         isInvoke = isInvoke,
         isSuspend = isSuspend,

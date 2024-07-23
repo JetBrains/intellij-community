@@ -12,16 +12,22 @@ import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.codegen.AsmUtil
-import org.jetbrains.kotlin.codegen.AsmUtil.THIS
-import org.jetbrains.kotlin.codegen.DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX
-import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
-import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
-import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
-import org.jetbrains.kotlin.codegen.inline.INLINE_SCOPE_NUMBER_SEPARATOR
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_LABELED_THIS_FIELD
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_PREFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CONTINUATION_VARIABLE_NAME
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_DECLARATION_SITE_THIS
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_SCOPE_NUMBER_SEPARATOR
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.LABELED_THIS_PARAMETER
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.LOCAL_FUNCTION_VARIABLE_PREFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.RECEIVER_PARAMETER_NAME
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.THIS
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.THIS_IN_DEFAULT_IMPLS
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
 import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 
@@ -89,7 +95,7 @@ open class KotlinStackFrame(
         thisVariables.forEach(::addItem)
         otherVariables.forEach {
             val nameWithoutScope = it.nameWithoutScopeNumber()
-            if (nameWithoutScope.startsWith(AsmUtil.CAPTURED_PREFIX)) {
+            if (nameWithoutScope.startsWith(CAPTURED_PREFIX)) {
                 val valueData = CapturedAsLocalVariableValueData(nameWithoutScope.drop(1), it)
                 val variableDescriptor = nodeManager.getDescriptor(null, valueData)
                 add(JavaValue.create(null, variableDescriptor, evaluationContext, nodeManager, false))
@@ -139,8 +145,8 @@ open class KotlinStackFrame(
         val variables = evaluationContext.frameProxy?.safeVisibleVariables() ?: return false
         val declarationSiteThis = variables.firstOrNull { v ->
             val name = v.name()
-            (name.endsWith(INLINE_FUN_VAR_SUFFIX) && dropInlineSuffix(name) == AsmUtil.INLINE_DECLARATION_SITE_THIS) ||
-                    (name.contains(INLINE_SCOPE_NUMBER_SEPARATOR) && name.startsWith(AsmUtil.INLINE_DECLARATION_SITE_THIS))
+            (name.endsWith(INLINE_FUN_VAR_SUFFIX) && dropInlineSuffix(name) == INLINE_DECLARATION_SITE_THIS) ||
+                    (name.contains(INLINE_SCOPE_NUMBER_SEPARATOR) && name.startsWith(INLINE_DECLARATION_SITE_THIS))
         } ?: return false
 
         if (declarationSiteThis.name().contains(INLINE_SCOPE_NUMBER_SEPARATOR) || getInlineDepth(variables) > 0) {
@@ -203,15 +209,15 @@ open class KotlinStackFrame(
                 val name = variable.nameWithoutScopeNumber()
                 !isFakeLocalVariableForInline(name) &&
                     !name.startsWith(DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX) &&
-                    !name.startsWith(AsmUtil.LOCAL_FUNCTION_VARIABLE_PREFIX) &&
+                    !name.startsWith(LOCAL_FUNCTION_VARIABLE_PREFIX) &&
                     name != CONTINUATION_VARIABLE_NAME &&
                     name != SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
             }.partition { variable ->
                 val name = variable.nameWithoutScopeNumber()
                 name == THIS ||
-                    name == AsmUtil.THIS_IN_DEFAULT_IMPLS ||
-                    name.startsWith(AsmUtil.LABELED_THIS_PARAMETER) ||
-                    name == AsmUtil.INLINE_DECLARATION_SITE_THIS
+                    name == THIS_IN_DEFAULT_IMPLS ||
+                    name.startsWith(LABELED_THIS_PARAMETER) ||
+                    name == INLINE_DECLARATION_SITE_THIS
             }
 
         // The variables are already sorted, so the mainThis is the last one in the list.
@@ -228,17 +234,17 @@ open class KotlinStackFrame(
         val name = dropInlineSuffix(nameWithoutScopeNumber())
 
         return when {
-            name.startsWith(AsmUtil.LABELED_THIS_PARAMETER) -> {
-                val label = name.drop(AsmUtil.LABELED_THIS_PARAMETER.length)
+            name.startsWith(LABELED_THIS_PARAMETER) -> {
+                val label = name.drop(LABELED_THIS_PARAMETER.length)
                 clone(customName ?: getThisName(label), label)
             }
-            name.startsWith(AsmUtil.CAPTURED_LABELED_THIS_FIELD) -> {
-                val label = name.drop(AsmUtil.CAPTURED_LABELED_THIS_FIELD.length)
+            name.startsWith(CAPTURED_LABELED_THIS_FIELD) -> {
+                val label = name.drop(CAPTURED_LABELED_THIS_FIELD.length)
                 clone(customName ?: getThisName(label), label)
             }
-            name == AsmUtil.THIS_IN_DEFAULT_IMPLS -> clone(customName ?: ("$THIS (outer)"), null)
-            name == AsmUtil.RECEIVER_PARAMETER_NAME -> clone(customName ?: ("$THIS (receiver)"), null)
-            name == AsmUtil.INLINE_DECLARATION_SITE_THIS -> {
+            name == THIS_IN_DEFAULT_IMPLS -> clone(customName ?: ("$THIS (outer)"), null)
+            name == RECEIVER_PARAMETER_NAME -> clone(customName ?: ("$THIS (receiver)"), null)
+            name == INLINE_DECLARATION_SITE_THIS -> {
                 val label = generateThisLabel(frame.getValue(this)?.type())
                 if (label != null) {
                     clone(customName ?: getThisName(label), label)
@@ -246,7 +252,7 @@ open class KotlinStackFrame(
                     this
                 }
             }
-            name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX) -> {
+            name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX) -> {
                 val label = generateThisLabel(type)
                 if (label != null) {
                     clone(getThisName(label), null)

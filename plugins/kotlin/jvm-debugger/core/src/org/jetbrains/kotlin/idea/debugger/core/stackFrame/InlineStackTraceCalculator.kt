@@ -10,9 +10,9 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
-import org.jetbrains.kotlin.codegen.inline.KOTLIN_DEBUG_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.codegen.inline.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_DEBUG_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod

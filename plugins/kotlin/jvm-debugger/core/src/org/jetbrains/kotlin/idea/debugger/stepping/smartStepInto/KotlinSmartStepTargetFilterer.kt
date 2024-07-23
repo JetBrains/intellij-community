@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
@@ -183,8 +184,8 @@ private fun BytecodeSignature.handleAccessMethods(): BytecodeSignature {
 
 private fun BytecodeSignature.handleInvokeSuspend(methodInfo: CallableMemberInfo): BytecodeSignature {
     if (!methodInfo.isSuspend || !methodInfo.isInvoke) return this
-    if (methodInfo.name != "invokeSuspend" || name != "invoke") return this
-    return copy(name = "invokeSuspend")
+    if (methodInfo.name != KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME || name != "invoke") return this
+    return copy(name = KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME)
 }
 
 
