@@ -253,7 +253,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected @NotNull PresentationFactory createPresentationFactory() {
-    return new ActionToolbarPresentationFactory();
+    return new ActionToolbarPresentationFactory(this);
   }
 
   protected void installPopupHandler(boolean customizable,
@@ -1582,6 +1582,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  @NotNull PresentationFactory getPresentationFactory() {
+    return myPresentationFactory;
   }
 
   @TestOnly

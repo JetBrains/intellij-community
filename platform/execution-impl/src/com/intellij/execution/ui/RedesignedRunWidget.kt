@@ -90,20 +90,18 @@ private fun createRunActionToolbar(): ActionToolbar {
       return filterOutRunIfDebugResumeIsPresent(e, visibleChildren)
     }
   }
-  val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_UI_RUN_TOOLBAR, group, true)
+  val toolbar = ActionToolbarImpl(ActionPlaces.NEW_UI_RUN_TOOLBAR, group, true)
   toolbar.targetComponent = null
-  toolbar.setReservePlaceAutoPopupIcon(false)
+  toolbar.isReservePlaceAutoPopupIcon = false
   toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   toolbar.component.isOpaque = false
   toolbar.component.border = null
-  if (toolbar is ActionToolbarImpl) {
-    toolbar.setMinimumButtonSize {
-      JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
-    }
-    toolbar.setForceMinimumSize(true)
-    toolbar.setActionButtonBorder(JBUI.CurrentTheme.RunWidget::toolbarBorderDirectionalGap, JBUI.CurrentTheme.RunWidget::toolbarBorderHeight)
-    toolbar.setCustomButtonLook(RunWidgetButtonLook())
+  toolbar.setMinimumButtonSize {
+    JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
   }
+  toolbar.setForceMinimumSize(true)
+  toolbar.setActionButtonBorder(JBUI.CurrentTheme.RunWidget::toolbarBorderDirectionalGap, JBUI.CurrentTheme.RunWidget::toolbarBorderHeight)
+  toolbar.setCustomButtonLook(RunWidgetButtonLook())
   return toolbar
 }
 

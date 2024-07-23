@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -43,14 +42,7 @@ abstract class SplitButtonAction : AnAction(), CustomComponentAction {
   @Suppress("DuplicatedCode")
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     component.isEnabled = presentation.isEnabled
-    if (component !is AbstractToolbarCombo) return
-    component.text = presentation.text
-    component.toolTipText = presentation.description
-    component.leftIcons = listOfNotNull(
-      if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
-      else presentation.icon
-    )
-    component.rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
+    (component as? AbstractToolbarCombo)?.updateFromPresentation(presentation)
   }
 
   protected abstract fun createPopup(event: AnActionEvent): JBPopup?

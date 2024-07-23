@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorContextProvider
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.ui.popup.PopupAlignableComponent
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -25,6 +27,16 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
 
   override fun updateUI() {
     setUI(UIManager.getUI(this))
+  }
+
+  open fun updateFromPresentation(presentation: Presentation) {
+    text = presentation.text
+    toolTipText = presentation.description
+    leftIcons = listOfNotNull(
+      if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
+      else presentation.icon
+    )
+    rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
   }
 
   protected fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
