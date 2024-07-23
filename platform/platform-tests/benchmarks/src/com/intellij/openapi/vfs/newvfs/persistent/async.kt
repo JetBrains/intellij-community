@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.coroutines.Continuation
@@ -12,16 +15,31 @@ import kotlin.coroutines.startCoroutine
 
 /* Support for AsyncTaskBenchmark: run java [Callable] via coroutines dispatcher */
 
-@OptIn(DelicateCoroutinesApi::class)
-fun <V> runTaskAsyncViaCoroutines(task: Callable<V>, coroutineDispatcher: CoroutineDispatcher): V {
+fun <V> runTaskAsyncViaDeferred(task: Callable<V>, dispatcher: CoroutineDispatcher): V {
   @Suppress("SSBasedInspection")
-  val deferred = CoroutineScope(coroutineDispatcher + CoroutineName("detachedComputation: $task")).async {
+  val deferred = CoroutineScope(dispatcher).async {
     task.call()
   }
 
   return runSuspend {
     deferred.await()
   }
+}
+
+fun <V> runTaskAsyncViaDirectDispatch(task: Callable<V>, dispatcher: CoroutineDispatcher): V {
+
+  val future = CompletableFuture<V>()
+  val block = Runnable {
+    future.complete(task.call())
+  }
+  if (dispatcher.isDispatchNeeded(EmptyCoroutineContext)) {
+    dispatcher.dispatch(EmptyCoroutineContext, block)
+  }
+  else {
+    block.run()
+  }
+
+  return future.get()
 }
 
 // Copied from kotlin.coroutines.jvm.internal.RunSuspend.kt
