@@ -8,6 +8,5 @@
         "implicitCallWithStar.kt",
         "implicitNestedCall.kt",
         "implicitNestedCallWithStarImport.kt"
-    ],
-    "ignoreK2Compiler": "KTIJ-29026"
+    ]
 }

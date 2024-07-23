@@ -4,6 +4,5 @@
         "ConstructorUsage.kt",
         "JavaClass.java",
         "TypeUsage.kt"
-    ],
-    "ignoreK2Compiler": "KTIJ-24833"
+    ]
 }

@@ -7,6 +7,5 @@
         "Main.kt",
         "TypeAliasUsage.kt",
         "Usage.kt"
-    ],
-    "ignoreK2Compiler": "KTIJ-24828"
+    ]
 }
