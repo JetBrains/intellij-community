@@ -2550,7 +2550,6 @@ f:com.intellij.util.KotlinUtils
 - sf:alsoIfNull(java.lang.Object,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:applyIf(java.lang.Object,Z,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:getValue(java.util.concurrent.atomic.AtomicReference,java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
-- *sf:multiple(kotlin.sequences.Sequence):Z
 - sf:runIf(Z,kotlin.jvm.functions.Function0):java.lang.Object
 - sf:setValue(java.util.concurrent.atomic.AtomicReference,java.lang.Object,kotlin.reflect.KProperty,java.lang.Object):V
 - sf:takeWhileInclusive(kotlin.sequences.Sequence,kotlin.jvm.functions.Function1):kotlin.sequences.Sequence
