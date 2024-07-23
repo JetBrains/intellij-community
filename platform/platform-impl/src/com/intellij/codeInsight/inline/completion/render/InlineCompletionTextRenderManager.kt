@@ -144,7 +144,7 @@ internal class InlineCompletionTextRenderManager private constructor(
     private fun renderBlockInlay(
       editor: Editor,
       offset: Int,
-      blocks: List<InlineCompletionRenderTextBlock>,
+      blocks: List<InlineCompletionRenderTextBlock>
     ): Inlay<InlineCompletionLineRenderer>? {
       val inlayFromProvider = EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
         provider.renderBlockInlay(editor, offset, blocks)
@@ -202,7 +202,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       text: String,
       attributes: TextAttributes,
       offset: Int,
-      disposable: Disposable,
+      disposable: Disposable
     ): RenderedInlineCompletionElementDescriptor {
       ThreadingAssertions.assertEventDispatchThread()
 
