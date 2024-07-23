@@ -7,8 +7,12 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
@@ -29,10 +33,10 @@ import com.intellij.ui.popup.PopupPositionManager.Position.RIGHT
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.ui.popup.util.PopupImplUtil
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.CancellablePromise
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -45,14 +49,18 @@ import javax.swing.JWindow
 import kotlin.math.max
 import kotlin.math.min
 
+@Service(Service.Level.PROJECT)
+private class IntentionPreviewPopupUpdateProcessorCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
+
 class IntentionPreviewPopupUpdateProcessor internal constructor(
-  private val project: Project, private val fn: (Any?) -> IntentionPreviewInfo,
+  private val project: Project,
+  private val fn: (Any?) -> IntentionPreviewInfo,
 ) : PopupUpdateProcessor(project) {
   private var index: Int = LOADING_PREVIEW
   private var show = false
   private var originalPopup: JBPopup? = null
   private val editorsToRelease = mutableListOf<EditorEx>()
-  private var promise: CancellablePromise<IntentionPreviewInfo?>? = null
+  private var job: Job? = null
 
   private lateinit var popup: JBPopup
   private lateinit var component: IntentionPreviewComponent
@@ -66,8 +74,8 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
     }
 
     if (!::popup.isInitialized || popup.isDisposed) {
-      val origPopup = originalPopup
-      if (origPopup == null || origPopup.isDisposed) return
+      val origPopup = originalPopup?.takeIf { !it.isDisposed } ?: return
+
       component = IntentionPreviewComponent(origPopup)
 
       component.multiPanel.select(LOADING_PREVIEW, true)
@@ -78,9 +86,9 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
         .setShowBorder(false)
         .addUserData(IntentionPreviewPopupKey())
 
-      //see with com.intellij.ui.popup.AbstractPopup.show(java.awt.Component, int, int, boolean).
-      //don't use in cases when borders may be preserved
-      if (WindowRoundedCornersManager.isAvailable() && SystemInfoRt.isMac && UIUtil.isUnderDarcula()) {
+      // see with com.intellij.ui.popup.AbstractPopup.show(java.awt.Component, int, int, boolean).
+      // don't use in cases when borders may be preserved
+      if (WindowRoundedCornersManager.isAvailable() && SystemInfoRt.isMac) {
         popupBuilder = popupBuilder.setShowBorder(true)
       }
 
@@ -99,20 +107,29 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
       addMoveListener(originalPopup) { adjustPosition(originalPopup) }
     }
 
-    val value = component.multiPanel.getValue(index, false)
-    if (value != null) {
-      promise?.cancel()
+    val oldJob = job
+    oldJob?.cancel()
+
+    component.multiPanel.getValue(index, false)?.let {
       select(index)
       return
     }
 
     component.startLoading()
 
-    promise = ReadAction.nonBlocking<IntentionPreviewInfo> { postprocess(fn(intentionAction)) }
-      .expireWith(popup)
-      .coalesceBy(this)
-      .finishOnUiThread(ModalityState.defaultModalityState()) { select(index, renderPreview(it)) }
-      .submit(AppExecutorUtil.getAppExecutorService())
+    val modality = ModalityState.defaultModalityState().asContextElement()
+    job = project.service<IntentionPreviewPopupUpdateProcessorCoroutineScopeHolder>().coroutineScope.launch {
+      oldJob?.join()
+
+      val info = readAction {
+        postprocess(fn(intentionAction))
+      }
+      withContext(Dispatchers.EDT + modality) {
+        select(index, renderPreview(info))
+      }
+    }.also {
+      it.cancelOnDispose(popup)
+    }
   }
 
   private fun addMoveListener(popup: JBPopup?, action: () -> Unit) {
@@ -212,7 +229,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
   }
 
   private fun cancel(): Boolean {
-    promise?.cancel()
+    job?.cancel()
 
     if (editorsToRelease.isNotEmpty()) {
       val editorFactory = EditorFactory.getInstance()
@@ -265,7 +282,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
 
     /**
      * Returns content of preview:
-     * if it's diff then new content is returned
+     * if it's a diff then new content is returned
      * if it's HTML then text representation is returned
      */
     @TestOnly
@@ -289,6 +306,7 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
       else -> info
     }
 
+    @Suppress("UsagesOfObsoleteApi")
     @TestOnly
     @JvmStatic
     @JvmOverloads
