@@ -6,10 +6,14 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collections;
@@ -18,6 +22,11 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   @Override
   protected String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igtest/imports/globalInspection";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_23;
   }
 
   public void testInnerClassImport() {
@@ -224,6 +233,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
 
   public void testNoWarn() {
     myFixture.addClass("package java.awt; public class List extends Component {}");
+    myFixture.addClass("package java.awt; public class Component {}");
     doTest("""
              import javax.swing.*;
              import java.awt.*;
@@ -288,6 +298,45 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
         uses A;
       }""");
     doTest();
+  }
+
+  public void testRedundantModuleImport() {
+    doTest("""
+      /*Unused import 'import module java.base;'*/import module java.base;/**/
+      import java.util.List;
+      import java.util.ArrayList;
+      
+      class Main {
+          public static void main(String[] args) {
+              List<String> a = new ArrayList<>();
+          }
+      }""");
+  }
+
+  public void testImplicitLangImport() {
+    doTest("""
+      import java.util.List;
+      import java.util.ArrayList;
+      /*Unused import 'import java.lang.String;'*/import java.lang.String;/**/
+      
+      class Main {
+          public static void main(String[] args) {
+              List<String> a = new ArrayList<>();
+          }
+      }""");
+  }
+
+  public void testRedundantImportWithImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(),
+                           () -> {
+                             doTest("""
+                                      /*Unused import 'import java.util.List;'*/import java.util.List;/**/
+                                      
+                                      public static void main(String[] args) {
+                                          List<String> a = new ArrayList<>();
+                                      }
+                                      """);
+                           });
   }
 
   private void doTest(String classText) {

@@ -39,8 +39,16 @@ public final class UnusedImportInspection extends GlobalSimpleInspectionTool {
     if (!(file instanceof PsiJavaFile javaFile) || FileTypeUtils.isInServerPageFile(file)) return;
     final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(javaFile);
     javaFile.accept(visitor);
+    PsiPolyVariantReference reference;
     for (PsiImportStatementBase unusedImportStatement : visitor.getUnusedImportStatements()) {
-      PsiJavaCodeReferenceElement reference = unusedImportStatement.getImportReference();
+      if (unusedImportStatement instanceof PsiImportModuleStatement moduleStatement) {
+        PsiJavaModuleReferenceElement moduleReference = moduleStatement.getModuleReference();
+        if (moduleReference == null) continue;
+        reference = moduleReference.getReference();
+      }
+      else {
+        reference = unusedImportStatement.getImportReference();
+      }
       if (reference != null &&
           reference.multiResolve(false).length > 0 &&
           !(PsiTreeUtil.skipWhitespacesForward(unusedImportStatement) instanceof PsiErrorElement)) {
