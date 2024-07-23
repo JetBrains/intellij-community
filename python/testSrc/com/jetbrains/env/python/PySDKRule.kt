@@ -35,16 +35,17 @@ class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfig
   companion object {
 
     /**
-     * Creates sdk (possible on [targetConfig])
+     * Creates sdk (possible on [targetConfig]).
+     * If [detectSystemSdk] tries to use system python first, then uses one created by [PyEnvTestSettings]
      */
-    suspend fun createSdk(targetConfig: TargetEnvironmentConfiguration?): Sdk = withContext(Dispatchers.IO) {
+    suspend fun createSdk(targetConfig: TargetEnvironmentConfiguration?, detectSystemSdk: Boolean): Sdk = withContext(Dispatchers.IO) {
       val (pythonPath, additionalData) = if (targetConfig == null) {
         // Local
         val flavor = if (SystemInfo.isWindows) WinPythonSdkFlavor() else UnixPythonSdkFlavor.getInstance()
-        val pythonPath = flavor.suggestLocalHomePaths(null, null).firstOrNull()
-                         ?: PyEnvTestSettings.fromEnvVariables().pythons.firstOrNull()?.toPath()?.let { PythonSdkUtil.getPythonExecutable(it.toString()); }
-        Assume.assumeNotNull("No python found on local installation", pythonPath)
-        Pair(pythonPath!!.toString(), PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, flavor)))
+        val pythonPath = if (detectSystemSdk) flavor.suggestLocalHomePaths(null, null).firstOrNull()
+        else null
+             ?: PythonSdkUtil.getPythonExecutable(getCPython3().getOrThrow().toString())
+        Pair(pythonPath.toString(), PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, flavor)))
       }
       else {
         // Target
@@ -77,6 +78,6 @@ class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfig
     private set
 
   override fun before() {
-    sdk = runBlocking { createSdk(targetConfigProducer?.let { it() }) }
+    sdk = runBlocking { createSdk(targetConfigProducer?.let { it() }, detectSystemSdk = true) }
   }
 }
