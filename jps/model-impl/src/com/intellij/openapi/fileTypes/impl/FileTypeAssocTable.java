@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class FileTypeAssocTable<T> {
+
   private final Map<CharSequence, T> myExtensionMappings;
   private final Map<CharSequence, T> myExactFileNameMappings;
   private final Map<CharSequence, T> myExactFileNameAnyCaseMappings;
@@ -28,14 +29,15 @@ public final class FileTypeAssocTable<T> {
 
   @FunctionalInterface
   public interface ConcurrentCharSequenceMapBuilder<T> {
-    @NotNull Map<CharSequence, T> build(@NotNull Map<? extends CharSequence, ? extends T> source, boolean caseSensitive);
+    @NotNull
+    Map<CharSequence, T> build(@NotNull Map<? extends CharSequence, ? extends T> source, boolean caseSensitive);
   }
 
   private FileTypeAssocTable(@NotNull Map<? extends CharSequence, ? extends T> extensionMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameMappings,
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameAnyCaseMappings,
                              @NotNull ConcurrentCharSequenceMapBuilder<T> concurrentCharSequenceMapBuilder,
-                             @NotNull Map<? extends String, ? extends T> hashBangMap,
+                             @NotNull Map<String, ? extends T> hashBangMap,
                              @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
     myExtensionMappings = concurrentCharSequenceMapBuilder.build(extensionMappings, false);
     myExactFileNameMappings = concurrentCharSequenceMapBuilder.build(exactFileNameMappings, true);
@@ -78,25 +80,41 @@ public final class FileTypeAssocTable<T> {
       String extension = ((ExtensionFileNameMatcher)matcher).getExtension();
       return myExtensionMappings.put(extension, type);
     }
+
     if (matcher instanceof ExactFileNameMatcher) {
       ExactFileNameMatcher exactFileNameMatcher = (ExactFileNameMatcher)matcher;
 
       Map<CharSequence, T> mapToUse = exactFileNameMatcher.isIgnoreCase() ? myExactFileNameAnyCaseMappings : myExactFileNameMappings;
       return mapToUse.put(exactFileNameMatcher.getFileName(), type);
     }
-    int i = ContainerUtil.indexOf(myMatchingMappings, p -> p.first.equals(matcher));
-    if (i == -1) {
-      myMatchingMappings.add(Pair.create(matcher, type));
-      return null;
+
+    Pair<FileNameMatcher, T> previousAssociation = null;
+    int previousAssociationIndex = ContainerUtil.indexOf(myMatchingMappings, a -> a.first.equals(matcher));
+
+    if (previousAssociationIndex >= 0) {
+      previousAssociation = myMatchingMappings.get(previousAssociationIndex);
+      myMatchingMappings.set(previousAssociationIndex, Pair.create(matcher, type));
     }
-    Pair<FileNameMatcher, T> old = myMatchingMappings.get(i);
-    myMatchingMappings.set(i, Pair.create(matcher, type));
-    return Pair.getSecond(old);
+    else {
+      myMatchingMappings.add(Pair.create(matcher, type));
+    }
+
+    // A comparator for pattern specificity added to resolve IJPL-149806. See the ticket and tests for this class for more details.
+    var mostSpecificPatternFirstComparator = Comparator
+      .comparing((Pair<FileNameMatcher, T> pair) -> pair.first.getPresentableString().length(), Comparator.reverseOrder())
+      .thenComparing(pair -> pair.first.getPresentableString()
+        .replace("?", "\uFFFE")
+        .replace("*", "\uFFFF"));
+
+    Collections.sort(myMatchingMappings, mostSpecificPatternFirstComparator);
+
+    return Pair.getSecond(previousAssociation);
   }
 
   void addHashBangPattern(@NotNull String hashBang, @NotNull T type) {
     myHashBangMap.put(hashBang, type);
   }
+
   void removeHashBangPattern(@NotNull String hashBang, @NotNull T type) {
     myHashBangMap.remove(hashBang, type);
   }
@@ -298,7 +316,8 @@ public final class FileTypeAssocTable<T> {
   }
 
   // todo drop it, when ConcurrentCollectionFactory will be available in the classpath
-  private static @NotNull <T> Map<CharSequence, T> createCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source, boolean caseSensitive) {
+  private static @NotNull <T> Map<CharSequence, T> createCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source,
+                                                                                   boolean caseSensitive) {
     Map<CharSequence, T> map = CollectionFactory.createCharSequenceMap(caseSensitive, source.size(), 0.5f);
     map.putAll(source);
     return Collections.synchronizedMap(map);
@@ -314,11 +333,11 @@ public final class FileTypeAssocTable<T> {
 
   @Override
   public String toString() {
-    return "FileTypeAssocTable. myExtensionMappings="+myExtensionMappings+";\n"
-      +"myExactFileNameMappings="+myExactFileNameMappings+";\n"
-      +"myExactFileNameAnyCaseMappings="+myExactFileNameAnyCaseMappings+";\n"
-      +"myMatchingMappings="+myMatchingMappings+";\n"
-      +"myHashBangMap="+myHashBangMap+";";
+    return "FileTypeAssocTable. myExtensionMappings=" + myExtensionMappings + ";\n"
+           + "myExactFileNameMappings=" + myExactFileNameMappings + ";\n"
+           + "myExactFileNameAnyCaseMappings=" + myExactFileNameAnyCaseMappings + ";\n"
+           + "myMatchingMappings=" + myMatchingMappings + ";\n"
+           + "myHashBangMap=" + myHashBangMap + ";";
   }
 
   @TestOnly
