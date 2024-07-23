@@ -130,6 +130,10 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkLambdaBodyAsParentOfDestructuringDeclaration(myFixture)
     }
 
+    fun testUnclosedLazyValueBody() {
+        checkUnclosedLazyValueBody(myFixture)
+    }
+
     fun testIdentifierOfNullableExtensionReceiver() {
         checkIdentifierOfNullableExtensionReceiver(myFixture)
     }
