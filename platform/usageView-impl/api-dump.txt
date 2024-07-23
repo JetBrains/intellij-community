@@ -33,8 +33,8 @@ a:com.intellij.usages.impl.UsageContextPanelBase
 - p:onEditorCreated(com.intellij.openapi.editor.Editor):V
 - f:updateLayout(com.intellij.openapi.project.Project,java.util.List):V
 - f:updateLayout(com.intellij.openapi.project.Project,java.util.List,com.intellij.usages.UsageView):V
-- pa:updateLayoutLater(com.intellij.openapi.project.Project,java.util.List):V
-- p:updateLayoutLater(com.intellij.openapi.project.Project,java.util.List,com.intellij.usages.UsageView):V
+- pa:updateLayoutLater(java.util.List):V
+- p:updateLayoutLater(java.util.List,com.intellij.usages.UsageView):V
 c:com.intellij.usages.impl.UsageGroupingRuleProviderImpl
 - com.intellij.usages.rules.UsageGroupingRuleProviderEx
 - <init>():V
@@ -81,8 +81,8 @@ c:com.intellij.usages.impl.UsagePreviewPanel
 - f:releaseEditor():V
 - removePropertyChangeListener(java.beans.PropertyChangeListener):V
 - f:setShowTooltipBalloon(Z):V
-- p:updateLayoutLater(com.intellij.openapi.project.Project,java.util.List):V
-- updateLayoutLater(com.intellij.openapi.project.Project,java.util.List,com.intellij.usages.UsageView):V
+- p:updateLayoutLater(java.util.List):V
+- updateLayoutLater(java.util.List,com.intellij.usages.UsageView):V
 com.intellij.usages.impl.UsageViewElementsListener
 - beforeUsageAdded(com.intellij.usages.UsageView,com.intellij.usages.Usage):V
 - isExcludedByDefault(com.intellij.usages.UsageView,com.intellij.usages.Usage):Z
