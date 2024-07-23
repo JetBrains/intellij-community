@@ -550,9 +550,17 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
-   * Returns the component representing the browser in the UI hierarchy.
+   * Returns the root browser component to be inserted into the UI.
+   * This component adapts the internal JCEF component to IJ.
    */
   public abstract @Nullable JComponent getComponent();
+
+  /**
+   * Returns the actual browser component. This component is the target for events.
+   */
+  public @Nullable Component getBrowserComponent() {
+    return myCefBrowser.getUIComponent();
+  }
 
   /**
    * Returns whether the browser is rendered off-screen.
