@@ -44,6 +44,11 @@ public abstract class XExecutionStack {
   }
 
   @Nullable
+  public AdditionalDisplayInfo getAdditionalDisplayInfo() {
+    return null;
+  }
+
+  @Nullable
   public final Icon getIcon() {
     return myIcon;
   }
@@ -79,5 +84,28 @@ public abstract class XExecutionStack {
      * @param last {@code true} if all frames are added
      */
     void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last);
+  }
+
+  public static class AdditionalDisplayInfo {
+    private final @Nls @NotNull String myText;
+    private final @Nls String myTooltip;
+
+    public AdditionalDisplayInfo(@Nls @NotNull String text, @Nls @Nullable String tooltip) {
+
+      myText = text;
+      myTooltip = tooltip;
+    }
+
+    @Nls
+    @NotNull
+    public String getText() {
+      return myText;
+    }
+
+    @Nls
+    @Nullable
+    public String getTooltip() {
+      return myTooltip;
+    }
   }
 }

@@ -5,17 +5,24 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.Nullable
 import java.awt.Component
 import java.awt.Point
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionListener
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
+
 
 class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : JBList<StackInfo>(
     CollectionListModel()
@@ -139,6 +146,10 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
             when (stack.kind) {
                 StackInfo.StackKind.ExecutionStack -> {
                     append(stack.getText())
+                    stack.getAdditionalDisplayInfo()?.let {
+                      append(" ".repeat(3))
+                      append(it.text, SimpleTextAttributes.GRAYED_ATTRIBUTES, it)
+                    }
                     icon = stack.stack?.icon
                 }
                 StackInfo.StackKind.Error,
@@ -147,6 +158,14 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
 
           SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected)
         }
+
+      override fun getToolTipText(event: MouseEvent): String? {
+        val fragmentIndex = findFragmentAt(event.x)
+        if (fragmentIndex == -1) return super.getToolTipText(event)
+
+        val additionalDisplayInfo = getFragmentTag(fragmentIndex) as AdditionalDisplayInfo?
+        return additionalDisplayInfo?.tooltip ?: super.getToolTipText(event)
+      }
     }
 }
 
@@ -164,6 +183,14 @@ data class StackInfo private constructor(val kind: StackKind, val stack: XExecut
       StackKind.ExecutionStack -> stack!!.displayName
       StackKind.Error -> error!!
       StackKind.Loading -> XDebuggerBundle.message("stack.frame.loading.text")
+    }
+  }
+
+  @Nullable
+  fun getAdditionalDisplayInfo(): AdditionalDisplayInfo? {
+    return when (kind) {
+      StackKind.ExecutionStack -> stack!!.additionalDisplayInfo
+      else -> null
     }
   }
 
