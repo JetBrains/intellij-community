@@ -216,7 +216,7 @@ abstract class ChartWrapper : ChartComponent {
 
   private inner class CentralPanel : JComponent() {
     override fun paintComponent(g: Graphics) {
-      g.clip = Rectangle(0, 0, width, height)
+      (g as Graphics2D).clip(Rectangle(0, 0, width, height))
       g.color = this@ChartWrapper.background
       (g as Graphics2D).fill(g.clip)
       this@ChartWrapper.height = height
