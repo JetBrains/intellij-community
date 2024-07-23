@@ -71,7 +71,8 @@ class ChangeReferenceProcessor(private val project: Project, private val editor:
       innerDifferences.get(sourceThreeSide)?.forEach {
         if (it.isEmpty) return@forEach
 
-        val text = editor.document.getText(rangeMarker.textRange)
+        val baseDocument = editor.document
+        val text = baseDocument.getText(rangeMarker.textRange)
         val fragmentStartOffset = sourceRange.startOffset + it.startOffset
         val rangeInDocument = TextRange(fragmentStartOffset, fragmentStartOffset + it.length)
         val fragmentText = sourceDocument.getText(rangeInDocument)
@@ -82,7 +83,7 @@ class ChangeReferenceProcessor(private val project: Project, private val editor:
         if (offset == -1) return@forEach
 
         val data = createReferenceData(psiFile, rangeInDocument.startOffset, rangeInDocument.endOffset)
-        val marker = sourceDocument.createRangeMarker(
+        val marker = baseDocument.createRangeMarker(
           rangeMarker.startOffset + offset,
           rangeMarker.startOffset + offset + fragmentText.length
         )
