@@ -95,6 +95,7 @@ class SettingTransferProductService(
           }
         }
         settings.recentProjects.nullize()?.let(TransferableSetting::recentProjects)?.let(::add)
+        addAll(ThirdPartyProductSettingItemProvider.generateSettingItems(product.product.transferableId, settings))
       }
     } ?: emptyList()
   }
