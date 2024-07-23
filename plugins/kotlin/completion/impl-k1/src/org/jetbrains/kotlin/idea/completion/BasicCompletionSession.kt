@@ -777,6 +777,12 @@ class BasicCompletionSession(
                         OverridesCompletion(collector, basicLookupElementFactory).complete(position, declaration = null)
                     }
 
+                    "actual" -> {
+                        collector.addElement(lookupElement)
+
+                        ActualDeclarationCompletion(project, collector, basicLookupElementFactory).complete(position)
+                    }
+
                     "class" -> {
                         if (callTypeAndReceiver !is CallTypeAndReceiver.CALLABLE_REFERENCE) { // otherwise it should be handled by KeywordValues
                             collector.addElement(lookupElement)

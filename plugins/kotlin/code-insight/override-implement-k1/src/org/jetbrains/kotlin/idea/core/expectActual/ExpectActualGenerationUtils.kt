@@ -33,18 +33,22 @@ object ExpectActualGenerationUtils {
     /**
      * Returns an 'actual' declaration for the corresponding [expectDeclaration] in the context of the provided [module]
      */
-    fun generateActualDeclaration(project: Project, module: Module, expectDeclaration: KtNamedDeclaration): KtDeclaration? {
+    fun generateActualDeclaration(project: Project, module: Module, expectDeclaration: KtNamedDeclaration): KtDeclaration {
         val checker = TypeAccessibilityChecker.create(project, module)
 
         return when (expectDeclaration) {
-            is KtCallableDeclaration -> generateCallable(
-                project = project,
-                generateExpect = false,
-                originalDeclaration = expectDeclaration,
-                descriptor = expectDeclaration.toDescriptor() as? CallableMemberDescriptor ?: return null,
-                generatedClass = null,
-                checker = checker
-            )
+            is KtCallableDeclaration -> {
+                val descriptor = expectDeclaration.toDescriptor() as? CallableMemberDescriptor
+                    ?: error("Not a callable member: $expectDeclaration")
+                generateCallable(
+                    project = project,
+                    generateExpect = false,
+                    originalDeclaration = expectDeclaration,
+                    descriptor = descriptor,
+                    generatedClass = null,
+                    checker = checker
+                )
+            }
 
             is KtClassOrObject -> generateClassOrObject(
                 project = project,
@@ -54,7 +58,7 @@ object ExpectActualGenerationUtils {
                 checker = checker
             )
 
-            else -> null
+            else -> error("Unsupported declaration for actual keyword: $expectDeclaration")
         }
     }
 
