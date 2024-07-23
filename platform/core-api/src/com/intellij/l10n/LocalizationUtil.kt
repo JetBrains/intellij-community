@@ -23,25 +23,13 @@ object LocalizationUtil {
   @Internal
   val l10nPluginIdToLanguageTag: Map<String, String> = mapOf("com.intellij.ja" to "ja", "com.intellij.ko" to "ko", "com.intellij.zh" to "zh-CN")
 
-  @Internal
-  fun getForcedLocale(): String? {
-    val languageTag = System.getProperty(LOCALIZATION_KEY)
-    if (languageTag.isNullOrEmpty()) {
-      return null
-    }
-    return languageTag
-  }
-
   fun getLocale(): Locale {
-    val forcedLocale = getForcedLocale()
-    val languageTag = forcedLocale ?: LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
+    val languageTag = LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
     val locale = Locale.forLanguageTag(languageTag)
 
-    if (forcedLocale == null) {
-      val englishTag = Locale.ENGLISH.toLanguageTag()
-      if (languageTag != englishTag && findLanguageBundle(locale) == null) {
-        return Locale.ENGLISH
-      }
+    val englishTag = Locale.ENGLISH.toLanguageTag()
+    if (languageTag != englishTag && findLanguageBundle(locale) == null) {
+      return Locale.ENGLISH
     }
 
     return locale
