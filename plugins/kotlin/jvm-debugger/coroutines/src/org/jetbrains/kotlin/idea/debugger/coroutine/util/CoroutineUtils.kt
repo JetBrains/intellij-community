@@ -20,7 +20,7 @@ const val CREATION_STACK_TRACE_SEPARATOR = "\b\b\b" // the "\b\b\b" is used as c
 const val CREATION_CLASS_NAME = "_COROUTINE._CREATION"
 
 fun Method.isInvokeSuspend(): Boolean =
-    name() == "invokeSuspend" && signature() == "(Ljava/lang/Object;)Ljava/lang/Object;"
+    name() == KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME && signature() == "(Ljava/lang/Object;)Ljava/lang/Object;"
 
 fun Method.isInvoke(): Boolean =
     name() == "invoke" && signature().contains("Ljava/lang/Object;)Ljava/lang/Object;")

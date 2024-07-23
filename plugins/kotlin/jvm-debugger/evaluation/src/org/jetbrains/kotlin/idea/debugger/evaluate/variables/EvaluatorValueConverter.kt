@@ -33,7 +33,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
             }
 
             val type = value.type()
-            if (type !is ClassType || !type.signature().startsWith("L" + AsmTypes.REF_TYPE_PREFIX)) {
+            if (type !is ClassType || !type.signature().startsWith("Lkotlin/jvm/internal/Ref$")) {
                 return value
             }
 
@@ -61,7 +61,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
             return true
         }
 
-        if (requestedType == AsmTypes.K_CLASS_TYPE && actualType == AsmTypes.JAVA_CLASS_TYPE) {
+        if (requestedType.internalName == "kotlin/reflect/KClass" && actualType.internalName == "java/lang/Class") {
             // KClass can be represented as a Java class for simpler cases. See BoxingInterpreter.isJavaLangClassBoxing().
             return true
         }
