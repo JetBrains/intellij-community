@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="mockito-junit-jupiter" type="repository">
-    <properties maven-id="org.mockito:mockito-junit-jupiter:5.11.0">
+    <properties maven-id="org.mockito:mockito-junit-jupiter:5.12.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.11.0/mockito-junit-jupiter-5.11.0.jar">
-          <sha256sum>a30ea4fe0484e54f64cdc15269a6c6ff1bd89bc26a0d41e4c27cb91cb78dc548</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.12.0/mockito-junit-jupiter-5.12.0.jar">
+          <sha256sum>2663b47e5b36bebef3a1a21610dc4cea504f0124545d45fa5f3332837971d66d</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -12,13 +12,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.11.0/mockito-junit-jupiter-5.11.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.12.0/mockito-junit-jupiter-5.12.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.11.0/mockito-junit-jupiter-5.11.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.12.0/mockito-junit-jupiter-5.12.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.11.0/mockito-junit-jupiter-5.11.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-junit-jupiter/5.12.0/mockito-junit-jupiter-5.12.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
