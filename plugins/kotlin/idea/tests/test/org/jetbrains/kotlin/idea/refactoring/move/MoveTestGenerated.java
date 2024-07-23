@@ -693,6 +693,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveTopLevel/kotlin/singletonsAndStatics/singletonsAndStatics.test");
         }
 
+        @TestMetadata("kotlin/staticUsageFromSuperClass/staticUsageFromSuperClass.test")
+        public void testKotlin_staticUsageFromSuperClass_StaticUsageFromSuperClass() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/staticUsageFromSuperClass/staticUsageFromSuperClass.test");
+        }
+
         @TestMetadata("kotlin/superReferences/superReferences.test")
         public void testKotlin_superReferences_SuperReferences() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/superReferences/superReferences.test");
