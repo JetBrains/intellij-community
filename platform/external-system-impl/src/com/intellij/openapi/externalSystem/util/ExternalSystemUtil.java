@@ -65,7 +65,6 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -104,7 +103,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -1131,30 +1129,11 @@ public final class ExternalSystemUtil {
                                                       @NotNull ProjectSystemId systemId
   ) {
     var future = new CompletableFuture<Void>();
-    ImportSpecBuilder specBuilder = new ImportSpecBuilder(project, systemId)
-      .callback(new ExternalProjectRefreshCallback() {
-        @Override
-        public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
-          if (externalProject != null) {
-            try {
-              ProjectDataManager.getInstance().importData(externalProject, project);
-            }
-            catch (ProcessCanceledException pce) {
-              future.completeExceptionally(new CancellationException());
-            }
-            catch (Exception e) {
-              future.completeExceptionally(e);
-            }
-          }
-          future.complete(null);
-        }
-
-        @Override
-        public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-          future.completeExceptionally(new RuntimeException(errorMessage));
-        }
-      });
-    refreshProject(projectPath, specBuilder);
+    ImportSpecImpl spec = new ImportSpecImpl(project, systemId);
+    spec.setProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+    ImportSpecBuilder.DefaultProjectRefreshCallback defaultCallback = new ImportSpecBuilder.DefaultProjectRefreshCallback(spec);
+    spec.setCallback(new AsyncExternalProjectRefreshCallback(defaultCallback, future));
+    refreshProject(projectPath, spec);
     return future;
   }
 
@@ -1246,6 +1225,35 @@ public final class ExternalSystemUtil {
     @Override
     public void close() {
       Disposer.dispose(this);
+    }
+  }
+
+  private static class AsyncExternalProjectRefreshCallback implements ExternalProjectRefreshCallback {
+
+    private final @NotNull ExternalProjectRefreshCallback delegate;
+    private final @NotNull CompletableFuture<Void> future;
+
+    private AsyncExternalProjectRefreshCallback(@NotNull ExternalProjectRefreshCallback delegate,
+                                                @NotNull CompletableFuture<Void> future) {
+      this.delegate = delegate;
+      this.future = future;
+    }
+
+    @Override
+    public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
+      try {
+        delegate.onSuccess(externalProject);
+      }
+      catch (Exception e) {
+        future.completeExceptionally(e);
+      }
+      future.complete(null);
+    }
+
+    @Override
+    public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+      future.completeExceptionally(new RuntimeException(errorMessage));
+      delegate.onFailure(errorMessage, errorDetails);
     }
   }
 }
