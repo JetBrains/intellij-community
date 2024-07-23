@@ -144,6 +144,8 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
                 StackInfo.StackKind.Error,
                 StackInfo.StackKind.Loading -> append(stack.getText())
             }
+
+          SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected)
         }
     }
 }
