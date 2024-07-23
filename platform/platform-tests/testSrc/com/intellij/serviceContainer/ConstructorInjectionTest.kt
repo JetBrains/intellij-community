@@ -5,7 +5,7 @@ package com.intellij.serviceContainer
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -16,7 +16,7 @@ class ConstructorInjectionTest {
   fun `light service getService() performance`() {
     val componentManager = TestComponentManager()
     assertThat(componentManager.getService(BarService::class.java)).isNotNull()
-    PerformanceTestUtil.newPerformanceTest("getService() must be fast for cached service") {
+    Benchmark.newBenchmark("getService() must be fast for cached service") {
       for (i in 0..30_000_000) {
         componentManager.getService(BarService::class.java)!!
       }

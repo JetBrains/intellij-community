@@ -13,7 +13,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
                                  }
                              }
                          }""");
-    PerformanceTestUtil.newPerformanceTest("Many exceptions", () -> {
+    Benchmark.newBenchmark("Many exceptions", () -> {
       // instantiate console with exception filters only to avoid failures due to Node/Ruby/etc dog-slow sloppy regex-based filters
       TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
       consoleBuilder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(getProject())));

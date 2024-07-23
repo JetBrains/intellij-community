@@ -23,7 +23,7 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -402,7 +402,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testCancellationPerformance() {
-    PerformanceTestUtil.newPerformanceTest("NBRA cancellation", () -> {
+    Benchmark.newBenchmark("NBRA cancellation", () -> {
       WriteAction.run(() -> {
         for (int i = 0; i < 100_000; i++) {
           ReadAction.nonBlocking(() -> {}).coalesceBy(this).submit(AppExecutorUtil.getAppExecutorService()).cancel();

@@ -15,7 +15,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
@@ -1044,7 +1044,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
 
     val className = this.javaClass.simpleName
 
-    PerformanceTestUtil.newPerformanceTest("Typing in injected") {
+    Benchmark.newBenchmark("Typing in injected") {
       for (i in 0..size) {
         myFixture.type("newkey$i: val$i")
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
@@ -1077,7 +1077,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
 
     val className = this.javaClass.simpleName
 
-    PerformanceTestUtil.newPerformanceTest("Reformatting large") {
+    Benchmark.newBenchmark("Reformatting large") {
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT)
     }.attempts(1)
       .apply { startAsSubtest("$className - ${this.launchName}") }

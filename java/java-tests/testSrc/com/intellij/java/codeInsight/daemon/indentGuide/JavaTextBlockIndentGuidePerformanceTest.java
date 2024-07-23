@@ -3,7 +3,7 @@ package com.intellij.java.codeInsight.daemon.indentGuide;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -24,7 +24,7 @@ public class JavaTextBlockIndentGuidePerformanceTest extends LightDaemonAnalyzer
     String text = "class X {\n" +
                   createCodeBlocks(n, nLines) +
                   "\n}";
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), this::doHighlighting)
+    Benchmark.newBenchmark(getTestName(false), this::doHighlighting)
       .setup(() -> configureFromFileText("X.java", text))
       .start();
   }

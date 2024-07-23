@@ -13,7 +13,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.testFramework.JavaResolveTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +106,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
 
     PsiReference ref = configureByFile("class/" + getTestName(false) + ".java");
     ensureIndexUpToDate();
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> assertNull(ref.resolve()))
+    Benchmark.newBenchmark(getTestName(false), () -> assertNull(ref.resolve()))
       .warmupIterations(20)
       .attempts(50)
       .start();
@@ -131,7 +131,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
 
     List<PsiJavaCodeReferenceElement> refs = SyntaxTraverser.psiTraverser(file).filter(PsiJavaCodeReferenceElement.class).toList();
 
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       for (PsiJavaCodeReferenceElement ref : refs) {
         assertNotNull(ref.resolve());
       }
@@ -173,7 +173,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     }
 
     ensureIndexUpToDate();
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> assertNull(ref.resolve()))
+    Benchmark.newBenchmark(getTestName(false), () -> assertNull(ref.resolve()))
       .warmupIterations(20)
       .attempts(50)
       .start();
@@ -181,7 +181,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
   }
 
   public void testLongIdentifierDotChain() {
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       PsiFile file = createDummyFile("a.java", "class C { { " + StringUtil.repeat("obj.", 100) + "foo } }");
       PsiReference ref = file.findReferenceAt(file.getText().indexOf("foo"));
       assertNull(ref.resolve());

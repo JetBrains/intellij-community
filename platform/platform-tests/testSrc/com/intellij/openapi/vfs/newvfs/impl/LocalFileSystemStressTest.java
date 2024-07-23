@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ui.UIUtil;
@@ -32,7 +32,7 @@ public class LocalFileSystemStressTest extends BareTestFixtureTestCase {
     assertThat(tmpRoot.getFileSystem()).isInstanceOf(TempFileSystem.class);
     VirtualFile testDir = WriteAction.computeAndWait(() -> tmpRoot.createChildDirectory(this, getTestName(true)));
     int N_LEVELS = 1_000_000;
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       UIUtil.pump();
       StringBuilder expectedPath = new StringBuilder(N_LEVELS*4+100);
       expectedPath.append(testDir.getPath());

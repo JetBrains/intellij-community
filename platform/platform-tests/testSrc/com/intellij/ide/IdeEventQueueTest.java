@@ -10,7 +10,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TestTimeOut;
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
     int N = 100000;
-    PerformanceTestUtil.newPerformanceTest("Event queue dispatch", () -> {
+    Benchmark.newBenchmark("Event queue dispatch", () -> {
       UIUtil.dispatchAllInvocationEvents();
       AtomicInteger count = new AtomicInteger();
       for (int i = 0; i < N; i++) {

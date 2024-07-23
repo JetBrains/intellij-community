@@ -8,7 +8,7 @@ import com.intellij.lexer.XmlLexer;
 import com.intellij.testFramework.LexerTestCase;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -63,7 +63,7 @@ public class XmlLexerTest extends LexerTestCase {
     final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
                                                     new FilterLexer.SetFilter(new XMLParserDefinition().getWhitespaceTokens()));
 
-    PerformanceTestUtil.newPerformanceTest("XML Lexer Performance on " + fileName, () -> {
+    Benchmark.newBenchmark("XML Lexer Performance on " + fileName, () -> {
       for (int i = 0; i < 10; i++) {
         doLex(lexer, text);
         doLex(filterLexer, text);

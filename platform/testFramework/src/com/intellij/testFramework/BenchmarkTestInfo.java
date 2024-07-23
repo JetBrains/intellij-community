@@ -10,21 +10,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 
-public interface PerformanceTestInfo {
+public interface BenchmarkTestInfo {
   // to warn about not calling .start() in the end
   @Contract(pure = true)
-  PerformanceTestInfo setup(@NotNull ThrowableRunnable<?> setup);
+  BenchmarkTestInfo setup(@NotNull ThrowableRunnable<?> setup);
 
   // to warn about not calling .start() in the end
   @Contract(pure = true)
-  PerformanceTestInfo attempts(int attempts);
+  BenchmarkTestInfo attempts(int attempts);
 
   /**
    * Runs the perf test {@code iterations} times before starting the final measuring.
    */
   // to warn about not calling .start() in the end
   @Contract(pure = true)
-  PerformanceTestInfo warmupIterations(int iterations);
+  BenchmarkTestInfo warmupIterations(int iterations);
 
   String getUniqueTestName();
 
@@ -99,5 +99,5 @@ public interface PerformanceTestInfo {
    * The method should be invoked right after constructor to provide required data.
    * It can be part of the constructor since instances are created via ServiceLoader.
    */
-  PerformanceTestInfo initialize(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName);
+  BenchmarkTestInfo initialize(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName);
 }

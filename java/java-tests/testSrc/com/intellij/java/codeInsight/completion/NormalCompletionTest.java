@@ -28,7 +28,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
@@ -2325,7 +2325,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                   "localV<caret>x }" +
                   "}";
     myFixture.configureByText("a.java", text);
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       assertEquals(1, myFixture.completeBasic().length);
     }).setup(() -> {
       LookupImpl lookup = getLookup();
@@ -2345,7 +2345,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       "}";
     myFixture.addClass(constantClass);
     myFixture.configureByText("a.java", "import static Constants.*; class C { { field<caret>x } }");
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       int length = myFixture.completeBasic().length;
       assertTrue(String.valueOf(length), length > 100);
     }).setup(() -> {

@@ -2,17 +2,16 @@
 package com.intellij.testFramework
 
 import com.intellij.openapi.diagnostic.logger
-import java.util.ServiceConfigurationError
-import java.util.ServiceLoader
+import java.util.*
 
-class PerformanceTestInfoLoader {
+class BenchmarkTestInfoLoader {
   companion object {
-    val instance: PerformanceTestInfo
+    val instance: BenchmarkTestInfo
       get() {
-        val log = logger<PerformanceTestInfo>()
+        val log = logger<BenchmarkTestInfo>()
 
         val instance = run {
-          val aClass = PerformanceTestInfo::class.java
+          val aClass = BenchmarkTestInfo::class.java
           val implementations = ServiceLoader.load(aClass, aClass.classLoader).toList()
           if (implementations.isEmpty()) {
             throw ServiceConfigurationError("No implementations of ${aClass.name} found. Make sure to include intellij.tools.ide.metrics.benchmark module" +
@@ -26,7 +25,7 @@ class PerformanceTestInfoLoader {
           }
         }
 
-        log.info("Loaded PerformanceTestInfo implementation ${instance::class.java.name}")
+        log.info("Loaded BenchmarkTestInfo implementation ${instance::class.java.name}")
         return instance
       }
   }

@@ -3,7 +3,7 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 
@@ -43,7 +43,7 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test long comment performance`() {
-    PerformanceTestUtil.newPerformanceTest("highlighting") {
+    Benchmark.newBenchmark("highlighting") {
       runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
     }.setup { psiManager.dropPsiCaches() }.start()
   }
@@ -51,7 +51,7 @@ class JavaSupportTest : GrazieTestBase() {
   fun `test performance with many line comments`() {
     val text = "// this is a single line comment\n".repeat(5000)
     myFixture.configureByText("a.java", text)
-    PerformanceTestUtil.newPerformanceTest("highlighting") {
+    Benchmark.newBenchmark("highlighting") {
       myFixture.checkHighlighting()
     }.setup { psiManager.dropPsiCaches() }.start()
   }

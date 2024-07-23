@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +72,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
   }
 
   public void testContainerCreateDeletePerformance() {
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       Disposable parent = Disposer.newDisposable();
       for (int i = 0; i < 100_000; i++) {
         myVirtualFilePointerManager.createContainer(parent);
@@ -88,7 +88,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     String url = VfsUtilCore.pathToUrl(f.getPath());
     VirtualFilePointer thePointer = myVirtualFilePointerManager.create(url, disposable, listener);
     assertNotNull(TempFileSystem.getInstance());
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
         for (int i = 0; i < 1_000_000; i++) {
           VirtualFilePointer pointer = myVirtualFilePointerManager.create(url, disposable, listener);
           assertSame(pointer, thePointer);
@@ -107,7 +107,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     VirtualFile v = refreshAndFindFile(f);
     VirtualFilePointer thePointer = myVirtualFilePointerManager.create(v, disposable, listener);
     assertNotNull(TempFileSystem.getInstance());
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
         for (int i = 0; i < 10_000_000; i++) {
           VirtualFilePointer pointer = myVirtualFilePointerManager.create(v, disposable, listener);
           assertSame(pointer, thePointer);
@@ -130,7 +130,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
         String name = "xxx" + (i % 20);
         events.add(new VFileCreateEvent(this, temp, name, true, null, null, null));
       }
-      PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+      Benchmark.newBenchmark(getTestName(false), () -> {
           for (int i = 0; i < 100; i++) {
             // simulate VFS refresh events since launching the actual refresh is too slow
             AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(events);
@@ -163,7 +163,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
 
     PersistentFSImpl persistentFS = (PersistentFSImpl)ManagingFS.getInstance();
 
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
         for (int i = 0; i < 500_000; i++) {
           persistentFS.incStructuralModificationCount();
           AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(createEvents);

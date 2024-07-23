@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.text.StringSearcher;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -44,7 +44,7 @@ public class LowLevelSearchUtilTest extends TestCase {
     IntList found = new IntArrayList(new int[]{-1});
     CharSequence text = StringUtil.repeat("xxx z ", 1000000);
 
-    PerformanceTestUtil.newPerformanceTest("processTextOccurrences", ()-> {
+    Benchmark.newBenchmark("processTextOccurrences", ()-> {
       for (int i=0; i<10000; i++) {
         found.removeInt(0);
         int startOffset = text.length() / 2 + i % 20;

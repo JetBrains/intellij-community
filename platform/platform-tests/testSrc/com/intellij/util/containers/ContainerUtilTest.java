@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -178,7 +178,7 @@ public class ContainerUtilTest extends TestCase {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();
     int count = 15000;
     List<Integer> ints = IntStreamEx.range(0, count).boxed().toList();
-    PerformanceTestUtil.newPerformanceTest("COWList add", () -> {
+    Benchmark.newBenchmark("COWList add", () -> {
       for (int it = 0; it < 10; it++) {
         list.clear();
         for (int i = 0; i < count; i++) {

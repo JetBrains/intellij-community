@@ -3,7 +3,7 @@
 package com.intellij.diff.util
 
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.containers.Interner
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
@@ -221,7 +221,7 @@ class DiffPerformanceTest : TestCase() {
 
 
   private inline fun testCpu(iterations: Int, crossinline test: () -> Unit) {
-    PerformanceTestUtil.newPerformanceTest(PlatformTestUtil.getTestName(name, true)) {
+    Benchmark.newBenchmark(PlatformTestUtil.getTestName(name, true)) {
       for (i in 0..iterations) {
         test()
       }

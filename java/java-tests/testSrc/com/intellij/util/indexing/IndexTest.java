@@ -67,7 +67,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.IsFileChangedResult;
@@ -957,7 +957,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     final String filename = "A.java";
     myFixture.addFileToProject("foo/bar/" + filename, "class A {}");
 
-    PerformanceTestUtil.newPerformanceTest("Vfs Event Processing By Index", () -> {
+    Benchmark.newBenchmark("Vfs Event Processing By Index", () -> {
       PsiFile[] files = FilenameIndex.getFilesByName(getProject(), filename, GlobalSearchScope.moduleScope(getModule()));
       assertEquals(1, files.length);
 

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 
 public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest {
@@ -37,8 +37,8 @@ public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest 
       commandProcessor.executeCommand(project, command, null, null);
     };
 
-    PerformanceTestUtil
-      .newPerformanceTest("smart reformat on big file", test)
+    Benchmark
+      .newBenchmark("smart reformat on big file", test)
       .setup(setup)
       .warmupIterations(50)
       .attempts(100)

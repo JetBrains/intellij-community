@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -899,7 +899,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testFindFileByUrlPerformance() {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    PerformanceTestUtil.newPerformanceTest("findFileByUrl", () -> {
+    Benchmark.newBenchmark("findFileByUrl", () -> {
       for (int i=0; i<10_000_000;i++) {
         assertNull(virtualFileManager.findFileByUrl("temp://"));
       }

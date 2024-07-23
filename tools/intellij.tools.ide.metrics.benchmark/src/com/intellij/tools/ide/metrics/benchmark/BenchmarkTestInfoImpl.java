@@ -8,7 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.testFramework.PerformanceTestInfo;
+import com.intellij.testFramework.BenchmarkTestInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProfilerForTests;
 import com.intellij.testFramework.UsefulTestCase;
@@ -41,7 +41,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttribute;
 
-public class PerformanceTestInfoImpl implements PerformanceTestInfo {
+public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   private enum IterationMode {
     WARMUP,
     MEASURE
@@ -63,7 +63,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
   /**
    * Default span metrics exporter {@link BenchmarksSpanMetricsCollector} will not be used
    */
-  public PerformanceTestInfoImpl disableDefaultSpanMetricsExporter() {
+  public BenchmarkTestInfoImpl disableDefaultSpanMetricsExporter() {
     this.useDefaultSpanMetricExporter = false;
     return this;
   }
@@ -131,21 +131,21 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
     }
   }
 
-  public PerformanceTestInfoImpl(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName) {
+  public BenchmarkTestInfoImpl(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName) {
     this();
     initialize(test, expectedInputSize, launchName);
   }
 
-  public PerformanceTestInfoImpl() {
+  public BenchmarkTestInfoImpl() {
     initOpenTelemetry();
     cleanupOutdatedMetrics();
     this.tracer = TelemetryManager.getInstance().getTracer(new Scope("performanceUnitTests", null));
   }
 
   @Override
-  public PerformanceTestInfoImpl initialize(@NotNull ThrowableComputable<Integer, ?> test,
-                                            int expectedInputSize,
-                                            @NotNull String launchName) {
+  public BenchmarkTestInfoImpl initialize(@NotNull ThrowableComputable<Integer, ?> test,
+                                          int expectedInputSize,
+                                          @NotNull String launchName) {
     this.test = test;
     this.expectedInputSize = expectedInputSize;
     assert expectedInputSize > 0 : "Expected input size must be > 0. Was: " + expectedInputSize;
@@ -155,7 +155,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
 
   @Override
   @Contract(pure = true) // to warn about not calling .start() in the end
-  public PerformanceTestInfoImpl setup(@NotNull ThrowableRunnable<?> setup) {
+  public BenchmarkTestInfoImpl setup(@NotNull ThrowableRunnable<?> setup) {
     assert this.setup == null;
     this.setup = setup;
     return this;
@@ -163,7 +163,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
 
   @Override
   @Contract(pure = true) // to warn about not calling .start() in the end
-  public PerformanceTestInfoImpl attempts(int attempts) {
+  public BenchmarkTestInfoImpl attempts(int attempts) {
     this.maxMeasurementAttempts = attempts;
     return this;
   }
@@ -180,7 +180,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
    *
    *     val meterCollector = OpenTelemetryJsonMeterCollector(MetricsSelectionStrategy.SUM) { it.name.contains("custom") }
    *
-   *     PerformanceTestUtil.newPerformanceTest("my perf test") {
+   *     Benchmark.newBenchmark("my perf test") {
    *       counter.incrementAndGet()
    *     }
    *       .withMetricsCollector(meterCollector)
@@ -188,14 +188,14 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
    * </pre>
    */
   @Contract(pure = true) // to warn about not calling .start() in the end
-  public PerformanceTestInfoImpl withMetricsCollector(TelemetryMetricsCollector meterCollector) {
+  public BenchmarkTestInfoImpl withMetricsCollector(TelemetryMetricsCollector meterCollector) {
     this.metricsCollectors.add(meterCollector);
     return this;
   }
 
   @Override
   @Contract(pure = true) // to warn about not calling .start() in the end
-  public PerformanceTestInfoImpl warmupIterations(int iterations) {
+  public BenchmarkTestInfoImpl warmupIterations(int iterations) {
     warmupIterations = iterations;
     return this;
   }
@@ -256,9 +256,9 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
   /**
    * Start the perf test where the test's artifact path will have a name inferred from test method + subtest name.
    *
-   * @see PerformanceTestInfoImpl#start()
-   * @see PerformanceTestInfoImpl#startAsSubtest(String)
-   * @see PerformanceTestInfoImpl#start(kotlin.reflect.KFunction)
+   * @see BenchmarkTestInfoImpl#start()
+   * @see BenchmarkTestInfoImpl#startAsSubtest(String)
+   * @see BenchmarkTestInfoImpl#start(kotlin.reflect.KFunction)
    **/
   public void start(@NotNull Method javaTestMethod, String subTestName) {
     var fullTestName = String.format("%s.%s", javaTestMethod.getDeclaringClass().getName(), javaTestMethod.getName());
@@ -299,7 +299,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
 
   /**
    * @param uniqueTestName - should be at least full qualified test method name.
-   *                       Sometimes additional suffixes might be added like here {@link PerformanceTestInfoImpl#startAsSubtest(String)}
+   *                       Sometimes additional suffixes might be added like here {@link BenchmarkTestInfoImpl#startAsSubtest(String)}
    */
   private void start(IterationMode iterationType, String uniqueTestName) {
     this.uniqueTestName = uniqueTestName;
