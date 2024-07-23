@@ -377,7 +377,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       LOG.error("No indexing tasks should be created for default project: $task")
     }
     val trace = Throwable()
-    val modality = ModalityState.defaultModalityState()
+    var modality = ModalityState.defaultModalityState()
+    if (modality == ModalityState.any()) {
+      LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL")
+      modality = ModalityState.nonModal()
+    }
     if (ApplicationManager.getApplication().isDispatchThread) {
       queueTaskOnEdt(task, modality, trace)
     }
