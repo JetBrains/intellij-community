@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.Document
@@ -15,19 +14,19 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
-import com.intellij.openapi.util.io.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.io.getResolvedPath
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.editor.saveToDisk
@@ -37,16 +36,16 @@ import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.testFramework.utils.vfs.getFile
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
-import org.jetbrains.concurrency.AsyncPromise
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.appendText
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 @Suppress("unused", "MemberVisibilityCanBePrivate", "SameParameterValue")
 abstract class AutoReloadTestCase : ExternalSystemTestCase() {
+
+  override fun runInDispatchThread() = false
+
   override fun getTestsTempDir() = "tmp${System.currentTimeMillis()}"
 
   override fun getExternalSystemConfigFileName() = throw UnsupportedOperationException()
@@ -238,12 +237,14 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     projectTrackerSettings.loadState(state.second)
   }
 
-  protected fun assertProjectAware(projectAware: MockProjectAware,
-                                   numReload: Int? = null,
-                                   numSettingsAccess: Int? = null,
-                                   numSubscribing: Int? = null,
-                                   numUnsubscribing: Int? = null,
-                                   event: String) {
+  protected fun assertProjectAware(
+    projectAware: MockProjectAware,
+    numReload: Int? = null,
+    numSettingsAccess: Int? = null,
+    numSubscribing: Int? = null,
+    numUnsubscribing: Int? = null,
+    event: String,
+  ) {
     if (numReload != null) assertCountEvent(numReload, projectAware.reloadCounter.get(), "project reload", event)
     if (numSettingsAccess != null) assertCountEvent(numSettingsAccess, projectAware.settingsAccessCounter.get(), "access to settings",
                                                     event)
@@ -320,7 +321,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
   protected fun testWithDummyExternalSystem(
     autoImportAwareCondition: Ref<Boolean>? = null,
-    test: DummyExternalSystemTestBench.(VirtualFile) -> Unit
+    test: DummyExternalSystemTestBench.(VirtualFile) -> Unit,
   ) {
     val externalSystemManagers = ExternalSystemManager.EP_NAME.extensionList + TestExternalSystemManager(myProject)
     ExtensionTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, externalSystemManagers, testRootDisposable)
@@ -354,7 +355,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   fun withProjectTracker(
     state: Pair<AutoImportProjectTracker.State, AutoImportProjectTrackerSettings.State> =
       AutoImportProjectTracker.State() to AutoImportProjectTrackerSettings.State(),
-    test: (Disposable) -> Unit
+    test: (Disposable) -> Unit,
   ): Pair<AutoImportProjectTracker.State, AutoImportProjectTrackerSettings.State> {
     return myProject.replaceService(ExternalSystemProjectTrackerSettings::class.java, AutoImportProjectTrackerSettings()) {
       myProject.replaceService(ExternalSystemProjectTracker::class.java, AutoImportProjectTracker(myProject)) {
@@ -372,7 +373,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     projectAware: MockProjectAware,
     state: Pair<AutoImportProjectTracker.State, AutoImportProjectTrackerSettings.State> =
       AutoImportProjectTracker.State() to AutoImportProjectTrackerSettings.State(),
-    test: SimpleTestBench.() -> Unit
+    test: SimpleTestBench.() -> Unit,
   ): Pair<AutoImportProjectTracker.State, AutoImportProjectTrackerSettings.State> {
     return withProjectTracker(state) {
       register(projectAware, parentDisposable = it)
@@ -409,7 +410,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   }
 
   protected fun mockProjectAware(projectId: ExternalSystemProjectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)) =
-    MockProjectAware(projectId, testDisposable)
+    MockProjectAware(projectId, myProject, testDisposable)
 
   protected inner class SimpleTestBench(val projectAware: MockProjectAware) {
 
@@ -499,21 +500,8 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       projectAware.resetAssertionCounters()
     }
 
-    fun waitForProjectReloadFinish(numExpectedReloads: Int = 1, action: () -> Unit) {
-      require(numExpectedReloads > 0)
-      Disposer.newDisposable(testDisposable, "waitForProjectReloadFinish").use { parentDisposable ->
-        val promise = AsyncPromise<ExternalSystemRefreshStatus>()
-        val uncompletedReloads = AtomicInteger(numExpectedReloads)
-        whenReloadFinished(parentDisposable) { status ->
-          if (uncompletedReloads.decrementAndGet() == 0) {
-            promise.setResult(status)
-          }
-        }
-        action()
-        invokeAndWaitIfNeeded {
-          PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
-        }
-      }
+    fun waitForAllProjectReloads(action: () -> Unit) {
+      projectAware.waitForAllProjectReloads(action)
     }
   }
 
@@ -534,13 +522,15 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       resetAssertionCounters()
     }
 
-    fun assertState(numReload: Int? = null,
-                    numReloadStarted: Int? = null,
-                    numReloadFinished: Int? = null,
-                    numSubscribing: Int? = null,
-                    numUnsubscribing: Int? = null,
-                    autoReloadType: AutoReloadType = SELECTIVE,
-                    event: String) {
+    fun assertState(
+      numReload: Int? = null,
+      numReloadStarted: Int? = null,
+      numReloadFinished: Int? = null,
+      numSubscribing: Int? = null,
+      numUnsubscribing: Int? = null,
+      autoReloadType: AutoReloadType = SELECTIVE,
+      event: String,
+    ) {
       if (numReload != null) assertCountEvent(numReload, projectAware.reloadCounter.get(), "project reload", event)
       if (numReloadStarted != null) assertCountEvent(numReloadStarted, projectAware.startReloadCounter.get(), "project before reload", event)
       if (numReloadFinished != null) assertCountEvent(numReloadFinished, projectAware.finishReloadCounter.get(), "project after reload", event)

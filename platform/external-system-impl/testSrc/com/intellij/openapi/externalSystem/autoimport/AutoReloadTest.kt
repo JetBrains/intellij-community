@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.FAILURE
@@ -10,6 +11,8 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFile
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
+import com.intellij.openapi.externalSystem.util.runReadAction
+import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.util.Ref
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.refreshVfs
@@ -473,7 +476,9 @@ class AutoReloadTest : AutoReloadTestCase() {
 
   fun `test document changes between save`() {
     test { settingsFile ->
-      val settingsDocument = settingsFile.getDocument()
+      val settingsDocument = runReadAction {
+        settingsFile.getDocument()
+      }
 
       settingsDocument.replaceContent("println 'hello'")
       assertStateAndReset(numReload = 0, notified = true, event = "change")
@@ -643,11 +648,11 @@ class AutoReloadTest : AutoReloadTestCase() {
     assertActivationStatus(projectId1, projectId2, event = "refresh project")
   }
 
-  fun `test merging of refreshes with different nature`() {
+  fun `test merging of refreshes with different nature (parallel)`() {
     test { settingsFile ->
       enableAsyncExecution()
 
-      waitForProjectReloadFinish {
+      waitForAllProjectReloads {
         parallel {
           thread {
             settingsFile.modify(EXTERNAL)
@@ -930,10 +935,16 @@ class AutoReloadTest : AutoReloadTestCase() {
 
   fun `test settings file modification by document before sync`() {
     test { settingsFile ->
-      val settingsDocument = settingsFile.getDocument()
+      val settingsDocument = runReadAction {
+        settingsFile.getDocument()
+      }
 
       settingsDocument.appendString(SAMPLE_TEXT + "\n")
-      onceWhenReloading { settingsDocument.saveToDisk() }
+      onceWhenReloading {
+        runWriteActionAndWait {
+          settingsDocument.saveToDisk()
+        }
+      }
       forceReloadProject()
       assertStateAndReset(numReload = 1, notified = false, event = "settings file modified by document before sync")
     }
@@ -944,9 +955,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       whenReloading(1) {
         settingsFile.modify(EXTERNAL)
       }
-      waitForProjectReloadFinish(2) {
-        settingsFile.modify(EXTERNAL)
-      }
+      settingsFile.modify(EXTERNAL)
       assertStateAndReset(numReload = 2, notified = false, event = "settings file modified during sync")
     }
   }
@@ -956,9 +965,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       whenReloadStarted(1) {
         forceReloadProject()
       }
-      waitForProjectReloadFinish(2) {
-        forceReloadProject()
-      }
+      forceReloadProject()
       assertStateAndReset(numReload = 2, notified = false, event = "test force sync action during sync")
     }
   }
@@ -976,7 +983,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       whenReloadStarted(expectedRefreshes - 1) {
         forceReloadProject()
       }
-      waitForProjectReloadFinish(expectedRefreshes) {
+      waitForAllProjectReloads {
         forceReloadProject()
       }
       assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
@@ -998,7 +1005,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       whenReloading(expectedRefreshes - 1) {
         settingsFile.modify(EXTERNAL)
       }
-      waitForProjectReloadFinish(expectedRefreshes) {
+      waitForAllProjectReloads {
         settingsFile.modify(EXTERNAL)
       }
       assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
@@ -1026,24 +1033,28 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  fun `test merge project reloads`() {
+  fun `test merge project reloads (parallel)`() {
     test { settingsFile ->
       enableAsyncExecution()
-      setDispatcherMergingSpan(100)
-      val alarm = Alarm()
+      // see AutoImportProjectTracker.scheduleDelayedSmartProjectReload
+      setDispatcherMergingSpan(100) // total merging delay 1000ms
+
+      val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, testDisposable)
       repeat(10) {
         val promise = AsyncPromise<Unit>()
-        alarm.addRequest({
-                           waitForProjectReloadFinish {
-                             markDirty()
-                             scheduleProjectReload()
-                           }
-                           promise.setResult(Unit)
-                         }, 500)
-        waitForProjectReloadFinish {
+        alarm.addRequest(Runnable {
+          waitForAllProjectReloads {
+            markDirty()
+            scheduleProjectReload()
+          }
+          promise.setResult(Unit)
+        }, 500)
+        waitForAllProjectReloads {
           settingsFile.modify(EXTERNAL)
         }
-        PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
+        invokeAndWaitIfNeeded {
+          PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
+        }
         assertStateAndReset(numReload = 1, notified = false, event = "project reload")
       }
     }
