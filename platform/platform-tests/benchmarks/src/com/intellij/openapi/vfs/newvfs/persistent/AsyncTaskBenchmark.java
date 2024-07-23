@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import kotlinx.coroutines.CoroutineDispatcher;
 import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -11,7 +13,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AsyncKt.runTaskAsyncViaCoroutines;
+import static com.intellij.openapi.vfs.newvfs.persistent.AsyncKt.*;
 import static com.intellij.util.io.BlockingKt.getBlockingDispatcher;
 import static java.util.concurrent.TimeUnit.*;
 
@@ -20,8 +22,8 @@ import static java.util.concurrent.TimeUnit.*;
  */
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(NANOSECONDS)
-@Warmup(iterations = 3, time = 2, timeUnit = SECONDS)
-@Measurement(iterations = 3, time = 5, timeUnit = SECONDS)
+@Warmup(iterations = 3, time = 5, timeUnit = SECONDS)
+@Measurement(iterations = 4, time = 10, timeUnit = SECONDS)
 @Threads(1)
 @Fork(1)
 public class AsyncTaskBenchmark {
@@ -30,7 +32,7 @@ public class AsyncTaskBenchmark {
   @State(Scope.Benchmark)
   public static class BaseContext {
 
-    @Param({"5000"})
+    @Param("5000")
     public long baselineTaskDurationNs;
 
     public Callable<Long> taskToRunAsync;
@@ -43,15 +45,23 @@ public class AsyncTaskBenchmark {
 
   @State(Scope.Benchmark)
   public static class AsyncContext {
+
+    private ExecutorService executorService;
     @Param({
       "thread-pool",
       "thread-pool-queried",
-      "coroutine-blocking-dispatcher",
-      "coroutine-io-dispatcher"
+
+      "coroutine-deferred-blocking-dispatcher",
+      "coroutine-deferred-io-dispatcher",
+      "coroutine-deferred-default-dispatcher",
+      "coroutine-deferred-via-thread-pool-dispatcher",
+
+      "coroutine-direct-dispatch-blocking-dispatcher",
+      "coroutine-direct-dispatch-io-dispatcher",
+      "coroutine-direct-dispatch-default-dispatcher",
+      "coroutine-direct-dispatch-via-thread-pool-dispatcher"
     })
     public String METHOD;
-
-    private ExecutorService executorService;
 
     public Callable<Long> asyncWrapper;
 
@@ -65,7 +75,7 @@ public class AsyncTaskBenchmark {
           executorService = new ThreadPoolExecutor(
             /* poolSize: */  1, Integer.MAX_VALUE,
             /* keepAlive: */ 1, MINUTES,
-            new SynchronousQueue<>() //rendezvous queue
+                             new SynchronousQueue<>() //rendezvous queue
           );
           asyncWrapper = () -> executorService.submit(taskToRunAsync).get();
           break;
@@ -75,19 +85,66 @@ public class AsyncTaskBenchmark {
           executorService = new ThreadPoolExecutor(
             /* poolSize: */  1, Integer.MAX_VALUE,
             /* keepAlive: */ 1, MINUTES,
-            new ArrayBlockingQueue<>(64) //use actual queue instead of rendezvous
+                             new ArrayBlockingQueue<>(64) //use actual queue instead of rendezvous
           );
           asyncWrapper = () -> executorService.submit(taskToRunAsync).get();
           break;
         }
 
-        case "coroutine-blocking-dispatcher": {
-          asyncWrapper = () -> runTaskAsyncViaCoroutines(taskToRunAsync, getBlockingDispatcher() );
+
+        case "coroutine-deferred-blocking-dispatcher": {
+          asyncWrapper = () -> runTaskAsyncViaDeferred(taskToRunAsync, getBlockingDispatcher());
           break;
         }
 
-        case "coroutine-io-dispatcher": {
-          asyncWrapper = () -> runTaskAsyncViaCoroutines(taskToRunAsync, Dispatchers.getIO() );
+        case "coroutine-deferred-default-dispatcher": {
+          asyncWrapper = () -> runTaskAsyncViaDeferred(taskToRunAsync, Dispatchers.getDefault());
+          break;
+        }
+
+        case "coroutine-deferred-io-dispatcher": {
+          asyncWrapper = () -> runTaskAsyncViaDeferred(taskToRunAsync, Dispatchers.getIO());
+          break;
+        }
+
+
+        case "coroutine-direct-dispatch-blocking-dispatcher": {
+          asyncWrapper = () -> runTaskAsyncViaDirectDispatch(taskToRunAsync, getBlockingDispatcher());
+          break;
+        }
+
+        case "coroutine-direct-dispatch-default-dispatcher": {
+          asyncWrapper = () -> runTaskAsyncViaDirectDispatch(taskToRunAsync, Dispatchers.getDefault());
+          break;
+        }
+
+        case "coroutine-direct-dispatch-io-dispatcher": {
+          asyncWrapper = () -> runTaskAsyncViaDirectDispatch(taskToRunAsync, Dispatchers.getIO());
+          break;
+        }
+
+
+        case "coroutine-deferred-via-thread-pool-dispatcher": {
+          executorService = new ThreadPoolExecutor(
+            /* poolSize: */  1, Integer.MAX_VALUE,
+            /* keepAlive: */ 1, MINUTES,
+                             new ArrayBlockingQueue<>(64)
+          );
+          CoroutineDispatcher dispatcher = ExecutorsKt.from(executorService);
+          asyncWrapper = () -> {
+            return runTaskAsyncViaDeferred(taskToRunAsync, dispatcher);
+          };
+          break;
+        }
+
+        case "coroutine-direct-dispatch-via-thread-pool-dispatcher": {
+          executorService = new ThreadPoolExecutor(
+            /* poolSize: */  1, Integer.MAX_VALUE,
+            /* keepAlive: */ 1, MINUTES,
+                             new ArrayBlockingQueue<>(64)
+          );
+          CoroutineDispatcher dispatcher = ExecutorsKt.from(executorService);
+          asyncWrapper = () -> runTaskAsyncViaDirectDispatch(taskToRunAsync, dispatcher);
           break;
         }
 
