@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.execution.impl;
 
 import com.google.common.base.CharMatcher;
@@ -68,6 +67,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -90,7 +90,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, UiCompatibleDataProvider, OccurenceNavigator {
-  @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
+  private static final @NonNls String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance(ConsoleViewImpl.class);
 
   private static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
@@ -99,7 +99,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public static final Key<Boolean> IS_CONSOLE_DOCUMENT = Key.create("IS_CONSOLE_DOCUMENT");
 
   private static boolean ourTypedHandlerInitialized;
-  private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final Alarm flushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private static final CharMatcher NEW_LINE_MATCHER = CharMatcher.anyOf("\n\r");
 
   private final CommandLineFolding myCommandLineFolding = new CommandLineFolding();
@@ -107,14 +107,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
 
   private final boolean myIsViewer;
-  @NotNull
-  private ConsoleState myState;
+  private @NotNull ConsoleState myState;
 
   private final Alarm mySpareTimeAlarm = new Alarm(this);
 
-  @NotNull
-  private final Alarm myHeavyAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private volatile int myHeavyUpdateTicket;
+  private final @NotNull Alarm heavyAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private volatile int heavyUpdateTicket;
   private final ExpirableTokenProvider myPredefinedFiltersUpdateExpirableTokenProvider = new ExpirableTokenProvider();
   private final Collection<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
 
@@ -132,7 +130,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private boolean myAllowHeavyFilters;
   protected boolean myCancelStickToEnd; // accessed in EDT only
 
-  private final Alarm myFlushAlarm = new Alarm(this);
+  private final Alarm flushAlarm = new Alarm(this);
 
   private final Project myProject;
 
@@ -149,8 +147,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private final List<Filter> myCustomFilters = new SmartList<>();
 
-  @NotNull
-  private final InputFilter myInputMessageFilter;
+  private final @NotNull InputFilter myInputMessageFilter;
   protected volatile List<Filter> myPredefinedFilters = Collections.emptyList();
 
   public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
@@ -163,9 +160,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                          boolean usePredefinedMessageFilter) {
     this(project, searchScope, viewer,
          new ConsoleState.NotStartedStated() {
-           @NotNull
            @Override
-           public ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
+           public @NotNull ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
              return new ConsoleViewRunningState(console, processHandler, this, true, true);
            }
          },
@@ -296,7 +292,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void foldImmediately() {
     ThreadingAssertions.assertEventDispatchThread();
-    if (!myFlushAlarm.isEmpty()) {
+    if (!flushAlarm.isEmpty()) {
       cancelAllFlushRequests();
       flushDeferredText();
     }
@@ -324,7 +320,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       // real document content will be cleared on next flush;
       myDeferredBuffer.clear();
     }
-    if (!myFlushAlarm.isDisposed()) {
+    if (!flushAlarm.isDisposed()) {
       cancelAllFlushRequests();
       addFlushRequest(0, CLEAR);
       cancelHeavyAlarm();
@@ -371,7 +367,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       public void doRun() {
         flushDeferredText();
         Editor editor = getEditor();
-        if (editor != null && !myFlushAlarm.isDisposed()) {
+        if (editor != null && !flushAlarm.isDisposed()) {
           scrollToEnd(editor);
         }
       }
@@ -432,8 +428,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     ThreadingAssertions.assertEventDispatchThread();
     if (myMainPanel == null) {
       myMainPanel = new JPanel(new BorderLayout());
@@ -453,8 +448,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return this;
   }
 
-  @NotNull
-  protected CompositeFilter createCompositeFilter() {
+  protected @NotNull CompositeFilter createCompositeFilter() {
     CompositeFilter compositeFilter = new CompositeFilter(myProject, ContainerUtil.concat(myCustomFilters, myPredefinedFilters));
     compositeFilter.setForceUseAllFilters(true);
     return compositeFilter;
@@ -474,8 +468,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myJLayeredPane.add(component, null, 0);
   }
 
-  @NotNull
-  private EditorEx initConsoleEditor() {
+  private @NotNull EditorEx initConsoleEditor() {
     ThreadingAssertions.assertEventDispatchThread();
     EditorEx editor = createConsoleEditor();
     registerConsoleEditorActions(editor);
@@ -522,8 +515,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     } 
   }
 
-  @NotNull
-  protected JComponent createCenterComponent() {
+  protected @NotNull JComponent createCenterComponent() {
     ThreadingAssertions.assertEventDispatchThread();
     return getEditor().getComponent();
   }
@@ -546,22 +538,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void cancelAllFlushRequests() {
-    myFlushAlarm.cancelAllRequests();
+    flushAlarm.cancelAllRequests();
     CLEAR.clearRequested();
     FLUSH.clearRequested();
   }
 
   @TestOnly
+  @RequiresEdt
   public void waitAllRequests() {
-    ThreadingAssertions.assertEventDispatchThread();
     assert ApplicationManager.getApplication().isUnitTestMode();
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       while (true) {
         try {
-          myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-          myFlushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-          myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-          myFlushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+          flushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+          flushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+          flushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+          flushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
           return;
         }
         catch (CancellationException e) {
@@ -635,8 +627,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ThreadingAssertions.assertEventDispatchThread();
     if (myState.isRunning() && NEW_LINE_MATCHER.indexIn(typedText) >= 0) {
       CharSequence textToSend = ConsoleTokenUtil.computeTextToSend(getEditor(), getProject());
-      if (textToSend.length() != 0) {
-        myFlushUserInputAlarm.addRequest(() -> {
+      if (!textToSend.isEmpty()) {
+        flushUserInputAlarm.addRequest(() -> {
           if (myState.isRunning()) {
             try {
               // this may block forever, see IDEA-54340
@@ -817,9 +809,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void cancelHeavyAlarm() {
-    if (!myHeavyAlarm.isDisposed()) {
-      myHeavyAlarm.cancelAllRequests();
-      ++myHeavyUpdateTicket;
+    if (!heavyAlarm.isDisposed()) {
+      heavyAlarm.cancelAllRequests();
+      ++heavyUpdateTicket;
     }
   }
 
@@ -865,8 +857,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info);
   }
 
-  @NotNull
-  private EditorEx createConsoleEditor() {
+  private @NotNull EditorEx createConsoleEditor() {
     ThreadingAssertions.assertEventDispatchThread();
     EditorEx editor = doCreateConsoleEditor();
     LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.getDocument()), "Undo must be disabled in console for performance reasons");
@@ -886,8 +877,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return editor;
   }
 
-  @NotNull
-  protected EditorEx doCreateConsoleEditor() {
+  protected @NotNull EditorEx doCreateConsoleEditor() {
     return ConsoleViewUtil.setupConsoleEditor(myProject, true, false);
   }
 
@@ -907,8 +897,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     action.registerCustomShortcutSet(action.getShortcutSet(), editor.getContentComponent());
   }
 
-  @NotNull
-  private ActionGroup getPopupGroup(@NotNull EditorMouseEvent event) {
+  private @NotNull ActionGroup getPopupGroup(@NotNull EditorMouseEvent event) {
     ThreadingAssertions.assertEventDispatchThread();
     ActionManager actionManager = ActionManager.getInstance();
     HyperlinkInfo info = getHyperlinks() != null ? getHyperlinks().getHyperlinkInfoByEvent(event) : null;
@@ -976,15 +965,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     documentCopy.setReadOnly(true);
 
     myJLayeredPane.startUpdating();
-    int currentValue = myHeavyUpdateTicket;
-    myHeavyAlarm.addRequest(() -> {
+    int currentValue = heavyUpdateTicket;
+    heavyAlarm.addRequest(() -> {
       if (!compositeFilter.shouldRunHeavy()) return;
       try {
         compositeFilter.applyHeavyFilter(documentCopy, startOffset, startLine, additionalHighlight ->
           addFlushRequest(0, new FlushRunnable(true) {
             @Override
             public void doRun() {
-              if (myHeavyUpdateTicket != currentValue) return;
+              if (heavyUpdateTicket != currentValue) return;
               TextAttributes additionalAttributes = additionalHighlight.getTextAttributes(null);
               if (additionalAttributes != null) {
                 ResultItem item = additionalHighlight.getResultItems().get(0);
@@ -1000,7 +989,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       catch (IndexNotReadyException ignore) {
       }
       finally {
-        if (myHeavyAlarm.getActiveRequestCount() <= 1) { // only the current request
+        if (heavyAlarm.getActiveRequestCount() <= 1) { // only the current request
           UIUtil.invokeLaterIfNeeded(() -> myJLayeredPane.finishUpdating());
         }
       }
@@ -1095,8 +1084,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return consoleFolding != null && consoleFolding.isEnabledForConsole(this) ? consoleFolding : null;
   }
 
-  @NotNull
-  private static String getFoldingFqn(@NotNull ConsoleFolding consoleFolding) {
+  private static @NotNull String getFoldingFqn(@NotNull ConsoleFolding consoleFolding) {
     return consoleFolding.getClass().getName();
   }
 
@@ -1218,8 +1206,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     protected abstract void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context);
 
-    @Nullable
-    private static ConsoleViewImpl getRunningConsole(@NotNull DataContext context) {
+    private static @Nullable ConsoleViewImpl getRunningConsole(@NotNull DataContext context) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);
       if (editor != null) {
         ConsoleViewImpl console = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
@@ -1296,8 +1283,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
 
-    @NotNull
-    private static EditorActionHandler getDefaultActionHandler(@NotNull String actionId) {
+    private static @NotNull EditorActionHandler getDefaultActionHandler(@NotNull String actionId) {
       return EditorActionManager.getInstance().getActionHandler(actionId);
     }
   }
@@ -1326,8 +1312,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Override
-  @NotNull
-  public JComponent getPreferredFocusableComponent() {
+  public @NotNull JComponent getPreferredFocusableComponent() {
     //ensure editor created
     getComponent();
     return getEditor().getContentComponent();
@@ -1350,8 +1335,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return calcNextOccurrence(1);
   }
 
-  @Nullable
-  protected OccurenceInfo calcNextOccurrence(int delta) {
+  protected @Nullable OccurenceInfo calcNextOccurrence(int delta) {
     Editor editor = getEditor();
     if (isDisposed() || editor == null) {
       return null;
@@ -1380,15 +1364,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return calcNextOccurrence(-1);
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return ExecutionBundle.message("down.the.stack.trace");
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return ExecutionBundle.message("up.the.stack.trace");
   }
 
@@ -1430,8 +1412,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return result;
   }
 
-  @NotNull
-  protected final AnAction clearThisConsoleAction() {
+  protected final @NotNull AnAction clearThisConsoleAction() {
     return new ClearThisConsoleAction(this);
   }
 
@@ -1584,9 +1565,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     void queue(long delay) {
-      if (myFlushAlarm.isDisposed()) return;
+      if (flushAlarm.isDisposed()) return;
       if (adHoc || requested.compareAndSet(false, true)) {
-        myFlushAlarm.addRequest(this, delay, getStateForUpdate());
+        flushAlarm.addRequest(this, delay, getStateForUpdate());
       }
     }
     void clearRequested() {
@@ -1628,8 +1609,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
   private final ClearRunnable CLEAR = new ClearRunnable();
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -1654,8 +1634,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
 
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getEditor().getDocument().getText();
   }
 }
