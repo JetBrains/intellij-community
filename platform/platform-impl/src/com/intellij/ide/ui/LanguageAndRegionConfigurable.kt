@@ -54,20 +54,12 @@ class LanguageAndRegionUi {
         val locales = LocalizationUtil.getAllAvailableLocales()
         val initSelectionLocale = LocalizationUtil.getLocale()
         val localizationService = LocalizationStateService.getInstance()!!
-        val forcedLocale = LocalizationUtil.getForcedLocale()
         val model = CollectionComboBoxModel(locales.first, initSelectionLocale)
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
+        languageBox.gap(RightGap.SMALL)
+        comment(IdeBundle.message("ide.restart.required.comment"))
 
-        if (forcedLocale == null) {
-          languageBox.gap(RightGap.SMALL)
-          comment(IdeBundle.message("ide.restart.required.comment"))
-        }
-
-        if (forcedLocale != null) {
-          languageBox.enabled(false)
-            .comment(IdeBundle.message("combobox.language.disable.comment", LocalizationUtil.LOCALIZATION_KEY, forcedLocale))
-        }
-        else if (propertyGraph != null && connection != null) {
+        if (propertyGraph != null && connection != null) {
           val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale() }
 
           property.afterChange(parentDisposable) {
@@ -112,23 +104,21 @@ class LanguageAndRegionUi {
           }
         })
 
-        if (forcedLocale == null) {
-          DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicBundle.LanguageBundleEP> {
-            override fun extensionAdded(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
-              updateComboModel()
-            }
+        DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicBundle.LanguageBundleEP> {
+          override fun extensionAdded(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
+            updateComboModel()
+          }
 
-            override fun extensionRemoved(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
-              updateComboModel()
-            }
+          override fun extensionRemoved(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
+            updateComboModel()
+          }
 
-            private fun updateComboModel() {
-              val newLocales = LocalizationUtil.getAllAvailableLocales()
-              languageComponent.renderer = LanguageComboBoxRenderer(newLocales)
-              languageComponent.model = CollectionComboBoxModel(newLocales.first, languageComponent.selectedItem as Locale)
-            }
-          }, parentDisposable)
-        }
+          private fun updateComboModel() {
+            val newLocales = LocalizationUtil.getAllAvailableLocales()
+            languageComponent.renderer = LanguageComboBoxRenderer(newLocales)
+            languageComponent.model = CollectionComboBoxModel(newLocales.first, languageComponent.selectedItem as Locale)
+          }
+        }, parentDisposable)
       }
 
       panel.row(IdeBundle.message("combobox.region")) {
