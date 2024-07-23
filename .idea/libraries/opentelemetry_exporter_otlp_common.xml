@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="opentelemetry-exporter-otlp-common" type="repository">
-    <properties maven-id="io.opentelemetry:opentelemetry-exporter-otlp-common:1.38.0">
+    <properties maven-id="io.opentelemetry:opentelemetry-exporter-otlp-common:1.40.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.38.0/opentelemetry-exporter-otlp-common-1.38.0.jar">
-          <sha256sum>4ddd1d42a0ee374473d31be0f3d32280a3bc738df39904f9c8acda060616083a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.40.0/opentelemetry-exporter-otlp-common-1.40.0.jar">
+          <sha256sum>8b4dd85958e280a8e2393b7ff8e595f266a9d96cf00526bc0463101442ed9e7d</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.38.0/opentelemetry-exporter-common-1.38.0.jar">
-          <sha256sum>a4426e59b83878c5ae64141fcf42fa9bbd2579b8764ba3bbcb3675b47410885b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.40.0/opentelemetry-exporter-common-1.40.0.jar">
+          <sha256sum>6a78e619f7944278101442291cc583195e6e0ac407f0708216c6827e4da56f0f</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -16,13 +16,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.38.0/opentelemetry-exporter-otlp-common-1.38.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.38.0/opentelemetry-exporter-common-1.38.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.40.0/opentelemetry-exporter-otlp-common-1.40.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.40.0/opentelemetry-exporter-common-1.40.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.38.0/opentelemetry-exporter-otlp-common-1.38.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.38.0/opentelemetry-exporter-common-1.38.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-otlp-common/1.40.0/opentelemetry-exporter-otlp-common-1.40.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/opentelemetry/opentelemetry-exporter-common/1.40.0/opentelemetry-exporter-common-1.40.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

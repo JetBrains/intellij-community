@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="slf4j-jdk14" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.slf4j:slf4j-jdk14:2.0.9">
+    <properties include-transitive-deps="false" maven-id="org.slf4j:slf4j-jdk14:2.0.13">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/2.0.9/slf4j-jdk14-2.0.9.jar">
-          <sha256sum>1052aa82851c36f76465e64539ad4450338a86094e638a5cb1b3ce7a0dabfb18</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/2.0.13/slf4j-jdk14-2.0.13.jar">
+          <sha256sum>83f17205a6470c3cd4214306d3ed011651c173297f705acef544c01795f253cd</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,11 +11,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/2.0.9/slf4j-jdk14-2.0.9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/2.0.13/slf4j-jdk14-2.0.13.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/2.0.9/slf4j-jdk14-2.0.9-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/2.0.13/slf4j-jdk14-2.0.13-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
