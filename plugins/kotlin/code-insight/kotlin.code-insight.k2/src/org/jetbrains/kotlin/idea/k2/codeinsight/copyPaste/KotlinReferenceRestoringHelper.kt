@@ -18,11 +18,14 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -177,13 +180,28 @@ internal object KotlinReferenceRestoringHelper {
         targetFqNames: Set<FqName>,
         targetShortNames: Set<Name>
     ): ReferenceToRestore? = when {
-        sourceFqName in targetFqNames -> null
+        sourceFqName in targetFqNames -> {
+            null
+        }
 
         // target reference is resolved to a symbol with different/with no fq-name, so we might need to add a qualifier instead of an import
         // TODO: maybe warn user if the reference is not qualifiable and adding an import affects other usages
-        isReferenceQualifiable && sourceFqName.shortName() in targetShortNames ->
+        isReferenceQualifiable && sourceFqName.shortName() in targetShortNames -> {
             ReferenceToBindToFqName(sourceFqName, targetReference as KtSimpleNameReference)
+        }
 
-        else -> ReferenceToImport(sourceFqName)
+        else -> {
+            val project = targetReference.element.project
+            val importedReference = KtPsiFactory(project).createImportDirective(ImportPath(sourceFqName, false)).importedReference
+            val importedExpression =
+                importedReference as? KtSimpleNameExpression ?: (importedReference as? KtDotQualifiedExpression)?.selectorExpression
+            val reference = importedExpression?.mainReference
+            val symbols = reference?.resolveToSymbols()
+            if (symbols?.isNotEmpty() == true) {
+                ReferenceToImport(sourceFqName)
+            } else {
+                null
+            }
+        }
     }
 }
