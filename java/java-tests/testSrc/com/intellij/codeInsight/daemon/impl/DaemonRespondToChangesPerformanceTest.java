@@ -24,7 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
@@ -58,7 +58,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     text.append(".toString();<caret>}");
     configureByText(JavaFileType.INSTANCE, text.toString());
 
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
       type("k");
@@ -79,7 +79,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     PlatformTestUtil.maskExtensions(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, getProject(), Collections.emptyList(), getTestRootDisposable());
     ExtensionTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, Collections.emptyList(), getTestRootDisposable());
     ExtensionTestUtil.maskExtensions(new ExtensionPointName<>(LanguageAnnotators.INSTANCE.getName()), Collections.emptyList(), getTestRootDisposable());
-    PerformanceTestUtil.newPerformanceTest("highlighting many string literals", () -> {
+    Benchmark.newBenchmark("highlighting many string literals", () -> {
       assertEmpty(highlightErrors());
 
       type("k");
@@ -101,7 +101,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
                   ".toString(); } }";
     configureByText(JavaFileType.INSTANCE, text);
 
-    PerformanceTestUtil.newPerformanceTest("highlighting deep call chain", () -> {
+    Benchmark.newBenchmark("highlighting deep call chain", () -> {
       assertEmpty(highlightErrors());
 
       type("k");

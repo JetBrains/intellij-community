@@ -32,7 +32,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.LineSeparator;
@@ -268,7 +268,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testPerformance() {
     withCycleConsoleNoFolding(100, console ->
-      PerformanceTestUtil.newPerformanceTest("console print", () -> {
+      Benchmark.newBenchmark("console print", () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -282,7 +282,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testLargeConsolePerformance() {
     withCycleConsoleNoFolding(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
-      PerformanceTestUtil.newPerformanceTest("console print", () -> {
+      Benchmark.newBenchmark("console print", () -> {
         console.clear();
         for (int i=0; i<20_000_000; i++) {
           console.print("hello\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -294,7 +294,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testPerformanceOfMergeableTokens() {
     withCycleConsoleNoFolding(1000, console ->
-      PerformanceTestUtil.newPerformanceTest("console print with mergeable tokens", () -> {
+      Benchmark.newBenchmark("console print with mergeable tokens", () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -693,7 +693,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testBackspacePerformance() {
     int nCopies = 10000;
     String in = StringUtil.repeat("\na\nb\bc", nCopies);
-    PerformanceTestUtil.newPerformanceTest("print newlines with backspace", () -> {
+    Benchmark.newBenchmark("print newlines with backspace", () -> {
       for (int i = 0; i < 2; i++) {
         myConsole.clear();
         int printCount = ConsoleBuffer.getCycleBufferSize() / in.length();

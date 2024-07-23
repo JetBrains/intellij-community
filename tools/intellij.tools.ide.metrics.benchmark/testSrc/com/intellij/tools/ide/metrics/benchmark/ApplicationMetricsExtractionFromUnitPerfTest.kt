@@ -62,7 +62,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .ofLongs()
       .build()
 
-    PerformanceTestUtil.newPerformanceTest(testName) {
+    Benchmark.newBenchmark(testName) {
       runWithSpan(tracer, customSpanName) {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
@@ -106,7 +106,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
 
-    val perfTest = PerformanceTestUtil.newPerformanceTest(testName) {
+    val perfTest = Benchmark.newBenchmark(testName) {
       runWithSpan(tracer, customSpanName) {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }

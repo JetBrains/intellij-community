@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.hamcrest.core.IsCollectionContaining;
 import org.jetbrains.annotations.NotNull;
@@ -369,7 +369,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
   }
 
   public void testPerformanceWithLotsOfFragments() {
-    PerformanceTestUtil.newPerformanceTest("Flushing lot's of fragments", mySplitter::flush)
+    Benchmark.newBenchmark("Flushing lot's of fragments", mySplitter::flush)
       .setup(() -> {
         for (int i = 0; i < 10_000; i++) {
           mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
@@ -386,7 +386,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
 
       }
     };
-    PerformanceTestUtil.newPerformanceTest("print newlines with backspace", () -> {
+    Benchmark.newBenchmark("print newlines with backspace", () -> {
       for (int i = 0; i < 2_000_000; i++) {
         mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         mySplitter.process(testStarted, ProcessOutputTypes.STDOUT);

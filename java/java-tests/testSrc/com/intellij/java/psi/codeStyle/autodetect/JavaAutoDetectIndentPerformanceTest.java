@@ -19,7 +19,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.autodetect.AbstractIndentAutoDetectionTest;
 import com.intellij.testFramework.TeamCityLogger;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -62,8 +62,8 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
     configureByFile(getFileNameWithExtension());
     detectIndentOptions(getVFile(), getEditor().getDocument());
 
-    PerformanceTestUtil
-      .newPerformanceTest("Detecting indent on hot file", () -> detectIndentOptions(getVFile(), getEditor().getDocument()))
+    Benchmark
+      .newBenchmark("Detecting indent on hot file", () -> detectIndentOptions(getVFile(), getEditor().getDocument()))
       .start();
   }
   

@@ -4,7 +4,7 @@ package com.intellij.tools.ide.metrics.benchmark
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.testFramework.PerformanceTestInfo
+import com.intellij.testFramework.BenchmarkTestInfo
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import kotlinx.coroutines.delay
@@ -163,7 +163,7 @@ class SpanExtractionFromUnitPerfTest {
   @Test
   fun perfTestWithSubtests(testInfo: TestInfo) {
     fun runSubTest(subtestName: String) {
-      PerformanceTestUtil.newPerformanceTest(testInfo.testMethod.get().name) {
+      Benchmark.newBenchmark(testInfo.testMethod.get().name) {
         runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
       }.startAsSubtest(subtestName)
     }
@@ -175,7 +175,7 @@ class SpanExtractionFromUnitPerfTest {
   @Test
   fun flushingTelemetryMetricsShouldNotFailTheTest() {
     val spanName = "simple perf test"
-    val uniqueTestName = PerformanceTestUtil.newPerformanceTest(spanName) {
+    val uniqueTestName = Benchmark.newBenchmark(spanName) {
       runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
     }.run {
       start()
@@ -187,10 +187,10 @@ class SpanExtractionFromUnitPerfTest {
   @Test
   fun throwingExceptionWillNotAffectMetricsPublishing() {
     val spanName = "perf test throwing exception"
-    var perfTest: PerformanceTestInfo? = null
+    var perfTest: BenchmarkTestInfo? = null
 
     try {
-      perfTest = PerformanceTestUtil.newPerformanceTest(spanName) {
+      perfTest = Benchmark.newBenchmark(spanName) {
         runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
         throw RuntimeException("Exception text")
       }

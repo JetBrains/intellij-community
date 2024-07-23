@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.local.FileWatcherTestUtil.refresh
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
@@ -78,7 +78,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
     try {
       val roots = (1..fileCount).map { "${root}/f${it}" }
       val requests = ArrayList<LocalFileSystem.WatchRequest>(fileCount)
-      PerformanceTestUtil.newPerformanceTest("Adding roots") {
+      Benchmark.newBenchmark("Adding roots") {
         roots.forEach {
           requests.add(fs.addRootToWatch(it, true)!!)
         }
@@ -97,7 +97,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
 
     try {
       val roots = (1..fileCount).map { "${root}/f${it}" }
-      PerformanceTestUtil.newPerformanceTest("Adding roots") {
+      Benchmark.newBenchmark("Adding roots") {
         fs.removeWatchedRoots(fs.addRootsToWatch(roots, true))
       }.start()
     }
@@ -115,7 +115,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
 
     try {
       val rootPath = root.toString()
-      PerformanceTestUtil.newPerformanceTest("Adding roots") {
+      Benchmark.newBenchmark("Adding roots") {
         fs.removeWatchedRoot(fs.addRootToWatch(rootPath, true)!!)
       }.start()
     }
@@ -138,13 +138,13 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
       (1..5).forEach { pathMappings.add(Pair("$root/rec$i/ln$it", "$root/targets/rec$i/ln$it")) }
     }
 
-    PerformanceTestUtil.newPerformanceTest("Create canonical path map") {
+    Benchmark.newBenchmark("Create canonical path map") {
       repeat(18) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
     }.startAsSubtest()
 
-    PerformanceTestUtil.newPerformanceTest("Create canonical path map - convert paths") {
+    Benchmark.newBenchmark("Create canonical path map - convert paths") {
       repeat(18) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }
@@ -167,19 +167,19 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
 
     val map = WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
     map.addMapping((1..filesCount).map { Pair("$root/src/ln$it-3", "$root/src/ln$it-3") })
-    PerformanceTestUtil.newPerformanceTest("Test apply mapping from canonical path map") {
+    Benchmark.newBenchmark("Test apply mapping from canonical path map") {
       repeat(1_000_000) {
         map.mapToOriginalWatchRoots("$root/src/ln${(Math.random() * 200_000).toInt()}", true)
       }
     }.startAsSubtest()
 
-    PerformanceTestUtil.newPerformanceTest("Create canonical path map") {
+    Benchmark.newBenchmark("Create canonical path map") {
       repeat(100) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, false)
       }
     }.startAsSubtest()
 
-    PerformanceTestUtil.newPerformanceTest("Create canonical path map - convert paths") {
+    Benchmark.newBenchmark("Create canonical path map - convert paths") {
       repeat(40) {
         WatchRootsManager.createCanonicalPathMap(flatWatchRoots, optimizedRecursiveWatchRoots, pathMappings, true)
       }

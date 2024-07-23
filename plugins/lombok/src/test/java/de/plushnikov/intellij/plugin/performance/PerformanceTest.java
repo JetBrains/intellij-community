@@ -5,7 +5,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
 public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
@@ -14,7 +14,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
     final String testName = getTestName(true);
     loadToPsiFile("/performance/" + testName + "/lombok.config");
     final PsiFile psiFile = loadToPsiFile("/performance/" + testName + "/HugeClass.java");
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       type(' ');
       PsiDocumentManager.getInstance(getProject()).commitDocument(getEditor().getDocument());
       ((PsiJavaFileImpl)psiFile).getClasses()[0].getFields()[0].hasModifierProperty(PsiModifier.FINAL);
@@ -34,7 +34,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
   }
 
   public void testGeneratedCode() {
-    PerformanceTestUtil.newPerformanceTest("300 unrelated methods", () -> {
+    Benchmark.newBenchmark("300 unrelated methods", () -> {
         StringBuilder text = new StringBuilder("import lombok.Getter; import lombok.Setter; @interface Tolerate{} class Foo {");
         for (int i = 0; i < 200; i++) {
           text.append("@Getter @Setter int bar").append(i).append(";");
@@ -57,7 +57,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
   }
 
   public void testGeneratedCodeThroughStubs() {
-    PerformanceTestUtil.newPerformanceTest("200 unrelated methods", () -> {
+    Benchmark.newBenchmark("200 unrelated methods", () -> {
         StringBuilder text = new StringBuilder("import lombok.Getter; import lombok.Setter; @interface Tolerate{} class Foo {");
         for (int i = 0; i < 200; i++) {
           text.append("@Getter @Setter int bar").append(i).append(";");
@@ -101,7 +101,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
       classText.append("}");
     }
 
-    PerformanceTestUtil.newPerformanceTest("@Data/@EqualsAndHashCode/@ToString performance", () -> {
+    Benchmark.newBenchmark("@Data/@EqualsAndHashCode/@ToString performance", () -> {
         myFixture.configureByText("Bar.java", classText.toString());
         myFixture.checkHighlighting();
       })

@@ -4,7 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
@@ -225,7 +225,7 @@ public class PersistentBTreeEnumeratorTest {
     StorageLockContext.assertNoBuffersLocked();
 
     FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
-    PerformanceTestUtil.newPerformanceTest("PersistentStringEnumerator", () -> {
+    Benchmark.newBenchmark("PersistentStringEnumerator", () -> {
       for (int i = 0; i < 10000; i++) {
         for (String item : data) {
           assertNotEquals(0, myEnumerator.tryEnumerate(item));
@@ -327,7 +327,7 @@ public class PersistentBTreeEnumeratorTest {
       }
     };
 
-    PerformanceTestUtil.newPerformanceTest("PersistentStringEnumerator", () -> {
+    Benchmark.newBenchmark("PersistentStringEnumerator", () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         String string = createRandomString();

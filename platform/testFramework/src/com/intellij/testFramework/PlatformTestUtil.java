@@ -642,16 +642,16 @@ public final class PlatformTestUtil {
 
   /**
    * Init a performance test.<br/>
-   * E.g: {@code newPerformanceTest("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
+   * E.g: {@code newBenchmark("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
    * If you need to customize published metrics, use
-   * {@code com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil#newPerformanceTest} and
+   * {@code com.intellij.tools.ide.metrics.benchmark.Benchmark#newBenchmark} and
    * method {@code PerformanceTestInfoImpl#withMetricsCollector}.
-   * @see PerformanceTestInfo#start()
+   * @see BenchmarkTestInfo#start()
    */
   // to warn about not calling .assertTiming() in the end
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo newPerformanceTest(@NonNls @NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
-    return newPerformanceTestWithVariableInputSize(launchName, 1, () -> {
+  public static @NotNull BenchmarkTestInfo newBenchmark(@NonNls @NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
+    return newBenchmarkWithVariableInputSize(launchName, 1, () -> {
       test.run();
       return 1;
     });
@@ -664,14 +664,14 @@ public final class PlatformTestUtil {
    * @param expectedInputSize specifies size of the input,
    * @param test returns actual size of the input. It is supposed that the execution time is lineally proportionally dependent on the input size.
    *
-   * @see PerformanceTestInfo#start()
+   * @see BenchmarkTestInfo#start()
    * </p>
    */
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo newPerformanceTestWithVariableInputSize(@NonNls @NotNull String launchName,
-                                                                                     int expectedInputSize,
-                                                                                     @NotNull ThrowableComputable<Integer, ?> test) {
-    return PerformanceTestInfoLoader.Companion.getInstance().initialize(test, expectedInputSize, launchName);
+  public static @NotNull BenchmarkTestInfo newBenchmarkWithVariableInputSize(@NonNls @NotNull String launchName,
+                                                                             int expectedInputSize,
+                                                                             @NotNull ThrowableComputable<Integer, ?> test) {
+    return BenchmarkTestInfoLoader.Companion.getInstance().initialize(test, expectedInputSize, launchName);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {

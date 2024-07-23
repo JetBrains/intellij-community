@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.SuperUserStatus;
@@ -1125,7 +1125,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
 
-    PerformanceTestUtil.newPerformanceTest("get()", () -> {
+    Benchmark.newBenchmark("get()", () -> {
       for (int i=0; i<200_000_000; i++) {
         assertNotNull(pointer.getFile());
       }

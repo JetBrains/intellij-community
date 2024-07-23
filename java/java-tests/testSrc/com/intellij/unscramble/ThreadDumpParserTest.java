@@ -2,7 +2,7 @@
 package com.intellij.unscramble;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 
@@ -389,12 +389,12 @@ public class ThreadDumpParserTest extends TestCase {
   public void testVeryLongLineParsingPerformance() {
     final String spaces = " ".repeat(1_000_000);
     final String letters = "a".repeat(1_000_000);
-    PerformanceTestUtil.newPerformanceTest("parsing spaces", () -> {
+    Benchmark.newBenchmark("parsing spaces", () -> {
       List<ThreadState> threads = ThreadDumpParser.parse(spaces);
       assertTrue(threads.isEmpty());
     }).startAsSubtest();
 
-    PerformanceTestUtil.newPerformanceTest("parsing letters", () -> {
+    Benchmark.newBenchmark("parsing letters", () -> {
       List<ThreadState> threads = ThreadDumpParser.parse(letters);
       assertTrue(threads.isEmpty());
     }).startAsSubtest();

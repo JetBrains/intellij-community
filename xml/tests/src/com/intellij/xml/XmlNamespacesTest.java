@@ -22,7 +22,7 @@ import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 
@@ -301,7 +301,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPatternPerformanceProblem() {
     myFixture.configureByFile("idproblem.html");
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> myFixture.doHighlighting()).start();
+    Benchmark.newBenchmark(getTestName(false), () -> myFixture.doHighlighting()).start();
   }
 
   private void doUnusedDeclarationTest(String text, String after, String name) {

@@ -44,7 +44,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.testFramework.*;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
@@ -1021,7 +1021,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
     encodingManager.waitAllTasksExecuted();
-    PerformanceTestUtil.newPerformanceTest("encoding re-detect requests", ()->{
+    Benchmark.newBenchmark("encoding re-detect requests", ()->{
       for (int i=0; i<100_000_000;i++) {
         encodingManager.queueUpdateEncodingFromContent(document);
       }

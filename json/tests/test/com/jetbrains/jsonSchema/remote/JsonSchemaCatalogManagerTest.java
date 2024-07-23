@@ -3,7 +3,7 @@ package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -55,7 +55,7 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
     VirtualFile file = myFixture.addFileToProject("some/unknown.json", "").getVirtualFile();
     VirtualFile schemaFile = myCatalogManager.getSchemaFileForFile(file);
     Assert.assertNull(schemaFile);
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       for (int i = 0; i < 1000000; i++) {
         VirtualFile result = myCatalogManager.getSchemaFileForFile(file);
         Assert.assertNull(result);

@@ -18,7 +18,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -196,7 +196,7 @@ public class XmlParsingTest extends ParsingTestCase {
     transformAllChildren(file.getNode());
     LOG.debug("First parsing took " + (System.nanoTime() - start) + "ns");
 
-    var perfTest = PerformanceTestUtil.newPerformanceTest("XML Parser Performance on " + fileName, () -> {
+    var perfTest = Benchmark.newBenchmark("XML Parser Performance on " + fileName, () -> {
       for (int i = 0; i < 10; i++) {
         PsiFile next = createPsiFile("test" + i, text);
         transformAllChildren(next.getNode());

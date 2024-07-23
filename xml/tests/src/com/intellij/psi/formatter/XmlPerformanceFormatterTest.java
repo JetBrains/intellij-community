@@ -18,7 +18,7 @@ import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.semantic.SemService;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
@@ -43,14 +43,14 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testReformatCodeFragment() {
-    PerformanceTestUtil.newPerformanceTest("reformat code fragment",
-                                        () -> checkFormattingDoesNotProduceException("performance")).start();
+    Benchmark.newBenchmark("reformat code fragment",
+                           () -> checkFormattingDoesNotProduceException("performance")).start();
   }
 
   public void testPerformance3() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PerformanceTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
+      Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
 
       highlight();
 
@@ -87,7 +87,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance4() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PerformanceTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
+      Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
     }
     finally {
       editorManager.closeFile(editorManager.getSelectedFiles()[0]);
@@ -108,7 +108,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance5() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PerformanceTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
+      Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
     }
     finally {
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
@@ -121,7 +121,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance6() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PerformanceTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
+      Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
     }
     finally {
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
@@ -130,7 +130,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testPerformance7() {
-    PerformanceTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
+    Benchmark.newBenchmark("xml formatter", createTestRunnable()).start();
   }
 
   public void testPerformance() throws Exception {
@@ -144,7 +144,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformanceIdea148943() throws Exception {
     final String textBefore = loadFile(getTestName(true) + ".xml", null);
     final PsiFile file = createFileFromText(textBefore, "before.xml", PsiFileFactory.getInstance(getProject()));
-    PerformanceTestUtil.newPerformanceTest("IDEA-148943", createAdjustLineIndentInRangeRunnable(file))
+    Benchmark.newBenchmark("IDEA-148943", createAdjustLineIndentInRangeRunnable(file))
       .start();
   }
   

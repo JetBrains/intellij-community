@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -287,7 +287,7 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
 
     //noinspection CodeBlock2Expr
     withProcessHandlerFrom(testProcess, handler -> {
-      PerformanceTestUtil.newPerformanceTest("ansi color", () -> {
+      Benchmark.newBenchmark("ansi color", () -> {
         for (int i = 0; i < 2_000_000; i++) {
           handler.notifyTextAvailable(i + "Chrome 35.0.1916 (Linux): Executed 0 of 1\u001B[32m SUCCESS\u001B[39m (0 secs / 0 secs)\n",
                                       ProcessOutputTypes.STDOUT);
