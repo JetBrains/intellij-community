@@ -73,7 +73,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private void queueSession(RefreshSessionImpl session, ModalityState modality) {
     if (LOG.isDebugEnabled()) LOG.debug("Queue session with id=" + session.hashCode());
-    if (session.isEventSession()) {
+    if (session.isEventSession() && !session.isAsynchronous()) {
       processEvents(session, session.getModality(), runRefreshSession(session, -1L));
     }
     else {
