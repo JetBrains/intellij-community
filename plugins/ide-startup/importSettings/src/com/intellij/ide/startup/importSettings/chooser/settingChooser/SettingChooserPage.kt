@@ -99,7 +99,7 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
     val listPane = JPanel(VerticalLayout(0)).apply {
       isOpaque = false
       productService.getSettings(product.id).forEach {
-        val st = createSettingPane(it, configurable, { changeHandler() }, this@SettingChooserPage)
+        val st = createSettingPane(it, it.isConfigurable && configurable, { changeHandler() }, this@SettingChooserPage)
         settingPanes.add(st)
         add(st.component())
       }
