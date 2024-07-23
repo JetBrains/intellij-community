@@ -19832,6 +19832,7 @@ a:com.intellij.openapi.wm.impl.AbstractToolbarCombo
 - f:setText(java.lang.String):V
 - f:setTextCutStrategy(com.intellij.openapi.wm.impl.TextCutStrategy):V
 - f:setTransparentHoverBackground(java.awt.Color):V
+- updateFromPresentation(com.intellij.openapi.actionSystem.Presentation):V
 - updateUI():V
 f:com.intellij.openapi.wm.impl.AltStateManager
 - java.awt.event.AWTEventListener

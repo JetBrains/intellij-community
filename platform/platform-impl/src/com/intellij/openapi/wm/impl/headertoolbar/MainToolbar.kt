@@ -311,14 +311,14 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
   }
 
   override fun createPresentationFactory(): PresentationFactory {
-    return object : ActionToolbarPresentationFactory() {
+    return object : ActionToolbarPresentationFactory(this) {
       override fun postProcessPresentation(action: AnAction, presentation: Presentation) {
         super.postProcessPresentation(action, presentation)
 
         presentation.icon = presentation.icon?.let { iconUpdater.updateIcon(it) }
-        presentation.selectedIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
-        presentation.hoveredIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
-        presentation.disabledIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
+        presentation.selectedIcon = presentation.selectedIcon?.let { iconUpdater.updateIcon(it) }
+        presentation.hoveredIcon = presentation.hoveredIcon?.let { iconUpdater.updateIcon(it) }
+        presentation.disabledIcon = presentation.disabledIcon?.let { iconUpdater.updateIcon(it) }
         presentation.getClientProperty(ActionUtil.SECONDARY_ICON)?.let {
           presentation.putClientProperty(ActionUtil.SECONDARY_ICON, iconUpdater.updateIcon(it))
         }
