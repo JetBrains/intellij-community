@@ -134,19 +134,19 @@ class MethodExtractor {
 
   private fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
     val unsafeNames = guessMethodName(options)
-    val safeNames = unsafeNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }
+    val method = createMethodSignature(options)
+    fun hasConflicts(name: String): Boolean {
+      method.name = name
+      val conflicts = MultiMap<PsiElement, String>()
+      ConflictsUtil.checkMethodConflicts(options.targetClass, null, method, conflicts)
+      return ! conflicts.isEmpty
+    }
+    val safeNames = unsafeNames.filterNot { name -> hasConflicts(name) }
     if (safeNames.isNotEmpty()) return safeNames
 
     val baseName = unsafeNames.firstOrNull() ?: "extracted"
     val generatedNames = sequenceOf(baseName) + generateSequence(1) { seed -> seed + 1 }.map { number -> "$baseName$number" }
-    return generatedNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }.take(1).toList()
-  }
-
-  private fun hasConflicts(options: ExtractOptions): Boolean {
-    val (_, method) = prepareRefactoringElements(options)
-    val conflicts = MultiMap<PsiElement, String>()
-    ConflictsUtil.checkMethodConflicts(options.targetClass, null, method, conflicts)
-    return ! conflicts.isEmpty
+    return generatedNames.filterNot { name -> hasConflicts(name) }.take(1).toList()
   }
 
   private fun createInplaceSettingsPopup(options: ExtractOptions): ExtractMethodPopupProvider {
@@ -237,19 +237,7 @@ class MethodExtractor {
         dependencies.disabledParameters,
         dependencies.requiredVariablesInside
       )
-    val method = SignatureBuilder(dependencies.project)
-      .build(
-        dependencies.targetClass,
-        dependencies.elements,
-        dependencies.isStatic,
-        dependencies.visibility,
-        dependencies.typeParameters,
-        dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
-        dependencies.methodName,
-        dependencies.inputParameters,
-        dependencies.dataOutput.annotations,
-        dependencies.thrownExceptions
-      )
+    val method = createMethodSignature(dependencies)
     method.body?.replace(codeBlock)
 
     if (needsNullabilityAnnotations(dependencies.project) && ExtractMethodHelper.isNullabilityAvailable(dependencies)) {
@@ -263,6 +251,22 @@ class MethodExtractor {
       emptyList()
     }
     return ExtractedElements(callElements, method)
+  }
+
+  private fun createMethodSignature(dependencies: ExtractOptions): PsiMethod {
+    return SignatureBuilder(dependencies.project)
+      .build(
+        dependencies.targetClass,
+        dependencies.elements,
+        dependencies.isStatic,
+        dependencies.visibility,
+        dependencies.typeParameters,
+        dependencies.dataOutput.type.takeIf { !dependencies.isConstructor },
+        dependencies.methodName,
+        dependencies.inputParameters,
+        dependencies.dataOutput.annotations,
+        dependencies.thrownExceptions
+      )
   }
 
   private fun needsNullabilityAnnotations(project: Project): Boolean {
