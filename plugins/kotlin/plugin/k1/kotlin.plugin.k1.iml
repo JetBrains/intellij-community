@@ -108,6 +108,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" scope="RUNTIME" />

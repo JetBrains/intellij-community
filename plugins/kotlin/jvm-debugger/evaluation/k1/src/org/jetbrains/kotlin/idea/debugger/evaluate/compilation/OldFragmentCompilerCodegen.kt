@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.psi.search.GlobalSearchScope
@@ -66,11 +63,11 @@ class OldFragmentCompilerCodegen(
         methodDescriptor: FunctionDescriptor,
         parameterInfo: K1CodeFragmentParameterInfo,
         generationState: GenerationState
-    ): CodeFragmentCompiler.CompilationResult {
+    ): CompilationResult {
         val classes = collectGeneratedClasses(generationState)
         val methodSignature = getMethodSignature(methodDescriptor, parameterInfo, generationState)
         val functionSuffixes = getLocalFunctionSuffixes(parameterInfo.smartParameters, generationState.typeMapper)
-        return CodeFragmentCompiler.CompilationResult(classes, parameterInfo, functionSuffixes, methodSignature, CompilerType.OLD)
+        return CompilationResult(classes, parameterInfo, functionSuffixes, methodSignature, CompilerType.OLD)
     }
 
     private fun collectGeneratedClasses(generationState: GenerationState): List<ClassToLoad> {
@@ -107,7 +104,7 @@ class OldFragmentCompilerCodegen(
     }
 
     private fun getLocalFunctionSuffixes(
-        parameters: List<CodeFragmentParameter.Smart>,
+        parameters: List<SmartCodeFragmentParameter>,
         typeMapper: KotlinTypeMapper
     ): Map<CodeFragmentParameter.Dumb, String> {
         val result = mutableMapOf<CodeFragmentParameter.Dumb, String>()

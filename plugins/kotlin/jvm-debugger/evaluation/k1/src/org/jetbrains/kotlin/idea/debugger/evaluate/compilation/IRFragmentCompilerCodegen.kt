@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import org.jetbrains.kotlin.backend.jvm.FacadeClassSourceShimForFragmentCompilation
@@ -21,7 +18,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
 import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
@@ -37,9 +33,6 @@ import org.jetbrains.kotlin.psi2ir.generators.fragments.FragmentCompilerSymbolTa
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.source.PsiSourceFile
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
-import org.jetbrains.org.objectweb.asm.*
-import org.jetbrains.org.objectweb.asm.ClassReader.SKIP_CODE
-
 
 class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
 
@@ -177,22 +170,22 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
         methodDescriptor: FunctionDescriptor,
         parameterInfo: K1CodeFragmentParameterInfo,
         generationState: GenerationState
-    ): CodeFragmentCompiler.CompilationResult {
+    ): CompilationResult {
         val classes: List<ClassToLoad> = collectGeneratedClasses(generationState)
         val fragmentClass = classes.single { it.className == GENERATED_CLASS_NAME }
         val methodSignature = getMethodSignature(fragmentClass)
 
-        val newCaptures: List<CodeFragmentParameter.Smart> = generationState.newFragmentCaptureParameters.map { (name, type, target) ->
+        val newCaptures: List<SmartCodeFragmentParameter> = generationState.newFragmentCaptureParameters.map { (name, type, target) ->
             val kind = when {
                 name == "<this>" -> CodeFragmentParameter.Kind.DISPATCH_RECEIVER
                 target is LocalVariableDescriptor && target.isDelegated -> CodeFragmentParameter.Kind.DELEGATED
                 else -> CodeFragmentParameter.Kind.ORDINARY
             }
             val dumb = CodeFragmentParameter.Dumb(kind, name)
-            CodeFragmentParameter.Smart(dumb, type, target)
+            SmartCodeFragmentParameter(dumb, type, target)
         }
 
-        val processedOldCaptures: List<CodeFragmentParameter.Smart> = parameterInfo.smartParameters.map {
+        val processedOldCaptures: List<SmartCodeFragmentParameter> = parameterInfo.smartParameters.map {
             val target = it.targetDescriptor
             val (newName, newDebugName) = when {
                 target is LocalVariableDescriptor && target.isDelegated -> {
@@ -205,7 +198,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                     it.name to it.name
             }
             val dumb = CodeFragmentParameter.Dumb(it.dumb.kind, newName, newDebugName)
-            CodeFragmentParameter.Smart(dumb, it.targetType, it.targetDescriptor)
+            SmartCodeFragmentParameter(dumb, it.targetType, it.targetDescriptor)
         }
 
         val newParameterInfo =
@@ -214,7 +207,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                 parameterInfo.crossingBounds
             )
 
-        return CodeFragmentCompiler.CompilationResult(classes, newParameterInfo, mapOf(), methodSignature, CompilerType.IR)
+        return CompilationResult(classes, newParameterInfo, mapOf(), methodSignature, CompilerType.IR)
     }
 
     private fun collectGeneratedClasses(generationState: GenerationState): List<ClassToLoad> {
@@ -225,29 +218,3 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
             }
     }
 }
-
-fun getMethodSignature(
-    fragmentClass: ClassToLoad,
-): CompiledCodeFragmentData.MethodSignature {
-    val parameters: MutableList<Type> = mutableListOf()
-    var returnType: Type? = null
-
-    ClassReader(fragmentClass.bytes).accept(object : ClassVisitor(Opcodes.ASM7) {
-        override fun visitMethod(
-            access: Int,
-            name: String?,
-            descriptor: String?,
-            signature: String?,
-            exceptions: Array<out String>?
-        ): MethodVisitor? {
-            if (name != null && isEvaluationEntryPoint(name)) {
-                Type.getArgumentTypes(descriptor).forEach { parameters.add(it) }
-                returnType = Type.getReturnType(descriptor)
-            }
-            return null
-        }
-    }, SKIP_CODE)
-
-    return CompiledCodeFragmentData.MethodSignature(parameters, returnType!!)
-}
-

@@ -3,14 +3,11 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.evaluation.CodeFragmentFactoryContextWrapper
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
@@ -29,55 +26,27 @@ import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
-import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KaCompilerFacility
-import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
-import org.jetbrains.kotlin.analysis.api.components.isClassFile
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
-import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
-import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilingEvaluator.loadClassesSafely
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.merge
-import org.jetbrains.kotlin.name.NameUtils
-import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.AnalyzingUtils
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.org.objectweb.asm.ClassReader
@@ -241,222 +210,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     private fun compileCodeFragment(context: ExecutionContext): CompiledCodeFragmentData {
         try {
-            return if (KotlinPluginModeProvider.isK2Mode()) compiledCodeFragmentDataK2(context) else compiledCodeFragmentDataK1(context)
+            return KotlinCodeFragmentCompiler.getInstance().compileCodeFragment(context, codeFragment)
         } catch (e: ExecutionException) {
             throw e.cause ?: e
         }
     }
-
-    private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData {
-        val stats = CodeFragmentCompilationStats()
-        fun onFinish(status: StatisticsEvaluationResult) =
-            KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(codeFragment.project, CompilerType.K2, status, stats)
-        try {
-            patchCodeFragment(context, codeFragment, stats)
-
-            val result = stats.startAndMeasureAnalysisUnderReadAction {
-                compiledCodeFragmentDataK2Impl(context)
-            }.getOrThrow()
-            onFinish(StatisticsEvaluationResult.SUCCESS)
-            return result
-        } catch(e: ProcessCanceledException) {
-            throw e
-        } catch (e: Throwable) {
-            onFinish(StatisticsEvaluationResult.FAILURE)
-            throw e
-        }
-    }
-
-    @OptIn(KaExperimentalApi::class)
-    private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext): CompiledCodeFragmentData {
-        val module = codeFragment.module
-
-        val compilerConfiguration = CompilerConfiguration().apply {
-            if (module != null) {
-                put(CommonConfigurationKeys.MODULE_NAME, module.name)
-            }
-            put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
-            put(KaCompilerFacility.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
-            put(KaCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
-            // Compile lambdas to anonymous classes, so that toString would show something sensible for them.
-            put(JVMConfigurationKeys.LAMBDAS, JvmClosureGenerationScheme.CLASS)
-        }
-
-        return analyze(codeFragment) {
-            try {
-                val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
-                val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
-
-                when (val result = compile(codeFragment, compilerConfiguration, compilerTarget, allowedErrorFilter)) {
-                    is KaCompilationResult.Success -> {
-                        logCompilation(codeFragment)
-
-                        val classes: List<ClassToLoad> = result.output
-                            .filter { it.isClassFile && it.isCodeFragmentClassFile }
-                            .map { ClassToLoad(it.internalClassName, it.path, it.content) }
-
-                        val fragmentClass = classes.single { it.className == GENERATED_CLASS_NAME }
-                        val methodSignature = getMethodSignature(fragmentClass)
-
-                        val parameterInfo = computeCodeFragmentParameterInfo(result)
-                        val ideCompilationResult = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature, CompilerType.K2)
-                        createCompiledDataDescriptor(ideCompilationResult)
-                    }
-                    is KaCompilationResult.Failure -> {
-                        val firstError = result.errors.first()
-                        throw EvaluateExceptionUtil.createEvaluateException(firstError.defaultMessage)
-                    }
-                }
-            } catch (e: ProcessCanceledException) {
-                throw e
-            } catch (e: EvaluateException) {
-                throw e
-            } catch (e: Throwable) {
-                reportErrorWithAttachments(context, codeFragment, e)
-                throw EvaluateExceptionUtil.createEvaluateException(e)
-            }
-        }
-    }
-
-    @KaExperimentalApi
-    private fun computeCodeFragmentParameterInfo(result: KaCompilationResult.Success): K2CodeFragmentParameterInfo {
-        val parameters = ArrayList<CodeFragmentParameter.Dumb>(result.capturedValues.size)
-        val crossingBounds = HashSet<CodeFragmentParameter.Dumb>()
-
-        for (capturedValue in result.capturedValues) {
-            val parameter = capturedValue.toDumbCodeFragmentParameter() ?: continue
-            parameters.add(parameter)
-
-            if (capturedValue.isCrossingInlineBounds) {
-                crossingBounds.add(parameter)
-            }
-        }
-
-        return K2CodeFragmentParameterInfo(parameters, crossingBounds)
-    }
-
-    @OptIn(KaExperimentalApi::class)
-    private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
-        return when (this) {
-            is CodeFragmentCapturedValue.Local ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name)
-            is CodeFragmentCapturedValue.LocalDelegate ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText)
-            is CodeFragmentCapturedValue.ContainingClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
-            is CodeFragmentCapturedValue.SuperClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
-            is CodeFragmentCapturedValue.ExtensionReceiver ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, displayText)
-            is CodeFragmentCapturedValue.ContextReceiver -> {
-                val name = NameUtils.contextReceiverName(index).asString()
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, displayText)
-            }
-            is CodeFragmentCapturedValue.ForeignValue -> {
-                assert(name.endsWith(CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX))
-                val valueName = name.substringBeforeLast(CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX)
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DEBUG_LABEL, valueName, name)
-            }
-            is CodeFragmentCapturedValue.BackingField ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, displayText)
-            is CodeFragmentCapturedValue.CoroutineContext ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FAKE_JAVA_OUTER_CLASS, "")
-            else -> null
-        }
-    }
-
-    private fun compiledCodeFragmentDataK1(context: ExecutionContext): CompiledCodeFragmentData {
-        val debugProcess = context.debugProcess
-
-        // TODO remove this registry key?
-        val compilerStrategy = if (CodeFragmentCompiler.useIRFragmentCompiler()) {
-            IRCodeFragmentCompilingStrategy(codeFragment)
-        } else {
-            OldCodeFragmentCompilingStrategy(codeFragment)
-        }
-        try {
-            patchCodeFragment(context, codeFragment, compilerStrategy.stats)
-        } catch (e: Exception) {
-            compilerStrategy.processError(e, codeFragment, emptyList(), context)
-            throw e
-        }
-
-        compilerStrategy.beforeAnalyzingCodeFragment()
-        val analysisResult = analyze(codeFragment, debugProcess)
-
-        analysisResult.illegalSuspendFunCallDiagnostic?.let {
-            evaluationException(DefaultErrorMessages.render(it))
-        }
-
-        val compilerHandler = CodeFragmentCompilerHandler(compilerStrategy)
-
-        val result =
-            compilerHandler.compileCodeFragment(codeFragment, analysisResult.moduleDescriptor, analysisResult.bindingContext, context)
-
-        logCompilation(codeFragment)
-
-        return createCompiledDataDescriptor(result)
-    }
-
-    private data class ErrorCheckingResult(
-        val bindingContext: BindingContext,
-        val moduleDescriptor: ModuleDescriptor,
-        val files: List<KtFile>,
-        val illegalSuspendFunCallDiagnostic: Diagnostic?
-    )
-
-    private fun analyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl): ErrorCheckingResult {
-        val result = ReadAction.nonBlocking<Result<ErrorCheckingResult>> {
-            try {
-                Result.success(doAnalyze(codeFragment, debugProcess))
-            } catch (ex: ProcessCanceledException) {
-                throw ex // Restart the action
-            } catch (ex: Exception) {
-                Result.failure(ex)
-            }
-        }.executeSynchronously()
-        return result.getOrThrow()
-    }
-
-    private fun doAnalyze(codeFragment: KtCodeFragment, debugProcess: DebugProcessImpl): ErrorCheckingResult {
-        try {
-            AnalyzingUtils.checkForSyntacticErrors(codeFragment)
-        } catch (e: IllegalArgumentException) {
-            evaluationException(e.message ?: e.toString())
-        }
-
-        val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
-
-        DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
-
-        val analysisResult = resolutionFacade.analyzeWithAllCompilerChecks(codeFragment)
-
-        if (analysisResult.isError()) {
-            evaluationException(analysisResult.error)
-        }
-
-        val bindingContext = analysisResult.bindingContext
-        reportErrorDiagnosticIfAny(bindingContext)
-        return ErrorCheckingResult(
-            bindingContext,
-            analysisResult.moduleDescriptor,
-            Collections.singletonList(codeFragment),
-            bindingContext.diagnostics.firstOrNull {
-                it.isIllegalSuspendFunCallInCodeFragment()
-            }
-        )
-    }
-
-    private fun reportErrorDiagnosticIfAny(bindingContext: BindingContext) {
-        bindingContext.diagnostics
-            .filter { it.factory !in IGNORED_DIAGNOSTICS }
-            .firstOrNull { it.severity == Severity.ERROR && it.psiElement.containingFile == codeFragment }
-            ?.let { evaluationException(DefaultErrorMessages.render(it)) }
-    }
-
-    private fun Diagnostic.isIllegalSuspendFunCallInCodeFragment() =
-        severity == Severity.ERROR && psiElement.containingFile == codeFragment &&
-                factory == Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
 
     private fun evaluateWithCompilation(
         context: ExecutionContext,
@@ -603,7 +361,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         @get:ApiStatus.Internal
         var LOG_COMPILATIONS: Boolean = false
 
-        private fun logCompilation(codeFragment: KtCodeFragment) {
+        fun logCompilation(codeFragment: KtCodeFragment) {
             val needLog = @Suppress("TestOnlyProblems") LOG_COMPILATIONS &&
                     true != codeFragment.getUserData(KotlinPlatformUtils.suppressCodeFragmentCompilationLogging)
             if (needLog) {
@@ -611,7 +369,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             }
         }
 
-        internal val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
+        val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
                 setOf(
                     Errors.OPT_IN_USAGE_ERROR,
                     Errors.MISSING_DEPENDENCY_SUPERCLASS,
@@ -687,7 +445,7 @@ private fun reportError(codeFragment: KtCodeFragment, position: SourcePosition?,
     }
 }
 
-fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult): CompiledCodeFragmentData {
+fun createCompiledDataDescriptor(result: CompilationResult): CompiledCodeFragmentData {
     val localFunctionSuffixes = result.localFunctionSuffixes
 
     val dumbParameters = ArrayList<CodeFragmentParameter.Dumb>(result.parameterInfo.parameters.size)
@@ -712,14 +470,8 @@ fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult)
     )
 }
 
-internal fun evaluationException(msg: String): Nothing = throw EvaluateExceptionUtil.createEvaluateException(msg)
-internal fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptionUtil.createEvaluateException(e)
-
-internal fun getResolutionFacadeForCodeFragment(codeFragment: KtCodeFragment): ResolutionFacade {
-    val filesToAnalyze = listOf(codeFragment)
-    val kotlinCacheService = KotlinCacheService.getInstance(codeFragment.project)
-    return kotlinCacheService.getResolutionFacadeWithForcedPlatform(filesToAnalyze, JvmPlatforms.unspecifiedJvmPlatform)
-}
+fun evaluationException(msg: String): Nothing = throw EvaluateExceptionUtil.createEvaluateException(msg)
+fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptionUtil.createEvaluateException(e)
 
 enum class CompilerType {
     OLD, IR, K2

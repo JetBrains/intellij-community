@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 
 class CodeFragmentCodegenException(val reason: Throwable) : Exception()
 
-internal fun reportErrorWithAttachments(
+fun reportErrorWithAttachments(
     executionContext: ExecutionContext,
     codeFragment: KtCodeFragment,
     reason: Throwable,

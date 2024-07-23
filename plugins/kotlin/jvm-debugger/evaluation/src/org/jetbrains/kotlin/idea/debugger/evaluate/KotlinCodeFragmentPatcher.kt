@@ -73,7 +73,7 @@ private class KotlinCodeFragmentPatcher(val codeFragment: KtCodeFragment) {
         }
 }
 
-internal fun patchCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment, stats: CodeFragmentCompilationStats) {
+fun patchCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment, stats: CodeFragmentCompilationStats) {
     KotlinCodeFragmentPatcher(codeFragment)
         .addWrapper(KotlinValueClassToStringWrapper())
         .addWrapper(

@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
@@ -35,18 +34,8 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.expressions.createFunctionType
 
-interface CodeFragmentParameterInfo {
-    val parameters: List<Dumb>
-    val crossingBounds: Set<Dumb>
-}
-
-class K2CodeFragmentParameterInfo(
-    override val parameters: List<Dumb>,
-    override val crossingBounds: Set<Dumb>
-) : CodeFragmentParameterInfo
-
 class K1CodeFragmentParameterInfo(
-    val smartParameters: List<Smart>,
+    val smartParameters: List<SmartCodeFragmentParameter>,
     override val crossingBounds: Set<Dumb>
 ) : CodeFragmentParameterInfo {
     override val parameters: List<Dumb> = object : AbstractList<Dumb>() {
@@ -68,7 +57,7 @@ class CodeFragmentParameterAnalyzer(
     private val codeFragment: KtCodeFragment,
     private val bindingContext: BindingContext
 ) {
-    private val parameters = LinkedHashMap<DeclarationDescriptor, Smart>()
+    private val parameters = LinkedHashMap<DeclarationDescriptor, SmartCodeFragmentParameter>()
     private val crossingBounds = mutableSetOf<Dumb>()
 
     private val onceUsedChecker = OnceUsedChecker(CodeFragmentParameterAnalyzer::class.java)
@@ -156,7 +145,7 @@ class CodeFragmentParameterAnalyzer(
                 }
             }
 
-            private fun processDescriptor(descriptor: DeclarationDescriptor, expression: KtSimpleNameExpression): Smart? {
+            private fun processDescriptor(descriptor: DeclarationDescriptor, expression: KtSimpleNameExpression): SmartCodeFragmentParameter? {
                 return processDebugLabel(descriptor)
                     ?: processCoroutineContextCall(descriptor)
                     ?: processSimpleNameExpression(descriptor, expression)
@@ -192,7 +181,7 @@ class CodeFragmentParameterAnalyzer(
 
                 parameters.getOrPut(descriptor) {
                     val name = descriptor.name.asString()
-                    Smart(Dumb(Kind.DISPATCH_RECEIVER, "", "super@$name"), type, descriptor)
+                    SmartCodeFragmentParameter(Dumb(Kind.DISPATCH_RECEIVER, "", "super@$name"), type, descriptor)
                 }
 
                 return null
@@ -216,7 +205,7 @@ class CodeFragmentParameterAnalyzer(
         return K1CodeFragmentParameterInfo(parameters.values.toList(), crossingBounds)
     }
 
-    private fun processReceiver(receiver: ImplicitReceiver): Smart? {
+    private fun processReceiver(receiver: ImplicitReceiver): SmartCodeFragmentParameter? {
         if (isCodeFragmentDeclaration(receiver.declarationDescriptor)) {
             return null
         }
@@ -230,7 +219,7 @@ class CodeFragmentParameterAnalyzer(
         }
     }
 
-    private fun processDispatchReceiver(descriptor: ClassDescriptor): Smart? {
+    private fun processDispatchReceiver(descriptor: ClassDescriptor): SmartCodeFragmentParameter? {
         if (descriptor.kind == ClassKind.OBJECT) {
             return null
         }
@@ -239,11 +228,11 @@ class CodeFragmentParameterAnalyzer(
         return parameters.getOrPut(descriptor) {
             val name = descriptor.name
             val debugLabel = if (name.isSpecial) "" else "@" + name.asString()
-            Smart(Dumb(Kind.DISPATCH_RECEIVER, "", AsmUtil.THIS + debugLabel), type, descriptor)
+            SmartCodeFragmentParameter(Dumb(Kind.DISPATCH_RECEIVER, "", AsmUtil.THIS + debugLabel), type, descriptor)
         }
     }
 
-    private fun processExtensionReceiver(descriptor: CallableDescriptor, receiverType: KotlinType, label: String?): Smart? {
+    private fun processExtensionReceiver(descriptor: CallableDescriptor, receiverType: KotlinType, label: String?): SmartCodeFragmentParameter? {
         if (isFakeFunctionForJavaContext(descriptor)) {
             return processFakeJavaCodeReceiver(descriptor)
         }
@@ -252,7 +241,7 @@ class CodeFragmentParameterAnalyzer(
         val receiverParameter = descriptor.extensionReceiverParameter ?: return null
 
         return parameters.getOrPut(descriptor) {
-            Smart(Dumb(Kind.EXTENSION_RECEIVER, actualLabel, AsmUtil.THIS + "@" + actualLabel), receiverType, receiverParameter)
+            SmartCodeFragmentParameter(Dumb(Kind.EXTENSION_RECEIVER, actualLabel, AsmUtil.THIS + "@" + actualLabel), receiverType, receiverParameter)
         }
     }
 
@@ -277,17 +266,17 @@ class CodeFragmentParameterAnalyzer(
     }
 
 
-    private fun processContextReceiver(descriptor: CallableDescriptor, receiverType: KotlinType): Smart? {
+    private fun processContextReceiver(descriptor: CallableDescriptor, receiverType: KotlinType): SmartCodeFragmentParameter? {
         val receiverParameter = descriptor.contextReceiverParameters.find { it.type == receiverType } ?: return null
 
         return parameters.getOrPut(receiverParameter) {
             val name = receiverParameter.name.asString()
             val label = getThisName("${receiverType.fqName?.shortName()}")
-            Smart(Dumb(Kind.CONTEXT_RECEIVER, name, label), receiverType, receiverParameter)
+            SmartCodeFragmentParameter(Dumb(Kind.CONTEXT_RECEIVER, name, label), receiverType, receiverParameter)
         }
     }
 
-    private fun processFakeJavaCodeReceiver(descriptor: CallableDescriptor): Smart? {
+    private fun processFakeJavaCodeReceiver(descriptor: CallableDescriptor): SmartCodeFragmentParameter? {
         val receiverParameter = descriptor
             .takeIf { descriptor is FunctionDescriptor }
             ?.extensionReceiverParameter
@@ -296,20 +285,20 @@ class CodeFragmentParameterAnalyzer(
         val label = FAKE_JAVA_CONTEXT_FUNCTION_NAME
         val type = receiverParameter.type
         return parameters.getOrPut(descriptor) {
-            Smart(Dumb(Kind.FAKE_JAVA_OUTER_CLASS, label, AsmUtil.THIS), type, receiverParameter)
+            SmartCodeFragmentParameter(Dumb(Kind.FAKE_JAVA_OUTER_CLASS, label, AsmUtil.THIS), type, receiverParameter)
         }
     }
 
-    private fun processSyntheticFieldVariable(descriptor: SyntheticFieldDescriptor): Smart {
+    private fun processSyntheticFieldVariable(descriptor: SyntheticFieldDescriptor): SmartCodeFragmentParameter {
         val propertyDescriptor = descriptor.propertyDescriptor
         val fieldName = propertyDescriptor.name.asString()
         val type = propertyDescriptor.type
         return parameters.getOrPut(descriptor) {
-            Smart(Dumb(Kind.FIELD_VAR, fieldName, "field"), type, descriptor)
+            SmartCodeFragmentParameter(Dumb(Kind.FIELD_VAR, fieldName, "field"), type, descriptor)
         }
     }
 
-    private fun processSimpleNameExpression(target: DeclarationDescriptor, expression: KtSimpleNameExpression): Smart? {
+    private fun processSimpleNameExpression(target: DeclarationDescriptor, expression: KtSimpleNameExpression): SmartCodeFragmentParameter? {
         if (target is ValueParameterDescriptor && target.isCrossinline) {
             throw EvaluateExceptionUtil.createEvaluateException(
                 KotlinDebuggerEvaluationBundle.message("error.crossinline.lambda.evaluation")
@@ -324,7 +313,7 @@ class CodeFragmentParameterAnalyzer(
             is SimpleFunctionDescriptor -> {
                 val type = target.createFunctionType(target.builtIns, target.isSuspend) ?: return null
                 parameters.getOrPut(target) {
-                    Smart(Dumb(Kind.LOCAL_FUNCTION, target.name.asString()), type, target.original)
+                    SmartCodeFragmentParameter(Dumb(Kind.LOCAL_FUNCTION, target.name.asString()), type, target.original)
                 }
             }
             is ValueDescriptor -> {
@@ -333,7 +322,7 @@ class CodeFragmentParameterAnalyzer(
 
                 parameters.getOrPut(target) {
                     val kind = if (target is LocalVariableDescriptor && target.isDelegated) Kind.DELEGATED else Kind.ORDINARY
-                    Smart(Dumb(kind, target.name.asString()), target.type, target, isLValue)
+                    SmartCodeFragmentParameter(Dumb(kind, target.name.asString()), target.type, target, isLValue)
                 }
             }
             else -> null
@@ -367,28 +356,28 @@ class CodeFragmentParameterAnalyzer(
         return false
     }
 
-    private fun processCoroutineContextCall(target: DeclarationDescriptor): Smart? {
+    private fun processCoroutineContextCall(target: DeclarationDescriptor): SmartCodeFragmentParameter? {
         if (target is PropertyDescriptor && target.fqNameSafe == COROUTINE_CONTEXT_FQ_NAME) {
             return parameters.getOrPut(target) {
-                Smart(Dumb(Kind.COROUTINE_CONTEXT, ""), target.type, target)
+                SmartCodeFragmentParameter(Dumb(Kind.COROUTINE_CONTEXT, ""), target.type, target)
             }
         }
 
         return null
     }
 
-    private fun processDebugLabel(target: DeclarationDescriptor): Smart? {
+    private fun processDebugLabel(target: DeclarationDescriptor): SmartCodeFragmentParameter? {
         val debugLabelPropertyDescriptor = target as? DebugLabelPropertyDescriptor ?: return null
         val labelName = debugLabelPropertyDescriptor.labelName
         val debugString = debugLabelPropertyDescriptor.name.asString()
 
         return parameters.getOrPut(target) {
             val type = debugLabelPropertyDescriptor.type
-            Smart(Dumb(Kind.DEBUG_LABEL, labelName, debugString), type, debugLabelPropertyDescriptor)
+            SmartCodeFragmentParameter(Dumb(Kind.DEBUG_LABEL, labelName, debugString), type, debugLabelPropertyDescriptor)
         }
     }
 
-    fun checkBounds(descriptor: DeclarationDescriptor?, expression: KtExpression, parameter: Smart?) {
+    fun checkBounds(descriptor: DeclarationDescriptor?, expression: KtExpression, parameter: SmartCodeFragmentParameter?) {
         if (parameter == null || descriptor !is DeclarationDescriptorWithSource) {
             return
         }

@@ -33,7 +33,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
     private val fallbackToOldEvaluatorEvent = GROUP.registerEvent("fallback.to.old.evaluator")
 
     @JvmStatic
-    internal fun logAnalysisAndCompilationResult(
+    fun logAnalysisAndCompilationResult(
         project: Project?, compilerType: CompilerType, evaluationResult: StatisticsEvaluationResult,
         stats: CodeFragmentCompilationStats
     ) {

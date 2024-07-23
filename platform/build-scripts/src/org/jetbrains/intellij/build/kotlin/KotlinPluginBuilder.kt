@@ -138,6 +138,7 @@ object KotlinPluginBuilder {
     "kotlin.jvm-debugger.core",
     "kotlin.jvm-debugger.core-fe10",
     "kotlin.jvm-debugger.evaluation",
+    "kotlin.jvm-debugger.evaluation.k1",
     "kotlin.jvm-debugger.coroutines",
     "kotlin.jvm-debugger.sequence",
     "kotlin.jvm-debugger.eval4j",
