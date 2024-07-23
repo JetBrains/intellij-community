@@ -44,7 +44,7 @@ internal object ShellMakeCommandSpec {
   }
 
   private fun parseMakefileForSuggestions(makefileContents: String): List<ShellCompletionSuggestion> {
-    return makefileContents.splitToSequence("\n")
+    return makefileContents.splitToSequence("\n", "\r", "\r\n")
       .mapNotNull { MakefileTarget.parse(it) }
       .map { makefileTarget ->
         ShellCompletionSuggestion(
