@@ -33,6 +33,7 @@ import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
@@ -143,7 +144,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       val errorText = "Waiting for highlight to finish took more than $timeout."
       if (throws) {
         LOG.error(errorText)
-        error(errorText)
+        throw TimeoutException(errorText)
       } else {
         LOG.error(errorText)
       }
