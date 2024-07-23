@@ -174,7 +174,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
     var isValid = true;
     for (JsonSchemaValidation validation : schema.getValidations(instanceFieldType, value)) {
-      isValid = validation.validate(value, schema, instanceFieldType, this, myOptions);
+      isValid &= validation.validate(value, schema, instanceFieldType, this, myOptions);
       if (!isValid && myOptions.shouldStopValidationAfterAnyErrorFound()) return false;
     }
     return isValid;
