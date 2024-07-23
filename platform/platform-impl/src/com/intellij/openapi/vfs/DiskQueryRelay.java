@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
@@ -37,16 +38,23 @@ public final class DiskQueryRelay<Param, Result> {
    * in case the callee is interrupted by "checkCanceled", restarted, comes again with the same query, is interrupted again, and so on.
    */
   private final Map<Param, Future<Result>> myTasks = new ConcurrentHashMap<>();
+  private final ExecutorService executor;
 
   public DiskQueryRelay(@NotNull Function<? super Param, ? extends Result> function) {
+    this(function, ProcessIOExecutorService.INSTANCE);
+  }
+
+  public DiskQueryRelay(@NotNull Function<? super Param, ? extends Result> function,
+                        @NotNull ExecutorService executor) {
     myFunction = function;
+    this.executor = executor;
   }
 
   public Result accessDiskWithCheckCanceled(@NotNull Param arg) {
     if (!isInCancellableContext()) {
       return myFunction.apply(arg);
     }
-    Future<Result> future = myTasks.computeIfAbsent(arg, eachArg -> ProcessIOExecutorService.INSTANCE.submit(() -> {
+    Future<Result> future = myTasks.computeIfAbsent(arg, eachArg -> executor.submit(() -> {
       try {
         return myFunction.apply(eachArg);
       }
@@ -68,11 +76,22 @@ public final class DiskQueryRelay<Param, Result> {
    * inside the {@code task} block.
    */
   public static <Result, E extends Exception> Result compute(@NotNull ThrowableComputable<Result, E> task) throws E, ProcessCanceledException {
+    return compute(task, ProcessIOExecutorService.INSTANCE);
+  }
+
+  /**
+   * Use the method for one-shot tasks; for performing multiple similar operations, prefer an instance of the class.
+   * <p>
+   * To avoid deadlocks, please pay attention to locks held at the call time and try to abstain from taking locks
+   * inside the {@code task} block.
+   */
+  public static <Result, E extends Exception> Result compute(@NotNull ThrowableComputable<Result, E> task,
+                                                             @NotNull ExecutorService executor) throws E, ProcessCanceledException {
     if (!isInCancellableContext()) {
       return task.compute();
     }
 
-    Future<Result> future = ProcessIOExecutorService.INSTANCE.submit(task::compute);
+    Future<Result> future = executor.submit(task::compute);
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
     }
