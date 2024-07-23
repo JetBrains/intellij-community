@@ -7657,11 +7657,6 @@ f:com.intellij.codeInsight.intention.impl.config.PlainTextDescriptor
 com.intellij.codeInsight.intention.impl.config.TextDescriptor
 - a:getFileName():java.lang.String
 - a:getText():java.lang.String
-f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable
-- java.util.concurrent.Callable
-- <init>(com.intellij.openapi.project.Project,com.intellij.codeInsight.intention.IntentionAction,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I):V
-- call():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- f:generatePreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputableKt
 - sf:findCopyIntention(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,com.intellij.codeInsight.intention.IntentionAction):com.intellij.codeInsight.intention.IntentionAction
 f:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult
