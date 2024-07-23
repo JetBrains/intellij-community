@@ -8503,9 +8503,9 @@ f:com.intellij.vcs.console.MockVcsConsoleTabService
 - showConsoleTabAndScrollToTheEnd():V
 com.intellij.vcs.console.VcsConsoleFolding
 - sf:Companion:com.intellij.vcs.console.VcsConsoleFolding$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getFoldingsForLine(com.intellij.openapi.project.Project,java.lang.String):java.util.List
 f:com.intellij.vcs.console.VcsConsoleFolding$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.vcs.console.VcsConsoleFolding$Placeholder
 - <init>(java.lang.String,com.intellij.openapi.util.TextRange):V
 - f:component1():java.lang.String
@@ -8528,14 +8528,6 @@ com.intellij.vcs.console.VcsConsoleTabService
 - a:showConsoleTabAndScrollToTheEnd():V
 f:com.intellij.vcs.console.VcsConsoleTabService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.console.VcsConsoleTabService
-f:com.intellij.vcs.console.VcsConsoleView
-- com.intellij.execution.impl.ConsoleViewImpl
-- sf:CONSOLE_PLACE:com.intellij.execution.ui.ConsoleViewPlace
-- sf:Companion:com.intellij.vcs.console.VcsConsoleView$Companion
-- <init>(com.intellij.openapi.project.Project):V
-- createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
-- getPlace():com.intellij.execution.ui.ConsoleViewPlace
-f:com.intellij.vcs.console.VcsConsoleView$Companion
 a:com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 - com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 - com.intellij.openapi.vfs.NonPhysicalFileSystem

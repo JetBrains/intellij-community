@@ -122,13 +122,11 @@ public final class ConsoleExecutionEditor implements Disposable {
     return myConsoleEditor.getComponent().isVisible();
   }
 
-  @Nullable
-  public String getPrompt() {
+  public @NotNull String getPrompt() {
     return myConsolePromptDecorator.getMainPrompt();
   }
 
-  @NotNull
-  public ConsoleViewContentType getPromptAttributes() {
+  public @NotNull ConsoleViewContentType getPromptAttributes() {
     return myConsolePromptDecorator.getPromptAttributes();
   }
 
@@ -139,7 +137,6 @@ public final class ConsoleExecutionEditor implements Disposable {
   public void setPrompt(@Nullable String prompt) {
     setPromptInner(prompt);
   }
-
 
   public void setEditable(boolean editable) {
     myConsoleEditor.setRendererMode(!editable);
