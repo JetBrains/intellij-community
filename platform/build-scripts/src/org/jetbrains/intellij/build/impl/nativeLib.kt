@@ -158,7 +158,7 @@ private suspend fun unpackNativeLibraries(
       }
 
       context.addDistFile(DistFile(
-        content = LocalDistFileContent(file),
+        content = LocalDistFileContent(file, Files.isExecutable(file)),
         relativePath = toRelativePath(libName, getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
         os = os.takeUnless { allPlatformsRequired },
         arch = arch.takeUnless { allPlatformsRequired },
