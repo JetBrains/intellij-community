@@ -6,6 +6,7 @@
 
   <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
     <step key="searchEverywhere" implementationClass="com.intellij.platform.ide.newUsersOnboarding.SearchEverywhereStep"/>
+    <step key="settingsPopup" implementationClass="com.intellij.platform.ide.newUsersOnboarding.SettingsPopupStep"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

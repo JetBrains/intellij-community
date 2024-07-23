@@ -43,6 +43,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,9 +96,15 @@ public final class SettingsEntryPointAction extends ActionGroup
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    ListPopup popup = createMainPopup(this, e.getDataContext());
-    PopupUtil.addToggledStateListener(popup, e.getPresentation());
+    JBPopup popup = createPopup(e);
     PopupUtil.showForActionButtonEvent(popup, e);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull JBPopup createPopup(@NotNull AnActionEvent e) {
+    JBPopup popup = createMainPopup(this, e.getDataContext());
+    PopupUtil.addToggledStateListener(popup, e.getPresentation());
+    return popup;
   }
 
   @Override
