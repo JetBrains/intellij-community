@@ -169,6 +169,11 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
 
     log.info("OpenTelemetry metrics were flushed")
   }
+
+  @TestOnly
+  override suspend fun resetExporters() {
+    batchSpanProcessor?.reset()
+  }
 }
 
 private class IntelliJTracerImpl(private val scope: Scope, private val otlpService: OtlpService) : IntelliJTracer {

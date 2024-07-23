@@ -12,5 +12,8 @@ interface AsyncSpanExporter {
 
   suspend fun flush() {}
 
+  /** Should clean any previously exported metrics */
+  suspend fun reset() {}
+
   suspend fun shutdown() {}
 }

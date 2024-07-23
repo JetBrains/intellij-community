@@ -21,7 +21,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.io.PersistentEnumeratorCache;
 import com.intellij.util.ref.DebugReflectionUtil;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Suppress;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
