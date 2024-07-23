@@ -140,7 +140,7 @@ object KotlinPluginBuilder {
     "kotlin.jvm-debugger.evaluation",
     "kotlin.jvm-debugger.evaluation.k1",
     "kotlin.jvm-debugger.coroutines",
-    "kotlin.jvm-debugger.sequence",
+    "kotlin.jvm-debugger.sequence.k1",
     "kotlin.jvm-debugger.eval4j",
     "kotlin.uast.uast-kotlin-base",
     "kotlin.uast.uast-kotlin",
