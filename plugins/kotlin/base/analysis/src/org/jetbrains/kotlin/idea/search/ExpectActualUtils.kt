@@ -49,7 +49,7 @@ object ExpectActualUtils {
         null
     } ?: unwrappedElement
 
-    fun collectTopLevelExpectDeclarations(project: Project, modules: Set<KaModule>): List<KtNamedDeclaration> {
+    fun collectTopLevelExpectDeclarations(project: Project, modules: List<KaModule>): List<KtNamedDeclaration> {
         val searchScope = GlobalSearchScope.union(modules.map { module -> module.contentScope })
 
         val indexes = listOf(

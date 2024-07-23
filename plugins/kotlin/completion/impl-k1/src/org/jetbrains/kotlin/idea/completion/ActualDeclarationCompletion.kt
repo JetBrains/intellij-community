@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -25,7 +24,6 @@ import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtPackageDirective
@@ -63,29 +61,20 @@ internal class ActualDeclarationCompletion(
     fun complete(position: PsiElement) {
         val module = position.module ?: return
         val kaModule = position.moduleInfo.toKaModule()
-        if (kaModule.targetPlatform.isCommon()) {
-            return
-        }
+        val dependsOnModules = kaModule.transitiveDependsOnDependencies
+        if (dependsOnModules.isEmpty()) return
 
         val packageQualifiedName = position.packageDirective?.qualifiedName ?: return
-
-        val commonModules = kaModule.findCommonDependencyModules()
 
         // TODO: Allow completion not only for top level actual declarations
         //  `expect`/`actual` interfaces, objects, annotations, enums and typealiases are in Beta
         //  https://youtrack.jetbrains.com/issue/KT-61573
-        val notImplementedExpectDeclarations = ExpectActualUtils.collectTopLevelExpectDeclarations(project, commonModules)
+        val notImplementedExpectDeclarations = ExpectActualUtils.collectTopLevelExpectDeclarations(project, dependsOnModules)
             .filter { expectDeclaration -> canImplementActualForExpect(expectDeclaration, module, packageQualifiedName) }
         val actualDeclarationLookupElements = notImplementedExpectDeclarations
             .mapNotNull { expectDeclaration -> expectDeclaration.createLookupElement(position, module) }
 
         actualDeclarationLookupElements.forEach { lookupElement -> collector.addElement(lookupElement) }
-    }
-
-    private fun KaModule.findCommonDependencyModules(): Set<KaModule> {
-        return directRegularDependencies
-            .filter { dependencyModule -> dependencyModule.targetPlatform.isCommon() }
-            .toSet()
     }
 
     private fun canImplementActualForExpect(
