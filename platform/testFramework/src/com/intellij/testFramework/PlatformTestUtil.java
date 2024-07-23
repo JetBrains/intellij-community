@@ -421,7 +421,7 @@ public final class PlatformTestUtil {
     AtomicBoolean pooledRunnableInvoked = new AtomicBoolean();
     AtomicBoolean alarmInvoked1 = new AtomicBoolean();
     AtomicBoolean alarmInvoked2 = new AtomicBoolean();
-    Alarm alarm = new Alarm();
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, tempDisposable);
     Alarm pooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, tempDisposable);
     ModalityState initialModality = ModalityState.current();
 

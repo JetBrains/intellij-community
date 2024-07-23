@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
@@ -48,15 +34,15 @@ import java.util.List;
 public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
 
-  @NotNull private final List<DiffViewerListener> myListeners = new SmartList<>();
+  @NotNull private final List<DiffViewerListener> listeners = new SmartList<>();
 
   @Nullable protected final Project myProject;
   @NotNull protected final DiffContext myContext;
   @NotNull protected final ContentDiffRequest myRequest;
 
   @NotNull private final DiffTaskQueue myTaskExecutor = new DiffTaskQueue();
-  @NotNull private final Alarm myTaskAlarm = new Alarm();
-  private volatile boolean myDisposed;
+  @NotNull private final Alarm taskAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null, null, null);
+  private volatile boolean isDisposed;
 
   public DiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     myProject = context.getProject();
@@ -103,12 +89,12 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @Override
   @RequiresEdt
   public final void dispose() {
-    if (myDisposed) return;
+    if (isDisposed) return;
     ThreadingAssertions.assertEventDispatchThread();
 
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (myDisposed) return;
-      myDisposed = true;
+      if (isDisposed) return;
+      isDisposed = true;
 
       abortRediff();
       updateContextHints();
@@ -134,14 +120,14 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     abortRediff();
 
     if (UIUtil.isShowing(getComponent())) {
-      myTaskAlarm.addRequest(this::rediff, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      taskAlarm.addRequest(this::rediff, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     }
   }
 
   @RequiresEdt
   public final void abortRediff() {
     myTaskExecutor.abort();
-    myTaskAlarm.cancelAllRequests();
+    taskAlarm.cancelAllRequests();
     fireEvent(EventType.REDIFF_ABORTED);
   }
 
@@ -194,7 +180,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   public boolean isDisposed() {
-    return myDisposed;
+    return isDisposed;
   }
 
   //
@@ -252,7 +238,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @RequiresEdt
   protected void onDispose() {
-    Disposer.dispose(myTaskAlarm);
+    Disposer.dispose(taskAlarm);
   }
 
   @Nullable
@@ -266,23 +252,23 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @RequiresEdt
   public void addListener(@NotNull DiffViewerListener listener) {
-    myListeners.add(listener);
+    listeners.add(listener);
   }
 
   @RequiresEdt
   public void removeListener(@NotNull DiffViewerListener listener) {
-    myListeners.remove(listener);
+    listeners.remove(listener);
   }
 
   @NotNull
   @RequiresEdt
   protected List<DiffViewerListener> getListeners() {
-    return myListeners;
+    return listeners;
   }
 
   @RequiresEdt
   private void fireEvent(@NotNull EventType type) {
-    for (DiffViewerListener listener : myListeners) {
+    for (DiffViewerListener listener : listeners) {
       switch (type) {
         case INIT -> listener.onInit();
         case DISPOSE -> listener.onDispose();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
@@ -20,6 +20,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
@@ -93,14 +94,14 @@ public class ContentTabLabel extends ContentLabel {
       //noinspection ConstantConditions
       if (myContent != null && !(myContent instanceof SingleContentLayout.SubContent) && !Disposer.isDisposed(myContent) && !textUpdateScheduled) {
         textUpdateScheduled = true;
-        EdtScheduledExecutorService.getInstance().schedule(() -> {
+        EdtScheduler.getInstance().schedule(50, () -> {
           textUpdateScheduled = false;
           Container parent = getParent();
           if (parent != null) {
             parent.revalidate();
             parent.repaint();
           }
-        }, 50, TimeUnit.MILLISECONDS);
+        });
       }
     }
   }

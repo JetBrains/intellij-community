@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
@@ -20,7 +20,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,7 +63,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   private final PathOverrider localRepositoryOverrider;
 
   private boolean isUpdating = false;
-  private final Alarm myUpdateAlarm = new Alarm();
+  private final SingleEdtTaskScheduler updateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private String myTargetName;
   private Project myProject;
 
@@ -75,13 +75,12 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
           if (isUpdating) return;
           if (!panel.isShowing()) return;
 
-          myUpdateAlarm.cancelAllRequests();
-          myUpdateAlarm.addRequest(() -> {
+          updateAlarm.cancelAndRequest(100, () -> {
             isUpdating = true;
             userSettingsFileOverrider.updateDefault();
             localRepositoryOverrider.updateDefault();
             isUpdating = false;
-          }, 100);
+          });
         });
       }
     };

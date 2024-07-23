@@ -1483,11 +1483,6 @@ com.intellij.xdebugger.impl.inline.XInlineWatchesView
 *:com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue
 - com.intellij.xdebugger.impl.pinned.items.PinToTopValue
 - a:getTag():java.lang.String
-f:com.intellij.xdebugger.impl.pinned.items.PinToTopUtilKt
-- sf:canBePinned(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
-- sf:getParentPinToTopValue(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue
-- sf:getPinInfo(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
-- sf:isPinned(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager):Z
 *:com.intellij.xdebugger.impl.pinned.items.PinToTopValue
 f:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo
 - sf:Companion:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo$Companion
@@ -1509,25 +1504,6 @@ f:com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo$Companion
 *:com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopListener
 - a:onPinnedItemAdded(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):V
 - a:onPinnedItemRemoved(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):V
-c:com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager
-- sf:Companion:com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager$Companion
-- <init>():V
-- f:addItemInfo(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):V
-- f:addListener(com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopListener,com.intellij.openapi.Disposable):V
-- f:getCompoundComparator():java.util.Comparator
-- f:getPinToTopComparator():java.util.Comparator
-- f:getPinnedItemInfos():java.util.List
-- f:isEnabled():Z
-- f:isItemPinned(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):Z
-- f:isPinToTopSupported(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode):Z
-- f:isPinned(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):Z
-- f:loadState(com.intellij.xdebugger.impl.PinToTopManagerState):V
-- f:onNodeHovered(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,com.intellij.openapi.Disposable):V
-- f:removeItemInfo(com.intellij.xdebugger.impl.pinned.items.PinnedItemInfo):V
-- f:removeListener(com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopListener):V
-- f:saveState(com.intellij.xdebugger.impl.PinToTopManagerState):V
-f:com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager$Companion
-- f:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager
 f:com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction
 - com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 - sf:Companion:com.intellij.xdebugger.impl.pinned.items.actions.XDebuggerPinToTopAction$Companion
@@ -2370,7 +2346,6 @@ c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - expandNodesOnLoad(com.intellij.openapi.util.Condition):V
 - getData(java.lang.String):java.lang.Object
 - getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-- getPinToTopManager():com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager
 - getProject():com.intellij.openapi.project.Project
 - getRoot():com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 - s:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List

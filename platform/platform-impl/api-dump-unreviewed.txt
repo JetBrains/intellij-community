@@ -8376,7 +8376,7 @@ a:com.intellij.ide.plugins.newui.PluginsGroupComponentWithProgress
 - stopLoading():V
 a:com.intellij.ide.plugins.newui.PluginsTab
 - f:mySearchListener:com.intellij.ui.components.labels.LinkListener
-- p:mySearchTextField:com.intellij.ide.plugins.newui.PluginSearchTextField
+- p:searchTextField:com.intellij.ide.plugins.newui.PluginSearchTextField
 - <init>():V
 - clearSearchPanel(java.lang.String):V
 - pa:createDetailsPanel(com.intellij.ui.components.labels.LinkListener):com.intellij.ide.plugins.newui.PluginDetailsPageComponent
@@ -25574,7 +25574,6 @@ f:com.intellij.ui.colorpicker.ColorValuePanel
 - f:getColorField3():com.intellij.ui.colorpicker.ColorValueField
 - f:getColorFormatButtonPanel():com.intellij.ui.colorpicker.ButtonPanel
 - f:getHexField():com.intellij.ui.colorpicker.ColorValueField
-- f:getUpdateAlarm():com.intellij.util.Alarm
 - insertUpdate(javax.swing.event.DocumentEvent):V
 - removeUpdate(javax.swing.event.DocumentEvent):V
 - requestFocusInWindow():Z

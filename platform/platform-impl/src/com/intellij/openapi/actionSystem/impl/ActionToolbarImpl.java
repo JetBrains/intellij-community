@@ -39,7 +39,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.animation.AlphaAnimationContext;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -1067,9 +1067,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       else {
         AnimatedIcon icon = AnimatedIcon.Default.INSTANCE;
         label.setIcon(EmptyIcon.create(icon.getIconWidth(), icon.getIconHeight()));
-        EdtScheduledExecutorService.getInstance().schedule(() -> {
+        EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), () -> {
           label.setIcon(icon);
-        }, Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
+        });
       }
     }
     myForcedUpdateRequested = true;

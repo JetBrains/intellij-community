@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm.ThreadToUse
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
 
 private val LOG: Logger = logger<SingleAlarm>()
 
@@ -257,7 +259,7 @@ class SingleAlarm @Internal constructor(
 
   @TestOnly
   fun waitForAllExecuted(timeout: Long, timeUnit: TimeUnit) {
-    assert(ApplicationManager.getApplication().isUnitTestMode)
+    require(ApplicationManager.getApplication().isUnitTestMode)
 
     val currentJob = currentJob ?: return
     @Suppress("RAW_RUN_BLOCKING", "RedundantSuppression")
@@ -270,6 +272,24 @@ class SingleAlarm @Internal constructor(
       catch (e: TimeoutCancellationException) {
         // compatibility - throw TimeoutException as before
         throw TimeoutException(e.message)
+      }
+    }
+  }
+
+  @TestOnly
+  internal fun waitForAllExecutedInEdt(timeout: Duration) {
+    require(ApplicationManager.getApplication().isUnitTestMode)
+
+    if (currentJob == null) {
+      return
+    }
+
+    @Suppress("RAW_RUN_BLOCKING", "RedundantSuppression")
+    runBlocking {
+      withTimeout(timeout) {
+        while (currentJob != null) {
+          EDT.dispatchAllInvocationEvents()
+        }
       }
     }
   }
@@ -299,11 +319,13 @@ class SingleAlarm @Internal constructor(
     val effectiveDelay = if (forceRun) 0 else delay.toLong()
     synchronized(LOCK) {
       var prevCurrentJob = currentJob
-      if (cancelCurrent) {
-        prevCurrentJob?.cancel()
-      }
-      else if (prevCurrentJob != null) {
-        return
+      if (prevCurrentJob != null) {
+        if (cancelCurrent) {
+          prevCurrentJob.cancel()
+        }
+        else {
+          return
+        }
       }
 
       currentJob = taskCoroutineScope.launch {
@@ -340,16 +362,37 @@ class SingleAlarm @Internal constructor(
     }
   }
 
-  internal fun scheduleTask(delay: Long, customModalityState: CoroutineContext?, task: suspend () -> Unit) {
+  /**
+   * If [cancelCurrent] is true, it behaves as `debounce`.
+   * If [cancelCurrent] is false, it behaves as `throttle` (that's how SingleAlarm works, if you call [request] several times).
+   */
+  internal fun scheduleTask(
+    delay: Long,
+    customModality: CoroutineContext?,
+    cancelCurrent: Boolean = true,
+    task: suspend () -> Unit,
+  ) {
+    if (isDisposed) {
+      return
+    }
+
     synchronized(LOCK) {
       var prevCurrentJob = currentJob
-      prevCurrentJob?.cancel()
+      if (prevCurrentJob != null) {
+        if (cancelCurrent) {
+          prevCurrentJob.cancel()
+        }
+        else {
+          return
+        }
+      }
+
       currentJob = taskCoroutineScope.launch {
         prevCurrentJob?.join()
         prevCurrentJob = null
 
         delay(delay)
-        withContext(if (customModalityState == null) taskContext else (taskContext + customModalityState)) {
+        withContext(if (customModality == null) taskContext else (taskContext + customModality)) {
           try {
             task()
           }

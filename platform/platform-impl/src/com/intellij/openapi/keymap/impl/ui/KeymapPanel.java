@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.VMOptions;
@@ -38,7 +38,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.touchbar.Helpers;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IoErrorText;
 import com.intellij.util.ui.JBUI;
@@ -394,12 +394,11 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
     actionToolbar.setTargetComponent(myActionsTree.getTree());
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
-    final Alarm alarm = new Alarm();
+    SingleEdtTaskScheduler alarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
     myFilterComponent = new FilterComponent("KEYMAP", 5) {
       @Override
       public void filter() {
-        alarm.cancelAllRequests();
-        alarm.addRequest(() -> {
+        alarm.cancelAndRequest(300, () -> {
           if (!myFilterComponent.isShowing()) return;
           myTreeExpansionMonitor.freeze();
           myFilteringPanel.setShortcut(null);
@@ -414,7 +413,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
           else {
             myTreeExpansionMonitor.unfreeze();
           }
-        }, 300);
+        });
       }
     };
     myFilterComponent.reset();

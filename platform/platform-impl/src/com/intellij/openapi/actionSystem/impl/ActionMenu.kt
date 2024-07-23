@@ -38,22 +38,22 @@ import com.intellij.ui.plaf.beg.IdeaMenuUI
 import com.intellij.util.FontUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.Job
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
 import javax.swing.*
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import javax.swing.event.MenuEvent
 import javax.swing.event.MenuListener
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("RedundantConstructorKeyword")
 class ActionMenu constructor(private val context: DataContext?,
@@ -272,7 +272,7 @@ class ActionMenu constructor(private val context: DataContext?,
   }
 
   private inner class MenuListenerImpl : ChangeListener, MenuListener {
-    var delayedClear: ScheduledFuture<*>? = null
+    var delayedClear: Job? = null
     var isSelected: Boolean = false
 
     override fun stateChanged(e: ChangeEvent) {
@@ -324,7 +324,7 @@ class ActionMenu constructor(private val context: DataContext?,
         // When a user selects item of a system menu (under macOS), AppKit generates such sequence: CloseParentMenu -> PerformItemAction
         // So we can destroy menu-item before item's action performed, and because of that action will not be executed.
         // Defer clearing to avoid this problem.
-        delayedClear = EdtScheduledExecutorService.getInstance().schedule(clearSelf, 1000, TimeUnit.MILLISECONDS)
+        delayedClear = EdtScheduler.getInstance().schedule(1.seconds, clearSelf)
       }
       else {
         clearSelf.run()
@@ -344,7 +344,7 @@ class ActionMenu constructor(private val context: DataContext?,
       }
       Disposer.register(disposable!!, helper)
       if (delayedClear != null) {
-        delayedClear!!.cancel(false)
+        delayedClear!!.cancel()
         delayedClear = null
         clearItems()
       }

@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.util.Alarm
+import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -46,7 +46,7 @@ internal class TerminalBlocksDecorator(
     outputModel.addListener(this)
     EditorUtil.disposeWithEditor(editor, gradientCache)
     editor.markupModel.addRangeHighlighter(0, 0,
-                                           // the order doesn't matter because there is only custom renderer with its own order
+                                           // the order doesn't matter because there is only a custom renderer with its own order
                                            HighlighterLayer.LAST, null,
                                            HighlighterTargetArea.LINES_IN_RANGE).apply {
       isGreedyToLeft = true
@@ -107,11 +107,11 @@ internal class TerminalBlocksDecorator(
         // Remove inactive state with a delay to make it after selected blocks change.
         // Because otherwise, the old selected block will first become active, and then the selection will be removed.
         // So, it will cause blinking. But with delay, the selection will be removed first, and it won't become active.
-        Alarm().addRequest(Runnable {
+        EdtScheduler.getInstance().schedule(150) {
           if (!editor.isDisposed) {
             updateSelectionDecorationState(selectionModel.selectedBlocks)
           }
-        }, 150)
+        }
       }
     })
   }
@@ -122,7 +122,7 @@ internal class TerminalBlocksDecorator(
       return
     }
 
-    // add additional empty space on top of the block, if it is the first block
+    // add additional empty space on top of the block if it is the first block
     val topRenderer = EmptyWidthInlayRenderer {
       val additionalInset = if (outputModel.blocks[0] === block) TerminalUi.blocksGap else 0
       TerminalUi.blockTopInset + additionalInset
@@ -137,7 +137,7 @@ internal class TerminalBlocksDecorator(
     else null
 
     val bgHighlighter = editor.markupModel.addRangeHighlighter(block.startOffset, block.endOffset,
-                                                               // the order doesn't matter because there is only custom renderer with its own order
+                                                               // the order doesn't matter because there is only a custom renderer with its own order
                                                                HighlighterLayer.LAST, null,
                                                                HighlighterTargetArea.LINES_IN_RANGE)
     bgHighlighter.isGreedyToRight = true

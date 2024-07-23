@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -24,7 +23,7 @@ import com.intellij.ui.components.BrowserLink;
 import com.intellij.ui.components.JBFontScaler;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
@@ -131,7 +130,7 @@ public class HelpTooltip {
   private BooleanSupplier masterPopupOpenCondition;
 
   private JBPopup myPopup;
-  private final Alarm popupAlarm = new Alarm();
+  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private boolean isOverPopup;
   private boolean isMultiline;
   private int myInitialDelay = -1;
@@ -230,7 +229,7 @@ public class HelpTooltip {
   }
 
   /**
-   * Set HelpTooltip initial delay. Tooltip is show after component's mouse enter plus initial delay.
+   * Set HelpTooltip initial delay. A tooltip is show after component's mouse entering plus initial delay.
    * @param delay - non negative value for initial delay
    * @return {@code this}
    * @throws IllegalArgumentException if delay is less than zero
@@ -271,10 +270,10 @@ public class HelpTooltip {
   }
 
   /**
-   * Enables link in the tooltip below description and sets action for it.
+   * Enables a link in the tooltip below description and sets action for it.
    *
    * @param linkText text to show in the link.
-   * @param linkAction action to execute when link is clicked.
+   * @param linkAction action to execute when a link is clicked.
    * @return {@code this}
    */
   public HelpTooltip setLink(@NlsContexts.LinkLabel String linkText, Runnable linkAction) {
@@ -282,10 +281,10 @@ public class HelpTooltip {
   }
 
   /**
-   * Enables link in the tooltip below description and sets action for it.
+   * Enables a link in the tooltip below description and sets action for it.
    *
    * @param linkText text to show in the link.
-   * @param linkAction action to execute when link is clicked.
+   * @param linkAction action to execute when a link is clicked.
    * @param external whether the link is "external" or not
    * @return {@code this}
    */
@@ -301,7 +300,7 @@ public class HelpTooltip {
   }
 
   /**
-   * Enables link in the tooltip below description and sets BrowserUtil.browse action for it.
+   * Enables a link in the tooltip below description and sets `BrowserUtil.browse` action for it.
    * It's then painted with a small arrow button.
    *
    * @param linkLabel text to show in the link.
@@ -496,7 +495,7 @@ public class HelpTooltip {
   /**
    * Hides and disposes the tooltip possibly installed on the mentioned component. Disposing means
    * unregistering all {@code HelpTooltip} specific listeners installed on the component.
-   * If there is no tooltip installed on the component nothing happens.
+   * If there is no tooltip installed on the component, nothing happens.
    *
    * @param owner a possible {@code HelpTooltip} owner.
    */
@@ -519,7 +518,7 @@ public class HelpTooltip {
   /**
    * Hides the tooltip possibly installed on the mentioned component without disposing.
    * Listeners are not removed.
-   * If there is no tooltip installed on the component nothing happens.
+   * If there is no tooltip installed on the component, nothing happens.
    *
    * @param owner a possible {@code HelpTooltip} owner.
    */
@@ -591,11 +590,17 @@ public class HelpTooltip {
   }
 
   private void scheduleShow(MouseEvent e, int delay) {
-    popupAlarm.cancelAllRequests();
-    if (isTooltipDisabled(e.getComponent())) return;
-    if (ScreenReader.isActive()) return; // Disable HelpTooltip in screen reader mode.
+    popupAlarm.cancel();
 
-    popupAlarm.addRequest((ContextAwareRunnable) () -> {
+    if (isTooltipDisabled(e.getComponent())) {
+      return;
+    }
+    if (ScreenReader.isActive()) {
+      // disable HelpTooltip in screen reader mode
+      return;
+    }
+
+    popupAlarm.request(delay, () -> {
       initialShowScheduled = false;
       if (masterPopupOpenCondition != null && !masterPopupOpenCondition.getAsBoolean()) {
         return;
@@ -605,12 +610,12 @@ public class HelpTooltip {
       String text = owner instanceof JComponent ? ((JComponent)owner).getToolTipText(e) : null;
       if (myPopup != null && !myPopup.isDisposed()) {
         if (Strings.isEmpty(text) && Strings.isEmpty(myToolTipText)) {
-          return; // do nothing if a tooltip become empty
+          return; // do nothing if a tooltip becomes empty
         }
         if (Objects.equals(text, myToolTipText)) {
           return; // do nothing if a tooltip is not changed
         }
-        myPopup.cancel(); // cancel previous popup before showing a new one
+        myPopup.cancel(); // cancel the previous popup before showing a new one
       }
 
       myToolTipText = text;
@@ -620,23 +625,25 @@ public class HelpTooltip {
       myPopup = popupBuilder.createPopup();
       myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, tipPanel.getPreferredSize(), e.getPoint())));
       if (!neverHide) {
+        //noinspection SpellCheckingInspection
         int dismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
         scheduleHide(true, dismissDelay);
       }
-    }, delay);
+    });
   }
 
   private void scheduleHide(boolean force, int delay) {
-    popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest((ContextAwareRunnable)() -> hidePopup(force), delay);
+    popupAlarm.cancelAndRequest(delay, () -> hidePopup(force));
   }
 
   protected void hidePopup(boolean force) {
     initialShowScheduled = false;
-    popupAlarm.cancelAllRequests();
+    popupAlarm.cancel();
 
     if (myPopup != null && (!isOverPopup || force)) {
-      if (myPopup.isVisible()) myPopup.cancel();
+      if (myPopup.isVisible()) {
+        myPopup.cancel();
+      }
       myPopup = null;
       myToolTipText = null;
     }

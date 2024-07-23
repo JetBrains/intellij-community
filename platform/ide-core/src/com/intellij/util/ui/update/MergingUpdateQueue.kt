@@ -320,7 +320,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
     waiterForMerge.scheduleTask(
       delay = mergingTimeSpan.toLong(),
-      customModalityState = (if (!executeInDispatchThread || modalityStateComponent === ANY_COMPONENT) {
+      customModality = (if (!executeInDispatchThread || modalityStateComponent === ANY_COMPONENT) {
         null
       }
       else {

@@ -58,7 +58,7 @@ import com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.ScrollableMultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.WrapMultiRowLayout
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
-import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
@@ -269,7 +269,7 @@ class EditorTabbedContainer internal constructor(
     get() = editorTabs
 }
 
-@ApiStatus.Internal
+@Internal
 class DockableEditor(
   @JvmField internal val img: Image?,
   @JvmField internal val file: VirtualFile,
@@ -344,18 +344,18 @@ private fun doProcessDoubleClick(e: MouseEvent, editorTabs: JBTabsImpl, window: 
 
 private fun createKeepMousePositionRunnable(event: MouseEvent): () -> Unit {
   return {
-    EdtScheduledExecutorService.getInstance().schedule({
-                                                         val component = event.component
-                                                         if (component != null && component.isShowing) {
-                                                           val p = component.locationOnScreen
-                                                           p.translate(event.x, event.y)
-                                                           try {
-                                                             Robot().mouseMove(p.x, p.y)
-                                                           }
-                                                           catch (ignored: AWTException) {
-                                                           }
-                                                         }
-                                                       }, 50, TimeUnit.MILLISECONDS)
+    EdtScheduler.getInstance().schedule(50) {
+      val component = event.component
+      if (component != null && component.isShowing) {
+        val p = component.locationOnScreen
+        p.translate(event.x, event.y)
+        try {
+          Robot().mouseMove(p.x, p.y)
+        }
+        catch (ignored: AWTException) {
+        }
+      }
+    }
   }
 }
 

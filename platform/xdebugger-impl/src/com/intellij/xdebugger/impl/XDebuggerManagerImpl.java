@@ -103,7 +103,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     myBreakpointManager = new XBreakpointManagerImpl(project, this, messageBusConnection, coroutineScope);
     myWatchesManager = new XDebuggerWatchesManager(project, coroutineScope);
-    myPinToTopManager = new XDebuggerPinToTopManager();
+    myPinToTopManager = new XDebuggerPinToTopManager(coroutineScope);
     myExecutionPointManager = new XDebuggerExecutionPointManager(project, coroutineScope);
 
     messageBusConnection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
@@ -214,8 +214,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   @Override
-  @NotNull
-  public XBreakpointManagerImpl getBreakpointManager() {
+  public @NotNull XBreakpointManagerImpl getBreakpointManager() {
     return myBreakpointManager;
   }
 
@@ -223,8 +222,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return myWatchesManager;
   }
 
-  @NotNull
-  public XDebuggerPinToTopManager getPinToTopManager() {
+  public @NotNull XDebuggerPinToTopManager getPinToTopManager() {
     return myPinToTopManager;
   }
 
@@ -238,16 +236,14 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   }
 
   @Override
-  @NotNull
-  public XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter)
+  public @NotNull XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter)
     throws ExecutionException {
     return startSession(environment.getContentToReuse(), processStarter, new XDebugSessionImpl(environment, this));
   }
 
   @Override
-  @NotNull
-  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
-                                              @NotNull XDebugProcessStarter starter) throws ExecutionException {
+  public @NotNull XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException {
     return startSessionAndShowTab(sessionName, contentToReuse, false, starter);
   }
 
@@ -258,21 +254,19 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return startSessionAndShowTab(sessionName, null, environment, environment.getContentToReuse(), false, starter);
   }
 
-  @NotNull
   @Override
-  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
-                                              boolean showToolWindowOnSuspendOnly,
-                                              @NotNull XDebugProcessStarter starter) throws ExecutionException {
+  public @NotNull XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+                                                       boolean showToolWindowOnSuspendOnly,
+                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException {
     return startSessionAndShowTab(sessionName, null, contentToReuse, showToolWindowOnSuspendOnly, starter);
   }
 
-  @NotNull
   @Override
-  public XDebugSession startSessionAndShowTab(@NotNull String sessionName,
-                                              Icon icon,
-                                              @Nullable RunContentDescriptor contentToReuse,
-                                              boolean showToolWindowOnSuspendOnly,
-                                              @NotNull XDebugProcessStarter starter) throws ExecutionException {
+  public @NotNull XDebugSession startSessionAndShowTab(@NotNull String sessionName,
+                                                       Icon icon,
+                                                       @Nullable RunContentDescriptor contentToReuse,
+                                                       boolean showToolWindowOnSuspendOnly,
+                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException {
     return startSessionAndShowTab(sessionName, icon, null, contentToReuse, showToolWindowOnSuspendOnly, starter);
   }
 
@@ -327,7 +321,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return session;
   }
 
-  void removeSession(@NotNull final XDebugSessionImpl session) {
+  void removeSession(final @NotNull XDebugSessionImpl session) {
     XDebugSessionTab sessionTab = session.getSessionTab();
     mySessions.remove(session.getDebugProcess().getProcessHandler());
     if (sessionTab != null &&
@@ -357,13 +351,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @Override
   public XDebugSession @NotNull [] getDebugSessions() {
-    // ConcurrentHashMap.values().toArray(new T[0]) guaranteed to return array with no nulls
+    // ConcurrentHashMap.values().toArray(new T[0]) guaranteed to return an array with no nulls
     return mySessions.values().toArray(new XDebugSessionImpl[0]);
   }
 
   @Override
-  @Nullable
-  public XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole) {
+  public @Nullable XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole) {
     synchronized (mySessions) {
       for (final XDebugSessionImpl debuggerSession : mySessions.values()) {
         XDebugSessionTab sessionTab = debuggerSession.getSessionTab();
@@ -378,17 +371,15 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return null;
   }
 
-  @NotNull
   @Override
-  public <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass) {
+  public @NotNull <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass) {
     synchronized (mySessions) {
       return StreamEx.of(mySessions.values()).map(XDebugSessionImpl::getDebugProcess).select(processClass).toList();
     }
   }
 
   @Override
-  @Nullable
-  public XDebugSessionImpl getCurrentSession() {
+  public @Nullable XDebugSessionImpl getCurrentSession() {
     return myActiveSession.get();
   }
 

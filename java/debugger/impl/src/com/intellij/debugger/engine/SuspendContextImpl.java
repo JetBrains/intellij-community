@@ -96,7 +96,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     myVotesToVote = eventVotes;
     myEventSet = set;
     myDebugId = debugId;
-    Disposer.register(debugProcess.myDisposable, this);
+    Disposer.register(debugProcess.disposable, this);
   }
 
   public VirtualMachineProxyImpl getVirtualMachineProxy() {

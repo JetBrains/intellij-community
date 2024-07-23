@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -39,9 +39,9 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -70,8 +70,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER;
 
-public class PropagateAnnotationPanel extends JPanel implements Disposable {
-
+public final class PropagateAnnotationPanel extends JPanel implements Disposable {
   private final Tree myTree;
   @NotNull
   private final Project myProject;
@@ -261,11 +260,10 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
     };
   }
 
-  private static class PropagateTreeListener implements TreeSelectionListener, Disposable {
-
+  private static final class PropagateTreeListener implements TreeSelectionListener, Disposable {
     private final ElementEditor myUsageEditor;
     private final ElementEditor myMemberEditor;
-    private final Alarm myAlarm = new Alarm();
+    private final SingleEdtTaskScheduler alarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
     private PropagateTreeListener(@NotNull Editor usageEditor,
                                   @NotNull Editor memberEditor) {
@@ -278,8 +276,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
       TreePath path = e.getPath();
       if (path == null) return;
       TaintNode taintNode = (TaintNode)path.getLastPathComponent();
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(() -> updateEditorTexts(taintNode), 300);
+      alarm.cancelAndRequest(300, () -> updateEditorTexts(taintNode));
     }
 
     void updateEditorTexts(@NotNull TaintNode taintNode) {
@@ -308,6 +305,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
 
     @Override
     public void dispose() {
+      alarm.dispose();
       Disposer.dispose(myUsageEditor);
       Disposer.dispose(myMemberEditor);
     }
@@ -420,7 +418,7 @@ public class PropagateAnnotationPanel extends JPanel implements Disposable {
     }
   }
 
-  private static class PropagateTree extends Tree implements DataProvider {
+  private static final class PropagateTree extends Tree implements DataProvider {
     private PropagateTree(TreeModel treeModel) {
       super(treeModel);
       getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);

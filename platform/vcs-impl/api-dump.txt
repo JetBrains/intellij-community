@@ -2532,12 +2532,9 @@ f:com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterComponent
 - removeChangeListener(javax.swing.event.ChangeListener):V
 - resetFilterBase():V
 - setFilterBase(java.util.List):V
-c:com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog
+f:com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor,com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings):V
-- p:createCenterPanel():javax.swing.JComponent
-- p:doOKAction():V
-- p:getDimensionServiceKey():java.lang.String
 - getSettings():com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings
 com.intellij.openapi.vcs.changes.committed.CommittedChangesListener
 - changesCleared():V

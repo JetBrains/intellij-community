@@ -14,11 +14,11 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,10 +29,10 @@ import java.awt.event.KeyEvent;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
-public class ThreadsPanel extends DebuggerTreePanel {
+public final class ThreadsPanel extends DebuggerTreePanel {
   @NonNls private static final String POPUP_ACTION_NAME = "Debugger.ThreadsPanelPopup";
   @NonNls private static final String HELP_ID = "debugging.debugThreads";
-  private final Alarm myUpdateLabelsAlarm = new Alarm();
+  private final SingleEdtTaskScheduler updateLabelsAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private static final int LABELS_UPDATE_DELAY_MS = 200;
 
   public ThreadsPanel(Project project, final DebuggerStateManager stateManager) {
@@ -57,7 +57,7 @@ public class ThreadsPanel extends DebuggerTreePanel {
           startLabelsUpdate();
         }
         else if (DebuggerSession.Event.PAUSE == event || DebuggerSession.Event.DETACHED == event || DebuggerSession.Event.DISPOSE == event) {
-          myUpdateLabelsAlarm.cancelAllRequests();
+          updateLabelsAlarm.cancel();
         }
         if (DebuggerSession.Event.DETACHED == event || DebuggerSession.Event.DISPOSE == event) {
           stateManager.removeListener(this);
@@ -68,11 +68,11 @@ public class ThreadsPanel extends DebuggerTreePanel {
   }
 
   private void startLabelsUpdate() {
-    if (myUpdateLabelsAlarm.isDisposed()) {
+    if (updateLabelsAlarm.isDisposed()) {
       return;
     }
-    myUpdateLabelsAlarm.cancelAllRequests();
-    myUpdateLabelsAlarm.addRequest(new Runnable() {
+
+    updateLabelsAlarm.cancelAndRequest(LABELS_UPDATE_DELAY_MS, new Runnable() {
       @Override
       public void run() {
         boolean updateScheduled = false;
@@ -113,16 +113,16 @@ public class ThreadsPanel extends DebuggerTreePanel {
 
       private void reschedule() {
         final DebuggerSession session = getContext().getDebuggerSession();
-        if (session != null && session.isAttached() && !session.isPaused() && !myUpdateLabelsAlarm.isDisposed()) {
-          myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.nonModal());
+        if (session != null && session.isAttached() && !session.isPaused() && !updateLabelsAlarm.isDisposed()) {
+          ApplicationManager.getApplication().invokeLater(() -> updateLabelsAlarm.request(LABELS_UPDATE_DELAY_MS, this), ModalityState.any());
         }
       }
-    }, LABELS_UPDATE_DELAY_MS, ModalityState.nonModal());
+    });
   }
 
   @Override
   public void dispose() {
-    Disposer.dispose(myUpdateLabelsAlarm);
+    updateLabelsAlarm.dispose();
     super.dispose();
   }
 

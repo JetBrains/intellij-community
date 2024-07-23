@@ -79,7 +79,7 @@ import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -585,12 +585,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       Disposer.register(popup, indicator::cancel);
 
       // show popup only if find usages takes more than 300ms, otherwise it would flicker needlessly
-      EdtScheduledExecutorService.getInstance().schedule(() -> {
+      EdtScheduler.getInstance().schedule(ourPopupDelayTimeout, () -> {
         if (!usageView.isDisposed()) {
           showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef);
           popupSpan.end();
         }
-      }, ourPopupDelayTimeout, TimeUnit.MILLISECONDS);
+      });
     }
 
     UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, table.USAGES_OUTSIDE_SCOPE_SEPARATOR);

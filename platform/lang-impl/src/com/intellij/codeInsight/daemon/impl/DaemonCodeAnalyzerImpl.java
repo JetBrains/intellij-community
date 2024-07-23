@@ -81,6 +81,7 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.context.Context;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -133,7 +134,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private final AtomicInteger daemonCancelEventCount = new AtomicInteger();
   private final DaemonListener myDaemonListenerPublisher;
 
-  public DaemonCodeAnalyzerImpl(@NotNull Project project) {
+  public DaemonCodeAnalyzerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     // DependencyValidationManagerImpl adds scope listener, so we need to force service creation
     DependencyValidationManager.getInstance(project);
 
@@ -163,6 +164,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
     myListeners = new DaemonListeners(project, this);
     Disposer.register(this, myListeners);
+    repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null, null, coroutineScope);
   }
 
   @NotNull
@@ -390,7 +392,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     repaintTrafficIcon(session.getPsiFile(), editor, progress);
   }
 
-  private final Alarm repaintIconAlarm = new Alarm();
+  private final Alarm repaintIconAlarm;
+
   private void repaintTrafficIcon(@NotNull PsiFile file, @Nullable Editor editor, double progress) {
     if (ApplicationManager.getApplication().isCommandLine()) return;
     ApplicationManager.getApplication().assertIsNonDispatchThread();

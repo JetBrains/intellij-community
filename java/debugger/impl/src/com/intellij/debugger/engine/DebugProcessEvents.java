@@ -72,7 +72,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   public DebugProcessEvents(Project project) {
     super(project);
-    DebuggerSettings.getInstance().addCapturePointsSettingsListener(this::createStackCapturingBreakpoints, myDisposable);
+    DebuggerSettings.getInstance().addCapturePointsSettingsListener(this::createStackCapturingBreakpoints, disposable);
   }
 
   @Override
@@ -434,7 +434,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
             }
           });
         }
-      }, true, myDisposable);
+      }, true, disposable);
 
       myDebugProcessDispatcher.getMulticaster().processAttached(this);
 

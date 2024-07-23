@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutorService;
@@ -10,12 +11,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An {@link ExecutorService} implementation which
- * schedules tasks to the EDT for execution.
- */
+ * An {@link ExecutorService} implementation which schedules tasks to the EDT for execution.
+  * Use coroutines.
+  */
+@ApiStatus.Obsolete
 public interface EdtScheduledExecutorService extends ScheduledExecutorService {
-  @NotNull
-  static EdtScheduledExecutorService getInstance() {
+  static @NotNull EdtScheduledExecutorService getInstance() {
     return EdtScheduledExecutorServiceImpl.INSTANCE;
   }
 

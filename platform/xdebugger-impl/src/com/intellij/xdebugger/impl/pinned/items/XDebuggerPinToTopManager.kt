@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.pinned.items
 
 import com.intellij.openapi.Disposable
@@ -13,32 +13,33 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import icons.PlatformDebuggerImplIcons
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Internal
 
-open class XDebuggerPinToTopManager {
-
+@Internal
+class XDebuggerPinToTopManager(coroutineScope: CoroutineScope) {
   companion object {
-    fun getInstance(project: Project): XDebuggerPinToTopManager =
-      (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).pinToTopManager
+    fun getInstance(project: Project): XDebuggerPinToTopManager {
+      return (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).pinToTopManager
+    }
 
     private const val DEFAULT_ICON_DELAY = 300L
   }
 
-  private val myListeners = mutableListOf<XDebuggerPinToTopListener>()
+  private val listeners = mutableListOf<XDebuggerPinToTopListener>()
 
-  private var myNodeHoverLifetime: Disposable? = null
-  private var myActiveNode: XDebuggerTreeNode? = null
-  private var myPinnedMembers = HashSet<PinnedItemInfo>()
-  private val myPinToTopIconAlarm = Alarm()
+  private var nodeHoverLifetime: Disposable? = null
+  private var activeNode: XDebuggerTreeNode? = null
+  private var pinnedMembers = HashSet<PinnedItemInfo>()
+  private val pinToTopIconAlarm = Alarm(threadToUse = Alarm.ThreadToUse.SWING_THREAD, coroutineScope = coroutineScope)
 
   val pinToTopComparator: Comparator<XValueNodeImpl> = Comparator.comparing { !isItemPinned(it) }
   val compoundComparator = pinToTopComparator.then(XValueNodeImpl.COMPARATOR)
 
-  fun isEnabled(): Boolean {
-    return Registry.`is`("debugger.field.pin.to.top", true)
-  }
+  fun isEnabled(): Boolean = Registry.`is`("debugger.field.pin.to.top", true)
 
   fun onNodeHovered(node: XDebuggerTreeNode?, lifetimeHolder: Disposable) {
-    if (myActiveNode == node) {
+    if (activeNode == node) {
       return
     }
     if (!isEnabled()) {
@@ -55,6 +56,7 @@ open class XDebuggerPinToTopManager {
     if (!valueNode.canBePinned() || node.isPinned(this)) {
       return
     }
+
     var oldIcon = valueNode.icon
 
     val changeIconLifetime = Disposable {
@@ -62,69 +64,69 @@ open class XDebuggerPinToTopManager {
       if (node.icon == PlatformDebuggerImplIcons.PinToTop.UnpinnedItem && xValuePresentation != null) {
         node.setPresentation(oldIcon, xValuePresentation, !node.isLeaf)
       }
-      myActiveNode = null
-      myNodeHoverLifetime = null
+      activeNode = null
+      nodeHoverLifetime = null
     }
-    myActiveNode = node
-    myNodeHoverLifetime = changeIconLifetime
+    activeNode = node
+    nodeHoverLifetime = changeIconLifetime
 
-    myPinToTopIconAlarm.addRequest(
-      {
+    pinToTopIconAlarm.addRequest(
+      request = {
         val xValuePresentation = node.valuePresentation ?: return@addRequest
-        oldIcon = node.icon //update icon with actual value
+        // update icon with actual value
+        oldIcon = node.icon
         node.setPresentation(PlatformDebuggerImplIcons.PinToTop.UnpinnedItem, xValuePresentation, !node.isLeaf)
-      }, DEFAULT_ICON_DELAY)
+      },
+      delayMillis = DEFAULT_ICON_DELAY,
+    )
     Disposer.register(lifetimeHolder, changeIconLifetime)
   }
 
   fun addListener(listener: XDebuggerPinToTopListener, disposable: Disposable) {
-    myListeners.add(listener)
-    Disposer.register(disposable, Disposable { myListeners.remove(listener) })
+    listeners.add(listener)
+    Disposer.register(disposable, Disposable { listeners.remove(listener) })
   }
 
   fun removeListener(listener: XDebuggerPinToTopListener) {
-    myListeners.remove(listener)
+    listeners.remove(listener)
   }
 
-  fun getPinnedItemInfos() = myPinnedMembers.toList()
+  fun getPinnedItemInfos() = pinnedMembers.toList()
 
   fun addItemInfo(info: PinnedItemInfo) {
-    myPinnedMembers.add(info)
-    for (listener in myListeners) {
+    pinnedMembers.add(info)
+    for (listener in listeners) {
       listener.onPinnedItemAdded(info)
     }
   }
 
   fun removeItemInfo(info: PinnedItemInfo) {
-    myPinnedMembers.remove(info)
-    for (listener in myListeners) {
+    pinnedMembers.remove(info)
+    for (listener in listeners) {
       listener.onPinnedItemRemoved(info)
     }
   }
 
   fun isItemPinned(node: XValueNodeImpl?): Boolean = node.isPinned(this)
 
-  fun isPinned(pinnedItemInfo: PinnedItemInfo): Boolean {
-    return myPinnedMembers.contains(pinnedItemInfo)
-  }
+  fun isPinned(pinnedItemInfo: PinnedItemInfo): Boolean = pinnedMembers.contains(pinnedItemInfo)
 
   private fun disposeCurrentNodeHoverSubscription() {
-    Disposer.dispose(myNodeHoverLifetime ?: return)
-    myNodeHoverLifetime = null
-    myPinToTopIconAlarm.cancelAllRequests()
+    Disposer.dispose(nodeHoverLifetime ?: return)
+    nodeHoverLifetime = null
+    pinToTopIconAlarm.cancelAllRequests()
   }
 
   fun saveState(state: PinToTopManagerState) {
-    state.pinnedMembersList = myPinnedMembers.toMutableList()
+    state.pinnedMembersList = pinnedMembers.toMutableList()
   }
 
   fun loadState(state: PinToTopManagerState) {
-    myPinnedMembers.addAll(state.pinnedMembersList)
+    pinnedMembers.addAll(state.pinnedMembersList)
   }
 
   fun isPinToTopSupported(node: XDebuggerTreeNode?): Boolean {
-    if (node !is XValueContainerNode<*>) return false
-    return node.valueContainer is PinToTopValue
+    return if (node is XValueContainerNode<*>) return node.valueContainer is PinToTopValue else false
   }
 }
 

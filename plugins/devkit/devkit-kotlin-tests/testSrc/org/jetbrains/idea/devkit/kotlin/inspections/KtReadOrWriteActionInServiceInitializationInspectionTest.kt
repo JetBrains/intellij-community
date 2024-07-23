@@ -227,7 +227,7 @@ class KtReadOrWriteActionInServiceInitializationInspectionTest : ReadOrWriteActi
       internal class TestService {
         private val myListener1: ProjectCloseListener
         private val myListener2: ProjectCloseListener
-        private val myAlarm = <warning descr="[DEPRECATION] 'constructor Alarm()' is deprecated. Please flow or at least pass coroutineScope">Alarm</warning>()
+        private val myAlarm = <warning descr="[DEPRECATION] 'constructor Alarm()' is deprecated. Please use flow or at least pass coroutineScope">Alarm</warning>()
       
         init {
           myListener1 = object : ProjectCloseListener {

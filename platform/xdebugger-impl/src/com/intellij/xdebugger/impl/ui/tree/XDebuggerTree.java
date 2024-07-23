@@ -340,6 +340,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return myValueMarkers;
   }
 
+  @ApiStatus.Internal
   public @NotNull XDebuggerPinToTopManager getPinToTopManager() {
     return myPinToTopManager;
   }

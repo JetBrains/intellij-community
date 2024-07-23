@@ -279,8 +279,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private VirtualFile myVirtualFile;
   private @Nullable Dimension myPreferredSize;
 
-  private final Alarm myMouseSelectionStateAlarm = new Alarm();
-  private Runnable myMouseSelectionStateResetRunnable;
+  private final SingleEdtTaskScheduler mouseSelectionStateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+  private Runnable mouseSelectionStateResetRunnable;
 
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
@@ -3687,13 +3687,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMouseSelectionState = mouseSelectionState;
     myMouseSelectionChangeTimestamp = System.currentTimeMillis();
 
-    myMouseSelectionStateAlarm.cancelAllRequests();
+    mouseSelectionStateAlarm.cancel();
     if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE) {
-      if (myMouseSelectionStateResetRunnable == null) {
-        myMouseSelectionStateResetRunnable = () -> resetMouseSelectionState(null, null);
+      if (mouseSelectionStateResetRunnable == null) {
+        mouseSelectionStateResetRunnable = () -> resetMouseSelectionState(null, null);
       }
-      myMouseSelectionStateAlarm.addRequest(myMouseSelectionStateResetRunnable, Registry.intValue("editor.mouseSelectionStateResetTimeout"),
-                                            ModalityState.stateForComponent(myEditorComponent));
+      mouseSelectionStateAlarm.request(Registry.intValue("editor.mouseSelectionStateResetTimeout"),
+                                       ModalityState.stateForComponent(myEditorComponent),
+                                       mouseSelectionStateResetRunnable);
     }
   }
 
@@ -3707,7 +3708,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void cancelAutoResetForMouseSelectionState() {
-    myMouseSelectionStateAlarm.cancelAllRequests();
+    mouseSelectionStateAlarm.cancel();
   }
 
   void replaceInputMethodText(@NotNull InputMethodEvent e) {

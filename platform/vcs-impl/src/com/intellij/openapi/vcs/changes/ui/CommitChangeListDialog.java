@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -118,7 +118,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Nullable private final String myHelpId;
 
-  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm();
+  @NotNull private final Alarm okButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
     updateButtons();
     updateLegend();
@@ -531,7 +531,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myDisposed = true;
     Disposer.dispose(getBrowser());
     Disposer.dispose(myCommitMessageArea);
-    Disposer.dispose(myOKButtonUpdateAlarm);
+    Disposer.dispose(okButtonUpdateAlarm);
     super.dispose();
     Disposer.dispose(myDiffDetails);
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, mySplitter.getProportion(), SPLITTER_PROPORTION_OPTION_DEFAULT);
@@ -593,8 +593,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       myCommitAction.setEnabled(enabled);
     }
     myExecutorActions.forEach(action -> action.updateEnabled(enabled));
-    myOKButtonUpdateAlarm.cancelAllRequests();
-    myOKButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(getBrowser()));
+    okButtonUpdateAlarm.cancelAllRequests();
+    okButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(getBrowser()));
   }
 
   private void updateLegend() {

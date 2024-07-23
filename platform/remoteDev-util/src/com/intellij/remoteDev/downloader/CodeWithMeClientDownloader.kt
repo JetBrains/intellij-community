@@ -29,7 +29,7 @@ import com.intellij.remoteDev.util.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.HttpRequests
@@ -60,10 +60,10 @@ import java.nio.file.attribute.FileTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.*
 import kotlin.math.min
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Experimental
 object CodeWithMeClientDownloader {
@@ -834,7 +834,7 @@ object CodeWithMeClientDownloader {
               if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 && lifetime.isAlive) {
                 if (attemptCount > 0) {
                   LOG.info("Previous attempt to start guest process failed, will try again in one second")
-                  EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)
+                  EdtScheduler.getInstance().schedule(1.seconds, ModalityState.any()) { doRunProcess() }
                 }
                 else {
                   LOG.warn("Running client process failed after specified number of attempts")

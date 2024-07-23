@@ -171,17 +171,18 @@ public class ActionButtonWithText extends ActionButton {
     if (UISettings.isIdeHelpTooltipEnabled()) {
       HelpTooltip.dispose(this);
       HelpTooltip tooltip = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
-      if (StringUtil.isNotEmpty(description) && tooltip == null) {
+      if (tooltip == null && !StringUtil.isEmpty(description)) {
         tooltip = new HelpTooltip().setDescription(description);
         Boolean property = myPresentation.getClientProperty(SHORTCUT_SHOULD_SHOWN);
-        if(property != null && property) {
+        if (property != null && property) {
           tooltip.setShortcut(getShortcutText());
         }
       }
       if (tooltip != null) {
         tooltip.installOn(this);
       }
-    } else {
+    }
+    else {
       setToolTipText(description);
     }
   }

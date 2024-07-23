@@ -22,7 +22,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
-import com.intellij.util.Alarm
+import com.intellij.util.SingleEdtTaskScheduler
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
@@ -51,15 +51,14 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   private lateinit var nothingFoundRow: Row
   private var onlyShowModified = false
 
-  private val searchAlarm = Alarm()
+  private val searchAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler()
 
   private val searchField = SearchTextField().apply {
     textEditor.emptyText.text = ApplicationBundle.message("search.advanced.settings")
 
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        searchAlarm.cancelAllRequests()
-        searchAlarm.addRequest(Runnable { updateSearch() }, 300)
+        searchAlarm.cancelAndRequest(300, Runnable { updateSearch() })
       }
     })
   }

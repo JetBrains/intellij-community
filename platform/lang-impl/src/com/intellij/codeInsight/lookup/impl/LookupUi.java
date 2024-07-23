@@ -39,7 +39,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -53,7 +53,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.concurrent.TimeUnit;
 
 final class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
@@ -61,12 +60,12 @@ final class LookupUi {
   private final @NotNull LookupImpl myLookup;
   private final Advertiser myAdvertiser;
   private final JBList<?> myList;
-  private final ModalityState myModalityState;
+  private final ModalityState modalityState;
   private final Alarm myHintAlarm = new Alarm();
   private final JScrollPane myScrollPane;
-  private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
+  private final AsyncProcessIcon processIcon = new AsyncProcessIcon("Completion progress");
   private final ActionButton myMenuButton;
-  private final ActionButton myHintButton;
+  private final ActionButton hintButton;
   private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
@@ -77,7 +76,7 @@ final class LookupUi {
     myAdvertiser = advertiser;
     myList = list;
 
-    myProcessIcon.setVisible(false);
+    processIcon.setVisible(false);
     myLookup.resort(false);
 
     MenuAction menuAction = new MenuAction();
@@ -109,17 +108,17 @@ final class LookupUi {
     });
 
     AnAction hintAction = new HintAction();
-    myHintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
-                                    ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-    myHintButton.setVisible(false);
+    hintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
+                                  ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    hintButton.setVisible(false);
 
     LookupLayeredPane layeredPane = new LookupLayeredPane();
 
     if (showBottomPanel) {
       myBottomPanel = new JPanel(new LookupBottomLayout());
       myBottomPanel.add(myAdvertiser.getAdComponent());
-      myBottomPanel.add(myProcessIcon);
-      myBottomPanel.add(myHintButton);
+      myBottomPanel.add(processIcon);
+      myBottomPanel.add(hintButton);
       myBottomPanel.add(myMenuButton);
       if (ExperimentalUI.isNewUI()) {
         myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
@@ -147,14 +146,14 @@ final class LookupUi {
 
     layeredPane.mainPanel.add(myScrollPane, BorderLayout.CENTER);
 
-    myModalityState = ModalityState.stateForComponent(lookup.getTopLevelEditor().getComponent());
+    modalityState = ModalityState.stateForComponent(lookup.getTopLevelEditor().getComponent());
 
     addListeners();
 
     Disposer.register(lookup, new Disposable() {
       @Override
       public void dispose() {
-        myProcessIcon.dispose();
+        processIcon.dispose();
       }
     });
     Disposer.register(lookup, myHintAlarm);
@@ -179,23 +178,23 @@ final class LookupUi {
 
   private void updateHint() {
     myLookup.checkValid();
-    if (myHintButton.isVisible()) {
-      myHintButton.setVisible(false);
+    if (hintButton.isVisible()) {
+      hintButton.setVisible(false);
     }
 
     LookupElement item = myLookup.getCurrentItem();
     if (item != null && item.isValid()) {
       ReadAction.nonBlocking(() -> myLookup.getActionsFor(item))
         .expireWhen(() -> !item.isValid() || myHintAlarm.isDisposed())
-        .finishOnUiThread(myModalityState, actions -> {
+        .finishOnUiThread(modalityState, actions -> {
           if (!actions.isEmpty()) {
             myHintAlarm.addRequest(() -> {
               if (ShowHideIntentionIconLookupAction.shouldShowLookupHint() &&
                   !((CompletionExtender)myList.getExpandableItemsHandler()).isShowing() &&
-                  !myProcessIcon.isVisible()) {
-                myHintButton.setVisible(true);
+                  !processIcon.isVisible()) {
+                hintButton.setVisible(true);
               }
-            }, 500, myModalityState);
+            }, 500, modalityState);
           }
         })
         .submit(AppExecutorUtil.getAppExecutorService());
@@ -204,26 +203,26 @@ final class LookupUi {
 
   void setCalculating(boolean calculating) {
     if (calculating) {
-      myProcessIcon.resume();
+      processIcon.resume();
     }
     else {
-      myProcessIcon.suspend();
+      processIcon.suspend();
     }
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
+    EdtScheduler.getInstance().schedule(100, modalityState, () -> {
       if (myLookup.isLookupDisposed()) {
         return;
       }
-      if (calculating && myHintButton.isVisible()) {
-        myHintButton.setVisible(false);
+      if (calculating && hintButton.isVisible()) {
+        hintButton.setVisible(false);
       }
-      myProcessIcon.setVisible(calculating);
+      processIcon.setVisible(calculating);
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!calculating && !myLookup.isLookupDisposed()) {
           updateHint();
         }
-      }, myModalityState);
-    }, myModalityState, 100, TimeUnit.MILLISECONDS);
+      }, modalityState);
+    });
   }
 
   void refreshUi(boolean selectionVisible, boolean itemsChanged, boolean reused, boolean onExplicitAction) {
@@ -516,7 +515,7 @@ final class LookupUi {
     public Dimension preferredLayoutSize(Container parent) {
       Insets insets = parent.getInsets();
       Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
-      Dimension hintButtonSize = myHintButton.getPreferredSize();
+      Dimension hintButtonSize = hintButton.getPreferredSize();
       Dimension menuButtonSize = myMenuButton.getPreferredSize();
 
       return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width + insets.left + insets.right,
@@ -527,7 +526,7 @@ final class LookupUi {
     public Dimension minimumLayoutSize(Container parent) {
       Insets insets = parent.getInsets();
       Dimension adSize = myAdvertiser.getAdComponent().getMinimumSize();
-      Dimension hintButtonSize = myHintButton.getMinimumSize();
+      Dimension hintButtonSize = hintButton.getMinimumSize();
       Dimension menuButtonSize = myMenuButton.getMinimumSize();
 
       return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width + insets.left + insets.right,
@@ -546,19 +545,19 @@ final class LookupUi {
 
       myMenuButton.setBounds(x, y + insets.top, menuButtonSize.width, menuButtonSize.height);
 
-      Dimension myHintButtonSize = myHintButton.getPreferredSize();
-      if (myHintButton.isVisible() && !myProcessIcon.isVisible()) {
+      Dimension myHintButtonSize = hintButton.getPreferredSize();
+      if (hintButton.isVisible() && !processIcon.isVisible()) {
         x -= myHintButtonSize.width;
         y = (innerHeight - myHintButtonSize.height) / 2;
-        myHintButton.setBounds(x, y + insets.top, myHintButtonSize.width, myHintButtonSize.height);
+        hintButton.setBounds(x, y + insets.top, myHintButtonSize.width, myHintButtonSize.height);
       }
-      else if (!myHintButton.isVisible() && myProcessIcon.isVisible()) {
-        Dimension myProcessIconSize = myProcessIcon.getPreferredSize();
+      else if (!hintButton.isVisible() && processIcon.isVisible()) {
+        Dimension myProcessIconSize = processIcon.getPreferredSize();
         x -= myProcessIconSize.width;
         y = (innerHeight - myProcessIconSize.height) / 2;
-        myProcessIcon.setBounds(x, y + insets.top, myProcessIconSize.width, myProcessIconSize.height);
+        processIcon.setBounds(x, y + insets.top, myProcessIconSize.width, myProcessIconSize.height);
       }
-      else if (!myHintButton.isVisible() && !myProcessIcon.isVisible()) {
+      else if (!hintButton.isVisible() && !processIcon.isVisible()) {
         x -= myHintButtonSize.width;
       }
       else {

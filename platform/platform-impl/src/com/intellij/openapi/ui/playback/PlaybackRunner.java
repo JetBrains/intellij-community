@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
@@ -14,7 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
 import io.opentelemetry.context.Context;
@@ -261,11 +261,11 @@ public class PlaybackRunner {
           int delay = getDelay(command);
           if (delay > 0) {
             if (SwingUtilities.isEventDispatchThread()) {
-              EdtScheduledExecutorService.getInstance().schedule(Context.current().wrap(() -> {
+              EdtScheduler.getInstance().schedule(delay, Context.current().wrap(() -> {
                 if (!onStop.isDisposed()) {
                   executeFrom(commandIndex + 1, context.getBaseDir());
                 }
-              }), delay, TimeUnit.MILLISECONDS);
+              }));
             }
             else {
               LockSupport.parkUntil(System.currentTimeMillis() + delay);

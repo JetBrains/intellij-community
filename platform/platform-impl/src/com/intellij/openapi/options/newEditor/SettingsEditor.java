@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -33,7 +33,7 @@ import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -468,11 +468,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       myEditor.revalidate();
     }
     if (configurable != null) {
-      new Alarm().addRequest(() -> {
+      EdtScheduler.getInstance().schedule(300, () -> {
         if (!myDisposed && mySpotlightPainter != null) {
           mySpotlightPainter.updateNow();
         }
-      }, 300);
+      });
     }
   }
 
