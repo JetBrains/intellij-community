@@ -17,17 +17,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.inlineDocumentationItems;
 import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS;
@@ -82,10 +78,15 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
   @NotNull
   public static Items calculateItemsToRender(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     boolean enabled = DocRenderManager.isDocRenderingEnabled(editor);
+    return calculateItemsToRender(editor.getDocument(), psiFile, enabled);
+  }
+
+  @NotNull
+  static Items calculateItemsToRender(@NotNull Document document, @NotNull PsiFile psiFile, boolean enabled) {
     Items items = new Items();
     for (InlineDocumentation documentation : inlineDocumentationItems(psiFile)) {
       TextRange range = documentation.getDocumentationRange();
-      if (isValidRange(editor, range)) {
+      if (isValidRange(document, range)) {
         String textToRender = enabled ? calcText(documentation) : null;
         items.addItem(new Item(range, textToRender));
       }
@@ -93,8 +94,7 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
     return items;
   }
 
-  static boolean isValidRange(@NotNull Editor editor, @NotNull TextRange range) {
-    Document document = editor.getDocument();
+  static boolean isValidRange(@NotNull Document document, @NotNull TextRange range) {
     CharSequence text = document.getImmutableCharSequence();
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
@@ -138,6 +138,18 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
 
   public static final class Items implements Iterable<Item> {
     private final Map<TextRange, Item> myItems = new LinkedHashMap<>();
+    private final boolean isZombie;
+
+    public Items() {
+      this(Collections.emptyList(), false);
+    }
+
+    Items(@NotNull Collection<@NotNull Item> items, boolean zombie) {
+      isZombie = zombie;
+      for (Item item : items) {
+        addItem(item);
+      }
+    }
 
     public boolean isEmpty() {
       return myItems.isEmpty();
@@ -157,13 +169,17 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
     public Iterator<Item> iterator() {
       return myItems.values().iterator();
     }
+
+    boolean isZombie() {
+      return isZombie;
+    }
   }
 
   public static final class Item {
     public final TextRange textRange;
     public final @Nls String textToRender;
 
-    private Item(@NotNull TextRange textRange, @Nullable @Nls String textToRender) {
+    public Item(@NotNull TextRange textRange, @Nullable @Nls String textToRender) {
       this.textRange = textRange;
       this.textToRender = textToRender;
     }
