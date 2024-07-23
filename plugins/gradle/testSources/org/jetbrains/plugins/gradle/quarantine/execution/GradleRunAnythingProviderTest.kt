@@ -304,7 +304,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   private fun getExecutionOutputRegexString(command: String, args: String): String {
     return """
-          |\d+:\d+:\d+(\p{javaSpaceChar}(AM|PM))?: Executing '$command'...
+          |\d+:\d+:\d+(\p{javaSpaceChar}(AM|PM))?: Executing '$command'…
           |
           |(?:Starting Gradle Daemon...
           |Gradle Daemon started in .* ms
