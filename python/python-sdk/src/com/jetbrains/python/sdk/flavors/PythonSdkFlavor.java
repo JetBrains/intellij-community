@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -218,10 +219,10 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return builder.toString();
   }
 
-  public static @NotNull List<PythonSdkFlavor<?>> getApplicableFlavors() {
-    return getApplicableFlavors(true);
-  }
-
+  /**
+   * List of flavors starting from platform-independent, so venv flavor goes before unix or windows flavor.
+   * That could be used to find the first flavor that is {@link PythonSdkFlavor#isValidSdkPath(File)} for example
+   */
   public static @NotNull List<PythonSdkFlavor<?>> getApplicableFlavors(boolean addPlatformIndependent) {
     List<PythonSdkFlavor<?>> result = new ArrayList<>();
     for (PythonSdkFlavor<?> flavor : EP_NAME.getExtensionList()) {
@@ -232,6 +233,10 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
 
     result.addAll(getPlatformFlavorsFromExtensions(addPlatformIndependent));
 
+    // Sort flavors to make venv go before unix/windows, see method doc
+    if (addPlatformIndependent) {
+      result.sort((f1, f2) -> Boolean.compare(f2.isPlatformIndependent(), f1.isPlatformIndependent()));
+    }
     return result;
   }
 
@@ -270,15 +275,27 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * @deprecated SDK path is not enough to get flavor, use {@link #getFlavor(Sdk)} instead
+   * @deprecated SDK path is not enough to get flavor, use {@link #getFlavor(Sdk)} instead.
+   * if you do not have sdk yet, and you want to guess the flavor, use {@link #tryDetectFlavorByLocalPath(Path)}
    */
   @Deprecated
   @Nullable
   public static PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
     if (sdkPath == null || PythonSdkUtil.isCustomPythonSdkHomePath(sdkPath)) return null;
+    return tryDetectFlavorByLocalPath(Path.of(sdkPath));
+  }
 
-    for (PythonSdkFlavor<?> flavor : getApplicableFlavors()) {
-      if (flavor.isValidSdkHome(sdkPath)) {
+  /**
+   * Detects {@link PythonSdkFlavor} for local python path
+   */
+  @RequiresBackgroundThread(generateAssertion = false) //No warning yet as there are usages: to be fixed
+  public static @Nullable PythonSdkFlavor<?> tryDetectFlavorByLocalPath(@NotNull Path sdkPath) {
+    var sdkPathStr = sdkPath.toString();
+
+    // Iterate over all flavors starting with platform-independent (like venv): see `getApplicableFlavors` doc.
+    // Order is important as venv must have priority over unix/windows
+    for (PythonSdkFlavor<?> flavor : getApplicableFlavors(true)) {
+      if (flavor.isValidSdkHome(sdkPathStr)) {
         return flavor;
       }
     }

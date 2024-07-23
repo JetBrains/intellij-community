@@ -208,7 +208,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
       setAssociatedModulePath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
       var flavorId = JDOMExternalizer.readString(element, FLAVOR_ID);
       if (flavorId != null) {
-        var flavorOpt = PythonSdkFlavor.getApplicableFlavors().stream().filter(f -> f.getUniqueId().equals(flavorId)).findFirst();
+        var flavorOpt = PythonSdkFlavor.getApplicableFlavors(true).stream().filter(f -> f.getUniqueId().equals(flavorId)).findFirst();
         if (flavorOpt.isPresent()) {
           setFlavorFromConfig(element, flavorOpt.get());
         }
