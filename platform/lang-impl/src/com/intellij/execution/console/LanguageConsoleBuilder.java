@@ -38,13 +38,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.BiFunction;
 
 @ApiStatus.Experimental
 public final class LanguageConsoleBuilder {
   private @Nullable LanguageConsoleView consoleView;
   private Condition<? super LanguageConsoleView> executionEnabled = Conditions.alwaysTrue();
 
-  private @Nullable PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
+  private @Nullable BiFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
   private @Nullable BaseConsoleExecuteActionHandler executeActionHandler;
   private @Nullable String historyType;
 
@@ -173,21 +174,21 @@ public final class LanguageConsoleBuilder {
   }
 
   public static final class MyHelper extends LanguageConsoleImpl.Helper {
-    private final PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
+    private final BiFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
 
     public MyHelper(@NotNull  Project project,
                     @NotNull String title,
                     @NotNull Language language,
-                    @Nullable PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory) {
+                    @Nullable BiFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory) {
       super(project, new LightVirtualFile(title, language, ""));
       this.psiFileFactory = psiFileFactory;
     }
 
     @Override
     public @NotNull PsiFile getFile() {
-      return psiFileFactory == null ? super.getFile() : psiFileFactory.fun(virtualFile, project);
+      return psiFileFactory == null ? super.getFile() : psiFileFactory.apply(virtualFile, project);
     }
 
     @Override
@@ -209,7 +210,7 @@ public final class LanguageConsoleBuilder {
     }
 
     @Override
-    boolean isHistoryViewerForceAdditionalColumnsUsage() {
+    public boolean isHistoryViewerForceAdditionalColumnsUsage() {
       return false;
     }
 
@@ -286,7 +287,7 @@ public final class LanguageConsoleBuilder {
     }
 
     @Override
-    protected void doAddPromptToHistory() {
+    public void doAddPromptToHistory() {
       gutterContentProvider.beforeEvaluate(getHistoryViewer());
     }
 

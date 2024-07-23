@@ -1,88 +1,49 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.execution.console;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.console
 
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.lang.Language
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 
-import static com.intellij.openapi.util.NlsContexts.TabTitle;
+interface LanguageConsoleView : ConsoleView, Disposable {
+  companion object {
+    @JvmField
+    val EXECUTION_EDITOR_KEY: Key<ConsoleExecutionEditor> = Key("EXECUTION_EDITOR_KEY")
+  }
 
-/**
- * @author gregsh
- */
-public interface LanguageConsoleView extends ConsoleView, Disposable {
-  Key<ConsoleExecutionEditor> EXECUTION_EDITOR_KEY = new Key<>("EXECUTION_EDITOR_KEY");
+  val project: Project
 
-  @NotNull
-  Project getProject();
+  var title: @NlsContexts.TabTitle String
 
-  @NotNull @TabTitle String getTitle();
+  val file: PsiFile?
 
-  void setTitle(@TabTitle @NotNull String title);
+  val virtualFile: VirtualFile
 
-  @NotNull
-  PsiFile getFile();
+  val currentEditor: EditorEx
 
-  @NotNull
-  VirtualFile getVirtualFile();
+  val consoleEditor: EditorEx
 
-  @NotNull
-  EditorEx getCurrentEditor();
+  val editorDocument: Document
 
-  @NotNull
-  EditorEx getConsoleEditor();
+  val historyViewer: EditorEx
 
-  @NotNull
-  Document getEditorDocument();
+  var language: Language
 
-  @NotNull
-  EditorEx getHistoryViewer();
+  var prompt: String?
 
-  @NotNull
-  Language getLanguage();
+  var promptAttributes: ConsoleViewContentType
 
-  void setLanguage(@NotNull Language language);
+  fun setInputText(inputText: String)
 
-  @Nullable
-  String getPrompt();
+  var isEditable: Boolean
 
-  @Nullable
-  ConsoleViewContentType getPromptAttributes();
-
-  void setPrompt(@Nullable String prompt);
-
-  void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes);
-
-  void setInputText(@NotNull String inputText);
-
-  boolean isEditable();
-
-  void setEditable(boolean editable);
-
-  boolean isConsoleEditorEnabled();
-
-  void setConsoleEditorEnabled(boolean enabled);
+  var isConsoleEditorEnabled: Boolean
 }
