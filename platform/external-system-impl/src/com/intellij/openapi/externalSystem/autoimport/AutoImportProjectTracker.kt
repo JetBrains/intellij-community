@@ -309,18 +309,33 @@ class AutoImportProjectTracker(
   init {
     LOG.debug("Project tracker initialization")
 
-    projectReloadOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
-    projectReloadOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
-    projectChangeOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
-    projectChangeOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
-    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { scheduleChangeProcessing() }
-    settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) { scheduleChangeProcessing() }
-    projectReloadOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project reload start event") }
-    projectReloadOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project reload finish event") }
-    projectChangeOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project change start event") }
-    projectChangeOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project change finish event") }
-    isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) { LOG.debug("Detected project lookup start event") }
-    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { LOG.debug("Detected project lookup finish event") }
+    projectReloadOperation.whenOperationStarted(serviceDisposable) {
+      LOG.debug("Detected project reload start event")
+      notificationAware.notificationExpire()
+    }
+    projectReloadOperation.whenOperationFinished(serviceDisposable) {
+      LOG.debug("Detected project reload finish event")
+      scheduleChangeProcessing()
+    }
+    projectChangeOperation.whenOperationStarted(serviceDisposable) {
+      LOG.debug("Detected project change start event")
+      notificationAware.notificationExpire()
+    }
+    projectChangeOperation.whenOperationFinished(serviceDisposable) {
+      LOG.debug("Detected project change finish event")
+      scheduleChangeProcessing()
+    }
+    isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) {
+      LOG.debug("Detected project lookup start event")
+    }
+    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) {
+      LOG.debug("Detected project lookup finish event")
+      scheduleChangeProcessing()
+    }
+    settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) {
+      LOG.debug("Detected project reload type change event")
+      scheduleChangeProcessing()
+    }
 
     dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
     asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }
