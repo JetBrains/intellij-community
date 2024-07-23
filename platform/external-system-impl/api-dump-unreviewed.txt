@@ -169,8 +169,6 @@ e:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
 - getDescription(com.intellij.openapi.externalSystem.model.ProjectSystemId):java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.model.settings.LocationSettingType
 - s:values():com.intellij.openapi.externalSystem.model.settings.LocationSettingType[]
-com.intellij.openapi.externalSystem.service.DisposableExternalSystemService
-- a:onExternalSystemUnlinked(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.project.Project):V
 com.intellij.openapi.externalSystem.service.ExternalSystemCommunicationManager
 - a:acquire(java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
 - a:clear():V
