@@ -1,458 +1,382 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.impl;
+@file:Suppress("ReplaceGetOrSet")
 
-import com.google.common.base.CharMatcher;
-import com.intellij.codeInsight.folding.impl.FoldingUtil;
-import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
-import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.execution.ConsoleFolding;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.actions.ClearConsoleAction;
-import com.intellij.execution.actions.ConsoleActionsPostProcessor;
-import com.intellij.execution.actions.EOFAction;
-import com.intellij.execution.filters.*;
-import com.intellij.execution.filters.Filter.ResultItem;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.ObservableConsoleView;
-import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
-import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.toolWindow.InternalDecoratorImpl;
-import com.intellij.ui.AncestorListenerAdapter;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+package com.intellij.execution.impl
 
-import javax.swing.*;
-import javax.swing.event.AncestorEvent;
-import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.io.IOException;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.google.common.base.CharMatcher
+import com.intellij.codeInsight.folding.impl.FoldingUtil
+import com.intellij.codeInsight.navigation.IncrementalSearchHandler
+import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase
+import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
+import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
+import com.intellij.execution.ConsoleFolding
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.actions.ClearConsoleAction
+import com.intellij.execution.actions.ConsoleActionsPostProcessor
+import com.intellij.execution.actions.EOFAction
+import com.intellij.execution.filters.*
+import com.intellij.execution.impl.ConsoleState.NotStartedStated
+import com.intellij.execution.impl.ConsoleViewImpl.Companion.CONSOLE_VIEW_IN_EDITOR_VIEW
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.execution.ui.ObservableConsoleView
+import com.intellij.ide.CommonActionsManager
+import com.intellij.ide.OccurenceNavigator
+import com.intellij.ide.OccurenceNavigator.OccurenceInfo
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.startup.StartupManagerEx
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.command.undo.UndoUtil
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.ClientEditorManager.Companion.getClientEditor
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.actionSystem.TypedAction
+import com.intellij.openapi.editor.actionSystem.TypedActionHandler
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
+import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.VisibleAreaEvent
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FoldingModelEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbService.Companion.getInstance
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.pom.Navigatable
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.toolWindow.InternalDecoratorImpl.Companion.componentWithEditorBackgroundAdded
+import com.intellij.toolWindow.InternalDecoratorImpl.Companion.componentWithEditorBackgroundRemoved
+import com.intellij.ui.AncestorListenerAdapter
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.*
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.CharArrayUtil
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
+import java.awt.BorderLayout
+import java.awt.datatransfer.DataFlavor
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
+import java.io.IOException
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Consumer
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.event.AncestorEvent
+import kotlin.concurrent.Volatile
+import kotlin.math.max
+import kotlin.math.min
 
-public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, UiCompatibleDataProvider, OccurenceNavigator {
-  private static final @NonNls String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
-  private static final Logger LOG = Logger.getInstance(ConsoleViewImpl.class);
+open class ConsoleViewImpl protected constructor(
+  project: Project,
+  searchScope: GlobalSearchScope,
+  viewer: Boolean,
+  initialState: ConsoleState,
+  usePredefinedMessageFilter: Boolean,
+) : JPanel(BorderLayout()), ConsoleView, ObservableConsoleView, UiCompatibleDataProvider, OccurenceNavigator {
+  @Suppress("LeakingThis")
+  private val flushUserInputAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
+  private val commandLineFolding = CommandLineFolding()
 
-  private static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
+  private val psiDisposedCheck: DisposedPsiManagerCheck
 
-  public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
-  public static final Key<Boolean> IS_CONSOLE_DOCUMENT = Key.create("IS_CONSOLE_DOCUMENT");
+  @JvmField
+  internal val isViewer: Boolean
 
-  private static boolean ourTypedHandlerInitialized;
-  private final Alarm flushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private static final CharMatcher NEW_LINE_MATCHER = CharMatcher.anyOf("\n\r");
+  @get:VisibleForTesting
+  var state: ConsoleState
+    private set
 
-  private final CommandLineFolding myCommandLineFolding = new CommandLineFolding();
+  @Suppress("LeakingThis")
+  private val spareTimeAlarm = Alarm(this)
 
-  private final DisposedPsiManagerCheck myPsiDisposedCheck;
+  @Suppress("LeakingThis")
+  private val heavyAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
-  private final boolean myIsViewer;
-  private @NotNull ConsoleState myState;
+  @Volatile
+  private var heavyUpdateTicket = 0
+  private val myPredefinedFiltersUpdateExpirableTokenProvider = ExpirableTokenProvider()
+  private val myListeners: MutableCollection<ObservableConsoleView.ChangeListener> = CopyOnWriteArraySet()
 
-  private final Alarm mySpareTimeAlarm = new Alarm(this);
+  private val customActions: MutableList<AnAction> = ArrayList()
 
-  private final @NotNull Alarm heavyAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private volatile int heavyUpdateTicket;
-  private final ExpirableTokenProvider myPredefinedFiltersUpdateExpirableTokenProvider = new ExpirableTokenProvider();
-  private final Collection<ChangeListener> myListeners = new CopyOnWriteArraySet<>();
-
-  private final List<AnAction> customActions = new ArrayList<>();
   /**
-   * the text from {@link #print(String, ConsoleViewContentType)} goes there and stays there until {@link #flushDeferredText()} is called
+   * the text from [.print] goes there and stays there until [.flushDeferredText] is called
    * guarded by LOCK
    */
-  private final TokenBuffer myDeferredBuffer = new TokenBuffer(ConsoleBuffer.useCycleBuffer() && ConsoleBuffer.getCycleBufferSize() > 0 ? ConsoleBuffer.getCycleBufferSize() : Integer.MAX_VALUE);
+  private val myDeferredBuffer = TokenBuffer(
+    if (ConsoleBuffer.useCycleBuffer() && ConsoleBuffer.getCycleBufferSize() > 0) ConsoleBuffer.getCycleBufferSize() else Int.MAX_VALUE)
 
-  private boolean myUpdateFoldingsEnabled = true;
+  private var myUpdateFoldingsEnabled = true
 
-  private MyDiffContainer myJLayeredPane;
-  private JPanel myMainPanel;
-  private boolean myAllowHeavyFilters;
-  protected boolean myCancelStickToEnd; // accessed in EDT only
+  private var layeredPane: MyDiffContainer? = null
+  private var myMainPanel: JPanel? = null
+  private var myAllowHeavyFilters = false
+  protected var myCancelStickToEnd: Boolean = false // accessed in EDT only
 
-  private final Alarm flushAlarm = new Alarm(this);
+  @Suppress("LeakingThis")
+  private val flushAlarm = Alarm(this)
 
-  private final Project myProject;
+  val project: Project
 
-  private boolean myOutputPaused; // guarded by LOCK
+  private var myOutputPaused = false // guarded by LOCK
 
   // do not access directly, use getEditor() for proper synchronization
-  private EditorEx myEditor; // guarded by LOCK
+  private var myEditor: EditorEx? = null // guarded by LOCK
 
-  private final Object LOCK = ObjectUtils.sentinel("ConsoleView lock");
+  private val LOCK = ObjectUtils.sentinel("ConsoleView lock")
 
-  private String myHelpId;
+  private var myHelpId: String? = null
 
-  private final GlobalSearchScope mySearchScope;
+  private val mySearchScope: GlobalSearchScope
 
-  private final List<Filter> myCustomFilters = new SmartList<>();
+  private val myCustomFilters: MutableList<Filter> = SmartList()
 
-  private final @NotNull InputFilter myInputMessageFilter;
-  protected volatile List<Filter> myPredefinedFilters = Collections.emptyList();
+  private val myInputMessageFilter: InputFilter
 
-  public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
-    this(project, GlobalSearchScope.allScope(project), viewer, true);
-  }
+  @Volatile
+  @JvmField
+  protected var predefinedFilters: List<Filter> = emptyList()
 
-  public ConsoleViewImpl(@NotNull Project project,
-                         @NotNull GlobalSearchScope searchScope,
-                         boolean viewer,
-                         boolean usePredefinedMessageFilter) {
-    this(project, searchScope, viewer,
-         new ConsoleState.NotStartedStated() {
-           @Override
-           public @NotNull ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
-             return new ConsoleViewRunningState(console, processHandler, this, true, true);
-           }
-         },
-         usePredefinedMessageFilter);
-  }
+  constructor(project: Project, viewer: Boolean) : this(project, GlobalSearchScope.allScope(project), viewer, true)
 
-  protected ConsoleViewImpl(@NotNull Project project,
-                            @NotNull GlobalSearchScope searchScope,
-                            boolean viewer,
-                            @NotNull ConsoleState initialState,
-                            boolean usePredefinedMessageFilter) {
-    super(new BorderLayout());
-    initTypedHandler();
-    myIsViewer = viewer;
-    myState = initialState;
-    myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
-    myProject = project;
-    mySearchScope = searchScope;
-
-    myInputMessageFilter = ConsoleViewUtil.computeInputFilter(this, project, searchScope);
-    project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      private long myLastStamp;
-
-      @Override
-      public void enteredDumbMode() {
-        Editor editor = getEditor();
-        if (editor == null) return;
-        myLastStamp = editor.getDocument().getModificationStamp();
+  constructor(
+    project: Project,
+    searchScope: GlobalSearchScope,
+    viewer: Boolean,
+    usePredefinedMessageFilter: Boolean,
+  ) : this(
+    project = project, searchScope = searchScope, viewer = viewer,
+    initialState = object : NotStartedStated() {
+      override fun attachTo(console: ConsoleViewImpl, processHandler: ProcessHandler): ConsoleState {
+        return ConsoleViewRunningState(console, processHandler, this, true, true)
       }
+    },
+    usePredefinedMessageFilter = usePredefinedMessageFilter,
+  )
 
-      @Override
-      public void exitDumbMode() {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          Editor editor = getEditor();
-          if (editor == null || project.isDisposed() || DumbService.getInstance(project).isDumb()) return;
-
-          Document document = editor.getDocument();
-          if (myLastStamp != document.getModificationStamp()) {
-            rehighlightHyperlinksAndFoldings();
-          }
-        });
-      }
-    });
-    ApplicationManager.getApplication().getMessageBus().connect(this)
-      .subscribe(EditorColorsManager.TOPIC, __ -> {
-        ThreadingAssertions.assertEventDispatchThread();
-        if (isDisposed()) return;
-        ConsoleTokenUtil.updateAllTokenTextAttributes(getEditor(), project);
-      });
-    if (usePredefinedMessageFilter) {
-      if (!ClientId.isCurrentlyUnderLocalId() && myPredefinedFilters.isEmpty()) {
-        updatePredefinedFiltersLater(ModalityState.defaultModalityState());
-      }
-      addAncestorListener(new AncestorListenerAdapter() {
-        @Override
-        public void ancestorAdded(AncestorEvent event) {
-          if (myPredefinedFilters.isEmpty()) {
-            updatePredefinedFiltersLater();
-          }
-        }
-      });
-      ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-          @Override
-          public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-            updatePredefinedFiltersLater();
-          }
-
-          @Override
-          public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-            updatePredefinedFiltersLater();
-          }
-        });
-    }
-  }
-
-  private void updatePredefinedFiltersLater() {
-    updatePredefinedFiltersLater(null);
-  }
-
-  private void updatePredefinedFiltersLater(@Nullable ModalityState modalityState) {
+  private fun updatePredefinedFiltersLater(modalityState: ModalityState? = null) {
     ReadAction
-      .nonBlocking(() -> ConsoleViewUtil.computeConsoleFilters(myProject, this, mySearchScope))
+      .nonBlocking<List<Filter>> {
+        ConsoleViewUtil.computeConsoleFilters(
+          project, this, mySearchScope)
+      }
       .expireWith(this)
-      .finishOnUiThread(modalityState != null ? modalityState : ModalityState.stateForComponent(this), filters -> {
-        myPredefinedFilters = filters;
-        rehighlightHyperlinksAndFoldings();
-      }).submit(AppExecutorUtil.getAppExecutorService());
+      .finishOnUiThread(modalityState ?: ModalityState.stateForComponent(this)
+      ) { filters: List<Filter> ->
+        predefinedFilters = filters
+        rehighlightHyperlinksAndFoldings()
+      }.submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  private static void initTypedHandler() {
-    if (ourTypedHandlerInitialized) return;
-    EditorActionManager.getInstance();
-    TypedAction typedAction = TypedAction.getInstance();
-    typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
-    ourTypedHandlerInitialized = true;
-  }
-
-  public Editor getEditor() {
-    synchronized (LOCK) {
-      return myEditor;
+  open val editor: Editor?
+    get() {
+      synchronized(LOCK) {
+        return myEditor
+      }
     }
-  }
 
-  public EditorHyperlinkSupport getHyperlinks() {
-    ThreadingAssertions.assertEventDispatchThread();
-    Editor editor = getEditor();
-    return editor == null ? null : EditorHyperlinkSupport.get(editor);
-  }
+  @RequiresEdt
+  fun getHyperlinks(): EditorHyperlinkSupport? = editor?.let { EditorHyperlinkSupport.get(it) }
 
-  public void scrollToEnd() {
-    ThreadingAssertions.assertEventDispatchThread();
-    Editor editor = getEditor();
-    if (editor == null) return;
-    boolean hasSelection = editor.getSelectionModel().hasSelection();
-    List<CaretState> prevSelection = hasSelection ? editor.getCaretModel().getCaretsAndSelections() : null;
-    scrollToEnd(editor);
+  open fun scrollToEnd() {
+    ThreadingAssertions.assertEventDispatchThread()
+    val editor = editor
+    if (editor == null) return
+    val hasSelection = editor.selectionModel.hasSelection()
+    val prevSelection = if (hasSelection) editor.caretModel.caretsAndSelections else null
+    scrollToEnd(editor)
     if (prevSelection != null) {
-      editor.getCaretModel().setCaretsAndSelections(prevSelection);
+      editor.caretModel.caretsAndSelections = prevSelection
     }
   }
 
-  private void scrollToEnd(@NotNull Editor editor) {
-    ThreadingAssertions.assertEventDispatchThread();
-    EditorUtil.scrollToTheEnd(editor, true);
-    myCancelStickToEnd = false;
+  private fun scrollToEnd(editor: Editor) {
+    ThreadingAssertions.assertEventDispatchThread()
+    EditorUtil.scrollToTheEnd(editor, true)
+    myCancelStickToEnd = false
   }
 
-  public void foldImmediately() {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (!flushAlarm.isEmpty()) {
-      cancelAllFlushRequests();
-      flushDeferredText();
+  fun foldImmediately() {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (!flushAlarm.isEmpty) {
+      cancelAllFlushRequests()
+      flushDeferredText()
     }
 
-    Editor editor = getEditor();
-    FoldingModel model = editor.getFoldingModel();
-    model.runBatchFoldingOperation(() -> {
-      for (FoldRegion region : model.getAllFoldRegions()) {
-        model.removeFoldRegion(region);
+    val editor = editor
+    val model = editor!!.foldingModel
+    model.runBatchFoldingOperation {
+      for (region in model.allFoldRegions) {
+        model.removeFoldRegion(region!!)
       }
-    });
+    }
 
-    updateFoldings(0, editor.getDocument().getLineCount() - 1);
+    updateFoldings(0, editor.document.lineCount - 1)
   }
 
-  @Override
-  public void attachToProcess(@NotNull ProcessHandler processHandler) {
-    myState = myState.attachTo(this, processHandler);
+  override fun attachToProcess(processHandler: ProcessHandler) {
+    state = state.attachTo(this, processHandler)
   }
 
-  @Override
-  public void clear() {
-    synchronized (LOCK) {
-      if (getEditor() == null) return;
+  override fun clear() {
+    synchronized(LOCK) {
+      if (editor == null) return
       // real document content will be cleared on next flush;
-      myDeferredBuffer.clear();
+      myDeferredBuffer.clear()
     }
-    if (!flushAlarm.isDisposed()) {
-      cancelAllFlushRequests();
-      addFlushRequest(0, CLEAR);
-      cancelHeavyAlarm();
+    if (!flushAlarm.isDisposed) {
+      cancelAllFlushRequests()
+      addFlushRequest(0, CLEAR)
+      cancelHeavyAlarm()
     }
   }
 
-  @Override
-  public void scrollTo(int offset) {
-    if (getEditor() == null) return;
-    final class ScrollRunnable extends FlushRunnable {
-      private ScrollRunnable() {
-        super(true); // each request must be executed
+  override fun scrollTo(offset: Int) {
+    if (editor == null) return
+    class ScrollRunnable : FlushRunnable(true) {
+      public override fun doRun() {
+        flushDeferredText()
+        val editor = editor ?: return
+        val moveOffset = getEffectiveOffset(editor)
+        editor.caretModel.moveToOffset(moveOffset)
+        editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
       }
 
-      @Override
-      public void doRun() {
-        flushDeferredText();
-        Editor editor = getEditor();
-        if (editor == null) return;
-        int moveOffset = getEffectiveOffset(editor);
-        editor.getCaretModel().moveToOffset(moveOffset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-      }
-
-      private int getEffectiveOffset(@NotNull Editor editor) {
-        int moveOffset = Math.min(offset, editor.getDocument().getTextLength());
-        if (ConsoleBuffer.useCycleBuffer() && moveOffset >= editor.getDocument().getTextLength()) {
-          moveOffset = 0;
+      fun getEffectiveOffset(editor: Editor): Int {
+        var moveOffset = min(offset.toDouble(), editor.document.textLength.toDouble()).toInt()
+        if (ConsoleBuffer.useCycleBuffer() && moveOffset >= editor.document.textLength) {
+          moveOffset = 0
         }
-        return moveOffset;
+        return moveOffset
       }
     }
-    addFlushRequest(0, new ScrollRunnable());
+    addFlushRequest(0, ScrollRunnable())
   }
 
-  @Override
-  public void requestScrollingToEnd() {
-    if (getEditor() == null) {
-      return;
+  override fun requestScrollingToEnd() {
+    if (editor == null) {
+      return
     }
 
-    addFlushRequest(0, new FlushRunnable(true) {
-      @Override
-      public void doRun() {
-        flushDeferredText();
-        Editor editor = getEditor();
-        if (editor != null && !flushAlarm.isDisposed()) {
-          scrollToEnd(editor);
+    addFlushRequest(0, object : FlushRunnable(true) {
+      public override fun doRun() {
+        flushDeferredText()
+        val editor = editor
+        if (editor != null && !flushAlarm.isDisposed) {
+          scrollToEnd(editor)
         }
       }
-    });
+    })
   }
 
-  private void addFlushRequest(int millis, @NotNull FlushRunnable flushRunnable) {
-    flushRunnable.queue(millis);
+  private fun addFlushRequest(millis: Int, flushRunnable: FlushRunnable) {
+    flushRunnable.queue(millis.toLong())
   }
 
-  @Override
-  public void setOutputPaused(boolean value) {
-    synchronized (LOCK) {
-      myOutputPaused = value;
-      if (!value && getEditor() != null) {
-        requestFlushImmediately();
+  override fun setOutputPaused(value: Boolean) {
+    synchronized(LOCK) {
+      myOutputPaused = value
+      if (!value && editor != null) {
+        requestFlushImmediately()
       }
     }
   }
 
-  @Override
-  public boolean isOutputPaused() {
-    synchronized (LOCK) {
-      return myOutputPaused;
+  override fun isOutputPaused(): Boolean {
+    synchronized(LOCK) {
+      return myOutputPaused
     }
   }
 
-  private boolean keepSlashR = true;
-  public void setEmulateCarriageReturn(boolean emulate) {
-    keepSlashR = emulate;
+  private var keepSlashR = true
+  fun setEmulateCarriageReturn(emulate: Boolean) {
+    keepSlashR = emulate
   }
 
-  @Override
-  public boolean hasDeferredOutput() {
-    synchronized (LOCK) {
-      return myDeferredBuffer.length() > 0;
+  override fun hasDeferredOutput(): Boolean {
+    synchronized(LOCK) {
+      return myDeferredBuffer.length() > 0
     }
   }
 
-  @Override
-  public void performWhenNoDeferredOutput(@NotNull Runnable runnable) {
-    ThreadingAssertions.assertEventDispatchThread();
+  override fun performWhenNoDeferredOutput(runnable: Runnable) {
+    ThreadingAssertions.assertEventDispatchThread()
     if (!hasDeferredOutput()) {
-      runnable.run();
-      return;
+      runnable.run()
+      return
     }
-    if (mySpareTimeAlarm.isDisposed()) {
-      return;
+    if (spareTimeAlarm.isDisposed) {
+      return
     }
-    if (myJLayeredPane == null) {
-      getComponent();
+    if (layeredPane == null) {
+      component
     }
-    mySpareTimeAlarm.addRequest(
-      () -> performWhenNoDeferredOutput(runnable),
+    spareTimeAlarm.addRequest(
+      { performWhenNoDeferredOutput(runnable) },
       100,
-      ModalityState.stateForComponent(myJLayeredPane)
-    );
+      ModalityState.stateForComponent(layeredPane!!)
+    )
   }
 
-  @Override
-  public @NotNull JComponent getComponent() {
-    ThreadingAssertions.assertEventDispatchThread();
+  override fun getComponent(): JComponent {
+    ThreadingAssertions.assertEventDispatchThread()
     if (myMainPanel == null) {
-      myMainPanel = new JPanel(new BorderLayout());
-      myJLayeredPane = new MyDiffContainer(myMainPanel, createCompositeFilter().getUpdateMessage());
-      Disposer.register(this, myJLayeredPane);
-      add(myJLayeredPane, BorderLayout.CENTER);
+      myMainPanel = JPanel(BorderLayout())
+      layeredPane = MyDiffContainer(myMainPanel!!, createCompositeFilter().updateMessage).also {
+        Disposer.register(this, it)
+        add(it, BorderLayout.CENTER)
+      }
     }
 
-    if (getEditor() == null) {
-      EditorEx editor = initConsoleEditor();
-      synchronized (LOCK) {
-        myEditor = editor;
+    if (editor == null) {
+      val editor = initConsoleEditor()
+      synchronized(LOCK) {
+        myEditor = editor
       }
-      requestFlushImmediately();
-      myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
+      requestFlushImmediately()
+      myMainPanel!!.add(createCenterComponent(), BorderLayout.CENTER)
     }
-    return this;
+    return this
   }
 
-  protected @NotNull CompositeFilter createCompositeFilter() {
-    CompositeFilter compositeFilter = new CompositeFilter(myProject, ContainerUtil.concat(myCustomFilters, myPredefinedFilters));
-    compositeFilter.setForceUseAllFilters(true);
-    return compositeFilter;
+  protected open fun createCompositeFilter(): CompositeFilter {
+    val compositeFilter = CompositeFilter(project, ContainerUtil.concat(myCustomFilters, predefinedFilters))
+    compositeFilter.setForceUseAllFilters(true)
+    return compositeFilter
   }
 
   /**
@@ -461,1181 +385,1202 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    *
    * @param component component to add
    */
-  public final void addLayerToPane(@NotNull JComponent component) {
-    ThreadingAssertions.assertEventDispatchThread();
-    getComponent(); // Make sure component exists
-    component.setOpaque(false);
-    component.setVisible(true);
-    myJLayeredPane.add(component, null, 0);
+  fun addLayerToPane(component: JComponent) {
+    ThreadingAssertions.assertEventDispatchThread()
+    getComponent() // Make sure component exists
+    component.isOpaque = false
+    component.isVisible = true
+    layeredPane!!.add(component, null, 0)
   }
 
-  private @NotNull EditorEx initConsoleEditor() {
-    ThreadingAssertions.assertEventDispatchThread();
-    EditorEx editor = createConsoleEditor();
-    registerConsoleEditorActions(editor);
-    editor.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
-    MouseAdapter mouseListener = new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        updateStickToEndState(editor, true);
+  private fun initConsoleEditor(): EditorEx {
+    ThreadingAssertions.assertEventDispatchThread()
+    val editor = createConsoleEditor()
+    registerConsoleEditorActions(editor)
+    editor.scrollPane.border = IdeBorderFactory.createBorder(SideBorder.LEFT)
+    val mouseListener: MouseAdapter = object : MouseAdapter() {
+      override fun mousePressed(e: MouseEvent) {
+        updateStickToEndState(editor, true)
       }
 
-      @Override
-      public void mouseDragged(MouseEvent e) {
-        updateStickToEndState(editor, false);
+      override fun mouseDragged(e: MouseEvent) {
+        updateStickToEndState(editor, false)
       }
 
-      @Override
-      public void mouseWheelMoved(MouseWheelEvent e) {
-        if (e.isShiftDown()) return; // ignore horizontal scrolling
-        updateStickToEndState(editor, false);
+      override fun mouseWheelMoved(e: MouseWheelEvent) {
+        if (e.isShiftDown) return  // ignore horizontal scrolling
+
+        updateStickToEndState(editor, false)
       }
-    };
-    editor.getScrollPane().addMouseWheelListener(mouseListener);
-    editor.getScrollPane().getVerticalScrollBar().addMouseListener(mouseListener);
-    editor.getScrollPane().getVerticalScrollBar().addMouseMotionListener(mouseListener);
-    editor.getScrollingModel().addVisibleAreaListener(e -> {
+    }
+    editor.scrollPane.addMouseWheelListener(mouseListener)
+    editor.scrollPane.verticalScrollBar.addMouseListener(mouseListener)
+    editor.scrollPane.verticalScrollBar.addMouseMotionListener(mouseListener)
+    editor.scrollingModel.addVisibleAreaListener { e: VisibleAreaEvent ->
       // There is a possible case that the console text is populated while the console is not shown (e.g., we're debugging and
       // 'Debugger' tab is active while 'Console' is not). It's also possible that newly added text contains long lines that
       // are soft-wrapped. We want to update viewport position then when the console becomes visible.
-      Rectangle oldR = e.getOldRectangle();
-
-      if (oldR != null && oldR.height <= 0 && e.getNewRectangle().height > 0 && isStickingToEnd(editor)) {
-        scrollToEnd(editor);
+      val oldR = e.oldRectangle
+      if (oldR != null && oldR.height <= 0 && e.newRectangle.height > 0 && isStickingToEnd(
+          editor)
+      ) {
+        scrollToEnd(editor)
       }
-    });
-    return editor;
+    }
+    return editor
   }
 
-  private void updateStickToEndState(@NotNull EditorEx editor, boolean useImmediatePosition) {
-    ThreadingAssertions.assertEventDispatchThread();
-    boolean vScrollAtBottom = isVScrollAtTheBottom(editor, useImmediatePosition);
-    boolean caretAtTheLastLine = isCaretAtTheLastLine(editor);
+  private fun updateStickToEndState(editor: EditorEx, useImmediatePosition: Boolean) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val vScrollAtBottom = isVScrollAtTheBottom(editor, useImmediatePosition)
+    val caretAtTheLastLine = isCaretAtTheLastLine(editor)
     if (!vScrollAtBottom && caretAtTheLastLine) {
-      myCancelStickToEnd = true;
-    } 
+      myCancelStickToEnd = true
+    }
   }
 
-  protected @NotNull JComponent createCenterComponent() {
-    ThreadingAssertions.assertEventDispatchThread();
-    return getEditor().getComponent();
+  protected open fun createCenterComponent(): JComponent {
+    ThreadingAssertions.assertEventDispatchThread()
+    return editor!!.component
   }
 
-  @Override
-  public void dispose() {
-    myState = myState.dispose();
-    Arrays.stream(getAncestorListeners()).forEach(l -> removeAncestorListener(l));
-    Editor editor = getEditor();
+  override fun dispose() {
+    state = state.dispose()
+    for (l in ancestorListeners) {
+      removeAncestorListener(l)
+    }
+    val editor = editor
     if (editor != null) {
-      cancelAllFlushRequests();
-      mySpareTimeAlarm.cancelAllRequests();
-      disposeEditor();
-      editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, null);
-      synchronized (LOCK) {
-        myDeferredBuffer.clear();
-        myEditor = null;
+      cancelAllFlushRequests()
+      spareTimeAlarm.cancelAllRequests()
+      disposeEditor()
+      editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, null)
+      synchronized(LOCK) {
+        myDeferredBuffer.clear()
+        myEditor = null
       }
     }
   }
 
-  private void cancelAllFlushRequests() {
-    flushAlarm.cancelAllRequests();
-    CLEAR.clearRequested();
-    FLUSH.clearRequested();
+  private fun cancelAllFlushRequests() {
+    flushAlarm.cancelAllRequests()
+    CLEAR.clearRequested()
+    FLUSH.clearRequested()
   }
 
   @TestOnly
   @RequiresEdt
-  public void waitAllRequests() {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+  fun waitAllRequests() {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+    val future = ApplicationManager.getApplication().executeOnPooledThread {
       while (true) {
         try {
-          flushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-          flushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-          flushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-          flushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-          return;
+          flushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS)
+          flushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS)
+          flushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS)
+          flushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS)
+          return@executeOnPooledThread
         }
-        catch (CancellationException e) {
+        catch (e: CancellationException) {
           //try again
         }
-        catch (TimeoutException e) {
-          throw new RuntimeException(e);
+        catch (e: TimeoutException) {
+          throw RuntimeException(e)
         }
       }
-    });
+    }
     try {
       while (true) {
         try {
-          future.get(10, TimeUnit.MILLISECONDS);
-          break;
+          future[10, TimeUnit.MILLISECONDS]
+          break
         }
-        catch (TimeoutException ignored) {
+        catch (ignored: TimeoutException) {
         }
-        EDT.dispatchAllInvocationEvents();
+        EDT.dispatchAllInvocationEvents()
       }
     }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
+    catch (e: InterruptedException) {
+      throw RuntimeException(e)
+    }
+    catch (e: ExecutionException) {
+      throw RuntimeException(e)
     }
   }
 
-  protected void disposeEditor() {
-    UIUtil.invokeAndWaitIfNeeded(() -> {
-      Editor editor = getEditor();
-      if (!editor.isDisposed()) {
-        EditorFactory.getInstance().releaseEditor(editor);
+  protected open fun disposeEditor() {
+    UIUtil.invokeAndWaitIfNeeded {
+      val editor = editor
+      if (!editor!!.isDisposed) {
+        EditorFactory.getInstance().releaseEditor(editor)
       }
-    });
+    }
   }
 
-  @Override
-  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, contentType);
+  override fun print(text: String, contentType: ConsoleViewContentType) {
+    val result = myInputMessageFilter.applyFilter(text, contentType)
     if (result == null) {
-      print(text, contentType, null);
+      print(text, contentType, null)
     }
     else {
-      for (Pair<String, ConsoleViewContentType> pair : result) {
+      for (pair in result) {
         if (pair.first != null) {
-          print(pair.first, pair.second == null ? contentType : pair.second, null);
+          print(pair.first, (if (pair.second == null) contentType else pair.second)!!, null)
         }
       }
     }
   }
 
-  protected void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
-    text = Strings.convertLineSeparators(text, keepSlashR);
-    synchronized (LOCK) {
-      boolean hasEditor = getEditor() != null;
-      myDeferredBuffer.print(text, contentType, info);
-
+  open fun print(text: String, contentType: ConsoleViewContentType, info: HyperlinkInfo?) {
+    val effectiveText = Strings.convertLineSeparators(text, keepSlashR)
+    synchronized(LOCK) {
+      val hasEditor = editor != null
+      myDeferredBuffer.print(effectiveText, contentType, info)
       if (hasEditor) {
-        if (contentType == ConsoleViewContentType.USER_INPUT) {
-          requestFlushImmediately();
+        if (contentType === ConsoleViewContentType.USER_INPUT) {
+          requestFlushImmediately()
         }
         else {
-          boolean shouldFlushNow = myDeferredBuffer.length() >= myDeferredBuffer.getCycleBufferSize();
-          addFlushRequest(shouldFlushNow ? 0 : DEFAULT_FLUSH_DELAY, FLUSH);
+          val shouldFlushNow = myDeferredBuffer.length() >= myDeferredBuffer.cycleBufferSize
+          addFlushRequest(if (shouldFlushNow) 0 else DEFAULT_FLUSH_DELAY, FLUSH)
         }
       }
     }
   }
 
   // send text which was typed in the console to the running process
-  private void sendUserInput(@NotNull CharSequence typedText) {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (myState.isRunning() && NEW_LINE_MATCHER.indexIn(typedText) >= 0) {
-      CharSequence textToSend = ConsoleTokenUtil.computeTextToSend(getEditor(), getProject());
+  private fun sendUserInput(typedText: CharSequence) {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (state.isRunning && NEW_LINE_MATCHER.indexIn(typedText) >= 0) {
+      val textToSend = ConsoleTokenUtil.computeTextToSend(editor!!, project)
       if (!textToSend.isEmpty()) {
-        flushUserInputAlarm.addRequest(() -> {
-          if (myState.isRunning()) {
-            try {
-              // this may block forever, see IDEA-54340
-              myState.sendUserInput(textToSend.toString());
-            }
-            catch (IOException ignored) {
-            }
-          }
-        }, 0);
+        flushUserInputAlarm.addRequest({
+                                         if (state.isRunning) {
+                                           try {
+                                             // this may block forever, see IDEA-54340
+                                             state.sendUserInput(textToSend.toString())
+                                           }
+                                           catch (ignored: IOException) {
+                                           }
+                                         }
+                                       }, 0)
       }
     }
   }
 
-  protected ModalityState getStateForUpdate() {
-    return null;
-  }
+  protected open val stateForUpdate: ModalityState?
+    get() = null
 
-  private void requestFlushImmediately() {
-    addFlushRequest(0, FLUSH);
+  private fun requestFlushImmediately() {
+    addFlushRequest(0, FLUSH)
   }
 
   /**
    * Holds number of symbols managed by the current console.
-   * <p/>
+   *
+   *
    * Total number is assembled as a sum of symbols that are already pushed to the document and number of deferred symbols that
    * are awaiting to be pushed to the document.
    */
-  @Override
-  public int getContentSize() {
-    int length;
-    Editor editor;
-    synchronized (LOCK) {
-      length = myDeferredBuffer.length();
-      editor = getEditor();
+  override fun getContentSize(): Int {
+    var length: Int
+    var editor: Editor?
+    synchronized(LOCK) {
+      length = myDeferredBuffer.length()
+      editor = this.editor
     }
-    return (editor == null || CLEAR.hasRequested() ? 0 : editor.getDocument().getTextLength()) + length;
+    return (if (editor == null || CLEAR.hasRequested()) 0 else editor!!.document.textLength) + length
   }
 
-  @Override
-  public boolean canPause() {
-    return true;
+  override fun canPause(): Boolean {
+    return true
   }
 
-  public void flushDeferredText() {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (isDisposed()) return;
-    EditorEx editor = (EditorEx)getEditor();
-    boolean shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd(editor);
-    myCancelStickToEnd = false; // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
+  open fun flushDeferredText() {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (isDisposed) return
+    val editor = editor as EditorEx?
+    val shouldStickToEnd = !myCancelStickToEnd && isStickingToEnd(
+      editor!!)
+    myCancelStickToEnd = false // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
 
-    List<TokenBuffer.TokenInfo> deferredTokens;
-    Document document = editor.getDocument();
+    var deferredTokens: List<TokenBuffer.TokenInfo>
+    val document: Document = editor!!.document
 
-    synchronized (LOCK) {
-      if (myOutputPaused) return;
-
-      deferredTokens = myDeferredBuffer.drain();
-      if (deferredTokens.isEmpty()) return;
-      cancelHeavyAlarm();
+    synchronized(LOCK) {
+      if (myOutputPaused) return
+      deferredTokens = myDeferredBuffer.drain()
+      if (deferredTokens.isEmpty()) return
+      cancelHeavyAlarm()
     }
 
-    RangeMarker lastProcessedOutput = document.createRangeMarker(document.getTextLength(), document.getTextLength());
+    val lastProcessedOutput = document.createRangeMarker(document.textLength, document.textLength)
 
     if (!shouldStickToEnd) {
-      editor.getScrollingModel().accumulateViewportChanges();
+      editor.scrollingModel.accumulateViewportChanges()
     }
-    Collection<ConsoleViewContentType> contentTypes = new HashSet<>();
-    List<Pair<String, ConsoleViewContentType>> contents = new ArrayList<>();
-    CharSequence addedText;
+    val contentTypes = HashSet<ConsoleViewContentType>()
+    val contents = ArrayList<Pair<String, ConsoleViewContentType>>()
+    val addedText: CharSequence
     try {
       // the text can contain one "\r" at the start meaning we should delete the last line
-      boolean startsWithCR = deferredTokens.get(0) == TokenBuffer.CR_TOKEN;
+      val startsWithCR = deferredTokens[0] == TokenBuffer.CR_TOKEN
       if (startsWithCR) {
         // remove last line if any
-        if (document.getLineCount() != 0) {
-          int lineStartOffset = document.getLineStartOffset(document.getLineCount() - 1);
-          document.deleteString(lineStartOffset, document.getTextLength());
+        if (document.lineCount != 0) {
+          val lineStartOffset = document.getLineStartOffset(document.lineCount - 1)
+          document.deleteString(lineStartOffset, document.textLength)
         }
       }
-      int startIndex = startsWithCR ? 1 : 0;
-      List<TokenBuffer.TokenInfo> refinedTokens = new ArrayList<>(deferredTokens.size() - startIndex);
-      int backspacePrefixLength = ConsoleTokenUtil.evaluateBackspacesInTokens(deferredTokens, startIndex, refinedTokens);
+      val startIndex = if (startsWithCR) 1 else 0
+      val refinedTokens = ArrayList<TokenBuffer.TokenInfo>(deferredTokens.size - startIndex)
+      val backspacePrefixLength = ConsoleTokenUtil.evaluateBackspacesInTokens(deferredTokens, startIndex, refinedTokens)
       if (backspacePrefixLength > 0) {
-        int lineCount = document.getLineCount();
+        val lineCount = document.lineCount
         if (lineCount != 0) {
-          int lineStartOffset = document.getLineStartOffset(lineCount - 1);
-          document.deleteString(Math.max(lineStartOffset, document.getTextLength() - backspacePrefixLength), document.getTextLength());
+          val lineStartOffset = document.getLineStartOffset(lineCount - 1)
+          document.deleteString(
+            max(lineStartOffset.toDouble(), (document.textLength - backspacePrefixLength).toDouble()).toInt(), document.textLength)
         }
       }
-      addedText = TokenBuffer.getRawText(refinedTokens);
-      document.insertString(document.getTextLength(), addedText);
-      ConsoleTokenUtil.highlightTokenTextAttributes(getEditor(), getProject(), refinedTokens, getHyperlinks(), contentTypes, contents);
+      addedText = TokenBuffer.getRawText(refinedTokens)
+      document.insertString(document.textLength, addedText)
+      ConsoleTokenUtil.highlightTokenTextAttributes(this.editor!!, project, refinedTokens, getHyperlinks()!!, contentTypes, contents)
     }
     finally {
       if (!shouldStickToEnd) {
-        editor.getScrollingModel().flushViewportChanges();
+        editor.scrollingModel.flushViewportChanges()
       }
     }
     if (!contentTypes.isEmpty()) {
-      for (ChangeListener each : myListeners) {
-        each.contentAdded(contentTypes);
+      for (each in myListeners) {
+        @Suppress("removal", "DEPRECATION")
+        each.contentAdded(contentTypes)
       }
     }
     if (!contents.isEmpty()) {
-      for (ChangeListener each : myListeners) {
-        for (int i = contents.size() - 1; i >= 0; i--) {
-          each.textAdded(contents.get(i).first, contents.get(i).second);
+      for (each in myListeners) {
+        for (i in contents.indices.reversed()) {
+          each.textAdded(contents[i].first, contents[i].second)
         }
       }
     }
-    myPsiDisposedCheck.performCheck();
+    psiDisposedCheck.performCheck()
 
-    int startLine = lastProcessedOutput.isValid() ? editor.getDocument().getLineNumber(lastProcessedOutput.getEndOffset()) : 0;
-    lastProcessedOutput.dispose();
-    highlightHyperlinksAndFoldings(startLine, myPredefinedFiltersUpdateExpirableTokenProvider.createExpirable());
+    val startLine = if (lastProcessedOutput.isValid) editor.document.getLineNumber(lastProcessedOutput.endOffset) else 0
+    lastProcessedOutput.dispose()
+    highlightHyperlinksAndFoldings(startLine, myPredefinedFiltersUpdateExpirableTokenProvider.createExpirable())
 
     if (shouldStickToEnd) {
-      scrollToEnd();
+      scrollToEnd()
     }
-    sendUserInput(addedText);
+    sendUserInput(addedText)
   }
 
-  private boolean isDisposed() {
-    Editor editor = getEditor();
-    return myProject.isDisposed() || editor == null || editor.isDisposed();
-  }
+  private val isDisposed: Boolean
+    get() {
+      val editor = editor
+      return project.isDisposed || editor == null || editor.isDisposed
+    }
 
-  protected void doClear() {
-    ThreadingAssertions.assertEventDispatchThread();
+  protected open fun doClear() {
+    ThreadingAssertions.assertEventDispatchThread()
 
-    if (isDisposed()) return;
+    if (isDisposed) return
 
-    Editor editor = getEditor();
-    Document document = editor.getDocument();
-    int documentTextLength = document.getTextLength();
+    val editor = editor
+    val document = editor!!.document
+    val documentTextLength = document.textLength
     if (documentTextLength > 0) {
-      DocumentUtil.executeInBulk(document, () -> document.deleteString(0, documentTextLength));
+      DocumentUtil.executeInBulk(document) { document.deleteString(0, documentTextLength) }
     }
-    synchronized (LOCK) {
-      clearHyperlinkAndFoldings();
+    synchronized(LOCK) {
+      clearHyperlinkAndFoldings()
     }
-    MarkupModel model = DocumentMarkupModel.forDocument(editor.getDocument(), getProject(), true);
-    model.removeAllHighlighters(); // remove all empty highlighters leftovers if any
-    editor.getInlayModel().getInlineElementsInRange(0, 0).forEach(Disposer::dispose); // remove inlays if any
+    val model = DocumentMarkupModel.forDocument(editor.document, project, true)
+    model.removeAllHighlighters() // remove all empty highlighters leftovers if any
+    editor.inlayModel.getInlineElementsInRange(0, 0).forEach(
+      Consumer { disposable: Inlay<*>? ->
+        Disposer.dispose(
+          disposable!!)
+      }) // remove inlays if any
   }
 
-  protected static boolean isStickingToEnd(@NotNull EditorEx editor) {
-    return isCaretAtTheLastLine(editor) ||
-           isVScrollAtTheBottom(editor, true);
-  }
-
-  private static boolean isCaretAtTheLastLine(@NotNull Editor editor) {
-    Document document = editor.getDocument();
-    int caretOffset = editor.getCaretModel().getOffset();
-    return document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
-  }
-
-  private static boolean isVScrollAtTheBottom(@NotNull EditorEx editor, boolean useImmediatePosition) {
-    JScrollBar scrollBar = editor.getScrollPane().getVerticalScrollBar();
-    int scrollBarPosition = useImmediatePosition ? scrollBar.getValue() :
-                            editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y;
-    return scrollBarPosition == scrollBar.getMaximum() - scrollBar.getVisibleAmount();
-  }
-
-  private void clearHyperlinkAndFoldings() {
-    ThreadingAssertions.assertEventDispatchThread();
-    Editor editor = getEditor();
-    for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+  private fun clearHyperlinkAndFoldings() {
+    ThreadingAssertions.assertEventDispatchThread()
+    val editor = editor
+    for (highlighter in editor!!.markupModel.allHighlighters) {
       if (highlighter.getUserData(ConsoleTokenUtil.MANUAL_HYPERLINK) == null) {
-        editor.getMarkupModel().removeHighlighter(highlighter);
+        editor.markupModel.removeHighlighter(highlighter)
       }
     }
 
-    editor.getFoldingModel().runBatchFoldingOperation(() -> ((FoldingModelEx)editor.getFoldingModel()).clearFoldRegions());
-    editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength()).forEach(inlay -> Disposer.dispose(inlay));
+    editor.foldingModel.runBatchFoldingOperation { (editor.foldingModel as FoldingModelEx).clearFoldRegions() }
+    editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength).forEach(
+      Consumer { inlay: Inlay<*>? ->
+        Disposer.dispose(
+          inlay!!)
+      })
 
-    cancelHeavyAlarm();
+    cancelHeavyAlarm()
   }
 
-  private void cancelHeavyAlarm() {
-    if (!heavyAlarm.isDisposed()) {
-      heavyAlarm.cancelAllRequests();
-      ++heavyUpdateTicket;
+  private fun cancelHeavyAlarm() {
+    if (!heavyAlarm.isDisposed) {
+      heavyAlarm.cancelAllRequests()
+      ++heavyUpdateTicket
     }
   }
 
-  @Override
-  public void uiDataSnapshot(@NotNull DataSink sink) {
-    EditorEx editor = (EditorEx)getEditor();
-    sink.set(CommonDataKeys.EDITOR, getEditor());
-    sink.set(LangDataKeys.CONSOLE_VIEW, this);
-    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId);
+  override fun uiDataSnapshot(sink: DataSink) {
+    val editor = editor as EditorEx?
+    sink.set(CommonDataKeys.EDITOR, this.editor)
+    sink.set(LangDataKeys.CONSOLE_VIEW, this)
+    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId)
 
-    if (editor == null) return;
-    sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
-    sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
+    if (editor == null) return
+    sink.set(CommonDataKeys.CARET, editor.caretModel.currentCaret)
+    sink.set(PlatformDataKeys.COPY_PROVIDER, editor.copyProvider)
 
-    EditorHyperlinkSupport hyperlinks = getHyperlinks();
-    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
-      int offset = editor.getCaretModel().getOffset();
-      HyperlinkInfo info = hyperlinks.getHyperlinkAt(offset);
-      return info == null ? null : new Navigatable() {
-        @Override public void navigate(boolean requestFocus) { info.navigate(myProject); }
-        @Override public boolean canNavigate() { return true; }
-        @Override public boolean canNavigateToSource() { return true; }
-      };
-    });
-  }
+    val hyperlinks = getHyperlinks()
+    sink.lazy<Navigatable>(CommonDataKeys.NAVIGATABLE) {
+      val offset = editor.caretModel.offset
+      val info = hyperlinks!!.getHyperlinkAt(offset)
+      if (info == null) null
+      else object : Navigatable {
+        override fun navigate(requestFocus: Boolean) {
+          info.navigate(project)
+        }
 
-  @Override
-  public void setHelpId(@NotNull String helpId) {
-    myHelpId = helpId;
-  }
+        override fun canNavigate(): Boolean = true
 
-  public void setUpdateFoldingsEnabled(boolean updateFoldingsEnabled) {
-    myUpdateFoldingsEnabled = updateFoldingsEnabled;
-  }
-
-  @Override
-  public void addMessageFilter(@NotNull Filter filter) {
-    myCustomFilters.add(filter);
-  }
-
-  @Override
-  public void printHyperlink(@NotNull String hyperlinkText, @Nullable HyperlinkInfo info) {
-    print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info);
-  }
-
-  private @NotNull EditorEx createConsoleEditor() {
-    ThreadingAssertions.assertEventDispatchThread();
-    EditorEx editor = doCreateConsoleEditor();
-    LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.getDocument()), "Undo must be disabled in console for performance reasons");
-    LOG.assertTrue(!((DocumentImpl)editor.getDocument()).isWriteThreadOnly(), "Console document must support background modifications, see e.g. ConsoleViewUtil.setupConsoleEditor() "+getClass());
-    editor.installPopupHandler(new ContextMenuPopupHandler() {
-      @Override
-      public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
-        return getPopupGroup(event);
+        override fun canNavigateToSource(): Boolean = true
       }
-    });
-
-    int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : 0;
-    editor.getDocument().setCyclicBufferSize(bufferSize);
-    editor.getDocument().putUserData(IS_CONSOLE_DOCUMENT, true);
-    editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
-    editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
-    return editor;
-  }
-
-  protected @NotNull EditorEx doCreateConsoleEditor() {
-    return ConsoleViewUtil.setupConsoleEditor(myProject, true, false);
-  }
-
-  private void registerConsoleEditorActions(@NotNull Editor editor) {
-    ThreadingAssertions.assertEventDispatchThread();
-    Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_GOTO_DECLARATION).getShortcuts();
-    CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(shortcuts, CommonShortcuts.ENTER.getShortcuts()));
-    new HyperlinkNavigationAction().registerCustomShortcutSet(shortcutSet, editor.getContentComponent());
-    if (!myIsViewer) {
-      registerActionHandler(editor, EOFAction.ACTION_ID);
     }
   }
 
-  private static void registerActionHandler(@NotNull Editor editor, @NotNull String actionId) {
-    ThreadingAssertions.assertEventDispatchThread();
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-    action.registerCustomShortcutSet(action.getShortcutSet(), editor.getContentComponent());
+  override fun setHelpId(helpId: String) {
+    myHelpId = helpId
   }
 
-  private @NotNull ActionGroup getPopupGroup(@NotNull EditorMouseEvent event) {
-    ThreadingAssertions.assertEventDispatchThread();
-    ActionManager actionManager = ActionManager.getInstance();
-    HyperlinkInfo info = getHyperlinks() != null ? getHyperlinks().getHyperlinkInfoByEvent(event) : null;
-    ActionGroup group = null;
-    if (info instanceof HyperlinkWithPopupMenuInfo) {
-      group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(event.getMouseEvent());
+  fun setUpdateFoldingsEnabled(updateFoldingsEnabled: Boolean) {
+    myUpdateFoldingsEnabled = updateFoldingsEnabled
+  }
+
+  override fun addMessageFilter(filter: Filter) {
+    myCustomFilters.add(filter)
+  }
+
+  override fun printHyperlink(hyperlinkText: String, info: HyperlinkInfo?) {
+    print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT, info)
+  }
+
+  private fun createConsoleEditor(): EditorEx {
+    ThreadingAssertions.assertEventDispatchThread()
+    val editor = doCreateConsoleEditor()
+    LOG.assertTrue(UndoUtil.isUndoDisabledFor(editor.document), "Undo must be disabled in console for performance reasons")
+    LOG.assertTrue(!(editor.document as DocumentImpl).isWriteThreadOnly,
+                   "Console document must support background modifications, see e.g. ConsoleViewUtil.setupConsoleEditor() $javaClass")
+    editor.installPopupHandler(object : ContextMenuPopupHandler() {
+      override fun getActionGroup(event: EditorMouseEvent) = getPopupGroup(event)
+    })
+
+    val bufferSize = if (ConsoleBuffer.useCycleBuffer()) ConsoleBuffer.getCycleBufferSize() else 0
+    editor.document.setCyclicBufferSize(bufferSize)
+    editor.document.putUserData(IS_CONSOLE_DOCUMENT, true)
+    editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this)
+    editor.settings.isAllowSingleLogicalLineFolding = true // We want to fold long soft-wrapped command lines
+    return editor
+  }
+
+  protected open fun doCreateConsoleEditor(): EditorEx {
+    return ConsoleViewUtil.setupConsoleEditor(project, true, false)
+  }
+
+  private fun registerConsoleEditorActions(editor: Editor) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_GOTO_DECLARATION).shortcuts
+    val shortcutSet = CustomShortcutSet(*ArrayUtil.mergeArrays(shortcuts, CommonShortcuts.ENTER.shortcuts))
+    HyperlinkNavigationAction().registerCustomShortcutSet(shortcutSet, editor.contentComponent)
+    if (!isViewer) {
+      registerActionHandler(editor, EOFAction.ACTION_ID)
+    }
+  }
+
+  private fun getPopupGroup(event: EditorMouseEvent): ActionGroup {
+    ThreadingAssertions.assertEventDispatchThread()
+    val actionManager = ActionManager.getInstance()
+    val info = if (getHyperlinks() != null) getHyperlinks()!!.getHyperlinkInfoByEvent(event) else null
+    var group: ActionGroup? = null
+    if (info is HyperlinkWithPopupMenuInfo) {
+      group = info.getPopupMenuGroup(event.mouseEvent)
     }
     if (group == null) {
-      group = (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU);
+      group = actionManager.getAction(CONSOLE_VIEW_POPUP_MENU) as ActionGroup
     }
-    List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
-    AnAction[] result = group.getChildren(null);
+    val postProcessors = ConsoleActionsPostProcessor.EP_NAME.extensionList
+    var result = group.getChildren(null)
 
-    for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
-      result = postProcessor.postProcessPopupActions(this, result);
+    for (postProcessor in postProcessors) {
+      result = postProcessor.postProcessPopupActions(this, result)
     }
-    return new DefaultActionGroup(result);
+    return DefaultActionGroup(*result)
   }
 
-  private void highlightHyperlinksAndFoldings(int startLine, @NotNull Expirable expirableToken) {
-    ThreadingAssertions.assertEventDispatchThread();
-    CompositeFilter compositeFilter = createCompositeFilter();
-    boolean canHighlightHyperlinks = !compositeFilter.isEmpty();
+  private fun highlightHyperlinksAndFoldings(startLine: Int, expirableToken: Expirable) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val compositeFilter = createCompositeFilter()
+    val canHighlightHyperlinks = !compositeFilter.isEmpty
 
     if (!canHighlightHyperlinks && !myUpdateFoldingsEnabled) {
-      return;
+      return
     }
-    Document document = getEditor().getDocument();
-    if (document.getTextLength() == 0) return;
+    val document = editor!!.document
+    if (document.textLength == 0) return
 
-    int endLine = Math.max(0, document.getLineCount() - 1);
+    val endLine = max(0.0, (document.lineCount - 1).toDouble()).toInt()
 
     if (canHighlightHyperlinks) {
-      getHyperlinks().highlightHyperlinksLater(compositeFilter, startLine, endLine, expirableToken);
+      getHyperlinks()!!.highlightHyperlinksLater(compositeFilter, startLine, endLine, expirableToken)
     }
 
-    if (myAllowHeavyFilters && compositeFilter.isAnyHeavy() && compositeFilter.shouldRunHeavy()) {
-      runHeavyFilters(compositeFilter, startLine, endLine);
+    if (myAllowHeavyFilters && compositeFilter.isAnyHeavy && compositeFilter.shouldRunHeavy()) {
+      runHeavyFilters(compositeFilter, startLine, endLine)
     }
     if (myUpdateFoldingsEnabled) {
-      updateFoldings(startLine, endLine);
+      updateFoldings(startLine, endLine)
     }
   }
 
-  public void invalidateFiltersExpirableTokens() {
-    myPredefinedFiltersUpdateExpirableTokenProvider.invalidateAll();
+  fun invalidateFiltersExpirableTokens() {
+    myPredefinedFiltersUpdateExpirableTokenProvider.invalidateAll()
   }
 
-  public void rehighlightHyperlinksAndFoldings() {
-    ThreadingAssertions.assertEventDispatchThread();
-    if (isDisposed()) return;
-    invalidateFiltersExpirableTokens();
-    clearHyperlinkAndFoldings();
-    highlightHyperlinksAndFoldings(0, myPredefinedFiltersUpdateExpirableTokenProvider.createExpirable());
+  open fun rehighlightHyperlinksAndFoldings() {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (isDisposed) return
+    invalidateFiltersExpirableTokens()
+    clearHyperlinkAndFoldings()
+    highlightHyperlinksAndFoldings(0, myPredefinedFiltersUpdateExpirableTokenProvider.createExpirable())
   }
 
-  private void runHeavyFilters(@NotNull CompositeFilter compositeFilter, int line1, int endLine) {
-    ThreadingAssertions.assertEventDispatchThread();
-    int startLine = Math.max(0, line1);
+  private fun runHeavyFilters(compositeFilter: CompositeFilter, line1: Int, endLine: Int) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val startLine = max(0.0, line1.toDouble()).toInt()
 
-    Document document = getEditor().getDocument();
-    int startOffset = document.getLineStartOffset(startLine);
-    String text = document.getText(new TextRange(startOffset, document.getLineEndOffset(endLine)));
-    Document documentCopy = new DocumentImpl(text,true);
-    documentCopy.setReadOnly(true);
+    val document = editor!!.document
+    val startOffset = document.getLineStartOffset(startLine)
+    val text = document.getText(TextRange(startOffset, document.getLineEndOffset(endLine)))
+    val documentCopy: Document = DocumentImpl(text, true)
+    documentCopy.setReadOnly(true)
 
-    myJLayeredPane.startUpdating();
-    int currentValue = heavyUpdateTicket;
-    heavyAlarm.addRequest(() -> {
-      if (!compositeFilter.shouldRunHeavy()) return;
-      try {
-        compositeFilter.applyHeavyFilter(documentCopy, startOffset, startLine, additionalHighlight ->
-          addFlushRequest(0, new FlushRunnable(true) {
-            @Override
-            public void doRun() {
-              if (heavyUpdateTicket != currentValue) return;
-              TextAttributes additionalAttributes = additionalHighlight.getTextAttributes(null);
-              if (additionalAttributes != null) {
-                ResultItem item = additionalHighlight.getResultItems().get(0);
-                getHyperlinks().addHighlighter(item.getHighlightStartOffset(), item.getHighlightEndOffset(), additionalAttributes);
-              }
-              else {
-                getHyperlinks().highlightHyperlinks(additionalHighlight, 0);
-              }
-            }
-          })
-        );
-      }
-      catch (IndexNotReadyException ignore) {
-      }
-      finally {
-        if (heavyAlarm.getActiveRequestCount() <= 1) { // only the current request
-          UIUtil.invokeLaterIfNeeded(() -> myJLayeredPane.finishUpdating());
-        }
-      }
-    }, 0);
+    layeredPane!!.startUpdating()
+    val currentValue = heavyUpdateTicket
+    heavyAlarm.addRequest({
+                            if (!compositeFilter.shouldRunHeavy()) {
+                              return@addRequest
+                            }
+
+                            try {
+                              compositeFilter.applyHeavyFilter(documentCopy, startOffset, startLine) { additionalHighlight ->
+                                addFlushRequest(0, object : FlushRunnable(true) {
+                                  public override fun doRun() {
+                                    if (heavyUpdateTicket != currentValue) {
+                                      return
+                                    }
+
+                                    val additionalAttributes = additionalHighlight.getTextAttributes(null)
+                                    if (additionalAttributes != null) {
+                                      val item = additionalHighlight.resultItems[0]
+                                      getHyperlinks()!!.addHighlighter(item.highlightStartOffset, item.highlightEndOffset, additionalAttributes)
+                                    }
+                                    else {
+                                      getHyperlinks()!!.highlightHyperlinks(additionalHighlight, 0)
+                                    }
+                                  }
+                                })
+                              }
+                            }
+                            catch (ignore: IndexNotReadyException) {
+                            }
+                            finally {
+                              if (heavyAlarm.activeRequestCount <= 1) { // only the current request
+                                UIUtil.invokeLaterIfNeeded { layeredPane!!.finishUpdating() }
+                              }
+                            }
+                          }, 0)
   }
 
-  protected void updateFoldings(int startLine, int endLine) {
-    ThreadingAssertions.assertEventDispatchThread();
-    Editor editor = getEditor();
-    editor.getFoldingModel().runBatchFoldingOperation(() -> {
-      Document document = editor.getDocument();
-
-      FoldRegion existingRegion = null;
+  protected open fun updateFoldings(startLine: Int, endLine: Int) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val editor = editor
+    editor!!.foldingModel.runBatchFoldingOperation {
+      val document = editor.document
+      var existingRegion: FoldRegion? = null
       if (startLine > 0) {
-        int prevLineStart = document.getLineStartOffset(startLine - 1);
-        FoldRegion[] regions = FoldingUtil.getFoldRegionsAtOffset(editor, prevLineStart);
-        if (regions.length == 1) {
-          existingRegion = regions[0];
+        val prevLineStart = document.getLineStartOffset(startLine - 1)
+        val regions = FoldingUtil.getFoldRegionsAtOffset(editor, prevLineStart)
+        if (regions.size == 1) {
+          existingRegion = regions[0]
         }
       }
-      ConsoleFolding lastFolding = existingRegion == null ? null : findFoldingByRegion(existingRegion);
-      int lastStartLine = Integer.MAX_VALUE;
+      var lastFolding = if (existingRegion == null) null else findFoldingByRegion(existingRegion)
+      var lastStartLine = Int.MAX_VALUE
       if (lastFolding != null) {
-        int offset = existingRegion.getStartOffset();
+        val offset = existingRegion!!.startOffset
         if (offset == 0) {
-          lastStartLine = 0;
+          lastStartLine = 0
         }
         else {
-          lastStartLine = document.getLineNumber(offset);
-          if (document.getLineStartOffset(lastStartLine) != offset) lastStartLine++;
+          lastStartLine = document.getLineNumber(offset)
+          if (document.getLineStartOffset(lastStartLine) != offset) lastStartLine++
         }
       }
 
-      List<ConsoleFolding> extensions = ContainerUtil.filter(ConsoleFolding.EP_NAME.getExtensionList(), cf -> cf.isEnabledForConsole(this));
-      if (extensions.isEmpty()) return;
-
-      for (int line = startLine; line <= endLine; line++) {
+      val extensions = ConsoleFolding.EP_NAME.extensionList.filter { it.isEnabledForConsole(this) }
+      if (extensions.isEmpty()) return@runBatchFoldingOperation
+      for (line in startLine..endLine) {
         /*
-        Grep Console plugin allows to fold empty lines. We need to handle this case in a special way.
-
-        Multiple lines are grouped into one folding, but to know when you can create the folding,
-        you need a line which does not belong to that folding.
-        When a new line, or a chunk of lines is printed, #addFolding is called for that lines + for an empty string
-        (which basically does only one thing, gets a folding displayed).
-        We do not want to process that empty string, but also we do not want to wait for another line
-        which will create and display the folding - we'd see an unfolded stacktrace until another text came and flushed it.
-        Thus, the condition: the last line(empty string) should still flush, but not be processed by
-        com.intellij.execution.ConsoleFolding.
-         */
-        ConsoleFolding next = line < endLine ? foldingForLine(extensions, line, document) : null;
-        if (next != lastFolding) {
+            Grep Console plugin allows to fold empty lines. We need to handle this case in a special way.
+    
+            Multiple lines are grouped into one folding, but to know when you can create the folding,
+            you need a line which does not belong to that folding.
+            When a new line, or a chunk of lines is printed, #addFolding is called for that lines + for an empty string
+            (which basically does only one thing, gets a folding displayed).
+            We do not want to process that empty string, but also we do not want to wait for another line
+            which will create and display the folding - we'd see an unfolded stacktrace until another text came and flushed it.
+            Thus, the condition: the last line(empty string) should still flush, but not be processed by
+            com.intellij.execution.ConsoleFolding.
+             */
+        val next = if (line < endLine) foldingForLine(extensions, line, document) else null
+        if (next !== lastFolding) {
           if (lastFolding != null) {
-            boolean isExpanded = false;
+            var isExpanded = false
             if (line > startLine && existingRegion != null && lastStartLine < startLine) {
-              isExpanded = existingRegion.isExpanded();
-              editor.getFoldingModel().removeFoldRegion(existingRegion);
+              isExpanded = existingRegion.isExpanded
+              editor.foldingModel.removeFoldRegion(existingRegion)
             }
-            addFoldRegion(document, lastFolding, lastStartLine, line - 1, isExpanded);
+            addFoldRegion(document, lastFolding, lastStartLine, line - 1, isExpanded)
           }
-          lastFolding = next;
-          lastStartLine = line;
-          existingRegion = null;
+          lastFolding = next
+          lastStartLine = line
+          existingRegion = null
         }
       }
-    });
+    }
   }
 
-  private static final Key<String> USED_FOLDING_FQN_KEY = Key.create("USED_FOLDING_KEY");
-
-  private void addFoldRegion(@NotNull Document document, @NotNull ConsoleFolding folding, int startLine, int endLine, boolean isExpanded) {
-    List<String> toFold = new ArrayList<>(endLine - startLine + 1);
-    for (int i = startLine; i <= endLine; i++) {
-      toFold.add(EditorHyperlinkSupport.getLineText(document, i, false));
+  private fun addFoldRegion(document: Document, folding: ConsoleFolding, startLine: Int, endLine: Int, isExpanded: Boolean) {
+    val toFold: MutableList<String> = ArrayList(endLine - startLine + 1)
+    for (i in startLine..endLine) {
+      toFold.add(EditorHyperlinkSupport.getLineText(document, i, false))
     }
 
-    int oStart = document.getLineStartOffset(startLine);
-    if (oStart > 0 && folding.shouldBeAttachedToThePreviousLine()) oStart--;
-    int oEnd = CharArrayUtil.shiftBackward(document.getImmutableCharSequence(), document.getLineEndOffset(endLine) - 1, " \t") + 1;
+    var oStart = document.getLineStartOffset(startLine)
+    if (oStart > 0 && folding.shouldBeAttachedToThePreviousLine()) oStart--
+    val oEnd = CharArrayUtil.shiftBackward(document.immutableCharSequence, document.getLineEndOffset(endLine) - 1, " \t") + 1
 
-    String placeholder = folding.getPlaceholderText(getProject(), toFold);
-    FoldRegion region = placeholder == null ? null : getEditor().getFoldingModel().addFoldRegion(oStart, oEnd, placeholder);
+    val placeholder = folding.getPlaceholderText(project, toFold)
+    val region = if (placeholder == null) null else editor!!.foldingModel.addFoldRegion(oStart, oEnd, placeholder)
     if (region != null) {
-      region.setExpanded(isExpanded);
-      region.putUserData(USED_FOLDING_FQN_KEY, getFoldingFqn(folding));
+      region.isExpanded = isExpanded
+      region.putUserData(USED_FOLDING_FQN_KEY, getFoldingFqn(folding))
     }
   }
 
-  private ConsoleFolding findFoldingByRegion(@NotNull FoldRegion region) {
-    String lastFoldingFqn = USED_FOLDING_FQN_KEY.get(region);
-    if (lastFoldingFqn == null) return null;
-    ConsoleFolding consoleFolding = ConsoleFolding.EP_NAME.getByKey(lastFoldingFqn, ConsoleViewImpl.class, ConsoleViewImpl::getFoldingFqn);
-    return consoleFolding != null && consoleFolding.isEnabledForConsole(this) ? consoleFolding : null;
+  private fun findFoldingByRegion(region: FoldRegion): ConsoleFolding? {
+    val lastFoldingFqn = USED_FOLDING_FQN_KEY[region]
+    if (lastFoldingFqn == null) return null
+    val consoleFolding = ConsoleFolding.EP_NAME.getByKey(lastFoldingFqn,
+                                                         ConsoleViewImpl::class.java
+    ) { consoleFolding: ConsoleFolding -> getFoldingFqn(consoleFolding) }
+    return if (consoleFolding != null && consoleFolding.isEnabledForConsole(this)) consoleFolding else null
   }
 
-  private static @NotNull String getFoldingFqn(@NotNull ConsoleFolding consoleFolding) {
-    return consoleFolding.getClass().getName();
-  }
-
-  private @Nullable ConsoleFolding foldingForLine(@NotNull List<? extends ConsoleFolding> extensions, int line, @NotNull Document document) {
-    String lineText = EditorHyperlinkSupport.getLineText(document, line, false);
-    if (line == 0 && myCommandLineFolding.shouldFoldLine(myProject, lineText)) {
-      return myCommandLineFolding;
+  private fun foldingForLine(extensions: List<ConsoleFolding>, line: Int, document: Document): ConsoleFolding? {
+    val lineText = EditorHyperlinkSupport.getLineText(document, line, false)
+    if (line == 0 && commandLineFolding.shouldFoldLine(project, lineText)) {
+      return commandLineFolding
     }
 
-    for (ConsoleFolding extension : extensions) {
-      if (extension.shouldFoldLine(myProject, lineText)) {
-        return extension;
+    for (extension in extensions) {
+      if (extension.shouldFoldLine(project, lineText)) {
+        return extension
       }
     }
 
-    return null;
+    return null
   }
 
-  private static final class ClearThisConsoleAction extends ClearConsoleAction {
-    private final ConsoleView myConsoleView;
-
-    ClearThisConsoleAction(@NotNull ConsoleView consoleView) {
-      myConsoleView = consoleView;
+  private class ClearThisConsoleAction(private val myConsoleView: ConsoleView) : ClearConsoleAction() {
+    override fun update(e: AnActionEvent) {
+      val enabled = myConsoleView.contentSize > 0
+      e.presentation.isEnabled = enabled
     }
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      boolean enabled = myConsoleView.getContentSize() > 0;
-      e.getPresentation().setEnabled(enabled);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myConsoleView.clear();
+    override fun actionPerformed(e: AnActionEvent) {
+      myConsoleView.clear()
     }
   }
 
-  /**
-   * @deprecated use {@link ClearConsoleAction} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static class ClearAllAction extends ClearConsoleAction {
-  }
+  @Deprecated("use {@link ClearConsoleAction} instead")
+  class ClearAllAction : ClearConsoleAction()
 
-  private static final class MyTypedHandler extends TypedActionHandlerBase {
-    private MyTypedHandler(@NotNull TypedActionHandler originalAction) {
-      super(originalAction);
+  open fun type(editor: Editor, text: String) {
+    ThreadingAssertions.assertEventDispatchThread()
+    flushDeferredText()
+    val selectionModel = editor.selectionModel
+
+    val lastOffset = if (selectionModel.hasSelection()) selectionModel.selectionStart else editor.caretModel.offset - 1
+    val marker = ConsoleTokenUtil.findTokenMarker(this.editor!!, project, lastOffset)
+    if (marker == null || ConsoleTokenUtil.getTokenType(marker) !== ConsoleViewContentType.USER_INPUT) {
+      print(text, ConsoleViewContentType.USER_INPUT)
+      flushDeferredText()
+      moveScrollRemoveSelection(editor, editor.document.textLength)
+      return
     }
 
-    @Override
-    public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
-      ConsoleViewImpl consoleView = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
-      if (consoleView == null || !consoleView.myState.isRunning() || consoleView.myIsViewer) {
-        if (myOriginalHandler != null) {
-          myOriginalHandler.execute(editor, charTyped, dataContext);
-        }
-        return;
-      }
-      String text = String.valueOf(charTyped);
-      consoleView.type(editor, text);
-    }
-  }
-
-  protected void type(@NotNull Editor editor, @NotNull String text) {
-    ThreadingAssertions.assertEventDispatchThread();
-    flushDeferredText();
-    SelectionModel selectionModel = editor.getSelectionModel();
-
-    int lastOffset = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset() - 1;
-    RangeMarker marker = ConsoleTokenUtil.findTokenMarker(getEditor(), getProject(), lastOffset);
-    if (marker == null || ConsoleTokenUtil.getTokenType(marker) != ConsoleViewContentType.USER_INPUT) {
-      print(text, ConsoleViewContentType.USER_INPUT);
-      flushDeferredText();
-      moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
-      return;
-    }
-
-    String textToUse = StringUtil.convertLineSeparators(text);
-    int typeOffset;
-    Document document = editor.getDocument();
+    val textToUse = StringUtil.convertLineSeparators(text)
+    val typeOffset: Int
+    val document = editor.document
     if (selectionModel.hasSelection()) {
-      int start = selectionModel.getSelectionStart();
-      int end = selectionModel.getSelectionEnd();
-      document.deleteString(start, end);
-      selectionModel.removeSelection();
-      typeOffset = start;
-      assert typeOffset <= document.getTextLength() : "typeOffset="+typeOffset+"; document.getTextLength()="+document.getTextLength()+"; sel start="+start+"; sel end="+end+"; document="+document.getClass();
+      val start = selectionModel.selectionStart
+      val end = selectionModel.selectionEnd
+      document.deleteString(start, end)
+      selectionModel.removeSelection()
+      typeOffset = start
+      assert(
+        typeOffset <= document.textLength) { "typeOffset=" + typeOffset + "; document.getTextLength()=" + document.textLength + "; sel start=" + start + "; sel end=" + end + "; document=" + document.javaClass }
     }
     else {
-      typeOffset = editor.getCaretModel().getOffset();
-      assert typeOffset <= document.getTextLength() : "typeOffset="+typeOffset+"; document.getTextLength()="+document.getTextLength()+"; caret model="+editor.getCaretModel();
+      typeOffset = editor.caretModel.offset
+      assert(
+        typeOffset <= document.textLength) { "typeOffset=" + typeOffset + "; document.getTextLength()=" + document.textLength + "; caret model=" + editor.caretModel }
     }
-    insertUserText(editor, typeOffset, textToUse);
+    insertUserText(editor, typeOffset, textToUse)
   }
 
-  abstract static class ConsoleActionHandler extends EditorActionHandler {
-    private final EditorActionHandler myOriginalHandler;
-
-    ConsoleActionHandler(EditorActionHandler originalHandler) {
-      myOriginalHandler = originalHandler;
-    }
-
-    @Override
-    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      ThreadingAssertions.assertEventDispatchThread();
-      ConsoleViewImpl console = getRunningConsole(dataContext);
+  internal abstract class ConsoleActionHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+    override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
+      ThreadingAssertions.assertEventDispatchThread()
+      val console = getRunningConsole(dataContext)
       if (console != null) {
-        execute(console, editor, dataContext);
-      } else {
-        myOriginalHandler.execute(editor, caret, dataContext);
-      }
-    }
-
-    @Override
-    protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      ConsoleViewImpl console = getRunningConsole(dataContext);
-      return console != null || myOriginalHandler.isEnabled(editor, caret, dataContext);
-    }
-
-    protected abstract void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context);
-
-    private static @Nullable ConsoleViewImpl getRunningConsole(@NotNull DataContext context) {
-      Editor editor = CommonDataKeys.EDITOR.getData(context);
-      if (editor != null) {
-        ConsoleViewImpl console = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
-        if (console != null && console.myState.isRunning() && !console.myIsViewer) {
-          return console;
-        }
-      }
-      return null;
-    }
-  }
-
-  static final class EnterHandler extends ConsoleActionHandler {
-    EnterHandler(EditorActionHandler originalHandler) {
-      super(originalHandler);
-    }
-
-    @Override
-    protected void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context) {
-      console.print("\n", ConsoleViewContentType.USER_INPUT);
-      console.flushDeferredText();
-      moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
-    }
-  }
-
-  static final class PasteHandler extends ConsoleActionHandler {
-    PasteHandler(EditorActionHandler originalHandler) {
-      super(originalHandler);
-    }
-
-    @Override
-    protected void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context) {
-      String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-      if (text == null) return;
-      console.type(editor, text);
-    }
-  }
-
-  private static class DeleteBackspaceHandler extends ConsoleActionHandler {
-    private final int myTextOffsetToDeleteRelativeToCaret;
-    private final String myParentActionId;
-
-    private DeleteBackspaceHandler(EditorActionHandler originalHandler,
-                                   int textOffsetToDeleteRelativeToCaret,
-                                   @NotNull String parentActionId) {
-      super(originalHandler);
-      myTextOffsetToDeleteRelativeToCaret = textOffsetToDeleteRelativeToCaret;
-      myParentActionId = parentActionId;
-    }
-
-    @Override
-    protected void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context) {
-      if (IncrementalSearchHandler.isHintVisible(editor)) {
-        getDefaultActionHandler(myParentActionId).execute(editor, null, context);
-        return;
-      }
-
-      console.flushDeferredText();
-      Document document = editor.getDocument();
-      int length = document.getTextLength();
-      if (length == 0) {
-        return;
-      }
-
-      SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasSelection()) {
-        console.deleteUserText(selectionModel.getSelectionStart(),
-                                   selectionModel.getSelectionEnd() - selectionModel.getSelectionStart());
+        execute(console, editor, dataContext)
       }
       else {
-        int offset = editor.getCaretModel().getOffset() + myTextOffsetToDeleteRelativeToCaret;
+        originalHandler.execute(editor, caret, dataContext)
+      }
+    }
+
+    override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext): Boolean {
+      val console = getRunningConsole(dataContext)
+      return console != null || originalHandler.isEnabled(editor, caret, dataContext)
+    }
+
+    protected abstract fun execute(console: ConsoleViewImpl, editor: Editor, context: DataContext)
+
+    companion object {
+      private fun getRunningConsole(context: DataContext): ConsoleViewImpl? {
+        val editor = CommonDataKeys.EDITOR.getData(context)
+        if (editor != null) {
+          val console = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW)
+          if (console != null && console.state.isRunning && !console.isViewer) {
+            return console
+          }
+        }
+        return null
+      }
+    }
+  }
+
+  internal class EnterHandler(originalHandler: EditorActionHandler) : ConsoleActionHandler(originalHandler) {
+    override fun execute(console: ConsoleViewImpl, editor: Editor, context: DataContext) {
+      console.print("\n", ConsoleViewContentType.USER_INPUT)
+      console.flushDeferredText()
+      moveScrollRemoveSelection(editor, editor.document.textLength)
+    }
+  }
+
+  internal class PasteHandler(originalHandler: EditorActionHandler) : ConsoleActionHandler(originalHandler) {
+    override fun execute(console: ConsoleViewImpl, editor: Editor, context: DataContext) {
+      val text = CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor)
+      if (text == null) return
+      console.type(editor, text)
+    }
+  }
+
+  internal open class DeleteBackspaceHandler(
+    originalHandler: EditorActionHandler,
+    private val myTextOffsetToDeleteRelativeToCaret: Int,
+    private val myParentActionId: String,
+  ) : ConsoleActionHandler(originalHandler) {
+    override fun execute(console: ConsoleViewImpl, editor: Editor, context: DataContext) {
+      if (IncrementalSearchHandler.isHintVisible(editor)) {
+        getDefaultActionHandler(myParentActionId).execute(editor, null, context)
+        return
+      }
+
+      console.flushDeferredText()
+      val document = editor.document
+      val length = document.textLength
+      if (length == 0) {
+        return
+      }
+
+      val selectionModel = editor.selectionModel
+      if (selectionModel.hasSelection()) {
+        console.deleteUserText(selectionModel.selectionStart,
+                               selectionModel.selectionEnd - selectionModel.selectionStart)
+      }
+      else {
+        val offset = editor.caretModel.offset + myTextOffsetToDeleteRelativeToCaret
         if (offset >= 0) {
-          console.deleteUserText(offset, 1);
+          console.deleteUserText(offset, 1)
         }
       }
     }
 
-    private static @NotNull EditorActionHandler getDefaultActionHandler(@NotNull String actionId) {
-      return EditorActionManager.getInstance().getActionHandler(actionId);
+    companion object {
+      private fun getDefaultActionHandler(actionId: String): EditorActionHandler {
+        return EditorActionManager.getInstance().getActionHandler(actionId)
+      }
     }
   }
 
-  static final class BackspaceHandler extends DeleteBackspaceHandler {
-    BackspaceHandler(EditorActionHandler originalHandler) {
-      super(originalHandler, -1, IdeActions.ACTION_EDITOR_BACKSPACE);
+  internal class BackspaceHandler(originalHandler: EditorActionHandler) : DeleteBackspaceHandler(originalHandler, -1,
+                                                                                                 IdeActions.ACTION_EDITOR_BACKSPACE)
+
+  internal class DeleteHandler(originalHandler: EditorActionHandler) : DeleteBackspaceHandler(originalHandler, 0,
+                                                                                              IdeActions.ACTION_EDITOR_DELETE)
+
+  internal class TabHandler(originalHandler: EditorActionHandler) : ConsoleActionHandler(originalHandler) {
+    override fun execute(console: ConsoleViewImpl, editor: Editor, context: DataContext) {
+      console.type(console.editor!!, "\t")
     }
   }
 
-  static final class DeleteHandler extends DeleteBackspaceHandler {
-    DeleteHandler(EditorActionHandler originalHandler) {
-      super(originalHandler, 0, IdeActions.ACTION_EDITOR_DELETE);
-    }
-  }
-
-  static final class TabHandler extends ConsoleActionHandler {
-    TabHandler(EditorActionHandler originalHandler) {
-      super(originalHandler);
-    }
-
-    @Override
-    protected void execute(@NotNull ConsoleViewImpl console, @NotNull Editor editor, @NotNull DataContext context) {
-      console.type(console.getEditor(), "\t");
-    }
-  }
-
-  @Override
-  public @NotNull JComponent getPreferredFocusableComponent() {
+  override fun getPreferredFocusableComponent(): JComponent {
     //ensure editor created
-    getComponent();
-    return getEditor().getContentComponent();
+    component
+    return editor!!.contentComponent
   }
 
 
   // navigate up/down in stack trace
-  @Override
-  public boolean hasNextOccurence() {
-    return calcNextOccurrence(1) != null;
+  override fun hasNextOccurence(): Boolean {
+    return calcNextOccurrence(1) != null
   }
 
-  @Override
-  public boolean hasPreviousOccurence() {
-    return calcNextOccurrence(-1) != null;
+  override fun hasPreviousOccurence(): Boolean {
+    return calcNextOccurrence(-1) != null
   }
 
-  @Override
-  public OccurenceInfo goNextOccurence() {
-    return calcNextOccurrence(1);
+  override fun goNextOccurence(): OccurenceInfo? {
+    return calcNextOccurrence(1)
   }
 
-  protected @Nullable OccurenceInfo calcNextOccurrence(int delta) {
-    Editor editor = getEditor();
-    if (isDisposed() || editor == null) {
-      return null;
+  protected open fun calcNextOccurrence(delta: Int): OccurenceInfo? {
+    val editor = editor
+    if (isDisposed || editor == null) {
+      return null
     }
 
-    return EditorHyperlinkSupport.getNextOccurrence(editor, delta, next -> {
-      int offset = next.getStartOffset();
-      scrollTo(offset);
-      HyperlinkInfo hyperlinkInfo = EditorHyperlinkSupport.getHyperlinkInfo(next);
-      if (hyperlinkInfo instanceof BrowserHyperlinkInfo) {
-        return;
+    return EditorHyperlinkSupport.getNextOccurrence(editor, delta) { next: RangeHighlighter ->
+      val offset = next.startOffset
+      scrollTo(offset)
+      val hyperlinkInfo = EditorHyperlinkSupport.getHyperlinkInfo(next)
+      if (hyperlinkInfo is BrowserHyperlinkInfo) {
+        return@getNextOccurrence
       }
-      if (hyperlinkInfo instanceof HyperlinkInfoBase) {
-        VisualPosition position = editor.offsetToVisualPosition(offset);
-        Point point = editor.visualPositionToXY(new VisualPosition(position.getLine() + 1, position.getColumn()));
-        ((HyperlinkInfoBase)hyperlinkInfo).navigate(myProject, new RelativePoint(editor.getContentComponent(), point));
+      if (hyperlinkInfo is HyperlinkInfoBase) {
+        val position = editor.offsetToVisualPosition(offset)
+        val point = editor.visualPositionToXY(
+          VisualPosition(position.getLine() + 1, position.getColumn()))
+        hyperlinkInfo.navigate(project, RelativePoint(editor.contentComponent, point))
       }
-      else if (hyperlinkInfo != null) {
-        hyperlinkInfo.navigate(myProject);
-      }
-    });
+      else hyperlinkInfo?.navigate(project)
+    }
   }
 
-  @Override
-  public OccurenceInfo goPreviousOccurence() {
-    return calcNextOccurrence(-1);
+  override fun goPreviousOccurence(): OccurenceInfo? {
+    return calcNextOccurrence(-1)
   }
 
-  @Override
-  public @NotNull String getNextOccurenceActionName() {
-    return ExecutionBundle.message("down.the.stack.trace");
+  override fun getNextOccurenceActionName(): String {
+    return ExecutionBundle.message("down.the.stack.trace")
   }
 
-  @Override
-  public @NotNull String getPreviousOccurenceActionName() {
-    return ExecutionBundle.message("up.the.stack.trace");
+  override fun getPreviousOccurenceActionName(): String {
+    return ExecutionBundle.message("up.the.stack.trace")
   }
 
-  public void addCustomConsoleAction(@NotNull AnAction action) {
-    customActions.add(action);
+  fun addCustomConsoleAction(action: AnAction) {
+    customActions.add(action)
   }
 
-  @Override
-  public AnAction @NotNull [] createConsoleActions() {
+  override fun createConsoleActions(): Array<AnAction> {
     //Initializing prev and next occurrences actions
-    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    AnAction prevAction = actionsManager.createPrevOccurenceAction(this);
-    prevAction.getTemplatePresentation().setText(getPreviousOccurenceActionName());
-    AnAction nextAction = actionsManager.createNextOccurenceAction(this);
-    nextAction.getTemplatePresentation().setText(getNextOccurenceActionName());
+    val actionsManager = CommonActionsManager.getInstance()
+    val prevAction = actionsManager.createPrevOccurenceAction(this)
+    prevAction.templatePresentation.setText(previousOccurenceActionName)
+    val nextAction = actionsManager.createNextOccurenceAction(this)
+    nextAction.templatePresentation.setText(nextOccurenceActionName)
 
-    AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
-      @Override
-      protected Editor getEditor(@NotNull AnActionEvent e) {
-        var editor = ConsoleViewImpl.this.getEditor();
-        return editor == null ? null : ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
+    val switchSoftWrapsAction: AnAction = object : ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
+      override fun getEditor(e: AnActionEvent): Editor? {
+        val editor = this@ConsoleViewImpl.editor
+        return if (editor == null) null else getClientEditor(editor, currentOrNull)
       }
-    };
-    AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(getEditor());
-
-    List<AnAction> consoleActions = new ArrayList<>();
-    consoleActions.add(prevAction);
-    consoleActions.add(nextAction);
-    consoleActions.add(switchSoftWrapsAction);
-    consoleActions.add(autoScrollToTheEndAction);
-    consoleActions.add(ActionManager.getInstance().getAction("Print"));
-    consoleActions.add(clearThisConsoleAction());
-    consoleActions.addAll(customActions);
-    List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
-    AnAction[] result = consoleActions.toArray(AnAction.EMPTY_ARRAY);
-    for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
-      result = postProcessor.postProcess(this, result);
     }
-    return result;
+    val autoScrollToTheEndAction: AnAction = ScrollToTheEndToolbarAction(
+      editor)
+
+    val consoleActions: MutableList<AnAction> = ArrayList()
+    consoleActions.add(prevAction)
+    consoleActions.add(nextAction)
+    consoleActions.add(switchSoftWrapsAction)
+    consoleActions.add(autoScrollToTheEndAction)
+    consoleActions.add(ActionManager.getInstance().getAction("Print"))
+    consoleActions.add(clearThisConsoleAction())
+    consoleActions.addAll(customActions)
+    val postProcessors = ConsoleActionsPostProcessor.EP_NAME.extensionList
+    var result = consoleActions.toTypedArray()
+    for (postProcessor in postProcessors) {
+      result = postProcessor.postProcess(this, result)
+    }
+    return result
   }
 
-  protected final @NotNull AnAction clearThisConsoleAction() {
-    return new ClearThisConsoleAction(this);
+  protected fun clearThisConsoleAction(): AnAction {
+    return ClearThisConsoleAction(this)
   }
 
-  @Override
-  public void allowHeavyFilters() {
-    myAllowHeavyFilters = true;
+  override fun allowHeavyFilters() {
+    myAllowHeavyFilters = true
   }
 
-  @Override
-  public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
-    myListeners.add(listener);
-    Disposer.register(parent, () -> myListeners.remove(listener));
+  override fun addChangeListener(listener: ObservableConsoleView.ChangeListener, parent: Disposable) {
+    myListeners.add(listener)
+    Disposer.register(parent) { myListeners.remove(listener) }
   }
 
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    InternalDecoratorImpl.componentWithEditorBackgroundAdded(this);
+  override fun addNotify() {
+    super.addNotify()
+    componentWithEditorBackgroundAdded(this)
   }
 
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-    InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
+  override fun removeNotify() {
+    super.removeNotify()
+    componentWithEditorBackgroundRemoved(this)
   }
 
-  private void insertUserText(@NotNull Editor editor, int offset, @NotNull String text) {
-    ThreadingAssertions.assertEventDispatchThread();
-    List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, ConsoleViewContentType.USER_INPUT);
+  private fun insertUserText(editor: Editor, offset: Int, text: String) {
+    @Suppress("NAME_SHADOWING")
+    var offset = offset
+    ThreadingAssertions.assertEventDispatchThread()
+    val result = myInputMessageFilter.applyFilter(text, ConsoleViewContentType.USER_INPUT)
     if (result == null) {
-      doInsertUserInput(editor, offset, text);
+      doInsertUserInput(editor, offset, text)
     }
     else {
-      for (Pair<String, ConsoleViewContentType> pair : result) {
-        String chunkText = pair.getFirst();
-        ConsoleViewContentType chunkType = pair.getSecond();
-        if (chunkType.equals(ConsoleViewContentType.USER_INPUT)) {
-          doInsertUserInput(editor, offset, chunkText);
-          offset += chunkText.length();
+      for (pair in result) {
+        val chunkText = pair.getFirst()
+        val chunkType = pair.getSecond()
+        if (chunkType == ConsoleViewContentType.USER_INPUT) {
+          doInsertUserInput(editor, offset, chunkText)
+          offset += chunkText.length
         }
         else {
-          print(chunkText, chunkType, null);
+          print(chunkText, chunkType, null)
         }
       }
     }
   }
 
-  private void doInsertUserInput(@NotNull Editor editor, int offset, @NotNull String text) {
-    ThreadingAssertions.assertEventDispatchThread();
-    Document document = editor.getDocument();
+  private fun doInsertUserInput(editor: Editor, offset: Int, text: String) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val document = editor.document
 
-    int oldDocLength = document.getTextLength();
-    document.insertString(offset, text);
-    int newStartOffset = Math.max(0,document.getTextLength() - oldDocLength + offset - text.length()); // take care of trim document
-    int newEndOffset = document.getTextLength() - oldDocLength + offset; // take care of trim document
+    val oldDocLength = document.textLength
+    document.insertString(offset, text)
+    val newStartOffset = max(0.0,
+                             (document.textLength - oldDocLength + offset - text.length).toDouble()).toInt() // take care of trim document
+    val newEndOffset = document.textLength - oldDocLength + offset // take care of trim document
 
-    if (ConsoleTokenUtil.findTokenMarker(getEditor(), getProject(), newEndOffset) == null) {
-      ConsoleTokenUtil.createTokenRangeHighlighter(getEditor(), getProject(), ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset, !text.equals("\n"));
+    if (ConsoleTokenUtil.findTokenMarker(this.editor!!, project, newEndOffset) == null) {
+      ConsoleTokenUtil.createTokenRangeHighlighter(this.editor!!, project, ConsoleViewContentType.USER_INPUT, newStartOffset, newEndOffset,
+                                                   text != "\n")
     }
 
-    moveScrollRemoveSelection(editor, newEndOffset);
-    sendUserInput(text);
+    moveScrollRemoveSelection(editor, newEndOffset)
+    sendUserInput(text)
   }
 
-  private static void moveScrollRemoveSelection(@NotNull Editor editor, int offset) {
-    ThreadingAssertions.assertEventDispatchThread();
-    editor.getCaretModel().moveToOffset(offset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    editor.getSelectionModel().removeSelection();
-  }
+  private fun deleteUserText(startOffset: Int, length: Int) {
+    ThreadingAssertions.assertEventDispatchThread()
+    val editor = editor
+    val document = editor!!.document
 
-  private void deleteUserText(int startOffset, int length) {
-    ThreadingAssertions.assertEventDispatchThread();
-    Editor editor = getEditor();
-    Document document = editor.getDocument();
-
-    RangeMarker marker = ConsoleTokenUtil.findTokenMarker(getEditor(), getProject(), startOffset);
-    if (marker == null || ConsoleTokenUtil.getTokenType(marker) != ConsoleViewContentType.USER_INPUT) {
-      return;
+    val marker = ConsoleTokenUtil.findTokenMarker(this.editor!!, project, startOffset)
+    if (marker == null || ConsoleTokenUtil.getTokenType(marker) !== ConsoleViewContentType.USER_INPUT) {
+      return
     }
 
-    int endOffset = startOffset + length;
+    val endOffset = startOffset + length
     if (startOffset >= 0 && endOffset >= 0 && endOffset > startOffset) {
-      document.deleteString(startOffset, endOffset);
+      document.deleteString(startOffset, endOffset)
     }
-    moveScrollRemoveSelection(editor, startOffset);
+    moveScrollRemoveSelection(editor, startOffset)
   }
 
-  public boolean isRunning() {
-    return myState.isRunning();
-  }
+  open val isRunning: Boolean
+    get() = state.isRunning
 
-  public void addNotificationComponent(@NotNull JComponent notificationComponent) {
-    ThreadingAssertions.assertEventDispatchThread();
-    add(notificationComponent, BorderLayout.NORTH);
-  }
-
-  @TestOnly
-  @NotNull
-  ConsoleState getState() {
-    return myState;
+  fun addNotificationComponent(notificationComponent: JComponent) {
+    ThreadingAssertions.assertEventDispatchThread()
+    add(notificationComponent, BorderLayout.NORTH)
   }
 
   /**
    * Command line used to launch application/test from idea may be quite long.
    * Hence, it takes many visual lines during representation if soft wraps are enabled
    * or, otherwise, takes many columns and makes horizontal scrollbar thumb too small.
-   * <p/>
-   * Our point is to fold such long command line and represent it as a single visual line by default.
+   *
+   *
+   * Our point is to fold such a long command line and represent it as a single visual line by default.
    */
-  private final class CommandLineFolding extends ConsoleFolding {
-    @Override
-    public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
-      return line.length() >= 1000 && myState.isCommandLine(line);
+  private inner class CommandLineFolding : ConsoleFolding() {
+    override fun shouldFoldLine(project: Project, line: String): Boolean {
+      return line.length >= 1000 && state.isCommandLine(line)
     }
 
-    @Override
-    public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
-      String text = lines.get(0);
+    override fun getPlaceholderText(project: Project, lines: List<String>): String {
+      val text = lines[0]
 
-      int index = 0;
-      if (text.charAt(0) == '"') {
-        index = text.indexOf('"', 1) + 1;
+      var index = 0
+      if (text[0] == '"') {
+        index = text.indexOf('"', 1) + 1
       }
       if (index == 0) {
-        boolean nonWhiteSpaceFound = false;
-        for (; index < text.length(); index++) {
-          char c = text.charAt(index);
+        var nonWhiteSpaceFound = false
+        while (index < text.length) {
+          val c = text[index]
           if (c != ' ' && c != '\t') {
-            nonWhiteSpaceFound = true;
-            continue;
+            nonWhiteSpaceFound = true
+            index++
+            continue
           }
           if (nonWhiteSpaceFound) {
-            break;
+            break
+          }
+          index++
+        }
+      }
+      assert(index <= text.length)
+      return text.substring(0, index) + " ..."
+    }
+  }
+
+  private open inner class FlushRunnable(
+    // true if requests of this class should not be merged (i.e., they can be requested multiple times)
+    private val adHoc: Boolean,
+  ) : Runnable {
+    // Does request of this class was myFlushAlarm.addRequest()-ed but not yet executed
+    private val requested = AtomicBoolean()
+
+    fun queue(delay: Long) {
+      if (flushAlarm.isDisposed) return
+      if (adHoc || requested.compareAndSet(false, true)) {
+        flushAlarm.addRequest(this, delay, stateForUpdate)
+      }
+    }
+
+    fun clearRequested() {
+      requested.set(false)
+    }
+
+    fun hasRequested(): Boolean {
+      return requested.get()
+    }
+
+    override fun run() {
+      if (isDisposed) {
+        return
+      }
+
+      // flush requires UndoManger/CommandProcessor properly initialized
+      if (!StartupManagerEx.getInstanceEx(project).startupActivityPassed()) {
+        addFlushRequest(DEFAULT_FLUSH_DELAY, FLUSH)
+      }
+
+      clearRequested()
+      doRun()
+    }
+
+    protected open fun doRun() {
+      flushDeferredText()
+    }
+  }
+
+  private val FLUSH = FlushRunnable(false)
+
+  private inner class ClearRunnable : FlushRunnable(false) {
+    public override fun doRun() {
+      doClear()
+    }
+  }
+
+  private val CLEAR = ClearRunnable()
+
+  init {
+    initTypedHandler()
+    isViewer = viewer
+    state = initialState
+    psiDisposedCheck = DisposedPsiManagerCheck(project)
+    this.project = project
+    mySearchScope = searchScope
+
+    myInputMessageFilter = ConsoleViewUtil.computeInputFilter(this, project, searchScope)
+    project.messageBus.connect(
+      this).subscribe<DumbService.DumbModeListener>(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+      private var myLastStamp: Long = 0
+
+      override fun enteredDumbMode() {
+        val editor: Editor = editor ?: return
+        myLastStamp = editor.document.modificationStamp
+      }
+
+      override fun exitDumbMode() {
+        ApplicationManager.getApplication().invokeLater {
+          val editor = editor
+          if (editor == null || project.isDisposed || getInstance(project).isDumb) {
+            return@invokeLater
+          }
+
+          val document = editor.document
+          if (myLastStamp != document.modificationStamp) {
+            rehighlightHyperlinksAndFoldings()
           }
         }
       }
-      assert index <= text.length();
-      return text.substring(0, index) + " ...";
-    }
-  }
+    })
+    @Suppress("LeakingThis")
+    ApplicationManager.getApplication().messageBus.connect(this)
+      .subscribe<EditorColorsListener>(EditorColorsManager.TOPIC, EditorColorsListener { `__`: EditorColorsScheme? ->
+        ThreadingAssertions.assertEventDispatchThread()
+        if (isDisposed) {
+          return@EditorColorsListener
+        }
 
-  private class FlushRunnable implements Runnable {
-    // Does request of this class was myFlushAlarm.addRequest()-ed but not yet executed
-    private final AtomicBoolean requested = new AtomicBoolean();
-    private final boolean adHoc; // true if requests of this class should not be merged (i.e., they can be requested multiple times)
-
-    private FlushRunnable(boolean adHoc) {
-      this.adHoc = adHoc;
-    }
-
-    void queue(long delay) {
-      if (flushAlarm.isDisposed()) return;
-      if (adHoc || requested.compareAndSet(false, true)) {
-        flushAlarm.addRequest(this, delay, getStateForUpdate());
+        ConsoleTokenUtil.updateAllTokenTextAttributes(editor!!, project)
+      })
+    if (usePredefinedMessageFilter) {
+      if (!isCurrentlyUnderLocalId && predefinedFilters.isEmpty()) {
+        updatePredefinedFiltersLater(ModalityState.defaultModalityState())
       }
-    }
-    void clearRequested() {
-      requested.set(false);
-    }
+      @Suppress("LeakingThis")
+      addAncestorListener(object : AncestorListenerAdapter() {
+        override fun ancestorAdded(event: AncestorEvent) {
+          if (predefinedFilters.isEmpty()) {
+            updatePredefinedFiltersLater()
+          }
+        }
+      })
+      ApplicationManager.getApplication().messageBus.connect(this)
+        .subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+          override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+            updatePredefinedFiltersLater()
+          }
 
-    boolean hasRequested() {
-      return requested.get();
-    }
-
-    @Override
-    public final void run() {
-      if (isDisposed()) return;
-      // flush requires UndoManger/CommandProcessor properly initialized
-      if (!StartupManagerEx.getInstanceEx(myProject).startupActivityPassed()) {
-        addFlushRequest(DEFAULT_FLUSH_DELAY, FLUSH);
-      }
-
-      clearRequested();
-      doRun();
-    }
-
-    protected void doRun() {
-      flushDeferredText();
+          override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+            updatePredefinedFiltersLater()
+          }
+        })
     }
   }
 
-  private final FlushRunnable FLUSH = new FlushRunnable(false);
-
-  private final class ClearRunnable extends FlushRunnable {
-    private ClearRunnable() {
-      super(false);
+  private inner class HyperlinkNavigationAction : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+      val runnable: Runnable = checkNotNull(getHyperlinks()!!.getLinkNavigationRunnable(editor!!.getCaretModel().logicalPosition))
+      runnable.run()
     }
 
-    @Override
-    public void doRun() {
-      doClear();
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = getHyperlinks()!!.getLinkNavigationRunnable(editor!!.getCaretModel().logicalPosition) != null
     }
-  }
-  private final ClearRunnable CLEAR = new ClearRunnable();
 
-  public @NotNull Project getProject() {
-    return myProject;
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   }
 
-  private final class HyperlinkNavigationAction extends DumbAwareAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Runnable runnable = getHyperlinks().getLinkNavigationRunnable(getEditor().getCaretModel().getLogicalPosition());
-      assert runnable != null;
-      runnable.run();
-    }
+  val text: String
+    get() = editor!!.document.text
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(getHyperlinks().getLinkNavigationRunnable(getEditor().getCaretModel().getLogicalPosition()) != null);
-    }
+  companion object {
+    private const val CONSOLE_VIEW_POPUP_MENU: @NonNls String = "ConsoleView.PopupMenu"
+    private val LOG = logger<ConsoleViewImpl>()
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+    private val DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200)
+
+    @JvmField
+    val CONSOLE_VIEW_IN_EDITOR_VIEW: Key<ConsoleViewImpl> = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW")
+    @JvmField
+    val IS_CONSOLE_DOCUMENT: Key<Boolean> = Key.create("IS_CONSOLE_DOCUMENT")
+
+    fun isStickingToEnd(editor: EditorEx): Boolean {
+      return isCaretAtTheLastLine(editor) || isVScrollAtTheBottom(editor, true)
     }
   }
+}
 
+private var ourTypedHandlerInitialized = false
+private val NEW_LINE_MATCHER: CharMatcher = CharMatcher.anyOf("\n\r")
 
+private fun initTypedHandler() {
+  if (ourTypedHandlerInitialized) return
+  EditorActionManager.getInstance()
+  val typedAction = TypedAction.getInstance()
+  @Suppress("DEPRECATION")
+  typedAction.setupHandler(MyTypedHandler(typedAction.handler))
+  ourTypedHandlerInitialized = true
+}
 
-  public @NotNull String getText() {
-    return getEditor().getDocument().getText();
+private fun isCaretAtTheLastLine(editor: Editor): Boolean {
+  val document = editor.document
+  val caretOffset = editor.caretModel.offset
+  return document.getLineNumber(caretOffset) >= document.lineCount - 1
+}
+
+private fun isVScrollAtTheBottom(editor: EditorEx, useImmediatePosition: Boolean): Boolean {
+  val scrollBar = editor.scrollPane.verticalScrollBar
+  val scrollBarPosition = if (useImmediatePosition) scrollBar.value else editor.scrollingModel.visibleAreaOnScrollingFinished.y
+  return scrollBarPosition == scrollBar.maximum - scrollBar.visibleAmount
+}
+
+@RequiresEdt
+private fun registerActionHandler(editor: Editor, @Suppress("SameParameterValue") actionId: String) {
+  val action = ActionManager.getInstance().getAction(actionId)
+  action.registerCustomShortcutSet(action.shortcutSet, editor.contentComponent)
+}
+
+private val USED_FOLDING_FQN_KEY = Key.create<String>("USED_FOLDING_KEY")
+
+private fun getFoldingFqn(consoleFolding: ConsoleFolding): String = consoleFolding.javaClass.name
+
+private fun moveScrollRemoveSelection(editor: Editor, offset: Int) {
+  ThreadingAssertions.assertEventDispatchThread()
+  editor.caretModel.moveToOffset(offset)
+  editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+  editor.selectionModel.removeSelection()
+}
+
+private class MyTypedHandler(originalAction: TypedActionHandler) : TypedActionHandlerBase(originalAction) {
+  override fun execute(editor: Editor, charTyped: Char, dataContext: DataContext) {
+    val consoleView = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW)
+    if (consoleView == null || !consoleView.state.isRunning || consoleView.isViewer) {
+      myOriginalHandler?.execute(editor, charTyped, dataContext)
+      return
+    }
+    val text = charTyped.toString()
+    consoleView.type(editor, text)
   }
 }
