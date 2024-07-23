@@ -8,38 +8,37 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.Long
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 internal class LocalizationActionsStatistics: CounterUsagesCollector() {
-  private val localizationActionsGroup = EventLogGroup("localization.actions.info", 2)
+  private val localizationActionsGroup = EventLogGroup("localization.actions.info", 3)
   private val eventSource: NullableEnumEventField<EventSource> = EventFields.NullableEnum<EventSource>("event_source")
-  private val selectedLang: StringEventField = EventFields.String("selected_language", Region.entries.map { it.externalName() })
-  private val selectedLangPrev: StringEventField = EventFields.String("selected_language_prev", Region.entries.map { it.externalName() })
-  private val selectedRegion: StringEventField = EventFields.String("selected_region", Region.entries.map { it.externalName() })
-  private val selectedRegionPrev: StringEventField = EventFields.String("selected_region_prev", Region.entries.map { it.externalName() })
+  private val availableLanguages = listOf(Locale.CHINA, Locale.JAPANESE, Locale.KOREAN, Locale.ENGLISH).map { it.toLanguageTag() }
+  private val availableRegions = Region.entries.map { it.externalName() }
+  private val selectedLang: StringEventField = EventFields.String("selected_language", availableLanguages)
+  private val selectedLangPrev: StringEventField = EventFields.String("selected_language_prev", availableLanguages)
+  private val selectedRegion: StringEventField = EventFields.String("selected_region", availableRegions)
+  private val selectedRegionPrev: StringEventField = EventFields.String("selected_region_prev", availableRegions)
   private val eventTimestamp: EventField<Long> = Long("timestamp")
-  private val hyperLinkActivatedEvent: EventId1<EventSource> = localizationActionsGroup.registerEvent("documentation_link_activated", eventSource)
-  private val languageExpandEvent: EventId1<EventSource> = localizationActionsGroup.registerEvent("language_expanded", eventSource)
-  private val languageSelectedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("language_selected", selectedLang, selectedLangPrev, eventSource)
-  private val regionExpandEvent: EventId1<EventSource> = localizationActionsGroup.registerEvent("region_expanded", eventSource)
-  private val regionSelectedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("region_selected", selectedRegion, selectedRegionPrev, eventSource)
+  private val hyperLinkActivatedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("documentation_link_activated", eventSource, eventTimestamp)
+  private val languageExpandEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("language_expanded", eventSource, eventTimestamp)
+  private val languageSelectedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("language_selected", selectedLang, selectedLangPrev, eventSource, eventTimestamp)
+  private val regionExpandEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("region_expanded", eventSource, eventTimestamp)
+  private val regionSelectedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("region_selected", selectedRegion, selectedRegionPrev, eventSource, eventTimestamp)
 
   private val languages = Locale.getISOLanguages().toList()
   private val osLang = EventFields.String("os_language", languages)
   private val countries = Locale.getISOCountries().toList()
   private val osCountry = EventFields.String("os_country", countries)
-  private val availableLanguages = listOf(Locale.CHINA, Locale.JAPANESE, Locale.KOREAN, Locale.ENGLISH).map { it.toLanguageTag() }
   private val detectedLang: StringEventField = EventFields.String("detected_language", availableLanguages)
-  private val detectedRegion: StringEventField = EventFields.String("detected_region", Region.entries.map { it.externalName() })
+  private val detectedRegion: StringEventField = EventFields.String("detected_region", availableRegions)
 
   private val nextButtonPressed: VarargEventId = localizationActionsGroup.registerVarargEvent("next_button_pressed", selectedLang, selectedRegion, eventTimestamp, EventFields.DurationMs, eventSource)
   private val dialogClosedWithoutConfirmation: VarargEventId = localizationActionsGroup.registerVarargEvent("dialog_closed_without_confirmation", selectedLang, selectedRegion, eventTimestamp, EventFields.DurationMs, eventSource)
   private val languageAndRegionBeforeEuaShownEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("dialog_shown", osLang, osCountry, detectedLang, detectedRegion, eventTimestamp, eventSource)
 
-  private val settingsApplied: VarargEventId = localizationActionsGroup.registerVarargEvent("settings_applied", selectedLang, selectedLangPrev, selectedRegion, selectedRegionPrev, eventSource)
+  private val settingsApplied: VarargEventId = localizationActionsGroup.registerVarargEvent("settings_applied", selectedLang, selectedLangPrev, selectedRegion, selectedRegionPrev, eventSource, eventTimestamp)
   
   private var initializationStartedTimestamp: Long? = null
   private var source: EventSource = EventSource.NOT_SET
@@ -53,20 +52,11 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
   }
 
   fun logEvent(event: VarargEventId, params: List<EventPair<*>>) {
-    invokeOnBackgroundWhenApplicationLoaded { event.log(params) }
-  }
-
-  fun logEvent(event: EventId1<EventSource>, eventSource: EventSource) {
-    invokeOnBackgroundWhenApplicationLoaded { event.log(eventSource) }
-  }
-
-
-  private fun invokeOnBackgroundWhenApplicationLoaded(action: Runnable) {
     if (!LoadingState.APP_READY.isOccurred || ApplicationManager.getApplication() == null) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule({ invokeOnBackgroundWhenApplicationLoaded(action) }, 3000L, TimeUnit.MILLISECONDS)
+      unSentEvents.add(Pair(event, params))
     }
     else {
-      AppExecutorUtil.getAppExecutorService().execute(action)
+      event.log(params)
     }
   }
 
@@ -111,33 +101,44 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
   }
 
   fun languageExpanded() {
-    logEvent(languageExpandEvent, source)
+    logEvent(languageExpandEvent, listOf(
+      eventSource.with(source),
+      eventTimestamp.with(System.currentTimeMillis())
+    ))
   }
 
   fun languageSelected(selected: Locale, prevSelected: Locale) {
     logEvent(languageSelectedEvent, listOf(
       selectedLang.with( selected.toLanguageTag()),
       selectedLangPrev.with(prevSelected.toLanguageTag()),
-      eventSource.with(source)
+      eventSource.with(source),
+      eventTimestamp.with(System.currentTimeMillis())
     )
     )
   }
 
   fun regionExpanded() {
-    logEvent(regionExpandEvent, source)
+    logEvent(regionExpandEvent, listOf(
+      eventSource.with(source),
+      eventTimestamp.with(System.currentTimeMillis())
+    ))
   }
 
   fun regionSelected(selected: Region, prevSelected: Region) {
     logEvent(regionSelectedEvent, listOf(
       selectedRegion.with(selected.externalName()),
       selectedRegionPrev.with(prevSelected.externalName()),
-      eventSource.with(source)
+      eventSource.with(source),
+      eventTimestamp.with(System.currentTimeMillis())
     )
     )
   }
 
   fun hyperLinkActivated() {
-    logEvent(hyperLinkActivatedEvent, source)
+    logEvent(hyperLinkActivatedEvent, listOf(
+      eventSource.with(source),
+      eventTimestamp.with(System.currentTimeMillis())
+    ))
   }
 
   fun settingsUpdated(locale: Locale, localePrev: Locale, region: Region, regionPrev: Region) {
@@ -146,11 +147,14 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
       selectedLangPrev.with(localePrev.toLanguageTag()),
       selectedRegion.with(region.externalName()),
       selectedRegionPrev.with(regionPrev.externalName()),
-      eventSource.with(source)
+      eventSource.with(source),
+      eventTimestamp.with(System.currentTimeMillis())
     )
     )
   }
 }
+
+internal val unSentEvents = mutableListOf<Pair<VarargEventId, List<EventPair<*>>>>()
 
 @Internal
 enum class EventSource {
