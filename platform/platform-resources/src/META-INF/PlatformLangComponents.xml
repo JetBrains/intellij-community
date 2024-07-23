@@ -127,13 +127,13 @@
     <!--suppress PluginXmlDynamicPlugin -->
     <actionConfigurationCustomizer implementation="com.intellij.ide.actionMacro.ActionMacroManager$MyActionTuner"/>
 
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer" order="first"/>
-    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FoldingTextEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionTextEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.DeclarativeHintsEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.codeInsight.hints.ParameterHintsEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.DocRenderTextEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FocusZoneTextEditorInitializer"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.daemon.impl.HighlightingNecromancerAwaker" order="first"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.folding.impl.CodeFoldingNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.daemon.impl.DeclarativeHintsNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.hints.ParameterHintsNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.documentation.render.DocRenderNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.openapi.fileEditor.impl.text.FocusZoneNecromancerAwaker"/>
 
     <postStartupActivity implementation="com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"/>
 
