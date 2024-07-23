@@ -6,7 +6,6 @@ import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
-import java.nio.file.Path
 
 
 //TODO: Use Konfig instead?
@@ -29,7 +28,8 @@ internal data class PyEnvTestSettings(
   /**
    * Paths to all existing python SDKs
    */
-  val pythons: List<File> = foldersWithPythons
+  @TestOnly
+  internal val pythons: List<File> = foldersWithPythons
     .filter(File::exists)
     .flatMap { it.listFiles()?.toList() ?: emptyList() }
     .filter { !it.name.startsWith('.') }
@@ -126,10 +126,3 @@ enum class PyTestEnvVars(private val getVarName: (PyTestEnvVars) -> String = { i
 
   fun isSet() = getValue() != null
 }
-
-/**
- * Returns first python installed with gradle script to the dir with env variable (see [PyEnvTestSettings])
- */
-@TestOnly
-fun getPython(): Result<Path> = PyEnvTestSettings.fromEnvVariables().pythons.firstOrNull()?.toPath()?.let { Result.success(it) }
-                                ?: Result.failure(Throwable("No python found. See ${PyEnvTestSettings::class} class for more info"))
