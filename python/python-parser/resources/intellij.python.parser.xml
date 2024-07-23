@@ -11,8 +11,8 @@
               extensions="pyi"
               implementationClass="com.jetbrains.python.pyi.PyiFileType"
               fieldName="INSTANCE"/>
-  <registryKey key="python.ast.leaves.incremental.reparse" defaultValue="true"
-               description="Enables incremental reparse for Python leaf elements (string literals, identifiers, comments)"/>
+    <registryKey key="python.ast.leaves.incremental.reparse" defaultValue="true"
+                 description="Enables incremental reparse for Python leaf elements (string literals, identifiers, comments)"/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"

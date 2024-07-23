@@ -467,9 +467,6 @@
                  description="When enabled, activates LiteralString inference for Python string literals" />
     <registryKey key="python.statement.lists.incremental.reparse" defaultValue="true"
                  description="Enables incremental reparse for statement lists"/>
-    <registryKey key="python.ast.leaves.incremental.reparse" defaultValue="true"
-                 description="Enables incremental reparse for Python leaf elements (string literals, identifiers, comments)"/>
-
   </extensions>
 
   <extensionPoints>
