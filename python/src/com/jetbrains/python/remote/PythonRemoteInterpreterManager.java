@@ -62,7 +62,7 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   public static void addHelpersMapping(@NotNull RemoteSdkProperties data, @NotNull PyRemotePathMapper pathMapper) {
-    pathMapper.addMapping(PythonHelpersLocator.getCommunityHelpersRoot().getPath(), data.getHelpersPath(), PyPathMappingType.HELPERS);
+    pathMapper.addMapping(PythonHelpersLocator.getCommunityHelpersRoot().toString(), data.getHelpersPath(), PyPathMappingType.HELPERS);
   }
 
   public static @NotNull PyRemotePathMapper appendBasicMappings(@Nullable Project project,

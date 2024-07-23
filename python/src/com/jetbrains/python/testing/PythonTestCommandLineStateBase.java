@@ -19,6 +19,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -236,7 +237,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   @Override
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
     super.customizeEnvironmentVars(envs, passParentEnvs);
-    envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.findPathInHelpers("pycharm"));
+    envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.findPathStringInHelpers("pycharm"));
   }
 
   @Override
@@ -245,11 +246,14 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
                                                          boolean passParentEnvs) {
     super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs);
     var helpersTargetPath = helpersAwareTargetRequest.preparePyCharmHelpers();
-    // Community Helpers root should be first in the list
-    var communityTargetPathFun = helpersTargetPath.getHelpers().get(0).getTargetPathFun();
-    Function<TargetEnvironment, String> targetPycharmHelpersPath =
-      TargetEnvironmentFunctions.getRelativeTargetPath(communityTargetPathFun, "pycharm");
-    envs.put("PYCHARM_HELPERS_DIR", targetPycharmHelpersPath);
+    var communityHelpersPath = helpersTargetPath.getHelpers().stream().filter(it -> it.getLocalPath().endsWith("helpers")).findFirst();
+    if (communityHelpersPath.isPresent()) {
+      Function<TargetEnvironment, String> targetPycharmHelpersPath =
+        TargetEnvironmentFunctions.getRelativeTargetPath(communityHelpersPath.get().getTargetPathFun(), "pycharm");
+      envs.put("PYCHARM_HELPERS_DIR", targetPycharmHelpersPath);
+    } else {
+      Logger.getInstance(this.getClass()).error("Python Community helpers dir path not found");
+    }
   }
 
   protected abstract HelperPackage getRunner();

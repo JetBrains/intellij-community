@@ -374,7 +374,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
 
   private static @NotNull HelperPackage getPipHelperPackage() {
     return new PythonHelper.ScriptPythonHelper(PIP_WHEEL_NAME + "/" + PyPackageUtil.PIP,
-                                               PythonHelpersLocator.getCommunityHelpersRoot(),
+                                               PythonHelpersLocator.getCommunityHelpersRoot().toFile(),
                                                Collections.emptyList());
   }
 
