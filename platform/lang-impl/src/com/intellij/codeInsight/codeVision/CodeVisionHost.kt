@@ -9,7 +9,6 @@ import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.grave.CodeVisionGrave
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings
 import com.intellij.codeInsight.hints.codeVision.ModificationStampUtil
@@ -153,7 +152,6 @@ open class CodeVisionHost(val project: Project) {
     return providers.firstOrNull { it.id == id }
   }
 
-  @RequiresReadLock
   suspend fun collectPlaceholders(editor: Editor, psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
     return withTimeoutOrNull(100.milliseconds) {
       readAction {
@@ -413,7 +411,6 @@ open class CodeVisionHost(val project: Project) {
     }
 
     editorLifetime.onTermination {
-      editor.project?.service<CodeVisionGrave>()?.bury(editor, context.getValidPairResult())
       context.clearLenses()
     }
   }
