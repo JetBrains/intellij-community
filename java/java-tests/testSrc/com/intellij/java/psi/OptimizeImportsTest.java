@@ -50,7 +50,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+    return JAVA_23;
   }
 
   @Override
@@ -126,7 +126,11 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testImplicitIoImport3() {
     implicitIoImport();
   }
-  
+
+  public void testImplicitModulesWithImplicitClass() {
+    doTest();
+  }
+
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 
