@@ -396,8 +396,9 @@ private fun Sdk.containsModuleName(module: Module?): Boolean {
 fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
   val existingData = sdkAdditionalData as? PythonSdkAdditionalData
   if (existingData != null) return existingData
-  val flavor = PythonSdkFlavor.getFlavor(homePath)
-  val newData = PythonSdkAdditionalData(flavor?.let { if (it.supportsEmptyData()) it else null })
+  val homePath = Path.of(homePath ?: error("homePath is null for $this"))
+  val flavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(homePath) ?: error("No flavor detected for $homePath sdk")
+  val newData = PythonSdkAdditionalData(if (flavor.supportsEmptyData()) flavor else null)
   val modificator = sdkModificator
   modificator.sdkAdditionalData = newData
   val application = ApplicationManager.getApplication()
