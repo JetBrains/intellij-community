@@ -791,11 +791,6 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(new VirtualFile[]{findVirtualFile(getFullRelativeTestName()), findVirtualFile(BASE_PATH + location)}, false, false);
   }
 
-  @IJIgnore(issue = "IDEA-356247")
-  public void testMavenValidation() throws Exception {
-    doTest(getFullRelativeTestName(), false, false);
-  }
-
   public void testResolveEntityUrl() throws Throwable {
     doTest(new VirtualFile[] {
       findVirtualFile(getFullRelativeTestName()),
