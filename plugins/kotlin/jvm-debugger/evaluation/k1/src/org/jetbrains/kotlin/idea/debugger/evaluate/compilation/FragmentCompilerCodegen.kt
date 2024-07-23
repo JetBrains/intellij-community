@@ -49,7 +49,3 @@ private fun isCodeFragmentClassPath(path: String): Boolean {
 fun List<OutputFile>.filterCodeFragmentClassFiles(): List<OutputFile> {
     return filter { isCodeFragmentClassPath(it.relativePath) }
 }
-
-@KaExperimentalApi
-val KaCompiledFile.isCodeFragmentClassFile: Boolean
-    get() = isCodeFragmentClassPath(path)

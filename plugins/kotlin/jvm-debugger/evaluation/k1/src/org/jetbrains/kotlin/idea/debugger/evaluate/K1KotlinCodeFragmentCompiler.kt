@@ -6,17 +6,18 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator.Companion.IGNORED_DIAGNOSTICS
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator.Companion.logCompilation
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import java.util.Collections
 
 class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
@@ -117,3 +118,15 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                 factory == Errors.ILLEGAL_SUSPEND_FUNCTION_CALL
 
 }
+
+private val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
+        setOf(
+            Errors.OPT_IN_USAGE_ERROR,
+            Errors.MISSING_DEPENDENCY_SUPERCLASS,
+            Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS,
+            Errors.FIR_COMPILED_CLASS,
+            Errors.ILLEGAL_SUSPEND_FUNCTION_CALL,
+            ErrorsJvm.JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE,
+            ErrorsJvm.JAVA_MODULE_DOES_NOT_READ_UNNAMED_MODULE,
+            ErrorsJvm.JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE
+        )

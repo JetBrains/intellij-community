@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.moduleInfo
+import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen.Companion.getSharedTypeIfApplicable
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegenInfo
@@ -122,3 +123,6 @@ class OldFragmentCompilerCodegen(
         return result
     }
 }
+
+internal val OutputFile.internalClassName: String
+    get() = computeInternalClassName(relativePath)

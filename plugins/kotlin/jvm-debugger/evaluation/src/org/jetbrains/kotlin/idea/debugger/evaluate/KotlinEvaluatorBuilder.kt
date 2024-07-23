@@ -26,8 +26,6 @@ import org.jetbrains.eval4j.jdi.JDIEval
 import org.jetbrains.eval4j.jdi.asJdiValue
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.eval4j.jdi.makeInitialFrame
-import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
-import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
@@ -47,7 +45,6 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.merge
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -367,18 +364,6 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 LOG.debug("Compile bytecode for ${codeFragment.text}")
             }
         }
-
-        val IGNORED_DIAGNOSTICS: Set<DiagnosticFactory<*>> = Errors.INVISIBLE_REFERENCE_DIAGNOSTICS +
-                setOf(
-                    Errors.OPT_IN_USAGE_ERROR,
-                    Errors.MISSING_DEPENDENCY_SUPERCLASS,
-                    Errors.IR_WITH_UNSTABLE_ABI_COMPILED_CLASS,
-                    Errors.FIR_COMPILED_CLASS,
-                    Errors.ILLEGAL_SUSPEND_FUNCTION_CALL,
-                    ErrorsJvm.JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE,
-                    ErrorsJvm.JAVA_MODULE_DOES_NOT_READ_UNNAMED_MODULE,
-                    ErrorsJvm.JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE
-                )
 
         private val DEFAULT_METHOD_MARKERS = listOf("java/lang/Object", "kotlin/jvm/internal/DefaultConstructorMarker")
 
