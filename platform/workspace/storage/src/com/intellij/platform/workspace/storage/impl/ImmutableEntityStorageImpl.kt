@@ -800,6 +800,7 @@ internal class MutableEntityStorageImpl(
     val children = refs.getChildrenRefsOfParentBy(id.asParent())
     children.keys.forEach { connectionId ->
       val modifications = refs.removeRefsByParent(connectionId, id.asParent())
+      LOG.trace { "Perform modifications on children refs for $connectionId: $modifications" }
       if (updateChangelogForChildren) {
         this.createReplaceEventsForUpdates(modifications, connectionId)
       }
@@ -809,6 +810,7 @@ internal class MutableEntityStorageImpl(
     val parents = refs.getParentRefsOfChild(id.asChild())
     parents.forEach { (connectionId, parentId) ->
       val modifications = refs.removeParentToChildRef(connectionId, parentId, id.asChild())
+      LOG.trace { "Perform modifications on parent refs for $connectionId: $modifications" }
       if (updateChangelogForParents) {
         this.createReplaceEventsForUpdates(modifications, connectionId)
       }
