@@ -187,7 +187,7 @@ public interface JBAccountInfoService {
       INSTANCE
     }
 
-    record TrialRejected(@NotNull Reason reason, @Nullable String url, @NlsSafe @NotNull String message) implements LicenseListResult {
+    record TrialRejected(@NotNull Reason reason, @NlsSafe @NotNull String message) implements LicenseListResult {
       public enum Reason {
         TRIAL_NOT_ALLOWED,
         PAYMENT_PROOF_REQUIRED,
