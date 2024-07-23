@@ -51,7 +51,7 @@ abstract class AbstractOpenProjectProvider {
     linkProject(projectFile, project)
   }
 
-  private suspend fun unlinkAllLinkedProjects(project: Project, projectFile: VirtualFile) {
+  protected suspend fun unlinkAllLinkedProjects(project: Project, projectFile: VirtualFile) {
     val externalProjectPath = projectFile.path
     EP_NAME.forEachExtensionSafeAsync { extension ->
       if (extension.systemId != systemId && extension.isLinkedProject(project, externalProjectPath)) {

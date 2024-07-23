@@ -62,6 +62,8 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
 
   @ApiStatus.Internal
   suspend fun forceLinkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
+    unlinkAllLinkedProjects(project, projectRoot)
     doLinkToExistingProjectAsync(projectFile, project, true)
   }
 
