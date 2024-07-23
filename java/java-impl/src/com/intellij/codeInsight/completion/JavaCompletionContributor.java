@@ -1386,25 +1386,30 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
   private static void addModuleReferences(PsiElement moduleRef, PsiFile originalFile, CompletionResultSet result) {
     PsiElement statement = moduleRef.getParent();
-    boolean requires;
-    if ((requires = statement instanceof PsiRequiresStatement) || statement instanceof PsiPackageAccessibilityStatement) {
+    boolean withAutoModules;
+    if ((withAutoModules = statement instanceof PsiRequiresStatement || statement instanceof PsiImportModuleStatement) || statement instanceof PsiPackageAccessibilityStatement) {
       PsiElement parent = statement.getParent();
       if (parent != null) {
         Project project = moduleRef.getProject();
         Set<String> filter = new HashSet<>();
-        filter.add(((PsiJavaModule)parent).getName());
+        if (parent instanceof PsiJavaModule psiJavaModule) {
+          filter.add(psiJavaModule.getName());
+        } else {
+          PsiJavaModule psiJavaModule = JavaModuleGraphHelper.getInstance().findDescriptorByElement(originalFile);
+          if (psiJavaModule != null) filter.add(psiJavaModule.getName());
+        }
 
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
         for (String name : index.getAllKeys(project)) {
           if (!index.getModules(name, project, scope).isEmpty() && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
-            if (requires) lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
+            if (withAutoModules) lookup = TailTypeDecorator.withTail(lookup, TailTypes.semicolonType());
             result.addElement(lookup);
           }
         }
 
-        if (requires) {
+        if (withAutoModules) {
           Module module = ModuleUtilCore.findModuleForFile(originalFile);
           if (module != null) {
             scope = ProjectScope.getAllScope(project);
