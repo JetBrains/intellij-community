@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BooleanSupplier;
 
 /**
  * Perform injections, run highlight visitors and annotators on discovered injected files
@@ -191,7 +190,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     Divider.divideInsideAndOutsideAllRoots(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, dividedElements -> {
       List<? extends @NotNull PsiElement> inside = dividedElements.inside();
       LongList insideRanges = dividedElements.insideRanges();
-      BooleanSupplier runnable = () -> {
+      Runnable runnable = () -> {
         HighlightVisitorRunner highlightVisitorRunner = new HighlightVisitorRunner(injectedPsi, myGlobalScheme, myRunVisitors, myHighlightErrorElements);
 
         highlightVisitorRunner.createHighlightVisitorsFor(visitors -> {
@@ -209,10 +208,9 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
             });
         });
         highlightInjectedSyntax(injectedPsi, places, resultSink);
-        return true;
       };
       if (annotatorRunner == null) {
-        runnable.getAsBoolean();
+        runnable.run();
       }
       else {
         annotatorRunner.runAnnotatorsAsync(inside, List.of(), runnable, resultSink);

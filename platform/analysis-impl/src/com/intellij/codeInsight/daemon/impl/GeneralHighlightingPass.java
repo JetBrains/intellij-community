@@ -40,7 +40,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -237,13 +236,17 @@ sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     boolean forceHighlightParents,
                                     @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
-    BooleanSupplier runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
+    Runnable runnable = () -> myHighlightVisitorRunner.runVisitors(getFile(), myRestrictRange, elements1, ranges1, elements2, ranges2, visitors, forceHighlightParents, chunkSize,
                                                             myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
     setupAnnotationSession(session, myPriorityRange, myRestrictRange,
                            ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(getFile(), false, session) : null;
-    return annotatorRunner == null ? runnable.getAsBoolean() : annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
+    if (annotatorRunner == null) {
+      runnable.run();
+      return true;
+    }
+    return annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
   }
 
   static final int POST_UPDATE_ALL = 5;

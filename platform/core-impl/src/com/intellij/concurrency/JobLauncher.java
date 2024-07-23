@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -91,17 +90,16 @@ public abstract class JobLauncher {
    */
   public abstract @NotNull Job<Void> submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
 
+  /**
+   * Process each element in {@code items} with {@code thingProcessor} under {@code progress} in a background in an async manner,
+   * while running {@code runnable} synchronously.
+   * All processing is finished when the method returns, unless PCE is thrown, in which case there are no guarantees
+   */
   @ApiStatus.Internal
-  public <T> boolean procInOrderAsync(@NotNull ProgressIndicator progress,
-                                      int maxQueueSize,
-                                      @NotNull PairProcessor<? super T, ? super QueueController<? super T>> thingProcessor,
-                                      @NotNull Processor<? super QueueController<? super T>> otherActions) throws ProcessCanceledException {
+  public <T> boolean processConcurrentlyAsync(@NotNull ProgressIndicator progress,
+                                              @NotNull List<? extends T> items,
+                                              @NotNull Processor<? super T> thingProcessor,
+                                              @NotNull Runnable runnable) throws ProcessCanceledException {
     return false;
-  }
-
-  public interface QueueController<T> {
-    void enqueue(T element);
-    void dropEverythingAndPanic();
-    void finish();
   }
 }

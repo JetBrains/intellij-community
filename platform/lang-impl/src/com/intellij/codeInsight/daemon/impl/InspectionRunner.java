@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -23,7 +22,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -82,28 +80,9 @@ class InspectionRunner {
                            @NotNull PsiElementVisitor visitor,
                            @NotNull List<? extends PsiElement> elementsInside,
                            @NotNull List<? extends PsiElement> elementsOutside,
-                           boolean isVisible,
                            @NotNull List<? extends Class<?>> acceptingPsiTypes,
                            // The containing file this tool was called for. In the case of injected context, this will be the injected file.
-                           @NotNull PsiFile psiFile,
-                           @NotNull InspectionVisitorOptimizer inspectionVisitorsOptimizer) {
-    InspectionContext(@NotNull LocalInspectionToolWrapper tool,
-                      @NotNull InspectionProblemHolder holder,
-                      @NotNull PsiElementVisitor visitor,
-                      @NotNull List<? extends PsiElement> elementsInside,
-                      @NotNull List<? extends PsiElement> elementsOutside,
-                      boolean isVisible,
-                      @NotNull List<? extends Class<?>> acceptingPsiTypes,
-                      // The containing file this tool was called for. In the case of injected context, this will be the injected file.
-                      @NotNull PsiFile psiFile) {
-      this(tool, holder, visitor, elementsInside, elementsOutside, isVisible, acceptingPsiTypes, psiFile, new InspectionVisitorOptimizer(isVisible ? elementsInside : elementsOutside));
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("inspect: created context: "+psiFile+"; host="+InjectedLanguageManager.getInstance(psiFile.getProject()).injectedToHost(psiFile, psiFile.getTextRange())+"; context="+this+"; acceptingPsiTypes="+acceptingPsiTypes+
-                                      "\n"+" inside:"+elementsInside()+
-                                      "\n"+"; outside:"+elementsOutside());
-      }
-    }
-
+                           @NotNull PsiFile psiFile) {
     @Override
     public String toString() {
       return tool +"; inside:"+elementsInside().size()+"; outside:"+elementsOutside().size();
@@ -176,7 +155,7 @@ class InspectionRunner {
 
           List<? extends PsiElement> sortedInside = HighlightInfoUpdaterImpl.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
           List<? extends PsiElement> outside = toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside;
-          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, true, InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor), myPsiFile);
+          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor), myPsiFile);
           init.add(context);
         }
       }
@@ -184,41 +163,32 @@ class InspectionRunner {
       // but only for visible elements, because we don't care about the order in 'outside', and spending CPU on their rearrangement would be counterproductive
       InspectionProfilerDataHolder.sortByLatencies(myPsiFile, init, highlightInfoUpdater);
 
-      int initSize = init.size();
-      AtomicInteger addedInvisibles = new AtomicInteger();
-
-      PairProcessor<? super InspectionContext, JobLauncherImpl.QueueController<? super InspectionContext>> contextProcessor = (context,addToQueue) -> {
+      Processor<? super InspectionContext> contextProcessor = (context) -> {
         executeInImpatientReadAction(()-> {
-          processContext(context);
-          contextCompleted(context, session, addToQueue, initSize, addedInvisibles, contextFinishedCallback);
+          // sequentially to avoid inspection visitor reentrancy
+          processContext(context, context.elementsInside(), new InspectionVisitorOptimizer(context.elementsInside()));
+          processContext(context, context.elementsOutside(), new InspectionVisitorOptimizer(context.elementsOutside()));
+          contextCompleted(context, session, contextFinishedCallback);
         });
         return true;
       };
       // start InspectionContexts in `init` parallel to discovering injected fragments and running inspection runner on them too.
-      // note that the parallelism is restricted: first all InspectionContexts(visible=true) from `init` are run in parallel, then
-      // all InspectionContexts(visible=false) from `init` are added to the queue and run in parallel too.
-      // thus, we avoid running the same inspection tool visitor in a reentrant manner (on visible elements parallel to invisible elements),
+      // note that the parallelism is restricted: all InspectionContexts from `init` are run in parallel, within each
+      // the InspectionContext with (visible=true) is run and then InspectionContext with (visible=false).
+      // Thus, we avoid running the same inspection tool visitor in a reentrant manner (on visible elements parallel to invisible elements),
       // because some of them are not ready for that.
-      if (!JobLauncher.getInstance().procInOrderAsync(new SensitiveProgressWrapper(myProgress), initSize, contextProcessor, addToQueue -> {
+      if (!JobLauncher.getInstance().processConcurrentlyAsync(new SensitiveProgressWrapper(myProgress), init, contextProcessor, () -> {
         // have to do all this even for empty elements, to perform correct cleanup/inspectionFinished
-        if (init.isEmpty()) {
-          addToQueue.finish();
-        }
-        else {
-          for (InspectionContext context : init) {
-            addToQueue.enqueue(context);
-          }
-        }
         reportIdsOfInspectionsReportedAnyProblemToFUS(init);
 
         if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
           // we don't run whole-file tools on injected fragments
           List<LocalInspectionToolWrapper> localTools = ContainerUtil.filter(toolWrappers, t -> !t.runForWholeFile());
-          return inspectInjectedPsi(session, localTools, injectedContexts, applyIncrementallyCallback,
-                                    contextFinishedCallback, enabledToolsPredicate, addToInjectedQueue ->
-              getInjectedWithHosts(ContainerUtil.concat(restrictedInside, restrictedOutside), addToInjectedQueue));
+          getInjectedWithHosts(
+            ContainerUtil.concat(restrictedInside, restrictedOutside), session,
+            localTools, injectedContexts, applyIncrementallyCallback,
+            contextFinishedCallback, enabledToolsPredicate);
         }
-        return true;
       })) {
         throw new ProcessCanceledException();
       }
@@ -237,32 +207,17 @@ class InspectionRunner {
 
   private static void contextCompleted(@NotNull InspectionContext context,
                                        @NotNull LocalInspectionToolSession session,
-                                       @NotNull JobLauncherImpl.QueueController<? super InspectionContext> addToQueue,
-                                       int initSize,
-                                       @NotNull AtomicInteger addedInvisibles,
                                        @NotNull Consumer<? super InspectionContext> contextFinishedCallback) {
     if (LOG.isTraceEnabled()) {
-      LOG.trace("onComplete: " + context + "; visible=" + context.isVisible()+"; holder:"+context.holder.getResults());
+      LOG.trace("onComplete: " + context + "; holder:"+context.holder.getResults());
     }
-    if (context.isVisible()) {
-      // after the visible part is finished, queue the invisible part
-      InspectionContext invisibleContext =
-        new InspectionContext(context.tool(), context.holder(), context.visitor(), context.elementsInside(), context.elementsOutside(),
-                              false, context.acceptingPsiTypes(), context.psiFile());
-      addToQueue.enqueue(invisibleContext);
-      if (addedInvisibles.incrementAndGet() == initSize) {
-        addToQueue.finish();
-      }
-    }
-    else {
-      // both 'inside' and 'outside' elements are visited, the inspection is considered finished
-      InspectionProblemHolder holder = context.holder;
-      holder.toolStamps.finishTimeStamp = System.nanoTime();
-      context.tool.getTool().inspectionFinished(session, holder);
-      // report descriptors which were added by crazy inspections in their inspectionFinished() as the result of "visiting" fake element
-      holder.reportAddedDescriptors(HighlightInfoUpdaterImpl.FAKE_ELEMENT);
-      contextFinishedCallback.accept(context);
-    }
+    // both 'inside' and 'outside' elements are visited, the inspection is considered finished
+    InspectionProblemHolder holder = context.holder;
+    holder.toolStamps.finishTimeStamp = System.nanoTime();
+    context.tool.getTool().inspectionFinished(session, holder);
+    // report descriptors which were added by crazy inspections in their inspectionFinished() as the result of "visiting" fake element
+    holder.reportAddedDescriptors(HighlightInfoUpdaterImpl.FAKE_ELEMENT);
+    contextFinishedCallback.accept(context);
   }
 
   private void reportIdsOfInspectionsReportedAnyProblemToFUS(@NotNull List<? extends InspectionContext> init) {
@@ -404,64 +359,55 @@ class InspectionRunner {
    * (starting from this inspection's most fertile elements if any),
    * maintaining parallelism during this process (i.e., several visitors from {@code init} can be executed concurrently, but elements from the list head get higher priority than the list tail).
    */
-  private static void processContext(@NotNull InspectionContext context) {
-    List<? extends PsiElement> elements = context.isVisible() ? context.elementsInside() : context.elementsOutside();
+  private static void processContext(@NotNull InspectionContext context, List<? extends PsiElement> psiElements,
+                                     @NotNull InspectionVisitorOptimizer optimizer) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("processContext: " +
-                context + "; elements(" + elements.size() + "): " + StringUtil.join(elements, e-> e + "(" + e.getClass() + ")", ", ") + "; accepts=" + context.acceptingPsiTypes());
+                context + "; elements(" + psiElements.size() + "): " + StringUtil.join(psiElements, e-> e + "(" + e.getClass() + ")", ", ") + "; accepts=" + context.acceptingPsiTypes());
     }
-    context.inspectionVisitorsOptimizer().acceptElements(elements,
-                                                         context.acceptingPsiTypes,
-                                                         psiElement -> context.holder.visitElement(psiElement, context.visitor));
+    optimizer.acceptElements(psiElements,
+                             context.acceptingPsiTypes,
+                             psiElement -> context.holder.visitElement(psiElement, context.visitor));
   }
 
-  private boolean inspectInjectedPsi(@NotNull LocalInspectionToolSession session,
-                                     @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
-                                     @NotNull List<? super InspectionContext> outInjectedContexts,
-                                     @NotNull ApplyIncrementallyCallback addDescriptorIncrementallyCallback,
-                                     @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
-                                     @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate,
-                                     @NotNull Processor<? super JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>>> otherActions) {
-    PairProcessor<? super Pair<PsiFile, PsiElement>, JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>>> injectedProcessor = (pair,__) -> {
-      executeInImpatientReadAction(() -> {
-        PsiFile injectedPsi = pair.getFirst();
-        if (!shouldInspect(injectedPsi)) {
-          return;
-        }
-        PsiElement host = pair.getSecond();
-        ApplyIncrementallyCallback applyInjectionsIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) ->
-          applyInjectedDescriptor(descriptors, holder, visitingPsiElement, shortName, host, addDescriptorIncrementallyCallback);
+  private void injectedFound(@NotNull PsiFile injectedPsi, @NotNull PsiElement host, @NotNull LocalInspectionToolSession session,
+                             @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
+                             @NotNull List<? super InspectionContext> outInjectedContexts,
+                             @NotNull ApplyIncrementallyCallback addDescriptorIncrementallyCallback,
+                             @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
+                             @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+    if (!shouldInspect(injectedPsi)) {
+      return;
+    }
+    // convert host priority range to the injected
+    Document document = PsiDocumentManager.getInstance(myPsiFile.getProject()).getDocument(injectedPsi);
+    TextRange injectedPriorityRange;
+    if (document instanceof DocumentWindow documentWindow) {
+      int start = documentWindow.hostToInjected(myPriorityRange.getStartOffset());
+      int end = documentWindow.hostToInjected(myPriorityRange.getEndOffset());
+      injectedPriorityRange = TextRange.isProperRange(start, end) ? new TextRange(start, end) : TextRange.EMPTY_RANGE;
 
-        // convert host priority range to the injected
-        Document document = PsiDocumentManager.getInstance(myPsiFile.getProject()).getDocument(injectedPsi);
-        TextRange injectedPriorityRange;
-        if (document instanceof DocumentWindow documentWindow) {
-          int start = documentWindow.hostToInjected(myPriorityRange.getStartOffset());
-          int end = documentWindow.hostToInjected(myPriorityRange.getEndOffset());
-          injectedPriorityRange = TextRange.isProperRange(start, end) ? new TextRange(start, end) : TextRange.EMPTY_RANGE;
-
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("startInspectingInjectedPsi: psi=" + injectedPsi + "; host ranges= " + Arrays.toString(documentWindow.getHostRanges())+"; wrappers="+wrappers+"; injectedPsi.getTextRange()="+injectedPsi.getTextRange()+"; shouldInspect="+shouldInspect(injectedPsi));
-          }
-        }
-        else {
-          injectedPriorityRange = TextRange.EMPTY_RANGE;
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("startInspectingInjectedPsi: psi=" + injectedPsi + "; document = " + document+"; wrappers="+wrappers+"; injectedPsi.getTextRange()="+injectedPsi.getTextRange()+"; shouldInspect="+shouldInspect(injectedPsi));
-          }
-        }
-        InspectionRunner injectedRunner = new InspectionRunner(injectedPsi, injectedPsi.getTextRange(),
-                                                               injectedPriorityRange, false, myIsOnTheFly, myProgress,
-                                                               myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
-        List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(
-          wrappers, session.getMinimumSeverity(), true, applyInjectionsIncrementallyCallback,
-          contextFinishedCallback, enabledToolsPredicate);
-        outInjectedContexts.addAll(injectedContexts);
-      });
-      return true;
-    };
-
-    return JobLauncher.getInstance().procInOrderAsync(new SensitiveProgressWrapper(myProgress), Integer.MAX_VALUE, injectedProcessor, otherActions);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("startInspectingInjectedPsi: psi=" + injectedPsi + "; host ranges= " + Arrays.toString(documentWindow.getHostRanges()) + "; wrappers=" +
+                  wrappers + "; injectedPsi.getTextRange()=" + injectedPsi.getTextRange() + "; shouldInspect=" + shouldInspect(injectedPsi));
+      }
+    }
+    else {
+      injectedPriorityRange = TextRange.EMPTY_RANGE;
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("startInspectingInjectedPsi: psi=" + injectedPsi + "; document = " + document + "; wrappers=" +
+                  wrappers + "; injectedPsi.getTextRange()=" + injectedPsi.getTextRange() + "; shouldInspect=" + shouldInspect(injectedPsi));
+      }
+    }
+    InspectionRunner injectedRunner = new InspectionRunner(injectedPsi, injectedPsi.getTextRange(),
+                                                           injectedPriorityRange, false, myIsOnTheFly, myProgress,
+                                                           myIgnoreSuppressed, myInspectionProfileWrapper, mySuppressedElements);
+    ApplyIncrementallyCallback applyInjectionsIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) ->
+      applyInjectedDescriptor(descriptors, holder, visitingPsiElement, shortName, host, addDescriptorIncrementallyCallback);
+    List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(
+      wrappers, session.getMinimumSeverity(), true, applyInjectionsIncrementallyCallback,
+      contextFinishedCallback, enabledToolsPredicate);
+    outInjectedContexts.addAll(injectedContexts);
   }
 
   private void applyInjectedDescriptor(@NotNull List<? extends ProblemDescriptor> descriptors,
@@ -498,27 +444,27 @@ class InspectionRunner {
     }
   }
 
-  private boolean getInjectedWithHosts(@NotNull List<? extends PsiElement> elements,
-                                       @NotNull JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>> addToQueue) {
-    Map<PsiFile, PsiElement> injectedToHost = createInjectedFileMap();
-    try {
-      Project project = myPsiFile.getProject();
-      for (PsiElement element : elements) {
-        InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false, (injectedPsi, places) -> {
-           if (injectedToHost.put(injectedPsi, element) == null) {
-             if (LOG.isTraceEnabled()) {
-               LOG.trace("getInjectedWithHosts: found injected " +injectedPsi+ " at "+places.size()+" places: "+places+"; "+injectedPsi);
-             }
-             addToQueue.enqueue(Pair.create(injectedPsi, element));
+  private void getInjectedWithHosts(@NotNull List<? extends PsiElement> elements,
+                                    @NotNull LocalInspectionToolSession session,
+                                    @NotNull List<? extends LocalInspectionToolWrapper> wrappers,
+                                    @NotNull List<? super InspectionContext> outInjectedContexts,
+                                    @NotNull ApplyIncrementallyCallback addDescriptorIncrementallyCallback,
+                                    @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
+                                    @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+    Map<PsiFile, PsiElement> injectedToHost = Collections.synchronizedMap(createInjectedFileMap());
+    Project project = myPsiFile.getProject();
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(elements, myProgress, element -> {
+      InjectedLanguageManager.getInstance(project).enumerateEx(element, myPsiFile, false, (injectedPsi, places) -> {
+         if (injectedToHost.put(injectedPsi, element) == null) {
+           if (LOG.isTraceEnabled()) {
+             LOG.trace("getInjectedWithHosts: found injected " +injectedPsi+ " at "+places.size()+" places: "+places+"; "+injectedPsi);
            }
-        });
-      }
-    }
-    finally {
-      addToQueue.finish(); // no more injections
-    }
+           injectedFound(injectedPsi, element, session, wrappers, outInjectedContexts, addDescriptorIncrementallyCallback, contextFinishedCallback, enabledToolsPredicate);
+         }
+      });
+      return true;
+    });
     myInjectedFragments.addAll(injectedToHost.keySet());
-    return true;
   }
 
   interface ApplyIncrementallyCallback {
