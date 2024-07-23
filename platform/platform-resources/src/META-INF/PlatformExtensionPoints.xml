@@ -554,7 +554,7 @@
 
     <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions"/>
     
-    <extensionPoint name="textEditorInitializer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorInitializer"/>
+    <extensionPoint name="textEditorNecromancerAwaker" interface="com.intellij.openapi.editor.impl.zombie.NecromancerAwaker"/>
 
     <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean">
       <with attribute="implementationClass" implements="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfo"/>

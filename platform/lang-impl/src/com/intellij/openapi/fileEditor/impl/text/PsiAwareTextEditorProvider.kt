@@ -4,11 +4,9 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -19,9 +17,9 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.editor.impl.EditorGutterLayout
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
+import com.intellij.openapi.editor.impl.zombie.Necropolis
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,11 +28,9 @@ import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
-import java.util.concurrent.CancellationException
 import java.util.function.Supplier
 
 private const val FOLDING_ELEMENT: @NonNls String = "folding"
-private val EDITOR_LOADER_EP = ExtensionPointName<TextEditorInitializer>("com.intellij.textEditorInitializer")
 
 open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorProvider {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
@@ -57,8 +53,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     return coroutineScope {
       val effectiveDocument = document!!
 
-      val markupCacheInvalidated = async(CoroutineName("markup cache invalidation")) {
-        serviceAsync<TextEditorCacheInvalidator>().cleanCacheIfNeeded()
+      val necropolisDeferred = async(CoroutineName("necropolis loading")) {
+        // open persistent maps in advance
+        project.serviceAsync<Necropolis>()
       }
 
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
@@ -80,7 +77,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         asyncLoader = asyncLoader,
         editorDeferred = editorDeferred,
         highlighterDeferred = highlighterDeferred,
-        markupCacheInvalidated = markupCacheInvalidated,
+        necropolisDeferred = necropolisDeferred,
         project = project,
         file = file,
         document = effectiveDocument,
@@ -114,7 +111,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     asyncLoader: AsyncEditorLoader,
     editorDeferred: CompletableDeferred<EditorEx>,
     highlighterDeferred: Deferred<EditorHighlighter>,
-    markupCacheInvalidated: Deferred<Unit>,
+    necropolisDeferred: Deferred<Necropolis>,
     project: Project,
     file: VirtualFile,
     document: Document,
@@ -123,36 +120,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val editorSupplier = suspend { editorDeferred.await() }
       val highlighterReady = suspend { highlighterDeferred.join() }
 
-      markupCacheInvalidated.await()
-
-      coroutineScope {
-        for (item in EDITOR_LOADER_EP.filterableLazySequence()) {
-          if (item.pluginDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-            logger<AsyncFileEditorProvider>().error("Only core plugin can define ${EDITOR_LOADER_EP.name}: ${item.pluginDescriptor}")
-            continue
-          }
-
-          val initializer = item.instance ?: continue
-          launch(CoroutineName(item.implementationClassName)) {
-            try {
-              initializer.initializeEditor(
-                project = project,
-                file = file,
-                document = document,
-                editorSupplier = editorSupplier,
-                highlighterReady = highlighterReady,
-              )
-            }
-            catch (e: CancellationException) {
-              throw e
-            }
-            catch (e: Throwable) {
-              logger<AsyncFileEditorProvider>()
-                .warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
-            }
-          }
-        }
-      }
+      val necropolis = necropolisDeferred.await()
+      necropolis.spawnZombies(project, file, document, editorSupplier, highlighterReady)
 
       val editor = editorSupplier()
       span("editor languageSupplier set", Dispatchers.EDT) {
