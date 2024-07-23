@@ -25,6 +25,7 @@ object MavenJDOMUtil {
   suspend fun read(file: VirtualFile, handler: ErrorHandler?): Element? {
     val app = ApplicationManager.getApplication()
     if (app == null || app.isDisposed) {
+      MavenLog.LOG.warn("MavenJDOMUtil.read: app is null or disposed")
       return null
     }
 
@@ -49,7 +50,11 @@ object MavenJDOMUtil {
       return null
     }
 
-    return doRead(text, handler)
+    val element = doRead(text, handler)
+    if (element == null) {
+      MavenLog.LOG.warn("MavenJDOMUtil.read: reading result is null for text '$text'")
+    }
+    return element
   }
 
   @JvmStatic
