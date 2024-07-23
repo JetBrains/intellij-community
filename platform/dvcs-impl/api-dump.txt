@@ -528,24 +528,27 @@ com.intellij.dvcs.repo.VcsRepositoryCreator
 - a:getVcsKey():com.intellij.openapi.vcs.VcsKey
 f:com.intellij.dvcs.repo.VcsRepositoryManager
 - com.intellij.openapi.Disposable
+- sf:Companion:com.intellij.dvcs.repo.VcsRepositoryManager$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - sf:VCS_REPOSITORY_MAPPING_UPDATED:com.intellij.util.messages.Topic
-- addExternalRepository(com.intellij.openapi.vfs.VirtualFile,com.intellij.dvcs.repo.Repository):V
+- f:addExternalRepository(com.intellij.openapi.vfs.VirtualFile,com.intellij.dvcs.repo.Repository):V
 - dispose():V
-- getExternalRepositoryForFile(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
-- getExternalRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.VcsRepositoryManager
-- getRepositories():java.util.Collection
-- getRepositoryForFile(com.intellij.openapi.vcs.FilePath,Z):com.intellij.dvcs.repo.Repository
-- getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
-- getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.dvcs.repo.Repository
-- getRepositoryForFileQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
-- getRepositoryForRoot(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
-- getRepositoryForRootQuick(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
-- getRepositoryForRootQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
-- isExternal(com.intellij.dvcs.repo.Repository):Z
-- removeExternalRepository(com.intellij.openapi.vfs.VirtualFile):V
-- waitForAsyncTaskCompletion():V
+- f:getExternalRepositoryForFile(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
+- f:getExternalRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.VcsRepositoryManager
+- f:getRepositories():java.util.Collection
+- f:getRepositoryForFile(com.intellij.openapi.vcs.FilePath,Z):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForFileQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForRoot(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForRootQuick(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForRootQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- f:isExternal(com.intellij.dvcs.repo.Repository):Z
+- f:removeExternalRepository(com.intellij.openapi.vfs.VirtualFile):V
+- f:waitForAsyncTaskCompletion():V
+f:com.intellij.dvcs.repo.VcsRepositoryManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.VcsRepositoryManager
 com.intellij.dvcs.repo.VcsRepositoryMappingListener
 - a:mappingChanged():V
 a:com.intellij.dvcs.ui.BranchActionGroup
