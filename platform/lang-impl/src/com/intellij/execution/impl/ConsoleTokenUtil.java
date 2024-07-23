@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -70,7 +70,7 @@ public final class ConsoleTokenUtil {
     text.setLength(newLength);
   }
 
-  static int evaluateBackspacesInTokens(@NotNull List<? extends TokenBuffer.TokenInfo> source,
+  static int evaluateBackspacesInTokens(@NotNull List<TokenBuffer.TokenInfo> source,
                                         int sourceStartIndex,
                                         @NotNull List<? super TokenBuffer.TokenInfo> dest) {
     int backspacesFromNextToken = 0;
@@ -147,7 +147,7 @@ public final class ConsoleTokenUtil {
     model.addRangeHighlighterAndChangeAttributes(
       contentType.getAttributesKey(), startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
       rm -> {
-        // fallback for contentTypes which provide only attributes
+        // fallback for contentTypes that provides only attributes
         if (rm.getTextAttributesKey() == null) {
           rm.setTextAttributes(contentType.getAttributes());
         }
@@ -187,7 +187,7 @@ public final class ConsoleTokenUtil {
 
   static void highlightTokenTextAttributes(@NotNull Editor editor,
                                            @NotNull Project project,
-                                           @NotNull List<? extends TokenBuffer.TokenInfo> tokens,
+                                           @NotNull List<TokenBuffer.TokenInfo> tokens,
                                            @NotNull EditorHyperlinkSupport hyperlinks,
                                            @NotNull Collection<? super ConsoleViewContentType> contentTypes,
                                            @NotNull List<? super Pair<String, ConsoleViewContentType>> contents) {
