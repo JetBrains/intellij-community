@@ -29,6 +29,9 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
 ) {
     private var mySelectedFrame: StackInfo? = null
 
+    var stackUnderMouse: StackInfo? = null
+      private set
+
     val elementCount: Int
         get() = model.size
 
@@ -66,6 +69,21 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
                 onThreadChanged(selectedValue)
             }
         }
+
+        addMouseMotionListener(object : MouseMotionListener {
+          override fun mouseMoved(e: MouseEvent) {
+            val point = e.point
+            val index: Int = locationToIndex(point)
+            if (index == -1) {
+              stackUnderMouse = null
+            }
+            else {
+              stackUnderMouse = model.getElementAt(index)
+            }
+          }
+
+          override fun mouseDragged(e: MouseEvent) {}
+        })
 
         emptyText.text = XDebuggerBundle.message("threads.list.threads.not.available")
     }
