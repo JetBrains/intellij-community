@@ -26,7 +26,7 @@ class CompilationChartsView(project: Project, private val vm: CompilationChartsV
       viewport.scrollMode = JViewport.SIMPLE_SCROLL_MODE
       name = "compilation-charts-scroll-pane"
 
-      val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(horizontalScrollBar)
+      val rightAdhesionScrollBarListener = RightAdhesionScrollBarListener(viewport)
       addMouseWheelListener(rightAdhesionScrollBarListener)
       horizontalScrollBar.addAdjustmentListener(rightAdhesionScrollBarListener)
     }
