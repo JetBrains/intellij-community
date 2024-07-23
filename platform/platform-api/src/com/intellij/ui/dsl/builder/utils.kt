@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -47,7 +48,8 @@ enum class DslComponentProperty {
    *
    * Value: [JComponent]
    */
-  // todo replace usage by INTERACTIVE_COMPONENT and deprecate
+  @Deprecated(message = "Use INTERACTIVE_COMPONENT instead")
+  @ScheduledForRemoval
   LABEL_FOR,
 
   /**
