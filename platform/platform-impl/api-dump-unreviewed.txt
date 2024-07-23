@@ -1691,7 +1691,6 @@ f:com.intellij.concurrency.AsyncFutureResultImpl
 - set(java.lang.Object):V
 - setException(java.lang.Throwable):V
 f:com.intellij.concurrency.JobLauncherImpl
-- <init>():V
 - invokeConcurrentlyUnderProgress(java.util.List,com.intellij.openapi.progress.ProgressIndicator,Z,Z,com.intellij.util.Processor):Z
 - submitToJobThread(java.lang.Runnable,java.util.function.Consumer):com.intellij.concurrency.Job
 com.intellij.configurationStore.BatchUpdateListener
