@@ -137,11 +137,14 @@ internal class RemoveExplicitTypeIntention :
             val type = typeReference.type
             val thenType = initializer.then?.expressionType
             val elseType = initializer.`else`?.expressionType
-            type == thenType && type == elseType
+            thenType != null && elseType != null && type.semanticallyEquals(thenType) && type.semanticallyEquals(elseType)
         }
         is KtWhenExpression -> {
             val type = typeReference.type
-            initializer.entries.all { it.expression?.expressionType == type }
+            initializer.entries.all {
+                val expressionType = it.expression?.expressionType ?: return@all false
+                expressionType.semanticallyEquals(type)
+            }
         }
 
         // consider types of expressions that the compiler views as constants, e.g. `1 + 2`, as independent
