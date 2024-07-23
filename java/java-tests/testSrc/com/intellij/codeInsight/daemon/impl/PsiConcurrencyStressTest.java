@@ -28,6 +28,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 @SkipSlowTestLocally
 public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
   private volatile PsiJavaFile myFile;
@@ -138,7 +139,6 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
       case 1 -> {
         mark("m");
         for (int offset = 0; offset < myFile.getTextLength(); offset++) {
-          //noinspection ResultOfMethodCallIgnored -- performance testing
           myFile.findElementAt(offset);
         }
       }
