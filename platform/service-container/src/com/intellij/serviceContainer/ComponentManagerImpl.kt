@@ -40,6 +40,7 @@ import com.intellij.util.containers.UList
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.messages.impl.MessageDeliveryListener
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -768,6 +769,16 @@ abstract class ComponentManagerImpl(
     return result
   }
 
+  private class StartUpMessageDeliveryListener(private val messageBus: MessageBusImpl, private val logMessageBusDeliveryFunction: (Topic<*>, String, Any, Long) -> Unit): MessageDeliveryListener {
+    override fun messageDelivered(topic: Topic<*>, messageName: String, handler: Any, durationNanos: Long) {
+      if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
+        messageBus.removeMessageDeliveryListener(this)
+        return
+      }
+      logMessageBusDeliveryFunction(topic, messageName, handler, durationNanos)
+    }
+  }
+
   @Synchronized
   private fun getOrCreateMessageBusUnderLock(): MessageBus {
     var messageBus = this.messageBus
@@ -778,14 +789,7 @@ abstract class ComponentManagerImpl(
     @Suppress("RetrievingService", "SimplifiableServiceRetrieving")
     messageBus = getApplication()!!.getService(MessageBusFactory::class.java).createMessageBus(this, parent?.messageBus) as MessageBusImpl
     if (StartUpMeasurer.isMeasuringPluginStartupCosts()) {
-      messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->
-        if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
-          messageBus.setMessageDeliveryListener(null)
-          return@setMessageDeliveryListener
-        }
-
-        logMessageBusDelivery(topic = topic, messageName = messageName, handler = handler, duration = duration)
-      }
+      messageBus.addMessageDeliveryListener(StartUpMessageDeliveryListener(messageBus, ::logMessageBusDelivery))
     }
 
     registerServiceInstance(MessageBus::class.java, messageBus, fakeCorePluginDescriptor)

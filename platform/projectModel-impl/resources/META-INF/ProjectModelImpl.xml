@@ -82,6 +82,8 @@
                  description="Enable additional checks after replaceBySource and applyChangesFrom"/>
     <registryKey key="ide.workspace.model.assertions.on.update" defaultValue="false" restartRequired="false"
                  description="Enable workspace model consistency checking after every update"/>
+    <registryKey key="ide.workspace.model.assertions.on.long.listeners" defaultValue="true" restartRequired="true"
+                 description="Enable workspace model checking for listeners that execute more than 200ms"/>
 
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>
