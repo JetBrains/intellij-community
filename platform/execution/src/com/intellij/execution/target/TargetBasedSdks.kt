@@ -46,7 +46,7 @@ fun loadTargetBasedSdkAdditionalData(element: Element): Pair<ContributedConfigur
   // the state that contains information of the target, as for now the target configuration is embedded into the additional data
   val targetConfigurationElement = element.getChild(TARGET_ENVIRONMENT_CONFIGURATION)
   if (targetConfigurationElement == null) {
-    LOG.warn("SDK target configuration data is absent")
+    LOG.info("SDK target configuration data is absent")
     return null to null
   }
   val targetState = jdomSerializer.deserialize(targetConfigurationElement, ContributedConfigurationsList.ContributedStateBase::class.java, JdomAdapter)

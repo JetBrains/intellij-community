@@ -69,7 +69,7 @@ public abstract class PyEnvTestCase {
   @Rule public final TestWatcher myWatcher = new TestWatcher(){};
 
   static {
-    LOG.warn("Using following config\n" + SETTINGS.reportConfiguration());
+    LOG.info("Using following config\n" + SETTINGS.reportConfiguration());
   }
 
   /**
