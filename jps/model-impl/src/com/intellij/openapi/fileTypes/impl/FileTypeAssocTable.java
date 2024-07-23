@@ -20,13 +20,6 @@ import java.util.stream.Collectors;
 @ApiStatus.Internal
 public final class FileTypeAssocTable<T> {
 
-  // A comparator for pattern specificity added to resolve IJPL-149806. See the ticket and tests for this class for more details.
-  private final Comparator<Pair<FileNameMatcher, T>> myMatchingMappingComparator = Comparator
-    .comparing((Pair<FileNameMatcher, T> pair) -> pair.first.getPresentableString().length(), Comparator.reverseOrder())
-    .thenComparing(pair -> pair.first.getPresentableString()
-      .replace("?", "\uFFFE")
-      .replace("*", "\uFFFF"));
-
   private final Map<CharSequence, T> myExtensionMappings;
   private final Map<CharSequence, T> myExactFileNameMappings;
   private final Map<CharSequence, T> myExactFileNameAnyCaseMappings;
@@ -106,7 +99,14 @@ public final class FileTypeAssocTable<T> {
       myMatchingMappings.add(Pair.create(matcher, type));
     }
 
-    Collections.sort(myMatchingMappings, myMatchingMappingComparator);
+    // A comparator for pattern specificity added to resolve IJPL-149806. See the ticket and tests for this class for more details.
+    var mostSpecificPatternFirstComparator = Comparator
+      .comparing((Pair<FileNameMatcher, T> pair) -> pair.first.getPresentableString().length(), Comparator.reverseOrder())
+      .thenComparing(pair -> pair.first.getPresentableString()
+        .replace("?", "\uFFFE")
+        .replace("*", "\uFFFF"));
+
+    Collections.sort(myMatchingMappings, mostSpecificPatternFirstComparator);
 
     return Pair.getSecond(previousAssociation);
   }
