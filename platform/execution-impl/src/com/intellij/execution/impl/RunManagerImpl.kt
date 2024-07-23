@@ -59,6 +59,7 @@ import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -88,7 +89,7 @@ interface RunConfigurationTemplateProvider {
 }
 
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl @NonInjectable constructor(val project: Project, sharedStreamProvider: StreamProvider?) :
+open class RunManagerImpl @NonInjectable constructor(val project: Project, private val coroutineScope: CoroutineScope, sharedStreamProvider: StreamProvider?) :
   RunManagerEx(), PersistentStateComponent<Element>, Disposable, SettingsSavingComponent {
   companion object {
     const val CONFIGURATION: String = "configuration"
@@ -123,7 +124,9 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     }
   }
 
-  constructor(project: Project) : this(project = project, sharedStreamProvider = null)
+  @JvmOverloads
+  constructor(project: Project, scope: CoroutineScope = (project as ComponentManagerEx).getCoroutineScope()) :
+    this(project = project, coroutineScope = scope, sharedStreamProvider = null)
 
   private val lock = ReentrantReadWriteLock()
 
@@ -387,7 +390,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
   }
 
   private fun loadRunConfigsFromArbitraryFiles() {
-    (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Default) {
+    coroutineScope.launch(Dispatchers.Default) {
       readAction {
         blockingContextToIndicator {
           updateRunConfigsFromArbitraryFiles(emptyList(), loadFileWithRunConfigs(project))

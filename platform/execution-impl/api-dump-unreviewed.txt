@@ -1155,7 +1155,9 @@ c:com.intellij.execution.impl.RunManagerImpl
 - sf:Companion:com.intellij.execution.impl.RunManagerImpl$Companion
 - sf:NAME_ATTR:java.lang.String
 - <init>(com.intellij.openapi.project.Project):V
-- <init>(com.intellij.openapi.project.Project,com.intellij.configurationStore.StreamProvider):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- b:<init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,com.intellij.configurationStore.StreamProvider):V
 - addConfiguration(com.intellij.execution.RunnerAndConfigurationSettings):V
 - sf:canRunConfiguration(com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.Executor):Z
 - f:checkRecentsLimit():V
