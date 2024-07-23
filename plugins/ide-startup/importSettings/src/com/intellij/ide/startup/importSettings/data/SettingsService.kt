@@ -253,6 +253,12 @@ interface BaseSetting {
   val icon: Icon
   val name: @Nls String
   val comment: @Nls String?
+
+  /**
+   * Whether the user should be allowed to turn the setting on and off.
+   */
+  val isConfigurable: Boolean
+    get() = true
 }
 
 interface Configurable : Multiple {
