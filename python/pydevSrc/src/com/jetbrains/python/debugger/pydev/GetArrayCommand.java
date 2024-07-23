@@ -20,7 +20,7 @@ public class GetArrayCommand extends GetFrameCommand {
 
   public GetArrayCommand(final RemoteDebugger debugger, final String threadId, final String frameId, PyDebugValue var, int rowOffset, int colOffset, int rows, int cols, String format) {
     super(debugger, GET_ARRAY, threadId, frameId);
-    myVariableName = GetVariableCommand.composeName(var);
+    myVariableName = var.getEvaluationExpression();
     myRowOffset = rowOffset;
     myColOffset = colOffset;
     myRows = rows;
