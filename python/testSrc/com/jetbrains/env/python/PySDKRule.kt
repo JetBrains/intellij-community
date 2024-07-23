@@ -3,7 +3,7 @@ package com.jetbrains.env.python
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
@@ -18,6 +18,9 @@ import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Assume
 import org.junit.rules.ExternalResource
 
@@ -29,44 +32,51 @@ private const val PYTHON_PATH_ON_TARGET: FullPathOnTarget = "/usr/bin/python3"
  * Locals are search automatically like in [PyEnvTestSettings] or using [com.jetbrains.python.sdk.flavors.PythonSdkFlavor.suggestLocalHomePaths]
  */
 class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfiguration)?) : ExternalResource() {
+  companion object {
+
+    /**
+     * Creates sdk (possible on [targetConfig])
+     */
+    suspend fun createSdk(targetConfig: TargetEnvironmentConfiguration?): Sdk = withContext(Dispatchers.IO) {
+      val (pythonPath, additionalData) = if (targetConfig == null) {
+        // Local
+        val flavor = if (SystemInfo.isWindows) WinPythonSdkFlavor() else UnixPythonSdkFlavor.getInstance()
+        val pythonPath = flavor.suggestLocalHomePaths(null, null).firstOrNull()
+                         ?: PyEnvTestSettings.fromEnvVariables().pythons.firstOrNull()?.toPath()?.let { PythonSdkUtil.getPythonExecutable(it.toString()); }
+        Assume.assumeNotNull("No python found on local installation", pythonPath)
+        Pair(pythonPath!!.toString(), PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, flavor)))
+      }
+      else {
+        // Target
+        val targetData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()),
+                                                     targetConfig).apply {
+          interpreterPath = PYTHON_PATH_ON_TARGET
+        }
+        try {
+          Assume.assumeNotNull("No $PYTHON_PATH_ON_TARGET on target", targetData.getInterpreterVersion(null, true))
+        }
+        catch (e: RemoteSdkException) {
+          Assume.assumeNoException("Error running $PYTHON_PATH_ON_TARGET", e)
+        }
+        Pair(PYTHON_PATH_ON_TARGET, targetData) //No ability to look for remote pythons for now
+      }
+
+      val sdk = ProjectJdkTable.getInstance().createSdk(pythonPath, PythonSdkType.getInstance())
+      val sdkModificator = sdk.sdkModificator
+      sdkModificator.homePath = pythonPath
+      sdkModificator.sdkAdditionalData = additionalData
+      writeAction {
+        sdkModificator.commitChanges()
+      }
+      return@withContext sdk
+    }
+  }
+
   @Volatile
   lateinit var sdk: Sdk
     private set
 
   override fun before() {
-    val targetConfig = targetConfigProducer?.let { it() }
-    val (pythonPath, additionalData) = if (targetConfig == null) {
-      // Local
-      val flavor = if (SystemInfo.isWindows) WinPythonSdkFlavor() else UnixPythonSdkFlavor.getInstance()
-      val pythonPath = flavor.suggestLocalHomePaths(null, null).firstOrNull()
-                       ?: PyEnvTestSettings.fromEnvVariables().pythons.firstOrNull()?.toPath()?.let { PythonSdkUtil.getPythonExecutable(it.toString()); }
-      Assume.assumeNotNull("No python found on local installation", pythonPath)
-      Pair(pythonPath!!.toString(), PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, flavor)))
-    }
-    else {
-      // Target
-      val targetData = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, UnixPythonSdkFlavor.getInstance()),
-                                                   targetConfig).apply {
-        interpreterPath = PYTHON_PATH_ON_TARGET
-      }
-      try {
-        Assume.assumeNotNull("No $PYTHON_PATH_ON_TARGET on target", targetData.getInterpreterVersion(null, true))
-      }
-      catch (e: RemoteSdkException) {
-        Assume.assumeNoException("Error running $PYTHON_PATH_ON_TARGET", e)
-      }
-      Pair(PYTHON_PATH_ON_TARGET, targetData) //No ability to look for remote pythons for now
-    }
-
-    sdk = ProjectJdkTable.getInstance().createSdk(pythonPath, PythonSdkType.getInstance())
-    val sdkModificator = sdk.sdkModificator
-    sdkModificator.homePath = pythonPath
-    sdkModificator.sdkAdditionalData = additionalData
-    val application = ApplicationManager.getApplication()
-    application.invokeAndWait {
-      application.runWriteAction {
-        sdkModificator.commitChanges()
-      }
-    }
+    sdk = runBlocking { createSdk(targetConfigProducer?.let { it() }) }
   }
 }
