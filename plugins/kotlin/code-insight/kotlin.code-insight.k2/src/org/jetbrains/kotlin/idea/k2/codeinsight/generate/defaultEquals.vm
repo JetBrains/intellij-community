@@ -35,7 +35,7 @@ return true
 ##
 #macro(addClassInstance)
     #set($wildcards = "#generateWildcards()")
-other as $classname$wildcards
+$paramName as $classname$wildcards
 #end
 ##
 #macro(generateWildcards)

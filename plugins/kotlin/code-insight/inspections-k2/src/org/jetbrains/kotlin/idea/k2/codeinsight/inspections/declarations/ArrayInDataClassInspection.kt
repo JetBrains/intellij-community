@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.GenerateEqualsAndHashCodeUtils
+import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -22,16 +22,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParameter, ArrayInDataClassInspection.Context>() {
     class Context(
-        val equalsHeader: String?,
-        val equalsBody: String?,
-        val hashCodeHeader: String?,
-        val hashCodeBody: String?,
-    ) {
-        init {
-            check((equalsHeader == null) == (equalsBody == null))
-            check((hashCodeHeader == null) == (hashCodeBody == null))
-        }
-    }
+        val equals: String?,
+        val hashCode: String?,
+    )
 
     override fun getProblemDescription(element: KtParameter, context: Context): String {
         return KotlinBundle.message("array.property.in.data.class.it.s.recommended.to.override.equals.hashcode")
@@ -45,19 +38,17 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
             override fun applyFix(project: Project, element: KtParameter, updater: ModPsiUpdater): Unit = with(context) {
                 val psiFactory = KtPsiFactory(project, markGenerated = true)
                 val containingClass = element.containingClass() ?: return
-                if (equalsHeader != null && equalsBody != null) {
-                    generateFunctionDeclarationInClass(psiFactory, containingClass, equalsHeader, equalsBody)
+                if (equals != null) {
+                    generateFunctionDeclarationInClass(psiFactory, containingClass, equals)
                 }
-                if (hashCodeHeader != null && hashCodeBody != null) {
-                    generateFunctionDeclarationInClass(psiFactory, containingClass, hashCodeHeader, hashCodeBody)
+                if (hashCode != null) {
+                    generateFunctionDeclarationInClass(psiFactory, containingClass, hashCode)
                 }
             }
 
-            private fun generateFunctionDeclarationInClass(factory: KtPsiFactory, containingClass: KtClass, header: String, body: String) {
-                val function = factory.createFunction(header)
-                shortenReferences(function)
-                if (body.isNotEmpty()) function.bodyExpression?.replace(factory.createBlock(body))
-                containingClass.addDeclaration(function)
+            private fun generateFunctionDeclarationInClass(factory: KtPsiFactory, containingClass: KtClass, text: String) {
+                val function = factory.createFunction(text)
+                shortenReferences(containingClass.addDeclaration(function))
             }
         }
     }
@@ -86,17 +77,17 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
         return when (checkOverriddenEqualsAndHashCode(containingClass)) {
             EqualsHashCodeOverrides.HAS_EQUALS_AND_HASHCODE -> null
             EqualsHashCodeOverrides.HAS_EQUALS -> {
-                val (hashCodeHeader, hashCodeBody) = GenerateEqualsAndHashCodeUtils.generateHashCodeHeaderAndBodyTexts(containingClass)
-                Context(equalsHeader = null, equalsBody = null, hashCodeHeader, hashCodeBody)
+                val text = GenerateEqualsAndHashCodeUtils.generateHashCode(containingClass)
+                Context(equals = null, hashCode = text)
             }
             EqualsHashCodeOverrides.HAS_HASHCODE -> {
-                val (equalsHeader, equalsBody) = GenerateEqualsAndHashCodeUtils.generateEqualsHeaderAndBodyTexts(containingClass)
-                Context(equalsHeader, equalsBody, hashCodeHeader = null, hashCodeBody = null)
+                val text = GenerateEqualsAndHashCodeUtils.generateEquals(containingClass)
+                Context(equals = text, hashCode = null)
             }
             EqualsHashCodeOverrides.HAS_NONE -> {
-                val (equalsHeader, equalsBody) = GenerateEqualsAndHashCodeUtils.generateEqualsHeaderAndBodyTexts(containingClass)
-                val (hashCodeHeader, hashCodeBody) = GenerateEqualsAndHashCodeUtils.generateHashCodeHeaderAndBodyTexts(containingClass)
-                Context(equalsHeader, equalsBody, hashCodeHeader, hashCodeBody)
+                val equalsText = GenerateEqualsAndHashCodeUtils.generateEquals(containingClass)
+                val hashCodeText = GenerateEqualsAndHashCodeUtils.generateHashCode(containingClass)
+                Context(equalsText, hashCodeText)
             }
         }
     }

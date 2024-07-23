@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.DeletePsiElementsFix
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.GenerateEqualsAndHashCodeUtils
+import org.jetbrains.kotlin.idea.k2.codeinsight.generate.GenerateEqualsAndHashCodeUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateEqualsFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateHashCodeFix
 import org.jetbrains.kotlin.psi.KtClass
@@ -60,11 +60,9 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                     )
 
                     val fix = if (equalsDeclaration != null) {
-                        val (function, body) = GenerateEqualsAndHashCodeUtils.generateHashCodeHeaderAndBodyTexts(classOrObject)
-                        GenerateHashCodeFix(function, body)
+                        GenerateHashCodeFix(GenerateEqualsAndHashCodeUtils.generateHashCode(classOrObject))
                     } else {
-                        val (function, body) = GenerateEqualsAndHashCodeUtils.generateEqualsHeaderAndBodyTexts(classOrObject)
-                        GenerateEqualsFix(function, body)
+                        GenerateEqualsFix(GenerateEqualsAndHashCodeUtils.generateEquals(classOrObject))
                     }
 
                     holder.registerProblem(
