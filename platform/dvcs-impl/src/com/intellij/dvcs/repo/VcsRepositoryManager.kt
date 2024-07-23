@@ -1,442 +1,428 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.dvcs.repo;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
-import com.intellij.openapi.vcs.impl.VcsStartupActivity;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.messages.Topic;
-import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.*;
+package com.intellij.dvcs.repo
 
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsMappingListener
+import com.intellij.openapi.vcs.impl.VcsInitObject
+import com.intellij.openapi.vcs.impl.VcsStartupActivity
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.Volatile
 
 /**
- * VcsRepositoryManager creates, stores and updates all repository's information using registered {@link VcsRepositoryCreator}
+ * VcsRepositoryManager creates, stores and updates all repository's information using registered [VcsRepositoryCreator]
  * extension point in a thread safe way.
  */
 @Service(Service.Level.PROJECT)
-public final class VcsRepositoryManager implements Disposable {
-  public static final ExtensionPointName<VcsRepositoryCreator> EP_NAME = new ExtensionPointName<>("com.intellij.vcsRepositoryCreator");
+class VcsRepositoryManager @ApiStatus.Internal constructor(private val project: Project, coroutineScope: CoroutineScope) : Disposable {
+  private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
-  private static final Logger LOG = Logger.getInstance(VcsRepositoryManager.class);
+  private val REPO_LOCK = ReentrantReadWriteLock()
+  private val MODIFY_LOCK = ReentrantReadWriteLock().writeLock()
 
-  /**
-   * VCS repository mapping updated. Project level.
-   */
-  @Topic.ProjectLevel
-  public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
-    new Topic<>(VcsRepositoryMappingListener.class, Topic.BroadcastDirection.NONE);
+  private val repositories = HashMap<VirtualFile, Repository>()
+  private val externalRepositories = HashMap<VirtualFile, Repository>()
+  private val pathToRootMap: MutableMap<String, VirtualFile> = CollectionFactory.createFilePathMap()
 
-  private final @NotNull Project myProject;
-  private final @NotNull ProjectLevelVcsManager myVcsManager;
+  private val updateAlarm: Alarm
 
-  private final @NotNull ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
-  private final @NotNull ReentrantReadWriteLock.WriteLock MODIFY_LOCK = new ReentrantReadWriteLock().writeLock();
+  @Volatile
+  private var isDisposed = false
 
-  private final @NotNull Map<VirtualFile, Repository> myRepositories = new HashMap<>();
-  private final @NotNull Map<VirtualFile, Repository> myExternalRepositories = new HashMap<>();
-  private final @NotNull Map<String, VirtualFile> myPathToRootMap = CollectionFactory.createFilePathMap();
+  private val isStarted = AtomicBoolean(false)
+  private val updateScheduled = AtomicBoolean(false)
 
-  private final Alarm updateAlarm;
-  private volatile boolean myDisposed;
+  init {
+    project.messageBus.connect(coroutineScope).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED,
+                                                         VcsMappingListener { this.scheduleUpdate() })
 
-  private final AtomicBoolean myStarted = new AtomicBoolean(false);
-  private final AtomicBoolean myUpdateScheduled = new AtomicBoolean(false);
-
-  public static @NotNull VcsRepositoryManager getInstance(@NotNull Project project) {
-    return Objects.requireNonNull(project.getService(VcsRepositoryManager.class));
+    EP_NAME.addChangeListener({
+                                disposeAllRepositories(false)
+                                scheduleUpdate()
+                                BackgroundTaskUtil.syncPublisher(project, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged()
+                              }, this)
+    updateAlarm = Alarm(
+      threadToUse = Alarm.ThreadToUse.POOLED_THREAD,
+      parentDisposable = null,
+      activationComponent = null,
+      coroutineScope = coroutineScope,
+    )
   }
 
-  @ApiStatus.Internal
-  public VcsRepositoryManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
-    myProject = project;
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    project.getMessageBus().connect(coroutineScope).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::scheduleUpdate);
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<VcsRepositoryCreator> = ExtensionPointName("com.intellij.vcsRepositoryCreator")
 
-    EP_NAME.addChangeListener(() -> {
-      disposeAllRepositories(false);
-      scheduleUpdate();
-      BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
-    }, this);
-    updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null, null, coroutineScope);
+    private val LOG = logger<VcsRepositoryManager>()
+
+    /**
+     * VCS repository mapping updated. Project level.
+     */
+    @Topic.ProjectLevel
+    @JvmField
+    val VCS_REPOSITORY_MAPPING_UPDATED: Topic<VcsRepositoryMappingListener> = Topic(
+      VcsRepositoryMappingListener::class.java, Topic.BroadcastDirection.NONE)
+
+    @JvmStatic
+    fun getInstance(project: Project): VcsRepositoryManager = project.service()
+
+    private fun tryCreateRepository(
+      project: Project,
+      vcs: AbstractVcs,
+      rootPath: VirtualFile,
+      disposable: Disposable
+    ): Repository? {
+      return EP_NAME.computeSafeIfAny { creator ->
+        if (creator.vcsKey == vcs.keyInstanceMethod) {
+          return@computeSafeIfAny creator.createRepositoryIfValid(project, rootPath, disposable)
+        }
+        null
+      }
+    }
   }
 
-  static final class MyStartupActivity implements VcsStartupActivity {
-    @Override
-    public void runActivity(@NotNull Project project) {
+  internal class MyStartupActivity : VcsStartupActivity {
+    override fun runActivity(project: Project) {
       // run initial refresh and wait its completion
       // to make sure VcsInitObject.AFTER_COMMON are being run with initialized repositories
-      getInstance(project).ensureUpToDate();
+      getInstance(project).ensureUpToDate()
     }
 
-    @Override
-    public int getOrder() {
-      return VcsInitObject.OTHER_INITIALIZATION.getOrder();
-    }
+    override val order: Int
+      get() = VcsInitObject.OTHER_INITIALIZATION.order
   }
 
-  @Override
-  public void dispose() {
-    myDisposed = true;
-    disposeAllRepositories(true);
+  override fun dispose() {
+    isDisposed = true
+    disposeAllRepositories(true)
   }
 
-  private void disposeAllRepositories(boolean disposeExternal) {
-    REPO_LOCK.writeLock().lock();
+  private fun disposeAllRepositories(disposeExternal: Boolean) {
+    REPO_LOCK.writeLock().lock()
     try {
-      for (Repository repo : myRepositories.values()) {
-        Disposer.dispose(repo);
+      for (repo in repositories.values) {
+        Disposer.dispose(repo)
       }
-      myRepositories.clear();
+      repositories.clear()
 
       if (disposeExternal) {
-        for (Repository repo : myExternalRepositories.values()) {
-          Disposer.dispose(repo);
+        for (repo in externalRepositories.values) {
+          Disposer.dispose(repo)
         }
-        myExternalRepositories.clear();
+        externalRepositories.clear()
       }
 
-      updatePathToRootMap();
+      updatePathToRootMap()
     }
     finally {
-      REPO_LOCK.writeLock().unlock();
+      REPO_LOCK.writeLock().unlock()
     }
   }
 
-  private void scheduleUpdate() {
-    if (!myStarted.get() || myDisposed) return;
-    if (myUpdateScheduled.compareAndSet(false, true)) {
-      updateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 100);
+  private fun scheduleUpdate() {
+    if (!isStarted.get() || isDisposed) return
+    if (updateScheduled.compareAndSet(false, true)) {
+      updateAlarm.addRequest({ checkAndUpdateRepositoryCollection(null) }, 100)
     }
   }
 
   @ApiStatus.Internal
-  public void ensureUpToDate() {
-    if (myStarted.compareAndSet(false, true)) {
-      myUpdateScheduled.set(true);
-      updateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 0);
+  fun ensureUpToDate() {
+    if (isStarted.compareAndSet(false, true)) {
+      updateScheduled.set(true)
+      updateAlarm.addRequest({ checkAndUpdateRepositoryCollection(null) }, 0)
     }
 
-    CountDownLatch waiter = new CountDownLatch(1);
-    updateAlarm.addRequest(() -> waiter.countDown(), 10);
-    awaitWithCheckCanceled(waiter);
+    val waiter = CountDownLatch(1)
+    updateAlarm.addRequest({ waiter.countDown() }, 10)
+    ProgressIndicatorUtils.awaitWithCheckCanceled(waiter)
   }
 
   @RequiresBackgroundThread
-  public @Nullable Repository getRepositoryForFile(@Nullable VirtualFile file) {
-    return getRepositoryForFile(file, false);
-  }
+  fun getRepositoryForFile(file: VirtualFile?): Repository? = getRepositoryForFile(file = file, quick = false)
 
   @CalledInAny
-  public @Nullable Repository getRepositoryForFileQuick(@Nullable VirtualFile file) {
-    return getRepositoryForFile(file, true);
+  fun getRepositoryForFileQuick(file: VirtualFile?): Repository? = getRepositoryForFile(file = file, quick = true)
+
+  fun getRepositoryForFile(file: VirtualFile?, quick: Boolean): Repository? {
+    val vcsRoot = vcsManager.getVcsRootObjectFor(file) ?: return getExternalRepositoryForFile(file)
+    return if (quick) getRepositoryForRootQuick(vcsRoot.path) else getRepositoryForRoot(vcsRoot.path)
   }
 
-  public @Nullable Repository getRepositoryForFile(@Nullable VirtualFile file, boolean quick) {
-    final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
-    if (vcsRoot == null) {
-      return getExternalRepositoryForFile(file);
+  fun getRepositoryForFile(file: FilePath?, quick: Boolean): Repository? {
+    val vcsRoot = vcsManager.getVcsRootObjectFor(file) ?: return getExternalRepositoryForFile(file)
+    return if (quick) getRepositoryForRootQuick(vcsRoot.path) else getRepositoryForRoot(vcsRoot.path)
+  }
+
+  fun getExternalRepositoryForFile(file: VirtualFile?): Repository? {
+    if (file == null) {
+      return null
     }
-    return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
-  }
 
-  public @Nullable Repository getRepositoryForFile(@Nullable FilePath file, boolean quick) {
-    final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
-    if (vcsRoot == null) {
-      return getExternalRepositoryForFile(file);
-    }
-    return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
-  }
-
-  public @Nullable Repository getExternalRepositoryForFile(@Nullable VirtualFile file) {
-    if (file == null) return null;
-    Map<VirtualFile, Repository> repositories = getExternalRepositories();
-    for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
-      if (entry.getKey().isValid() && VfsUtilCore.isAncestor(entry.getKey(), file, false)) {
-        return entry.getValue();
+    val repositories = getExternalRepositories()
+    for ((key, value) in repositories) {
+      if (key.isValid && VfsUtilCore.isAncestor(key, file, false)) {
+        return value
       }
     }
-    return null;
+    return null
   }
 
-  public @Nullable Repository getExternalRepositoryForFile(@Nullable FilePath file) {
-    if (file == null) return null;
-    Map<VirtualFile, Repository> repositories = getExternalRepositories();
-    for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
-      if (entry.getKey().isValid() && FileUtil.isAncestor(entry.getKey().getPath(), file.getPath(), false)) {
-        return entry.getValue();
+  fun getExternalRepositoryForFile(file: FilePath?): Repository? {
+    if (file == null) {
+      return null
+    }
+
+    val repositories = getExternalRepositories()
+    for ((key, value) in repositories) {
+      if (key.isValid && FileUtil.isAncestor(key.path, file.path, false)) {
+        return value
       }
     }
-    return null;
+    return null
   }
 
-  public @Nullable Repository getRepositoryForRootQuick(@Nullable FilePath rootPath) {
-    VirtualFile root = getVirtualFileForRoot(rootPath);
-    if (root == null) return null;
-
-    return getRepositoryForRoot(root, false);
+  fun getRepositoryForRootQuick(rootPath: FilePath?): Repository? {
+    return getRepositoryForRoot(root = getVirtualFileForRoot(rootPath) ?: return null, updateIfNeeded = false)
   }
 
-  @Nullable
-  private VirtualFile getVirtualFileForRoot(@Nullable FilePath rootPath) {
-    if (rootPath == null) return null;
+  private fun getVirtualFileForRoot(rootPath: FilePath?): VirtualFile? {
+    if (rootPath == null) {
+      return null
+    }
 
-    REPO_LOCK.readLock().lock();
+    REPO_LOCK.readLock().lock()
     try {
-      return myPathToRootMap.get(rootPath.getPath());
+      return pathToRootMap.get(rootPath.path)
     }
     finally {
-      REPO_LOCK.readLock().unlock();
+      REPO_LOCK.readLock().unlock()
     }
   }
 
-  private void updatePathToRootMap() {
-    myPathToRootMap.clear();
-    for (VirtualFile root : myRepositories.keySet()) {
-      myPathToRootMap.put(root.getPath(), root);
+  private fun updatePathToRootMap() {
+    pathToRootMap.clear()
+    for (root in repositories.keys) {
+      pathToRootMap.put(root.path, root)
     }
-    for (VirtualFile root : myExternalRepositories.keySet()) {
-      myPathToRootMap.put(root.getPath(), root);
+    for (root in externalRepositories.keys) {
+      pathToRootMap.put(root.path, root)
     }
   }
 
-  public @Nullable Repository getRepositoryForRootQuick(@Nullable VirtualFile root) {
-    return getRepositoryForRoot(root, false);
-  }
+  fun getRepositoryForRootQuick(root: VirtualFile?): Repository? = getRepositoryForRoot(root = root, updateIfNeeded = false)
 
-  public @Nullable Repository getRepositoryForRoot(@Nullable VirtualFile root) {
-    return getRepositoryForRoot(root, true);
-  }
+  fun getRepositoryForRoot(root: VirtualFile?): Repository? = getRepositoryForRoot(root = root, updateIfNeeded = true)
 
-  private @Nullable Repository getRepositoryForRoot(@Nullable VirtualFile root, boolean updateIfNeeded) {
-    if (root == null) return null;
-
-    Application application = ApplicationManager.getApplication();
-    if (updateIfNeeded && application.isDispatchThread() &&
-        !application.isUnitTestMode() && !application.isHeadlessEnvironment()) {
-      updateIfNeeded = false;
-      LOG.error("Do not call synchronous repository update in EDT");
+  private fun getRepositoryForRoot(root: VirtualFile?, updateIfNeeded: Boolean): Repository? {
+    if (root == null) {
+      return null
     }
 
-    REPO_LOCK.readLock().lock();
+    var updateIfNeeded = updateIfNeeded
+    val app = ApplicationManager.getApplication()
+    if (updateIfNeeded && app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
+      updateIfNeeded = false
+      LOG.error("Do not call synchronous repository update in EDT")
+    }
+
+    REPO_LOCK.readLock().lock()
     try {
-      if (myDisposed) {
-        throw new ProcessCanceledException();
+      if (isDisposed) {
+        throw ProcessCanceledException()
       }
-      Repository repo = myRepositories.get(root);
-      if (repo != null) return repo;
-
-      Repository externalRepo = myExternalRepositories.get(root);
-      if (externalRepo != null) return externalRepo;
+      (repositories.get(root) ?: externalRepositories.get(root))?.let {
+        return it
+      }
     }
     finally {
-      REPO_LOCK.readLock().unlock();
+      REPO_LOCK.readLock().unlock()
     }
 
     // if we didn't find the appropriate repository, request update mappings if needed and try again
     // may be this should not be called from several places (for example, branch widget updating from edt).
-    if (updateIfNeeded && ArrayUtil.contains(root, myVcsManager.getAllVersionedRoots())) {
-      checkAndUpdateRepositoryCollection(root);
+    return if (updateIfNeeded && vcsManager.allVersionedRoots.contains(root)) {
+      checkAndUpdateRepositoryCollection(root)
 
-      REPO_LOCK.readLock().lock();
+      REPO_LOCK.readLock().lock()
       try {
-        return myRepositories.get(root);
+        repositories.get(root)
       }
       finally {
-        REPO_LOCK.readLock().unlock();
+        REPO_LOCK.readLock().unlock()
       }
     }
     else {
-      return null;
+      null
     }
   }
 
-  public void addExternalRepository(@NotNull VirtualFile root, @NotNull Repository repository) {
-    REPO_LOCK.writeLock().lock();
+  fun addExternalRepository(root: VirtualFile, repository: Repository) {
+    REPO_LOCK.writeLock().lock()
     try {
-      myExternalRepositories.put(root, repository);
-      updatePathToRootMap();
+      externalRepositories.put(root, repository)
+      updatePathToRootMap()
     }
     finally {
-      REPO_LOCK.writeLock().unlock();
+      REPO_LOCK.writeLock().unlock()
     }
   }
 
-  public void removeExternalRepository(@NotNull VirtualFile root) {
-    REPO_LOCK.writeLock().lock();
+  fun removeExternalRepository(root: VirtualFile) {
+    REPO_LOCK.writeLock().lock()
     try {
-      myExternalRepositories.remove(root);
-      updatePathToRootMap();
+      externalRepositories.remove(root)
+      updatePathToRootMap()
     }
     finally {
-      REPO_LOCK.writeLock().unlock();
+      REPO_LOCK.writeLock().unlock()
     }
   }
 
-  public boolean isExternal(@NotNull Repository repository) {
-    REPO_LOCK.readLock().lock();
+  fun isExternal(repository: Repository): Boolean {
+    REPO_LOCK.readLock().lock()
     try {
-      return !myRepositories.containsValue(repository) && myExternalRepositories.containsValue(repository);
+      return !repositories.containsValue(repository) && externalRepositories.containsValue(repository)
     }
     finally {
-      REPO_LOCK.readLock().unlock();
+      REPO_LOCK.readLock().unlock()
     }
   }
 
-  public @NotNull Collection<Repository> getRepositories() {
-    REPO_LOCK.readLock().lock();
+  fun getRepositories(): Collection<Repository> {
+    REPO_LOCK.readLock().lock()
     try {
-      return new ArrayList<>(myRepositories.values());
+      return java.util.List.copyOf(repositories.values)
     }
     finally {
-      REPO_LOCK.readLock().unlock();
+      REPO_LOCK.readLock().unlock()
     }
   }
 
-  private @NotNull Map<VirtualFile, Repository> getExternalRepositories() {
-    REPO_LOCK.readLock().lock();
+  private fun getExternalRepositories(): Map<VirtualFile, Repository> {
+    REPO_LOCK.readLock().lock()
     try {
-      return new HashMap<>(myExternalRepositories);
+      return java.util.Map.copyOf(externalRepositories)
     }
     finally {
-      REPO_LOCK.readLock().unlock();
+      REPO_LOCK.readLock().unlock()
     }
   }
 
   @RequiresBackgroundThread
-  private void checkAndUpdateRepositoryCollection(@Nullable VirtualFile checkedRoot) {
-    myUpdateScheduled.set(false);
+  private fun checkAndUpdateRepositoryCollection(checkedRoot: VirtualFile?) {
+    updateScheduled.set(false)
 
-    if (MODIFY_LOCK.isHeldByCurrentThread()) {
-      LOG.error(new Throwable("Recursive Repository initialization"));
-      return;
+    if (MODIFY_LOCK.isHeldByCurrentThread) {
+      LOG.error(Throwable("Recursive Repository initialization"))
+      return
     }
 
-    MODIFY_LOCK.lock();
+    MODIFY_LOCK.lock()
     try {
-      Map<VirtualFile, Repository> repositories;
-
-      REPO_LOCK.readLock().lock();
-      try {
-        repositories = new HashMap<>(myRepositories);
+      REPO_LOCK.readLock().lock()
+      val repositoryListSnapshot = try {
+        HashMap(repositories)
       }
       finally {
-        REPO_LOCK.readLock().unlock();
+        REPO_LOCK.readLock().unlock()
       }
 
-      if (checkedRoot != null && repositories.containsKey(checkedRoot)) return;
+      if (checkedRoot != null && repositoryListSnapshot.containsKey(checkedRoot)) {
+        return
+      }
 
-      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
-        Collection<VirtualFile> invalidRoots = findInvalidRoots(repositories.values());
-        repositories.keySet().removeAll(invalidRoots);
-        Map<VirtualFile, Repository> newRoots = findNewRoots(repositories.keySet());
-        repositories.putAll(newRoots);
-      });
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(this) {
+        val invalidRoots = findInvalidRoots(repositoryListSnapshot.values)
+        for (invalidRoot in invalidRoots) {
+          repositoryListSnapshot.keys.remove(invalidRoot)
+        }
+        repositoryListSnapshot.putAll(findNewRoots(repositoryListSnapshot.keys))
+      }
 
-      REPO_LOCK.writeLock().lock();
+      REPO_LOCK.writeLock().lock()
       try {
-        if (!myDisposed) {
-          for (VirtualFile file : myRepositories.keySet()) {
-            Repository oldRepo = myRepositories.get(file);
-            Repository newRepo = repositories.get(file);
-            if (oldRepo != newRepo) {
-              Disposer.dispose(oldRepo);
+        if (!isDisposed) {
+          for ((file, oldRepo) in repositories) {
+            val newRepo = repositoryListSnapshot.get(file)
+            if (oldRepo !== newRepo) {
+              Disposer.dispose(oldRepo)
             }
           }
 
-          myRepositories.clear();
-          myRepositories.putAll(repositories);
+          repositories.clear()
+          repositories.putAll(repositoryListSnapshot)
         }
 
-        updatePathToRootMap();
+        updatePathToRootMap()
       }
       finally {
-        REPO_LOCK.writeLock().unlock();
+        REPO_LOCK.writeLock().unlock()
       }
     }
     finally {
-      MODIFY_LOCK.unlock();
+      MODIFY_LOCK.unlock()
     }
-    BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
+    BackgroundTaskUtil.syncPublisher(project, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged()
   }
 
-  private @NotNull Map<VirtualFile, Repository> findNewRoots(@NotNull Set<VirtualFile> knownRoots) {
-    Map<VirtualFile, Repository> newRootsMap = new HashMap<>();
-    for (VcsRoot root : myVcsManager.getAllVcsRoots()) {
-      VirtualFile rootPath = root.getPath();
+  private fun findNewRoots(knownRoots: Set<VirtualFile>): Map<VirtualFile, Repository> {
+    val newRootsMap = HashMap<VirtualFile, Repository>()
+    for (root in vcsManager.allVcsRoots) {
+      val rootPath = root.path
       if (!knownRoots.contains(rootPath)) {
-        Repository repository = tryCreateRepository(myProject, root.getVcs(), rootPath, this);
-        if (repository != null) {
-          newRootsMap.put(rootPath, repository);
-        }
+        val repository = root.vcs?.let {
+          tryCreateRepository(project = project, vcs = it, rootPath = rootPath, disposable = this)
+        } ?: continue
+        newRootsMap.put(rootPath, repository)
       }
     }
-    return newRootsMap;
+    return newRootsMap
   }
 
-  private @NotNull Collection<VirtualFile> findInvalidRoots(@NotNull Collection<? extends Repository> repositories) {
-    List<VirtualFile> invalidRepos = new ArrayList<>();
-    for (Repository repo : repositories) {
-      VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(repo.getRoot());
-      if (vcsRoot == null ||
-          !repo.getRoot().equals(vcsRoot.getPath()) ||
-          !repo.getVcs().equals(vcsRoot.getVcs())) {
-        invalidRepos.add(repo.getRoot());
+  private fun findInvalidRoots(repositories: Collection<Repository>): Collection<VirtualFile> {
+    val invalidRepos = ArrayList<VirtualFile>()
+    for (repo in repositories) {
+      val vcsRoot = vcsManager.getVcsRootObjectFor(repo.root)
+      if (vcsRoot == null || repo.root != vcsRoot.path || repo.vcs != vcsRoot.vcs) {
+        invalidRepos.add(repo.root)
       }
     }
-    return invalidRepos;
+    return invalidRepos
   }
 
-  private static @Nullable Repository tryCreateRepository(@NotNull Project project,
-                                                          @Nullable AbstractVcs vcs,
-                                                          @NotNull VirtualFile rootPath,
-                                                          @NotNull Disposable disposable) {
-    if (vcs == null) return null;
-    return EP_NAME.computeSafeIfAny(creator -> {
-      if (creator.getVcsKey().equals(vcs.getKeyInstanceMethod())) {
-        return creator.createRepositoryIfValid(project, rootPath, disposable);
-      }
-      return null;
-    });
-  }
-
-  public @NotNull String toString() {
-    return "RepositoryManager(repositories=" + myRepositories + ')'; // NON-NLS
-  }
+  override fun toString(): String = "RepositoryManager(repositories=$repositories)" // NON-NLS
 
   @TestOnly
-  public void waitForAsyncTaskCompletion() {
-    try {
-      updateAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+  fun waitForAsyncTaskCompletion() {
+    updateAlarm.waitForAllExecuted(10, TimeUnit.SECONDS)
   }
 }
