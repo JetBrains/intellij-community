@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +20,12 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-class DefaultScrollBarUI extends ScrollBarUI {
-  static final Key<Component> LEADING = Key.create("JB_SCROLL_BAR_LEADING_COMPONENT");
-  static final Key<Component> TRAILING = Key.create("JB_SCROLL_BAR_TRAILING_COMPONENT");
+@ApiStatus.Internal
+public class DefaultScrollBarUI extends ScrollBarUI {
+  @ApiStatus.Internal
+  public static final Key<Component> LEADING = Key.create("JB_SCROLL_BAR_LEADING_COMPONENT");
+  @ApiStatus.Internal
+  public static final Key<Component> TRAILING = Key.create("JB_SCROLL_BAR_TRAILING_COMPONENT");
 
   private final Listener myListener = new Listener();
   private final Timer myScrollTimer = TimerUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
