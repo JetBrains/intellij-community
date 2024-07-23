@@ -251,7 +251,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       }
     }
     val allResourceRootsList = allResourceRoots.toList()
-    
+
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       loadDescriptorFromDir(
         dir = mainResourceRoot,
@@ -263,7 +263,16 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           pluginModuleGroup.optionalModuleIds,
           fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool),
         )
-      )
+      ).also { descriptor ->
+        descriptor?.content?.modules?.forEach { module ->
+          val requireDescriptor = module.requireDescriptor()
+          if (requireDescriptor.packagePrefix == null) {
+            requireDescriptor.jarFiles = includedModules.single {
+              it.moduleDescriptor.moduleId.stringId == requireDescriptor.moduleName
+            }.moduleDescriptor.resourceRootPaths
+          }
+        }
+      }
     }
     else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
@@ -287,7 +296,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pool = zipFilePool,
       )
     }
-    descriptor?.jarFiles = allResourceRootsList
+    val modulesWithJarFiles = descriptor?.content?.modules?.mapNotNull { it.requireDescriptor().jarFiles }?.flatten()
+    descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
     return descriptor
   }
 
