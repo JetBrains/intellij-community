@@ -64,14 +64,14 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
       localizationState.lastSelectedLocale = localizationState.selectedLocale
     }
     localizationState.selectedLocale = locale
-    restartRequired = true
+    restartRequired = selectedLocale != lastSelectedLocale
     ApplicationManager.getApplication().messageBus.syncPublisher(LocalizationListener.Companion.UPDATE_TOPIC).localeChanged()
   }
 
   override fun resetLocaleIfNeeded() {
     if (selectedLocale != DEFAULT_LOCALE && LoadingState.COMPONENTS_LOADED.isOccurred && PluginManager.getLoadedPlugins().none { LocalizationPluginHelper.isActiveLocalizationPlugin(it, selectedLocale) }) {
       logger<ConfigImportHelper>().info("[i18n] Language setting was reset to default value: $DEFAULT_LOCALE; Previous value: $selectedLocale")
-      setSelectedLocale(DEFAULT_LOCALE)
+      localizationState.selectedLocale = DEFAULT_LOCALE
     }
   }
 }
