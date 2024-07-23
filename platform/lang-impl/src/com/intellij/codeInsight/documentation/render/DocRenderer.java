@@ -22,11 +22,13 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;
@@ -171,7 +173,10 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         g.fillRect(startX, filledStartY, endX - startX, filledHeight);
       }
     }
-    g.setColor(editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
+    Color guideColor = isDebugZombie()
+                       ? JBColor.DARK_GRAY
+                       : editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE);
+    g.setColor(guideColor);
     g.fillRect(startX, filledStartY, scale(LINE_WIDTH), filledHeight);
 
     int topBottomInset = scale(TOP_BOTTOM_INSETS);
@@ -369,6 +374,12 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       return result;
     }
     return ourCachedStyleSheet;
+  }
+
+  private boolean isDebugZombie() {
+    return Registry.is("cache.markup.debug", false) &&
+           myItem instanceof DocRenderItemImpl itemImpl &&
+           itemImpl.isZombie();
   }
 
   private static final class ChangeFontSize extends DumbAwareAction {

@@ -47,7 +47,8 @@ internal class DocRenderItemImpl(override val editor: Editor,
                                  textRange: TextRange,
                                  override var textToRender: @Nls String?,
                                  private val docRendererFactory: (DocRenderItem) -> DocRenderer,
-                                 private val inlineDocumentationFinder: InlineDocumentationFinder?) : DocRenderItem, MutableDocRenderItem {
+                                 private val inlineDocumentationFinder: InlineDocumentationFinder?,
+                                 val isZombie: Boolean = false) : DocRenderItem, MutableDocRenderItem {
   override val highlighter: RangeHighlighter
   override var foldRegion: CustomFoldRegion? = null
     private set

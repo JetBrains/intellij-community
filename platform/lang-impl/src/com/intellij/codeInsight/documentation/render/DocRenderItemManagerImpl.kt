@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.psi.PsiManager
 import com.intellij.util.messages.Topic
 import java.util.*
 import java.util.function.BooleanSupplier
@@ -65,7 +64,12 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
       val it = items.iterator()
       while (it.hasNext()) {
         val existingItem = it.next()
-        val matchingNewItem = if (existingItem.isValid) itemsToSet.removeItem(existingItem.highlighter) else null
+        val matchingNewItem = if (existingItem.isValid && !existingItem.isZombie) {
+          itemsToSet.removeItem(existingItem.highlighter)
+        }
+        else {
+          null
+        }
         if (matchingNewItem == null) {
           updated = updated or existingItem.remove(foldingTasks)
           it.remove()
@@ -81,8 +85,12 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
       val newRenderItems: MutableCollection<DocRenderItemImpl> = ArrayList()
       for (item in itemsToSet) {
         val newItem = DocRenderItemImpl(
-          editor, item.textRange, if (collapseNewItems) null else item.textToRender,
-          DocRendererProvider.getInstance()::provideDocRenderer, InlineDocumentationFinder.getInstance(editor.project)
+          editor,
+          item.textRange,
+          if (collapseNewItems) null else item.textToRender,
+          DocRendererProvider.getInstance()::provideDocRenderer,
+          InlineDocumentationFinder.getInstance(editor.project),
+          itemsToSet.isZombie,
         )
         newRenderItems.add(newItem)
         if (collapseNewItems) {
