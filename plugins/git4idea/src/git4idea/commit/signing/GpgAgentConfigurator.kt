@@ -68,11 +68,17 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     withContext(Dispatchers.IO) { doConfigure() }
   }
 
-  private fun createPathLocator(): GpgAgentPathsLocator {
+  private fun createPathLocator(executor: GitExecutable): GpgAgentPathsLocator {
+    if (executor is GitExecutable.Wsl) {
+      return WslGpgAgentPathsLocator(executor)
+    }
     return MacAndUnixGpgAgentPathsLocator()
   }
 
-  private fun createGpgAgentExecutor(): GpgAgentCommandExecutor {
+  private fun createGpgAgentExecutor(executor: GitExecutable): GpgAgentCommandExecutor {
+    if (executor is GitExecutable.Wsl) {
+      return WslGpgAgentCommandExecutor(project, executor)
+    }
     return LocalGpgAgentCommandExecutor()
   }
 
@@ -81,13 +87,13 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     val executable = GitExecutableManager.getInstance().getExecutable(project)
     if (!isEnabled(executable)) return
 
-    val gpgAgentPaths = pathLocator?.resolvePaths() ?: createPathLocator().resolvePaths() ?: return
+    val gpgAgentPaths = pathLocator?.resolvePaths() ?: createPathLocator(executable).resolvePaths() ?: return
     val gpgAgentConf = gpgAgentPaths.gpgAgentConf
     var needBackup = gpgAgentConf.exists()
     if (!needBackup) {
       LOG.debug("Cannot locate $gpgAgentConf, creating new")
       gpgAgentConf.write("$GPG_AGENT_PINENTRY_PROGRAM_CONF_KEY ${gpgAgentPaths.gpgPinentryAppLauncherConfigPath}")
-      restartAgent()
+      restartAgent(executable)
       needBackup = false
     }
 
@@ -104,7 +110,7 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
       }
       else if (backupExistingConfig(gpgAgentPaths, config)) {
         changePinentryProgram(gpgAgentPaths, config)
-        restartAgent()
+        restartAgent(executable)
       }
     }
 
@@ -175,9 +181,9 @@ internal class GpgAgentConfigurator(private val project: Project, cs: CoroutineS
     }
   }
 
-  private fun restartAgent() {
+  private fun restartAgent(executor: GitExecutable) {
     try {
-      val output = createGpgAgentExecutor().execute("gpg-connect-agent", "reloadagent /bye").lastOrNull()
+      val output = createGpgAgentExecutor(executor).execute("gpg-connect-agent", "reloadagent /bye").lastOrNull()
       if (output == "OK") {
         LOG.debug("Gpg Agent restarted successfully")
       }
@@ -234,6 +240,55 @@ private class MacAndUnixGpgAgentPathsLocator : GpgAgentPathsLocator {
   }
 }
 
+private class WslGpgAgentCommandExecutor(private val project: Project,
+                                         private val executable: GitExecutable.Wsl) : GpgAgentCommandExecutor {
+  override fun execute(command: String, vararg params: String): List<String> {
+    val commandLine = executable.createBundledCommandLine(project, command).withParameters(*params)
+    return CapturingProcessHandler
+      .Silent(commandLine)
+      .runProcess(10000, true).stdoutLines
+  }
+}
+
+private class WslGpgAgentPathsLocator(private val executable: GitExecutable.Wsl) : GpgAgentPathsLocator {
+  override fun resolvePaths(): GpgAgentPaths? {
+    try {
+      val gpgAgentHome = getWindowsAccessibleGpgHome(executable) ?: return null
+      val gpgAgentConf = gpgAgentHome.resolve(GPG_AGENT_CONF_FILE_NAME)
+      val gpgAgentConfBackup = gpgAgentHome.resolve(GPG_AGENT_CONF_BACKUP_FILE_NAME)
+      val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
+      val pathToPinentryAppInWsl = (getPathInWslUserHome(executable) ?: return null) + "/$GPG_HOME_DIR/$PINENTRY_LAUNCHER_FILE_NAME"
+      return GpgAgentPaths(gpgAgentHome, gpgAgentConf, gpgAgentConfBackup, gpgPinentryAppLauncher,
+                           pathToPinentryAppInWsl)
+    }
+    catch (e: InvalidPathException) {
+      LOG.warn("Cannot resolve path", e)
+      return null
+    }
+  }
+
+  private fun getPathInWslUserHome(executable: GitExecutable.Wsl): String? {
+    val wslDistribution = executable.distribution
+    val wslUserHomePath = wslDistribution.userHome?.trimEnd('/')
+    if (wslUserHomePath == null) return null
+    LOG.debug("User home path in WSL = $wslUserHomePath")
+
+    return wslUserHomePath
+  }
+
+  private fun getWindowsAccessibleGpgHome(executable: GitExecutable.Wsl): Path? {
+    val wslDistribution = executable.distribution
+    val wslUserHomePath = getPathInWslUserHome(executable)
+    if (wslUserHomePath != null) {
+      return Path.of(wslDistribution.getWindowsPath(wslUserHomePath), GPG_HOME_DIR)
+    }
+    else {
+      LOG.warn("Cannot resolve wsl user home path")
+    }
+    return null
+  }
+}
+
 internal interface PinentryLauncherGenerator {
   val executable: GitExecutable
   fun getScriptTemplate(fallbackPinentryPath: String?): String
@@ -242,7 +297,14 @@ internal interface PinentryLauncherGenerator {
     val path = gpgAgentPaths.gpgPinentryAppLauncher
     try {
       FileUtil.writeToFile(path.toFile(), getScriptTemplate(fallbackPinentryPath))
-      NioFiles.setExecutable(path)
+      val executable = executable
+      if (executable is GitExecutable.Wsl) {
+        val launcherConfigPath = gpgAgentPaths.gpgPinentryAppLauncherConfigPath
+        WslGpgAgentCommandExecutor(project, executable).execute("chmod", "+x", launcherConfigPath)
+      }
+      else {
+        NioFiles.setExecutable(path)
+      }
     }
     catch (e: IOException) {
       LOG.warn("Cannot generate $path", e)
