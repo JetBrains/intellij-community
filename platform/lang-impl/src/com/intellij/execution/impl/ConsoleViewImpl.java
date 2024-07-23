@@ -70,6 +70,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -572,7 +573,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
         catch (TimeoutException ignored) {
         }
-        UIUtil.dispatchAllInvocationEvents();
+        EDT.dispatchAllInvocationEvents();
       }
     }
     catch (InterruptedException | ExecutionException e) {
