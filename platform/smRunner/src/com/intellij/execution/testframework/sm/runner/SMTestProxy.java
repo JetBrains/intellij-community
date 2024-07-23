@@ -66,13 +66,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   private SMTestProxy myParent;
 
   private volatile AbstractState myState = NotRunState.getInstance();
-  /**
-   * Represents the duration of a test or suite.
-   * The duration is stored as a Long value in milliseconds. If the duration is unknown,
-   * the value is set to null. This variable is used within the SMTestProxy class to calculate
-   * and cache the duration of a test or suite.
-   */
-  private Long myDuration = null;
+  private Long myDuration = null; // duration is unknown
   /**
    * Represents the start time of node which is used to calculate the duration if the user interrupted the tests execution
    * @see SMTestProxy#setStarted()
@@ -856,9 +850,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   /**
    * Sets the test or suite to a terminated state, starting from the current node.
-   * This method is invoked for Junit/TestNG run configurations for the {@link SMRootTestProxy}
-   * @see GeneralIdBasedToSMTRunnerEventsConvertor#onFinishTesting
-   * @see GeneralToSMTRunnerEventsConvertor#onFinishTesting
+   * This method is invoked in case of running native test configurations (they don't delegate testing to some external tools like Gradle)
+   * @see SMTestProxy#setTerminated(long)
    */
   public void setTerminated() {
     setTerminated(System.currentTimeMillis());
