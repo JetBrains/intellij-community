@@ -423,6 +423,8 @@ com.intellij.injected.editor.VirtualFileWindow
 f:com.intellij.l10n.LocalizationUtil
 - sf:INSTANCE:com.intellij.l10n.LocalizationUtil
 - f:getLocale():java.util.Locale
+- f:getLocale(Z):java.util.Locale
+- bs:getLocale$default(com.intellij.l10n.LocalizationUtil,Z,I,java.lang.Object):java.util.Locale
 - f:getLocaleOrNullForDefault():java.util.Locale
 com.intellij.lang.ASTNode
 - com.intellij.openapi.util.UserDataHolder
