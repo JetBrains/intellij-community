@@ -64,11 +64,11 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(private val project: 
     project.messageBus.connect(coroutineScope).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED,
                                                          VcsMappingListener { this.scheduleUpdate() })
 
-    EP_NAME.addChangeListener({
-                                disposeAllRepositories(false)
-                                scheduleUpdate()
-                                BackgroundTaskUtil.syncPublisher(project, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged()
-                              }, this)
+    EP_NAME.addChangeListener(coroutineScope) {
+      disposeAllRepositories(false)
+      scheduleUpdate()
+      BackgroundTaskUtil.syncPublisher(project, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged()
+    }
     updateAlarm = Alarm(
       threadToUse = Alarm.ThreadToUse.POOLED_THREAD,
       parentDisposable = null,
@@ -247,6 +247,7 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(private val project: 
       return null
     }
 
+    @Suppress("NAME_SHADOWING")
     var updateIfNeeded = updateIfNeeded
     val app = ApplicationManager.getApplication()
     if (updateIfNeeded && app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
