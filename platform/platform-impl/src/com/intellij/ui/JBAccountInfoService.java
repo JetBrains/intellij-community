@@ -176,7 +176,7 @@ public interface JBAccountInfoService {
   sealed interface LicenseListResult permits LicenseListResult.LicenseList,
                                              LicenseListResult.LoginRequired,
                                              LicenseListResult.FetchFailure,
-                                             LicenseListResult.TrialRejected {
+                                             LicenseListResult.RequestDeclined {
     record LicenseList(@NotNull List<@NotNull JbaLicense> licenses) implements LicenseListResult { }
 
     /**
@@ -187,7 +187,7 @@ public interface JBAccountInfoService {
       INSTANCE
     }
 
-    record TrialRejected(@NotNull Reason reason, @NlsSafe @NotNull String message) implements LicenseListResult {
+    record RequestDeclined(@NotNull Reason reason, @NlsSafe @NotNull String message) implements LicenseListResult {
       public enum Reason {
         TRIAL_NOT_ALLOWED,
         PAYMENT_PROOF_REQUIRED,
