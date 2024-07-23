@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +26,7 @@ class NewUsersOnboardingExperiment {
   }
 
   fun isEnabled(): Boolean {
-    return isExperimentEnabled
+    return Registry.`is`("ide.newUsersOnboarding", false) && isExperimentEnabled
   }
 
   /**
@@ -43,7 +44,7 @@ class NewUsersOnboardingExperiment {
 
     override suspend fun execute(asyncScope: CoroutineScope) {
       asyncScope.launch(Dispatchers.IO) {
-        serviceAsync<NewUsersOnboardingExperiment>().isEnabled()
+        serviceAsync<NewUsersOnboardingExperiment>().isExperimentEnabled
       }
     }
   }
