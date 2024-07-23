@@ -442,7 +442,6 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:JsonSchema:javax.swing.Icon
 - sf:Jsp:javax.swing.Icon
 - sf:Jspx:javax.swing.Icon
-- sf:Less:javax.swing.Icon
 - sf:Manifest:javax.swing.Icon
 - sf:MicrosoftWindows:javax.swing.Icon
 - sf:Perl:javax.swing.Icon
