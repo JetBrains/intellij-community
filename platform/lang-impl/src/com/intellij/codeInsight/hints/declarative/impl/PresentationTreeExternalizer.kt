@@ -14,12 +14,10 @@ import com.intellij.util.io.IOUtil.writeUTF
 import java.io.DataInput
 import java.io.DataOutput
 
-internal class PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
+internal object PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
 
-  companion object {
-    // increment on format changed
-    private const val SERDE_VERSION = 0
-  }
+  // increment on format changed
+  private const val SERDE_VERSION = 0
 
   override fun serdeVersion(): Int = SERDE_VERSION + super.serdeVersion()
 
