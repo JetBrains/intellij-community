@@ -142,6 +142,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     else {
       val errorText = "Waiting for highlight to finish took more than $timeout."
       if (throws) {
+        LOG.error(errorText)
         error(errorText)
       } else {
         LOG.error(errorText)
