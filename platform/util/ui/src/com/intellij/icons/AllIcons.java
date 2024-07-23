@@ -480,7 +480,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon JsonSchema = load("fileTypes/jsonSchema.svg", "expui/", -2026062432, 2);
     /** 16x16 */ public static final @NotNull Icon Jsp = load("fileTypes/jsp.svg", "expui/", -476790980, 0);
     /** 16x16 */ public static final @NotNull Icon Jspx = load("fileTypes/jspx.svg", "expui/", -576899393, 0);
-    /** 16x16 */ public static final @NotNull Icon Less = load("expui/fileTypes/less.svg", -238843875, 2);
     /** 16x16 */ public static final @NotNull Icon Manifest = load("fileTypes/manifest.svg", "expui/", -119717710, 0);
     /** 16x16 */ public static final @NotNull Icon MicrosoftWindows = load("fileTypes/microsoftWindows.svg", "expui/", 10953923, 0);
     /** 16x16 */ public static final @NotNull Icon Perl = load("expui/fileTypes/perl.svg", -895068164, 2);

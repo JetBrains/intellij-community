@@ -5,7 +5,6 @@
     },
     "fileTypes": {
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
-      "less.svg": "icons/less.svg",
       "vueJs.svg": "icons/vue.svg",
       "yarn.svg": "icons/nodejs/yarn.svg"
     },
