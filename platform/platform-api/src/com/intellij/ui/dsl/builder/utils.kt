@@ -51,6 +51,14 @@ enum class DslComponentProperty {
   LABEL_FOR,
 
   /**
+   * By default, [Cell.label] assigns [javax.swing.JLabel.setLabelFor] for the cell component.
+   * It can be turned off via this property, which could be useful when shortcut is processed manually with some specific action
+   *
+   * Value: [Boolean]
+   */
+  SKIP_LABEL_FOR_ASSIGNMENT,
+
+  /**
    * Some compound components can contain several components inside itself. [INTERACTIVE_COMPONENT] points to main interactive one
    *
    * * Assigned to [JLabel.labelFor]

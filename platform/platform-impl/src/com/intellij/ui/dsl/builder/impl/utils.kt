@@ -147,6 +147,10 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
     return
   }
 
+  if (cell.component.getClientProperty(DslComponentProperty.SKIP_LABEL_FOR_ASSIGNMENT) as Boolean? == true) {
+    return
+  }
+
   val component = getLabelComponentFor(cell.component.interactiveComponent)
   if (component == null) {
     if (mnemonicExists) {
