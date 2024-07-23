@@ -3,10 +3,11 @@ package com.intellij.platform.ide.newUsersOnboarding
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 
-internal class StartNewUsersOnboardingAction : DumbAwareAction() {
+internal class StartNewUsersOnboardingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     NewUsersOnboardingService.getInstance(project).startOnboarding()
