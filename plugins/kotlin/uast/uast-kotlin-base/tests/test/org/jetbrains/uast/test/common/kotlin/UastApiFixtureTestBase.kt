@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
@@ -1115,6 +1116,28 @@ interface UastApiFixtureTestBase {
             destructuringDeclaration.toUElement().orFail("Cannot convert to KotlinUDestructuringDeclarationExpression")
 
         TestCase.assertNotNull(uDestructuringDeclaration.uastParent)
+    }
+
+    fun checkUnclosedLazyValueBody(myFixture: JavaCodeInsightTestFixture) {
+        // KTIJ-24092
+        myFixture.configureByText(
+            "main.kt", """
+                val lazyValue: String by lazy {
+                    println("Initializing lazy value")
+                //}
+                fun m<caret>ain() {
+                }
+            """.trimIndent()
+        )
+
+        val functionDeclaration =
+            myFixture.file.findElementAt(myFixture.caretOffset)
+                ?.getParentOfType<KtNamedFunction>(strict = false)
+                .orFail("Cannot find KtNamedFunction")
+
+        val uFunctionDeclaration = functionDeclaration.toUElement().orFail("Cannot convert to UElement")
+
+        TestCase.assertNotNull(uFunctionDeclaration.uastParent)
     }
 
     fun checkIdentifierOfNullableExtensionReceiver(myFixture: JavaCodeInsightTestFixture) {
