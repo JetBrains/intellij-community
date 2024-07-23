@@ -226,18 +226,6 @@ com.intellij.openapi.externalSystem.service.RemoteExternalSystemService
 - java.rmi.Remote
 - a:setNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):V
 - a:setSettings(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
-f:com.intellij.openapi.externalSystem.service.ResolverDeserializationWrapper
-- com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- <init>(com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade):V
-- applyProgressManager(com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager):V
-- applySettings(com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings):V
-- cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-- f:getDelegate():com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- getRawProjectResolver():com.intellij.openapi.externalSystem.service.remote.RawExternalSystemProjectResolver
-- getResolver():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver
-- getTaskManager():com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager
-- getTasksInProgress():java.util.Map
-- isTaskInProgress(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
 a:com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
 - com.intellij.execution.actions.RunConfigurationProducer
 - p:<init>():V
@@ -608,15 +596,6 @@ com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskAware
 - a:cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
 - a:getTasksInProgress():java.util.Map
 - a:isTaskInProgress(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
-c:com.intellij.openapi.externalSystem.service.notification.EditableNotificationMessageElement
-- com.intellij.openapi.externalSystem.service.notification.NotificationMessageElement
-- com.intellij.ide.errorTreeView.EditableMessageElement
-- <init>(com.intellij.notification.Notification,com.intellij.ide.errorTreeView.ErrorTreeElementKind,com.intellij.ide.errorTreeView.GroupingElement,java.lang.String[],com.intellij.pom.Navigatable,java.lang.String,java.lang.String):V
-- addDisabledLink(java.lang.String,java.lang.String):V
-- s:disableLink(javax.swing.event.HyperlinkEvent):V
-- getRightSelfEditor():javax.swing.tree.TreeCellEditor
-- startEditingOnMouseMove():Z
-- p:updateStyle(javax.swing.JEditorPane,javax.swing.JTree,java.lang.Object,Z,Z):V
 com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - customize(com.intellij.openapi.externalSystem.service.notification.NotificationData,com.intellij.openapi.project.Project,java.lang.String,java.lang.Throwable):V
@@ -641,11 +620,6 @@ com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressN
 - a:addNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener,com.intellij.openapi.Disposable):Z
 - s:getInstance():com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 - a:removeNotificationListener(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
-f:com.intellij.openapi.externalSystem.service.notification.MessageCounter
-- <init>():V
-- getCount(java.lang.String,com.intellij.openapi.externalSystem.service.notification.NotificationSource,com.intellij.openapi.externalSystem.service.notification.NotificationCategory,com.intellij.openapi.externalSystem.model.ProjectSystemId):I
-- increment(java.lang.String,com.intellij.openapi.externalSystem.service.notification.NotificationSource,com.intellij.openapi.externalSystem.service.notification.NotificationCategory,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
-- remove(java.lang.String,com.intellij.openapi.externalSystem.service.notification.NotificationSource,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 e:com.intellij.openapi.externalSystem.service.notification.NotificationCategory
 - java.lang.Enum
 - sf:ERROR:com.intellij.openapi.externalSystem.service.notification.NotificationCategory
@@ -686,15 +660,6 @@ c:com.intellij.openapi.externalSystem.service.notification.NotificationData
 - setNavigatable(com.intellij.pom.Navigatable):V
 - setNotificationCategory(com.intellij.openapi.externalSystem.service.notification.NotificationCategory):V
 - setTitle(java.lang.String):V
-c:com.intellij.openapi.externalSystem.service.notification.NotificationMessageElement
-- com.intellij.ide.errorTreeView.NavigatableMessageElement
-- sf:LINK_STYLE:java.lang.String
-- sf:MSG_STYLE:java.lang.String
-- <init>(com.intellij.ide.errorTreeView.ErrorTreeElementKind,com.intellij.ide.errorTreeView.GroupingElement,java.lang.String[],com.intellij.pom.Navigatable,java.lang.String,java.lang.String):V
-- getLeftSelfRenderer():com.intellij.ui.CustomizeColoredTreeCellRenderer
-- getRightSelfRenderer():com.intellij.ui.CustomizeColoredTreeCellRenderer
-- p:installJep(javax.swing.JEditorPane):javax.swing.JEditorPane
-- p:updateStyle(javax.swing.JEditorPane,javax.swing.JTree,java.lang.Object,Z,Z):V
 e:com.intellij.openapi.externalSystem.service.notification.NotificationSource
 - java.lang.Enum
 - sf:PROJECT_SYNC:com.intellij.openapi.externalSystem.service.notification.NotificationSource
@@ -822,9 +787,6 @@ c:com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvide
 - isSubstitution(java.lang.String,java.lang.String,com.intellij.openapi.roots.DependencyScope):Z
 - register(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate,com.intellij.openapi.module.Module):V
 - removeSubstitution(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.roots.DependencyScope):V
-f:com.intellij.openapi.externalSystem.service.project.ProjectRenameAware
-- <init>():V
-- s:beAware(com.intellij.openapi.project.Project):V
 c:com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware
 - com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 - <init>(com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware):V
