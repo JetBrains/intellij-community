@@ -194,7 +194,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     {
       extension.setConverter(LANGUAGE_CONVERTER);
     }
-    else if ("action".equals(propertyName)) {
+    else if ("action".equals(propertyName) ||
+             "actionId".equals(propertyName)) {
       extension.setConverter(ACTION_CONVERTER);
     }
   }
