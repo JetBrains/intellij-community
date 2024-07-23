@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
-import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
@@ -40,15 +39,12 @@ fun getMethodSignature(
     return CompiledCodeFragmentData.MethodSignature(parameters, returnType!!)
 }
 
-val OutputFile.internalClassName: String
-    @ApiStatus.Internal
-    get() = computeInternalClassName(relativePath)
-
 @KaExperimentalApi
 internal val KaCompiledFile.internalClassName: String
     get() = computeInternalClassName(path)
 
-private fun computeInternalClassName(path: String): String {
+@ApiStatus.Internal
+fun computeInternalClassName(path: String): String {
     require(path.endsWith(".class", ignoreCase = true))
     return path.dropLast(".class".length).internalNameToFqn()
 }
