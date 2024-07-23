@@ -25,6 +25,7 @@ import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
@@ -82,6 +83,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
+    if (Registry.`is`("ide.workspace.model.assertions.on.long.listeners", true)) {
+      (project.messageBus as MessageBusImpl).addMessageDeliveryListener(WorkspaceModelMessageDeliveryListener)
+    }
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)?.apply { setVirtualFileUrlManager(virtualFileManager) }
     val (projectEntities, unloadedEntities) = when {

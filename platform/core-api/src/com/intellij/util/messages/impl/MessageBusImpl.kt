@@ -67,7 +67,7 @@ open class MessageBusImpl : MessageBus {
   // separate disposable must be used, because container will dispose bus connections in a separate step
   private var connectionDisposable: Disposable? = Disposer.newDisposable()
   @JvmField
-  internal var messageDeliveryListener: MessageDeliveryListener? = null
+  internal var messageDeliveryListeners: MutableSet<MessageDeliveryListener> = ConcurrentHashMap.newKeySet()
 
   constructor(owner: MessageBusOwner, parentBus: CompositeMessageBus) {
     this.owner = owner
@@ -317,9 +317,12 @@ open class MessageBusImpl : MessageBus {
     error?.let(::throwError)
   }
 
-  fun setMessageDeliveryListener(listener: MessageDeliveryListener?) {
-    check(messageDeliveryListener == null || listener == null) { "Already set: $messageDeliveryListener" }
-    messageDeliveryListener = listener
+  fun addMessageDeliveryListener(listener: MessageDeliveryListener) {
+    messageDeliveryListeners.add(listener)
+  }
+
+  fun removeMessageDeliveryListener(listener: MessageDeliveryListener) {
+    messageDeliveryListeners.remove(listener)
   }
 
   open fun disconnectPluginConnections(predicate: Predicate<Class<*>>) {
@@ -447,7 +450,7 @@ private fun deliverMessage(job: Message, jobQueue: MessageQueue, prevError: Thro
                                args = job.args,
                                topic = job.topic,
                                handler = handler,
-                               messageDeliveryListener = job.bus.messageDeliveryListener,
+                               messageDeliveryListeners = job.bus.messageDeliveryListeners,
                                prevError = error)
       }
       if (++index != job.currentHandlerIndex) {
@@ -516,7 +519,7 @@ internal fun executeOrAddToQueue(topic: Topic<*>,
                              args = args,
                              topic = topic,
                              handler = handler ?: continue,
-                             messageDeliveryListener = bus.messageDeliveryListener,
+                             messageDeliveryListeners = bus.messageDeliveryListeners,
                              prevError = error)
     }
     return error
@@ -671,20 +674,20 @@ private fun invokeListener(methodHandle: MethodHandle,
                            args: Array<Any?>?,
                            topic: Topic<*>,
                            handler: Any,
-                           messageDeliveryListener: MessageDeliveryListener?,
+                           messageDeliveryListeners: Set<MessageDeliveryListener>,
                            prevError: Throwable?): Throwable? {
   try {
     //println("${topic.displayName} ${topic.isImmediateDelivery}: $methodName(${args.contentToString()})")
     if (handler is MessageHandler) {
       handler.handle(methodHandle, *(args ?: ArrayUtilRt.EMPTY_OBJECT_ARRAY))
     }
-    else if (messageDeliveryListener == null) {
+    else if (messageDeliveryListeners.isEmpty()) {
       invokeMethod(handler, args, methodHandle)
     }
     else {
       val startTime = System.nanoTime()
       invokeMethod(handler, args, methodHandle)
-      messageDeliveryListener.messageDelivered(topic, methodName, handler, System.nanoTime() - startTime)
+      messageDeliveryListeners.forEach { it.messageDelivered(topic, methodName, handler, System.nanoTime() - startTime) }
     }
   }
   catch (e: AbstractMethodError) {
