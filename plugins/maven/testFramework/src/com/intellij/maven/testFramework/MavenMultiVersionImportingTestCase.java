@@ -72,6 +72,7 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   protected void setUp() throws Exception {
     super.setUp();
     if ("bundled".equals(myMavenVersion)) {
+      MavenDistributionsCache.resolveEmbeddedMavenHome();
       return;
     }
     myWrapperTestFixture = new MavenWrapperTestFixture(getProject(), myMavenVersion);
