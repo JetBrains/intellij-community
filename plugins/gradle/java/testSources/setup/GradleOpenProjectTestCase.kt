@@ -4,6 +4,9 @@ package org.jetbrains.plugins.gradle.setup
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.openapi.externalSystem.action.AttachExternalProjectAction
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
+import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
@@ -34,6 +37,16 @@ abstract class GradleOpenProjectTestCase : GradleTestCase() {
         systemId = GradleConstants.SYSTEM_ID,
         selectedFile = testRoot.getDirectory(relativePath)
       )
+    }
+  }
+
+  suspend fun attachMavenProject(project: Project, relativePath: String) {
+    val mavenSystemId = ProjectSystemId("MAVEN")
+    val projectPath = testRoot.getDirectory(relativePath).toNioPath().toString()
+    EP_NAME.forEachExtensionSafeAsync { extension ->
+      if (extension.systemId == mavenSystemId) {
+        extension.linkAndLoadProjectAsync(project, projectPath)
+      }
     }
   }
 
