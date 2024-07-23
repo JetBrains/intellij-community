@@ -29,7 +29,7 @@ internal fun Iterable<KtNamedDeclaration>.moveInto(targetFile: KtFile): Map<KtNa
     return oldToNewMap
 }
 
-internal fun KtNamedDeclaration.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList() + this
+internal fun KtNamedDeclaration.withChildDeclarations() = collectDescendantsOfType<KtNamedDeclaration>().toList()
 
 internal fun K2ChangePackageDescriptor.usageViewDescriptor(): MoveMultipleElementsViewDescriptor {
     return MoveMultipleElementsViewDescriptor(files.toTypedArray(), target.presentablePkgName())
