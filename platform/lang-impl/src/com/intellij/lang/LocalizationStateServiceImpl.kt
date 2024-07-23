@@ -8,28 +8,36 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.*
 
 private const val DEFAULT_LOCALE = "en"
 
 @Internal
 @State(name = "LocalizationStateService", reloadable = false, category = SettingsCategory.SYSTEM, storages = [Storage(GeneralSettings.IDE_GENERAL_XML)])
-internal class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState>, Disposable {
+internal class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState> {
+
   private var localizationState = LocalizationState()
   private var restartRequired: Boolean = false
 
+
   override fun initializeComponent() {
     val localizationProperty = EarlyAccessRegistryManager.getString(LocalizationUtil.LOCALIZATION_KEY)
+    logger<ConfigImportHelper>().info("[i18n] Localization property from registry is $localizationProperty")
     if (!localizationProperty.isNullOrEmpty()) {
-      setSelectedLocale(localizationProperty)
       EarlyAccessRegistryManager.setString(LocalizationUtil.LOCALIZATION_KEY, "")
-      logger<ConfigImportHelper>().info("Language defined from registry: $localizationProperty")
+      if (localizationProperty != Locale.ENGLISH.toLanguageTag()) {
+        setSelectedLocale(localizationProperty)
+        logger<ConfigImportHelper>().info("[i18n] Language defined from registry: $localizationProperty")
+      }
+      else {
+        logger<ConfigImportHelper>().info("[i18n] Language defined from registry is English. Skipped")
+      }
     }
   }
 
@@ -60,9 +68,9 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
     ApplicationManager.getApplication().messageBus.syncPublisher(LocalizationListener.Companion.UPDATE_TOPIC).localeChanged()
   }
 
-  override fun dispose() {
+  override fun resetLocaleIfNeeded() {
     if (selectedLocale != DEFAULT_LOCALE && LoadingState.COMPONENTS_LOADED.isOccurred && PluginManager.getLoadedPlugins().none { LocalizationPluginHelper.isActiveLocalizationPlugin(it, selectedLocale) }) {
-      logger<ConfigImportHelper>().info("Language setting was reset to default value: $DEFAULT_LOCALE; Previous value: $selectedLocale")
+      logger<ConfigImportHelper>().info("[i18n] Language setting was reset to default value: $DEFAULT_LOCALE; Previous value: $selectedLocale")
       setSelectedLocale(DEFAULT_LOCALE)
     }
   }
