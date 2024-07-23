@@ -119,8 +119,8 @@ internal class IjentWslNioFileSystemProvider(
   override fun newOutputStream(path: Path?, vararg options: OpenOption?): OutputStream =
     originalFsProvider.newOutputStream(path, *options)
 
-  override fun newFileChannel(path: Path?, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): FileChannel =
-    originalFsProvider.newFileChannel(path, options, *attrs)
+  override fun newFileChannel(path: Path, options: MutableSet<out OpenOption>?, vararg attrs: FileAttribute<*>?): FileChannel =
+    ijentFsProvider.newFileChannel(path.toIjentPath(), options, *attrs)
 
   override fun newAsynchronousFileChannel(
     path: Path?,
