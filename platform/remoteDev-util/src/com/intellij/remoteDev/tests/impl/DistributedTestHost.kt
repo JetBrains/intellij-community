@@ -9,7 +9,6 @@ import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
 import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
-import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
@@ -23,13 +22,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.adviseSuspendPreserveClientId
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
-import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.modelGenerated.*
+import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
+import com.intellij.remoteDev.tests.modelGenerated.RdProductType
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
+import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
@@ -355,6 +356,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
 
   private suspend fun requestFocus(actionTitle: String): Boolean {
+    LOG.info("$actionTitle: Requesting focus")
+
     val projects = ProjectManagerEx.getOpenProjects()
 
     if (projects.size > 1) {
@@ -379,18 +382,20 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
     else {
       val windowString = "window '${projectIdeFrame.name}'"
-      AppIcon.getInstance().requestFocus(projectIdeFrame)
-      if (projectIdeFrame.isFocusAncestor()) {
+      if (projectIdeFrame.isFocused) {
         LOG.info("$actionTitle: Window '$windowString' is already focused")
         return true
       }
       else {
         LOG.info("$actionTitle: Requesting project focus for '$windowString'")
         ProjectUtil.focusProjectWindow(project, true)
-        waitFor(timeout = 5.seconds.toJavaDuration()) {
-          projectIdeFrame.isFocusAncestor()
+        val waitResult = waitFor(timeout = 5.seconds.toJavaDuration()) {
+          projectIdeFrame.isFocused
         }
-        return true
+        if (!waitResult) {
+          LOG.error("Couldn't wait for focus in project '$windowString'")
+        }
+        return waitResult
       }
     }
   }
@@ -400,13 +405,17 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     if (visibleWindows.size != 1) {
       LOG.info("$actionTitle: There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
     }
-    visibleWindows.forEach {
+    return visibleWindows.map {
+      LOG.info("$actionTitle: Focusing window '$it'")
       AppIcon.getInstance().requestFocus(it)
-      waitFor(timeout = 5.seconds.toJavaDuration()) {
-        it.isFocusAncestor()
+      val waitResult = waitFor(timeout = 5.seconds.toJavaDuration()) {
+        it.isFocused
       }
-    }
-    return true
+      if (!waitResult) {
+        LOG.error("Couldn't wait for focus in project '$it'")
+      }
+      waitResult
+    }.all { it }
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {
@@ -444,7 +453,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         return@withContext try {
           val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
           windows.forEachIndexed { index, window ->
-            val screenshotFile = if (window.isFocusAncestor()) {
+            val screenshotFile = if (window.isFocused) {
               screenshotFile(actionName, "_${index}_focusedWindow", timeStamp)
             }
             else {
