@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ReflectionUtil
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
@@ -42,7 +43,7 @@ class ProcessServiceImpl(private val coroutineScope: CoroutineScope) : ProcessSe
       .setRedirectErrorStream(redirectErrorStream)
       .setWindowsAnsiColorEnabled(windowsAnsiColorEnabled)
       .setUnixOpenTtyToPreserveOutputAfterTermination(unixOpenTtyToPreserveOutputAfterTermination)
-      .setSpawnProcessUsingJdkOnMacIntel(true)
+      .setSpawnProcessUsingJdkOnMacIntel(Registry.`is`("run.processes.using.pty.helper.on.mac.intel", true))
     val process = builder.start()
     if (process is UnixPtyProcess && Platform.isMac() && Platform.isIntel()) {
       coroutineScope.launch(Dispatchers.IO + CoroutineName("Reaper for $process")) {
