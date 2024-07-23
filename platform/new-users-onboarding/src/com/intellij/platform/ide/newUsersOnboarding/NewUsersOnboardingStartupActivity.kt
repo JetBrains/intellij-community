@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.newUsersOnboarding
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.EDT
@@ -16,7 +17,7 @@ import kotlinx.coroutines.withContext
 
 internal class NewUsersOnboardingStartupActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode || AppMode.isRemoteDevHost()) {
       throw ExtensionNotApplicableException.create()
     }
   }
