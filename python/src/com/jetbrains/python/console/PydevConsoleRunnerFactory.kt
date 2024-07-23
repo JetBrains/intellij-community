@@ -3,6 +3,7 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -215,10 +216,13 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       paths.add(getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)))
 
       val targetEnvironmentRequest = findPythonTargetInterpreter(sdk, project)
-      // // Community Helpers root should be first in the list
-      val communityHelpers = targetEnvironmentRequest.preparePyCharmHelpers().helpers.first()
-      for (helper in listOf("pycharm", "pydev")) {
-        paths.add(communityHelpers.targetPathFun.getRelativeTargetPath(helper))
+      val communityHelpers = targetEnvironmentRequest.preparePyCharmHelpers().helpers.find { it.localPath.endsWith("helpers") }
+      if (communityHelpers != null) {
+        for (helper in listOf("pycharm", "pydev")) {
+          paths.add(communityHelpers.targetPathFun.getRelativeTargetPath(helper))
+        }
+      } else {
+        Logger.getInstance(PydevConsoleRunnerFactory::class.java).error("Python Community helpers dir path not found")
       }
 
       val pathStr = paths.joinToStringFunction(separator = ", ", transform = String::toStringLiteral)

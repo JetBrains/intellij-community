@@ -30,7 +30,7 @@ public class PythonGeneratorTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected String getTestDataPath() {
-        return PythonHelpersLocator.getPythonCommunityPath();
+        return PythonHelpersLocator.getPythonCommunityPath().toString();
       }
     });
   }
