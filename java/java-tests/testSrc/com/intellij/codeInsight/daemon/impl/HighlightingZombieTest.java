@@ -16,20 +16,20 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-final class FileMarkupInfoTest {
+final class HighlightingZombieTest {
+
   @Test
-  void testFileMarkupInfoSerDe() throws IOException {
-    FileMarkupInfo markupInfo = mockMarkupInfo();
-    byte[] markupInfoBytes = serializedMarkupInfo(markupInfo);
-    FileMarkupInfo actualMarkupInfo = deserializedMarkupInfo(markupInfoBytes);
-    assertEquals(markupInfo, actualMarkupInfo);
+  void testHighlightingZombieSerDe() throws IOException {
+    HighlightingZombie zombie = createHighlightingZombie();
+    byte[] bytes = serializedZombie(zombie);
+    HighlightingZombie deserializedZombie = deserializedZombie(bytes);
+    assertEquals(zombie, deserializedZombie);
   }
 
-  private static FileMarkupInfo mockMarkupInfo() throws MalformedURLException {
-    return new FileMarkupInfo(
-      10,
+  private static HighlightingZombie createHighlightingZombie() throws MalformedURLException {
+    return new HighlightingZombie(
       List.of(
-        new HighlighterState(
+        new HighlightingLimb(
           10,
           20,
           30,
@@ -38,41 +38,47 @@ final class FileMarkupInfoTest {
           null,
           new CachedImageIcon(new URL("file:///example"), null)
         ),
-        new HighlighterState(
+        new HighlightingLimb(
           40,
           50,
           60,
           HighlighterTargetArea.EXACT_RANGE,
           null,
-          new TextAttributes(new Color(100), null, new Color(200), EffectType.STRIKEOUT, Font.BOLD),
+          new TextAttributes(
+            new Color(100),
+            null,
+            new Color(200),
+            EffectType.STRIKEOUT,
+            Font.BOLD
+          ),
           null
         )
       )
     );
   }
 
-  private static byte[] serializedMarkupInfo(FileMarkupInfo markupInfo) throws IOException {
+  private static byte[] serializedZombie(HighlightingZombie zombie) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try (DataOutputStream output = new DataOutputStream(baos)) {
-      markupInfo.bury(output);
+      HighlightingNecromancy.INSTANCE.buryZombie(output, zombie);
     }
     return baos.toByteArray();
   }
 
-  private static FileMarkupInfo deserializedMarkupInfo(byte[] markupInfoBytes) throws IOException {
-    try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(markupInfoBytes))) {
-      return FileMarkupInfo.Companion.readFileMarkupInfo(input);
+  private static HighlightingZombie deserializedZombie(byte[] zombieBytes) throws IOException {
+    try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(zombieBytes))) {
+      return HighlightingNecromancy.INSTANCE.exhumeZombie(input);
     }
   }
 
    //special handling for GutterIcon
-  private static void assertEquals(FileMarkupInfo expected, FileMarkupInfo actual) {
+  private static void assertEquals(HighlightingZombie expected, HighlightingZombie actual) {
     Assertions.assertEquals(expected, expected);
-    List<HighlighterState> expectedHighlighters = expected.highlighters;
-    List<HighlighterState> actualHighlighters = actual.highlighters;
+    List<HighlightingLimb> expectedHighlighters = expected.limbs();
+    List<HighlightingLimb> actualHighlighters = actual.limbs();
     for (int i = 0; i < expectedHighlighters.size(); i++) {
-      Icon expectedIcon = expectedHighlighters.get(i).gutterIcon;
-      Icon actualIcon = actualHighlighters.get(i).gutterIcon;
+      Icon expectedIcon = expectedHighlighters.get(i).getGutterIcon();
+      Icon actualIcon = actualHighlighters.get(i).getGutterIcon();
       if (expectedIcon == null && actualIcon == null) {
         continue;
       }

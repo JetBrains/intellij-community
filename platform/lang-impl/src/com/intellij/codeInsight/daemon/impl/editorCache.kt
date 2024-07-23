@@ -25,7 +25,7 @@ internal fun readGutterIcon(input: DataInput): Icon? {
   }
 }
 
-internal fun writeGutterIcon(icon: Icon?, out: DataOutput) {
+internal fun writeGutterIcon(out: DataOutput, icon: Icon?) {
   if (icon !is CachedImageIcon) {
     out.writeInt(0)
     return
