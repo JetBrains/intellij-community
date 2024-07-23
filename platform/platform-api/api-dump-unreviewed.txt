@@ -9753,6 +9753,7 @@ a:com.intellij.ui.jcef.JBCefBrowserBase
 - createImmediately():V
 - dispose():V
 - p:dispose(java.lang.Runnable):V
+- getBrowserComponent():java.awt.Component
 - f:getCefBrowser():org.cef.browser.CefBrowser
 - a:getComponent():javax.swing.JComponent
 - s:getFocusedBrowser():com.intellij.ui.jcef.JBCefBrowserBase
