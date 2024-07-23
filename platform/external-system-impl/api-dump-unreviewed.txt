@@ -169,15 +169,9 @@ e:com.intellij.openapi.externalSystem.model.settings.LocationSettingType
 - getDescription(com.intellij.openapi.externalSystem.model.ProjectSystemId):java.lang.String
 - s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.model.settings.LocationSettingType
 - s:values():com.intellij.openapi.externalSystem.model.settings.LocationSettingType[]
-com.intellij.openapi.externalSystem.service.ExternalSystemCommunicationManager
-- a:acquire(java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- a:clear():V
-- a:isAlive(com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade):Z
-- a:release(java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 f:com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
 - <init>():V
 - doInvoke(com.intellij.openapi.externalSystem.util.IntegrationKey,com.intellij.openapi.project.Project,java.lang.reflect.Method,java.lang.Object[],I):java.lang.Object
-- getCommunicationManager(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.ExternalSystemCommunicationManager
 - getFacade(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
 - s:getInstance():com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager
 - isTaskActive(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId):Z
@@ -195,23 +189,6 @@ f:com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicato
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getInstance(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater
 - f:getInstanceOrDefault(com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.ExternalSystemTaskProgressIndicatorUpdater
-f:com.intellij.openapi.externalSystem.service.InProcessExternalSystemCommunicationManager
-- com.intellij.openapi.externalSystem.service.ExternalSystemCommunicationManager
-- <init>():V
-- acquire(java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- clear():V
-- isAlive(com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade):Z
-- release(java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
-f:com.intellij.openapi.externalSystem.service.RemoteExternalSystemCommunicationManager
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.externalSystem.service.ExternalSystemCommunicationManager
-- <init>():V
-- acquire(java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
-- clear():V
-- dispose():V
-- isAlive(com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade):Z
-- release(java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
-- shutdown(Z):V
 com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade
 - com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskAware
 - java.rmi.Remote

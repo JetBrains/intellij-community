@@ -6,9 +6,11 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 public final class InProcessExternalSystemCommunicationManager implements ExternalSystemCommunicationManager {
   @SuppressWarnings("unchecked")

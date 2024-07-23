@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -136,7 +137,8 @@ public final class ExternalSystemFacadeManager {
     }
   }
 
-  public ExternalSystemCommunicationManager getCommunicationManager(@NotNull ProjectSystemId externalSystemId) {
+  @VisibleForTesting
+  ExternalSystemCommunicationManager getCommunicationManager(@NotNull ProjectSystemId externalSystemId) {
     final boolean currentInProcess = ExternalSystemApiUtil.isInProcessMode(externalSystemId);
     return currentInProcess ? myInProcessCommunicationManager : myRemoteCommunicationManager;
   }
