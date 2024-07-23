@@ -135,17 +135,56 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.checkResult("package whatever;\nclass Foo<TParam> { TParam<caret> p; }")
   }
 
+  @NeedsIndex.Full
+  fun testModuleImportDeclarations() = fileComplete("Test.java", """
+    import module M<caret>
+    class Test { }
+    """, """
+    import module M2;<caret>
+    class Test { }
+    """)
+
+  @NeedsIndex.Full
+  fun testAutoModuleImportDeclarations() = fileComplete("Test.java", """
+    import module al<caret>
+    class Test { }
+    """, """
+    import module all.fours;<caret>
+    class Test { }
+    """)
+
+  @NeedsIndex.Full
+  fun testModuleImportDeclarationsBare() =
+    fileVariants("Test.java", """
+      import module <caret>
+      class Test { }
+    """.trimIndent(),
+                 "M2", "java.base", "java.non.root", "java.se", "java.xml.bind", "java.xml.ws",
+                 "lib.multi.release", "lib.named", "lib.auto", "lib.claimed", "all.fours", "lib.with.module.info")
+
+  @NeedsIndex.Full
+  fun testModuleImportDeclarationsIgnoreCurrentModule() {
+    addFile("module-info.java", "module current.module.name { }")
+    fileVariants("Test.java", """
+      import module current<caret>
+      class Test { }
+    """.trimIndent())
+  }
+
   //<editor-fold desc="Helpers.">
-  private fun complete(text: String, expected: String) {
-    myFixture.configureByText("module-info.java", text)
+  private fun complete(text: String, expected: String) = fileComplete("module-info.java", text, expected)
+  private fun fileComplete(fileName: String, text: String, expected: String) {
+    myFixture.configureByText(fileName, text)
     myFixture.completeBasic()
     myFixture.checkResult(expected)
   }
 
-  private fun variants(text: String, vararg variants: String) {
-    myFixture.configureByText("module-info.java", text)
+  private fun variants(text: String, vararg variants: String) = fileVariants("module-info.java", text, *variants)
+  private fun fileVariants(fileName: String, text: String, vararg variants: String) {
+    myFixture.configureByText(fileName, text)
     myFixture.completeBasic()
     assertThat(myFixture.lookupElementStrings).containsExactlyInAnyOrder(*variants)
   }
+
   //</editor-fold>
 }
