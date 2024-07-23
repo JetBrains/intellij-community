@@ -21,12 +21,21 @@ object LocalizationUtil {
   @Internal
   const val LOCALIZATION_KEY: String = "i18n.locale"
 
-  fun getLocale(): Locale {
-    val languageTag = LocalizationStateService.getInstance()?.getSelectedLocale() ?: return Locale.ENGLISH
+  @JvmOverloads
+  fun getLocale(ignoreRestartRequired: Boolean = false): Locale {
+    val localizationStateService = LocalizationStateService.getInstance()
+    val languageTag = if (localizationStateService == null) {
+      return Locale.ENGLISH
+    }
+    else if (!ignoreRestartRequired && localizationStateService.isRestartRequired) {
+      localizationStateService.lastSelectedLocale
+    }
+    else {
+      localizationStateService.selectedLocale
+    }
+    
     val locale = Locale.forLanguageTag(languageTag)
-
-    val englishTag = Locale.ENGLISH.toLanguageTag()
-    if (languageTag != englishTag && findLanguageBundle(locale) == null) {
+    if (locale.language != Locale.ENGLISH.language && findLanguageBundle(locale) == null) {
       return Locale.ENGLISH
     }
 
