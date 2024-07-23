@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -29,6 +29,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Defines requirements for a light test's project environment (SDK, module, libraries, ...).
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/light-and-heavy-tests.html#lightprojectdescriptor">LightProjectDescriptor</a> in IntelliJ Platform Plugin SDK Docs
+ */
 public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
@@ -89,6 +94,7 @@ public class LightProjectDescriptor {
    * Creates in-memory directory {@code temp:///some/path} where sources for test project will be placed.
    * Please keep in mind that this directory will be marked as "Source root". If you want to disable this
    * behaviour use {@link #markDirForSourcesAsSourceRoot()}.
+   *
    * @see #markDirForSourcesAsSourceRoot()
    */
   public @Nullable VirtualFile createDirForSources(@NotNull Module module) {
