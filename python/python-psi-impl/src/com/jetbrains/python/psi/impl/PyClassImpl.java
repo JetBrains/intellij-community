@@ -441,6 +441,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Override
+  public PyFunction @NotNull [] getMethodsInherited(@Nullable TypeEvalContext context) {
+    List<PyFunction> collectedMethods = new ArrayList<>(Arrays.asList(getMethods()));
+
+    for (PyClass superClass : getAncestorClasses(context)) {
+      collectedMethods.addAll(Arrays.asList(superClass.getMethods()));
+    }
+    return collectedMethods.toArray(PyFunction.EMPTY_ARRAY);
+  }
+
+  @Override
   public PyFunction @NotNull [] getMethods() {
     final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
     return getClassChildren(functionDeclarationTokens, PyFunction.class, PyFunction.ARRAY_FACTORY);
