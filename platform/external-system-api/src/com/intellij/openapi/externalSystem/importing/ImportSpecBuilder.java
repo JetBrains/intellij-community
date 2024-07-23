@@ -154,11 +154,9 @@ public class ImportSpecBuilder {
   @ApiStatus.Internal
   public final static class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
     private final Project myProject;
-    private final ProgressExecutionMode myExecutionMode;
 
     public DefaultProjectRefreshCallback(ImportSpec spec) {
       myProject = spec.getProject();
-      myExecutionMode = spec.getProgressExecutionMode();
     }
 
     @Override
@@ -166,7 +164,6 @@ public class ImportSpecBuilder {
       if (externalProject == null) {
         return;
       }
-      final boolean synchronous = myExecutionMode == ProgressExecutionMode.MODAL_SYNC;
       ProjectDataManager.getInstance().importData(externalProject, myProject);
     }
   }
