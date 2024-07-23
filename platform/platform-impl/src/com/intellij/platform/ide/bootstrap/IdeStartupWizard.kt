@@ -72,7 +72,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
         val startupStatus = com.intellij.platform.ide.bootstrap.isInitialStart
         LOG.info("Inside the onboarding flow for adapter $wizard. StartupStatus.isCompleted: ${startupStatus?.isCompleted}")
         if (startupStatus?.isCompleted == false) {
-          LOG.warn("Initial startup initialization is not yet complete!")
+          LOG.info("Initial startup initialization is not yet complete. Will continue to the wizard (if necessary)")
         }
         try {
           if (startupStatus != null && startupStatus.isCompleted && !startupStatus.isCancelled) {
