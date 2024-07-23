@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.Long
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
+import com.jetbrains.rd.util.collections.SynchronizedList
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
@@ -154,7 +155,7 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
   }
 }
 
-internal val unSentEvents = mutableListOf<Pair<VarargEventId, List<EventPair<*>>>>()
+internal val unSentEvents = SynchronizedList<Pair<VarargEventId, List<EventPair<*>>>>()
 
 @Internal
 enum class EventSource {
