@@ -23,7 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
-import com.intellij.util.PairProcessor;
+import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.CollectionFactory;
@@ -32,7 +32,6 @@ import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.BooleanSupplier;
 
 final class AnnotatorRunner {
   private static final Logger LOG = Logger.getInstance(AnnotatorRunner.class);
@@ -54,7 +53,7 @@ final class AnnotatorRunner {
     myBatchMode = batchMode;
   }
 
-  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside, @NotNull BooleanSupplier runnable,
+  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside, @NotNull Runnable runnable,
                              @NotNull TriConsumer<Object, ? super PsiElement, ? super List<? extends HighlightInfo>> resultSink) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
@@ -62,19 +61,9 @@ final class AnnotatorRunner {
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
     Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside);
-    PairProcessor<Annotator, JobLauncher.QueueController<? super Annotator>> processor = (annotator, __) ->
+    Processor<? super Annotator> processor = (annotator) ->
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages, resultSink));
-    boolean result = JobLauncher.getInstance().procInOrderAsync(indicator, supportedLanguages.size(), processor, addToQueue -> {
-      try {
-        for (Annotator annotator : supportedLanguages.keySet()) {
-          addToQueue.enqueue(annotator);
-        }
-      }
-      finally {
-        addToQueue.finish();
-      }
-      return runnable.getAsBoolean();
-    });
+    boolean result = JobLauncher.getInstance().processConcurrentlyAsync(indicator, new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
     myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myAnnotationSession, myPsiFile);
     return result;
   }
