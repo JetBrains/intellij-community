@@ -153,7 +153,7 @@ class ReportingTest : BasePlatformTestCase() {
       "z fix", "a fix", // then custom fixes, in the specified order
       "mock intention and fix", // if a custom fix overrides an intention, it's raised in the list
       "Ignore 'S' in this sentence", // then the built-in general context action
-      "Configure rule 'something'...",
+      "Configure rule 'something'…",
       "mock intention", // normal intentions are at the bottom
     )
   }
