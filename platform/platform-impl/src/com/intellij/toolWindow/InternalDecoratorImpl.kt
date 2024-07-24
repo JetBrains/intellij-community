@@ -233,6 +233,7 @@ class InternalDecoratorImpl internal constructor(
   private var splitter: Splitter? = null
   private val componentsWithEditorLikeBackground = SmartList<Component>()
   private var tabActions: List<AnAction> = emptyList()
+  private val titleActions = mutableListOf<AnAction>()
 
   init {
     isFocusable = false
@@ -310,9 +311,15 @@ class InternalDecoratorImpl internal constructor(
       contentManager.addContent(content, dropIndex)
       return
     }
-    firstDecorator = toolWindow.createCellDecorator().also { it.setTabActions(tabActions) }
+    firstDecorator = toolWindow.createCellDecorator().also {
+      it.setTabActions(tabActions)
+      it.setTitleActions(titleActions)
+    }
     attach(firstDecorator)
-    secondDecorator = toolWindow.createCellDecorator().also { it.setTabActions(tabActions) }
+    secondDecorator = toolWindow.createCellDecorator().also {
+      it.setTabActions(tabActions)
+      it.setTitleActions(titleActions)
+    }
     attach(secondDecorator)
     val contents = contentManager.contents.toMutableList()
     if (!contents.contains(content)) {
@@ -527,7 +534,11 @@ class InternalDecoratorImpl internal constructor(
   }
 
   fun setTitleActions(actions: List<AnAction>) {
-    header.setAdditionalTitleActions(actions)
+    titleActions.clear()
+    titleActions.addAll(actions)
+    header.setAdditionalTitleActions(titleActions)
+    firstDecorator?.setTitleActions(actions)
+    secondDecorator?.setTitleActions(actions)
   }
 
   fun setTabActions(actions: List<AnAction>) {
