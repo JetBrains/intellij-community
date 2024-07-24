@@ -357,7 +357,7 @@ public final class NewMappings implements Disposable {
       if (frame != null) {
         // GitToolbarWidgetAction handles update in a new UI
         if (ExperimentalUI.isNewUI()) {
-          frame.rootPane.updateMainMenuActions();
+          frame.updateMainMenuActions();
         }
         else {
           frame.updateView();

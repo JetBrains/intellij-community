@@ -278,6 +278,10 @@ open class ProjectFrameHelper internal constructor(
     rootPane.updateNorthComponents()
   }
 
+  fun updateMainMenuActions() {
+    rootPane.updateMainMenuActions()
+  }
+
   override fun getCurrentAccessibleContext(): AccessibleContext = frame.accessibleContext
 
   override fun uiDataSnapshot(sink: DataSink) {
