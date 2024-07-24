@@ -19,22 +19,22 @@ interface ExternalJavaConfigurationProvider<T> {
   }
 
   /**
-   * Returns the configuration file supported by this provider.
+   * @return the configuration file supported by this provider.
    */
   fun getConfigurationFile(project: Project): File
 
   /**
-   * Returns the release data [T] corresponding to the [text] content of the configuration file.
+   * @return the release data [T] corresponding to the [text] content of the configuration file.
    */
   fun getReleaseData(text: String): T?
 
   /**
-   * Returns true if the release data matches the given SDK.
+   * @return true if the release data matches the given SDK.
    */
   fun matchAgainstSdk(releaseData: T, sdk: Sdk): Boolean
 
   /**
-   * Returns true if the release data matches the given path.
+   * @return true if the release data matches the given path.
    */
   fun matchAgainstPath(releaseData: T, path: String): Boolean
 

@@ -75,7 +75,7 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
   }
 
   /**
-   * Parses the configuration file and returns a candidate.
+   * @return a JDK candidate based on the configuration file.
    */
   suspend fun <T> getReleaseData(configProvider: ExternalJavaConfigurationProvider<T>): T? {
     val text = readAction {
@@ -87,7 +87,7 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
   }
 
   /**
-   * Finds a matching JDK candidate for the release data among registered and detected JDKs.
+   * @return a matching JDK candidate for the release data among registered and detected JDKs.
    */
   fun <T> findCandidate(releaseData: T, configProvider: ExternalJavaConfigurationProvider<T>): JdkCandidate<T>? {
     val fileName = configProvider.getConfigurationFile(project).name
