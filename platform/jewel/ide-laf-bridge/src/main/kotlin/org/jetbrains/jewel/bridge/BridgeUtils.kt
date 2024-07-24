@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.ui.JBColor
-import com.intellij.ui.JBColor.marker
 import com.intellij.ui.NewUI
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBDimension
@@ -49,15 +48,7 @@ public fun retrieveColor(
     default: Color,
 ): Color = retrieveColorOrNull(key) ?: default
 
-public fun retrieveColorOrNull(key: String): Color? =
-    try {
-        JBColor.namedColor(key, marker("JEWEL_JBCOLOR_MARKER")).toComposeColor()
-    } catch (_: AssertionError) {
-        // JBColor.marker will throw AssertionError on getRGB/any other color
-        // for now there is no way to handle non-existing key.
-        // The way should be introduced in platform
-        null
-    }
+public fun retrieveColorOrNull(key: String): Color? = JBColor.namedColorOrNull(key)?.toComposeColor()
 
 public fun retrieveColorOrUnspecified(key: String): Color {
     val color = retrieveColorOrNull(key)
