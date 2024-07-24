@@ -1170,6 +1170,7 @@ f:com.intellij.xdebugger.impl.frame.StackInfo
 - f:copy(com.intellij.xdebugger.impl.frame.StackInfo$StackKind,com.intellij.xdebugger.frame.XExecutionStack,java.lang.String):com.intellij.xdebugger.impl.frame.StackInfo
 - bs:copy$default(com.intellij.xdebugger.impl.frame.StackInfo,com.intellij.xdebugger.impl.frame.StackInfo$StackKind,com.intellij.xdebugger.frame.XExecutionStack,java.lang.String,I,java.lang.Object):com.intellij.xdebugger.impl.frame.StackInfo
 - equals(java.lang.Object):Z
+- f:getAdditionalDisplayInfo():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
 - f:getError():java.lang.String
 - f:getKind():com.intellij.xdebugger.impl.frame.StackInfo$StackKind
 - f:getStack():com.intellij.xdebugger.frame.XExecutionStack
@@ -1254,6 +1255,7 @@ f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - f:clear():V
 - f:getElementCount():I
 - getModel():com.intellij.ui.CollectionListModel
+- f:getStackUnderMouse():com.intellij.xdebugger.impl.frame.StackInfo
 - locationToIndex(java.awt.Point):I
 - setModel(javax.swing.ListModel):V
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
