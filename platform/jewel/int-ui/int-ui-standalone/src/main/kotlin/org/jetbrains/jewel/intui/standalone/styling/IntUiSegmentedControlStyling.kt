@@ -27,8 +27,8 @@ public fun SegmentedControlStyle.Companion.dark(
 
 @Composable
 public fun SegmentedControlColors.Companion.light(
-    border: Brush = SolidColor(IntUiLightTheme.colors.grey(9)),
-    borderDisabled: Brush = SolidColor(IntUiLightTheme.colors.grey(11)),
+    border: Brush = SolidColor(IntUiLightTheme.colors.gray(9)),
+    borderDisabled: Brush = SolidColor(IntUiLightTheme.colors.gray(11)),
     borderFocused: Brush = SolidColor(Color.Transparent),
     borderPressed: Brush = border,
     borderHovered: Brush = border,
@@ -43,9 +43,9 @@ public fun SegmentedControlColors.Companion.light(
 
 @Composable
 public fun SegmentedControlColors.Companion.dark(
-    border: Brush = SolidColor(IntUiDarkTheme.colors.grey(5)),
-    borderDisabled: Brush = SolidColor(IntUiDarkTheme.colors.grey(4)),
-    borderFocused: Brush = SolidColor(IntUiDarkTheme.colors.grey(2)),
+    border: Brush = SolidColor(IntUiDarkTheme.colors.gray(5)),
+    borderDisabled: Brush = SolidColor(IntUiDarkTheme.colors.gray(4)),
+    borderFocused: Brush = SolidColor(IntUiDarkTheme.colors.gray(2)),
     borderPressed: Brush = border,
     borderHovered: Brush = border,
 ): SegmentedControlColors =

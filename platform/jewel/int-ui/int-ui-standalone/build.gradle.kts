@@ -9,7 +9,7 @@ plugins {
 dependencies { api(projects.ui) }
 
 intelliJThemeGenerator {
-    val targetIdeaVersion = "241.9959"
+    val targetIdeaVersion = "idea/242.20224.91"
     register("intUiLight") {
         themeClassName = "org.jetbrains.jewel.intui.core.theme.IntUiLightTheme"
         themeFile = "platform/platform-resources/src/themes/expUI/expUI_light.theme.json"

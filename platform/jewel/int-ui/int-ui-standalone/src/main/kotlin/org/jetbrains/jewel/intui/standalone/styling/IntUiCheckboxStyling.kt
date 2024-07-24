@@ -32,14 +32,14 @@ public fun CheckboxStyle.Companion.dark(
 @Composable
 public fun CheckboxColors.Companion.light(
     content: Color = Color.Unspecified,
-    contentDisabled: Color = IntUiLightTheme.colors.grey(8),
+    contentDisabled: Color = IntUiLightTheme.colors.gray(8),
     contentSelected: Color = content,
 ): CheckboxColors = CheckboxColors(content, contentDisabled, contentSelected)
 
 @Composable
 public fun CheckboxColors.Companion.dark(
     content: Color = Color.Unspecified,
-    contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
+    contentDisabled: Color = IntUiDarkTheme.colors.gray(7),
     contentSelected: Color = content,
 ): CheckboxColors = CheckboxColors(content, contentDisabled, contentSelected)
 

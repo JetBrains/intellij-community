@@ -7,10 +7,11 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 private val colorKeyRegex: Regex
     get() = "([a-z]+)(\\d+)".toRegex(RegexOption.IGNORE_CASE)
 
+@Suppress("MemberVisibilityCanBePrivate")
 @Immutable
 @GenerateDataFunctions
 public class ThemeColorPalette(
-    public val grey: List<Color>,
+    public val gray: List<Color>,
     public val blue: List<Color>,
     public val green: List<Color>,
     public val red: List<Color>,
@@ -20,9 +21,15 @@ public class ThemeColorPalette(
     public val teal: List<Color>,
     public val rawMap: Map<String, Color>,
 ) {
-    public fun grey(index: Int): Color = grey[index - 1]
+    @Deprecated("Use gray() instead", ReplaceWith("gray(index)"))
+    public fun grey(index: Int): Color = gray(index)
 
-    public fun greyOrNull(index: Int): Color? = grey.getOrNull(index - 1)
+    @Deprecated("Use grayOrNull() instead", ReplaceWith("grayOrNull(index)"))
+    public fun greyOrNull(index: Int): Color? = grayOrNull(index)
+
+    public fun gray(index: Int): Color = gray[index - 1]
+
+    public fun grayOrNull(index: Int): Color? = gray.getOrNull(index - 1)
 
     public fun blue(index: Int): Color = blue[index - 1]
 
@@ -62,7 +69,7 @@ public class ThemeColorPalette(
         }
 
         return when (colorGroup) {
-            "grey" -> grey(colorIndex)
+            "grey", "gray" -> gray(colorIndex)
             "blue" -> blue(colorIndex)
             "green" -> green(colorIndex)
             "red" -> red(colorIndex)
@@ -77,7 +84,7 @@ public class ThemeColorPalette(
     public companion object {
         public val Empty: ThemeColorPalette =
             ThemeColorPalette(
-                grey = emptyList(),
+                gray = emptyList(),
                 blue = emptyList(),
                 green = emptyList(),
                 red = emptyList(),

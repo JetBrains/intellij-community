@@ -97,7 +97,7 @@ internal fun Borders() {
             }
         val backgroundColor =
             remember(isDark) {
-                if (isDark) colorPalette.grey(4) else colorPalette.grey(11)
+                if (isDark) colorPalette.gray(4) else colorPalette.gray(11)
             }
 
         Box(

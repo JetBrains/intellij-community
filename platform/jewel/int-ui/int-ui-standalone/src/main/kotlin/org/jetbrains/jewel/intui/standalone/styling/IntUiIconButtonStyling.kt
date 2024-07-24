@@ -27,13 +27,13 @@ public fun IconButtonStyle.Companion.dark(
 
 @Composable
 public fun IconButtonColors.Companion.light(
-    foregroundSelectedActivated: Color = IntUiLightTheme.colors.grey(14),
+    foregroundSelectedActivated: Color = IntUiLightTheme.colors.gray(14),
     background: Color = Color.Unspecified,
     backgroundDisabled: Color = background,
-    backgroundSelected: Color = IntUiLightTheme.colors.grey(11),
+    backgroundSelected: Color = IntUiLightTheme.colors.gray(11),
     backgroundSelectedActivated: Color = IntUiLightTheme.colors.blue(4),
-    backgroundPressed: Color = IntUiLightTheme.colors.grey(11),
-    backgroundHovered: Color = IntUiLightTheme.colors.grey(12),
+    backgroundPressed: Color = IntUiLightTheme.colors.gray(11),
+    backgroundHovered: Color = IntUiLightTheme.colors.gray(12),
     backgroundFocused: Color = backgroundHovered,
     border: Color = background,
     borderDisabled: Color = backgroundDisabled,
@@ -63,13 +63,13 @@ public fun IconButtonColors.Companion.light(
 
 @Composable
 public fun IconButtonColors.Companion.dark(
-    foregroundSelectedActivated: Color = IntUiDarkTheme.colors.grey(14),
+    foregroundSelectedActivated: Color = IntUiDarkTheme.colors.gray(14),
     background: Color = Color.Unspecified,
     backgroundDisabled: Color = background,
-    backgroundSelected: Color = IntUiDarkTheme.colors.grey(5),
+    backgroundSelected: Color = IntUiDarkTheme.colors.gray(5),
     backgroundSelectedActivated: Color = IntUiDarkTheme.colors.blue(6),
-    backgroundPressed: Color = IntUiDarkTheme.colors.grey(5),
-    backgroundHovered: Color = IntUiDarkTheme.colors.grey(3),
+    backgroundPressed: Color = IntUiDarkTheme.colors.gray(5),
+    backgroundHovered: Color = IntUiDarkTheme.colors.gray(3),
     backgroundFocused: Color = backgroundHovered,
     border: Color = background,
     borderDisabled: Color = backgroundDisabled,

@@ -205,10 +205,10 @@ private fun titleBarIconButtonStyle(
 
 @Composable
 public fun TitleBarColors.Companion.light(
-    backgroundColor: Color = IntUiLightTheme.colors.grey(2),
-    inactiveBackground: Color = IntUiLightTheme.colors.grey(3),
-    contentColor: Color = IntUiLightTheme.colors.grey(12),
-    borderColor: Color = IntUiLightTheme.colors.grey(4),
+    backgroundColor: Color = IntUiLightTheme.colors.gray(2),
+    inactiveBackground: Color = IntUiLightTheme.colors.gray(3),
+    contentColor: Color = IntUiLightTheme.colors.gray(12),
+    borderColor: Color = IntUiLightTheme.colors.gray(4),
     fullscreenControlButtonsBackground: Color = Color(0xFF7A7B80),
     // Color hex from
     // com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations.titlePaneButtonHoveredBackground
@@ -220,8 +220,8 @@ public fun TitleBarColors.Companion.light(
     // com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons.closeStyleBuilder
     titlePaneCloseButtonHoveredBackground: Color = Color(0xFFE81123),
     titlePaneCloseButtonPressedBackground: Color = Color(0xFFF1707A),
-    iconButtonHoveredBackground: Color = IntUiLightTheme.colors.grey(3),
-    iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(3),
+    iconButtonHoveredBackground: Color = IntUiLightTheme.colors.gray(3),
+    iconButtonPressedBackground: Color = IntUiLightTheme.colors.gray(3),
     // There are two fields in theme.json: transparentHoveredBackground and hoveredBackground,
     // but in com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI#paintBackground,
     // transparentHoveredBackground is used first, which is guessed to be due to the gradient
@@ -251,17 +251,17 @@ public fun TitleBarColors.Companion.light(
 
 @Composable
 public fun TitleBarColors.Companion.lightWithLightHeader(
-    backgroundColor: Color = IntUiLightTheme.colors.grey(13),
-    inactiveBackground: Color = IntUiLightTheme.colors.grey(12),
+    backgroundColor: Color = IntUiLightTheme.colors.gray(13),
+    inactiveBackground: Color = IntUiLightTheme.colors.gray(12),
     fullscreenControlButtonsBackground: Color = Color(0xFF7A7B80),
-    contentColor: Color = IntUiLightTheme.colors.grey(1),
-    borderColor: Color = IntUiLightTheme.colors.grey(11),
+    contentColor: Color = IntUiLightTheme.colors.gray(1),
+    borderColor: Color = IntUiLightTheme.colors.gray(11),
     titlePaneButtonHoveredBackground: Color = Color(0x1A000000),
     titlePaneButtonPressedBackground: Color = titlePaneButtonHoveredBackground,
     titlePaneCloseButtonHoveredBackground: Color = Color(0xFFE81123),
     titlePaneCloseButtonPressedBackground: Color = Color(0xFFF1707A),
-    iconButtonHoveredBackground: Color = IntUiLightTheme.colors.grey(12),
-    iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(11),
+    iconButtonHoveredBackground: Color = IntUiLightTheme.colors.gray(12),
+    iconButtonPressedBackground: Color = IntUiLightTheme.colors.gray(11),
     dropdownHoveredBackground: Color = Color(0x0D000000),
     dropdownPressedBackground: Color = dropdownHoveredBackground,
 ): TitleBarColors =
@@ -283,17 +283,17 @@ public fun TitleBarColors.Companion.lightWithLightHeader(
 
 @Composable
 public fun TitleBarColors.Companion.dark(
-    backgroundColor: Color = IntUiDarkTheme.colors.grey(2),
-    inactiveBackground: Color = IntUiDarkTheme.colors.grey(3),
+    backgroundColor: Color = IntUiDarkTheme.colors.gray(2),
+    inactiveBackground: Color = IntUiDarkTheme.colors.gray(3),
     fullscreenControlButtonsBackground: Color = Color(0xFF575A5C),
-    contentColor: Color = IntUiDarkTheme.colors.grey(12),
-    borderColor: Color = IntUiDarkTheme.colors.grey(4),
+    contentColor: Color = IntUiDarkTheme.colors.gray(12),
+    borderColor: Color = IntUiDarkTheme.colors.gray(4),
     titlePaneButtonHoveredBackground: Color = Color(0x1AFFFFFF),
     titlePaneButtonPressedBackground: Color = titlePaneButtonHoveredBackground,
     titlePaneCloseButtonHoveredBackground: Color = Color(0xFFE81123),
     titlePaneCloseButtonPressedBackground: Color = Color(0xFFF1707A),
-    iconButtonHoveredBackground: Color = IntUiLightTheme.colors.grey(3),
-    iconButtonPressedBackground: Color = IntUiLightTheme.colors.grey(3),
+    iconButtonHoveredBackground: Color = IntUiLightTheme.colors.gray(3),
+    iconButtonPressedBackground: Color = IntUiLightTheme.colors.gray(3),
     dropdownHoveredBackground: Color = Color(0x1AFFFFFF),
     dropdownPressedBackground: Color = dropdownHoveredBackground,
 ): TitleBarColors =

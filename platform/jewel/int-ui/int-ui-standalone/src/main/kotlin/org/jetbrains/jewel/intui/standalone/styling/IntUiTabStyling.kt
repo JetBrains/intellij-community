@@ -62,12 +62,12 @@ public val TabColors.Companion.Default: IntUiDefaultTabColorsFactory
 
 public object IntUiDefaultTabColorsFactory {
     public fun light(
-        background: Color = IntUiLightTheme.colors.grey(14),
-        backgroundHovered: Color = IntUiLightTheme.colors.grey(12),
+        background: Color = IntUiLightTheme.colors.gray(14),
+        backgroundHovered: Color = IntUiLightTheme.colors.gray(12),
         backgroundPressed: Color = backgroundHovered,
         backgroundSelected: Color = background,
         backgroundDisabled: Color = background,
-        content: Color = IntUiLightTheme.colors.grey(1),
+        content: Color = IntUiLightTheme.colors.gray(1),
         contentHovered: Color = content,
         contentDisabled: Color = content,
         contentPressed: Color = content,
@@ -98,7 +98,7 @@ public object IntUiDefaultTabColorsFactory {
 
     public fun dark(
         background: Color = Color.Unspecified,
-        backgroundHovered: Color = IntUiDarkTheme.colors.grey(4),
+        backgroundHovered: Color = IntUiDarkTheme.colors.gray(4),
         backgroundPressed: Color = backgroundHovered,
         backgroundSelected: Color = background,
         backgroundDisabled: Color = background,

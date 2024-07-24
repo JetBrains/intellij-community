@@ -32,7 +32,7 @@ public fun RadioButtonStyle.Companion.dark(
 public fun RadioButtonColors.Companion.light(
     content: Color = Color.Unspecified,
     contentHovered: Color = content,
-    contentDisabled: Color = IntUiLightTheme.colors.grey(8),
+    contentDisabled: Color = IntUiLightTheme.colors.gray(8),
     contentSelected: Color = content,
     contentSelectedHovered: Color = content,
     contentSelectedDisabled: Color = contentDisabled,
@@ -50,7 +50,7 @@ public fun RadioButtonColors.Companion.light(
 public fun RadioButtonColors.Companion.dark(
     content: Color = Color.Unspecified,
     contentHovered: Color = content,
-    contentDisabled: Color = IntUiDarkTheme.colors.grey(8),
+    contentDisabled: Color = IntUiDarkTheme.colors.gray(8),
     contentSelected: Color = content,
     contentSelectedHovered: Color = content,
     contentSelectedDisabled: Color = contentDisabled,

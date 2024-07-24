@@ -35,8 +35,8 @@ public fun MenuStyle.Companion.dark(
 
 @Composable
 public fun MenuColors.Companion.light(
-    background: Color = IntUiLightTheme.colors.grey(14),
-    border: Color = IntUiLightTheme.colors.grey(9),
+    background: Color = IntUiLightTheme.colors.gray(14),
+    border: Color = IntUiLightTheme.colors.gray(9),
     shadow: Color = Color(0x78919191), // Not a palette color
     itemColors: MenuItemColors = MenuItemColors.light(),
 ): MenuColors =
@@ -49,8 +49,8 @@ public fun MenuColors.Companion.light(
 
 @Composable
 public fun MenuColors.Companion.dark(
-    background: Color = IntUiDarkTheme.colors.grey(2),
-    border: Color = IntUiDarkTheme.colors.grey(3),
+    background: Color = IntUiDarkTheme.colors.gray(2),
+    border: Color = IntUiDarkTheme.colors.gray(3),
     shadow: Color = Color(0x66000000), // Not a palette color
     itemColors: MenuItemColors = MenuItemColors.dark(),
 ): MenuColors =
@@ -63,27 +63,27 @@ public fun MenuColors.Companion.dark(
 
 @Composable
 public fun MenuItemColors.Companion.light(
-    background: Color = IntUiLightTheme.colors.grey(14),
-    backgroundDisabled: Color = IntUiLightTheme.colors.grey(14),
+    background: Color = IntUiLightTheme.colors.gray(14),
+    backgroundDisabled: Color = IntUiLightTheme.colors.gray(14),
     backgroundFocused: Color = IntUiLightTheme.colors.blue(11),
     backgroundPressed: Color = background,
     backgroundHovered: Color = backgroundFocused,
-    content: Color = IntUiLightTheme.colors.grey(1),
-    contentDisabled: Color = IntUiLightTheme.colors.grey(8),
+    content: Color = IntUiLightTheme.colors.gray(1),
+    contentDisabled: Color = IntUiLightTheme.colors.gray(8),
     contentFocused: Color = content,
     contentPressed: Color = content,
     contentHovered: Color = content,
-    iconTint: Color = IntUiLightTheme.colors.grey(7),
+    iconTint: Color = IntUiLightTheme.colors.gray(7),
     iconTintDisabled: Color = iconTint,
     iconTintFocused: Color = iconTint,
     iconTintPressed: Color = iconTint,
     iconTintHovered: Color = iconTint,
-    keybindingTint: Color = IntUiLightTheme.colors.grey(8),
+    keybindingTint: Color = IntUiLightTheme.colors.gray(8),
     keybindingTintDisabled: Color = keybindingTint,
-    keybindingTintFocused: Color = IntUiLightTheme.colors.grey(1),
+    keybindingTintFocused: Color = IntUiLightTheme.colors.gray(1),
     keybindingTintPressed: Color = keybindingTintFocused,
     keybindingTintHovered: Color = keybindingTintFocused,
-    separator: Color = IntUiLightTheme.colors.grey(12),
+    separator: Color = IntUiLightTheme.colors.gray(12),
 ): MenuItemColors =
     MenuItemColors(
         background = background,
@@ -111,27 +111,27 @@ public fun MenuItemColors.Companion.light(
 
 @Composable
 public fun MenuItemColors.Companion.dark(
-    background: Color = IntUiDarkTheme.colors.grey(2),
-    backgroundDisabled: Color = IntUiDarkTheme.colors.grey(2),
+    background: Color = IntUiDarkTheme.colors.gray(2),
+    backgroundDisabled: Color = IntUiDarkTheme.colors.gray(2),
     backgroundFocused: Color = IntUiDarkTheme.colors.blue(2),
     backgroundPressed: Color = background,
     backgroundHovered: Color = backgroundFocused,
-    content: Color = IntUiDarkTheme.colors.grey(12),
-    contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
+    content: Color = IntUiDarkTheme.colors.gray(12),
+    contentDisabled: Color = IntUiDarkTheme.colors.gray(7),
     contentFocused: Color = content,
     contentPressed: Color = content,
     contentHovered: Color = content,
-    iconTint: Color = IntUiDarkTheme.colors.grey(10),
+    iconTint: Color = IntUiDarkTheme.colors.gray(10),
     iconTintDisabled: Color = iconTint,
     iconTintFocused: Color = iconTint,
     iconTintPressed: Color = iconTint,
     iconTintHovered: Color = iconTint,
-    keybindingTint: Color = IntUiDarkTheme.colors.grey(7),
+    keybindingTint: Color = IntUiDarkTheme.colors.gray(7),
     keybindingTintDisabled: Color = keybindingTint,
-    keybindingTintFocused: Color = IntUiDarkTheme.colors.grey(12),
+    keybindingTintFocused: Color = IntUiDarkTheme.colors.gray(12),
     keybindingTintPressed: Color = keybindingTintFocused,
     keybindingTintHovered: Color = keybindingTintFocused,
-    separator: Color = IntUiDarkTheme.colors.grey(3),
+    separator: Color = IntUiDarkTheme.colors.gray(3),
 ): MenuItemColors =
     MenuItemColors(
         background = background,

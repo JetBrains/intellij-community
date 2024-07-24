@@ -4,10 +4,8 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.joinToCode
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -15,7 +13,7 @@ import kotlinx.serialization.json.JsonPrimitive
 internal object IntUiThemeDescriptorReader {
 
     private val colorGroups =
-        setOf("Grey", "Blue", "Green", "Red", "Yellow", "Orange", "Purple", "Teal")
+        setOf("Gray", "Blue", "Green", "Red", "Yellow", "Orange", "Purple", "Teal")
     private val colorClassName = ClassName("androidx.compose.ui.graphics", "Color")
 
     fun readThemeFrom(
@@ -136,20 +134,4 @@ internal object IntUiThemeDescriptorReader {
     private inline fun <reified K, reified V> Map<K, V>.toMapCodeBlock() =
         entries.map { (key, value) -> CodeBlock.of("\"%L\" to \"%L\"", key, value) }
             .joinToCode(prefix = "mapOf(", separator = ",\n", suffix = ")")
-
-    private inline fun <reified K, reified V> createOverrideStringMapProperty(
-        name: String,
-        values: Map<K, V>,
-    ) =
-        PropertySpec.builder(
-            name = name,
-            type = Map::class.asTypeName().parameterizedBy(K::class.asTypeName(), V::class.asTypeName()),
-            KModifier.OVERRIDE
-        )
-            .initializer(
-                values.entries
-                    .map { (key, value) -> CodeBlock.of("\"%L\" to \"%L\"", key, value) }
-                    .joinToCode(prefix = "mapOf(", separator = ",\n", suffix = ")")
-            )
-            .build()
 }

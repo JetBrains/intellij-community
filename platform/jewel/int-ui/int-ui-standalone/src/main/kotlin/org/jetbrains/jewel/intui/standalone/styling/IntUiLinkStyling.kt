@@ -39,7 +39,7 @@ public fun LinkStyle.Companion.dark(
 @Composable
 public fun LinkColors.Companion.light(
     content: Color = IntUiLightTheme.colors.blue(2),
-    contentDisabled: Color = IntUiLightTheme.colors.grey(8),
+    contentDisabled: Color = IntUiLightTheme.colors.gray(8),
     contentFocused: Color = content,
     contentPressed: Color = content,
     contentHovered: Color = content,
@@ -57,7 +57,7 @@ public fun LinkColors.Companion.light(
 @Composable
 public fun LinkColors.Companion.dark(
     content: Color = IntUiDarkTheme.colors.blue(9),
-    contentDisabled: Color = IntUiDarkTheme.colors.grey(7),
+    contentDisabled: Color = IntUiDarkTheme.colors.gray(7),
     contentFocused: Color = content,
     contentPressed: Color = content,
     contentHovered: Color = content,

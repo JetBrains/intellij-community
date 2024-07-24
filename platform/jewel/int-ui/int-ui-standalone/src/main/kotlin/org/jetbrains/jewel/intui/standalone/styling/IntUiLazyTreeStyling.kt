@@ -36,7 +36,7 @@ public fun LazyTreeColors.Companion.light(
     contentSelected: Color = content,
     contentSelectedFocused: Color = content,
     nodeBackgroundFocused: Color = Color.Unspecified,
-    nodeBackgroundSelected: Color = IntUiLightTheme.colors.grey(11),
+    nodeBackgroundSelected: Color = IntUiLightTheme.colors.gray(11),
     nodeBackgroundSelectedFocused: Color = IntUiLightTheme.colors.blue(11),
 ): LazyTreeColors =
     LazyTreeColors(
@@ -56,7 +56,7 @@ public fun LazyTreeColors.Companion.dark(
     contentSelected: Color = content,
     contentSelectedFocused: Color = content,
     nodeBackgroundFocused: Color = Color.Unspecified,
-    nodeBackgroundSelected: Color = IntUiDarkTheme.colors.grey(4),
+    nodeBackgroundSelected: Color = IntUiDarkTheme.colors.gray(4),
     nodeBackgroundSelectedFocused: Color = IntUiDarkTheme.colors.blue(2),
 ): LazyTreeColors =
     LazyTreeColors(

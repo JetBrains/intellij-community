@@ -13,7 +13,7 @@ public val ThemeColorPalette.windowsPopupBorder: Color?
     get() = lookup("windowsPopupBorder")
 
 public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
-    val grey = readPaletteColors("Grey")
+    val gray = readPaletteColors("Grey")
     val blue = readPaletteColors("Blue")
     val green = readPaletteColors("Green")
     val red = readPaletteColors("Red")
@@ -25,7 +25,7 @@ public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
 
     val rawMap =
         buildMap {
-            putAll(grey)
+            putAll(gray)
             putAll(blue)
             putAll(green)
             putAll(red)
@@ -37,7 +37,7 @@ public fun ThemeColorPalette.Companion.readFromLaF(): ThemeColorPalette {
         }
 
     return ThemeColorPalette(
-        grey = grey.values.toList(),
+        gray = gray.values.toList(),
         blue = blue.values.toList(),
         green = green.values.toList(),
         red = red.values.toList(),

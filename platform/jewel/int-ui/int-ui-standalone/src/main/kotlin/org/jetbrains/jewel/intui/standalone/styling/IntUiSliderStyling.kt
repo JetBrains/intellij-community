@@ -29,21 +29,21 @@ public fun SliderStyle.Companion.dark(
 
 @Composable
 public fun SliderColors.Companion.light(
-    track: Color = IntUiLightTheme.colors.grey(10),
+    track: Color = IntUiLightTheme.colors.gray(10),
     trackFilled: Color = IntUiLightTheme.colors.blue(6),
-    trackDisabled: Color = IntUiLightTheme.colors.grey(12),
-    trackFilledDisabled: Color = IntUiLightTheme.colors.grey(11),
+    trackDisabled: Color = IntUiLightTheme.colors.gray(12),
+    trackFilledDisabled: Color = IntUiLightTheme.colors.gray(11),
     stepMarker: Color = track,
-    thumbFill: Color = IntUiLightTheme.colors.grey(14),
+    thumbFill: Color = IntUiLightTheme.colors.gray(14),
     thumbFillDisabled: Color = thumbFill,
     thumbFillFocused: Color = thumbFill,
     thumbFillPressed: Color = thumbFill,
     thumbFillHovered: Color = thumbFill,
-    thumbBorder: Color = IntUiLightTheme.colors.grey(8),
+    thumbBorder: Color = IntUiLightTheme.colors.gray(8),
     thumbBorderFocused: Color = IntUiLightTheme.colors.blue(4),
-    thumbBorderDisabled: Color = IntUiLightTheme.colors.grey(11),
-    thumbBorderPressed: Color = IntUiLightTheme.colors.grey(7),
-    thumbBorderHovered: Color = IntUiLightTheme.colors.grey(9),
+    thumbBorderDisabled: Color = IntUiLightTheme.colors.gray(11),
+    thumbBorderPressed: Color = IntUiLightTheme.colors.gray(7),
+    thumbBorderHovered: Color = IntUiLightTheme.colors.gray(9),
 ): SliderColors =
     SliderColors(
         track,
@@ -65,21 +65,21 @@ public fun SliderColors.Companion.light(
 
 @Composable
 public fun SliderColors.Companion.dark(
-    track: Color = IntUiDarkTheme.colors.grey(4),
+    track: Color = IntUiDarkTheme.colors.gray(4),
     trackFilled: Color = IntUiDarkTheme.colors.blue(7),
-    trackDisabled: Color = IntUiDarkTheme.colors.grey(3),
-    trackFilledDisabled: Color = IntUiDarkTheme.colors.grey(4),
+    trackDisabled: Color = IntUiDarkTheme.colors.gray(3),
+    trackFilledDisabled: Color = IntUiDarkTheme.colors.gray(4),
     stepMarker: Color = track,
-    thumbFill: Color = IntUiDarkTheme.colors.grey(2),
-    thumbFillDisabled: Color = IntUiDarkTheme.colors.grey(3),
+    thumbFill: Color = IntUiDarkTheme.colors.gray(2),
+    thumbFillDisabled: Color = IntUiDarkTheme.colors.gray(3),
     thumbFillFocused: Color = thumbFill,
     thumbFillPressed: Color = thumbFill,
     thumbFillHovered: Color = thumbFill,
-    thumbBorder: Color = IntUiDarkTheme.colors.grey(7),
+    thumbBorder: Color = IntUiDarkTheme.colors.gray(7),
     thumbBorderFocused: Color = IntUiDarkTheme.colors.blue(6),
-    thumbBorderDisabled: Color = IntUiDarkTheme.colors.grey(5),
-    thumbBorderPressed: Color = IntUiDarkTheme.colors.grey(8),
-    thumbBorderHovered: Color = IntUiDarkTheme.colors.grey(9),
+    thumbBorderDisabled: Color = IntUiDarkTheme.colors.gray(5),
+    thumbBorderPressed: Color = IntUiDarkTheme.colors.gray(8),
+    thumbBorderHovered: Color = IntUiDarkTheme.colors.gray(9),
 ): SliderColors =
     SliderColors(
         track,

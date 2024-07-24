@@ -806,14 +806,16 @@ public final class org/jetbrains/jewel/foundation/theme/ThemeColorPalette {
 	public final fun blueOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBlue ()Ljava/util/List;
+	public final fun getGray ()Ljava/util/List;
 	public final fun getGreen ()Ljava/util/List;
-	public final fun getGrey ()Ljava/util/List;
 	public final fun getOrange ()Ljava/util/List;
 	public final fun getPurple ()Ljava/util/List;
 	public final fun getRawMap ()Ljava/util/Map;
 	public final fun getRed ()Ljava/util/List;
 	public final fun getTeal ()Ljava/util/List;
 	public final fun getYellow ()Ljava/util/List;
+	public final fun gray-vNxB06k (I)J
+	public final fun grayOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
 	public final fun green-vNxB06k (I)J
 	public final fun greenOrNull-ijrfgN4 (I)Landroidx/compose/ui/graphics/Color;
 	public final fun grey-vNxB06k (I)J

@@ -29,7 +29,7 @@ public fun HorizontalProgressBarStyle.Companion.dark(
 
 @Composable
 public fun HorizontalProgressBarColors.Companion.light(
-    track: Color = IntUiLightTheme.colors.grey(11),
+    track: Color = IntUiLightTheme.colors.gray(11),
     progress: Color = IntUiLightTheme.colors.blue(4),
     indeterminateBase: Color = IntUiLightTheme.colors.blue(9),
     indeterminateHighlight: Color = IntUiLightTheme.colors.blue(4),
@@ -43,7 +43,7 @@ public fun HorizontalProgressBarColors.Companion.light(
 
 @Composable
 public fun HorizontalProgressBarColors.Companion.dark(
-    track: Color = IntUiDarkTheme.colors.grey(4),
+    track: Color = IntUiDarkTheme.colors.gray(4),
     progress: Color = IntUiDarkTheme.colors.blue(7),
     indeterminateBase: Color = IntUiDarkTheme.colors.blue(9),
     indeterminateHighlight: Color = IntUiDarkTheme.colors.blue(5),

@@ -30,16 +30,16 @@ public fun SegmentedControlButtonStyle.Companion.dark(
 @Composable
 public fun SegmentedControlButtonColors.Companion.light(
     background: Brush = SolidColor(Color.Transparent),
-    backgroundPressed: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
-    backgroundHovered: Brush = SolidColor(IntUiLightTheme.colors.grey(1).copy(alpha = .07f)),
-    backgroundSelected: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
+    backgroundPressed: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
+    backgroundHovered: Brush = SolidColor(IntUiLightTheme.colors.gray(1).copy(alpha = .07f)),
+    backgroundSelected: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
     backgroundSelectedFocused: Brush = SolidColor(IntUiLightTheme.colors.blue(11)),
-    content: Color = IntUiLightTheme.colors.grey(1),
-    contentDisabled: Color = IntUiLightTheme.colors.grey(8),
+    content: Color = IntUiLightTheme.colors.gray(1),
+    contentDisabled: Color = IntUiLightTheme.colors.gray(8),
     border: Brush = SolidColor(Color.Transparent),
-    borderSelected: Brush = SolidColor(IntUiLightTheme.colors.grey(8)),
-    borderSelectedDisabled: Brush = SolidColor(IntUiLightTheme.colors.grey(9)),
-    borderSelectedFocused: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
+    borderSelected: Brush = SolidColor(IntUiLightTheme.colors.gray(8)),
+    borderSelectedDisabled: Brush = SolidColor(IntUiLightTheme.colors.gray(9)),
+    borderSelectedFocused: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
 ): SegmentedControlButtonColors =
     SegmentedControlButtonColors(
         background = background,
@@ -58,16 +58,16 @@ public fun SegmentedControlButtonColors.Companion.light(
 @Composable
 public fun SegmentedControlButtonColors.Companion.dark(
     background: Brush = SolidColor(Color.Transparent),
-    backgroundPressed: Brush = SolidColor(IntUiDarkTheme.colors.grey(3)),
-    backgroundHovered: Brush = SolidColor(IntUiDarkTheme.colors.grey(14).copy(alpha = .09f)),
-    backgroundSelected: Brush = SolidColor(IntUiDarkTheme.colors.grey(3)),
+    backgroundPressed: Brush = SolidColor(IntUiDarkTheme.colors.gray(3)),
+    backgroundHovered: Brush = SolidColor(IntUiDarkTheme.colors.gray(14).copy(alpha = .09f)),
+    backgroundSelected: Brush = SolidColor(IntUiDarkTheme.colors.gray(3)),
     backgroundSelectedFocused: Brush = SolidColor(IntUiDarkTheme.colors.blue(3)),
-    content: Color = IntUiDarkTheme.colors.grey(12),
-    contentDisabled: Color = IntUiDarkTheme.colors.grey(8),
+    content: Color = IntUiDarkTheme.colors.gray(12),
+    contentDisabled: Color = IntUiDarkTheme.colors.gray(8),
     border: Brush = SolidColor(Color.Transparent),
-    borderSelected: Brush = SolidColor(IntUiDarkTheme.colors.grey(7)),
-    borderSelectedDisabled: Brush = SolidColor(IntUiDarkTheme.colors.grey(4)),
-    borderSelectedFocused: Brush = SolidColor(IntUiDarkTheme.colors.grey(2)),
+    borderSelected: Brush = SolidColor(IntUiDarkTheme.colors.gray(7)),
+    borderSelectedDisabled: Brush = SolidColor(IntUiDarkTheme.colors.gray(4)),
+    borderSelectedFocused: Brush = SolidColor(IntUiDarkTheme.colors.gray(2)),
 ): SegmentedControlButtonColors =
     SegmentedControlButtonColors(
         background = background,
