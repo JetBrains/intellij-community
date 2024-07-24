@@ -10,5 +10,6 @@ internal class SerializationK2QuickFixContributor : KotlinQuickFixRegistrar() {
         get() = KtQuickFixesListBuilder.registerPsiQuickFix {
             registerFactory(JsonFormatRedundantDefaultFixFactory.replaceWithInstanceFactory)
             registerFactory(IncorrectTransientFixFactory.useKotlinxSerializationTransientFactory)
+            registerFactory(JsonFormatRedundantFixFactory.extractToProperty)
         }
 }
