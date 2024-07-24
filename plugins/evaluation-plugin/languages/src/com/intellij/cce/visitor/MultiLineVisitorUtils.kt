@@ -68,21 +68,26 @@ object MultiLineVisitorUtils {
   }
 
   private fun PsiElement.lineRanges(document: Document): List<LineInfo> = buildList {
-    val offset = startOffset
     var pos = 0
     val wholeRange = rangeFromLineBeginning(document)
     val wholeText = document.getText(wholeRange)
-    val elementPrefix = wholeText.substring(0, offset - wholeRange.startOffset)
-    val elementText = if (elementPrefix.isNotBlank()) { text } else { wholeText }
+
+    val currentLineStartToElementOffset = startOffset - wholeRange.startOffset
+
+    val elementPrefix = wholeText.substring(0, currentLineStartToElementOffset)
+    val (elementText, elementOffset) = if (elementPrefix.isNotBlank()) { text to startOffset } else { wholeText to wholeRange.startOffset }
 
     while (pos < elementText.length) {
       val nextLineBreakPos = elementText.indexOf('\n', pos)
-      if (nextLineBreakPos == -1) break
-      val range = TextRange(pos + offset, nextLineBreakPos + offset)
+      if (nextLineBreakPos == -1) {
+        if (pos == 0) return@buildList
+        break
+      }
+      val range = TextRange(pos + elementOffset, nextLineBreakPos + elementOffset)
       add(document.getLineInfo(range))
       pos = nextLineBreakPos + 1
     }
-    val lastRange = TextRange(pos + offset, textLength + offset)
+    val lastRange = TextRange(pos + elementOffset, elementText.length + elementOffset)
     add(document.getLineInfo(lastRange))
   }
 
@@ -108,7 +113,7 @@ object MultiLineVisitorUtils {
         .takeWhile { it.indent >= indent }
         .lastOrNull()?.range?.endOffset ?: element.endOffset
 
-      val scopeRange = TextRange(lineInfo.startOffset, lastInScopeOffset)
+      val scopeRange = TextRange(lineInfo.startOffset + indent, lastInScopeOffset)
       val scopeText = document.getText(scopeRange)
       add(CodeToken(scopeText, scopeRange.startOffset))
     }
