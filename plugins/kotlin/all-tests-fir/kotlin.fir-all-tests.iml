@@ -58,5 +58,6 @@
     <orderEntry type="module" module-name="kotlin.k2.lombok.tests" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit.kotlin.tests.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests.k2" scope="RUNTIME" />
   </component>
 </module>
