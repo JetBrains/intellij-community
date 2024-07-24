@@ -274,6 +274,7 @@ public final class FileManagerImpl implements FileManager {
       vFile.putUserData(myPsiHardRefKey, viewProvider);
     }
     else {
+      ThreadingAssertions.assertWriteAccess();
       getVFileToViewProviderMap().put(vFile, viewProvider);
     }
   }
