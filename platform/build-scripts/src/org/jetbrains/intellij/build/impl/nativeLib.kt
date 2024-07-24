@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.PathUtilRt
 import com.intellij.util.lang.ZipFile
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.plus
@@ -178,11 +179,13 @@ private suspend fun unpackNativeLibraries(
         signTool.getPresignedLibraryFile(path = path, libName = libName, libVersion = libVersion, context = context)
       }
 
+      // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)
+      val isExecutable = os != OsFamily.WINDOWS && !PathUtilRt.getFileName(path).contains('.')
       if (file == null) {
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
         file = tempDir.resolve(path)!!
         if (!dryRun) {
-          extractFileToDisk(file = file, zipFile = zipFile, pathWithPackage = pathWithPackage)
+          extractFileToDisk(file = file, zipFile = zipFile, pathWithPackage = pathWithPackage, isExecutable = isExecutable)
         }
 
         if (os != OsFamily.LINUX && fileName !in nonSignFiles) {
@@ -192,7 +195,7 @@ private suspend fun unpackNativeLibraries(
 
       context.addDistFile(
         DistFile(
-          content = LocalDistFileContent(file, Files.isExecutable(file)),
+          content = LocalDistFileContent(file = file, isExecutable = isExecutable),
           relativePath = toRelativePath(libName, getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
           os = os.takeUnless { allPlatformsRequired },
           arch = arch.takeUnless { allPlatformsRequired },
@@ -224,11 +227,11 @@ private suspend fun unpackNativeLibraries(
   }
 }
 
-private fun extractFileToDisk(file: Path, zipFile: ZipFile, pathWithPackage: String) {
+private fun extractFileToDisk(file: Path, zipFile: ZipFile, pathWithPackage: String, isExecutable: Boolean) {
   Files.createDirectories(file.parent)
   when {
     // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)
-    !isWindows && !file.fileName.toString().contains('.') -> FileChannel.open(file, W_CREATE_NEW, posixExecutableFileAttribute)
+    isExecutable -> FileChannel.open(file, W_CREATE_NEW, posixExecutableFileAttribute)
     else -> FileChannel.open(file, W_CREATE_NEW)
   }.use { channel ->
     val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
