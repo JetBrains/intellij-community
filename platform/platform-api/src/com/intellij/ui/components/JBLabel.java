@@ -403,9 +403,10 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
       return;
     }
 
-    int preferredHeight = myEditorPane.getPreferredSize().height;
+    Insets insets = myEditorPane.getInsets();
+    int preferredHeight = myEditorPane.getPreferredSize().height - insets.top - insets.bottom;
     int availableHeight = getHeight();
-    if (availableHeight <= preferredHeight) {
+    if (availableHeight <= preferredHeight || preferredHeight <= 0) {
       return;
     }
 
