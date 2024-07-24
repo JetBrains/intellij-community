@@ -26,15 +26,14 @@ abstract class J2kConverterExtension {
     abstract fun createPostProcessor(formatCode: Boolean = true): PostProcessor
 
     open fun doCheckBeforeConversion(project: Project, module: Module): Boolean =
-        true
+        J2KKotlinConfigurationHelper.checkKotlinIsConfigured(module)
 
     open fun setUpAndConvert(
         project: Project,
         module: Module,
         javaFiles: List<PsiJavaFile>,
         convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit
-    ) {
-    }
+    ) = J2KKotlinConfigurationHelper.setUpAndConvert(project, module, javaFiles, convertFunction)
 
     abstract fun createWithProgressProcessor(
         progress: ProgressIndicator?,

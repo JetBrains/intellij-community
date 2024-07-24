@@ -29,4 +29,7 @@ class OldJ2kConverterExtension : J2kConverterExtension() {
         phasesCount: Int
     ): WithProgressProcessor =
         OldWithProgressProcessor(progress, files)
+
+    override fun doCheckBeforeConversion(project: Project, module: Module): Boolean =
+        true
 }
