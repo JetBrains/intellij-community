@@ -396,24 +396,20 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   private void updateTextAlignment() {
     if (myEditorPane == null) return;
 
-    myEditorPane.setBorder(null); // clear border
-
-    int position = getVerticalTextPosition();
-    if (position == TOP) {
-      return;
+    Border newBorder = null;
+    int verticalTextPosition = getVerticalTextPosition();
+    if (verticalTextPosition == CENTER || verticalTextPosition == BOTTOM) {
+      Insets insets = myEditorPane.getInsets();
+      int preferredHeightWithoutInsets = myEditorPane.getPreferredSize().height - insets.top - insets.bottom;
+      int availableHeight = getHeight();
+      if (preferredHeightWithoutInsets > 0 && availableHeight > preferredHeightWithoutInsets) {
+        // since the 'top' value is in real already-scaled pixels, should use swing's EmptyBorder
+        //noinspection UseDPIAwareBorders
+        newBorder = new EmptyBorder(verticalTextPosition == CENTER ? (availableHeight - preferredHeightWithoutInsets + 1) / 2 :
+                                    availableHeight - preferredHeightWithoutInsets, 0, 0, 0);
+      }
     }
-
-    Insets insets = myEditorPane.getInsets();
-    int preferredHeight = myEditorPane.getPreferredSize().height - insets.top - insets.bottom;
-    int availableHeight = getHeight();
-    if (availableHeight <= preferredHeight || preferredHeight <= 0) {
-      return;
-    }
-
-    // since the 'top' value is in real already-scaled pixels, should use swing's EmptyBorder
-    //noinspection UseDPIAwareBorders
-    myEditorPane.setBorder(new EmptyBorder(position == CENTER ? (availableHeight - preferredHeight + 1) / 2 :
-                                           availableHeight - preferredHeight, 0, 0, 0));
+    myEditorPane.setBorder(newBorder);
   }
 
   @Override
