@@ -126,6 +126,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(KaFirDiagnostic.UnresolvedLabel::class, CreateLabelFixFactory.createLabelFixFactory)
         registerFactory(AddDefaultConstructorFixFactory.addDefaultConstructorFixFactory)
         registerFactory(MakeClassAnAnnotationClassFixFactory.makeClassAnAnnotationClassFixFactory)
+        registerFactory(WrongLongSuffixFixFactory.changeToCorrectLongSuffix)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
