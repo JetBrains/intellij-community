@@ -96,7 +96,9 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
     ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from tool window", __ -> {
       if (projectNode != null) {
         ExternalSystemNode<?> group = projectNode.getGroup();
-        group.remove(projectNode);
+        if (group != null) {
+          group.remove(projectNode);
+        }
       }
     });
 
