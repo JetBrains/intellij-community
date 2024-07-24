@@ -175,7 +175,7 @@ public interface JBAccountInfoService {
 
   sealed interface LicenseListResult permits LicenseListResult.LicenseList,
                                              LicenseListResult.LoginRequired,
-                                             LicenseListResult.FetchFailure,
+                                             LicenseListResult.RequestFailed,
                                              LicenseListResult.RequestDeclined {
     record LicenseList(@NotNull List<@NotNull JbaLicense> licenses) implements LicenseListResult { }
 
@@ -189,7 +189,7 @@ public interface JBAccountInfoService {
 
     record RequestDeclined(@NotNull String errorCode, @NlsSafe @NotNull String message) implements LicenseListResult { }
 
-    record FetchFailure(@NlsSafe @NotNull String errorMessage) implements LicenseListResult { }
+    record RequestFailed(@NlsSafe @NotNull String errorMessage) implements LicenseListResult { }
   }
 
   interface AuthStateListener extends EventListener {
