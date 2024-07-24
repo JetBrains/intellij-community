@@ -39,6 +39,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
@@ -594,7 +595,7 @@ private class EditorTabs(
   override fun getEditorWindow(): EditorWindow = window
 
   @Internal
-  override fun minHeaderHeight(): Int = JBUI.CurrentTheme.ToolWindow.headerHeight()
+  override fun minHeaderHeight(): Int = ToolWindowHeader.getUnscaledHeight()
 
   override fun createRowLayout(): TabLayout {
     if (!isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))) {
