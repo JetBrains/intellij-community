@@ -87,14 +87,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   private void doMultiFileTest(@Nullable String destination, @Nullable String errorMessage) throws IOException {
-    final String rootBeforePath = getTestName(true) + "/before";
-    final String rootAfterPath = getTestName(true) + "/after";
-    final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
-    myFixture.configureByFile("main.py");
-    runRefactoring(destination, errorMessage);
-    if (errorMessage == null) {
-      PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
-    }
+    doMultifileTest("main.py", destination, errorMessage);
   }
 
   private boolean isActionEnabled() {
@@ -122,6 +115,45 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
       element = element.getParent();
     }
     return false;
+  }
+
+  private void doMultifileTest(@NotNull String pathToOriginFunction, @Nullable String destination, @Nullable String errorMessage) throws IOException {
+    final String rootBeforePath = getTestName(true) + "/before";
+    final String rootAfterPath = getTestName(true) + "/after";
+    final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
+    myFixture.configureByFile(pathToOriginFunction);
+    runRefactoring(destination, errorMessage);
+    if (errorMessage == null) {
+      PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
+    }
+  }
+
+  //PY-44858
+  public void testRefactoringNotCreateInitInAnotherDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/b/other.py";
+    doMultifileTest(pathToOriginFunction, destination, null);
+  }
+
+  //PY-44858
+  public void testRefactoringNotCreateInitInSameDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/a/other.py";
+    doMultifileTest(pathToOriginFunction, destination, null);
+  }
+
+  //PY-44858
+  public void testRefactoringNotCreateInitInParentDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/b/main.py";
+    String destination = "mypkg/a/other.py";
+    doMultifileTest(pathToOriginFunction, destination, null);
+  }
+
+  //PY-44858
+  public void testRefactoringNotCreateInitInChildDir() throws IOException {
+    String pathToOriginFunction = "mypkg/a/main.py";
+    String destination = "mypkg/a/b/other.py";
+    doMultifileTest(pathToOriginFunction, destination, null);
   }
 
   // PY-6637
