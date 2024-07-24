@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.inference.nullability
 
-import javaslang.control.Option
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -20,8 +19,6 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.jvm.checkers.mustNotBeNull
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isNullable
-
-private fun <T> Option<T>.getOrNull(): T? = getOrElse(null as T?)
 
 class NullabilityBoundTypeEnhancer(private val resolutionFacade: ResolutionFacade) : BoundTypeEnhancer() {
     override fun enhance(
