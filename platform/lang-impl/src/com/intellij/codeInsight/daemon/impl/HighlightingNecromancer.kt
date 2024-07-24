@@ -40,14 +40,16 @@ import javax.swing.Icon
 @Internal
 open class HighlightingNecromancerAwaker : NecromancerAwaker<HighlightingZombie> {
   override fun awake(project: Project, coroutineScope: CoroutineScope): Necromancer<HighlightingZombie> {
-    return HighlightingNecromancer(project, coroutineScope)
+    val necromancer = HighlightingNecromancer(project, coroutineScope)
+    necromancer.subscribeDaemonFinished()
+    return necromancer
   }
 }
 
 @Internal
 open class HighlightingNecromancer(
-  private val project: Project,
-  coroutineScope: CoroutineScope,
+  protected val project: Project,
+  protected val coroutineScope: CoroutineScope,
 ) : GravingNecromancer<HighlightingZombie>(
   project,
   coroutineScope,
@@ -56,10 +58,6 @@ open class HighlightingNecromancer(
 ) {
 
   private val spawnedZombies: ConcurrentIntObjectMap<Boolean> = ConcurrentCollectionFactory.createConcurrentIntObjectMap()
-
-  init {
-    subscribeDaemonFinished(project, coroutineScope)
-  }
 
   override fun turnIntoZombie(recipe: TurningRecipe): HighlightingZombie? {
     if (isEnabled()) {
@@ -123,7 +121,7 @@ open class HighlightingNecromancer(
     }
   }
 
-  protected open fun subscribeDaemonFinished(project: Project, coroutineScope: CoroutineScope) {
+  open fun subscribeDaemonFinished() {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
     project.messageBus.connect(coroutineScope).subscribe(
