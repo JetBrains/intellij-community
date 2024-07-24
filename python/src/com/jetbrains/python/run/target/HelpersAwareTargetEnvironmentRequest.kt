@@ -14,7 +14,7 @@ import kotlin.io.path.absolutePathString
 
 data class PathMapping(val localPath: Path, val targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>)
 
-data class PythonHelpersMappings(val communityHelpers: PathMapping, val proHelpers: PathMapping?)
+data class PythonHelpersMappings(val helpers: List<PathMapping>)
 
 /**
  * The target request for Python interpreter configured in PyCharm on a
@@ -31,27 +31,22 @@ interface HelpersAwareTargetEnvironmentRequest {
   fun preparePyCharmHelpers(): PythonHelpersMappings
 }
 
-fun getPythonHelpers(): Path = PythonHelpersLocator.getHelpersRoot().toPath()
-
-fun getPythonProHelpers(): Path? = if (PythonHelpersLocator.hasHelpersPro()) PythonHelpersLocator.getHelpersProRoot() else null
+fun getPythonHelpers(): List<Path> = PythonHelpersLocator.getHelpersRoots()
 
 /**
  * Returns the mappings where Python helpers of Community and Professional versions are mapped to a single directory.
  * For example, when their contents are uploaded to the same directory on the SSH machine.
  */
 fun singleDirectoryPythonHelpersMappings(targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>): PythonHelpersMappings =
-  PythonHelpersMappings(
-    communityHelpers = getPythonHelpers() to targetPathFun,
-    proHelpers = getPythonProHelpers()?.let { pythonProHelpers -> pythonProHelpers to targetPathFun },
-  )
+  PythonHelpersMappings(getPythonHelpers().map { it to targetPathFun })
+
 
 infix fun Path.to(targetPathFun: TargetEnvironmentFunction<FullPathOnTarget>): PathMapping =
   PathMapping(localPath = this, targetPathFun)
 
 fun String.tryResolveAsPythonHelperDir(mappings: PythonHelpersMappings): PathMapping? {
-  val (communityHelpers, proHelpers) = mappings
   val thisLocalPath = Path.of(this)
-  val rootPaths = listOfNotNull(communityHelpers, proHelpers)
+  val rootPaths = mappings.helpers
     .filter { (localPath) -> FileUtil.isAncestor(localPath.absolutePathString(), this, false) }
   return rootPaths
     .firstNotNullOfOrNull { (localPath, targetPathFun) ->
