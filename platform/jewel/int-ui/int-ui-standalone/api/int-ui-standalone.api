@@ -193,14 +193,18 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiLazyTreeSty
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiLinkStylingKt {
-	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/LinkStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
-	public static final fun dark-dPtIKUs (Lorg/jetbrains/jewel/ui/component/styling/LinkColors$Companion;JJJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LinkColors;
+	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/LinkStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;)Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
+	public static synthetic fun dark$default (Lorg/jetbrains/jewel/ui/component/styling/LinkStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
+	public static final fun dark-40kPL-U (Lorg/jetbrains/jewel/ui/component/styling/LinkColors$Companion;JJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/LinkColors;
+	public static synthetic fun dark-40kPL-U$default (Lorg/jetbrains/jewel/ui/component/styling/LinkColors$Companion;JJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/LinkColors;
 	public static final fun defaults (Lorg/jetbrains/jewel/ui/component/styling/LinkIcons$Companion;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;)Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;
 	public static synthetic fun defaults$default (Lorg/jetbrains/jewel/ui/component/styling/LinkIcons$Companion;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;
 	public static final fun defaults-7dA9OmY (Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;FJ)Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;
 	public static synthetic fun defaults-7dA9OmY$default (Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;FJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;
-	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/LinkStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
-	public static final fun light-dPtIKUs (Lorg/jetbrains/jewel/ui/component/styling/LinkColors$Companion;JJJJJJLandroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/LinkColors;
+	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/LinkStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;)Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
+	public static synthetic fun light$default (Lorg/jetbrains/jewel/ui/component/styling/LinkStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;
+	public static final fun light-40kPL-U (Lorg/jetbrains/jewel/ui/component/styling/LinkColors$Companion;JJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/LinkColors;
+	public static synthetic fun light-40kPL-U$default (Lorg/jetbrains/jewel/ui/component/styling/LinkColors$Companion;JJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/LinkColors;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiMenuStylingKt {

@@ -1551,11 +1551,12 @@ public final class org/jetbrains/jewel/ui/component/styling/LinkMetrics$Companio
 public final class org/jetbrains/jewel/ui/component/styling/LinkStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LinkStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/LinkColors;
 	public final fun getIcons ()Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;
+	public final fun getUnderlineBehavior ()Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1565,6 +1566,14 @@ public final class org/jetbrains/jewel/ui/component/styling/LinkStyle$Companion 
 
 public final class org/jetbrains/jewel/ui/component/styling/LinkStylingKt {
 	public static final fun getLocalLinkStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public final class org/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior : java/lang/Enum {
+	public static final field ShowAlways Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;
+	public static final field ShowOnHover Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;
+	public static fun values ()[Lorg/jetbrains/jewel/ui/component/styling/LinkUnderlineBehavior;
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/MenuColors {

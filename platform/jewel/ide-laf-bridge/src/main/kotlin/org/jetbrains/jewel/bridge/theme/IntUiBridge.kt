@@ -85,6 +85,7 @@ import org.jetbrains.jewel.ui.component.styling.LinkColors
 import org.jetbrains.jewel.ui.component.styling.LinkIcons
 import org.jetbrains.jewel.ui.component.styling.LinkMetrics
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior
 import org.jetbrains.jewel.ui.component.styling.MenuColors
 import org.jetbrains.jewel.ui.component.styling.MenuIcons
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
@@ -652,6 +653,7 @@ private fun readLinkStyle(): LinkStyle {
                 dropdownChevron = AllIconsKeys.General.ChevronDown,
                 externalLink = AllIconsKeys.Ide.External_link_arrow,
             ),
+        underlineBehavior = LinkUnderlineBehavior.ShowOnHover,
     )
 }
 

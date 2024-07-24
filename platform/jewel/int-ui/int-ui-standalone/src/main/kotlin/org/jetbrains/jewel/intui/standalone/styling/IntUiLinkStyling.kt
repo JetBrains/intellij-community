@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -12,24 +11,24 @@ import org.jetbrains.jewel.ui.component.styling.LinkColors
 import org.jetbrains.jewel.ui.component.styling.LinkIcons
 import org.jetbrains.jewel.ui.component.styling.LinkMetrics
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
-@Composable
 public fun LinkStyle.Companion.light(
     colors: LinkColors = LinkColors.light(),
     metrics: LinkMetrics = LinkMetrics.defaults(),
     icons: LinkIcons = LinkIcons.defaults(),
-): LinkStyle = LinkStyle(colors, metrics, icons)
+    underlineBehavior: LinkUnderlineBehavior = LinkUnderlineBehavior.ShowOnHover,
+): LinkStyle = LinkStyle(colors, metrics, icons, underlineBehavior)
 
-@Composable
 public fun LinkStyle.Companion.dark(
     colors: LinkColors = LinkColors.dark(),
     metrics: LinkMetrics = LinkMetrics.defaults(),
     icons: LinkIcons = LinkIcons.defaults(),
-): LinkStyle = LinkStyle(colors, metrics, icons)
+    underlineBehavior: LinkUnderlineBehavior = LinkUnderlineBehavior.ShowOnHover,
+): LinkStyle = LinkStyle(colors, metrics, icons, underlineBehavior)
 
-@Composable
 public fun LinkColors.Companion.light(
     content: Color = IntUiLightTheme.colors.blue(2),
     contentDisabled: Color = IntUiLightTheme.colors.gray(8),
@@ -47,7 +46,6 @@ public fun LinkColors.Companion.light(
         contentVisited = contentVisited,
     )
 
-@Composable
 public fun LinkColors.Companion.dark(
     content: Color = IntUiDarkTheme.colors.blue(9),
     contentDisabled: Color = IntUiDarkTheme.colors.gray(7),

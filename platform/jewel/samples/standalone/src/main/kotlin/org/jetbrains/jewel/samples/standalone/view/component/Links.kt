@@ -9,21 +9,38 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.styling.dark
+import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.DropdownLink
 import org.jetbrains.jewel.ui.component.ExternalLink
 import org.jetbrains.jewel.ui.component.Link
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.separator
+import org.jetbrains.jewel.ui.component.styling.LinkStyle
+import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior
 
 @Composable
 @View(title = "Links", position = 4, icon = "icons/components/links.svg")
 fun Links() {
+    val isDark = JewelTheme.isDark
+    val alwaysUnderlinedStyle =
+        remember(isDark) {
+            if (isDark) {
+                LinkStyle.dark(underlineBehavior = LinkUnderlineBehavior.ShowAlways)
+            } else {
+                LinkStyle.light(underlineBehavior = LinkUnderlineBehavior.ShowAlways)
+            }
+        }
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Link("Link", {})
+
+        Link("Always underlined", {}, style = alwaysUnderlinedStyle)
 
         ExternalLink("ExternalLink", {})
 
@@ -61,6 +78,8 @@ fun Links() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Link("Link", {}, enabled = false)
+
+        Link("Always underlined", {}, style = alwaysUnderlinedStyle, enabled = false)
 
         ExternalLink("ExternalLink", {}, enabled = false)
 
