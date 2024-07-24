@@ -8318,6 +8318,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertReferenceToLambda/member.kt");
         }
 
+        @TestMetadata("missingTypeArgument.kt")
+        public void testMissingTypeArgument() throws Exception {
+            runTest("testData/intentions/convertReferenceToLambda/missingTypeArgument.kt");
+        }
+
         @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
         public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
             runTest("testData/intentions/convertReferenceToLambda/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");

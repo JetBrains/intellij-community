@@ -3477,6 +3477,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/member.kt");
         }
 
+        @TestMetadata("missingTypeArgument.kt")
+        public void testMissingTypeArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/missingTypeArgument.kt");
+        }
+
         @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
         public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
