@@ -652,7 +652,7 @@ class AutoReloadTest : AutoReloadTestCase() {
     test { settingsFile ->
       enableAsyncExecution()
 
-      waitForAllProjectReloads {
+      waitForAllProjectActivities {
         parallel {
           thread {
             settingsFile.modify(EXTERNAL)
@@ -696,7 +696,7 @@ class AutoReloadTest : AutoReloadTestCase() {
 
       setAutoReloadType(SELECTIVE)
       assertStateAndReset(numReload = 0, notified = true, autoReloadType = SELECTIVE,
-                  event = "enable auto-reload external changes with internal and external modifications")
+                          event = "enable auto-reload external changes with internal and external modifications")
 
       setAutoReloadType(ALL)
       assertStateAndReset(numReload = 1, notified = false, autoReloadType = ALL, event = "enable auto-reload of any changes")
@@ -983,7 +983,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       whenReloadStarted(expectedRefreshes - 1) {
         forceReloadProject()
       }
-      waitForAllProjectReloads {
+      waitForAllProjectActivities {
         forceReloadProject()
       }
       assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
@@ -1005,7 +1005,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       whenReloading(expectedRefreshes - 1) {
         settingsFile.modify(EXTERNAL)
       }
-      waitForAllProjectReloads {
+      waitForAllProjectActivities {
         settingsFile.modify(EXTERNAL)
       }
       assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
@@ -1043,13 +1043,13 @@ class AutoReloadTest : AutoReloadTestCase() {
       repeat(10) {
         val promise = AsyncPromise<Unit>()
         alarm.addRequest(Runnable {
-          waitForAllProjectReloads {
+          waitForAllProjectActivities {
             markDirty()
             scheduleProjectReload()
           }
           promise.setResult(Unit)
         }, 500)
-        waitForAllProjectReloads {
+        waitForAllProjectActivities {
           settingsFile.modify(EXTERNAL)
         }
         invokeAndWaitIfNeeded {

@@ -160,7 +160,7 @@ class MockProjectAware(
     }
   }
 
-  fun <R> waitForAllProjectReloads(action: () -> R): R {
+  fun <R> waitForAllProjectActivities(action: () -> R): R {
     return project.trackActivityBlocking(MockProjectReloadActivityKey, action)
       .also {
         runBlocking {

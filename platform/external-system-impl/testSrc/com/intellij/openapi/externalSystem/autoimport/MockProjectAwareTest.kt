@@ -11,7 +11,7 @@ class MockProjectAwareTest : AutoReloadTestCase() {
     test {
       enableAsyncExecution()
 
-      waitForAllProjectReloads {
+      waitForAllProjectActivities {
         forceReloadProject()
       }
       assertStateAndReset(numReload = 1, notified = false, event = "project reload")
@@ -26,7 +26,7 @@ class MockProjectAwareTest : AutoReloadTestCase() {
       parallel {
         repeat(expectedReloads) {
           thread {
-            waitForAllProjectReloads {
+            waitForAllProjectActivities {
               forceReloadProject()
             }
           }
@@ -40,7 +40,7 @@ class MockProjectAwareTest : AutoReloadTestCase() {
     test { settingsFile ->
       enableAsyncExecution()
 
-      waitForAllProjectReloads {
+      waitForAllProjectActivities {
         settingsFile.modify(EXTERNAL)
       }
       assertStateAndReset(numReload = 1, notified = false, event = "project reload")

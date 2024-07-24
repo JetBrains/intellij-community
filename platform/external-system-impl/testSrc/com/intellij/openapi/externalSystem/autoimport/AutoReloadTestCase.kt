@@ -500,8 +500,8 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       projectAware.resetAssertionCounters()
     }
 
-    fun waitForAllProjectReloads(action: () -> Unit) {
-      projectAware.waitForAllProjectReloads(action)
+    fun waitForAllProjectActivities(action: () -> Unit) {
+      projectAware.waitForAllProjectActivities(action)
     }
   }
 
