@@ -498,10 +498,15 @@ a:com.intellij.xdebugger.frame.XExecutionStack
 - p:<init>(java.lang.String):V
 - p:<init>(java.lang.String,javax.swing.Icon):V
 - a:computeStackFrames(I,com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer):V
+- getAdditionalDisplayInfo():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
 - f:getDisplayName():java.lang.String
 - getExecutionLineIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
 - f:getIcon():javax.swing.Icon
 - a:getTopFrame():com.intellij.xdebugger.frame.XStackFrame
+c:com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
+- <init>(java.lang.String,java.lang.String):V
+- getText():java.lang.String
+- getTooltip():java.lang.String
 com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
 - com.intellij.xdebugger.Obsolescent
 - com.intellij.xdebugger.frame.XValueCallback
