@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.CommonProcessors
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ConcurrentIntObjectMap
-import com.intellij.util.messages.SimpleMessageBusConnection
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -59,8 +58,7 @@ open class HighlightingNecromancer(
   private val spawnedZombies: ConcurrentIntObjectMap<Boolean> = ConcurrentCollectionFactory.createConcurrentIntObjectMap()
 
   init {
-    val connection = project.messageBus.connect(coroutineScope)
-    subscribeDaemonFinished(connection)
+    subscribeDaemonFinished(project, coroutineScope)
   }
 
   override fun turnIntoZombie(recipe: TurningRecipe): HighlightingZombie? {
@@ -125,10 +123,10 @@ open class HighlightingNecromancer(
     }
   }
 
-  protected open fun subscribeDaemonFinished(connection: SimpleMessageBusConnection) {
+  protected open fun subscribeDaemonFinished(project: Project, coroutineScope: CoroutineScope) {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
-    connection.subscribe(
+    project.messageBus.connect(coroutineScope).subscribe(
       DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
       object : DaemonCodeAnalyzer.DaemonListener {
         override fun daemonFinished(fileEditors: Collection<FileEditor>) {
