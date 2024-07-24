@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.1.0-dev-2188">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.1.0-dev-2515">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.1.0-dev-2188/kotlin-scripting-common-2.1.0-dev-2188.jar">
-          <sha256sum>913630178483883472784f6980a3fbb131e757cfe80f7d1af1fde4ebd4d01e41</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.1.0-dev-2515/kotlin-scripting-common-2.1.0-dev-2515.jar">
+          <sha256sum>e72dd0465757430c16480242583d4df31df9569c2f30366c90c81fa70c64b055</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.1.0-dev-2188/kotlin-scripting-common-2.1.0-dev-2188.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.1.0-dev-2515/kotlin-scripting-common-2.1.0-dev-2515.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.1.0-dev-2188/kotlin-scripting-common-2.1.0-dev-2188-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.1.0-dev-2515/kotlin-scripting-common-2.1.0-dev-2515-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
