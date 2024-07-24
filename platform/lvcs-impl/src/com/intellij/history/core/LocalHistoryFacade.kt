@@ -26,11 +26,11 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.regex.Pattern
 
 open class LocalHistoryFacade(internal val changeList: ChangeList) {
   private val listeners: MutableList<Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
@@ -196,7 +196,7 @@ interface ChangeProcessor {
 @ApiStatus.Experimental
 open class ChangeProcessorBase(private val projectId: String?, patternString: String?,
                                private val consumer: (ChangeSet) -> Unit) : ChangeProcessor {
-  private val pattern = patternString.toPattern()
+  private val pattern = patternString.toLocalHistoryMatcher()
   private val processedChangesSets = mutableSetOf<Long>()
 
   override fun process(changeSet: ChangeSet, change: Change, changePath: String) {
@@ -251,16 +251,11 @@ fun LocalHistoryFacade.collectChanges(startPath: String, processor: ChangeProces
   }
 }
 
-internal fun String?.toPattern(): Pattern? {
-  if (this == null) return null
-  return Pattern.compile(NameUtil.buildRegexp(this, 0, true, true), Pattern.CASE_INSENSITIVE)
-}
-
-internal fun Change.matches(projectId: String?, path: String, pattern: Pattern?): Boolean {
-  if (!affectsPath(path) && !affectsProject(projectId)) return false
-  if (pattern != null && !affectsMatching(pattern)) return false
-  return true
-}
+internal fun String?.toLocalHistoryMatcher(): MinusculeMatcher? = this?.let { NameUtil.buildMatcher("*$this").build() }
+internal fun Change.matches(projectId: String?, path: String, matcher: MinusculeMatcher?): Boolean =
+  if (affectsPath(path) || affectsProject(projectId)) {
+    matcher?.let { affectsMatching(it) } ?: true
+  } else false
 
 @ApiStatus.Internal
 fun LocalHistoryFacade.processContents(gateway: IdeaGateway,

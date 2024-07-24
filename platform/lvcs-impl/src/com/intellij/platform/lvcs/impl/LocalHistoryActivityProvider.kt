@@ -92,7 +92,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   private fun loadRecentActivityList(projectId: String, scope: ActivityScope, fileFilter: String?): ActivityData {
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
-    val pattern = fileFilter.toPattern()
+    val matcher = fileFilter.toLocalHistoryMatcher()
     for (changeSet in facade.changes) {
       if (changeSet.isSystemLabelOnly) continue
       if (changeSet.isLabelOnly) {
@@ -100,7 +100,7 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
       }
       else {
         if (!changeSet.changes.any { change ->
-            change !is PutLabelChange && paths.any { path -> change.matches(projectId, path, pattern) }
+            change !is PutLabelChange && paths.any { path -> change.matches(projectId, path, matcher) }
           }) continue
       }
       result.add(changeSet.toActivityItem(scope))

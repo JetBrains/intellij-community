@@ -132,6 +132,7 @@ a:com.intellij.history.core.changes.Change
 - p:<init>(J):V
 - p:<init>(java.io.DataInput):V
 - accept(com.intellij.history.core.changes.ChangeVisitor):V
+- a:affectsMatching(com.intellij.psi.codeStyle.MinusculeMatcher):Z
 - a:affectsMatching(java.util.regex.Pattern):Z
 - a:affectsPath(java.lang.String):Z
 - a:affectsProject(java.lang.String):Z
@@ -234,6 +235,7 @@ c:com.intellij.history.core.changes.PutLabelChange
 - <init>(J,java.lang.String,java.lang.String):V
 - <init>(java.io.DataInput):V
 - accept(com.intellij.history.core.changes.ChangeVisitor):V
+- affectsMatching(com.intellij.psi.codeStyle.MinusculeMatcher):Z
 - affectsMatching(java.util.regex.Pattern):Z
 - affectsPath(java.lang.String):Z
 - affectsProject(java.lang.String):Z
@@ -270,6 +272,7 @@ a:com.intellij.history.core.changes.StructuralChange
 - pf:myPath:java.lang.String
 - p:<init>(J,java.lang.String):V
 - p:<init>(java.io.DataInput):V
+- affectsMatching(com.intellij.psi.codeStyle.MinusculeMatcher):Z
 - affectsMatching(java.util.regex.Pattern):Z
 - affectsPath(java.lang.String):Z
 - affectsProject(java.lang.String):Z
