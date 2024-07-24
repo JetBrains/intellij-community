@@ -13,14 +13,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteIntentReadAction;
-import com.intellij.openapi.editor.ClientEditorManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -30,6 +27,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
@@ -140,14 +140,13 @@ public final class DebuggerUIUtil {
     WriteIntentReadAction.run((Runnable)() -> VisualizedTextPopup.INSTANCE.evaluateAndShowValuePopup(evaluator, event, project, editor));
   }
 
+  /**
+   * Create read-only {@link TextViewer} for plain text data.
+   * @see #createFormattedTextViewer(String, FileType, Project, Disposable)
+   */
   @ApiStatus.Experimental
   public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project) {
-    return createTextViewer(initialText, project, FileTypes.PLAIN_TEXT);
-  }
-
-  @ApiStatus.Experimental
-  public static TextViewer createTextViewer(@NotNull String initialText, @NotNull Project project, FileType fileType) {
-    TextViewer textArea = new TextViewer(initialText, project, fileType);
+    TextViewer textArea = new TextViewer(initialText, project);
     textArea.setBackground(HintUtil.getInformationColor());
 
     textArea.addSettingsProvider(e -> {
@@ -156,6 +155,27 @@ public final class DebuggerUIUtil {
     });
 
     return textArea;
+  }
+
+  /**
+   * Create read-only {@link Editor} for text data with syntax highlighting, folding and other {@link Editor} features.
+   * @see #createTextViewer(String, Project)
+   */
+  @ApiStatus.Experimental
+  public static Editor createFormattedTextViewer(@NotNull String initialText, @NotNull FileType type, @NotNull Project project, @NotNull Disposable parentDisposable) {
+    // Proper highlighting requires presense of PSIFile corresponding to the Document, see IJPL-157652.
+    var virtualFile = new LightVirtualFile("", type, initialText);
+    var psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+    assert psiFile != null;
+    var document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    assert document != null;
+
+    var editor = EditorFactory.getInstance().createEditor(document, project, virtualFile, true);
+    Disposer.register(parentDisposable, () -> {
+      EditorFactory.getInstance().releaseEditor(editor);
+    });
+    editor.getSettings().setLineNumbersShown(false);
+    return editor;
   }
 
   @ApiStatus.Experimental

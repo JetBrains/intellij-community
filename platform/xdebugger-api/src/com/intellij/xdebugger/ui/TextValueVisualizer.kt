@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.ui
 
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -41,7 +41,7 @@ interface VisualizedContentTab {
   val id: String
 
   /** Create the visualized content component. */
-  fun createComponent(project: Project): JComponent
+  fun createComponent(project: Project, parentDisposable: Disposable): JComponent
 
   /**
    * This callback is called when the tab is shown.

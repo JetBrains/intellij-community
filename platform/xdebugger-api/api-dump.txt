@@ -758,7 +758,7 @@ com.intellij.xdebugger.ui.DebuggerColors
 - canVisualize(java.lang.String):Z
 - a:visualize(java.lang.String):java.util.List
 *:com.intellij.xdebugger.ui.VisualizedContentTab
-- a:createComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
+- a:createComponent(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):javax.swing.JComponent
 - a:getId():java.lang.String
 - a:getName():java.lang.String
 - onShown(com.intellij.openapi.project.Project,Z):V

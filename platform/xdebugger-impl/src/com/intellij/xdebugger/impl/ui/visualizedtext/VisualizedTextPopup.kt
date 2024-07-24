@@ -2,12 +2,15 @@
 package com.intellij.xdebugger.impl.ui.visualizedtext
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.DimensionService
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AppUIUtil
@@ -42,7 +45,7 @@ object VisualizedTextPopup {
   private val extensionPoint: ExtensionPointName<TextValueVisualizer> =
     ExtensionPointName.create("com.intellij.xdebugger.textValueVisualizer")
 
-  fun showValuePopup(event: MouseEvent, project: Project, editor: Editor?, component: JComponent, cancelCallback: Runnable?) {
+  fun showValuePopup(event: MouseEvent, project: Project, editor: Editor?, component: JComponent, cancelCallback: Runnable?): JBPopup {
     var size = DimensionService.getInstance().getSize(DebuggerUIUtil.FULL_VALUE_POPUP_DIMENSION_KEY, project)
     if (size == null) {
       val frameSize = WindowManager.getInstance().getFrame(project)!!.size
@@ -64,6 +67,7 @@ object VisualizedTextPopup {
     else {
       popup.showInBestPositionFor(editor)
     }
+    return popup
   }
 
   fun evaluateAndShowValuePopup(evaluator: XFullValueEvaluator, event: MouseEvent, project: Project, editor: Editor?) {
@@ -73,11 +77,12 @@ object VisualizedTextPopup {
 
     val panel = PopupPanel(project)
     val callback = EvaluationCallback(project, panel)
-    showValuePopup(event, project, editor, panel.component, callback::setObsolete)
+    val popup = showValuePopup(event, project, editor, panel.component, callback::setObsolete)
+    Disposer.register(popup, panel)
     evaluator.startEvaluation(callback) // to make it really cancellable
   }
 
-  private class PopupPanel(private val project: Project)  {
+  private class PopupPanel(private val project: Project) : Disposable.Default  {
     private val base = JPanel(CardLayout())
 
     val component: JComponent
@@ -143,7 +148,7 @@ object VisualizedTextPopup {
     }
 
     private fun createComponent(fullValue: String): JComponent {
-      val tabs = collectVisualizedTabs(project, fullValue)
+      val tabs = collectVisualizedTabs(project, fullValue, panel)
       assert(tabs.isNotEmpty()) { "at least one raw tab is expected to be provided by fallback visualizer" }
       if (tabs.size > 1) {
         return createTabbedPane(tabs)
@@ -193,7 +198,7 @@ object VisualizedTextPopup {
     }
   }
 
-  fun collectVisualizedTabs(project: Project, fullValue: String): List<Pair<VisualizedContentTab, JComponent>> {
+  fun collectVisualizedTabs(project: Project, fullValue: String, parentDisposable: Disposable): List<Pair<VisualizedContentTab, JComponent>> {
     val tabs = extensionPoint.extensionList
                  .flatMap { viz ->
                    try {
@@ -207,15 +212,15 @@ object VisualizedTextPopup {
                // Explicitly add the fallback raw visualizer to make it the last one.
                FallbackTextVisualizer.visualize(fullValue)
 
-    return tabs.map { tab ->
+    return tabs.mapNotNull { tab ->
       try {
-        tab to tab.createComponent(project)
+        tab to tab.createComponent(project, parentDisposable)
       }
       catch (e: Throwable) {
-        LOG.error("failed to create visualized compnent (${tab.id})", e, Attachment("value.txt", fullValue))
+        LOG.error("failed to create visualized component (${tab.id})", e, Attachment("value.txt", fullValue))
         null
       }
-    }.filterNotNull()
+    }
   }
 
   fun isVisualizable(fullValue: String): Boolean {
