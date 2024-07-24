@@ -470,15 +470,5 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
-  fun build(){
-    actionButtonByXpath("//div[@myicon='build.svg']").click()
-  }
 
-  fun recompileByShortcut(){
-    keyboard { hotKey(KeyEvent.VK_SHIFT, KeyEvent.VK_META, KeyEvent.VK_F9) }
-  }
-
-  fun run(){
-    actionButtonByXpath("//div[@myicon='run.svg']").click()
-  }
 }
