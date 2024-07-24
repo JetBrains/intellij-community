@@ -10,8 +10,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.ExceptionDebugHelper
@@ -54,7 +52,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             }
 
             if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
-                showCoroutinePanel(debugProcess)
+                showOrHideCoroutinePanel(debugProcess, true)
             }
 
             val resumeWithFrame = stackFrame.threadPreCoroutineFrames.firstOrNull()
@@ -66,14 +64,6 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             return listOf(stackFrame)
         }
         return null
-    }
-
-    private fun showCoroutinePanel(debugProcess: DebugProcessImpl) {
-        val ui = debugProcess.session.xDebugSession?.ui as? RunnerLayoutUiImpl ?: return
-        val contentUi = ui.contentUI
-        runInEdt {
-            contentUi.findOrRestoreContentIfNeeded(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
-        }
     }
 
     override fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {

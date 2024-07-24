@@ -59,6 +59,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1570,6 +1571,17 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       }
     }
     return content;
+  }
+
+  @ApiStatus.Internal
+  public void hideContent(@NotNull String key) {
+    Content content = findContent(key);
+    if (content == null) {
+      content = findMinimizedContent(key);
+    }
+    if (content != null) {
+      minimize(content, null);
+    }
   }
 
   void setToDisposeRemovedContent(final boolean toDispose) {
