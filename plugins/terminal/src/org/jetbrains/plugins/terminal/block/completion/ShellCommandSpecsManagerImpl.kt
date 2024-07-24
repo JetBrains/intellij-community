@@ -10,6 +10,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.util.containers.MultiMap
@@ -51,6 +54,9 @@ import java.time.Duration
  */
 @Service
 internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
+
+  val tracer = TelemetryManager.getTracer(Scope("terminal"))
+
   /**
    * Cache for all **Light** json-based and code based specs with resolved conflicts.
    * Key is the name of the command.
@@ -159,15 +165,19 @@ internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
   }
 
   private fun loadCommandSpecs(): MultiMap<String, ShellCommandSpecData> {
-    val specsDataMap = MultiMap<String, ShellCommandSpecData>()
-    for (provider in ShellCommandSpecsProvider.EP_NAME.extensionList) {
-      val specInfos = provider.getCommandSpecs()
-      for (specInfo in specInfos) {
-        val specData = ShellCommandSpecData(specInfo.spec, specInfo.conflictStrategy, provider)
-        specsDataMap.putValue(specData.spec.name, specData)
+    tracer.spanBuilder("terminal-load-command-specs").use {
+      val specsDataMap = MultiMap<String, ShellCommandSpecData>()
+      for (provider in ShellCommandSpecsProvider.EP_NAME.extensionList) {
+        tracer.spanBuilder(provider.javaClass.name).use {
+          val specInfos = provider.getCommandSpecs()
+          for (specInfo in specInfos) {
+            val specData = ShellCommandSpecData(specInfo.spec, specInfo.conflictStrategy, provider)
+            specsDataMap.putValue(specData.spec.name, specData)
+          }
+        }
       }
+      return specsDataMap
     }
-    return specsDataMap
   }
 
   private fun clearCaches() {
