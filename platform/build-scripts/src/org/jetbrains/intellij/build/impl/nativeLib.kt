@@ -231,7 +231,7 @@ private fun extractFileToDisk(file: Path, zipFile: ZipFile, pathWithPackage: Str
   Files.createDirectories(file.parent)
   when {
     // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)
-    isExecutable -> FileChannel.open(file, W_CREATE_NEW, posixExecutableFileAttribute)
+    isExecutable && !isWindows -> FileChannel.open(file, W_CREATE_NEW, posixExecutableFileAttribute)
     else -> FileChannel.open(file, W_CREATE_NEW)
   }.use { channel ->
     val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
