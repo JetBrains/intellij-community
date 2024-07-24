@@ -34,10 +34,10 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -232,10 +232,11 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   private void filerByPackageName(@NotNull Collection<PsiClass> classList, @NotNull PsiFile file) {
-    String packageName = StringUtil.getPackageName(getQualifiedName(myReferenceElement));
+    String qualifiedName = getQualifiedName(myReferenceElement);
+    String packageName = StringUtil.getPackageName(qualifiedName);
     if (!packageName.isEmpty() &&
-        file instanceof PsiJavaFile &&
-        !ArrayUtil.contains(packageName, ((PsiJavaFile)file).getImplicitlyImportedPackages())) {
+        file instanceof PsiJavaFile javaFile &&
+        !ImportUtils.createImplicitImportChecker(javaFile).isImplicitlyImported(new ImportUtils.Import(qualifiedName, false))) {
       classList.removeIf(aClass -> {
         String classQualifiedName = aClass.getQualifiedName();
         return classQualifiedName != null && !packageName.equals(StringUtil.getPackageName(classQualifiedName));
