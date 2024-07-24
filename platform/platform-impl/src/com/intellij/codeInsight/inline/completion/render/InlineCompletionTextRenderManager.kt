@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.render
 
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionRendererCustomization.Companion.EP_NAME
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionRendererCustomization.Companion.getInlineCompletionLineRenderer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
@@ -64,9 +62,10 @@ internal class InlineCompletionTextRenderManager private constructor(
 
   private class Renderer(private val editor: Editor, private val offset: Int) : Disposable {
 
-    private var suffixInlay: Inlay<InlineCompletionLineRenderer>? = null
-    private val blockLineInlays = mutableListOf<Inlay<InlineCompletionLineRenderer>>()
+    private var suffixInlay: Inlay<out InlineCompletionLineRenderer>? = null
+    private val blockLineInlays = mutableListOf<Inlay<out InlineCompletionLineRenderer>>()
     private var state = RenderState.RENDERING_SUFFIX
+    private val inlayRenderers = InlineCompletionInlayRenderer.all()
     private val descriptor = Descriptor()
 
     fun append(text: String, attributes: TextAttributes): RenderedInlineCompletionElementDescriptor {
@@ -105,7 +104,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       suffixInlay = null
 
       editor.inlayModel.execute(true) {
-        val element = editor.inlayModel.addInlineElement(offset, true, getInlineCompletionLineRenderer(editor, suffixBlocks))
+        val element = renderInlineInlay(editor, offset, suffixBlocks)
         element?.addActionAvailabilityHint(
           EditorActionAvailabilityHint(
             IdeActions.ACTION_INSERT_INLINE_COMPLETION,
@@ -145,23 +144,16 @@ internal class InlineCompletionTextRenderManager private constructor(
       editor: Editor,
       offset: Int,
       blocks: List<InlineCompletionRenderTextBlock>
-    ): Inlay<InlineCompletionLineRenderer>? {
-      val inlayFromProvider = EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
-        provider.renderBlockInlay(editor, offset, blocks)
-      }
-      if (inlayFromProvider != null) {
-        return inlayFromProvider
-      }
+    ): Inlay<out InlineCompletionLineRenderer>? {
+      return inlayRenderers.firstNotNullOfOrNull { it.renderBlockInlay(editor, offset, blocks) }
+    }
 
-      val inlay = editor.inlayModel.addBlockElement(
-        offset,
-        true,
-        false,
-        1,
-        getInlineCompletionLineRenderer(editor, blocks)
-      )
-
-      return inlay
+    private fun renderInlineInlay(
+      editor: Editor,
+      offset: Int,
+      blocks: List<InlineCompletionRenderTextBlock>
+    ): Inlay<out InlineCompletionLineRenderer>? {
+      return inlayRenderers.firstNotNullOfOrNull { it.renderInlineInlay(editor, offset, blocks) }
     }
 
     private fun Editor.forceLeanLeft() {
