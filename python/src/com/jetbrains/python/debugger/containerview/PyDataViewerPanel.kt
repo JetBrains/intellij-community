@@ -17,7 +17,6 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.TextFieldCompletionProvider
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
@@ -37,7 +36,7 @@ import javax.swing.JPanel
 open class PyDataViewerPanel(@JvmField protected val project: Project, val frameAccessor: PyFrameAccessor) :
   JPanel(BorderLayout()), Disposable {
 
-  val sliceTextField = createEditorField()
+  val sliceTextField: EditorTextField = createEditorField()
 
   protected val tablePanel = JPanel(BorderLayout())
 
@@ -45,14 +44,14 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   private var formatTextField: EditorTextField = createEditorField()
 
-  private var colored = PyDataView.isColoringEnabled(project)
+  private var colored: Boolean = PyDataView.isColoringEnabled(project)
 
   private val listeners = CopyOnWriteArrayList<Listener>()
 
   var originalVarName: @NlsSafe String? = null
     private set
 
-  private var modifiedVarName: String? = null
+  protected var modifiedVarName: String? = null
 
   protected var debugValue: PyDebugValue? = null
 
@@ -78,12 +77,12 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
       return table?.model as? AsyncArrayTableModel
     }
 
-  var isModified = false
+  var isModified: Boolean = false
     private set
 
   private lateinit var errorLabel: Cell<JEditorPane>
 
-  protected val showFooter = AtomicBooleanProperty(true)
+  protected val showFooter: AtomicBooleanProperty = AtomicBooleanProperty(true)
 
   init {
     PyDataViewCompletionProvider().apply(sliceTextField)
@@ -203,7 +202,6 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         doStrategyInitExecution(debugValue.frameAccessor, strategy)
-
         // Currently does not support pandas dataframes.
         val arrayChunk = debugValue.frameAccessor.getArrayItems(debugValue, 0, 0, 0, 0, format)
         ApplicationManager.getApplication().invokeLater {
@@ -316,7 +314,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     apply(sliceTextField.getText(), false)
   }
 
-  private fun setError(text: @NlsContexts.Label String, modifier: Boolean) {
+  protected fun setError(text: @NlsContexts.Label String, modifier: Boolean) {
     errorLabel.visible(true)
     errorLabel.text(if (modifier) PyBundle.message("debugger.dataviewer.modifier.error", text) else text)
     if (!modifier) {
