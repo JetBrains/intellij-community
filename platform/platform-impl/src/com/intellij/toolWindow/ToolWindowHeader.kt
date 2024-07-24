@@ -54,6 +54,16 @@ abstract class ToolWindowHeader internal constructor(
   private val gearProducer: Supplier<ActionGroup>
 ) : BorderLayoutPanel(), PropertyChangeListener {
 
+  @ApiStatus.Internal
+  companion object {
+    internal fun getUnscaledHeight() = if (ExperimentalUI.isNewUI()) {
+      JBUI.CurrentTheme.ToolWindow.headerHeight()
+    }
+    else {
+      SingleHeightTabs.UNSCALED_PREF_HEIGHT
+    }
+  }
+
   private val actionGroup = DefaultActionGroup()
   private val toolbar: ActionToolbar
   private val westPanel: JPanel
@@ -315,11 +325,9 @@ abstract class ToolWindowHeader internal constructor(
   protected abstract fun hideToolWindow()
 
   override fun getPreferredSize(): Dimension {
-    val unscaledHeight =
-        if (toolWindow.toolWindowManager.isNewUi) JBUI.CurrentTheme.ToolWindow.headerHeight() else SingleHeightTabs.UNSCALED_PREF_HEIGHT
     val insets = insets
     val top = if (InternalDecoratorImpl.headerNeedsTopBorder(this)) 1 else 0
-    val height = JBUI.scale(unscaledHeight) + top - insets.top - insets.bottom
+    val height = JBUI.scale(getUnscaledHeight()) + top - insets.top - insets.bottom
     val size = super.getPreferredSize()
     return Dimension(size.width, height)
   }
