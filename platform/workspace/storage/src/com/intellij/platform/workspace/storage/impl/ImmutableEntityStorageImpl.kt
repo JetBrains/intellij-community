@@ -344,7 +344,9 @@ internal class MutableEntityStorageImpl(
 
       val updatedEntity = copiedData.createEntity(this)
 
-      this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
+      if (modifiableEntity.changedProperty.isNotEmpty()) {
+        this.indexes.updateSymbolicIdIndexes(this, updatedEntity, beforeSymbolicId, copiedData, modifiableEntity)
+      }
 
       updatedEntity
     }
