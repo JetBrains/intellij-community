@@ -22,11 +22,28 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(all(target_os = "windows", target_arch = "x86_64")))]
     fn classpath_test_on_unicode_path() {
         let suffix = "δοκιμή-परीक्षा-시험";
         let test = prepare_custom_test_env(LauncherLocation::Standard, Some(suffix), true);
-        classpath_test_impl(&test);
+
+        #[cfg(target_os = "windows")]
+        {
+            let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump());
+            if result.exit_status.success() {
+                let dump = result.dump();
+                let classpath = &dump.systemProperties["java.class.path"];
+                assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
+                let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
+                assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+            } else {
+                assert_startup_error(&result, "Cannot convert VM option string");
+            }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            classpath_test_impl(&test);
+        }
     }
 
     #[test]
@@ -66,6 +83,15 @@ mod tests {
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
         let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
         assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+    }
+
+    fn assert_startup_error(result: &LauncherRunResult, message: &str) {
+        let header = "Cannot start the IDE";
+        let header_present = result.stderr.find(header);
+        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
+        let message_present = result.stderr.find(message);
+        assert!(message_present.is_some(), "JVM error message ('{}') is missing: {:?}", message, result);
+        assert!(header_present.unwrap() < message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
     }
 
     #[test]
@@ -316,18 +342,8 @@ mod tests {
         test.create_toolbox_vm_options("-XX:+UseG1GC\n-XX:+UseZGC\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
-
         assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
-
-        let header = "Cannot start the IDE";
-        let header_present = result.stderr.find(header);
-        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
-
-        let jvm_message = "Conflicting collector combinations in option list";
-        let jvm_message_present = result.stderr.find(jvm_message);
-        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
-
-        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+        assert_startup_error(&result, "Conflicting collector combinations in option list");
     }
 
     #[test]
@@ -337,18 +353,8 @@ mod tests {
         test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
-
         assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
-
-        let header = "Cannot start the IDE";
-        let header_present = result.stderr.find(header);
-        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
-
-        let jvm_message = "Initial heap size set to a larger value than the maximum heap size";
-        let jvm_message_present = result.stderr.find(jvm_message);
-        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
-
-        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+        assert_startup_error(&result, "Initial heap size set to a larger value than the maximum heap size");
     }
 
     #[test]
