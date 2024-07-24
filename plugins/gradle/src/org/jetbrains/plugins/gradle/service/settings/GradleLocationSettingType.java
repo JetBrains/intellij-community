@@ -14,7 +14,7 @@ import java.awt.*;
 /**
  * Enumerates possible types of external project location setting.
  */
-public enum LocationSettingType {
+public enum GradleLocationSettingType {
 
   /** User hasn't defined location but the IDE discovered it automatically. */
   DEDUCED("setting.type.location.deduced", "TextField.inactiveForeground"),
@@ -31,12 +31,12 @@ public enum LocationSettingType {
   @NotNull private final String myDescriptionKey;
   @NotNull private final Color myColor;
 
-  LocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String descriptionKey) {
+  GradleLocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String descriptionKey) {
     this(descriptionKey, "TextField.foreground");
   }
 
-  LocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String descriptionKey,
-                      @NotNull String key)
+  GradleLocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String descriptionKey,
+                            @NotNull String key)
   {
     myDescriptionKey = descriptionKey;
     myColor = JBColor.namedColor(key, UIManager.getColor(key));
