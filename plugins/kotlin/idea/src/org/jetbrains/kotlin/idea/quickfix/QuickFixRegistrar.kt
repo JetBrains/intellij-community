@@ -581,7 +581,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         UNUSED_LAMBDA_EXPRESSION.registerFactory(AddRunToLambdaFix)
 
-        WRONG_LONG_SUFFIX.registerFactory(WrongLongSuffixFix)
+        WRONG_LONG_SUFFIX.registerFactory(WrongLongSuffixFixFactory)
 
         REIFIED_TYPE_PARAMETER_NO_INLINE.registerFactory(AddInlineToFunctionWithReifiedFix)
 
