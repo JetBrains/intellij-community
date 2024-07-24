@@ -240,11 +240,14 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.overrides.KotlinOverrideHierarchyProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinEqualsHashCodeTemplatesManager"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager"/>
   </extensions>
   <actions>
     <group id="KotlinGenerateGroup">
       <action id="KotlinGenerateEqualsAndHashCode"
               class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction"/>
+      <action id="KotlinGenerateToString"
+              class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateToStringAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
   </actions>

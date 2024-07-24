@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
@@ -44,7 +45,7 @@ import org.jetbrains.kotlin.types.Variance
 object KotlinElementFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    fun newClassElement(clazz: KtClass): ClassElement {
+    fun newClassElement(clazz: KtClassOrObject): ClassElement {
         val ce = ClassElement()
 
         // name
@@ -52,7 +53,7 @@ object KotlinElementFactory {
         ce.name = clazz.nameIdentifier?.text
 
         ce.qualifiedName = fqName?.asString()
-        ce.isEnum = clazz.isEnum()
+        ce.isEnum = (clazz as? KtClass)?.isEnum() == true
         ce.isAbstract = clazz.hasModifier(KtTokens.ABSTRACT_KEYWORD)
         ce.typeParams = clazz.getTypeParameters().size
 

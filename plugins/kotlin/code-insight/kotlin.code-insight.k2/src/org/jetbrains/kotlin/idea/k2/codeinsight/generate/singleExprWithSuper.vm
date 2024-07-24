@@ -1,0 +1,35 @@
+override fun toString(): String {
+return "$classname(##
+#set($first = true)
+#foreach ($field in $fields)
+#if (!$first), ##
+#else
+#set($first = false)
+#end
+$field.name=##
+#addQuote($field)
+$##
+#addFieldToString($field)##
+#addQuote($field)
+#end
+)##
+#if ($generateSuper) $##
+{##
+super.toString()##
+}##
+#end
+"
+}
+#macro(addQuote $field)
+#if ($field.string && $field.notNull)'##
+#end
+#end
+#macro(addFieldToString $field)
+#if ($field.array)
+{##
+${field.name}##
+.contentToString()}##
+#else
+${field.name}##
+#end
+#end

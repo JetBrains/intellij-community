@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.generate
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.openapi.ui.Messages
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -12,29 +14,19 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.BASE_PARAM_NAME
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.CHECK_PARAMETER_WITH_INSTANCEOF
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.SUPER_HAS_EQUALS
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.SUPER_HAS_HASHCODE
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
@@ -43,7 +35,6 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import kotlin.collections.forEach
 
 object GenerateEqualsAndHashCodeUtils {
     context(KaSession)
@@ -68,8 +59,22 @@ object GenerateEqualsAndHashCodeUtils {
     }
 
     context(KaSession)
+    fun matchesToStringMethodSignature(function: KaNamedFunctionSymbol): Boolean {
+        if (function.modality == KaSymbolModality.ABSTRACT) return false
+        if (function.name != OperatorNameConventions.TO_STRING) return false
+        if (function.typeParameters.isNotEmpty()) return false
+        if (function.valueParameters.isNotEmpty()) return false
+        val returnType = function.returnType
+        return returnType.isStringType && !returnType.isMarkedNullable
+    }
+
+    context(KaSession)
     fun findEqualsMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
         findNonGeneratedMethodInSelfOrSuperclass(classSymbol, OperatorNameConventions.EQUALS) { matchesEqualsMethodSignature(it) }
+
+    context(KaSession)
+    fun findToStringMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
+        findNonGeneratedMethodInSelfOrSuperclass(classSymbol, OperatorNameConventions.TO_STRING) { matchesToStringMethodSignature(it) }
 
     context(KaSession)
     fun findHashCodeMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
@@ -184,7 +189,29 @@ object GenerateEqualsAndHashCodeUtils {
         return function
     }
 
-    private fun deleteBodyOfExpectFunction(klass: KtClass, function: KtNamedFunction) {
+    context(KaSession)
+    fun generateToString(klass: KtClassOrObject, declarations: List<KtNamedDeclaration>, template: String): KtNamedFunction? {
+
+        val contextMap = mutableMapOf<String, Any?>()
+
+        val toStringFunction = findToStringMethodForClass(klass.symbol as KaClassSymbol)
+
+        contextMap["generateSuper"] = toStringFunction != null && (toStringFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
+
+        val methodText = VelocityGeneratorHelper
+            .velocityGenerateCode(
+                klass, declarations, contextMap,
+                template, false) ?: return null
+
+
+        val function = KtPsiFactory.contextual(klass).createFunction(methodText)
+
+        deleteBodyOfExpectFunction(klass, function)
+        return function
+    }
+
+
+    private fun deleteBodyOfExpectFunction(klass: KtClassOrObject, function: KtNamedFunction) {
         if (klass.hasExpectModifier()) {
             (function.bodyExpression ?: function.bodyBlockExpression)?.delete()
         }
@@ -205,4 +232,20 @@ object GenerateEqualsAndHashCodeUtils {
             equals.text
         }
     }
+
+    fun confirmMemberRewrite(
+        targetClass: KtClassOrObject, @Nls title: String, vararg declarations: KtNamedDeclaration
+    ): Boolean {
+        if (isUnitTestMode()) return true
+
+        val functionsText =
+            declarations.joinToString { it.name ?: "" }
+        val message = KotlinBundle.message("action.generate.functions.already.defined", functionsText, targetClass.name.toString())
+        return Messages.showYesNoDialog(
+            targetClass.project, message,
+            title,
+            Messages.getQuestionIcon()
+        ) == Messages.YES
+    }
+
 }

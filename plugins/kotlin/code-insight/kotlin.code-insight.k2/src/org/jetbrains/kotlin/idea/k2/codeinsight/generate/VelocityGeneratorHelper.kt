@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
@@ -30,7 +31,7 @@ import java.lang.Exception
 object VelocityGeneratorHelper {
     context(KaSession)
     fun velocityGenerateCode(
-        clazz: KtClass,
+        clazz: KtClassOrObject,
         selectedMembers: List<KtNamedDeclaration>,
         contextMap: Map<String, Any?>,
         templateMacro: String?,
@@ -59,7 +60,7 @@ object VelocityGeneratorHelper {
     context(KaSession)
     private fun prepareContext(
         selectedMembers: List<KtNamedDeclaration>,
-        clazz: KtClass,
+        clazz: KtClassOrObject,
         useFullyQualifiedName: Boolean,
         contextMap: Map<String, Any?>
     ): VelocityContext {

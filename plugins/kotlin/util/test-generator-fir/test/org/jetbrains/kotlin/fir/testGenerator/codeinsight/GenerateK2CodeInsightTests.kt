@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirPairMatcherTest
 import org.jetbrains.kotlin.idea.k2.copyPaste.AbstractK2InsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateHashCodeAndEqualsActionTest
+import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
@@ -149,6 +150,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractFirGenerateHashCodeAndEqualsActionTest> {
             model("../../../idea/tests/testData/codeInsight/generate/equalsWithHashCode")
+        }
+
+        testClass<AbstractFirGenerateToStringActionTest> {
+            model("../../../idea/tests/testData/codeInsight/generate/toString")
         }
 
         testClass<AbstractKotlinFirJoinLinesTest> {
