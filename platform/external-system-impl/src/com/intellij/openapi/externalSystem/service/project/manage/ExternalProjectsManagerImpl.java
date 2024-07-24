@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
-import com.intellij.openapi.externalSystem.util.CompositeRunnable;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
@@ -374,5 +373,24 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     TaskActivationState getTasksActivation(@NotNull ProjectSystemId systemId, @NotNull String projectPath);
 
     Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull ProjectSystemId systemId);
+  }
+
+  private static class CompositeRunnable implements Runnable {
+    private List<Runnable> list = new SmartList<>();
+
+    public boolean add(Runnable runnable) {
+      return list.add(runnable);
+    }
+
+    public void clear() {
+      list = new SmartList<>();
+    }
+
+    @Override
+    public void run() {
+      for (Runnable runnable : list) {
+        runnable.run();
+      }
+    }
   }
 }

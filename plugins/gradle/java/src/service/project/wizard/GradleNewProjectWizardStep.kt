@@ -10,6 +10,7 @@ import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.setupProjectFromBuilder
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -18,7 +19,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
-import com.intellij.openapi.externalSystem.service.ui.completion.whenItemChangedFromUi
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -198,6 +198,15 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           }
       }.bottomGap(BottomGap.SMALL)
     }.visibleIf(parentProperty.transform { !it.isPresent })
+  }
+
+  private fun <T, C : TextCompletionComboBox<T>> Cell<C>.whenItemChangedFromUi(
+    parentDisposable: Disposable? = null,
+    listener: (T) -> Unit
+  ): Cell<C> {
+    return applyToComponent {
+      whenItemChangedFromUi(parentDisposable, listener)
+    }
   }
 
   private fun getCurrentDefaultProjectSettings(): GradleDefaultProjectSettings {
