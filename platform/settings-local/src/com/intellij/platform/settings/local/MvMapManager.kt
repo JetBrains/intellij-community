@@ -7,21 +7,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.io.mvstore.compactMvStore
 import com.intellij.util.io.mvstore.createOrResetMvStore
 import com.intellij.util.io.mvstore.openOrResetMap
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
 import org.h2.mvstore.type.ByteArrayDataType
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -29,43 +23,27 @@ import kotlin.time.toDuration
 private fun nowAsDuration() = System.currentTimeMillis().toDuration(DurationUnit.MILLISECONDS)
 
 internal class MvStoreManager(readOnly: Boolean = false) {
-  // yes - save is ignored first 5 minutes
-  private var lastSaved: Duration = nowAsDuration()
-
-  // compact only once per-app launch
-  private var isCompacted = AtomicBoolean(false)
-
-  private val store: MVStore = createOrResetMvStore(getDatabaseFile(), readOnly) { logger<MvMapManager>() }
+  // we save only once every 2 minutes, and not earlier than 2 minutes after the start
+  private var lastSaved = nowAsDuration()
+  private val store = createOrResetMvStore(getDatabaseFile(), readOnly) { logger<MvMapManager>() }
 
   fun openMap(name: String): MvMapManager = MvMapManager(openMap(store, name))
 
   suspend fun save() {
     // Save upon exit.
     // This function will be executed under progress.
-    // If saving is skipped here, 'close' would be invoked on `dispose`, which will trigger `save`.
+    // If saving is skipped here, `close` would be invoked on `close`, which will trigger `save`.
     // This in turn would lead to saving in EDT — that must be avoided.
     val exitInProgress = ApplicationManager.getApplication().isExitInProgress
-    if (!exitInProgress && (nowAsDuration() - lastSaved) < 5.minutes) {
+    if (!exitInProgress && (nowAsDuration() - lastSaved) < 2.minutes) {
       return
     }
 
     // tryCommit - do not commit if store is locked (e.g., another commit for some reason is called or another write operation)
     withContext(Dispatchers.IO) {
-      store.tryCommit()
-
-      ensureActive()
-
-      if (!exitInProgress && isCompacted.compareAndSet(false, true)) {
-        compactStore()
-      }
+      store.commit()
+      lastSaved = nowAsDuration()
     }
-
-    lastSaved = nowAsDuration()
-  }
-
-  @VisibleForTesting
-  fun compactStore() {
-    compactMvStore(store, ::thisLogger)
   }
 
   fun close() {

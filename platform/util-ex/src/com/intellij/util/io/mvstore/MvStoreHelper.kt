@@ -6,11 +6,9 @@ import com.intellij.util.ArrayUtilRt
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.nio.channels.ClosedChannelException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.time.Duration.Companion.seconds
 
 @Internal
 fun markMvStoreDbAsInvalid(file: Path) {
@@ -99,20 +97,6 @@ private class StoreErrorHandler(private val dbFile: Path?, private val logSuppli
     }
     else {
       log.warn("Store will be recreated (db=$dbFile)", e)
-    }
-  }
-}
-
-@Internal
-fun compactMvStore(store: MVStore, logSupplier: () -> Logger) {
-  try {
-    store.compactFile(3.seconds.inWholeMilliseconds.toInt())
-  }
-  catch (e: RuntimeException) {
-    /** see [org.h2.mvstore.FileStore.compact] */
-    val cause = e.cause
-    if (cause !is InterruptedException && cause !is ClosedChannelException) {
-      logSupplier().warn("Cannot compact", e)
     }
   }
 }
