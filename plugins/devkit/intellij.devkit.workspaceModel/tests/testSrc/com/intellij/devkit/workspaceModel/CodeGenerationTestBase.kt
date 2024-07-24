@@ -147,6 +147,7 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
         project, module, srcRoot,
         processAbstractTypes = processAbstractTypes,
         explicitApiEnabled = explicitApiEnabled,
+        isTestSourceFolder = false,
         isTestModule = isTestModule,
         targetFolderGenerator = { genRoot },
         existingTargetFolder = { genRoot }
