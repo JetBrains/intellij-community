@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.Utils.computeWithProgressIcon
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiMethod
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
@@ -25,8 +23,8 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
-KtParameter::class.java,
-KotlinBundle.lazyMessage("convert.parameter.to.receiver")
+    KtParameter::class.java,
+    KotlinBundle.lazyMessage("convert.parameter.to.receiver")
 ) {
 
     override fun startInWriteAction(): Boolean = false
@@ -53,8 +51,7 @@ KotlinBundle.lazyMessage("convert.parameter.to.receiver")
                 computeWithProgressIcon(point, aComponent, ActionPlaces.UNKNOWN) {
                     readAction { overridesJava() }
                 }
-            }
-            else {
+            } else {
                 overridesJava()
             }
 
@@ -64,7 +61,7 @@ KotlinBundle.lazyMessage("convert.parameter.to.receiver")
     }
 
     override fun applyTo(element: KtParameter, editor: Editor?) {
-       val function = element.getStrictParentOfType<KtNamedFunction>() ?: return
+        val function = element.getStrictParentOfType<KtNamedFunction>() ?: return
         val parameterIndex = function.valueParameters.indexOf(element)
 
         val superMethods = checkSuperMethods(function, emptyList(), RefactoringBundle.message("to.refactor"))
