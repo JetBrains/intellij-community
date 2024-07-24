@@ -6,6 +6,7 @@ import com.intellij.platform.ml.MLModel
 import com.intellij.platform.ml.Session
 import com.intellij.platform.ml.analysis.SessionAnalyser
 import com.intellij.platform.ml.environment.Environment
+import com.intellij.platform.ml.logs.NO_DESCRIPTION
 import com.intellij.platform.ml.logs.schema.EventField
 import com.intellij.platform.ml.logs.schema.EventPair
 import org.jetbrains.annotations.ApiStatus
@@ -26,7 +27,7 @@ class ModelVersionAnalyser<M, P : Any> : SessionAnalyser.Default<M, P>()
   where M : MLModel<P>,
         M : Versioned {
   companion object {
-    private val VERSION = VersionEventField("model_version", null)
+    private val VERSION = VersionEventField("model_version", NO_DESCRIPTION)
   }
 
   override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<P>, mlModel: M): List<EventPair<*>> =

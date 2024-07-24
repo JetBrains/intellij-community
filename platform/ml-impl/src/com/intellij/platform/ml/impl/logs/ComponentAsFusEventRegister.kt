@@ -71,17 +71,17 @@ class ComponentAsFusEventRegister(private val baseEventGroup: IJEventLogGroup) :
 private fun <L> createConverter(mlEventField: MLEventField<L>): IJEventPairConverter<L, *> = when (mlEventField) {
   is MLObjectEventField -> ConverterOfObject(
     mlEventField.name,
-    mlEventField.description,
+    mlEventField.descriptionProvider,
     mlEventField.objectDescription
   ) as IJEventPairConverter<L, *>
-  is MLBooleanEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJBooleanEventField(n, d) } as IJEventPairConverter<L, *>
-  is MLIntEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJIntEventField(n, d) } as IJEventPairConverter<L, *>
-  is MLLongEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJLongEventField(n, d) } as IJEventPairConverter<L, *>
-  is MLFloatEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJFloatEventField1(n, d) } as IJEventPairConverter<L, *>
+  is MLBooleanEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJBooleanEventField(n, d()) } as IJEventPairConverter<L, *>
+  is MLIntEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJIntEventField(n, d()) } as IJEventPairConverter<L, *>
+  is MLLongEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJLongEventField(n, d()) } as IJEventPairConverter<L, *>
+  is MLFloatEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJFloatEventField1(n, d()) } as IJEventPairConverter<L, *>
   is MLEnumEventField<*> -> mlEventField.toIJConverter() as IJEventPairConverter<L, *>
   is MLClassEventField -> ConverterOfClass(mlEventField) as IJEventPairConverter<L, *>
   is MLObjectListEventField -> ConvertObjectList(mlEventField) as IJEventPairConverter<L, *>
-  is MLDoubleEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJDoubleEventField(n, d) } as IJEventPairConverter<L, *>
+  is MLDoubleEventField -> ConverterOfPrimitiveType(mlEventField) { n, d -> IJDoubleEventField(n, d()) } as IJEventPairConverter<L, *>
   is MLVersionEventField -> ConverterOfVersion(mlEventField) as IJEventPairConverter<L, *>
   is MLLanguageEventField -> ConverterOfLanguage(mlEventField) as IJEventPairConverter<L, *>
   is MLStringEventField -> ConverterOfString(mlEventField) as IJEventPairConverter<L, *>
@@ -115,7 +115,7 @@ private class ConverterOfString(mlEventField: MLStringEventField) : IJEventPairC
   override val ijEventField: IJEventField<String?> = IJStringEventField.ValidatedByAllowedValues(
     mlEventField.name,
     allowedValues = mlEventField.possibleValues,
-    description = mlEventField.description
+    description = mlEventField.descriptionProvider()
   )
 
   override fun buildEventPair(mlEventPair: EventPair<String>): IJEventPair<String?> {
@@ -124,7 +124,7 @@ private class ConverterOfString(mlEventField: MLStringEventField) : IJEventPairC
 }
 
 private class ConverterOfLanguage(mlEventField: MLLanguageEventField) : IJEventPairConverter<Language, Language?> {
-  override val ijEventField: IJEventField<Language?> = IJEventFields.Language(mlEventField.name, mlEventField.description)
+  override val ijEventField: IJEventField<Language?> = IJEventFields.Language(mlEventField.name, mlEventField.descriptionProvider())
 
   override fun buildEventPair(mlEventPair: MLEventPair<Language>): IJEventPair<Language?> {
     return ijEventField with mlEventPair.data
@@ -132,7 +132,7 @@ private class ConverterOfLanguage(mlEventField: MLLanguageEventField) : IJEventP
 }
 
 private class ConverterOfVersion(mlEventField: MLVersionEventField) : IJEventPairConverter<Version, Version?> {
-  private class VersionEventField(override val name: String, override val description: String?) : PrimitiveEventField<Version?>() {
+  private class VersionEventField(override val name: String, descriptionProvider: () -> String) : PrimitiveEventField<Version?>(descriptionProvider()) {
     override val validationRule: List<String>
       get() = listOf("{regexp#version}")
 
@@ -141,7 +141,7 @@ private class ConverterOfVersion(mlEventField: MLVersionEventField) : IJEventPai
     }
   }
 
-  override val ijEventField: IJEventField<Version?> = VersionEventField(mlEventField.name, mlEventField.description)
+  override val ijEventField: IJEventField<Version?> = VersionEventField(mlEventField.name, mlEventField.descriptionProvider)
 
   override fun buildEventPair(mlEventPair: MLEventPair<Version>): com.intellij.internal.statistic.eventLog.events.EventPair<Version?> {
     return ijEventField with mlEventPair.data
@@ -150,7 +150,7 @@ private class ConverterOfVersion(mlEventField: MLVersionEventField) : IJEventPai
 
 private class ConvertObjectList(mlEventField: MLObjectListEventField) :
   IJEventPairConverter<List<MLObjectEventData>, List<IJObjectEventData>> {
-  private val innerObjectConverter = ConverterOfObject(mlEventField.name, mlEventField.description, mlEventField.internalObjectDescription)
+  private val innerObjectConverter = ConverterOfObject(mlEventField.name, mlEventField.descriptionProvider, mlEventField.internalObjectDescription)
 
   // FIXME: description is not passed
   override val ijEventField: IJEventField<List<IJObjectEventData>> = IJObjectListEventField(
@@ -217,12 +217,12 @@ private class ConverterObjectDescription(mlObjectDescription: MLObjectDescriptio
 
 private class ConverterOfObject(
   name: String,
-  description: String?,
+  descriptionProvider: () -> String,
   mlObjectDescription: MLObjectDescription,
 ) : IJEventPairConverter<MLObjectEventData, IJObjectEventData> {
   val ijObjectDescription = mlObjectDescription.asIJObjectDescription()
 
-  override val ijEventField: IJEventField<IJObjectEventData> = IJObjectEventField(name, description, ijObjectDescription)
+  override val ijEventField: IJEventField<IJObjectEventData> = IJObjectEventField(name, descriptionProvider(), ijObjectDescription)
 
   fun buildObjectEventData(mlObject: MLObjectEventData): IJObjectEventData {
     return ijObjectDescription.buildObjectEventData(mlObject)
@@ -233,11 +233,13 @@ private class ConverterOfObject(
   }
 }
 
+typealias DescriptionProvider = () -> String
+
 private class ConverterOfPrimitiveType<T>(
   mlEventField: MLEventField<T>,
-  createIJField: (String, String?) -> IJEventField<T>
+  createIJField: (String, DescriptionProvider) -> IJEventField<T>
 ) : IJEventPairConverter<T, T> {
-  override val ijEventField: IJEventField<T> = createIJField(mlEventField.name, mlEventField.description)
+  override val ijEventField: IJEventField<T> = createIJField(mlEventField.name, mlEventField.descriptionProvider)
 
   override fun buildEventPair(mlEventPair: MLEventPair<T>): IJEventPair<T> {
     return ijEventField with mlEventPair.data
@@ -247,7 +249,7 @@ private class ConverterOfPrimitiveType<T>(
 private class ConverterOfClass(
   mlEventField: MLClassEventField,
 ) : IJEventPairConverter<Class<*>, Class<*>?> {
-  override val ijEventField: IJEventField<Class<*>?> = IJClassEventField(mlEventField.name, mlEventField.description)
+  override val ijEventField: IJEventField<Class<*>?> = IJClassEventField(mlEventField.name, mlEventField.descriptionProvider())
 
   override fun buildEventPair(mlEventPair: MLEventPair<Class<*>>): IJEventPair<Class<*>?> {
     return ijEventField with mlEventPair.data
