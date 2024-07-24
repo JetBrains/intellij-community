@@ -5,7 +5,7 @@ import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal abstract class PriorityEatUpdate(priority: Int) : Update(Any(), priority) {
+internal abstract class PriorityEatUpdate(priority: Int) : Update(priority, priority) {
   override fun canEat(update: Update): Boolean {
     if (update !is PriorityEatUpdate) return false
     return priority <= update.priority

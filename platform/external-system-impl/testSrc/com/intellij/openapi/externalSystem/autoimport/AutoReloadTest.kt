@@ -732,6 +732,26 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
+  fun `test merge sequent project reloads from explicit reload  (parallel)`() {
+    test {
+      enableAsyncExecution()
+      setDispatcherMergingSpan(10)
+
+      parallel {
+        repeat(100) { index ->
+          thread {
+            Thread.sleep(5L * index)
+            markDirty()
+            waitForAllProjectActivities {
+              scheduleProjectReload()
+            }
+          }
+        }
+      }
+      assertStateAndReset(numReload = 1, notified = false, event = "merged project reload")
+    }
+  }
+
   fun `test enabling-disabling internal-external changes importing`() {
     test { settingsFile ->
       settingsFile.modify(INTERNAL)
