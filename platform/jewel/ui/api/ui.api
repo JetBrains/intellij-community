@@ -414,9 +414,9 @@ public final class org/jetbrains/jewel/ui/component/LinearProgressBarKt {
 }
 
 public final class org/jetbrains/jewel/ui/component/LinkKt {
-	public static final fun DropdownLink-o1X-F34 (Ljava/lang/String;Landroidx/compose/ui/Modifier;ZJLandroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontFamily;JIIJLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
-	public static final fun ExternalLink-bWaSZw8 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZJLandroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontFamily;JIIJLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/runtime/Composer;III)V
-	public static final fun Link-bWaSZw8 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZJLandroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontFamily;JIIJLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/runtime/Composer;III)V
+	public static final fun DropdownLink-RWo7tUw (Ljava/lang/String;Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/text/TextStyle;ILandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ExternalLink-kye4rC8 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/text/TextStyle;ILandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Link-kye4rC8 (Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/text/TextStyle;ILandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/LinkStyle;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/LinkState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
@@ -1203,13 +1203,12 @@ public final class org/jetbrains/jewel/ui/component/styling/DropdownMetrics$Comp
 public final class org/jetbrains/jewel/ui/component/styling/DropdownStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/DropdownStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/DropdownColors;Lorg/jetbrains/jewel/ui/component/styling/DropdownMetrics;Lorg/jetbrains/jewel/ui/component/styling/DropdownIcons;Landroidx/compose/ui/text/TextStyle;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/DropdownColors;Lorg/jetbrains/jewel/ui/component/styling/DropdownMetrics;Lorg/jetbrains/jewel/ui/component/styling/DropdownIcons;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/DropdownColors;
 	public final fun getIcons ()Lorg/jetbrains/jewel/ui/component/styling/DropdownIcons;
 	public final fun getMenuStyle ()Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/DropdownMetrics;
-	public final fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1425,7 +1424,6 @@ public abstract interface class org/jetbrains/jewel/ui/component/styling/InputFi
 public abstract interface class org/jetbrains/jewel/ui/component/styling/InputFieldStyle {
 	public abstract fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldColors;
 	public abstract fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldMetrics;
-	public abstract fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/LazyTreeColors {
@@ -1553,12 +1551,11 @@ public final class org/jetbrains/jewel/ui/component/styling/LinkMetrics$Companio
 public final class org/jetbrains/jewel/ui/component/styling/LinkStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LinkStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;Lorg/jetbrains/jewel/ui/component/styling/LinkTextStyles;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/LinkColors;Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/LinkColors;
 	public final fun getIcons ()Lorg/jetbrains/jewel/ui/component/styling/LinkIcons;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/LinkMetrics;
-	public final fun getTextStyles ()Lorg/jetbrains/jewel/ui/component/styling/LinkTextStyles;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1568,25 +1565,6 @@ public final class org/jetbrains/jewel/ui/component/styling/LinkStyle$Companion 
 
 public final class org/jetbrains/jewel/ui/component/styling/LinkStylingKt {
 	public static final fun getLocalLinkStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LinkTextStyles {
-	public static final field $stable I
-	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LinkTextStyles$Companion;
-	public fun <init> (Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;)V
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getDisabled ()Landroidx/compose/ui/text/TextStyle;
-	public final fun getFocused ()Landroidx/compose/ui/text/TextStyle;
-	public final fun getHovered ()Landroidx/compose/ui/text/TextStyle;
-	public final fun getNormal ()Landroidx/compose/ui/text/TextStyle;
-	public final fun getPressed ()Landroidx/compose/ui/text/TextStyle;
-	public final fun getVisited ()Landroidx/compose/ui/text/TextStyle;
-	public fun hashCode ()I
-	public final fun styleFor-Qusrf_U (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class org/jetbrains/jewel/ui/component/styling/LinkTextStyles$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/MenuColors {
@@ -2182,13 +2160,12 @@ public final class org/jetbrains/jewel/ui/component/styling/TextAreaMetrics$Comp
 public final class org/jetbrains/jewel/ui/component/styling/TextAreaStyle : org/jetbrains/jewel/ui/component/styling/InputFieldStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TextAreaColors;Lorg/jetbrains/jewel/ui/component/styling/TextAreaMetrics;Landroidx/compose/ui/text/TextStyle;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TextAreaColors;Lorg/jetbrains/jewel/ui/component/styling/TextAreaMetrics;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public synthetic fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldColors;
 	public fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/TextAreaColors;
 	public synthetic fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldMetrics;
 	public fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/TextAreaMetrics;
-	public fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -2256,13 +2233,12 @@ public final class org/jetbrains/jewel/ui/component/styling/TextFieldMetrics$Com
 public final class org/jetbrains/jewel/ui/component/styling/TextFieldStyle : org/jetbrains/jewel/ui/component/styling/InputFieldStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;Landroidx/compose/ui/text/TextStyle;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public synthetic fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldColors;
 	public fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;
 	public synthetic fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/InputFieldMetrics;
 	public fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;
-	public fun getTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

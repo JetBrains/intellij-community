@@ -3,20 +3,15 @@ package org.jetbrains.jewel.intui.standalone.styling
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
 import org.jetbrains.jewel.ui.component.styling.LinkColors
 import org.jetbrains.jewel.ui.component.styling.LinkIcons
 import org.jetbrains.jewel.ui.component.styling.LinkMetrics
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
-import org.jetbrains.jewel.ui.component.styling.LinkTextStyles
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
@@ -25,16 +20,14 @@ public fun LinkStyle.Companion.light(
     colors: LinkColors = LinkColors.light(),
     metrics: LinkMetrics = LinkMetrics.defaults(),
     icons: LinkIcons = LinkIcons.defaults(),
-    textStyles: LinkTextStyles = LinkTextStyles.light(),
-): LinkStyle = LinkStyle(colors, metrics, icons, textStyles)
+): LinkStyle = LinkStyle(colors, metrics, icons)
 
 @Composable
 public fun LinkStyle.Companion.dark(
     colors: LinkColors = LinkColors.dark(),
     metrics: LinkMetrics = LinkMetrics.defaults(),
     icons: LinkIcons = LinkIcons.defaults(),
-    textStyles: LinkTextStyles = LinkTextStyles.dark(),
-): LinkStyle = LinkStyle(colors, metrics, icons, textStyles)
+): LinkStyle = LinkStyle(colors, metrics, icons)
 
 @Composable
 public fun LinkColors.Companion.light(
@@ -82,23 +75,3 @@ public fun LinkIcons.Companion.defaults(
     dropdownChevron: IconKey = AllIconsKeys.General.ChevronDown,
     externalLink: IconKey = AllIconsKeys.Ide.External_link_arrow,
 ): LinkIcons = LinkIcons(dropdownChevron, externalLink)
-
-@Composable
-public fun LinkTextStyles.Companion.light(
-    normal: TextStyle = JewelTheme.createDefaultTextStyle().copy(textDecoration = TextDecoration.Underline),
-    disabled: TextStyle = JewelTheme.createDefaultTextStyle(),
-    focused: TextStyle = normal,
-    pressed: TextStyle = normal,
-    hovered: TextStyle = normal,
-    visited: TextStyle = normal,
-): LinkTextStyles = LinkTextStyles(normal, disabled, focused, pressed, hovered, visited)
-
-@Composable
-public fun LinkTextStyles.Companion.dark(
-    normal: TextStyle = JewelTheme.createDefaultTextStyle().copy(textDecoration = TextDecoration.Underline),
-    disabled: TextStyle = JewelTheme.createDefaultTextStyle(),
-    focused: TextStyle = normal,
-    pressed: TextStyle = normal,
-    hovered: TextStyle = normal,
-    visited: TextStyle = normal,
-): LinkTextStyles = LinkTextStyles(normal, disabled, focused, pressed, hovered, visited)

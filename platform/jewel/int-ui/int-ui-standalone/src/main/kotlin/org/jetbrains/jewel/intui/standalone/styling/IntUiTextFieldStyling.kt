@@ -4,14 +4,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldColors
 import org.jetbrains.jewel.ui.component.styling.TextFieldMetrics
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -20,15 +17,13 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 public fun TextFieldStyle.Companion.light(
     colors: TextFieldColors = TextFieldColors.light(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
-    textStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
-): TextFieldStyle = TextFieldStyle(colors, metrics, textStyle)
+): TextFieldStyle = TextFieldStyle(colors, metrics)
 
 @Composable
 public fun TextFieldStyle.Companion.dark(
     colors: TextFieldColors = TextFieldColors.dark(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
-    textStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
-): TextFieldStyle = TextFieldStyle(colors, metrics, textStyle)
+): TextFieldStyle = TextFieldStyle(colors, metrics)
 
 @Composable
 public fun TextFieldColors.Companion.light(

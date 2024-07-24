@@ -8,7 +8,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.ui.component.InputFieldState
@@ -17,7 +16,6 @@ import org.jetbrains.jewel.ui.component.InputFieldState
 public interface InputFieldStyle {
     public val colors: InputFieldColors
     public val metrics: InputFieldMetrics
-    public val textStyle: TextStyle
 }
 
 @Immutable

@@ -7,7 +7,6 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
@@ -17,7 +16,6 @@ import org.jetbrains.jewel.foundation.GenerateDataFunctions
 public class TextFieldStyle(
     override val colors: TextFieldColors,
     override val metrics: TextFieldMetrics,
-    override val textStyle: TextStyle,
 ) : InputFieldStyle {
     public companion object
 }

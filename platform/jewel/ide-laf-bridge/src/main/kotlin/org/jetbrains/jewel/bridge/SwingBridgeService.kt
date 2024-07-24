@@ -54,18 +54,16 @@ internal class SwingBridgeService(scope: CoroutineScope) {
                 run {
                     val textStyle = TextStyle.Default.copy(fontSize = 13.sp)
                     val monospaceTextStyle = textStyle.copy(fontFamily = FontFamily.Monospace)
-                    val themeDefinition = createBridgeThemeDefinition(textStyle, monospaceTextStyle, monospaceTextStyle)
+                    val themeDefinition =
+                        createBridgeThemeDefinition(
+                            textStyle = textStyle,
+                            editorTextStyle = monospaceTextStyle,
+                            consoleTextStyle = monospaceTextStyle,
+                        )
 
                     BridgeThemeData(
                         themeDefinition = themeDefinition,
-                        componentStyling =
-                            createBridgeComponentStyling(
-                                theme = themeDefinition,
-                                textFieldTextStyle = textStyle,
-                                textAreaTextStyle = textStyle,
-                                dropdownTextStyle = textStyle,
-                                linkTextStyle = textStyle,
-                            ),
+                        componentStyling = createBridgeComponentStyling(themeDefinition),
                     )
                 }
         }

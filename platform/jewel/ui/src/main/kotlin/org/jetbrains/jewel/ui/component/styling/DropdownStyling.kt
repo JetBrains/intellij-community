@@ -10,7 +10,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
@@ -23,7 +22,6 @@ public class DropdownStyle(
     public val colors: DropdownColors,
     public val metrics: DropdownMetrics,
     public val icons: DropdownIcons,
-    public val textStyle: TextStyle,
     public val menuStyle: MenuStyle,
 ) {
     public companion object

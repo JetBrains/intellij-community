@@ -8,7 +8,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
@@ -21,7 +20,6 @@ public class LinkStyle(
     public val colors: LinkColors,
     public val metrics: LinkMetrics,
     public val icons: LinkIcons,
-    public val textStyles: LinkTextStyles,
 ) {
     public companion object
 }
@@ -69,33 +67,6 @@ public class LinkIcons(
     public val dropdownChevron: IconKey,
     public val externalLink: IconKey,
 ) {
-    public companion object
-}
-
-@Immutable
-@GenerateDataFunctions
-public class LinkTextStyles(
-    public val normal: TextStyle,
-    public val disabled: TextStyle,
-    public val focused: TextStyle,
-    public val pressed: TextStyle,
-    public val hovered: TextStyle,
-    public val visited: TextStyle,
-) {
-    @Composable
-    public fun styleFor(state: LinkState): State<TextStyle> =
-        rememberUpdatedState(
-            state.chooseValueWithVisited(
-                normal = normal,
-                disabled = disabled,
-                focused = focused,
-                pressed = pressed,
-                hovered = hovered,
-                visited = visited,
-                active = normal,
-            ),
-        )
-
     public companion object
 }
 
