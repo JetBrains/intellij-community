@@ -2,9 +2,12 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 
 internal object RemoveFinalUpperBoundFixFactory : KotlinSingleIntentionActionFactory() {
-    override fun createAction(diagnostic: Diagnostic) = RemoveFinalUpperBoundFix(Errors.FINAL_UPPER_BOUND.cast(diagnostic).psiElement)
+    override fun createAction(diagnostic: Diagnostic): IntentionAction {
+        return RemoveFinalUpperBoundFix(Errors.FINAL_UPPER_BOUND.cast(diagnostic).psiElement).asIntention()
+    }
 }
