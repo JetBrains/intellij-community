@@ -57,6 +57,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false"
+                 key="kotlin.k2.scripting.show.modules"
+                 description="Enable displaying Kotlin Script modules in 'Project Structure' | 'Modules' view "/>
     <registryKey
             key="kotlin.scripting.fs.roots.storage.enabled"
             description="Cache resolved dependencies paths across all scripts"
@@ -90,6 +93,9 @@
 
     <workspaceModel.fileIndexContributor
             implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
+
+    <configuration.moduleStructureFilterExtension
+            implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptsProjectStructureFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

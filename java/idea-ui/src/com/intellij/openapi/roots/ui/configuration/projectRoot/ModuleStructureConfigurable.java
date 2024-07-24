@@ -239,7 +239,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                                                                     ModuleGroupingTreeHelper.createDefaultGrouping(moduleGrouper),
                                                                                     ModuleStructureConfigurable::createModuleGroupNode,
                                                                                     m -> createModuleNode(m, moduleGrouper), getNodeComparator());
-    helper.createModuleNodes(Arrays.asList(myModuleManager.getModules()), myRoot, getTreeModel());
+    var filters = ModuleStructureFilterExtension.EP_NAME.getExtensionList();
+    var modules = Arrays.stream(myModuleManager.getModules()).filter(module -> ContainerUtil.and(filters, filter -> filter.accepts(module))).toList();
+    helper.createModuleNodes(modules, myRoot, getTreeModel());
     if (containsSecondLevelNodes(myRoot)) {
       myTree.setShowsRootHandles(true);
     }
@@ -249,11 +251,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     addRootNodesFromExtensions(myRoot, myProject);
-    //final LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
-    //final LibrariesModifiableModel projectLibrariesProvider = new LibrariesModifiableModel(table);
-    //myLevel2Providers.put(LibraryTablesRegistrar.PROJECT_LEVEL, projectLibrariesProvider);
-    //
-    //myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
   }
 
   private static boolean containsSecondLevelNodes(TreeNode rootNode) {

@@ -235,7 +235,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
   }
 
   fun moveAllModuleNodesToProperGroups(rootNode: N, model: DefaultTreeModel) {
-    val modules = nodeData.values.map { it.module }.filterNotNull()
+    val modules = nodeData.values.mapNotNull { it.module }
     nodeData.keys.forEach { it.removeFromParent() }
     nodeData.clear()
     nodeForGroup.clear()
