@@ -171,7 +171,8 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
   private fun createAwakers(): List<NecromancerAwaker<Zombie>> {
     val allAwakers = NECROMANCER_EP.filterableLazySequence()
       .filter {
-        val isCore = it.pluginDescriptor.pluginId == PluginManagerCore.CORE_ID
+        val isCore = it.pluginDescriptor.pluginId == PluginManagerCore.CORE_ID ||
+                     it.implementationClassName == "com.jetbrains.rider.daemon.grave.RiderHighlightingNecromancerAwaker"
         if (!isCore) {
           LOG.error("Only core plugin can define ${NECROMANCER_EP.name}: ${it.pluginDescriptor}")
         }
