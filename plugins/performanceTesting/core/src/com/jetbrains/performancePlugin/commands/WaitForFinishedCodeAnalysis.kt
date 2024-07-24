@@ -24,6 +24,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.UIUtil
@@ -334,7 +336,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   private fun daemonStopped(fileEditors: Collection<FileEditor>, isCancelled: Boolean) {
-    val status = if(isCancelled) "cancelled" else "stopped"
+    val status = if (isCancelled) "cancelled" else "stopped"
     CodeAnalysisStateListener.LOG.info("daemon $status with ${fileEditors.size} unfiltered editors")
     val worthy = fileEditors.getWorthy()
     if (worthy.isEmpty()) return
@@ -405,7 +407,14 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
     fun getLogHighlightingMessage(currentTime: Long, editor: TextEditor, exceptionWithTime: ExceptionWithTime?): String {
       return when (exceptionWithTime) {
         null -> "Editor ${editor} wasn't opened, and highlighting didn't start, but it finished, and the editor was highlighted"
-        is DaemonAnalysisStarted -> "Total highlighting time is : ${currentTime - exceptionWithTime.timestamp} ms for ${editor.description}"
+        is DaemonAnalysisStarted -> {
+          TelemetryManager.getTracer(Scope("highlighting"))
+            .spanBuilder("highlighting_${editor.file.name}")
+            .setStartTimestamp(exceptionWithTime.timestamp, TimeUnit.MILLISECONDS)
+            .startSpan()
+            .end(currentTime, TimeUnit.MILLISECONDS)
+          "Total highlighting time is : ${currentTime - exceptionWithTime.timestamp} ms for ${editor.description}"
+        }
         is EditorOpened -> "Total time from opening to highlighting is : ${currentTime - exceptionWithTime.timestamp} ms; \n" +
                            "daemon start was not reported for editor ${editor.description}"
         is EditorEdited -> "Total time from editing to highlighting is : ${currentTime - exceptionWithTime.timestamp} ms; \n" +

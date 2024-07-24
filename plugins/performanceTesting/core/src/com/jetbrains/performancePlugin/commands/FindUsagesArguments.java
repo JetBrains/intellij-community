@@ -11,4 +11,7 @@ public class FindUsagesArguments {
 
   @Argument
   String expectedName;
+
+  @Argument
+  Boolean runInBackground;
 }
