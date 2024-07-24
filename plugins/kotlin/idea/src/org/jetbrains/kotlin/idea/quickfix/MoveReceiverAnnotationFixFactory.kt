@@ -18,6 +18,6 @@ internal object MoveReceiverAnnotationFixFactory : KotlinSingleIntentionActionFa
         val declaration = entry.getParentOfType<KtCallableDeclaration>(true) ?: return null
         if (declaration.receiverTypeReference == null) return null
 
-        return MoveReceiverAnnotationFix(entry)
+        return MoveReceiverAnnotationFix(entry).asIntention()
     }
 }
