@@ -32,7 +32,7 @@ internal class LocalizationStateServiceImpl : LocalizationStateService, Persiste
     if (!localizationProperty.isNullOrEmpty()) {
       EarlyAccessRegistryManager.setString(LocalizationUtil.LOCALIZATION_KEY, "")
       if (localizationProperty != Locale.ENGLISH.toLanguageTag()) {
-        setSelectedLocale(localizationProperty)
+        localizationState.selectedLocale = localizationProperty
         logger<ConfigImportHelper>().info("[i18n] Language defined from registry: $localizationProperty")
       }
       else {
