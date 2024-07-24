@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" scope="TEST" />
